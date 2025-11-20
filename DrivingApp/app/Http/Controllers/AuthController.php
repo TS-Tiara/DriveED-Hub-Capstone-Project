@@ -57,8 +57,15 @@ class AuthController extends Controller
             }
             
             Auth::guard('student')->login($student, $remember);
-            return redirect()->route('schools.student.dashboard', $school)
-                ->with('success', 'Welcome back, ' . $student->name . '!');
+            
+            // Redirect based on role (guest or student)
+            if ($student->role === 'guest') {
+                return redirect()->route('schools.guest.dashboard', $school)
+                    ->with('success', 'Welcome back, ' . $student->name . '!');
+            } else {
+                return redirect()->route('schools.student.dashboard', $school)
+                    ->with('success', 'Welcome back, ' . $student->name . '!');
+            }
         }
 
         return back()->withErrors([

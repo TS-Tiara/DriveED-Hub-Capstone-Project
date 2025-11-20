@@ -12,7 +12,18 @@ class Authenticate extends Middleware
      */
     protected function redirectTo(Request $request): ?string
     {
-        return $request->expectsJson() ? null : route('drivingschool1.login');
+        if ($request->expectsJson()) {
+            return null;
+        }
+
+        // If we're in a school context, redirect to that school's login
+        $school = $request->route('school');
+        if ($school) {
+            return route('schools.login', ['school' => $school->slug]);
+        }
+
+        // Otherwise redirect to the welcome page to select a school
+        return url('/');
     }
 
     /**

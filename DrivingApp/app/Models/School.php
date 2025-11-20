@@ -15,6 +15,7 @@ class School extends Model
         'timezone',
         'branding',
         'settings',
+        'instructor_removal_notice_days',
     ];
 
     protected $casts = [
@@ -42,6 +43,16 @@ class School extends Model
         return $this->hasMany(Student::class);
     }
 
+    public function enrollmentRequests()
+    {
+        return $this->hasMany(EnrollmentRequest::class);
+    }
+
+    public function courses()
+    {
+        return $this->hasMany(Course::class);
+    }
+
     public function schedules()
     {
         return $this->hasMany(Schedule::class);
@@ -57,6 +68,11 @@ class School extends Model
         return $this->hasMany(ScheduleInstructor::class);
     }
 
+    public function schoolSetting()
+    {
+        return $this->hasOne(SchoolSetting::class);
+    }
+
     public function resolveView(string $view): string
     {
         $sluggedView = $this->slug . '.' . $view;
@@ -65,6 +81,6 @@ class School extends Model
             return $sluggedView;
         }
 
-        return 'schools.default.' . $view;
+        return 'school.' . $view;
     }
 }

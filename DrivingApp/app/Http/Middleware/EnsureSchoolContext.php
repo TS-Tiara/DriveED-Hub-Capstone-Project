@@ -18,6 +18,11 @@ class EnsureSchoolContext
             return $next($request);
         }
 
+        // Skip school validation for logout route to prevent conflicts
+        if ($request->route()->getName() === 'schools.logout') {
+            return $next($request);
+        }
+
         $request->session()->put('school_id', $school->id);
         $request->session()->put('school_slug', $school->slug);
 

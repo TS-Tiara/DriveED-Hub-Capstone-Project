@@ -21,6 +21,8 @@ class Instructor extends Authenticatable
         'enrollment_date',
         'availability',
         'license_number',
+        'bio',
+        'profile_picture',
     ];
 
     protected $hidden = [
@@ -38,5 +40,10 @@ class Instructor extends Authenticatable
     public function school()
     {
         return $this->belongsTo(School::class);
+    }
+
+    public function bookings()
+    {
+        return $this->hasMany(Booking::class);
     }
 }

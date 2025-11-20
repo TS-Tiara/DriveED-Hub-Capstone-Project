@@ -2,11 +2,11 @@
 
 use App\Models\School;
 
-test('the root URL redirects to the default school login', function () {
+test('the root URL shows the welcome page with school selection', function () {
     School::query()->firstOrCreate(
-        ['slug' => 'drivingschool1'],
+        ['slug' => 'test-school'],
         [
-            'name' => 'Driving School 1',
+            'name' => 'Test School',
             'timezone' => config('app.timezone', 'UTC'),
             'branding' => [],
             'settings' => [],
@@ -16,10 +16,7 @@ test('the root URL redirects to the default school login', function () {
     $response = $this->get('/');
 
     $response
-        ->assertRedirect('/drivingschool1')
-        ->assertStatus(302);
-
-    $this->followRedirects($response)
         ->assertOk()
-        ->assertViewIs('drivingschool1.login');
+        ->assertViewIs('welcome')
+        ->assertSee('Test School');
 });

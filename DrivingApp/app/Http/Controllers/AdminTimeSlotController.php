@@ -33,6 +33,46 @@ class AdminTimeSlotController extends Controller
     // Store new time slot
     public function store(Request $request, School $school)
     {
+        // Check if it's bulk creation
+        if ($request->has('timeslots') && $request->timeslots) {
+            $timeslots = json_decode($request->timeslots, true);
+            
+            if (!is_array($timeslots) || empty($timeslots)) {
+                return redirect()->back()->with('error', 'Invalid timeslots data');
+            }
+
+            $created = 0;
+            foreach ($timeslots as $timeslotData) {
+                // Validate each timeslot
+                $validator = validator($timeslotData, [
+                    'date' => 'required|date',
+                    'start_time' => 'required|date_format:H:i',
+                    'end_time' => 'required|date_format:H:i',
+                    'max_instructors' => 'required|integer|min:1',
+                ]);
+
+                if ($validator->fails()) {
+                    continue; // Skip invalid timeslots
+                }
+
+                TimeSlot::create([
+                    'school_id' => $school->id,
+                    'date' => $timeslotData['date'],
+                    'start_time' => $timeslotData['start_time'],
+                    'end_time' => $timeslotData['end_time'],
+                    'max_instructors' => $timeslotData['max_instructors'],
+                    'notes' => $timeslotData['notes'] ?? null,
+                    'status' => 'open',
+                ]);
+
+                $created++;
+            }
+
+            return redirect()->route('schools.admin.timeslots.index', $school)
+                ->with('success', "Successfully created {$created} time slot(s)!");
+        }
+
+        // Single timeslot creation
         $request->validate([
             'date' => 'required|date|after_or_equal:today',
             'start_time' => 'required|date_format:H:i',

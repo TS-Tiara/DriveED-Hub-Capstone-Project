@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>JavaScript Functionality Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        .test-result { padding: 10px; margin: 5px 0; }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .warning { background-color: #fff3cd; color: #856404; }
+        button { margin: 5px; padding: 8px 16px; }
+    </style>
+</head>
+<body>
+    <h1>JavaScript Functionality Test for Driving School App</h1>
+    
+    <div class="test-section">
+        <h2>1. Basic JavaScript Test</h2>
+        <button onclick="testBasicJS()">Test Basic JavaScript</button>
+        <div id="basic-test-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. AJAX Test</h2>
+        <button onclick="testAjax()">Test AJAX Request</button>
+        <div id="ajax-test-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. Modal Simulation Test</h2>
+        <button onclick="testModalFunctions()">Test Modal Functions</button>
+        <div id="modal-test-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>4. Form Handling Test</h2>
+        <button onclick="testFormHandling()">Test Form Processing</button>
+        <div id="form-test-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>5. Console Errors Check</h2>
+        <p>Open browser console (F12) and check for any JavaScript errors.</p>
+        <button onclick="showConsoleInstructions()">Show Console Check Instructions</button>
+        <div id="console-instructions"></div>
+    </div>
+
+    <script>
+        function testBasicJS() {
+            const result = document.getElementById('basic-test-result');
+            try {
+                // Test basic JavaScript functionality
+                const testData = {
+                    date: new Date(),
+                    array: [1, 2, 3],
+                    object: { key: 'value' }
+                };
+                
+                result.innerHTML = '<div class="test-result success">✓ Basic JavaScript is working correctly</div>';
+            } catch (error) {
+                result.innerHTML = `<div class="test-result error">✗ Basic JavaScript error: ${error.message}</div>`;
+            }
+        }
+        
+        function testAjax() {
+            const result = document.getElementById('ajax-test-result');
+            result.innerHTML = '<div class="test-result warning">Testing AJAX...</div>';
+            
+            fetch('/test-endpoint', {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    result.innerHTML = '<div class="test-result success">✓ AJAX request successful (or endpoint returned valid response)</div>';
+                } else {
+                    result.innerHTML = '<div class="test-result warning">⚠ AJAX request returned ' + response.status + ' (endpoint may not exist, but AJAX is working)</div>';
+                }
+            })
+            .catch(error => {
+                result.innerHTML = '<div class="test-result error">✗ AJAX error: ' + error.message + '</div>';
+            });
+        }
+        
+        function testModalFunctions() {
+            const result = document.getElementById('modal-test-result');
+            const tests = [];
+            
+            // Test if modal-related functions would work
+            try {
+                // Simulate modal opening
+                const mockModal = document.createElement('div');
+                mockModal.id = 'test-modal';
+                mockModal.style.display = 'none';
+                document.body.appendChild(mockModal);
+                
+                // Test modal manipulation
+                mockModal.style.display = 'block';
+                tests.push('✓ Modal display manipulation works');
+                
+                mockModal.style.display = 'none';
+                tests.push('✓ Modal hiding works');
+                
+                // Clean up
+                document.body.removeChild(mockModal);
+                tests.push('✓ Modal cleanup works');
+                
+                result.innerHTML = tests.map(test => `<div class="test-result success">${test}</div>`).join('');
+                
+            } catch (error) {
+                result.innerHTML = `<div class="test-result error">✗ Modal function error: ${error.message}</div>`;
+            }
+        }
+        
+        function testFormHandling() {
+            const result = document.getElementById('form-test-result');
+            try {
+                // Create a test form
+                const form = document.createElement('form');
+                form.innerHTML = `
+                    <input type="text" name="test" value="test-value">
+                    <input type="submit" value="Submit">
+                `;
+                
+                // Test form data extraction
+                const formData = new FormData(form);
+                const testValue = formData.get('test');
+                
+                if (testValue === 'test-value') {
+                    result.innerHTML = '<div class="test-result success">✓ Form data extraction works correctly</div>';
+                } else {
+                    result.innerHTML = '<div class="test-result error">✗ Form data extraction failed</div>';
+                }
+                
+            } catch (error) {
+                result.innerHTML = `<div class="test-result error">✗ Form handling error: ${error.message}</div>`;
+            }
+        }
+        
+        function showConsoleInstructions() {
+            const instructions = document.getElementById('console-instructions');
+            instructions.innerHTML = `
+                <div class="test-result warning">
+                    <strong>Manual Console Check:</strong><br>
+                    1. Press F12 to open Developer Tools<br>
+                    2. Go to the "Console" tab<br>
+                    3. Look for any red error messages<br>
+                    4. Navigate to different pages in your app and check for errors<br>
+                    5. Try using forms and modals while watching the console<br>
+                    6. Common error types to look for:<br>
+                    &nbsp;&nbsp;- Uncaught ReferenceError (undefined functions/variables)<br>
+                    &nbsp;&nbsp;- Uncaught TypeError (calling methods on undefined objects)<br>
+                    &nbsp;&nbsp;- Network errors (failed AJAX requests)<br>
+                    &nbsp;&nbsp;- Syntax errors in JavaScript<br>
+                </div>
+            `;
+        }
+        
+        // Auto-run basic test on page load
+        window.onload = function() {
+            testBasicJS();
+        };
+    </script>
+</body>
+</html>

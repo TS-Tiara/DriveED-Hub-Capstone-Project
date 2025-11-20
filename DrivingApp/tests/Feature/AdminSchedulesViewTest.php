@@ -9,9 +9,9 @@ use Illuminate\Support\Carbon;
 
 it('shows manual schedules and occupied time slots together', function (): void {
     $school = School::firstOrCreate(
-        ['slug' => 'drivingschool1'],
+        ['slug' => 'test-school'],
         [
-            'name' => 'Driving School 1',
+            'name' => 'Test School',
             'timezone' => 'Asia/Manila',
         ]
     );

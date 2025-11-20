@@ -13,15 +13,22 @@ return new class extends Migration
 {
     Schema::create('students', function (Blueprint $table) {
         $table->id();
+        $table->foreignId('school_id')->constrained()->onDelete('cascade');
         $table->string('name');
-        $table->string('email')->unique();
+        $table->string('email');
         $table->string('password');
         $table->string('contact')->nullable();
         $table->string('address')->nullable();
+        $table->string('branch')->nullable();
+        $table->string('location')->nullable();
+        $table->string('profile_picture')->nullable();
         $table->string('status')->default('active');
+        $table->enum('role', ['guest', 'student'])->default('guest');
         $table->date('enrollment_date')->nullable();
-
         $table->timestamps();
+        
+        // Composite unique key for email within school
+        $table->unique(['school_id', 'email']);
     });
 }
 

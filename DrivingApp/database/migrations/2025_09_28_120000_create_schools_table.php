@@ -15,6 +15,7 @@ return new class extends Migration
             $table->string('timezone')->default(config('app.timezone', 'UTC'));
             $table->json('branding')->nullable();
             $table->json('settings')->nullable();
+            $table->integer('instructor_removal_notice_days')->default(7);
             $table->timestamps();
         });
     }
