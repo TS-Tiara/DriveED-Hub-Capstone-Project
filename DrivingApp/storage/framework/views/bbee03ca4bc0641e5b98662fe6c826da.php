@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title') - System Admin</title>
+    <meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
+    <title><?php echo $__env->yieldContent('title'); ?> - System Admin</title>
     
     <style>
         :root {
@@ -389,35 +389,53 @@
                 <p>Global Management Portal</p>
             </div>
             <nav class="sidebar-menu">
-                <a href="{{ route('system-admin.dashboard') }}" class="menu-item {{ request()->routeIs('system-admin.dashboard') ? 'active' : '' }}">
+                <a href="<?php echo e(route('system-admin.dashboard')); ?>" class="menu-item <?php echo e(request()->routeIs('system-admin.dashboard') ? 'active' : ''); ?>">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
                     </svg>
                     Dashboard
                 </a>
-                <a href="{{ route('system-admin.schools') }}" class="menu-item {{ request()->routeIs('system-admin.schools') ? 'active' : '' }}">
+                <a href="<?php echo e(route('system-admin.schools')); ?>" class="menu-item <?php echo e(request()->routeIs('system-admin.schools') ? 'active' : ''); ?>">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
                     </svg>
                     Schools
                 </a>
-                <a href="{{ route('system-admin.admins') }}" class="menu-item {{ request()->routeIs('system-admin.admins') ? 'active' : '' }}">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    School Admins
-                </a>
-                <a href="{{ route('system-admin.users') }}" class="menu-item {{ request()->routeIs('system-admin.users') ? 'active' : '' }}">
+                <a href="<?php echo e(route('system-admin.students')); ?>" class="menu-item <?php echo e(request()->routeIs('system-admin.students') ? 'active' : ''); ?>">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
                     </svg>
-                    Users
+                    Students
                 </a>
-                <a href="{{ route('system-admin.logs') }}" class="menu-item {{ request()->routeIs('system-admin.logs*') ? 'active' : '' }}">
+                <a href="<?php echo e(route('system-admin.instructors')); ?>" class="menu-item <?php echo e(request()->routeIs('system-admin.instructors') ? 'active' : ''); ?>">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
                     </svg>
-                    System Logs
+                    Instructors
+                </a>
+                <a href="<?php echo e(route('system-admin.courses')); ?>" class="menu-item <?php echo e(request()->routeIs('system-admin.courses') ? 'active' : ''); ?>">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                    </svg>
+                    Courses
+                </a>
+                <a href="<?php echo e(route('system-admin.bookings')); ?>" class="menu-item <?php echo e(request()->routeIs('system-admin.bookings') ? 'active' : ''); ?>">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    Bookings
+                </a>
+                <a href="<?php echo e(route('system-admin.payments')); ?>" class="menu-item <?php echo e(request()->routeIs('system-admin.payments') ? 'active' : ''); ?>">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Payments
+                </a>
+                <a href="<?php echo e(route('system-admin.logs')); ?>" class="menu-item <?php echo e(request()->routeIs('system-admin.logs*') ? 'active' : ''); ?>">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                    Error Logs
                 </a>
             </nav>
         </aside>
@@ -425,32 +443,33 @@
         <!-- Main Content -->
         <main class="main-content">
             <header class="header">
-                <h2>@yield('page-title', 'Dashboard')</h2>
+                <h2><?php echo $__env->yieldContent('page-title', 'Dashboard'); ?></h2>
                 <div class="user-menu">
-                    <span class="user-name">{{ Auth::guard('admin')->user()->name }}</span>
-                    <form action="{{ route('system-admin.logout') }}" method="POST" style="display: inline;">
-                        @csrf
+                    <span class="user-name"><?php echo e(Auth::guard('admin')->user()->name); ?></span>
+                    <form action="<?php echo e(route('system-admin.logout')); ?>" method="POST" style="display: inline;">
+                        <?php echo csrf_field(); ?>
                         <button type="submit" class="btn-logout">Logout</button>
                     </form>
                 </div>
             </header>
 
             <div class="content">
-                @if(session('success'))
-                    <div class="alert alert-success">{{ session('success') }}</div>
-                @endif
+                <?php if(session('success')): ?>
+                    <div class="alert alert-success"><?php echo e(session('success')); ?></div>
+                <?php endif; ?>
 
-                @if(session('error'))
-                    <div class="alert alert-error">{{ session('error') }}</div>
-                @endif
+                <?php if(session('error')): ?>
+                    <div class="alert alert-error"><?php echo e(session('error')); ?></div>
+                <?php endif; ?>
 
-                @if(session('info'))
-                    <div class="alert alert-info">{{ session('info') }}</div>
-                @endif
+                <?php if(session('info')): ?>
+                    <div class="alert alert-info"><?php echo e(session('info')); ?></div>
+                <?php endif; ?>
 
-                @yield('content')
+                <?php echo $__env->yieldContent('content'); ?>
             </div>
         </main>
     </div>
 </body>
 </html>
+<?php /**PATH C:\Users\jcsdi\Documents\Driving School Management System\DrivingApp\resources\views/layouts/system-admin.blade.php ENDPATH**/ ?>

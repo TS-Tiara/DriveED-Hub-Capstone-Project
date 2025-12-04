@@ -145,9 +145,21 @@ class SystemLog extends Model
         $guardName = self::getCurrentGuardName();
         $user = Auth::guard($guardName)->user();
 
+        // Note: user_id FK references 'users' table, but our app uses separate tables:
+        // - admins table (system_admin, school_admin)
+        // - instructors table
+        // - students table (students, guests)
+        // So we always set user_id to null and store actor info in context instead
+        if ($user) {
+            $context['actor_id'] = $user->id;
+            $context['actor_type'] = $guardName;
+            $context['actor_email'] = $user->email ?? null;
+            $context['actor_name'] = $user->name ?? null;
+        }
+
         $log = self::create([
             'school_id' => $schoolId ?? ($user->school_id ?? null),
-            'user_id' => $user->id ?? null,
+            'user_id' => null, // Always null - our users aren't in the 'users' table
             'user_type' => $guardName ?? 'system',
             'level' => $level,
             'category' => $category,
@@ -188,10 +200,18 @@ class SystemLog extends Model
         $guardName = self::getCurrentGuardName();
         $user = Auth::guard($guardName)->user();
 
+        // Note: resolved_by FK references 'users' table, but our users are in separate tables
+        // So we always set resolved_by to null and include resolver info in resolution_notes
+        $resolutionNotes = $notes;
+        if ($user) {
+            $resolverInfo = "[Resolved by {$guardName}: {$user->name} (ID: {$user->id})]";
+            $resolutionNotes = $resolverInfo . ($notes ? "\n\n" . $notes : "");
+        }
+
         return $this->update([
             'resolved_at' => now(),
-            'resolved_by' => $user->id ?? null,
-            'resolution_notes' => $notes,
+            'resolved_by' => null, // Always null - our users aren't in the 'users' table
+            'resolution_notes' => $resolutionNotes,
         ]);
     }
 

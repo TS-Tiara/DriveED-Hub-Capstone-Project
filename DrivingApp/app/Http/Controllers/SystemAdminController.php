@@ -133,27 +133,22 @@ class SystemAdminController extends Controller
         try {
             $stats = [
                 'total_schools' => School::count(),
+                'total_school_admins' => Admin::where('role', 'school_admin')->count(),
                 'total_students' => Student::count(),
                 'total_instructors' => Instructor::count(),
-                'total_admins' => Admin::count(),
-                'total_courses' => Course::count(),
-                'total_bookings' => Booking::count(),
-                'active_students' => Student::where('status', 'active')->count(),
-                'active_instructors' => Instructor::where('status', 'active')->count(),
-                'pending_bookings' => Booking::where('status', 'pending')->count(),
-                'completed_bookings' => Booking::where('status', 'completed')->count(),
-                'total_revenue' => Payment::where('status', 'paid')->sum('amount'),
-                'pending_payments' => Payment::where('status', 'pending')->sum('amount'),
+                'total_users' => Student::count() + Instructor::count(),
+                'total_logs' => SystemLog::count(),
+                'error_logs' => SystemLog::whereIn('level', ['error', 'critical'])->count(),
+                'warning_logs' => SystemLog::where('level', 'warning')->count(),
             ];
 
             $schools = School::withCount([
                 'students', 
                 'instructors', 
-                'admins', 
-                'courses'
+                'admins',
             ])->get();
 
-            $recentActivities = SystemLog::with(['school', 'user'])
+            $recentActivities = SystemLog::with(['school'])
                 ->orderBy('created_at', 'desc')
                 ->limit(20)
                 ->get();
@@ -199,6 +194,125 @@ class SystemAdminController extends Controller
             );
 
             return back()->with('error', 'Unable to load schools.');
+        }
+    }
+
+    /**
+     * View all admins across all schools
+     */
+    public function admins(Request $request)
+    {
+        try {
+            $query = Admin::with('school');
+
+            if ($request->filled('school_id')) {
+                $query->where('school_id', $request->school_id);
+            }
+
+            if ($request->filled('role')) {
+                $query->where('role', $request->role);
+            }
+
+            if ($request->filled('search')) {
+                $search = $request->search;
+                $query->where(function($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('email', 'like', "%{$search}%");
+                });
+            }
+
+            $admins = $query->orderBy('created_at', 'desc')->paginate(50);
+            $schools = School::orderBy('name')->get();
+
+            return view('system-admin.admins', compact('admins', 'schools'));
+        } catch (\Exception $e) {
+            SystemLog::logError(
+                'Failed to load admins overview',
+                'system',
+                $e,
+                [],
+                null,
+                'view_admins'
+            );
+
+            return back()->with('error', 'Unable to load admins.');
+        }
+    }
+
+    /**
+     * View all users (students and instructors) across all schools
+     */
+    public function users(Request $request)
+    {
+        try {
+            // Get students
+            $studentsQuery = Student::with('school')->select([
+                'id', 'name', 'email', 'school_id', 'status', 'created_at',
+                \DB::raw("'student' as user_type")
+            ]);
+
+            // Get instructors  
+            $instructorsQuery = Instructor::with('school')->select([
+                'id', 'name', 'email', 'school_id', 'status', 'created_at',
+                \DB::raw("'instructor' as user_type")
+            ]);
+
+            // Apply school filter if provided
+            if ($request->filled('school_id')) {
+                $studentsQuery->where('school_id', $request->school_id);
+                $instructorsQuery->where('school_id', $request->school_id);
+            }
+
+            // Apply type filter if provided
+            $userType = $request->input('user_type');
+            
+            if ($userType === 'student') {
+                $users = $studentsQuery->orderBy('created_at', 'desc')->paginate(50);
+            } elseif ($userType === 'instructor') {
+                $users = $instructorsQuery->orderBy('created_at', 'desc')->paginate(50);
+            } else {
+                // Get both - we'll display them separately
+                $students = Student::with('school');
+                $instructors = Instructor::with('school');
+
+                if ($request->filled('school_id')) {
+                    $students->where('school_id', $request->school_id);
+                    $instructors->where('school_id', $request->school_id);
+                }
+
+                if ($request->filled('search')) {
+                    $search = $request->search;
+                    $students->where(function($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%")
+                          ->orWhere('email', 'like', "%{$search}%");
+                    });
+                    $instructors->where(function($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%")
+                          ->orWhere('email', 'like', "%{$search}%");
+                    });
+                }
+
+                $students = $students->orderBy('created_at', 'desc')->get();
+                $instructors = $instructors->orderBy('created_at', 'desc')->get();
+                $schools = School::orderBy('name')->get();
+
+                return view('system-admin.users', compact('students', 'instructors', 'schools'));
+            }
+
+            $schools = School::orderBy('name')->get();
+
+            return view('system-admin.users', compact('users', 'schools'));
+        } catch (\Exception $e) {
+            SystemLog::logError(
+                'Failed to load users overview',
+                'system',
+                $e,
+                [],
+                null,
+                'view_users'
+            );
+
+            return back()->with('error', 'Unable to load users.');
         }
     }
 

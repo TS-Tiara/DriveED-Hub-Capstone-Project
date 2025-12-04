@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('system_logs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('school_id')->nullable()->constrained()->onDelete('cascade');
-            $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');
+            $table->unsignedBigInteger('user_id')->nullable(); // No FK - can be admin, instructor, student, or user
             $table->string('user_type')->nullable(); // 'admin', 'instructor', 'student', 'system'
             $table->enum('level', ['emergency', 'alert', 'critical', 'error', 'warning', 'notice', 'info', 'debug'])->default('error');
             $table->enum('category', [
@@ -41,7 +41,7 @@ return new class extends Migration
             $table->boolean('notified_admin')->default(false);
             $table->boolean('notified_system_admin')->default(false);
             $table->timestamp('resolved_at')->nullable();
-            $table->foreignId('resolved_by')->nullable()->constrained('users')->onDelete('set null');
+            $table->unsignedBigInteger('resolved_by')->nullable(); // No FK - can be any user type
             $table->text('resolution_notes')->nullable();
             $table->timestamps();
             

@@ -53,23 +53,23 @@ class DemoSeeder extends Seeder
         // School 1 Admins
         Admin::create([
             'school_id' => $school1->id,
-            'name' => 'Maria Santos',
-            'email' => 'maria.santos@gmail.com',
+            'name' => 'School Admin',
+            'email' => 'schooladmin@gmail.com',
             'password' => Hash::make('password123'),
             'role' => 'school_admin',
         ]);
 
         Admin::create([
             'school_id' => $school1->id,
-            'name' => 'Carlos Rodriguez',
-            'email' => 'carlos.rodriguez@gmail.com',
+            'name' => 'System Admin',
+            'email' => 'systemadmin@gmail.com',
             'password' => Hash::make('password123'),
             'role' => 'system_admin',
         ]);
 
         // School 1 Instructors (4)
         $instructors1 = [
-            ['name' => 'Juan Dela Cruz', 'email' => 'juan.delacruz@gmail.com', 'contact' => '+63-917-111-2222'],
+            ['name' => 'Demo Instructor', 'email' => 'instructor@gmail.com', 'contact' => '+63-917-111-2222'],
             ['name' => 'Ana Garcia', 'email' => 'ana.garcia@gmail.com', 'contact' => '+63-917-222-3333'],
             ['name' => 'Pedro Martinez', 'email' => 'pedro.martinez@gmail.com', 'contact' => '+63-917-333-4444'],
             ['name' => 'Rosa Villanueva', 'email' => 'rosa.villanueva@gmail.com', 'contact' => '+63-917-444-5555'],
@@ -166,7 +166,7 @@ class DemoSeeder extends Seeder
 
         // School 1 Students (15)
         $students1Data = [
-            ['name' => 'Miguel Santos', 'email' => 'miguel.santos@gmail.com'],
+            ['name' => 'Demo Student', 'email' => 'student@gmail.com'],
             ['name' => 'Sofia Reyes', 'email' => 'sofia.reyes@gmail.com'],
             ['name' => 'Luis Cruz', 'email' => 'luis.cruz@gmail.com'],
             ['name' => 'Isabella Flores', 'email' => 'isabella.flores@gmail.com'],
@@ -235,23 +235,23 @@ class DemoSeeder extends Seeder
         // School 2 Admin
         Admin::create([
             'school_id' => $school2->id,
-            'name' => 'John Dela Cruz',
-            'email' => 'john.delacruz@gmail.com',
+            'name' => 'LySpeed Admin',
+            'email' => 'lyspeed.admin@gmail.com',
             'password' => Hash::make('password123'),
             'role' => 'school_admin',
         ]);
 
         Admin::create([
             'school_id' => $school2->id,
-            'name' => 'Patricia Lim',
-            'email' => 'patricia.lim@gmail.com',
+            'name' => 'LySpeed System',
+            'email' => 'lyspeed.system@gmail.com',
             'password' => Hash::make('password123'),
             'role' => 'system_admin',
         ]);
 
         // School 2 Instructors (3)
         $instructors2 = [
-            ['name' => 'Ricardo Santos', 'email' => 'ricardo.santos@gmail.com', 'contact' => '+63-918-111-2222'],
+            ['name' => 'LySpeed Instructor', 'email' => 'lyspeed.instructor@gmail.com', 'contact' => '+63-918-111-2222'],
             ['name' => 'Elena Ramos', 'email' => 'elena.ramos@gmail.com', 'contact' => '+63-918-222-3333'],
             ['name' => 'Fernando Cruz', 'email' => 'fernando.cruz@gmail.com', 'contact' => '+63-918-333-4444'],
         ];
@@ -325,7 +325,7 @@ class DemoSeeder extends Seeder
 
         // School 2 Students (10)
         $students2Data = [
-            ['name' => 'Paolo Gonzales', 'email' => 'paolo.gonzales@gmail.com'],
+            ['name' => 'LySpeed Student', 'email' => 'lyspeed.student@gmail.com'],
             ['name' => 'Maria Rodriguez', 'email' => 'maria.rodriguez@gmail.com'],
             ['name' => 'Antonio Hernandez', 'email' => 'antonio.hernandez@gmail.com'],
             ['name' => 'Teresa Jimenez', 'email' => 'teresa.jimenez@gmail.com'],
@@ -369,16 +369,16 @@ class DemoSeeder extends Seeder
         $this->command->info('========================================');
         $this->command->info('');
         $this->command->info('SMART DRIVING SCHOOL (smart-driving) - MAIN CLIENT');
-        $this->command->info('  School Admin: maria.santos@gmail.com / password123');
-        $this->command->info('  System Admin: carlos.rodriguez@gmail.com / password123');
-        $this->command->info('  Instructor: juan.delacruz@gmail.com / password123');
-        $this->command->info('  Student: miguel.santos@gmail.com / password123');
+        $this->command->info('  School Admin: schooladmin@gmail.com / password123');
+        $this->command->info('  System Admin: systemadmin@gmail.com / password123');
+        $this->command->info('  Instructor: instructor@gmail.com / password123');
+        $this->command->info('  Student: student@gmail.com / password123');
         $this->command->info('');
         $this->command->info('LYSPEED DRIVING SCHOOL (lyspeed-driving)');
-        $this->command->info('  School Admin: john.delacruz@gmail.com / password123');
-        $this->command->info('  System Admin: patricia.lim@gmail.com / password123');
-        $this->command->info('  Instructor: ricardo.santos@gmail.com / password123');
-        $this->command->info('  Student: paolo.gonzales@gmail.com / password123');
+        $this->command->info('  School Admin: lyspeed.admin@gmail.com / password123');
+        $this->command->info('  System Admin: lyspeed.system@gmail.com / password123');
+        $this->command->info('  Instructor: lyspeed.instructor@gmail.com / password123');
+        $this->command->info('  Student: lyspeed.student@gmail.com / password123');
         $this->command->info('');
         $this->command->info('========================================');
         $this->command->info('🎉 Demo data seeding complete!');

@@ -34,16 +34,12 @@ Route::prefix('system-admin')->name('system-admin.')->group(function () {
         Route::get('/', [SystemAdminController::class, 'dashboard'])->name('dashboard');
         Route::get('/dashboard', [SystemAdminController::class, 'dashboard']);
         Route::get('/schools', [SystemAdminController::class, 'schools'])->name('schools');
-        Route::get('/students', [SystemAdminController::class, 'students'])->name('students');
-        Route::get('/instructors', [SystemAdminController::class, 'instructors'])->name('instructors');
-        Route::get('/courses', [SystemAdminController::class, 'courses'])->name('courses');
-        Route::get('/bookings', [SystemAdminController::class, 'bookings'])->name('bookings');
-        Route::get('/payments', [SystemAdminController::class, 'payments'])->name('payments');
+        Route::get('/admins', [SystemAdminController::class, 'admins'])->name('admins');
+        Route::get('/users', [SystemAdminController::class, 'users'])->name('users');
         Route::get('/logs', [SystemAdminController::class, 'logs'])->name('logs');
         Route::get('/logs/{log}', [SystemAdminController::class, 'showLog'])->name('logs.show');
         Route::post('/logs/{log}/resolve', [SystemAdminController::class, 'resolveLog'])->name('logs.resolve');
         Route::post('/logs/cleanup', [SystemAdminController::class, 'cleanupLogs'])->name('logs.cleanup');
-        Route::get('/statistics', [SystemAdminController::class, 'getStatistics'])->name('statistics');
         Route::post('/logout', [SystemAdminController::class, 'logout'])->name('logout');
     });
 });
