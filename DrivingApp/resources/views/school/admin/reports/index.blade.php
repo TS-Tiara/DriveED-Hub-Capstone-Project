@@ -357,7 +357,7 @@
                 Export Data ▼
             </button>
             <div class="export-menu" id="exportMenu">
-                <div class="export-menu-title">Download as CSV</div>
+                <div class="export-menu-title">Download as Excel</div>
                 <a href="{{ route('schools.admin.reports.export.students', $school) }}">
                     Students
                 </a>

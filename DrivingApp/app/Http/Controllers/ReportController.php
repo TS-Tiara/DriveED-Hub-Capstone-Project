@@ -762,198 +762,230 @@ class ReportController extends Controller
     }
 
     /**
-     * Export Students to CSV
+     * Export Students to Excel (HTML format)
      */
     public function exportStudents()
     {
         $school = auth()->guard('admin')->user()->school;
-        $filename = $school->slug . '_students_' . now()->format('Y-m-d') . '.csv';
+        $filename = $school->slug . '_students_' . now()->format('Y-m-d') . '.xls';
+        $students = Student::where('school_id', $school->id)->orderBy('name')->get();
 
-        $headers = [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-        ];
+        $html = $this->buildExcelHtml(
+            $school->name . ' - Student List',
+            ['Name', 'Email', 'Contact', 'Enrollment Date', 'Status'],
+            $students->map(fn($s) => [
+                $s->name,
+                $s->email,
+                $s->contact ?? 'N/A',
+                $s->enrollment_date ? Carbon::parse($s->enrollment_date)->format('M d, Y') : 'N/A',
+                ucfirst($s->status),
+            ])->toArray()
+        );
 
-        $callback = function() use ($school) {
-            $file = fopen('php://output', 'w');
-            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
-
-            fputcsv($file, ['Name', 'Email', 'Contact', 'Enrollment Date', 'Status']);
-
-            $students = Student::where('school_id', $school->id)->orderBy('name')->get();
-            foreach ($students as $student) {
-                fputcsv($file, [
-                    $student->name,
-                    $student->email,
-                    $student->contact ?? 'N/A',
-                    $student->enrollment_date ? Carbon::parse($student->enrollment_date)->format('M d, Y') : 'N/A',
-                    ucfirst($student->status),
-                ]);
-            }
-            fclose($file);
-        };
-
-        return response()->stream($callback, 200, $headers);
+        return response($html)
+            ->header('Content-Type', 'application/vnd.ms-excel')
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
     }
 
     /**
-     * Export Instructors to CSV
+     * Export Instructors to Excel (HTML format)
      */
     public function exportInstructors()
     {
         $school = auth()->guard('admin')->user()->school;
-        $filename = $school->slug . '_instructors_' . now()->format('Y-m-d') . '.csv';
+        $filename = $school->slug . '_instructors_' . now()->format('Y-m-d') . '.xls';
+        $instructors = Instructor::where('school_id', $school->id)->orderBy('name')->get();
 
-        $headers = [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-        ];
+        $rows = [];
+        foreach ($instructors as $instructor) {
+            $totalLessons = Booking::where('instructor_id', $instructor->id)->where('school_id', $school->id)->count();
+            $completedLessons = Booking::where('instructor_id', $instructor->id)->where('school_id', $school->id)->where('status', 'completed')->count();
+            $rows[] = [
+                $instructor->name,
+                $instructor->email,
+                $instructor->contact ?? 'N/A',
+                ucfirst($instructor->status ?? 'active'),
+                $totalLessons,
+                $completedLessons,
+            ];
+        }
 
-        $callback = function() use ($school) {
-            $file = fopen('php://output', 'w');
-            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+        $html = $this->buildExcelHtml(
+            $school->name . ' - Instructor List',
+            ['Name', 'Email', 'Contact', 'Status', 'Total Lessons', 'Completed Lessons'],
+            $rows
+        );
 
-            fputcsv($file, ['Name', 'Email', 'Contact', 'Status', 'Total Lessons', 'Completed Lessons']);
-
-            $instructors = Instructor::where('school_id', $school->id)->orderBy('name')->get();
-            foreach ($instructors as $instructor) {
-                $totalLessons = Booking::where('instructor_id', $instructor->id)->where('school_id', $school->id)->count();
-                $completedLessons = Booking::where('instructor_id', $instructor->id)->where('school_id', $school->id)->where('status', 'completed')->count();
-
-                fputcsv($file, [
-                    $instructor->name,
-                    $instructor->email,
-                    $instructor->contact ?? 'N/A',
-                    ucfirst($instructor->status ?? 'active'),
-                    $totalLessons,
-                    $completedLessons,
-                ]);
-            }
-            fclose($file);
-        };
-
-        return response()->stream($callback, 200, $headers);
+        return response($html)
+            ->header('Content-Type', 'application/vnd.ms-excel')
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
     }
 
     /**
-     * Export Bookings to CSV
+     * Export Bookings to Excel (HTML format)
      */
     public function exportBookings()
     {
         $school = auth()->guard('admin')->user()->school;
-        $filename = $school->slug . '_bookings_' . now()->format('Y-m-d') . '.csv';
+        $filename = $school->slug . '_bookings_' . now()->format('Y-m-d') . '.xls';
+        
+        $bookings = Booking::where('school_id', $school->id)
+            ->with(['student', 'instructor', 'course'])
+            ->orderBy('scheduled_at', 'desc')
+            ->get();
 
-        $headers = [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-        ];
+        $html = $this->buildExcelHtml(
+            $school->name . ' - Booking List',
+            ['Student', 'Instructor', 'Course', 'Scheduled At', 'Status', 'Session Grade'],
+            $bookings->map(fn($b) => [
+                $b->student->name ?? 'N/A',
+                $b->instructor->name ?? 'Unassigned',
+                $b->course->title ?? 'N/A',
+                $b->scheduled_at ? Carbon::parse($b->scheduled_at)->format('M d, Y h:i A') : 'N/A',
+                ucfirst($b->status),
+                $b->session_grade ?? 'Not Graded',
+            ])->toArray()
+        );
 
-        $callback = function() use ($school) {
-            $file = fopen('php://output', 'w');
-            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
-
-            fputcsv($file, ['Student', 'Instructor', 'Course', 'Scheduled At', 'Status', 'Session Grade']);
-
-            $bookings = Booking::where('school_id', $school->id)
-                ->with(['student', 'instructor', 'course'])
-                ->orderBy('scheduled_at', 'desc')
-                ->get();
-
-            foreach ($bookings as $booking) {
-                fputcsv($file, [
-                    $booking->student->name ?? 'N/A',
-                    $booking->instructor->name ?? 'Unassigned',
-                    $booking->course->title ?? 'N/A',
-                    $booking->scheduled_at ? Carbon::parse($booking->scheduled_at)->format('M d, Y h:i A') : 'N/A',
-                    ucfirst($booking->status),
-                    $booking->session_grade ?? 'Not Graded',
-                ]);
-            }
-            fclose($file);
-        };
-
-        return response()->stream($callback, 200, $headers);
+        return response($html)
+            ->header('Content-Type', 'application/vnd.ms-excel')
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
     }
 
     /**
-     * Export Payments to CSV
+     * Export Payments to Excel (HTML format)
      */
     public function exportPayments()
     {
         $school = auth()->guard('admin')->user()->school;
-        $filename = $school->slug . '_payments_' . now()->format('Y-m-d') . '.csv';
+        $filename = $school->slug . '_payments_' . now()->format('Y-m-d') . '.xls';
 
-        $headers = [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-        ];
+        $payments = Payment::whereHas('booking', fn($q) => $q->where('school_id', $school->id))
+            ->with(['booking.student', 'booking.course'])
+            ->orderBy('paid_on', 'desc')
+            ->get();
 
-        $callback = function() use ($school) {
-            $file = fopen('php://output', 'w');
-            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+        $html = $this->buildExcelHtml(
+            $school->name . ' - Payment List',
+            ['Payment ID', 'Student', 'Course', 'Amount (PHP)', 'Method', 'Status', 'Paid On'],
+            $payments->map(fn($p) => [
+                $p->id,
+                $p->booking->student->name ?? 'N/A',
+                $p->booking->course->title ?? 'N/A',
+                number_format($p->amount, 2),
+                ucfirst($p->method ?? 'N/A'),
+                ucfirst($p->status),
+                $p->paid_on ? Carbon::parse($p->paid_on)->format('M d, Y') : 'N/A',
+            ])->toArray()
+        );
 
-            fputcsv($file, ['Payment ID', 'Student', 'Course', 'Amount (PHP)', 'Method', 'Status', 'Paid On']);
-
-            $payments = Payment::whereHas('booking', fn($q) => $q->where('school_id', $school->id))
-                ->with(['booking.student', 'booking.course'])
-                ->orderBy('paid_on', 'desc')
-                ->get();
-
-            foreach ($payments as $payment) {
-                fputcsv($file, [
-                    $payment->id,
-                    $payment->booking->student->name ?? 'N/A',
-                    $payment->booking->course->title ?? 'N/A',
-                    number_format($payment->amount, 2),
-                    ucfirst($payment->method ?? 'N/A'),
-                    ucfirst($payment->status),
-                    $payment->paid_on ? Carbon::parse($payment->paid_on)->format('M d, Y') : 'N/A',
-                ]);
-            }
-            fclose($file);
-        };
-
-        return response()->stream($callback, 200, $headers);
+        return response($html)
+            ->header('Content-Type', 'application/vnd.ms-excel')
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
     }
 
     /**
-     * Export Courses to CSV
+     * Export Courses to Excel (HTML format)
      */
     public function exportCourses()
     {
         $school = auth()->guard('admin')->user()->school;
-        $filename = $school->slug . '_courses_' . now()->format('Y-m-d') . '.csv';
+        $filename = $school->slug . '_courses_' . now()->format('Y-m-d') . '.xls';
+        $courses = Course::where('school_id', $school->id)->orderBy('title')->get();
 
-        $headers = [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-        ];
+        $rows = [];
+        foreach ($courses as $course) {
+            $enrollments = Booking::where('course_id', $course->id)->where('school_id', $school->id)->count();
+            $completed = Booking::where('course_id', $course->id)->where('school_id', $school->id)->where('status', 'completed')->count();
+            $rate = $enrollments > 0 ? round(($completed / $enrollments) * 100, 1) . '%' : '0%';
+            $rows[] = [
+                $course->title,
+                'PHP ' . number_format($course->price, 2),
+                $course->duration_hours ?? 'N/A',
+                $enrollments,
+                $completed,
+                $rate,
+            ];
+        }
 
-        $callback = function() use ($school) {
-            $file = fopen('php://output', 'w');
-            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+        $html = $this->buildExcelHtml(
+            $school->name . ' - Course List',
+            ['Title', 'Price', 'Duration (Hours)', 'Enrollments', 'Completed', 'Completion Rate'],
+            $rows
+        );
 
-            fputcsv($file, ['Title', 'Price (PHP)', 'Duration (Hours)', 'Enrollments', 'Completed', 'Completion Rate']);
+        return response($html)
+            ->header('Content-Type', 'application/vnd.ms-excel')
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+    }
 
-            $courses = Course::where('school_id', $school->id)->orderBy('title')->get();
-
-            foreach ($courses as $course) {
-                $enrollments = Booking::where('course_id', $course->id)->where('school_id', $school->id)->count();
-                $completed = Booking::where('course_id', $course->id)->where('school_id', $school->id)->where('status', 'completed')->count();
-                $rate = $enrollments > 0 ? round(($completed / $enrollments) * 100, 1) . '%' : '0%';
-
-                fputcsv($file, [
-                    $course->title,
-                    number_format($course->price, 2),
-                    $course->duration_hours ?? 'N/A',
-                    $enrollments,
-                    $completed,
-                    $rate,
-                ]);
+    /**
+     * Build HTML table for Excel export
+     */
+    private function buildExcelHtml(string $title, array $headers, array $rows): string
+    {
+        $date = now()->format('F d, Y');
+        
+        $html = '
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; }
+        h1 { color: #333; font-size: 18pt; margin-bottom: 5px; }
+        .date { color: #666; font-size: 10pt; margin-bottom: 20px; }
+        table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+        th { 
+            background-color: #4472C4; 
+            color: white; 
+            font-weight: bold; 
+            padding: 12px 8px; 
+            text-align: left; 
+            border: 1px solid #2F5496;
+            font-size: 11pt;
+        }
+        td { 
+            padding: 10px 8px; 
+            border: 1px solid #D9D9D9; 
+            font-size: 10pt;
+        }
+        tr:nth-child(even) { background-color: #F2F2F2; }
+        tr:hover { background-color: #E8F4FD; }
+        .footer { margin-top: 20px; font-size: 9pt; color: #666; }
+    </style>
+</head>
+<body>
+    <h1>' . htmlspecialchars($title) . '</h1>
+    <div class="date">Generated: ' . $date . '</div>
+    <table>
+        <thead>
+            <tr>';
+        
+        foreach ($headers as $header) {
+            $html .= '<th>' . htmlspecialchars($header) . '</th>';
+        }
+        
+        $html .= '
+            </tr>
+        </thead>
+        <tbody>';
+        
+        foreach ($rows as $row) {
+            $html .= '<tr>';
+            foreach ($row as $cell) {
+                $html .= '<td>' . htmlspecialchars((string)$cell) . '</td>';
             }
-            fclose($file);
-        };
+            $html .= '</tr>';
+        }
+        
+        $html .= '
+        </tbody>
+    </table>
+    <div class="footer">Total Records: ' . count($rows) . '</div>
+</body>
+</html>';
 
-        return response()->stream($callback, 200, $headers);
+        return $html;
     }
 }
