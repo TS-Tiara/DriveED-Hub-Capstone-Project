@@ -989,8 +989,8 @@
                 <div class="form-group">
                     <label class="form-label">Use Gradient Header</label>
                     <select class="form-select" id="use_gradient_header" name="use_gradient_header" onchange="updatePreview()">
-                        <option value="1" {{ old('use_gradient_header', $settings->use_gradient_header ?? true) ? 'selected' : '' }}>Yes - Use Gradient (Primary → Secondary)</option>
-                        <option value="0" {{ !old('use_gradient_header', $settings->use_gradient_header ?? true) ? 'selected' : '' }}>No - Use Solid Primary Color</option>
+                        <option value="1" {{ old('use_gradient_header', $settings->use_gradient_header ?? false) ? 'selected' : '' }}>Yes - Use Gradient (Primary → Secondary)</option>
+                        <option value="0" {{ !old('use_gradient_header', $settings->use_gradient_header ?? false) ? 'selected' : '' }}>No - Use Solid Primary Color</option>
                     </select>
                     <small style="color: #666; font-size: 0.85rem; display: block; margin-top: 5px;">
                         Applies to calendar header and other gradient elements

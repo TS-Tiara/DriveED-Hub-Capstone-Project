@@ -8,13 +8,13 @@
 <div class="stats-grid">
     <div class="stat-card">
         <h3>Registered Schools</h3>
-        <div class="value" style="color: #8b5cf6;">{{ $stats['total_schools'] }}</div>
+        <div class="value" style="color: #053d86;">{{ $stats['total_schools'] }}</div>
         <div class="subtext">Driving schools on platform</div>
     </div>
 
     <div class="stat-card">
         <h3>School Admins</h3>
-        <div class="value" style="color: #3b82f6;">{{ $stats['total_school_admins'] }}</div>
+        <div class="value" style="color: #0a4a9e;">{{ $stats['total_school_admins'] }}</div>
         <div class="subtext">Managing their schools</div>
     </div>
 

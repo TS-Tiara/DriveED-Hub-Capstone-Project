@@ -162,18 +162,36 @@ class AdminController extends Controller
         ];
 
         if ($request->role === 'student') {
-            Student::create(array_merge($data, [
+            $user = Student::create(array_merge($data, [
                 'address' => $request->address ?? null,
                 'status' => 'active',
             ]));
             $successMessage = 'Student created successfully!';
+            
+            // Log student creation
+            SystemLog::logInfo(
+                "New student created: {$user->name}",
+                'database',
+                ['student_id' => $user->id, 'email' => $user->email, 'created_by' => Auth::guard('admin')->user()->name],
+                $school->id,
+                'create_student'
+            );
         } else {
-            Instructor::create(array_merge($data, [
+            $user = Instructor::create(array_merge($data, [
                 'license_number' => $request->license_number ?? null,
                 'status' => 'active',
                 'availability' => 'available',
             ]));
             $successMessage = 'Instructor created successfully!';
+            
+            // Log instructor creation
+            SystemLog::logInfo(
+                "New instructor created: {$user->name}",
+                'database',
+                ['instructor_id' => $user->id, 'email' => $user->email, 'created_by' => Auth::guard('admin')->user()->name],
+                $school->id,
+                'create_instructor'
+            );
         }
 
         // Redirect back to the referring page or default to create account
@@ -1235,7 +1253,20 @@ class AdminController extends Controller
     {
         $student = \App\Models\Student::where('school_id', $school->id)->findOrFail($id);
         
-        // Log the deletion
+        // Log the deletion to SystemLog
+        SystemLog::logWarning(
+            "Student permanently deleted: {$student->name} ({$student->email})",
+            'database',
+            [
+                'student_id' => $student->id, 
+                'email' => $student->email,
+                'deleted_by' => Auth::guard('admin')->user()->name
+            ],
+            $school->id,
+            'delete_student'
+        );
+        
+        // Also log to school-level Log table
         \App\Models\Log::create([
             'school_id' => $school->id,
             'admin_id' => auth()->guard('admin')->id(),
@@ -1257,7 +1288,20 @@ class AdminController extends Controller
     {
         $instructor = \App\Models\Instructor::where('school_id', $school->id)->findOrFail($id);
         
-        // Log the deletion
+        // Log the deletion to SystemLog
+        SystemLog::logWarning(
+            "Instructor permanently deleted: {$instructor->name} ({$instructor->email})",
+            'database',
+            [
+                'instructor_id' => $instructor->id, 
+                'email' => $instructor->email,
+                'deleted_by' => Auth::guard('admin')->user()->name
+            ],
+            $school->id,
+            'delete_instructor'
+        );
+        
+        // Also log to school-level Log table
         \App\Models\Log::create([
             'school_id' => $school->id,
             'admin_id' => auth()->guard('admin')->id(),

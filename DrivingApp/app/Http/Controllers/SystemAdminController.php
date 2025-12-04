@@ -198,20 +198,163 @@ class SystemAdminController extends Controller
     }
 
     /**
-     * View all admins across all schools
+     * Store a new driving school with its admin
+     */
+    public function storeSchool(Request $request)
+    {
+        try {
+            $request->validate([
+                'name' => 'required|string|max:255',
+                'slug' => 'required|string|max:255|unique:schools,slug|regex:/^[a-z0-9\-]+$/',
+                'email' => 'nullable|email|max:255',
+                'address' => 'nullable|string',
+                'admin_name' => 'required|string|max:255',
+                'admin_email' => 'required|email|unique:admins,email',
+                'admin_password' => 'required|string|min:8',
+            ]);
+
+            DB::beginTransaction();
+
+            // Create the school
+            $school = School::create([
+                'name' => $request->name,
+                'slug' => $request->slug,
+                'email' => $request->email,
+                'address' => $request->address,
+                'status' => 'active',
+            ]);
+
+            // Create school settings
+            $school->schoolSetting()->create([
+                'primary_color' => '#667eea',
+                'secondary_color' => '#764ba2',
+                'font_family' => 'Segoe UI',
+            ]);
+
+            // Create school admin
+            Admin::create([
+                'name' => $request->admin_name,
+                'email' => $request->admin_email,
+                'password' => bcrypt($request->admin_password),
+                'role' => 'school_admin',
+                'school_id' => $school->id,
+            ]);
+
+            DB::commit();
+
+            SystemLog::logInfo(
+                "Created new driving school: {$school->name}",
+                'system',
+                ['school_id' => $school->id, 'admin_email' => $request->admin_email],
+                null,
+                'create_school'
+            );
+
+            return redirect()->route('system-admin.schools')->with('success', "Driving school '{$school->name}' created successfully!");
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            SystemLog::logError(
+                'Failed to create driving school',
+                'system',
+                $e,
+                ['name' => $request->name],
+                null,
+                'create_school'
+            );
+
+            return back()->with('error', 'Failed to create school: ' . $e->getMessage())->withInput();
+        }
+    }
+
+    /**
+     * Toggle school status (active/inactive)
+     */
+    public function toggleSchoolStatus(School $school)
+    {
+        try {
+            $newStatus = $school->status === 'active' ? 'inactive' : 'active';
+            $school->update(['status' => $newStatus]);
+
+            SystemLog::logInfo(
+                "School status changed to {$newStatus}: {$school->name}",
+                'system',
+                ['school_id' => $school->id, 'new_status' => $newStatus],
+                $school->id,
+                'toggle_school_status'
+            );
+
+            return back()->with('success', "School '{$school->name}' is now {$newStatus}.");
+        } catch (\Exception $e) {
+            SystemLog::logError(
+                'Failed to toggle school status',
+                'system',
+                $e,
+                ['school_id' => $school->id],
+                $school->id,
+                'toggle_school_status'
+            );
+
+            return back()->with('error', 'Failed to update school status.');
+        }
+    }
+
+    /**
+     * Delete a school and all its data
+     */
+    public function deleteSchool(School $school)
+    {
+        try {
+            $schoolName = $school->name;
+            $schoolId = $school->id;
+
+            DB::beginTransaction();
+
+            // Delete related data (cascade should handle most, but let's be explicit)
+            $school->students()->delete();
+            $school->instructors()->delete();
+            $school->admins()->delete();
+            $school->courses()->delete();
+            $school->bookings()->delete();
+            $school->timeSlots()->delete();
+            $school->schoolSetting()->delete();
+            $school->delete();
+
+            DB::commit();
+
+            SystemLog::logWarning(
+                "School permanently deleted: {$schoolName}",
+                'system',
+                ['school_id' => $schoolId, 'school_name' => $schoolName, 'deleted_by' => Auth::guard('admin')->user()->name],
+                null,
+                'delete_school'
+            );
+
+            return redirect()->route('system-admin.schools')->with('success', "School '{$schoolName}' and all its data has been permanently deleted.");
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            SystemLog::logError(
+                'Failed to delete school',
+                'system',
+                $e,
+                ['school_id' => $school->id],
+                $school->id,
+                'delete_school'
+            );
+
+            return back()->with('error', 'Failed to delete school: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * View all school admins (admins who manage driving schools)
      */
     public function admins(Request $request)
     {
         try {
-            $query = Admin::with('school');
-
-            if ($request->filled('school_id')) {
-                $query->where('school_id', $request->school_id);
-            }
-
-            if ($request->filled('role')) {
-                $query->where('role', $request->role);
-            }
+            // Get school admins with their schools
+            $query = Admin::with('school')->where('role', 'school_admin');
 
             if ($request->filled('search')) {
                 $search = $request->search;
@@ -219,6 +362,10 @@ class SystemAdminController extends Controller
                     $q->where('name', 'like', "%{$search}%")
                       ->orWhere('email', 'like', "%{$search}%");
                 });
+            }
+
+            if ($request->filled('school_id')) {
+                $query->where('school_id', $request->school_id);
             }
 
             $admins = $query->orderBy('created_at', 'desc')->paginate(50);
@@ -236,6 +383,132 @@ class SystemAdminController extends Controller
             );
 
             return back()->with('error', 'Unable to load admins.');
+        }
+    }
+
+    /**
+     * Store a new school admin
+     */
+    public function storeAdmin(Request $request)
+    {
+        try {
+            $request->validate([
+                'school_id' => 'required|exists:schools,id',
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|unique:admins,email',
+                'password' => 'required|string|min:8|confirmed',
+            ]);
+
+            $school = School::findOrFail($request->school_id);
+
+            $admin = Admin::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => bcrypt($request->password),
+                'role' => 'school_admin',
+                'school_id' => $school->id,
+            ]);
+
+            SystemLog::logInfo(
+                "Created new school admin: {$admin->name} for {$school->name}",
+                'system',
+                ['admin_id' => $admin->id, 'school_id' => $school->id, 'email' => $admin->email],
+                $school->id,
+                'create_school_admin'
+            );
+
+            return redirect()->route('system-admin.admins')->with('success', "School admin '{$admin->name}' created successfully for {$school->name}!");
+        } catch (\Exception $e) {
+            SystemLog::logError(
+                'Failed to create school admin',
+                'system',
+                $e,
+                ['name' => $request->name, 'email' => $request->email],
+                null,
+                'create_school_admin'
+            );
+
+            return back()->with('error', 'Failed to create admin: ' . $e->getMessage())->withInput();
+        }
+    }
+
+    /**
+     * Toggle a school admin's active status
+     */
+    public function toggleAdminStatus(Admin $admin)
+    {
+        try {
+            // Prevent toggling system admins
+            if ($admin->role === 'system_admin') {
+                return back()->with('error', 'Cannot modify system administrators.');
+            }
+
+            $admin->is_active = !$admin->is_active;
+            $admin->save();
+
+            $status = $admin->is_active ? 'activated' : 'deactivated';
+            $schoolName = $admin->school->name ?? 'Unknown';
+
+            SystemLog::logInfo(
+                "School admin {$status}: {$admin->name} ({$schoolName})",
+                'system',
+                ['admin_id' => $admin->id, 'email' => $admin->email, 'is_active' => $admin->is_active],
+                $admin->school_id,
+                'toggle_admin_status'
+            );
+
+            return back()->with('success', "Admin '{$admin->name}' has been {$status}.");
+        } catch (\Exception $e) {
+            SystemLog::logError(
+                'Failed to toggle admin status',
+                'system',
+                $e,
+                ['admin_id' => $admin->id],
+                null,
+                'toggle_admin_status'
+            );
+
+            return back()->with('error', 'Failed to update admin status.');
+        }
+    }
+
+    /**
+     * Delete a school admin
+     */
+    public function deleteAdmin(Admin $admin)
+    {
+        try {
+            // Prevent deleting system admins
+            if ($admin->role === 'system_admin') {
+                return back()->with('error', 'Cannot delete system administrators.');
+            }
+
+            $adminName = $admin->name;
+            $schoolName = $admin->school->name ?? 'Unknown';
+            $schoolId = $admin->school_id;
+
+            SystemLog::logWarning(
+                "School admin deleted: {$adminName} from {$schoolName}",
+                'system',
+                ['admin_id' => $admin->id, 'email' => $admin->email, 'deleted_by' => Auth::guard('admin')->user()->name],
+                $schoolId,
+                'delete_school_admin'
+            );
+
+            $admin->delete();
+
+            return back()->with('success', "Admin '{$adminName}' has been deleted.");
+        } catch (\Exception $e) {
+            SystemLog::logError(
+                'Failed to delete school admin',
+                'system',
+                $e,
+                ['admin_id' => $admin->id],
+                null,
+                'delete_school_admin'
+            );
+
+            return back()->with('error', 'Failed to delete admin.');
         }
     }
 
@@ -313,6 +586,89 @@ class SystemAdminController extends Controller
             );
 
             return back()->with('error', 'Unable to load users.');
+        }
+    }
+
+    /**
+     * Toggle user status (active/inactive)
+     */
+    public function toggleUserStatus($type, $id)
+    {
+        try {
+            if ($type === 'student') {
+                $user = Student::findOrFail($id);
+            } elseif ($type === 'instructor') {
+                $user = Instructor::findOrFail($id);
+            } else {
+                return back()->with('error', 'Invalid user type.');
+            }
+
+            $newStatus = $user->status === 'active' ? 'inactive' : 'active';
+            $user->update(['status' => $newStatus]);
+
+            SystemLog::logInfo(
+                ucfirst($type) . " status changed to {$newStatus}: {$user->name}",
+                'database',
+                ['user_id' => $user->id, 'type' => $type, 'new_status' => $newStatus],
+                $user->school_id,
+                'toggle_user_status'
+            );
+
+            return back()->with('success', ucfirst($type) . " '{$user->name}' is now {$newStatus}.");
+        } catch (\Exception $e) {
+            SystemLog::logError(
+                'Failed to toggle user status',
+                'database',
+                $e,
+                ['type' => $type, 'id' => $id],
+                null,
+                'toggle_user_status'
+            );
+
+            return back()->with('error', 'Failed to update user status.');
+        }
+    }
+
+    /**
+     * Delete a user (student or instructor)
+     */
+    public function deleteUser($type, $id)
+    {
+        try {
+            if ($type === 'student') {
+                $user = Student::findOrFail($id);
+            } elseif ($type === 'instructor') {
+                $user = Instructor::findOrFail($id);
+            } else {
+                return back()->with('error', 'Invalid user type.');
+            }
+
+            $userName = $user->name;
+            $userEmail = $user->email;
+            $schoolId = $user->school_id;
+
+            SystemLog::logWarning(
+                ucfirst($type) . " permanently deleted: {$userName} ({$userEmail})",
+                'database',
+                ['user_id' => $id, 'type' => $type, 'email' => $userEmail, 'deleted_by' => Auth::guard('admin')->user()->name],
+                $schoolId,
+                'delete_user'
+            );
+
+            $user->delete();
+
+            return back()->with('success', ucfirst($type) . " '{$userName}' has been permanently deleted.");
+        } catch (\Exception $e) {
+            SystemLog::logError(
+                'Failed to delete user',
+                'database',
+                $e,
+                ['type' => $type, 'id' => $id],
+                null,
+                'delete_user'
+            );
+
+            return back()->with('error', 'Failed to delete user.');
         }
     }
 

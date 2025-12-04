@@ -5,16 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title') - System Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
         :root {
-            --primary-color: #667eea;
-            --secondary-color: #764ba2;
-            --accent-color: #5a67d8;
+            --primary-color: #053d86;
+            --secondary-color: #0a4a9e;
+            --accent-color: #0356b3;
             --sidebar-bg: #1f2937;
             --sidebar-text: #e5e7eb;
             --sidebar-hover: #374151;
-            --sidebar-active: #4f46e5;
+            --sidebar-active: #053d86;
         }
         
         * {
@@ -48,7 +49,7 @@
         
         .sidebar-header {
             padding: 20px;
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            background: #053d86;
             border-bottom: 1px solid rgba(255,255,255,0.1);
         }
         
@@ -80,7 +81,7 @@
         
         .menu-item:hover {
             background: var(--sidebar-hover);
-            border-left-color: var(--primary-color);
+            border-left-color: #053d86;
         }
         
         .menu-item.active {
@@ -218,11 +219,15 @@
         .card-header {
             padding: 16px 20px;
             border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         
         .card-header h3 {
             font-size: 1.125rem;
             color: #1f2937;
+            margin: 0;
         }
         
         .card-body {
@@ -379,6 +384,7 @@
             border-color: var(--primary-color);
         }
     </style>
+    @yield('styles')
 </head>
 <body>
     <div class="app-container">

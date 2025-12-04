@@ -39,7 +39,7 @@ class DemoSeeder extends Seeder
             'primary_color' => '#2563eb',
             'secondary_color' => '#eab308',
             'accent_color' => '#3b82f6',
-            'use_gradient_header' => true,
+            'use_gradient_header' => false,
             'header_text_color' => '#ffffff',
             'background_type' => 'color',
             'background_color' => '#f5f5f5',
@@ -50,29 +50,60 @@ class DemoSeeder extends Seeder
             'booking_queue_days' => 3,
         ]);
 
-        // School 1 Admins
+        // School 1 Admins (2 school admins with proper names + 1 test account)
+        Admin::create([
+            'school_id' => $school1->id,
+            'name' => 'Maria Santos',
+            'email' => 'maria.santos@smartdriving.com',
+            'password' => Hash::make('password123'),
+            'role' => 'school_admin',
+            'is_active' => true,
+        ]);
+
+        Admin::create([
+            'school_id' => $school1->id,
+            'name' => 'Jose Reyes',
+            'email' => 'jose.reyes@smartdriving.com',
+            'password' => Hash::make('password123'),
+            'role' => 'school_admin',
+            'is_active' => true,
+        ]);
+
+        // Test School Admin Account (for easy login)
         Admin::create([
             'school_id' => $school1->id,
             'name' => 'School Admin',
             'email' => 'schooladmin@gmail.com',
             'password' => Hash::make('password123'),
             'role' => 'school_admin',
+            'is_active' => true,
+        ]);
+
+        // System Admins (platform-level, NOT associated with any school)
+        Admin::create([
+            'school_id' => null,
+            'name' => 'Tiara Santos',
+            'email' => 'systemadmin@gmail.com',
+            'password' => Hash::make('sysadmin123!'),
+            'role' => 'system_admin',
+            'is_active' => true,
         ]);
 
         Admin::create([
-            'school_id' => $school1->id,
-            'name' => 'System Admin',
-            'email' => 'systemadmin@gmail.com',
-            'password' => Hash::make('password123'),
+            'school_id' => null,
+            'name' => 'System Administrator',
+            'email' => 'systemadmin2@gmail.com',
+            'password' => Hash::make('sysadmin123!'),
             'role' => 'system_admin',
+            'is_active' => true,
         ]);
 
-        // School 1 Instructors (4)
+        // School 1 Instructors (4 instructors + 1 test account)
         $instructors1 = [
-            ['name' => 'Demo Instructor', 'email' => 'instructor@gmail.com', 'contact' => '+63-917-111-2222'],
-            ['name' => 'Ana Garcia', 'email' => 'ana.garcia@gmail.com', 'contact' => '+63-917-222-3333'],
-            ['name' => 'Pedro Martinez', 'email' => 'pedro.martinez@gmail.com', 'contact' => '+63-917-333-4444'],
-            ['name' => 'Rosa Villanueva', 'email' => 'rosa.villanueva@gmail.com', 'contact' => '+63-917-444-5555'],
+            ['name' => 'Juan dela Cruz', 'email' => 'juan.delacruz@smartdriving.com', 'contact' => '+63-917-111-2222'],
+            ['name' => 'Ana Garcia', 'email' => 'ana.garcia@smartdriving.com', 'contact' => '+63-917-222-3333'],
+            ['name' => 'Pedro Martinez', 'email' => 'pedro.martinez@smartdriving.com', 'contact' => '+63-917-333-4444'],
+            ['name' => 'Rosa Villanueva', 'email' => 'rosa.villanueva@smartdriving.com', 'contact' => '+63-917-444-5555'],
         ];
 
         $createdInstructors1 = [];
@@ -88,6 +119,19 @@ class DemoSeeder extends Seeder
                 'availability' => 'available',
             ]);
         }
+
+        // Test Instructor Account (for easy login)
+        $testInstructor1 = Instructor::create([
+            'school_id' => $school1->id,
+            'name' => 'Demo Instructor',
+            'email' => 'instructor@gmail.com',
+            'contact' => '+63-917-000-0000',
+            'password' => Hash::make('password123'),
+            'license_number' => 'LIC-SDS-TEST',
+            'status' => 'active',
+            'availability' => 'available',
+        ]);
+        $createdInstructors1[] = $testInstructor1;
 
         // School 1 Courses
         $course1_1 = Course::create([
@@ -164,9 +208,8 @@ class DemoSeeder extends Seeder
             'description' => 'Theoretical Driving Course for LTO exam',
         ]);
 
-        // School 1 Students (15)
+        // School 1 Students (14 students + 1 test account)
         $students1Data = [
-            ['name' => 'Demo Student', 'email' => 'student@gmail.com'],
             ['name' => 'Sofia Reyes', 'email' => 'sofia.reyes@gmail.com'],
             ['name' => 'Luis Cruz', 'email' => 'luis.cruz@gmail.com'],
             ['name' => 'Isabella Flores', 'email' => 'isabella.flores@gmail.com'],
@@ -198,13 +241,26 @@ class DemoSeeder extends Seeder
             ]);
         }
 
+        // Test Student Account (for easy login)
+        $testStudent1 = Student::create([
+            'school_id' => $school1->id,
+            'name' => 'Demo Student',
+            'email' => 'student@gmail.com',
+            'contact' => '+63-900-000-0000',
+            'password' => Hash::make('password123'),
+            'status' => 'active',
+            'role' => 'student',
+            'enrollment_date' => now()->subDays(30),
+        ]);
+        $students1[] = $testStudent1;
+
         // Create TimeSlots for School 1 courses and assign instructors
         $this->createTimeSlotsAndAssignInstructors($school1, $createdInstructors1, [$course1_1, $course1_2, $course1_3]);
 
         // Create Bookings and Payments for School 1
         $this->createBookingsAndPayments($school1, $students1, $createdInstructors1, [$course1_1, $course1_2, $course1_3]);
 
-        $this->command->info("✅ Smart Driving School created with 4 instructors, 15 students");
+        $this->command->info("✅ Smart Driving School created with 3 school admins, 5 instructors, 15 students");
 
         // ========================================
         // SCHOOL 2: LySpeed Driving School
@@ -232,28 +288,40 @@ class DemoSeeder extends Seeder
             'booking_queue_days' => 2,
         ]);
 
-        // School 2 Admin
+        // School 2 Admins (2 school admins with proper names + 1 test account)
+        Admin::create([
+            'school_id' => $school2->id,
+            'name' => 'Carlos Villanueva',
+            'email' => 'carlos.villanueva@lyspeed.com',
+            'password' => Hash::make('password123'),
+            'role' => 'school_admin',
+            'is_active' => true,
+        ]);
+
+        Admin::create([
+            'school_id' => $school2->id,
+            'name' => 'Elena Gonzales',
+            'email' => 'elena.gonzales@lyspeed.com',
+            'password' => Hash::make('password123'),
+            'role' => 'school_admin',
+            'is_active' => true,
+        ]);
+
+        // Test School Admin Account (for easy login)
         Admin::create([
             'school_id' => $school2->id,
             'name' => 'LySpeed Admin',
             'email' => 'lyspeed.admin@gmail.com',
             'password' => Hash::make('password123'),
             'role' => 'school_admin',
+            'is_active' => true,
         ]);
 
-        Admin::create([
-            'school_id' => $school2->id,
-            'name' => 'LySpeed System',
-            'email' => 'lyspeed.system@gmail.com',
-            'password' => Hash::make('password123'),
-            'role' => 'system_admin',
-        ]);
-
-        // School 2 Instructors (3)
+        // School 2 Instructors (3 instructors + 1 test account)
         $instructors2 = [
-            ['name' => 'LySpeed Instructor', 'email' => 'lyspeed.instructor@gmail.com', 'contact' => '+63-918-111-2222'],
-            ['name' => 'Elena Ramos', 'email' => 'elena.ramos@gmail.com', 'contact' => '+63-918-222-3333'],
-            ['name' => 'Fernando Cruz', 'email' => 'fernando.cruz@gmail.com', 'contact' => '+63-918-333-4444'],
+            ['name' => 'Miguel Santos', 'email' => 'miguel.santos@lyspeed.com', 'contact' => '+63-918-111-2222'],
+            ['name' => 'Elena Ramos', 'email' => 'elena.ramos@lyspeed.com', 'contact' => '+63-918-222-3333'],
+            ['name' => 'Fernando Cruz', 'email' => 'fernando.cruz@lyspeed.com', 'contact' => '+63-918-333-4444'],
         ];
 
         $createdInstructors2 = [];
@@ -269,6 +337,19 @@ class DemoSeeder extends Seeder
                 'availability' => 'available',
             ]);
         }
+
+        // Test Instructor Account (for easy login)
+        $testInstructor2 = Instructor::create([
+            'school_id' => $school2->id,
+            'name' => 'LySpeed Instructor',
+            'email' => 'lyspeed.instructor@gmail.com',
+            'contact' => '+63-918-000-0000',
+            'password' => Hash::make('password123'),
+            'license_number' => 'LIC-LSD-TEST',
+            'status' => 'active',
+            'availability' => 'available',
+        ]);
+        $createdInstructors2[] = $testInstructor2;
 
         // School 2 Courses
         $course2_1 = Course::create([
@@ -323,9 +404,8 @@ class DemoSeeder extends Seeder
             'description' => 'Motorcycle riding course',
         ]);
 
-        // School 2 Students (10)
+        // School 2 Students (9 students + 1 test account)
         $students2Data = [
-            ['name' => 'LySpeed Student', 'email' => 'lyspeed.student@gmail.com'],
             ['name' => 'Maria Rodriguez', 'email' => 'maria.rodriguez@gmail.com'],
             ['name' => 'Antonio Hernandez', 'email' => 'antonio.hernandez@gmail.com'],
             ['name' => 'Teresa Jimenez', 'email' => 'teresa.jimenez@gmail.com'],
@@ -352,36 +432,57 @@ class DemoSeeder extends Seeder
             ]);
         }
 
+        // Test Student Account (for easy login)
+        $testStudent2 = Student::create([
+            'school_id' => $school2->id,
+            'name' => 'LySpeed Student',
+            'email' => 'lyspeed.student@gmail.com',
+            'contact' => '+63-918-999-0000',
+            'password' => Hash::make('password123'),
+            'status' => 'active',
+            'role' => 'student',
+            'enrollment_date' => now()->subDays(30),
+        ]);
+        $students2[] = $testStudent2;
+
         // Create TimeSlots for School 2 courses and assign instructors
         $this->createTimeSlotsAndAssignInstructors($school2, $createdInstructors2, [$course2_1, $course2_2]);
 
         // Create Bookings and Payments for School 2
         $this->createBookingsAndPayments($school2, $students2, $createdInstructors2, [$course2_1, $course2_2]);
 
-        $this->command->info("✅ LySpeed Driving School created with 3 instructors, 10 students");
+        $this->command->info("✅ LySpeed Driving School created with 3 school admins, 4 instructors, 10 students");
 
         // ========================================
         // QUICK LOGIN ACCOUNTS (for demo)
         // ========================================
         $this->command->info('');
         $this->command->info('========================================');
-        $this->command->info('🔐 DEMO LOGIN CREDENTIALS');
+        $this->command->info('DEMO LOGIN CREDENTIALS');
         $this->command->info('========================================');
         $this->command->info('');
-        $this->command->info('SMART DRIVING SCHOOL (smart-driving) - MAIN CLIENT');
-        $this->command->info('  School Admin: schooladmin@gmail.com / password123');
-        $this->command->info('  System Admin: systemadmin@gmail.com / password123');
-        $this->command->info('  Instructor: instructor@gmail.com / password123');
-        $this->command->info('  Student: student@gmail.com / password123');
+        $this->command->info('SYSTEM ADMIN (Platform Level)');
+        $this->command->info('  systemadmin@gmail.com / sysadmin123!');
+        $this->command->info('  systemadmin2@gmail.com / sysadmin123!');
+        $this->command->info('');
+        $this->command->info('SMART DRIVING SCHOOL (smart-driving)');
+        $this->command->info('  School Admins:');
+        $this->command->info('    maria.santos@smartdriving.com / password123');
+        $this->command->info('    jose.reyes@smartdriving.com / password123');
+        $this->command->info('  Test Account: schooladmin@gmail.com / password123');
+        $this->command->info('  Test Instructor: instructor@gmail.com / password123');
+        $this->command->info('  Test Student: student@gmail.com / password123');
         $this->command->info('');
         $this->command->info('LYSPEED DRIVING SCHOOL (lyspeed-driving)');
-        $this->command->info('  School Admin: lyspeed.admin@gmail.com / password123');
-        $this->command->info('  System Admin: lyspeed.system@gmail.com / password123');
-        $this->command->info('  Instructor: lyspeed.instructor@gmail.com / password123');
-        $this->command->info('  Student: lyspeed.student@gmail.com / password123');
+        $this->command->info('  School Admins:');
+        $this->command->info('    carlos.villanueva@lyspeed.com / password123');
+        $this->command->info('    elena.gonzales@lyspeed.com / password123');
+        $this->command->info('  Test Account: lyspeed.admin@gmail.com / password123');
+        $this->command->info('  Test Instructor: lyspeed.instructor@gmail.com / password123');
+        $this->command->info('  Test Student: lyspeed.student@gmail.com / password123');
         $this->command->info('');
         $this->command->info('========================================');
-        $this->command->info('🎉 Demo data seeding complete!');
+        $this->command->info('Demo data seeding complete!');
         $this->command->info('========================================');
     }
 

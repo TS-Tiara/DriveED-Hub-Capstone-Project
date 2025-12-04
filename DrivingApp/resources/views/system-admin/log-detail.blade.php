@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Log #{{ $log->id }} - System Administrator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
         * {
             margin: 0;
@@ -295,15 +296,15 @@
     <div class="container">
         <div class="header">
             <div>
-                <h1>🔍 Log #{{ $log->id }} Details</h1>
-                <p style="margin-top: 5px; opacity: 0.9;">👤 {{ Auth::guard('admin')->user()->name }}</p>
+                <h1><i class="fas fa-file-alt"></i> Log #{{ $log->id }} Details</h1>
+                <p style="margin-top: 5px; opacity: 0.9;"><i class="fas fa-user"></i> {{ Auth::guard('admin')->user()->name }}</p>
             </div>
             <div style="display: flex; gap: 10px; align-items: center;">
                 <a href="{{ route('system-admin.logs') }}" class="back-btn">← Back to Logs</a>
                 <form method="POST" action="{{ route('system-admin.logout') }}" style="display: inline;">
                     @csrf
                     <button type="submit" class="back-btn" style="border: none; cursor: pointer;">
-                        🚪 Logout
+                        <i class="fas fa-sign-out-alt"></i> Logout
                     </button>
                 </form>
             </div>
@@ -446,7 +447,7 @@
             <!-- Resolution -->
             @if($log->resolved_at)
                 <div class="resolved-info">
-                    <h4>✅ This log has been resolved</h4>
+                    <h4><i class="fas fa-check-circle"></i> This log has been resolved</h4>
                     <p><strong>Resolved by:</strong> {{ $log->resolvedBy->name ?? 'Unknown' }}</p>
                     <p><strong>Resolved at:</strong> {{ $log->resolved_at->format('F d, Y H:i:s') }}</p>
                     @if($log->resolution_notes)
@@ -468,7 +469,7 @@
                                     placeholder="Describe what was done to resolve this issue..."
                                 ></textarea>
                             </div>
-                            <button type="submit" class="btn btn-success">✓ Mark as Resolved</button>
+                            <button type="submit" class="btn btn-success"><i class="fas fa-check"></i> Mark as Resolved</button>
                         </form>
                     </div>
                 </div>

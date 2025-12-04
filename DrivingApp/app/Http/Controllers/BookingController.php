@@ -7,6 +7,7 @@ use App\Models\Course;
 use App\Models\Instructor;
 use App\Models\School;
 use App\Models\Student;
+use App\Models\SystemLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -239,6 +240,23 @@ class BookingController extends Controller
         $booking = Booking::create($validated);
         $booking->load(['student', 'instructor', 'course', 'timeSlot']);
 
+        // Log booking creation
+        SystemLog::logInfo(
+            "New booking created for student: {$booking->student->name}",
+            'booking',
+            [
+                'booking_id' => $booking->id,
+                'student_id' => $booking->student_id,
+                'student_name' => $booking->student->name,
+                'course' => $booking->course->title ?? 'N/A',
+                'instructor' => $booking->instructor->name ?? 'Not assigned',
+                'scheduled_at' => $validated['scheduled_at'],
+                'status' => $booking->status
+            ],
+            $school->id,
+            'create_booking'
+        );
+
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
                 'success' => true,
@@ -309,6 +327,20 @@ class BookingController extends Controller
             if (empty($validated['cancellation_reason'])) {
                 $validated['cancellation_reason'] = 'Cancelled by school administrator';
             }
+            
+            // Log booking cancellation
+            SystemLog::logInfo(
+                "Booking cancelled by admin for student: {$booking->student->name}",
+                'booking',
+                [
+                    'booking_id' => $booking->id,
+                    'student_name' => $booking->student->name,
+                    'reason' => $validated['cancellation_reason'],
+                    'cancelled_by' => Auth::guard('admin')->user()->name ?? 'Admin'
+                ],
+                $school->id,
+                'cancel_booking'
+            );
         }
 
         $booking->update($validated);
@@ -331,6 +363,20 @@ class BookingController extends Controller
      */
     public function destroy(Request $request, School $school, Booking $booking)
     {
+        // Log booking deletion
+        SystemLog::logWarning(
+            "Booking permanently deleted",
+            'booking',
+            [
+                'booking_id' => $booking->id,
+                'student_name' => $booking->student->name ?? 'Unknown',
+                'course' => $booking->course->title ?? 'N/A',
+                'deleted_by' => Auth::guard('admin')->user()->name ?? 'Admin'
+            ],
+            $school->id,
+            'delete_booking'
+        );
+        
         $booking->delete();
 
         if ($request->ajax() || $request->wantsJson()) {
@@ -387,6 +433,19 @@ class BookingController extends Controller
         }
 
         $booking->update(['status' => 'scheduled']);
+        
+        // Log booking confirmation
+        SystemLog::logInfo(
+            "Booking confirmed for student: {$booking->student->name}",
+            'booking',
+            [
+                'booking_id' => $booking->id,
+                'student_name' => $booking->student->name ?? 'Unknown',
+                'course' => $booking->course->title ?? 'N/A'
+            ],
+            $school->id,
+            'confirm_booking'
+        );
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([

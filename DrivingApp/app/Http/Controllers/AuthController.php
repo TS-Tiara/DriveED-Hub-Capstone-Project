@@ -9,6 +9,7 @@ use App\Models\Admin;
 use App\Models\Instructor;
 use App\Models\School;
 use App\Models\Student;
+use App\Models\SystemLog;
 
 class AuthController extends Controller
 {
@@ -41,10 +42,28 @@ class AuthController extends Controller
         if ($admin) {
             if (Hash::check($password, $admin->password)) {
                 Auth::guard('admin')->login($admin, $remember);
+                
+                // Log successful school admin login
+                SystemLog::logInfo(
+                    "School admin logged in: {$admin->name}",
+                    'authentication',
+                    ['admin_id' => $admin->id, 'email' => $admin->email],
+                    $school->id,
+                    'school_admin_login'
+                );
+                
                 return redirect()->route('schools.admin.dashboard', $school)
                     ->with('success', 'Welcome back, ' . $admin->name . '!');
             }
-            // Wrong password for admin
+            // Wrong password for admin - log failed attempt
+            SystemLog::logWarning(
+                "Failed login attempt for school admin: {$email}",
+                'authentication',
+                ['email' => $email, 'reason' => 'incorrect_password'],
+                $school->id,
+                'failed_login'
+            );
+            
             return back()->withErrors([
                 'email' => 'The provided credentials do not match our records.',
             ])->withInput($request->only('email', 'remember'));
@@ -54,16 +73,44 @@ class AuthController extends Controller
         $instructor = Instructor::where('school_id', $school->id)->where('email', $email)->first();
         if ($instructor) {
             if (!Hash::check($password, $instructor->password)) {
+                // Log failed attempt
+                SystemLog::logWarning(
+                    "Failed login attempt for instructor: {$email}",
+                    'authentication',
+                    ['email' => $email, 'reason' => 'incorrect_password'],
+                    $school->id,
+                    'failed_login'
+                );
+                
                 return back()->withErrors([
                     'email' => 'The provided credentials do not match our records.',
                 ])->withInput($request->only('email', 'remember'));
             }
             
             if ($instructor->status !== 'active') {
+                // Log deactivated account login attempt
+                SystemLog::logWarning(
+                    "Deactivated instructor attempted login: {$email}",
+                    'authentication',
+                    ['email' => $email, 'instructor_id' => $instructor->id, 'reason' => 'account_inactive'],
+                    $school->id,
+                    'blocked_login'
+                );
+                
                 return back()->withErrors(['email' => 'Your account has been deactivated. Please contact the administrator.']);
             }
             
             Auth::guard('instructor')->login($instructor, $remember);
+            
+            // Log successful instructor login
+            SystemLog::logInfo(
+                "Instructor logged in: {$instructor->name}",
+                'authentication',
+                ['instructor_id' => $instructor->id, 'email' => $instructor->email],
+                $school->id,
+                'instructor_login'
+            );
+            
             return redirect()->route('schools.instructor.dashboard', $school)
                 ->with('success', 'Welcome back, ' . $instructor->name . '!');
         }
@@ -72,16 +119,44 @@ class AuthController extends Controller
         $student = Student::where('school_id', $school->id)->where('email', $email)->first();
         if ($student) {
             if (!Hash::check($password, $student->password)) {
+                // Log failed attempt
+                SystemLog::logWarning(
+                    "Failed login attempt for student: {$email}",
+                    'authentication',
+                    ['email' => $email, 'reason' => 'incorrect_password'],
+                    $school->id,
+                    'failed_login'
+                );
+                
                 return back()->withErrors([
                     'email' => 'The provided credentials do not match our records.',
                 ])->withInput($request->only('email', 'remember'));
             }
             
             if ($student->status !== 'active') {
+                // Log deactivated account login attempt
+                SystemLog::logWarning(
+                    "Deactivated student attempted login: {$email}",
+                    'authentication',
+                    ['email' => $email, 'student_id' => $student->id, 'reason' => 'account_inactive'],
+                    $school->id,
+                    'blocked_login'
+                );
+                
                 return back()->withErrors(['email' => 'Your account has been deactivated. Please contact the administrator.']);
             }
             
             Auth::guard('student')->login($student, $remember);
+            
+            // Log successful student/guest login
+            $userType = $student->role === 'guest' ? 'Guest' : 'Student';
+            SystemLog::logInfo(
+                "{$userType} logged in: {$student->name}",
+                'authentication',
+                ['student_id' => $student->id, 'email' => $student->email, 'role' => $student->role],
+                $school->id,
+                strtolower($userType) . '_login'
+            );
             
             // Redirect based on role (guest or student)
             if ($student->role === 'guest') {
@@ -93,7 +168,15 @@ class AuthController extends Controller
             }
         }
 
-        // No user found with this email
+        // No user found with this email - log unknown email attempt
+        SystemLog::logWarning(
+            "Login attempt with unknown email: {$email}",
+            'authentication',
+            ['email' => $email, 'reason' => 'email_not_found'],
+            $school->id,
+            'failed_login'
+        );
+
         return back()->withErrors([
             'email' => 'The provided credentials do not match our records.',
         ])->withInput($request->only('email', 'remember'));
@@ -101,12 +184,34 @@ class AuthController extends Controller
 
     public function logout(Request $request, School $school)
     {
+        $logMessage = null;
+        $logContext = [];
+        $action = 'logout';
+        
         if (Auth::guard('admin')->check()) {
+            $admin = Auth::guard('admin')->user();
+            $logMessage = "School admin logged out: {$admin->name}";
+            $logContext = ['admin_id' => $admin->id, 'email' => $admin->email];
+            $action = 'school_admin_logout';
             Auth::guard('admin')->logout();
         } elseif (Auth::guard('instructor')->check()) {
+            $instructor = Auth::guard('instructor')->user();
+            $logMessage = "Instructor logged out: {$instructor->name}";
+            $logContext = ['instructor_id' => $instructor->id, 'email' => $instructor->email];
+            $action = 'instructor_logout';
             Auth::guard('instructor')->logout();
         } elseif (Auth::guard('student')->check()) {
+            $student = Auth::guard('student')->user();
+            $userType = $student->role === 'guest' ? 'Guest' : 'Student';
+            $logMessage = "{$userType} logged out: {$student->name}";
+            $logContext = ['student_id' => $student->id, 'email' => $student->email, 'role' => $student->role];
+            $action = strtolower($userType) . '_logout';
             Auth::guard('student')->logout();
+        }
+
+        // Log the logout event
+        if ($logMessage) {
+            SystemLog::logInfo($logMessage, 'authentication', $logContext, $school->id, $action);
         }
 
         $request->session()->invalidate();

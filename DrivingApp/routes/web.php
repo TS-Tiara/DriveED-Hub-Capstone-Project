@@ -33,13 +33,30 @@ Route::prefix('system-admin')->name('system-admin.')->group(function () {
     Route::middleware(['system.admin'])->group(function () {
         Route::get('/', [SystemAdminController::class, 'dashboard'])->name('dashboard');
         Route::get('/dashboard', [SystemAdminController::class, 'dashboard']);
+        
+        // Schools management
         Route::get('/schools', [SystemAdminController::class, 'schools'])->name('schools');
+        Route::post('/schools', [SystemAdminController::class, 'storeSchool'])->name('schools.store');
+        Route::patch('/schools/{school}/toggle-status', [SystemAdminController::class, 'toggleSchoolStatus'])->name('schools.toggle-status');
+        Route::delete('/schools/{school}', [SystemAdminController::class, 'deleteSchool'])->name('schools.delete');
+        
+        // School Admins management
         Route::get('/admins', [SystemAdminController::class, 'admins'])->name('admins');
+        Route::post('/admins', [SystemAdminController::class, 'storeAdmin'])->name('admins.store');
+        Route::patch('/admins/{admin}/toggle-status', [SystemAdminController::class, 'toggleAdminStatus'])->name('admins.toggle-status');
+        Route::delete('/admins/{admin}', [SystemAdminController::class, 'deleteAdmin'])->name('admins.delete');
+        
+        // Users management
         Route::get('/users', [SystemAdminController::class, 'users'])->name('users');
+        Route::patch('/users/{type}/{id}/toggle-status', [SystemAdminController::class, 'toggleUserStatus'])->name('users.toggle-status');
+        Route::delete('/users/{type}/{id}', [SystemAdminController::class, 'deleteUser'])->name('users.delete');
+        
+        // Logs
         Route::get('/logs', [SystemAdminController::class, 'logs'])->name('logs');
         Route::get('/logs/{log}', [SystemAdminController::class, 'showLog'])->name('logs.show');
         Route::post('/logs/{log}/resolve', [SystemAdminController::class, 'resolveLog'])->name('logs.resolve');
         Route::post('/logs/cleanup', [SystemAdminController::class, 'cleanupLogs'])->name('logs.cleanup');
+        
         Route::post('/logout', [SystemAdminController::class, 'logout'])->name('logout');
     });
 });

@@ -1,8 +1,8 @@
-@extends('layouts.system-admin')
-@section('title', 'School Admins')
-@section('page-title', 'School Administrators')
 
-@section('styles')
+<?php $__env->startSection('title', 'School Admins'); ?>
+<?php $__env->startSection('page-title', 'School Administrators'); ?>
+
+<?php $__env->startSection('styles'); ?>
 <style>
     .action-bar {
         display: flex;
@@ -323,31 +323,32 @@
         font-size: 0.9rem;
     }
 </style>
-@endsection
+<?php $__env->stopSection(); ?>
 
-@section('content')
+<?php $__env->startSection('content'); ?>
 <!-- Action Bar -->
 <div class="action-bar">
     <form method="GET" class="search-box">
-        <input type="text" name="search" value="{{ request('search') }}" placeholder="Search by name or email...">
-        @if(request('school_id'))
-            <input type="hidden" name="school_id" value="{{ request('school_id') }}">
-        @endif
+        <input type="text" name="search" value="<?php echo e(request('search')); ?>" placeholder="Search by name or email...">
+        <?php if(request('school_id')): ?>
+            <input type="hidden" name="school_id" value="<?php echo e(request('school_id')); ?>">
+        <?php endif; ?>
         <button type="submit"><i class="fas fa-search"></i></button>
     </form>
     
     <div style="display: flex; gap: 10px; align-items: center;">
         <form method="GET">
-            @if(request('search'))
-                <input type="hidden" name="search" value="{{ request('search') }}">
-            @endif
+            <?php if(request('search')): ?>
+                <input type="hidden" name="search" value="<?php echo e(request('search')); ?>">
+            <?php endif; ?>
             <select name="school_id" class="filter-select" onchange="this.form.submit()">
                 <option value="">All Schools</option>
-                @foreach($schools as $school)
-                    <option value="{{ $school->id }}" {{ request('school_id') == $school->id ? 'selected' : '' }}>
-                        {{ $school->name }}
+                <?php $__currentLoopData = $schools; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $school): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <option value="<?php echo e($school->id); ?>" <?php echo e(request('school_id') == $school->id ? 'selected' : ''); ?>>
+                        <?php echo e($school->name); ?>
+
                     </option>
-                @endforeach
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </select>
         </form>
         
@@ -361,11 +362,11 @@
     <div class="card-header">
         <h3>
             <i class="fas fa-user-tie" style="margin-right: 0.5rem; color: #053d86;"></i>
-            School Admins ({{ $admins->total() }})
+            School Admins (<?php echo e($admins->total()); ?>)
         </h3>
     </div>
     <div class="card-body">
-        @if($admins->count() > 0)
+        <?php if($admins->count() > 0): ?>
         <table>
             <thead>
                 <tr>
@@ -378,63 +379,68 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach($admins as $admin)
+                <?php $__currentLoopData = $admins; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $admin): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                 <tr>
                     <td>
                         <div style="display: flex; align-items: center; gap: 0.75rem;">
                             <div class="user-avatar">
-                                {{ strtoupper(substr($admin->name, 0, 1)) }}
+                                <?php echo e(strtoupper(substr($admin->name, 0, 1))); ?>
+
                             </div>
-                            <strong>{{ $admin->name }}</strong>
+                            <strong><?php echo e($admin->name); ?></strong>
                         </div>
                     </td>
-                    <td>{{ $admin->email }}</td>
+                    <td><?php echo e($admin->email); ?></td>
                     <td>
-                        @if($admin->school)
+                        <?php if($admin->school): ?>
                             <span class="school-badge">
                                 <i class="fas fa-school"></i>
-                                {{ $admin->school->name }}
+                                <?php echo e($admin->school->name); ?>
+
                             </span>
-                        @else
+                        <?php else: ?>
                             <span style="color: #9ca3af;">No school</span>
-                        @endif
+                        <?php endif; ?>
                     </td>
                     <td>
-                        <span class="status-badge {{ $admin->is_active ? 'active' : 'inactive' }}">
+                        <span class="status-badge <?php echo e($admin->is_active ? 'active' : 'inactive'); ?>">
                             <i class="fas fa-circle" style="font-size: 6px;"></i>
-                            {{ $admin->is_active ? 'Active' : 'Inactive' }}
+                            <?php echo e($admin->is_active ? 'Active' : 'Inactive'); ?>
+
                         </span>
                     </td>
-                    <td>{{ $admin->created_at->format('M d, Y') }}</td>
+                    <td><?php echo e($admin->created_at->format('M d, Y')); ?></td>
                     <td>
                         <div class="actions-cell">
-                            <form action="{{ route('system-admin.admins.toggle-status', $admin->id) }}" method="POST" style="display: inline;">
-                                @csrf
-                                @method('PATCH')
-                                <button type="submit" class="btn-sm btn-toggle {{ $admin->is_active ? 'btn-active' : 'btn-inactive' }}" 
-                                        title="{{ $admin->is_active ? 'Deactivate' : 'Activate' }}">
-                                    <i class="fas {{ $admin->is_active ? 'fa-toggle-on' : 'fa-toggle-off' }}"></i>
-                                    {{ $admin->is_active ? 'Deactivate' : 'Activate' }}
+                            <form action="<?php echo e(route('system-admin.admins.toggle-status', $admin->id)); ?>" method="POST" style="display: inline;">
+                                <?php echo csrf_field(); ?>
+                                <?php echo method_field('PATCH'); ?>
+                                <button type="submit" class="btn-sm btn-toggle <?php echo e($admin->is_active ? 'btn-active' : 'btn-inactive'); ?>" 
+                                        title="<?php echo e($admin->is_active ? 'Deactivate' : 'Activate'); ?>">
+                                    <i class="fas <?php echo e($admin->is_active ? 'fa-toggle-on' : 'fa-toggle-off'); ?>"></i>
+                                    <?php echo e($admin->is_active ? 'Deactivate' : 'Activate'); ?>
+
                                 </button>
                             </form>
                             <button type="button" class="btn-sm btn-danger" 
-                                    onclick="confirmDeleteAdmin('{{ $admin->id }}', '{{ $admin->name }}')"
+                                    onclick="confirmDeleteAdmin('<?php echo e($admin->id); ?>', '<?php echo e($admin->name); ?>')"
                                     title="Delete Admin">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
                     </td>
                 </tr>
-                @endforeach
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </tbody>
         </table>
-        {{ $admins->appends(request()->query())->links() }}
-        @else
+        <?php echo e($admins->appends(request()->query())->links()); ?>
+
+        <?php else: ?>
         <div style="text-align: center; padding: 3rem; color: #6b7280;">
             <i class="fas fa-user-tie" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
             <p>No school admins found.</p>
         </div>
-        @endif
+        <?php endif; ?>
     </div>
 </div>
 
@@ -445,16 +451,16 @@
             <h3><i class="fas fa-user-plus" style="color: #053d86; margin-right: 8px;"></i>Add School Admin</h3>
             <button type="button" class="modal-close" onclick="closeModal('createAdminModal')">&times;</button>
         </div>
-        <form action="{{ route('system-admin.admins.store') }}" method="POST">
-            @csrf
+        <form action="<?php echo e(route('system-admin.admins.store')); ?>" method="POST">
+            <?php echo csrf_field(); ?>
             <div class="modal-body">
                 <div class="form-group">
                     <label for="school_id">Assign to School <span style="color: #dc2626;">*</span></label>
                     <select name="school_id" id="school_id" required>
                         <option value="">Select a school...</option>
-                        @foreach($schools as $school)
-                            <option value="{{ $school->id }}">{{ $school->name }}</option>
-                        @endforeach
+                        <?php $__currentLoopData = $schools; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $school): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($school->id); ?>"><?php echo e($school->name); ?></option>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
                 </div>
                 <div class="form-group">
@@ -490,8 +496,8 @@
             <button type="button" class="modal-close" onclick="closeModal('deleteAdminModal')">&times;</button>
         </div>
         <form id="deleteAdminForm" method="POST">
-            @csrf
-            @method('DELETE')
+            <?php echo csrf_field(); ?>
+            <?php echo method_field('DELETE'); ?>
             <div class="modal-body">
                 <p>Are you sure you want to delete <strong id="deleteAdminName"></strong>?</p>
                 <div class="warning-text">
@@ -518,7 +524,7 @@ function closeModal(id) {
 
 function confirmDeleteAdmin(id, name) {
     document.getElementById('deleteAdminName').textContent = name;
-    document.getElementById('deleteAdminForm').action = '{{ url("system-admin/admins") }}/' + id;
+    document.getElementById('deleteAdminForm').action = '<?php echo e(url("system-admin/admins")); ?>/' + id;
     openModal('deleteAdminModal');
 }
 
@@ -531,5 +537,7 @@ document.querySelectorAll('.modal-overlay').forEach(modal => {
     });
 });
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
 
+
+<?php echo $__env->make('layouts.system-admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\jcsdi\Documents\Driving School Management System\DrivingApp\resources\views/system-admin/admins.blade.php ENDPATH**/ ?>

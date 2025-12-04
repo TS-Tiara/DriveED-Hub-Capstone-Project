@@ -35,7 +35,7 @@
         $headerShadow = $settings?->login_header_shadow ?? true;
         
         // Check if gradient is enabled
-        $useGradient = $settings?->use_gradient_header ?? true;
+        $useGradient = $settings?->use_gradient_header ?? false;
         
         // Generate header background
         if ($headerBgType === 'solid' && $headerBgColor) {
