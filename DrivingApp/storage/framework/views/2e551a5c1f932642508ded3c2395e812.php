@@ -1,8 +1,6 @@
-@extends('layouts.app')
+<?php $__env->startSection('title', 'Reports & Analytics'); ?>
 
-@section('title', 'Reports & Analytics')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <?php
     $school = $school ?? $currentSchool ?? null;
     $settings = $school?->schoolSetting;
@@ -358,19 +356,19 @@
             </button>
             <div class="export-menu" id="exportMenu">
                 <div class="export-menu-title">Download as CSV</div>
-                <a href="{{ route('schools.admin.reports.export.students', $school) }}">
+                <a href="<?php echo e(route('schools.admin.reports.export.students', $school)); ?>">
                     Students
                 </a>
-                <a href="{{ route('schools.admin.reports.export.instructors', $school) }}">
+                <a href="<?php echo e(route('schools.admin.reports.export.instructors', $school)); ?>">
                     Instructors
                 </a>
-                <a href="{{ route('schools.admin.reports.export.bookings', $school) }}">
+                <a href="<?php echo e(route('schools.admin.reports.export.bookings', $school)); ?>">
                     Bookings
                 </a>
-                <a href="{{ route('schools.admin.reports.export.payments', $school) }}">
+                <a href="<?php echo e(route('schools.admin.reports.export.payments', $school)); ?>">
                     Payments
                 </a>
-                <a href="{{ route('schools.admin.reports.export.courses', $school) }}">
+                <a href="<?php echo e(route('schools.admin.reports.export.courses', $school)); ?>">
                     Courses
                 </a>
             </div>
@@ -381,24 +379,24 @@
     <div class="metrics-grid">
         <div class="metric-card info">
             <h3>Total Students</h3>
-            <div class="value">{{ $analytics['total_students'] }}</div>
-            <div class="subtitle">{{ $analytics['active_students'] }} active</div>
+            <div class="value"><?php echo e($analytics['total_students']); ?></div>
+            <div class="subtitle"><?php echo e($analytics['active_students']); ?> active</div>
         </div>
         <div class="metric-card success">
             <h3>Total Instructors</h3>
-            <div class="value">{{ $analytics['total_instructors'] }}</div>
+            <div class="value"><?php echo e($analytics['total_instructors']); ?></div>
         </div>
         <div class="metric-card warning">
             <h3>This Month Bookings</h3>
-            <div class="value">{{ $analytics['total_bookings_this_month'] }}</div>
+            <div class="value"><?php echo e($analytics['total_bookings_this_month']); ?></div>
         </div>
         <div class="metric-card success">
             <h3>Completed Lessons</h3>
-            <div class="value">{{ $analytics['completed_lessons_this_month'] }}</div>
+            <div class="value"><?php echo e($analytics['completed_lessons_this_month']); ?></div>
         </div>
-        <div class="metric-card {{ $analytics['completion_rate'] >= 70 ? 'success' : 'warning' }}">
+        <div class="metric-card <?php echo e($analytics['completion_rate'] >= 70 ? 'success' : 'warning'); ?>">
             <h3>Completion Rate</h3>
-            <div class="value">{{ number_format($analytics['completion_rate'], 1) }}%</div>
+            <div class="value"><?php echo e(number_format($analytics['completion_rate'], 1)); ?>%</div>
         </div>
     </div>
 
@@ -412,20 +410,20 @@
             <div class="stats-summary">
                 <div class="stat-box">
                     <div class="label">Total Enrolled</div>
-                    <div class="value">{{ $analytics['total_students'] }}</div>
+                    <div class="value"><?php echo e($analytics['total_students']); ?></div>
                 </div>
                 <div class="stat-box">
                     <div class="label">Active</div>
-                    <div class="value" style="color: #10b981;">{{ $analytics['active_students'] }}</div>
+                    <div class="value" style="color: #10b981;"><?php echo e($analytics['active_students']); ?></div>
                 </div>
                 <div class="stat-box">
                     <div class="label">This Month</div>
-                    <div class="value">{{ $analytics['enrollments_this_month'] }}</div>
+                    <div class="value"><?php echo e($analytics['enrollments_this_month']); ?></div>
                 </div>
                 <div class="stat-box">
                     <div class="label">Growth</div>
-                    <div class="value" style="color: {{ $analytics['enrollment_growth'] >= 0 ? '#10b981' : '#ef4444' }};">
-                        {{ $analytics['enrollment_growth'] >= 0 ? '+' : '' }}{{ $analytics['enrollment_growth'] }}%
+                    <div class="value" style="color: <?php echo e($analytics['enrollment_growth'] >= 0 ? '#10b981' : '#ef4444'); ?>;">
+                        <?php echo e($analytics['enrollment_growth'] >= 0 ? '+' : ''); ?><?php echo e($analytics['enrollment_growth']); ?>%
                     </div>
                 </div>
             </div>
@@ -439,11 +437,11 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @php
+                    <?php
                         $totalStudents = $analytics['total_students'];
-                    @endphp
-                    @forelse($analytics['students_by_status'] as $statusData)
-                        @php
+                    ?>
+                    <?php $__empty_1 = true; $__currentLoopData = $analytics['students_by_status']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $statusData): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                        <?php
                             $percentage = $totalStudents > 0 ? ($statusData->count / $totalStudents) * 100 : 0;
                             $badgeClass = match($statusData->status) {
                                 'active' => 'badge-success',
@@ -451,22 +449,22 @@
                                 'graduated' => 'badge-info',
                                 default => 'badge-secondary'
                             };
-                        @endphp
+                        ?>
                         <tr>
-                            <td><span class="badge {{ $badgeClass }}">{{ ucfirst($statusData->status) }}</span></td>
-                            <td>{{ $statusData->count }}</td>
+                            <td><span class="badge <?php echo e($badgeClass); ?>"><?php echo e(ucfirst($statusData->status)); ?></span></td>
+                            <td><?php echo e($statusData->count); ?></td>
                             <td>
                                 <div class="progress-bar">
-                                    <div class="progress-fill" style="width: {{ $percentage }}%"></div>
+                                    <div class="progress-fill" style="width: <?php echo e($percentage); ?>%"></div>
                                 </div>
-                                {{ number_format($percentage, 1) }}%
+                                <?php echo e(number_format($percentage, 1)); ?>%
                             </td>
                         </tr>
-                    @empty
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                         <tr>
                             <td colspan="3" class="empty-state">No student data available</td>
                         </tr>
-                    @endforelse
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
@@ -482,19 +480,19 @@
             <div class="stats-summary">
                 <div class="stat-box">
                     <div class="label">Total Bookings</div>
-                    <div class="value">{{ $analytics['total_all_bookings'] }}</div>
+                    <div class="value"><?php echo e($analytics['total_all_bookings']); ?></div>
                 </div>
                 <div class="stat-box">
                     <div class="label">This Month</div>
-                    <div class="value">{{ $analytics['total_bookings_this_month'] }}</div>
+                    <div class="value"><?php echo e($analytics['total_bookings_this_month']); ?></div>
                 </div>
                 <div class="stat-box">
                     <div class="label">Completed</div>
-                    <div class="value" style="color: #10b981;">{{ $analytics['completed_lessons_this_month'] }}</div>
+                    <div class="value" style="color: #10b981;"><?php echo e($analytics['completed_lessons_this_month']); ?></div>
                 </div>
                 <div class="stat-box">
                     <div class="label">Success Rate</div>
-                    <div class="value">{{ number_format($analytics['completion_rate'], 1) }}%</div>
+                    <div class="value"><?php echo e(number_format($analytics['completion_rate'], 1)); ?>%</div>
                 </div>
             </div>
             
@@ -507,11 +505,11 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @php
+                    <?php
                         $totalBookings = $analytics['total_all_bookings'];
-                    @endphp
-                    @forelse($analytics['bookings_by_status'] as $statusData)
-                        @php
+                    ?>
+                    <?php $__empty_1 = true; $__currentLoopData = $analytics['bookings_by_status']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $statusData): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                        <?php
                             $percentage = $totalBookings > 0 ? ($statusData->count / $totalBookings) * 100 : 0;
                             $badgeClass = match($statusData->status) {
                                 'completed' => 'badge-success',
@@ -520,22 +518,22 @@
                                 'cancelled', 'no-show' => 'badge-danger',
                                 default => 'badge-secondary'
                             };
-                        @endphp
+                        ?>
                         <tr>
-                            <td><span class="badge {{ $badgeClass }}">{{ ucfirst($statusData->status) }}</span></td>
-                            <td>{{ $statusData->count }}</td>
+                            <td><span class="badge <?php echo e($badgeClass); ?>"><?php echo e(ucfirst($statusData->status)); ?></span></td>
+                            <td><?php echo e($statusData->count); ?></td>
                             <td>
                                 <div class="progress-bar">
-                                    <div class="progress-fill" style="width: {{ $percentage }}%"></div>
+                                    <div class="progress-fill" style="width: <?php echo e($percentage); ?>%"></div>
                                 </div>
-                                {{ number_format($percentage, 1) }}%
+                                <?php echo e(number_format($percentage, 1)); ?>%
                             </td>
                         </tr>
-                    @empty
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                         <tr>
                             <td colspan="3" class="empty-state">No booking data available</td>
                         </tr>
-                    @endforelse
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
@@ -562,30 +560,31 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($analytics['course_stats'] ?? [] as $course)
+                    <?php $__empty_1 = true; $__currentLoopData = $analytics['course_stats'] ?? []; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $course): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                         <tr>
-                            <td><strong>{{ $course->title }}</strong></td>
-                            <td><span class="badge badge-info">{{ $course->total_enrolled }}</span></td>
-                            <td>₱{{ number_format($course->price ?? 0, 2) }}</td>
+                            <td><strong><?php echo e($course->title); ?></strong></td>
+                            <td><span class="badge badge-info"><?php echo e($course->total_enrolled); ?></span></td>
+                            <td>₱<?php echo e(number_format($course->price ?? 0, 2)); ?></td>
                             <td>
-                                <span style="color: {{ $course->completion_rate >= 70 ? '#10b981' : '#f59e0b' }};">
-                                    {{ number_format($course->completion_rate, 1) }}%
+                                <span style="color: <?php echo e($course->completion_rate >= 70 ? '#10b981' : '#f59e0b'); ?>;">
+                                    <?php echo e(number_format($course->completion_rate, 1)); ?>%
                                 </span>
                             </td>
                             <td>
-                                @if($course->average_rating)
-                                    <span style="color: #f59e0b;">★</span> {{ number_format($course->average_rating, 1) }}
-                                @else
+                                <?php if($course->average_rating): ?>
+                                    <span style="color: #f59e0b;">★</span> <?php echo e(number_format($course->average_rating, 1)); ?>
+
+                                <?php else: ?>
                                     <span style="color: #9ca3af;">No ratings</span>
-                                @endif
+                                <?php endif; ?>
                             </td>
-                            <td>₱{{ number_format($course->total_revenue, 2) }}</td>
+                            <td>₱<?php echo e(number_format($course->total_revenue, 2)); ?></td>
                         </tr>
-                    @empty
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                         <tr>
                             <td colspan="6" class="empty-state">No course data available</td>
                         </tr>
-                    @endforelse
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
@@ -609,29 +608,30 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($analytics['top_instructors'] as $instructor)
+                    <?php $__empty_1 = true; $__currentLoopData = $analytics['top_instructors']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $instructor): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                         <tr>
-                            <td><strong>{{ $instructor->name }}</strong></td>
-                            <td>{{ $instructor->total_sessions }}</td>
-                            <td>{{ $instructor->completed_sessions }}</td>
+                            <td><strong><?php echo e($instructor->name); ?></strong></td>
+                            <td><?php echo e($instructor->total_sessions); ?></td>
+                            <td><?php echo e($instructor->completed_sessions); ?></td>
                             <td>
-                                @if($instructor->average_rating)
-                                    <span style="color: #f59e0b;">★</span> {{ number_format($instructor->average_rating, 1) }}
-                                @else
+                                <?php if($instructor->average_rating): ?>
+                                    <span style="color: #f59e0b;">★</span> <?php echo e(number_format($instructor->average_rating, 1)); ?>
+
+                                <?php else: ?>
                                     <span style="color: #9ca3af;">No ratings yet</span>
-                                @endif
+                                <?php endif; ?>
                             </td>
                             <td>
-                                <span style="color: {{ $instructor->completion_rate >= 80 ? '#10b981' : '#f59e0b' }};">
-                                    {{ number_format($instructor->completion_rate, 1) }}%
+                                <span style="color: <?php echo e($instructor->completion_rate >= 80 ? '#10b981' : '#f59e0b'); ?>;">
+                                    <?php echo e(number_format($instructor->completion_rate, 1)); ?>%
                                 </span>
                             </td>
                         </tr>
-                    @empty
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                         <tr>
                             <td colspan="5" class="empty-state">No instructor data available</td>
                         </tr>
-                    @endforelse
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
@@ -647,23 +647,23 @@
             <div class="stats-summary">
                 <div class="stat-box">
                     <div class="label">Attendance Rate</div>
-                    <div class="value" style="color: #10b981;">{{ number_format($analytics['attendance']['rate'] ?? 0, 1) }}%</div>
+                    <div class="value" style="color: #10b981;"><?php echo e(number_format($analytics['attendance']['rate'] ?? 0, 1)); ?>%</div>
                 </div>
                 <div class="stat-box">
                     <div class="label">Attended</div>
-                    <div class="value">{{ $analytics['attendance']['attended'] ?? 0 }}</div>
+                    <div class="value"><?php echo e($analytics['attendance']['attended'] ?? 0); ?></div>
                 </div>
                 <div class="stat-box">
                     <div class="label">Missed</div>
-                    <div class="value" style="color: #ef4444;">{{ $analytics['attendance']['missed'] ?? 0 }}</div>
+                    <div class="value" style="color: #ef4444;"><?php echo e($analytics['attendance']['missed'] ?? 0); ?></div>
                 </div>
                 <div class="stat-box">
                     <div class="label">Cancellations</div>
-                    <div class="value" style="color: #f59e0b;">{{ $analytics['cancellations']['total'] ?? 0 }}</div>
+                    <div class="value" style="color: #f59e0b;"><?php echo e($analytics['cancellations']['total'] ?? 0); ?></div>
                 </div>
                 <div class="stat-box">
                     <div class="label">No-Shows</div>
-                    <div class="value" style="color: #ef4444;">{{ $analytics['cancellations']['no_show'] }}</div>
+                    <div class="value" style="color: #ef4444;"><?php echo e($analytics['cancellations']['no_show']); ?></div>
                 </div>
             </div>
         </div>
@@ -681,15 +681,15 @@
             <div class="stats-summary">
                 <div class="stat-box">
                     <div class="label">Total Lessons</div>
-                    <div class="value">{{ $analytics['total_bookings_this_month'] }}</div>
+                    <div class="value"><?php echo e($analytics['total_bookings_this_month']); ?></div>
                 </div>
                 <div class="stat-box">
                     <div class="label">Completed</div>
-                    <div class="value" style="color: #10b981;">{{ $analytics['completed_lessons_this_month'] }}</div>
+                    <div class="value" style="color: #10b981;"><?php echo e($analytics['completed_lessons_this_month']); ?></div>
                 </div>
                 <div class="stat-box">
                     <div class="label">Completion Rate</div>
-                    <div class="value" style="color: {{ $school->schoolSetting->primary_color ?? '#667eea' }};">{{ number_format($analytics['completion_rate'], 1) }}%</div>
+                    <div class="value" style="color: <?php echo e($school->schoolSetting->primary_color ?? '#667eea'); ?>;"><?php echo e(number_format($analytics['completion_rate'], 1)); ?>%</div>
                 </div>
             </div>
 
@@ -702,24 +702,24 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($analytics['lessons_by_status'] as $statusData)
+                    <?php $__empty_1 = true; $__currentLoopData = $analytics['lessons_by_status']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $statusData): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                         <tr>
                             <td>
-                                <span class="badge {{ match($statusData->status) {
+                                <span class="badge <?php echo e(match($statusData->status) {
                                     'completed' => 'badge-success',
                                     'confirmed' => 'badge-info',
                                     'pending' => 'badge-warning',
                                     'cancelled' => 'badge-danger',
                                     default => 'badge-secondary'
-                                } }}">{{ ucfirst($statusData->status) }}</span>
+                                }); ?>"><?php echo e(ucfirst($statusData->status)); ?></span>
                             </td>
-                            <td>{{ $statusData->count }}</td>
+                            <td><?php echo e($statusData->count); ?></td>
                         </tr>
-                    @empty
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                         <tr>
                             <td colspan="2" class="empty-state">No lesson data available</td>
                         </tr>
-                    @endforelse
+                    <?php endif; ?>
                 </tbody>
             </table>
 
@@ -734,22 +734,22 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($analytics['lessons_by_instructor'] as $instructor)
+                    <?php $__empty_1 = true; $__currentLoopData = $analytics['lessons_by_instructor']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $instructor): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                         <tr>
-                            <td>{{ $instructor->instructor_name }}</td>
-                            <td>{{ $instructor->total_lessons }}</td>
-                            <td>{{ $instructor->completed_lessons }}</td>
+                            <td><?php echo e($instructor->instructor_name); ?></td>
+                            <td><?php echo e($instructor->total_lessons); ?></td>
+                            <td><?php echo e($instructor->completed_lessons); ?></td>
                             <td>
-                                <span style="color: {{ $instructor->completion_rate >= 70 ? '#10b981' : '#f59e0b' }};">
-                                    {{ number_format($instructor->completion_rate, 1) }}%
+                                <span style="color: <?php echo e($instructor->completion_rate >= 70 ? '#10b981' : '#f59e0b'); ?>;">
+                                    <?php echo e(number_format($instructor->completion_rate, 1)); ?>%
                                 </span>
                             </td>
                         </tr>
-                    @empty
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                         <tr>
                             <td colspan="4" class="empty-state">No instructor data available</td>
                         </tr>
-                    @endforelse
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
@@ -767,15 +767,15 @@
             <div class="stats-summary">
                 <div class="stat-box">
                     <div class="label">Total Cancellations</div>
-                    <div class="value" style="color: #f59e0b;">{{ $analytics['cancellations']['total'] }}</div>
+                    <div class="value" style="color: #f59e0b;"><?php echo e($analytics['cancellations']['total']); ?></div>
                 </div>
                 <div class="stat-box">
                     <div class="label">No-Shows</div>
-                    <div class="value" style="color: #ef4444;">{{ $analytics['cancellations']['no_show'] }}</div>
+                    <div class="value" style="color: #ef4444;"><?php echo e($analytics['cancellations']['no_show']); ?></div>
                 </div>
                 <div class="stat-box">
                     <div class="label">Total Issues</div>
-                    <div class="value" style="color: #ef4444;">{{ $analytics['cancellations']['total'] + $analytics['cancellations']['no_show'] }}</div>
+                    <div class="value" style="color: #ef4444;"><?php echo e($analytics['cancellations']['total'] + $analytics['cancellations']['no_show']); ?></div>
                 </div>
             </div>
 
@@ -791,23 +791,24 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($analytics['cancellation_details'] as $booking)
+                    <?php $__empty_1 = true; $__currentLoopData = $analytics['cancellation_details']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $booking): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                         <tr>
-                            <td>{{ $booking->scheduled_at ? $booking->scheduled_at->format('M d, Y') : 'N/A' }}</td>
-                            <td>{{ $booking->student->name ?? 'N/A' }}</td>
-                            <td>{{ $booking->instructor->name ?? 'Unassigned' }}</td>
-                            <td>{{ $booking->course->title ?? 'N/A' }}</td>
+                            <td><?php echo e($booking->scheduled_at ? $booking->scheduled_at->format('M d, Y') : 'N/A'); ?></td>
+                            <td><?php echo e($booking->student->name ?? 'N/A'); ?></td>
+                            <td><?php echo e($booking->instructor->name ?? 'Unassigned'); ?></td>
+                            <td><?php echo e($booking->course->title ?? 'N/A'); ?></td>
                             <td>
-                                <span class="badge {{ $booking->status == 'cancelled' ? 'badge-warning' : 'badge-danger' }}">
-                                    {{ ucfirst(str_replace('_', ' ', $booking->status)) }}
+                                <span class="badge <?php echo e($booking->status == 'cancelled' ? 'badge-warning' : 'badge-danger'); ?>">
+                                    <?php echo e(ucfirst(str_replace('_', ' ', $booking->status))); ?>
+
                                 </span>
                             </td>
                         </tr>
-                    @empty
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                         <tr>
                             <td colspan="5" class="empty-state">No cancellations or no-shows</td>
                         </tr>
-                    @endforelse
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
@@ -825,15 +826,15 @@
             <div class="stats-summary">
                 <div class="stat-box">
                     <div class="label">Total Revenue</div>
-                    <div class="value" style="color: #10b981;">₱{{ number_format($analytics['financial']['total_revenue'], 2) }}</div>
+                    <div class="value" style="color: #10b981;">₱<?php echo e(number_format($analytics['financial']['total_revenue'], 2)); ?></div>
                 </div>
                 <div class="stat-box">
                     <div class="label">Pending Payments</div>
-                    <div class="value" style="color: #f59e0b;">₱{{ number_format($analytics['financial']['pending_payments'], 2) }}</div>
+                    <div class="value" style="color: #f59e0b;">₱<?php echo e(number_format($analytics['financial']['pending_payments'], 2)); ?></div>
                 </div>
                 <div class="stat-box">
                     <div class="label">Total Expected</div>
-                    <div class="value" style="color: {{ $school->schoolSetting->primary_color ?? '#667eea' }};">₱{{ number_format($analytics['financial']['total_revenue'] + $analytics['financial']['pending_payments'], 2) }}</div>
+                    <div class="value" style="color: <?php echo e($school->schoolSetting->primary_color ?? '#667eea'); ?>;">₱<?php echo e(number_format($analytics['financial']['total_revenue'] + $analytics['financial']['pending_payments'], 2)); ?></div>
                 </div>
             </div>
 
@@ -847,17 +848,17 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($analytics['financial']['payments_by_method'] as $payment)
+                    <?php $__empty_1 = true; $__currentLoopData = $analytics['financial']['payments_by_method']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $payment): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                         <tr>
-                            <td><strong>{{ ucfirst($payment->method ?? 'N/A') }}</strong></td>
-                            <td>₱{{ number_format($payment->total, 2) }}</td>
-                            <td>{{ $payment->count }}</td>
+                            <td><strong><?php echo e(ucfirst($payment->method ?? 'N/A')); ?></strong></td>
+                            <td>₱<?php echo e(number_format($payment->total, 2)); ?></td>
+                            <td><?php echo e($payment->count); ?></td>
                         </tr>
-                    @empty
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                         <tr>
                             <td colspan="3" class="empty-state">No payment data available</td>
                         </tr>
-                    @endforelse
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
@@ -884,31 +885,31 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($analytics['student_progress'] as $student)
+                    <?php $__empty_1 = true; $__currentLoopData = $analytics['student_progress']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $student): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                         <tr>
-                            <td><strong>{{ $student->name }}</strong></td>
-                            <td>{{ $student->email }}</td>
+                            <td><strong><?php echo e($student->name); ?></strong></td>
+                            <td><?php echo e($student->email); ?></td>
                             <td>
-                                <span class="badge {{ match($student->status) {
+                                <span class="badge <?php echo e(match($student->status) {
                                     'active' => 'badge-success',
                                     'inactive' => 'badge-warning',
                                     'graduated' => 'badge-info',
                                     default => 'badge-secondary'
-                                } }}">{{ ucfirst($student->status) }}</span>
+                                }); ?>"><?php echo e(ucfirst($student->status)); ?></span>
                             </td>
-                            <td>{{ $student->total_lessons }}</td>
-                            <td>{{ $student->completed_lessons }}</td>
+                            <td><?php echo e($student->total_lessons); ?></td>
+                            <td><?php echo e($student->completed_lessons); ?></td>
                             <td>
-                                <span style="color: {{ $student->progress_rate >= 70 ? '#10b981' : '#f59e0b' }};">
-                                    {{ number_format($student->progress_rate, 1) }}%
+                                <span style="color: <?php echo e($student->progress_rate >= 70 ? '#10b981' : '#f59e0b'); ?>;">
+                                    <?php echo e(number_format($student->progress_rate, 1)); ?>%
                                 </span>
                             </td>
                         </tr>
-                    @empty
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                         <tr>
                             <td colspan="6" class="empty-state">No student progress data available</td>
                         </tr>
-                    @endforelse
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
@@ -940,4 +941,6 @@ document.addEventListener('click', function(event) {
 });
 </script>
 
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\jcsdi\Documents\Driving School Management System\DrivingApp\resources\views/school/admin/reports/index.blade.php ENDPATH**/ ?>

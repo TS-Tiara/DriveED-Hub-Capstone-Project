@@ -390,10 +390,6 @@
 </style>
 
 <div class="grades-container">
-    <a href="<?php echo e($schoolRoute('instructor.dashboard')); ?>" onclick="loadContent(this.href); return false;" class="back-button">
-        &larr; Back to Dashboard
-    </a>
-
     <div class="page-header">
         <h1 class="page-title">Grade Management</h1>
     </div>

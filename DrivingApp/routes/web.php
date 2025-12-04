@@ -142,6 +142,13 @@ Route::prefix('{school:slug}')
             // Reports - consolidated in single index view
             Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
             
+            // Report exports (CSV)
+            Route::get('/reports/export/students', [ReportController::class, 'exportStudents'])->name('reports.export.students');
+            Route::get('/reports/export/instructors', [ReportController::class, 'exportInstructors'])->name('reports.export.instructors');
+            Route::get('/reports/export/bookings', [ReportController::class, 'exportBookings'])->name('reports.export.bookings');
+            Route::get('/reports/export/payments', [ReportController::class, 'exportPayments'])->name('reports.export.payments');
+            Route::get('/reports/export/courses', [ReportController::class, 'exportCourses'])->name('reports.export.courses');
+            
             Route::get('/profile', [AdminController::class, 'profile'])->name('profile');
             Route::put('/profile', [AdminController::class, 'updateProfile'])->name('profile.update');
             Route::post('/profile/picture', [AdminController::class, 'updateProfilePicture'])->name('profile.picture');

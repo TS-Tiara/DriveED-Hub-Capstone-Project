@@ -519,4 +519,441 @@ class ReportController extends Controller
         
         return view($school->resolveView('admin.reports.index'), compact('analytics', 'school'));
     }
+
+    /**
+     * Export reports to Excel/CSV format
+     */
+    public function export(Request $request)
+    {
+        $school = auth()->guard('admin')->user()->school;
+        $type = $request->get('type', 'all');
+        
+        // Get the same analytics data
+        $period = $request->get('period', 'all');
+        $startDate = null;
+        $endDate = now();
+        
+        switch($period) {
+            case 'today':
+                $startDate = now()->startOfDay();
+                break;
+            case 'week':
+                $startDate = now()->startOfWeek();
+                break;
+            case 'month':
+                $startDate = now()->startOfMonth();
+                break;
+            case 'year':
+                $startDate = now()->startOfYear();
+                break;
+        }
+
+        $filename = $school->name . '_Report_' . now()->format('Y-m-d') . '.csv';
+        
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0',
+        ];
+
+        $callback = function() use ($school, $type, $startDate, $endDate) {
+            $file = fopen('php://output', 'w');
+            
+            // Add BOM for Excel to recognize UTF-8
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+
+            // ==================== SCHOOL INFORMATION ====================
+            fputcsv($file, ['']);
+            fputcsv($file, ['========================================']);
+            fputcsv($file, [$school->name . ' - Analytics Report']);
+            fputcsv($file, ['Generated: ' . now()->format('F d, Y h:i A')]);
+            fputcsv($file, ['========================================']);
+            fputcsv($file, ['']);
+            fputcsv($file, ['']);
+
+            // ==================== SUMMARY STATISTICS ====================
+            if ($type === 'all' || $type === 'summary') {
+                $totalStudents = Student::where('school_id', $school->id)->count();
+                $activeStudents = Student::where('school_id', $school->id)->where('status', 'active')->count();
+                $totalInstructors = Instructor::where('school_id', $school->id)->count();
+                $totalBookings = Booking::where('school_id', $school->id)
+                    ->when($startDate, fn($q) => $q->whereBetween('scheduled_at', [$startDate, $endDate]))
+                    ->count();
+                $completedBookings = Booking::where('school_id', $school->id)
+                    ->where('status', 'completed')
+                    ->when($startDate, fn($q) => $q->whereBetween('scheduled_at', [$startDate, $endDate]))
+                    ->count();
+                $completionRate = $totalBookings > 0 ? round(($completedBookings / $totalBookings) * 100, 1) : 0;
+
+                fputcsv($file, ['SUMMARY STATISTICS']);
+                fputcsv($file, ['-------------------']);
+                fputcsv($file, ['']);
+                fputcsv($file, ['Metric', 'Value']);
+                fputcsv($file, ['Total Students', $totalStudents]);
+                fputcsv($file, ['Active Students', $activeStudents]);
+                fputcsv($file, ['Total Instructors', $totalInstructors]);
+                fputcsv($file, ['Total Bookings', $totalBookings]);
+                fputcsv($file, ['Completed Lessons', $completedBookings]);
+                fputcsv($file, ['Completion Rate', $completionRate . '%']);
+                fputcsv($file, ['']);
+                fputcsv($file, ['']);
+            }
+
+            // ==================== STUDENT LIST ====================
+            if ($type === 'all' || $type === 'students') {
+                $students = Student::where('school_id', $school->id)
+                    ->when($startDate, fn($q) => $q->whereBetween('enrollment_date', [$startDate, $endDate]))
+                    ->orderBy('name')
+                    ->get();
+
+                fputcsv($file, ['STUDENT LIST']);
+                fputcsv($file, ['------------']);
+                fputcsv($file, ['']);
+                fputcsv($file, ['Name', 'Email', 'Contact', 'Status', 'Enrollment Date', 'Address']);
+                
+                foreach ($students as $student) {
+                    fputcsv($file, [
+                        $student->name,
+                        $student->email,
+                        $student->contact ?? 'N/A',
+                        ucfirst($student->status),
+                        $student->enrollment_date ? Carbon::parse($student->enrollment_date)->format('M d, Y') : 'N/A',
+                        $student->address ?? 'N/A',
+                    ]);
+                }
+                fputcsv($file, ['']);
+                fputcsv($file, ['Total Students: ' . $students->count()]);
+                fputcsv($file, ['']);
+                fputcsv($file, ['']);
+            }
+
+            // ==================== INSTRUCTOR LIST ====================
+            if ($type === 'all' || $type === 'instructors') {
+                $instructors = Instructor::where('school_id', $school->id)
+                    ->orderBy('name')
+                    ->get();
+
+                fputcsv($file, ['INSTRUCTOR LIST']);
+                fputcsv($file, ['---------------']);
+                fputcsv($file, ['']);
+                fputcsv($file, ['Name', 'Email', 'Contact', 'Status', 'Total Students', 'Completed Lessons']);
+                
+                foreach ($instructors as $instructor) {
+                    $totalStudentsTaught = Booking::where('instructor_id', $instructor->id)
+                        ->where('school_id', $school->id)
+                        ->distinct('student_id')
+                        ->count('student_id');
+                    $completedLessons = Booking::where('instructor_id', $instructor->id)
+                        ->where('school_id', $school->id)
+                        ->where('status', 'completed')
+                        ->count();
+
+                    fputcsv($file, [
+                        $instructor->name,
+                        $instructor->email,
+                        $instructor->contact ?? 'N/A',
+                        ucfirst($instructor->status ?? 'active'),
+                        $totalStudentsTaught,
+                        $completedLessons,
+                    ]);
+                }
+                fputcsv($file, ['']);
+                fputcsv($file, ['Total Instructors: ' . $instructors->count()]);
+                fputcsv($file, ['']);
+                fputcsv($file, ['']);
+            }
+
+            // ==================== BOOKING LIST ====================
+            if ($type === 'all' || $type === 'bookings') {
+                $bookings = Booking::where('school_id', $school->id)
+                    ->when($startDate, fn($q) => $q->whereBetween('scheduled_at', [$startDate, $endDate]))
+                    ->with(['student', 'instructor', 'course'])
+                    ->orderBy('scheduled_at', 'desc')
+                    ->get();
+
+                fputcsv($file, ['BOOKING LIST']);
+                fputcsv($file, ['------------']);
+                fputcsv($file, ['']);
+                fputcsv($file, ['Date', 'Time', 'Student', 'Instructor', 'Course', 'Status', 'Session Grade']);
+                
+                foreach ($bookings as $booking) {
+                    fputcsv($file, [
+                        $booking->scheduled_at ? Carbon::parse($booking->scheduled_at)->format('M d, Y') : 'N/A',
+                        $booking->scheduled_at ? Carbon::parse($booking->scheduled_at)->format('h:i A') : 'N/A',
+                        $booking->student->name ?? 'N/A',
+                        $booking->instructor->name ?? 'Unassigned',
+                        $booking->course->title ?? 'N/A',
+                        ucfirst($booking->status),
+                        $booking->session_grade ?? 'Not Graded',
+                    ]);
+                }
+                fputcsv($file, ['']);
+                fputcsv($file, ['Total Bookings: ' . $bookings->count()]);
+                fputcsv($file, ['']);
+                fputcsv($file, ['']);
+            }
+
+            // ==================== COURSE LIST ====================
+            if ($type === 'all' || $type === 'courses') {
+                $courses = Course::where('school_id', $school->id)
+                    ->withCount(['bookings as total_enrollments'])
+                    ->orderBy('title')
+                    ->get();
+
+                fputcsv($file, ['COURSE LIST']);
+                fputcsv($file, ['-----------']);
+                fputcsv($file, ['']);
+                fputcsv($file, ['Course Title', 'Price (PHP)', 'Duration (Hours)', 'Status', 'Total Enrollments']);
+                
+                foreach ($courses as $course) {
+                    fputcsv($file, [
+                        $course->title,
+                        number_format($course->price, 2),
+                        $course->duration_hours ?? 'N/A',
+                        ucfirst($course->status ?? 'active'),
+                        $course->total_enrollments,
+                    ]);
+                }
+                fputcsv($file, ['']);
+                fputcsv($file, ['Total Courses: ' . $courses->count()]);
+                fputcsv($file, ['']);
+                fputcsv($file, ['']);
+            }
+
+            // ==================== PAYMENT LIST ====================
+            if ($type === 'all' || $type === 'payments') {
+                $payments = Payment::whereHas('booking', fn($q) => $q->where('school_id', $school->id))
+                    ->when($startDate, fn($q) => $q->whereBetween('paid_on', [$startDate, $endDate]))
+                    ->with(['booking.student', 'booking.course'])
+                    ->orderBy('paid_on', 'desc')
+                    ->get();
+
+                $totalRevenue = $payments->where('status', 'completed')->sum('amount');
+                $pendingPayments = $payments->where('status', 'pending')->sum('amount');
+
+                fputcsv($file, ['PAYMENT LIST']);
+                fputcsv($file, ['------------']);
+                fputcsv($file, ['']);
+                fputcsv($file, ['Date', 'Student', 'Course', 'Amount (PHP)', 'Method', 'Status']);
+                
+                foreach ($payments as $payment) {
+                    fputcsv($file, [
+                        $payment->paid_on ? Carbon::parse($payment->paid_on)->format('M d, Y') : 'N/A',
+                        $payment->booking->student->name ?? 'N/A',
+                        $payment->booking->course->title ?? 'N/A',
+                        number_format($payment->amount, 2),
+                        ucfirst($payment->method ?? 'N/A'),
+                        ucfirst($payment->status),
+                    ]);
+                }
+                fputcsv($file, ['']);
+                fputcsv($file, ['Total Payments: ' . $payments->count()]);
+                fputcsv($file, ['Total Revenue: PHP ' . number_format($totalRevenue, 2)]);
+                fputcsv($file, ['Pending Payments: PHP ' . number_format($pendingPayments, 2)]);
+                fputcsv($file, ['']);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Export Students to CSV
+     */
+    public function exportStudents()
+    {
+        $school = auth()->guard('admin')->user()->school;
+        $filename = $school->slug . '_students_' . now()->format('Y-m-d') . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function() use ($school) {
+            $file = fopen('php://output', 'w');
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+
+            fputcsv($file, ['Name', 'Email', 'Contact', 'Enrollment Date', 'Status']);
+
+            $students = Student::where('school_id', $school->id)->orderBy('name')->get();
+            foreach ($students as $student) {
+                fputcsv($file, [
+                    $student->name,
+                    $student->email,
+                    $student->contact ?? 'N/A',
+                    $student->enrollment_date ? Carbon::parse($student->enrollment_date)->format('M d, Y') : 'N/A',
+                    ucfirst($student->status),
+                ]);
+            }
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Export Instructors to CSV
+     */
+    public function exportInstructors()
+    {
+        $school = auth()->guard('admin')->user()->school;
+        $filename = $school->slug . '_instructors_' . now()->format('Y-m-d') . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function() use ($school) {
+            $file = fopen('php://output', 'w');
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+
+            fputcsv($file, ['Name', 'Email', 'Contact', 'Status', 'Total Lessons', 'Completed Lessons']);
+
+            $instructors = Instructor::where('school_id', $school->id)->orderBy('name')->get();
+            foreach ($instructors as $instructor) {
+                $totalLessons = Booking::where('instructor_id', $instructor->id)->where('school_id', $school->id)->count();
+                $completedLessons = Booking::where('instructor_id', $instructor->id)->where('school_id', $school->id)->where('status', 'completed')->count();
+
+                fputcsv($file, [
+                    $instructor->name,
+                    $instructor->email,
+                    $instructor->contact ?? 'N/A',
+                    ucfirst($instructor->status ?? 'active'),
+                    $totalLessons,
+                    $completedLessons,
+                ]);
+            }
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Export Bookings to CSV
+     */
+    public function exportBookings()
+    {
+        $school = auth()->guard('admin')->user()->school;
+        $filename = $school->slug . '_bookings_' . now()->format('Y-m-d') . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function() use ($school) {
+            $file = fopen('php://output', 'w');
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+
+            fputcsv($file, ['Student', 'Instructor', 'Course', 'Scheduled At', 'Status', 'Session Grade']);
+
+            $bookings = Booking::where('school_id', $school->id)
+                ->with(['student', 'instructor', 'course'])
+                ->orderBy('scheduled_at', 'desc')
+                ->get();
+
+            foreach ($bookings as $booking) {
+                fputcsv($file, [
+                    $booking->student->name ?? 'N/A',
+                    $booking->instructor->name ?? 'Unassigned',
+                    $booking->course->title ?? 'N/A',
+                    $booking->scheduled_at ? Carbon::parse($booking->scheduled_at)->format('M d, Y h:i A') : 'N/A',
+                    ucfirst($booking->status),
+                    $booking->session_grade ?? 'Not Graded',
+                ]);
+            }
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Export Payments to CSV
+     */
+    public function exportPayments()
+    {
+        $school = auth()->guard('admin')->user()->school;
+        $filename = $school->slug . '_payments_' . now()->format('Y-m-d') . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function() use ($school) {
+            $file = fopen('php://output', 'w');
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+
+            fputcsv($file, ['Payment ID', 'Student', 'Course', 'Amount (PHP)', 'Method', 'Status', 'Paid On']);
+
+            $payments = Payment::whereHas('booking', fn($q) => $q->where('school_id', $school->id))
+                ->with(['booking.student', 'booking.course'])
+                ->orderBy('paid_on', 'desc')
+                ->get();
+
+            foreach ($payments as $payment) {
+                fputcsv($file, [
+                    $payment->id,
+                    $payment->booking->student->name ?? 'N/A',
+                    $payment->booking->course->title ?? 'N/A',
+                    number_format($payment->amount, 2),
+                    ucfirst($payment->method ?? 'N/A'),
+                    ucfirst($payment->status),
+                    $payment->paid_on ? Carbon::parse($payment->paid_on)->format('M d, Y') : 'N/A',
+                ]);
+            }
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Export Courses to CSV
+     */
+    public function exportCourses()
+    {
+        $school = auth()->guard('admin')->user()->school;
+        $filename = $school->slug . '_courses_' . now()->format('Y-m-d') . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function() use ($school) {
+            $file = fopen('php://output', 'w');
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+
+            fputcsv($file, ['Title', 'Price (PHP)', 'Duration (Hours)', 'Enrollments', 'Completed', 'Completion Rate']);
+
+            $courses = Course::where('school_id', $school->id)->orderBy('title')->get();
+
+            foreach ($courses as $course) {
+                $enrollments = Booking::where('course_id', $course->id)->where('school_id', $school->id)->count();
+                $completed = Booking::where('course_id', $course->id)->where('school_id', $school->id)->where('status', 'completed')->count();
+                $rate = $enrollments > 0 ? round(($completed / $enrollments) * 100, 1) . '%' : '0%';
+
+                fputcsv($file, [
+                    $course->title,
+                    number_format($course->price, 2),
+                    $course->duration_hours ?? 'N/A',
+                    $enrollments,
+                    $completed,
+                    $rate,
+                ]);
+            }
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
 }

@@ -258,10 +258,6 @@
 </style>
 
 <div class="reports-container">
-    <a href="<?php echo e($schoolRoute('instructor.dashboard')); ?>" onclick="loadContent(this.href); return false;" class="back-button">
-        ← Back to Dashboard
-    </a>
-
     <div class="page-header">
         <h1 class="page-title">Performance Reports</h1>
     </div>
