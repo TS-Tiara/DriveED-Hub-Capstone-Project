@@ -139,30 +139,19 @@ Route::prefix('{school:slug}')
             Route::get('/reports/instructors', [AdminController::class, 'instructorReports'])->name('reports.instructors');
             Route::get('/reports/logs', [AdminController::class, 'logs'])->name('reports.logs');
             
-            // Comprehensive Reporting Module
-            Route::prefix('reports')->name('reports.')->group(function () {
-                Route::get('/', [ReportController::class, 'index'])->name('index');
-                Route::get('/enrollment', [ReportController::class, 'enrollmentReport'])->name('enrollment');
-                Route::get('/driving-lessons', [ReportController::class, 'drivingLessonsReport'])->name('driving-lessons');
-                Route::get('/practical-lessons', [ReportController::class, 'practicalLessonsReport'])->name('practical-lessons');
-                Route::get('/financial', [ReportController::class, 'financialReport'])->name('financial');
-                Route::get('/attendance', [ReportController::class, 'attendanceReport'])->name('attendance');
-                Route::get('/instructor-performance', [ReportController::class, 'instructorPerformanceReport'])->name('instructor-performance');
-                Route::get('/student-progress', [ReportController::class, 'studentProgressReport'])->name('student-progress');
-                Route::get('/booking-summary', [ReportController::class, 'bookingSummaryReport'])->name('booking-summary');
-                Route::get('/cancellation', [ReportController::class, 'cancellationReport'])->name('cancellation');
-            });
+            // Reports - consolidated in single index view
+            Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
             
             Route::get('/profile', [AdminController::class, 'profile'])->name('profile');
             Route::put('/profile', [AdminController::class, 'updateProfile'])->name('profile.update');
             Route::post('/profile/picture', [AdminController::class, 'updateProfilePicture'])->name('profile.picture');
 
-            // Bookings management
-            Route::resource('bookings', BookingController::class);
+            // Bookings management (no separate create/edit views - handled via modals)
+            Route::resource('bookings', BookingController::class)->except(['create', 'edit']);
             Route::patch('/bookings/{booking}/status', [BookingController::class, 'updateStatus'])->name('bookings.updateStatus');
 
-            // Payments management
-            Route::resource('payments', PaymentController::class);
+            // Payments management (no separate create/edit views - handled via modals)
+            Route::resource('payments', PaymentController::class)->except(['create', 'edit']);
             Route::get('/payments/statistics', [PaymentController::class, 'statistics'])->name('payments.statistics');
             
             Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
@@ -175,15 +164,11 @@ Route::prefix('{school:slug}')
             Route::post('/timeslots/{id}/toggle', [InstructorTimeSlotController::class, 'toggle'])->name('timeslots.toggle');
             Route::post('/timeslots/{id}/request-removal', [InstructorTimeSlotController::class, 'requestRemoval'])->name('timeslots.requestRemoval');
             
-            // Instructor bookings
-            Route::get('/bookings', [InstructorController::class, 'bookings'])->name('bookings.index');
-            Route::get('/bookings/{booking}', [InstructorController::class, 'showBooking'])->name('bookings.show');
-            
             Route::get('/profile', [InstructorTimeSlotController::class, 'profile'])->name('profile');
             Route::put('/profile', [InstructorTimeSlotController::class, 'updateProfile'])->name('profile.update');
             Route::post('/profile/picture', [InstructorTimeSlotController::class, 'updateProfilePicture'])->name('profile.picture');
 
-            // Instructor attendance and feedback
+            // Instructor attendance and feedback (used from schedule page)
             Route::post('/bookings/{booking}/attendance', [InstructorTimeSlotController::class, 'updateAttendance'])->name('bookings.attendance');
             Route::post('/bookings/{booking}/feedback', [InstructorTimeSlotController::class, 'updateFeedback'])->name('bookings.feedback');
             
@@ -227,9 +212,8 @@ Route::prefix('{school:slug}')
             Route::post('/bookings/{booking}/confirm', [BookingController::class, 'confirmBooking'])->name('bookings.confirm');
             Route::delete('/bookings/{booking}/queue', [BookingController::class, 'removeFromQueue'])->name('bookings.removeQueue');
 
-            // Student progress
+            // Student progress (single page view - no individual progress detail page)
             Route::get('/progress', [ProgressController::class, 'index'])->name('progress.index');
-            Route::get('/progress/{progress}', [ProgressController::class, 'show'])->name('progress.show');
 
             // Student payments
             Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');

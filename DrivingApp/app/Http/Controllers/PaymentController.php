@@ -44,7 +44,8 @@ class PaymentController extends Controller
             ]);
         }
 
-        $guard = Auth::guard('admin')->check() ? 'admin' : (Auth::guard('student')->check() ? 'student' : 'instructor');
+        // Only admin and student have payment views
+        $guard = Auth::guard('admin')->check() ? 'admin' : 'student';
         $view = "{$guard}.payments";
         return view($school->resolveView($view), compact('school', 'payments'));
     }
@@ -112,16 +113,11 @@ class PaymentController extends Controller
     {
         $payment->load(['booking.student', 'booking.course', 'booking.instructor']);
 
-        if (request()->ajax() || request()->wantsJson()) {
-            return response()->json([
-                'success' => true,
-                'payment' => $payment
-            ]);
-        }
-
-        $guard = Auth::guard('admin')->check() ? 'admin' : (Auth::guard('student')->check() ? 'student' : 'instructor');
-        $view = "{$guard}.payment-show";
-        return view($school->resolveView($view), compact('school', 'payment'));
+        // Always return JSON - payment details shown in modals/lists
+        return response()->json([
+            'success' => true,
+            'payment' => $payment
+        ]);
     }
 
     /**

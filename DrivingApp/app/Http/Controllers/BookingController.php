@@ -56,8 +56,8 @@ class BookingController extends Controller
             ]);
         }
 
-        $guard = Auth::guard('admin')->check() ? 'admin' : (Auth::guard('student')->check() ? 'student' : 'instructor');
-        $view = "{$guard}.bookings";
+        // Only admin has bookings list view
+        $view = 'admin.bookings';
         return view($school->resolveView($view), compact('school', 'bookings'));
     }
 
@@ -280,29 +280,11 @@ class BookingController extends Controller
     {
         $booking->load(['student', 'instructor', 'course', 'payment']);
 
-        if (request()->ajax() || request()->wantsJson()) {
-            return response()->json([
-                'success' => true,
-                'booking' => $booking
-            ]);
-        }
-
-        $guard = Auth::guard('admin')->check() ? 'admin' : (Auth::guard('student')->check() ? 'student' : 'instructor');
-        $view = "{$guard}.booking-show";
-        return view($school->resolveView($view), compact('school', 'booking'));
-    }
-
-    /**
-     * Show the form for editing the specified booking.
-     */
-    public function edit(School $school, Booking $booking)
-    {
-        $courses = Course::where('school_id', $school->id)->get();
-        $instructors = Instructor::where('school_id', $school->id)->get();
-        $students = Student::where('school_id', $school->id)->get();
-
-        $view = $school->resolveView('admin.booking-edit');
-        return view($view, compact('school', 'booking', 'courses', 'instructors', 'students'));
+        // Always return JSON - booking details shown in modals
+        return response()->json([
+            'success' => true,
+            'booking' => $booking
+        ]);
     }
 
     /**

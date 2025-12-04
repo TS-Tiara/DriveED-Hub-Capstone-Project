@@ -33,9 +33,9 @@ class CourseController extends Controller
             ]);
         }
 
-        // Determine which view to use based on user role
-        $guard = Auth::guard('admin')->check() ? 'admin' : (Auth::guard('student')->check() ? 'student' : 'instructor');
-        $view = $guard === 'admin' ? 'admin.courses' : ($guard === 'student' ? 'student.courses' : 'instructor.courses');
+        // Determine which view to use based on user role (only admin and student have course views)
+        $guard = Auth::guard('admin')->check() ? 'admin' : 'student';
+        $view = $guard === 'admin' ? 'admin.courses' : 'student.courses';
 
         // Get instructors for admin view
         $instructors = [];
