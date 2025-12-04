@@ -1945,7 +1945,7 @@
             })
             .then(response => {
                 if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    throw new Error('Network response was not ok');
                 }
                 return response.text();
             })
@@ -1990,14 +1990,12 @@
                 console.error('Error loading content:', error);
                 loadingOverlay.style.display = 'none';
                 
-                // Show error message with option to navigate directly
+                // Show error message
                 mainContent.innerHTML = `
                     <div style="text-align: center; padding: 50px; color: #dc3545;">
                         <h3>Error Loading Content</h3>
                         <p>Unable to load the requested page. Please try again.</p>
-                        <p style="font-size: 12px; color: #666;">${error.message}</p>
-                        <button onclick="window.location.href='${url}'" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; margin: 5px;">Go to Page</button>
-                        <button onclick="window.location.reload()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer; margin: 5px;">Reload Page</button>
+                        <button onclick="window.location.reload()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">Reload Page</button>
                     </div>
                 `;
             });
