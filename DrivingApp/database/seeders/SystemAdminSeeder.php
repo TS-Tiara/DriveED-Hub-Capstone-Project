@@ -26,14 +26,15 @@ class SystemAdminSeeder extends Seeder
     {
         $this->command->info('Creating System Administrators...');
         
-        // System Admin 1 - Primary (You - Tiara)
+        // System Admin 1 - Primary
         $admin1 = Admin::updateOrCreate(
-            ['email' => 'tiara@driveedhub.com'],
+            ['email' => 'systemadmin@gmail.com'],
             [
                 'school_id' => null, // System admins are NOT associated with any school
                 'name' => 'Tiara Santos',
-                'password' => Hash::make('SystemAdmin@2024'),
+                'password' => Hash::make('sysadmin123!'),
                 'role' => 'system_admin',
+                'is_active' => true,
             ]
         );
         
@@ -45,12 +46,13 @@ class SystemAdminSeeder extends Seeder
 
         // System Admin 2 - Secondary (Backup admin)
         $admin2 = Admin::updateOrCreate(
-            ['email' => 'admin@driveedhub.com'],
+            ['email' => 'systemadmin2@gmail.com'],
             [
                 'school_id' => null,
                 'name' => 'System Administrator',
-                'password' => Hash::make('SystemAdmin@2024'),
+                'password' => Hash::make('sysadmin123!'),
                 'role' => 'system_admin',
+                'is_active' => true,
             ]
         );
         
@@ -65,11 +67,11 @@ class SystemAdminSeeder extends Seeder
         $this->command->table(
             ['Email', 'Password'],
             [
-                ['tiara@driveedhub.com', 'SystemAdmin@2024'],
-                ['admin@driveedhub.com', 'SystemAdmin@2024'],
+                ['systemadmin@gmail.com', 'sysadmin123!'],
+                ['systemadmin2@gmail.com', 'sysadmin123!'],
             ]
         );
-        $this->command->warn('⚠️  Please change these passwords after first login!');
+        $this->command->warn('Please change these passwords after first login!');
         $this->command->info('Login at: /system-admin');
     }
 }

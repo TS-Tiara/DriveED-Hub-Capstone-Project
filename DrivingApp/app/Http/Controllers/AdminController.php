@@ -1212,10 +1212,6 @@ class AdminController extends Controller
      */
     public function systemLogs(School $school)
     {
-        // TODO: Implement comprehensive logging system
-        // This will track: logins, logouts, account deactivations, 
-        // activations, creations, deletions, etc.
-        
         $logs = \App\Models\Log::where('school_id', $school->id)
             ->orderBy('created_at', 'desc')
             ->paginate(50);
@@ -1229,10 +1225,6 @@ class AdminController extends Controller
      */
     public function systemMonitoring(School $school)
     {
-        // TODO: Implement system monitoring
-        // Track: uptime, server status, database performance,
-        // active users, system health checks
-        
         $metrics = [
             'uptime' => 'Operational',
             'active_users' => \App\Models\Admin::where('school_id', $school->id)->count() +

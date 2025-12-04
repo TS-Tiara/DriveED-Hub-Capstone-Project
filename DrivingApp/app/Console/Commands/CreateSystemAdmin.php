@@ -114,6 +114,7 @@ class CreateSystemAdmin extends Command
             'email' => $email,
             'password' => Hash::make($password),
             'role' => 'system_admin',
+            'is_active' => true,
         ]);
 
         $this->info('');
