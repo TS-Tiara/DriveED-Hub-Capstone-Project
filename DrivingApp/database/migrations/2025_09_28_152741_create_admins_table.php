@@ -13,18 +13,19 @@ return new class extends Migration
 {
     Schema::create('admins', function (Blueprint $table) {
         $table->id();
-        $table->foreignId('school_id')->constrained()->onDelete('cascade');
+        $table->foreignId('school_id')->nullable()->constrained()->onDelete('cascade');
         $table->string('name');
         $table->string('email');
         $table->string('password');
         $table->string('contact', 20)->nullable();
         $table->string('profile_picture')->nullable();
         $table->string('role')->default('school_admin');
+        $table->boolean('is_active')->default(true);
         $table->rememberToken();
         $table->timestamps();
         
-        // Composite unique key for email within school
-        $table->unique(['school_id', 'email']);
+        // Unique email (system admins have no school, school admins unique per school)
+        $table->unique('email');
     });
 }
 
