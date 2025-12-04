@@ -953,9 +953,9 @@
                                                         </span>
                                                     @endif
                                                 @else
-                                                    <form method="POST" action="{{ route('schools.instructor.timeslots.toggle', ['school' => $school->slug, 'id' => $slot->id]) }}" style="display: inline;" data-no-ajax="true">
+                                                    <form method="POST" action="{{ route('schools.instructor.timeslots.toggle', ['school' => $school->slug, 'id' => $slot->id]) }}" style="display: inline;" class="native-form" onsubmit="return confirm('Are you sure you want to leave this slot?');">
                                                         @csrf
-                                                        <button type="submit" class="btn-slot btn-leave" onclick="return confirm('Are you sure you want to leave this slot?')">
+                                                        <button type="submit" class="btn-slot btn-leave">
                                                             Leave Slot
                                                         </button>
                                                     </form>
@@ -1144,7 +1144,7 @@
                                         @endif
                                         
                                         <div class="slot-actions">
-                                            <form method="POST" action="{{ route('schools.instructor.timeslots.toggle', ['school' => $school->slug, 'id' => $slot->id]) }}" style="display: inline;" data-no-ajax="true">
+                                            <form method="POST" action="{{ route('schools.instructor.timeslots.toggle', ['school' => $school->slug, 'id' => $slot->id]) }}" style="display: inline;" class="native-form">
                                                 @csrf
                                                 <button type="submit" class="btn-slot btn-select">
                                                     Select Slot

@@ -1511,6 +1511,16 @@
                 return true;
             }
             
+            // Exclude forms with native-form class (for direct form submission)
+            if (form.classList.contains('native-form')) {
+                return true;
+            }
+            
+            // Exclude timeslot toggle forms
+            if (action.includes('timeslots') && action.includes('toggle')) {
+                return true;
+            }
+            
             return false;
         }
         

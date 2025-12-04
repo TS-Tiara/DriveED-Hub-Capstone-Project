@@ -24,5 +24,32 @@ class AppServiceProvider extends ServiceProvider
         if (config('app.env') === 'production' || isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
             URL::forceScheme('https');
         }
+        
+        // Ensure storage directories exist (for Docker/containerized deployments)
+        $this->ensureStorageDirectoriesExist();
+    }
+    
+    /**
+     * Ensure all required storage directories exist.
+     * This is necessary for containerized deployments where storage might not persist.
+     */
+    protected function ensureStorageDirectoriesExist(): void
+    {
+        $directories = [
+            storage_path('framework'),
+            storage_path('framework/cache'),
+            storage_path('framework/cache/data'),
+            storage_path('framework/sessions'),
+            storage_path('framework/views'),
+            storage_path('logs'),
+            storage_path('app'),
+            storage_path('app/public'),
+        ];
+        
+        foreach ($directories as $directory) {
+            if (!is_dir($directory)) {
+                @mkdir($directory, 0755, true);
+            }
+        }
     }
 }

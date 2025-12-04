@@ -128,7 +128,7 @@
     }
 
     .action-btn {
-        background: {{ $secondaryColor }};
+        background: white;
         color: {{ $primaryColor }};
         padding: 14px 16px;
         border-radius: 20px;
@@ -138,12 +138,14 @@
         font-size: 0.875rem;
         transition: all 0.3s ease;
         display: block;
-        border: 2px solid {{ $secondaryColor }};
+        border: 2px solid white;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
 
     .action-btn:hover {
-        background: white;
+        background: {{ $secondaryColor }};
         color: {{ $primaryColor }};
+        border-color: {{ $secondaryColor }};
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         text-decoration: none;
@@ -151,35 +153,46 @@
 
     /* Today's Lesson Section */
     .todays-lesson-section {
-        background: {{ $primaryColor }};
-        border-radius: {{ $borderRadius }}px;
-        padding: 16px 20px;
+        background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $primaryColor }}dd 100%);
+        border-radius: {{ $borderRadius }}px {{ $borderRadius }}px 0 0;
+        padding: 18px 20px;
         color: white;
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 14px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
 
     .todays-lesson-icon {
-        width: 40px;
-        height: 40px;
-        background: white;
-        border-radius: 8px;
+        width: 44px;
+        height: 44px;
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 10px;
         display: flex;
         align-items: center;
         justify-content: center;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
 
     .todays-lesson-icon svg {
-        width: 24px;
-        height: 24px;
+        width: 26px;
+        height: 26px;
         fill: {{ $primaryColor }};
     }
 
     .todays-lesson-title {
-        font-weight: 600;
-        font-size: 1rem;
+        font-weight: 700;
+        font-size: 1.1rem;
         margin: 0;
+        letter-spacing: 0.3px;
+    }
+
+    .todays-lesson-container {
+        background: white;
+        border-radius: 0 0 {{ $borderRadius }}px {{ $borderRadius }}px;
+        border: 2px solid {{ $primaryColor }};
+        border-top: none;
+        overflow: hidden;
     }
 
     .empty-state {
@@ -187,9 +200,6 @@
         padding: 40px 24px;
         color: #9ca3af;
         background: white;
-        border-radius: {{ $borderRadius }}px;
-        border: 2px solid {{ $primaryColor }};
-        margin-top: 12px;
     }
 
     .empty-state-icon {
@@ -206,6 +216,54 @@
         margin: 0;
         font-size: 0.9rem;
         font-weight: 500;
+        color: #6b7280;
+    }
+
+    /* Lesson Card Item Styles */
+    .lesson-card-item {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 16px 20px;
+        border-bottom: 1px solid #f0f0f0;
+        transition: background 0.2s ease;
+    }
+
+    .lesson-card-item:last-child {
+        border-bottom: none;
+    }
+
+    .lesson-card-item:hover {
+        background: #fafafa;
+    }
+
+    .lesson-time-badge {
+        background: {{ $primaryColor }};
+        color: white;
+        padding: 8px 14px;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        min-width: 80px;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .lesson-details {
+        flex: 1;
+    }
+
+    .lesson-course-name {
+        font-weight: 600;
+        font-size: 1rem;
+        color: #1f2937;
+        margin-bottom: 4px;
+    }
+
+    .lesson-instructor-name {
+        display: flex;
+        align-items: center;
+        font-size: 0.85rem;
         color: #6b7280;
     }
 
@@ -301,6 +359,25 @@
 
         .todays-lesson-title {
             font-size: 0.9rem;
+        }
+
+        .lesson-card-item {
+            padding: 12px 16px;
+            gap: 12px;
+        }
+
+        .lesson-time-badge {
+            padding: 6px 10px;
+            font-size: 0.75rem;
+            min-width: 70px;
+        }
+
+        .lesson-course-name {
+            font-size: 0.9rem;
+        }
+
+        .lesson-instructor-name {
+            font-size: 0.8rem;
         }
 
         .empty-state {
@@ -562,47 +639,44 @@
         </div>
         <h3 class="todays-lesson-title">Today's Lesson</h3>
     </div>
+    <div class="todays-lesson-container">
+        @php
+            $todayLessons = $nextLessons ? $nextLessons->filter(function($lesson) {
+                return \Carbon\Carbon::parse($lesson->date)->isToday();
+            }) : collect([]);
+        @endphp
 
-    @php
-        $todayLessons = $nextLessons ? $nextLessons->filter(function($lesson) {
-            return \Carbon\Carbon::parse($lesson->date)->isToday();
-        }) : collect([]);
-    @endphp
-
-    @if($todayLessons->isEmpty())
-    <div class="empty-state">
-        <div class="empty-state-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11zM9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm-8 4H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z"/>
-            </svg>
+        @if($todayLessons->isEmpty())
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11zM9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm-8 4H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z"/>
+                </svg>
+            </div>
+            <p class="empty-state-text">No Lessons Today</p>
         </div>
-        <p class="empty-state-text">No Lessons Today</p>
-    </div>
-    @else
-        @foreach($todayLessons as $lesson)
-        <div class="info-card" style="margin-top: 12px;">
-            <div class="card-body">
-                <div class="info-row">
-                    <span class="info-label">Time</span>
-                    <span class="info-value">
-                        @if($lesson->timeSlot)
-                            {{ \Carbon\Carbon::parse($lesson->timeSlot->start_time)->format('g:i A') }}
-                        @else
-                            TBD
-                        @endif
-                    </span>
+        @else
+            @foreach($todayLessons as $lesson)
+            <div class="lesson-card-item">
+                <div class="lesson-time-badge">
+                    @if($lesson->timeSlot)
+                        {{ \Carbon\Carbon::parse($lesson->timeSlot->start_time)->format('g:i A') }}
+                    @else
+                        TBD
+                    @endif
                 </div>
-                <div class="info-row">
-                    <span class="info-label">Course</span>
-                    <span class="info-value">{{ $lesson->course->title ?? 'Driving Lesson' }}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Instructor</span>
-                    <span class="info-value">{{ $lesson->instructor->name ?? 'TBA' }}</span>
+                <div class="lesson-details">
+                    <div class="lesson-course-name">{{ $lesson->course->title ?? 'Driving Lesson' }}</div>
+                    <div class="lesson-instructor-name">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" style="fill: currentColor; margin-right: 4px;">
+                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                        </svg>
+                        {{ $lesson->instructor->name ?? 'Instructor TBA' }}
+                    </div>
                 </div>
             </div>
-        </div>
-        @endforeach
-    @endif
+            @endforeach
+        @endif
+    </div>
 </div>
 @endsection
