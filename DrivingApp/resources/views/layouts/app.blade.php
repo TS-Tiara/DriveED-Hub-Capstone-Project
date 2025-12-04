@@ -1989,14 +1989,8 @@
                 console.error('Error loading content:', error);
                 loadingOverlay.style.display = 'none';
                 
-                // Show error message
-                mainContent.innerHTML = `
-                    <div style="text-align: center; padding: 50px; color: #dc3545;">
-                        <h3>Error Loading Content</h3>
-                        <p>Unable to load the requested page. Please try again.</p>
-                        <button onclick="window.location.reload()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">Reload Page</button>
-                    </div>
-                `;
+                // On error, redirect to the page directly instead of showing error
+                window.location.href = url;
             });
         }
         
