@@ -391,6 +391,7 @@
                             </a>
                             <form action="{{ route('system-admin.schools.toggle-status', $school) }}" method="POST" style="display: inline;">
                                 @csrf
+                                @method('PATCH')
                                 <button type="submit" class="btn-action {{ ($school->status ?? 'active') === 'active' ? 'btn-deactivate' : 'btn-activate' }}" title="{{ ($school->status ?? 'active') === 'active' ? 'Deactivate' : 'Activate' }}">
                                     <i class="fas {{ ($school->status ?? 'active') === 'active' ? 'fa-ban' : 'fa-check' }}"></i>
                                 </button>

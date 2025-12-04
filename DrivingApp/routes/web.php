@@ -184,8 +184,10 @@ Route::prefix('{school:slug}')
             Route::get('/progress', [ProgressController::class, 'index'])->name('progress.index');
             Route::get('/progress/create', [ProgressController::class, 'create'])->name('progress.create');
             Route::post('/progress', [ProgressController::class, 'store'])->name('progress.store');
+            Route::get('/progress/{progress}', [ProgressController::class, 'show'])->name('progress.show');
             Route::get('/progress/{progress}/edit', [ProgressController::class, 'edit'])->name('progress.edit');
             Route::put('/progress/{progress}', [ProgressController::class, 'update'])->name('progress.update');
+            Route::delete('/progress/{progress}', [ProgressController::class, 'destroy'])->name('progress.destroy');
             
             // Instructor performance reports
             Route::get('/reports', [InstructorController::class, 'reports'])->name('reports');
