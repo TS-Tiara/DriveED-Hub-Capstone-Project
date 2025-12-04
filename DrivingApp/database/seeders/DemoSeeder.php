@@ -104,19 +104,22 @@ class DemoSeeder extends Seeder
         CoursePackage::create([
             'course_id' => $course1_1->id,
             'name' => '10-Hour Package',
-            'sessions' => 10,
-            'hours' => 10,
+            'transmission_type' => 'manual',
+            'vehicle_type' => 'Car',
+            'training_hours' => 10,
             'price' => 5500.00,
-            'status' => 'active',
+            'description' => 'Basic manual driving course',
         ]);
 
         CoursePackage::create([
             'course_id' => $course1_1->id,
             'name' => '15-Hour Package',
-            'sessions' => 15,
-            'hours' => 15,
+            'transmission_type' => 'manual',
+            'vehicle_type' => 'Car',
+            'training_hours' => 15,
             'price' => 7500.00,
-            'status' => 'active',
+            'description' => 'Complete manual driving course',
+            'is_popular' => true,
         ]);
 
         $course1_2 = Course::create([
@@ -133,10 +136,12 @@ class DemoSeeder extends Seeder
         CoursePackage::create([
             'course_id' => $course1_2->id,
             'name' => '8-Hour Package',
-            'sessions' => 8,
-            'hours' => 8,
+            'transmission_type' => 'automatic',
+            'vehicle_type' => 'Car',
+            'training_hours' => 8,
             'price' => 4800.00,
-            'status' => 'active',
+            'description' => 'Automatic driving course',
+            'is_popular' => true,
         ]);
 
         $course1_3 = Course::create([
@@ -152,10 +157,11 @@ class DemoSeeder extends Seeder
         CoursePackage::create([
             'course_id' => $course1_3->id,
             'name' => 'TDC 15-Hour',
-            'sessions' => 5,
-            'hours' => 15,
+            'transmission_type' => 'automatic',
+            'vehicle_type' => 'Car',
+            'training_hours' => 15,
             'price' => 1500.00,
-            'status' => 'active',
+            'description' => 'Theoretical Driving Course for LTO exam',
         ]);
 
         // School 1 Students (15)
@@ -192,8 +198,8 @@ class DemoSeeder extends Seeder
             ]);
         }
 
-        // Create TimeSlots for School 1 instructors
-        $this->createTimeSlotsForInstructors($school1, $createdInstructors1);
+        // Create TimeSlots for School 1 courses and assign instructors
+        $this->createTimeSlotsAndAssignInstructors($school1, $createdInstructors1, [$course1_1, $course1_2, $course1_3]);
 
         // Create Bookings and Payments for School 1
         $this->createBookingsAndPayments($school1, $students1, $createdInstructors1, [$course1_1, $course1_2, $course1_3]);
@@ -279,19 +285,22 @@ class DemoSeeder extends Seeder
         CoursePackage::create([
             'course_id' => $course2_1->id,
             'name' => '8-Hour Starter',
-            'sessions' => 8,
-            'hours' => 8,
+            'transmission_type' => 'automatic',
+            'vehicle_type' => 'Car',
+            'training_hours' => 8,
             'price' => 4000.00,
-            'status' => 'active',
+            'description' => 'Beginner automatic course',
         ]);
 
         CoursePackage::create([
             'course_id' => $course2_1->id,
             'name' => '12-Hour Complete',
-            'sessions' => 12,
-            'hours' => 12,
+            'transmission_type' => 'automatic',
+            'vehicle_type' => 'Car',
+            'training_hours' => 12,
             'price' => 5500.00,
-            'status' => 'active',
+            'description' => 'Complete automatic driving course',
+            'is_popular' => true,
         ]);
 
         $course2_2 = Course::create([
@@ -307,10 +316,11 @@ class DemoSeeder extends Seeder
         CoursePackage::create([
             'course_id' => $course2_2->id,
             'name' => '6-Hour Package',
-            'sessions' => 6,
-            'hours' => 6,
+            'transmission_type' => 'manual',
+            'vehicle_type' => 'Motorcycle',
+            'training_hours' => 6,
             'price' => 3000.00,
-            'status' => 'active',
+            'description' => 'Motorcycle riding course',
         ]);
 
         // School 2 Students (10)
@@ -342,8 +352,8 @@ class DemoSeeder extends Seeder
             ]);
         }
 
-        // Create TimeSlots for School 2 instructors
-        $this->createTimeSlotsForInstructors($school2, $createdInstructors2);
+        // Create TimeSlots for School 2 courses and assign instructors
+        $this->createTimeSlotsAndAssignInstructors($school2, $createdInstructors2, [$course2_1, $course2_2]);
 
         // Create Bookings and Payments for School 2
         $this->createBookingsAndPayments($school2, $students2, $createdInstructors2, [$course2_1, $course2_2]);
@@ -375,7 +385,7 @@ class DemoSeeder extends Seeder
         $this->command->info('========================================');
     }
 
-    private function createTimeSlotsForInstructors($school, $instructors)
+    private function createTimeSlotsAndAssignInstructors($school, $instructors, $courses)
     {
         $times = [
             ['08:00:00', '09:00:00'],
@@ -396,20 +406,30 @@ class DemoSeeder extends Seeder
             // Skip Sundays
             if ($dayOfWeek == 0) continue;
 
-            foreach ($instructors as $instructor) {
-                // Each instructor gets 4-6 random slots per day
+            // Create time slots for each course
+            foreach ($courses as $course) {
+                // Create 4-6 random slots per day per course
                 $daySlots = array_rand($times, rand(4, min(6, count($times))));
                 if (!is_array($daySlots)) $daySlots = [$daySlots];
                 
                 foreach ($daySlots as $slotIndex) {
-                    TimeSlot::create([
+                    $timeSlot = TimeSlot::create([
                         'school_id' => $school->id,
-                        'instructor_id' => $instructor->id,
+                        'course_id' => $course->id,
                         'date' => $date,
                         'start_time' => $times[$slotIndex][0],
                         'end_time' => $times[$slotIndex][1],
-                        'status' => 'available',
-                        'max_students' => 1,
+                        'status' => 'open',
+                        'max_instructors' => 1,
+                    ]);
+
+                    // Assign a random instructor to this time slot
+                    $instructor = $instructors[array_rand($instructors)];
+                    ScheduleInstructor::create([
+                        'time_slot_id' => $timeSlot->id,
+                        'instructor_id' => $instructor->id,
+                        'school_id' => $school->id,
+                        'assignment_type' => 'admin_assigned',
                     ]);
                 }
             }
@@ -440,48 +460,54 @@ class DemoSeeder extends Seeder
                 'student_id' => $student->id,
                 'instructor_id' => $instructor->id,
                 'course_id' => $course->id,
-                'course_package_id' => $package->id,
-                'booking_date' => $bookingDate->format('Y-m-d'),
-                'start_time' => '09:00:00',
-                'end_time' => '10:00:00',
+                'package_id' => $package->id,
+                'scheduled_at' => $bookingDate,
+                'booking_date' => $bookingDate,
                 'status' => $status,
+                'payment_status' => $status == 'completed' ? 'paid' : 'pending',
+                'total_amount' => $package->price,
                 'notes' => $status == 'cancelled' ? 'Student requested cancellation' : null,
+                'cancelled_by' => $status == 'cancelled' ? 'student' : null,
+                'cancellation_reason' => $status == 'cancelled' ? 'Personal reasons' : null,
+                'cancelled_at' => $status == 'cancelled' ? now() : null,
+                'attendance_status' => $status == 'completed' ? 'attended' : null,
+                'session_status' => $status == 'completed' ? 'completed' : null,
             ]);
 
-            // Create payment for non-cancelled bookings
-            if ($status != 'cancelled' && $status != 'pending') {
-                $paymentStatus = $status == 'completed' ? 'completed' : (rand(0, 1) ? 'completed' : 'partial');
-                $amountPaid = $paymentStatus == 'completed' ? $package->price : $package->price * 0.5;
-                
+            // Create payment for completed bookings
+            if ($status == 'completed') {
                 Payment::create([
                     'school_id' => $school->id,
-                    'student_id' => $student->id,
                     'booking_id' => $booking->id,
-                    'course_package_id' => $package->id,
                     'amount' => $package->price,
-                    'amount_paid' => $amountPaid,
-                    'balance' => $package->price - $amountPaid,
-                    'payment_method' => ['cash', 'gcash', 'bank_transfer'][rand(0, 2)],
-                    'status' => $paymentStatus,
-                    'payment_date' => $bookingDate->format('Y-m-d'),
+                    'paid_on' => $bookingDate,
+                    'method' => ['cash', 'gcash', 'bank_transfer'][rand(0, 2)],
+                    'status' => 'completed',
                 ]);
             }
 
-            // Create progress for completed bookings
+            // Create/update progress for completed bookings
             if ($status == 'completed') {
-                Progress::create([
-                    'school_id' => $school->id,
-                    'student_id' => $student->id,
-                    'instructor_id' => $instructor->id,
-                    'course_id' => $course->id,
-                    'booking_id' => $booking->id,
-                    'session_number' => rand(1, 5),
-                    'total_sessions' => $package->sessions,
-                    'skills_covered' => ['Basic Control', 'Steering', 'Braking'],
-                    'performance_rating' => rand(3, 5),
-                    'notes' => 'Good progress, student is learning well.',
-                    'session_date' => $bookingDate->format('Y-m-d'),
-                ]);
+                $existingProgress = Progress::where('student_id', $student->id)
+                    ->where('course_id', $course->id)
+                    ->first();
+                    
+                if ($existingProgress) {
+                    $existingProgress->update([
+                        'completion_percent' => min(100, $existingProgress->completion_percent + rand(10, 25)),
+                        'last_updated' => now(),
+                        'notes' => 'Good progress, student is learning well.',
+                    ]);
+                } else {
+                    Progress::create([
+                        'school_id' => $school->id,
+                        'student_id' => $student->id,
+                        'course_id' => $course->id,
+                        'completion_percent' => rand(10, 40),
+                        'last_updated' => now(),
+                        'notes' => 'Good progress, student is learning well.',
+                    ]);
+                }
             }
         }
     }
