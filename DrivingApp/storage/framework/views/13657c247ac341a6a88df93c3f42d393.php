@@ -1,12 +1,12 @@
-@extends($isAjax ?? false ? 'layouts.ajax' : 'layouts.app')
 
-@section('title', 'Grade Management')
 
-@section('content')
-@php
+<?php $__env->startSection('title', 'Grade Management'); ?>
+
+<?php $__env->startSection('content'); ?>
+<?php
     $school = $school ?? $currentSchool ?? null;
     $settings = $school->schoolSetting;
-@endphp
+?>
 
 <style>
     .grades-container {
@@ -18,7 +18,7 @@
     .page-header {
         margin-bottom: 30px;
         padding-bottom: 15px;
-        border-bottom: 4px solid {{ $settings->primary_color ?? '#667eea' }};
+        border-bottom: 4px solid <?php echo e($settings->primary_color ?? '#667eea'); ?>;
     }
 
     .page-title {
@@ -34,8 +34,8 @@
         gap: 8px;
         padding: 10px 20px;
         background: white;
-        color: {{ $settings->primary_color ?? '#667eea' }};
-        border: 2px solid {{ $settings->primary_color ?? '#667eea' }};
+        color: <?php echo e($settings->primary_color ?? '#667eea'); ?>;
+        border: 2px solid <?php echo e($settings->primary_color ?? '#667eea'); ?>;
         border-radius: 8px;
         text-decoration: none;
         font-weight: 500;
@@ -44,7 +44,7 @@
     }
 
     .back-button:hover {
-        background: {{ $settings->primary_color ?? '#667eea' }};
+        background: <?php echo e($settings->primary_color ?? '#667eea'); ?>;
         color: white;
         transform: translateX(-5px);
     }
@@ -73,7 +73,7 @@
 
     .search-input:focus {
         outline: none;
-        border-color: {{ $settings->primary_color ?? '#667eea' }};
+        border-color: <?php echo e($settings->primary_color ?? '#667eea'); ?>;
     }
 
     .filter-group {
@@ -99,7 +99,7 @@
 
     .filter-select:focus {
         outline: none;
-        border-color: {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        border-color: <?php echo e($school->schoolSetting->primary_color ?? '#667eea'); ?>;
     }
 
     .action-buttons {
@@ -128,7 +128,7 @@
 
     .btn-save-all {
         padding: 10px 20px;
-        background: {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        background: <?php echo e($school->schoolSetting->primary_color ?? '#667eea'); ?>;
         color: white;
         border: none;
         border-radius: 8px;
@@ -141,7 +141,7 @@
     }
 
     .btn-save-all:hover {
-        background: {{ $school->schoolSetting->secondary_color ?? '#764ba2' }};
+        background: <?php echo e($school->schoolSetting->secondary_color ?? '#764ba2'); ?>;
         transform: translateY(-2px);
     }
 
@@ -159,7 +159,7 @@
 
     .grades-table thead {
         background: #f3f4f6;
-        border-bottom: 2px solid {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        border-bottom: 2px solid <?php echo e($school->schoolSetting->primary_color ?? '#667eea'); ?>;
     }
 
     .grades-table th {
@@ -200,7 +200,7 @@
         width: 40px;
         height: 40px;
         border-radius: 50%;
-        background: {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        background: <?php echo e($school->schoolSetting->primary_color ?? '#667eea'); ?>;
         color: white;
         display: flex;
         align-items: center;
@@ -239,7 +239,7 @@
 
     .grade-input:focus {
         outline: none;
-        border-color: {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        border-color: <?php echo e($school->schoolSetting->primary_color ?? '#667eea'); ?>;
     }
 
     .grade-input.changed {
@@ -305,11 +305,11 @@
     }
 
     .btn-view {
-        color: {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        color: <?php echo e($school->schoolSetting->primary_color ?? '#667eea'); ?>;
     }
 
     .btn-view:hover {
-        background: {{ $school->schoolSetting->primary_color ?? '#667eea' }}20;
+        background: <?php echo e($school->schoolSetting->primary_color ?? '#667eea'); ?>20;
     }
 
     .btn-save {
@@ -355,7 +355,7 @@
     .stat-value {
         font-size: 28px;
         font-weight: 700;
-        color: {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        color: <?php echo e($school->schoolSetting->primary_color ?? '#667eea'); ?>;
     }
 
     @media (max-width: 1024px) {
@@ -390,6 +390,10 @@
 </style>
 
 <div class="grades-container">
+    <a href="<?php echo e($schoolRoute('instructor.dashboard')); ?>" onclick="loadContent(this.href); return false;" class="back-button">
+        &larr; Back to Dashboard
+    </a>
+
     <div class="page-header">
         <h1 class="page-title">Grade Management</h1>
     </div>
@@ -398,19 +402,19 @@
     <div class="stats-summary">
         <div class="stat-box">
             <div class="stat-label">Total Students</div>
-            <div class="stat-value">{{ $students->count() }}</div>
+            <div class="stat-value"><?php echo e($students->count()); ?></div>
         </div>
         <div class="stat-box">
             <div class="stat-label">Graded Sessions</div>
-            <div class="stat-value">{{ $gradedSessions }}</div>
+            <div class="stat-value"><?php echo e($gradedSessions); ?></div>
         </div>
         <div class="stat-box">
             <div class="stat-label">Average Grade</div>
-            <div class="stat-value">{{ number_format($averageGrade, 1) }}</div>
+            <div class="stat-value"><?php echo e(number_format($averageGrade, 1)); ?></div>
         </div>
         <div class="stat-box">
             <div class="stat-label">Pending Grades</div>
-            <div class="stat-value">{{ $pendingGrades }}</div>
+            <div class="stat-value"><?php echo e($pendingGrades); ?></div>
         </div>
     </div>
 
@@ -445,7 +449,7 @@
 
     <!-- Grades Table -->
     <div class="grades-table-container">
-        @if($students->count() > 0)
+        <?php if($students->count() > 0): ?>
             <table class="grades-table" id="gradesTable">
                 <thead>
                     <tr>
@@ -459,56 +463,59 @@
                     </tr>
                 </thead>
                 <tbody id="gradesTableBody">
-                    @foreach($students as $student)
-                        @php
+                    <?php $__currentLoopData = $students; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $student): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <?php
                             $completedSessions = $student->bookings->where('status', 'completed')->count();
                             $avgGrade = $student->bookings->whereNotNull('session_grade')->avg('session_grade');
                             $lastSession = $student->bookings->sortByDesc('scheduled_at')->first();
                             $enrollmentTimestamp = $student->enrollment_date ? strtotime($student->enrollment_date) : 0;
                             $gradeCategory = $avgGrade >= 90 ? 'excellent' : ($avgGrade >= 75 ? 'good' : ($avgGrade >= 60 ? 'average' : ($avgGrade ? 'poor' : 'none')));
-                        @endphp
+                        ?>
                         <tr class="grade-row" 
-                            data-name="{{ strtolower($student->name) }}"
-                            data-email="{{ strtolower($student->email) }}"
-                            data-enrollment="{{ $enrollmentTimestamp }}"
-                            data-sessions="{{ $completedSessions }}"
-                            data-avg-grade="{{ $avgGrade ?? 0 }}">
+                            data-name="<?php echo e(strtolower($student->name)); ?>"
+                            data-email="<?php echo e(strtolower($student->email)); ?>"
+                            data-enrollment="<?php echo e($enrollmentTimestamp); ?>"
+                            data-sessions="<?php echo e($completedSessions); ?>"
+                            data-avg-grade="<?php echo e($avgGrade ?? 0); ?>">
                             <td>
                                 <div class="student-cell">
                                     <div class="student-avatar">
-                                        {{ strtoupper(substr($student->name, 0, 1)) }}
+                                        <?php echo e(strtoupper(substr($student->name, 0, 1))); ?>
+
                                     </div>
                                     <div class="student-info">
-                                        <span class="student-name">{{ $student->name }}</span>
-                                        <span class="student-email">{{ $student->email }}</span>
+                                        <span class="student-name"><?php echo e($student->name); ?></span>
+                                        <span class="student-email"><?php echo e($student->email); ?></span>
                                     </div>
                                 </div>
                             </td>
                             <td>
-                                <span class="sessions-badge">{{ $completedSessions }} sessions</span>
+                                <span class="sessions-badge"><?php echo e($completedSessions); ?> sessions</span>
                             </td>
                             <td>
-                                @if($avgGrade)
-                                    <span class="grade-badge grade-{{ $gradeCategory }}">
-                                        {{ number_format($avgGrade, 1) }}
+                                <?php if($avgGrade): ?>
+                                    <span class="grade-badge grade-<?php echo e($gradeCategory); ?>">
+                                        <?php echo e(number_format($avgGrade, 1)); ?>
+
                                     </span>
-                                @else
+                                <?php else: ?>
                                     <span class="grade-badge grade-none">N/A</span>
-                                @endif
+                                <?php endif; ?>
                             </td>
                             <td>
-                                @if($lastSession && ($lastSession->scheduled_at || $lastSession->booking_date))
-                                    {{ ($lastSession->scheduled_at ?? $lastSession->booking_date)?->format('M d, Y') ?? 'N/A' }}
-                                @else
+                                <?php if($lastSession && ($lastSession->scheduled_at || $lastSession->booking_date)): ?>
+                                    <?php echo e(($lastSession->scheduled_at ?? $lastSession->booking_date)?->format('M d, Y') ?? 'N/A'); ?>
+
+                                <?php else: ?>
                                     <span style="color: #9ca3af;">No sessions</span>
-                                @endif
+                                <?php endif; ?>
                             </td>
                             <td>
-                                @if($lastSession && $lastSession->session_grade)
-                                    <strong>{{ $lastSession->session_grade }}</strong>
-                                @else
+                                <?php if($lastSession && $lastSession->session_grade): ?>
+                                    <strong><?php echo e($lastSession->session_grade); ?></strong>
+                                <?php else: ?>
                                     <span style="color: #9ca3af;">-</span>
-                                @endif
+                                <?php endif; ?>
                             </td>
                             <td>
                                 <input type="number" 
@@ -516,36 +523,36 @@
                                        min="0" 
                                        max="100" 
                                        step="0.1"
-                                       data-student-id="{{ $student->id }}"
-                                       data-last-booking-id="{{ $lastSession ? $lastSession->id : '' }}"
+                                       data-student-id="<?php echo e($student->id); ?>"
+                                       data-last-booking-id="<?php echo e($lastSession ? $lastSession->id : ''); ?>"
                                        placeholder="0-100"
                                        onchange="markChanged(this)">
                             </td>
                             <td>
                                 <div class="action-cell">
                                     <button class="btn-icon btn-view" 
-                                            onclick="viewStudentDetails({{ $student->id }})"
+                                            onclick="viewStudentDetails(<?php echo e($student->id); ?>)"
                                             title="View Details">
                                         View
                                     </button>
                                     <button class="btn-icon btn-save" 
-                                            onclick="saveGrade({{ $student->id }})"
+                                            onclick="saveGrade(<?php echo e($student->id); ?>)"
                                             title="Save Grade">
                                         Save
                                     </button>
                                 </div>
                             </td>
                         </tr>
-                    @endforeach
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 </tbody>
             </table>
-        @else
+        <?php else: ?>
             <div class="empty-state">
                 <div class="empty-state-icon">-</div>
                 <p style="font-size: 18px; font-weight: 600; margin-bottom: 10px;">No Students Found</p>
                 <p>You don't have any students assigned yet.</p>
             </div>
-        @endif
+        <?php endif; ?>
     </div>
 </div>
 
@@ -662,7 +669,7 @@
 
     // View student details
     function viewStudentDetails(studentId) {
-        loadContent('/{{ $school->slug }}/instructor/students/' + studentId);
+        loadContent('/<?php echo e($school->slug); ?>/instructor/students/' + studentId);
     }
 
     // Save individual grade
@@ -682,7 +689,7 @@
         }
         
         // Send AJAX request
-        fetch(`/{{ $school->slug }}/instructor/lessons/${bookingId}/update`, {
+        fetch(`/<?php echo e($school->slug); ?>/instructor/lessons/${bookingId}/update`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -726,7 +733,7 @@
             const bookingId = input.dataset.lastBookingId;
             
             if (grade && grade >= 0 && grade <= 100 && bookingId) {
-                fetch(`/{{ $school->slug }}/instructor/lessons/${bookingId}/update`, {
+                fetch(`/<?php echo e($school->slug); ?>/instructor/lessons/${bookingId}/update`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -779,4 +786,6 @@
     }
 </script>
 
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make($isAjax ?? false ? 'layouts.ajax' : 'layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\jcsdi\Documents\Driving School Management System\DrivingApp\resources\views/school/instructor/grades.blade.php ENDPATH**/ ?>

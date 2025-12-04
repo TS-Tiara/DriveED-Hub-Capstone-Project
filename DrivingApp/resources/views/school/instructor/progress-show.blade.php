@@ -185,9 +185,6 @@
 <div class="progress-detail-container">
     <div class="page-header">
         <h1>Progress Details</h1>
-        <a href="{{ $schoolRoute('instructor.progress.index') }}" class="back-btn" onclick="loadContent(this.href); return false;">
-            ← Back to Progress List
-        </a>
     </div>
     
     <div class="detail-card">

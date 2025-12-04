@@ -1,11 +1,11 @@
-@extends($isAjax ?? false ? 'layouts.ajax' : 'layouts.app')
 
-@section('title', 'Performance Reports')
 
-@section('content')
-@php
+<?php $__env->startSection('title', 'Performance Reports'); ?>
+
+<?php $__env->startSection('content'); ?>
+<?php
     $school = $school ?? $currentSchool ?? null;
-@endphp
+?>
 
 <style>
     .reports-container {
@@ -17,7 +17,7 @@
     .page-header {
         margin-bottom: 30px;
         padding-bottom: 15px;
-        border-bottom: 4px solid {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        border-bottom: 4px solid <?php echo e($school->schoolSetting->primary_color ?? '#667eea'); ?>;
     }
 
     .page-title {
@@ -33,7 +33,7 @@
         gap: 8px;
         padding: 10px 20px;
         background: white;
-        color: {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        color: <?php echo e($school->schoolSetting->primary_color ?? '#667eea'); ?>;
         border-radius: 8px;
         text-decoration: none;
         font-weight: 500;
@@ -42,7 +42,7 @@
     }
 
     .back-button:hover {
-        background: {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        background: <?php echo e($school->schoolSetting->primary_color ?? '#667eea'); ?>;
         color: white;
         transform: translateX(-5px);
     }
@@ -61,7 +61,7 @@
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         text-align: center;
         transition: transform 0.2s;
-        border-left: 4px solid {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        border-left: 4px solid <?php echo e($school->schoolSetting->primary_color ?? '#667eea'); ?>;
     }
 
     .stat-box:hover {
@@ -81,7 +81,7 @@
     .stat-value {
         font-size: 36px;
         font-weight: 700;
-        color: {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        color: <?php echo e($school->schoolSetting->primary_color ?? '#667eea'); ?>;
     }
 
     .stat-subtext {
@@ -130,7 +130,7 @@
         font-size: 18px;
         font-weight: 600;
         color: #333;
-        border-bottom: 2px solid {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        border-bottom: 2px solid <?php echo e($school->schoolSetting->primary_color ?? '#667eea'); ?>;
         padding-bottom: 10px;
     }
 
@@ -151,7 +151,7 @@
         font-weight: 600;
         font-size: 14px;
         color: #374151;
-        border-bottom: 2px solid {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        border-bottom: 2px solid <?php echo e($school->schoolSetting->primary_color ?? '#667eea'); ?>;
     }
 
     .data-table td {
@@ -168,7 +168,7 @@
         width: 32px;
         height: 32px;
         border-radius: 50%;
-        background: {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        background: <?php echo e($school->schoolSetting->primary_color ?? '#667eea'); ?>;
         color: white;
         display: inline-flex;
         align-items: center;
@@ -210,7 +210,7 @@
         padding: 15px;
         border-radius: 8px;
         margin-bottom: 10px;
-        border-left: 3px solid {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        border-left: 3px solid <?php echo e($school->schoolSetting->primary_color ?? '#667eea'); ?>;
     }
 
     .lesson-time {
@@ -258,6 +258,10 @@
 </style>
 
 <div class="reports-container">
+    <a href="<?php echo e($schoolRoute('instructor.dashboard')); ?>" onclick="loadContent(this.href); return false;" class="back-button">
+        ← Back to Dashboard
+    </a>
+
     <div class="page-header">
         <h1 class="page-title">Performance Reports</h1>
     </div>
@@ -266,25 +270,25 @@
     <div class="stats-grid">
         <div class="stat-box">
             <div class="stat-label">Total Lessons</div>
-            <div class="stat-value">{{ $totalLessonsCompleted }}</div>
+            <div class="stat-value"><?php echo e($totalLessonsCompleted); ?></div>
             <div class="stat-subtext">All time completed</div>
         </div>
 
         <div class="stat-box">
             <div class="stat-label">Total Hours</div>
-            <div class="stat-value">{{ $totalHoursTaught }}</div>
+            <div class="stat-value"><?php echo e($totalHoursTaught); ?></div>
             <div class="stat-subtext">Teaching time</div>
         </div>
 
         <div class="stat-box">
             <div class="stat-label">Students Taught</div>
-            <div class="stat-value">{{ $totalStudentsTaught }}</div>
-            <div class="stat-subtext">{{ $activeStudents }} active now</div>
+            <div class="stat-value"><?php echo e($totalStudentsTaught); ?></div>
+            <div class="stat-subtext"><?php echo e($activeStudents); ?> active now</div>
         </div>
 
         <div class="stat-box">
             <div class="stat-label">Attendance Rate</div>
-            <div class="stat-value">{{ $attendanceRate }}%</div>
+            <div class="stat-value"><?php echo e($attendanceRate); ?>%</div>
             <div class="stat-subtext">Last 30 days</div>
         </div>
     </div>
@@ -295,8 +299,9 @@
         <div style="display: flex; justify-content: space-around; align-items: center; padding: 20px;">
             <div style="text-align: center;">
                 <div style="font-size: 14px; color: #666; margin-bottom: 10px;">This Month</div>
-                <div style="font-size: 42px; font-weight: 700; color: {{ $school->schoolSetting->primary_color ?? '#667eea' }};">
-                    {{ $thisMonthLessons }}
+                <div style="font-size: 42px; font-weight: 700; color: <?php echo e($school->schoolSetting->primary_color ?? '#667eea'); ?>;">
+                    <?php echo e($thisMonthLessons); ?>
+
                 </div>
                 <div style="font-size: 12px; color: #999;">Completed Lessons</div>
             </div>
@@ -304,25 +309,26 @@
             <div style="text-align: center;">
                 <div style="font-size: 14px; color: #666; margin-bottom: 10px;">Last Month</div>
                 <div style="font-size: 42px; font-weight: 700; color: #9ca3af;">
-                    {{ $lastMonthLessons }}
+                    <?php echo e($lastMonthLessons); ?>
+
                 </div>
                 <div style="font-size: 12px; color: #999;">Completed Lessons</div>
             </div>
             <div style="text-align: center;">
-                @php
+                <?php
                     $difference = $thisMonthLessons - $lastMonthLessons;
                     $trend = $difference > 0 ? 'up' : ($difference < 0 ? 'down' : 'neutral');
                     $trendIcon = $difference > 0 ? '↑' : ($difference < 0 ? '↓' : '→');
-                @endphp
+                ?>
                 <div style="font-size: 14px; color: #666; margin-bottom: 10px;">Change</div>
-                <div class="trend-indicator trend-{{ $trend }}">
-                    {{ $trendIcon }} {{ abs($difference) }} lessons
+                <div class="trend-indicator trend-<?php echo e($trend); ?>">
+                    <?php echo e($trendIcon); ?> <?php echo e(abs($difference)); ?> lessons
                 </div>
-                @if($lastMonthLessons > 0)
+                <?php if($lastMonthLessons > 0): ?>
                     <div style="font-size: 12px; color: #999; margin-top: 5px;">
-                        ({{ round(($difference / $lastMonthLessons) * 100, 1) }}%)
+                        (<?php echo e(round(($difference / $lastMonthLessons) * 100, 1)); ?>%)
                     </div>
-                @endif
+                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -351,7 +357,7 @@
         <!-- Top Students -->
         <div class="chart-card">
             <h3>Top Students</h3>
-            @if($topStudents->count() > 0)
+            <?php if($topStudents->count() > 0): ?>
                 <table class="data-table">
                     <thead>
                         <tr>
@@ -360,69 +366,74 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($topStudents as $record)
+                        <?php $__currentLoopData = $topStudents; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $record): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                             <tr>
                                 <td>
                                     <div style="display: flex; align-items: center;">
                                         <div class="student-avatar">
-                                            {{ strtoupper(substr($record->student->name ?? 'U', 0, 1)) }}
+                                            <?php echo e(strtoupper(substr($record->student->name ?? 'U', 0, 1))); ?>
+
                                         </div>
-                                        <span>{{ $record->student->name ?? 'Unknown' }}</span>
+                                        <span><?php echo e($record->student->name ?? 'Unknown'); ?></span>
                                     </div>
                                 </td>
-                                <td><strong>{{ $record->lesson_count }}</strong> lessons</td>
+                                <td><strong><?php echo e($record->lesson_count); ?></strong> lessons</td>
                             </tr>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </tbody>
                 </table>
-            @else
+            <?php else: ?>
                 <div class="empty-state">No student data available</div>
-            @endif
+            <?php endif; ?>
         </div>
 
         <!-- Upcoming Lessons -->
         <div class="chart-card">
             <h3>Upcoming Schedule</h3>
-            @if($upcomingLessons->count() > 0)
+            <?php if($upcomingLessons->count() > 0): ?>
                 <div style="max-height: 400px; overflow-y: auto;">
-                    @foreach($upcomingLessons as $lesson)
+                    <?php $__currentLoopData = $upcomingLessons; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $lesson): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                         <div class="upcoming-lesson">
                             <div class="lesson-time">
-                                {{ $lesson->scheduled_at->format('M d, Y - g:i A') }}
+                                <?php echo e($lesson->scheduled_at->format('M d, Y - g:i A')); ?>
+
                             </div>
                             <div class="lesson-student">
-                                {{ $lesson->student->name ?? 'Unknown' }} 
-                                | {{ $lesson->course->title ?? 'N/A' }}
+                                <?php echo e($lesson->student->name ?? 'Unknown'); ?> 
+                                | <?php echo e($lesson->course->title ?? 'N/A'); ?>
+
                             </div>
                         </div>
-                    @endforeach
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 </div>
-            @else
+            <?php else: ?>
                 <div class="empty-state">No upcoming lessons scheduled</div>
-            @endif
+            <?php endif; ?>
         </div>
     </div>
 
     <!-- Average Grade Display -->
-    @if($avgGrade)
+    <?php if($avgGrade): ?>
         <div class="chart-card" style="margin-top: 20px;">
             <h3>Average Session Grade</h3>
             <div style="text-align: center; padding: 30px;">
-                <div style="font-size: 72px; font-weight: 700; color: {{ $school->schoolSetting->primary_color ?? '#667eea' }};">
-                    {{ number_format($avgGrade, 1) }}
+                <div style="font-size: 72px; font-weight: 700; color: <?php echo e($school->schoolSetting->primary_color ?? '#667eea'); ?>;">
+                    <?php echo e(number_format($avgGrade, 1)); ?>
+
                 </div>
                 <div style="font-size: 18px; color: #666; margin-top: 10px;">out of 100</div>
                 <div style="margin-top: 20px; padding: 15px; background: #f3f4f6; border-radius: 8px;">
                     <div style="font-size: 14px; color: #374151;">
                         Performance Rating: 
-                        <strong style="color: {{ $avgGrade >= 90 ? '#10b981' : ($avgGrade >= 75 ? '#f59e0b' : '#ef4444') }};">
-                            {{ $avgGrade >= 90 ? 'Excellent' : ($avgGrade >= 75 ? 'Good' : 'Needs Improvement') }}
+                        <strong style="color: <?php echo e($avgGrade >= 90 ? '#10b981' : ($avgGrade >= 75 ? '#f59e0b' : '#ef4444')); ?>;">
+                            <?php echo e($avgGrade >= 90 ? 'Excellent' : ($avgGrade >= 75 ? 'Good' : 'Needs Improvement')); ?>
+
                         </strong>
                     </div>
                 </div>
             </div>
         </div>
-    @endif
+    <?php endif; ?>
 </div>
 
 <!-- Chart.js Library -->
@@ -431,7 +442,7 @@
 <script>
     // Monthly Lessons Chart
     const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
-    const monthlyData = @json($lessonsByMonth);
+    const monthlyData = <?php echo json_encode($lessonsByMonth, 15, 512) ?>;
     
     new Chart(monthlyCtx, {
         type: 'line',
@@ -443,8 +454,8 @@
             datasets: [{
                 label: 'Completed Lessons',
                 data: monthlyData.map(item => item.count),
-                borderColor: '{{ $school->schoolSetting->primary_color ?? "#667eea" }}',
-                backgroundColor: '{{ $school->schoolSetting->primary_color ?? "#667eea" }}20',
+                borderColor: '<?php echo e($school->schoolSetting->primary_color ?? "#667eea"); ?>',
+                backgroundColor: '<?php echo e($school->schoolSetting->primary_color ?? "#667eea"); ?>20',
                 tension: 0.4,
                 fill: true
             }]
@@ -470,7 +481,7 @@
 
     // Status Distribution Chart
     const statusCtx = document.getElementById('statusChart').getContext('2d');
-    const statusData = @json($lessonsByStatus);
+    const statusData = <?php echo json_encode($lessonsByStatus, 15, 512) ?>;
     
     const statusColors = {
         'completed': '#10b981',
@@ -500,4 +511,5 @@
     });
 </script>
 
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make($isAjax ?? false ? 'layouts.ajax' : 'layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\jcsdi\Documents\Driving School Management System\DrivingApp\resources\views/school/instructor/reports.blade.php ENDPATH**/ ?>

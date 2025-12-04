@@ -10,7 +10,5 @@
 <body>
     <h1>System Logs - {{ $schoolName }}</h1>
     <p>Recent activities and audit logs scoped to {{ $schoolName }} will appear in this section.</p>
-
-    <p><a href="{{ $schoolRoute('admin.dashboard') }}">← Back to Dashboard</a></p>
 </body>
 </html>
