@@ -1,0 +1,8 @@
+[phases.setup]
+nixPkgs = ["php82", "php82Extensions.pdo_mysql", "php82Extensions.mbstring", "php82Extensions.xml", "php82Extensions.curl", "php82Extensions.zip", "php82Extensions.gd", "php82Extensions.bcmath", "nodejs_18", "npm-9_x"]
+
+[phases.build]
+cmds = ["cd DrivingApp && composer install --no-dev --optimize-autoloader", "cd DrivingApp && npm install", "cd DrivingApp && npm run build", "cd DrivingApp && php artisan config:cache", "cd DrivingApp && php artisan route:cache", "cd DrivingApp && php artisan view:cache"]
+
+[start]
+cmd = "cd DrivingApp && php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=$PORT"
