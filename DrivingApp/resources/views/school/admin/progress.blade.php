@@ -5,7 +5,10 @@
 @section('content')
 @php
     $schoolName = $school->name ?? 'Driving School';
+    $primaryColor = $school->schoolSetting->primary_color ?? '#667eea';
 @endphp
+
+@include('school.admin.partials.admin-styles')
 
 <style>
 .progress-container {
@@ -20,18 +23,19 @@
     align-items: center;
     margin-bottom: 30px;
     padding-bottom: 15px;
-    border-bottom: 2px solid #667eea;
+    border-bottom: 3px solid {{ $primaryColor }};
 }
 
 .page-title {
-    font-size: 2rem;
-    color: #333;
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: #1f2937;
     margin: 0;
 }
 
 .page-subtitle {
-    color: #666;
-    font-size: 0.95rem;
+    color: #6b7280;
+    font-size: 0.9rem;
     margin-top: 5px;
 }
 
@@ -557,3 +561,4 @@ function toggleDetails(index) {
 </script>
 
 @endsection
+

@@ -364,18 +364,78 @@
         }
 
         .controls-bar {
-            flex-direction: column;
-            align-items: stretch;
+            flex-direction: row;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .search-input {
-            min-width: 100%;
+            flex: 1;
+            min-width: 200px;
         }
     }
 
     @media (max-width: 768px) {
+        .grades-container {
+            padding: 15px;
+        }
+
         .stats-summary {
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .stat-box {
+            padding: 10px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.65rem;
+        }
+
+        .stat-value {
+            font-size: 1.25rem;
+        }
+
+        .controls-bar {
+            padding: 12px;
+            flex-direction: row;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 150px;
+            padding: 8px 10px;
+            font-size: 13px;
+        }
+
+        .filter-group {
+            flex: 0 0 auto;
+        }
+
+        .filter-label {
+            display: none;
+        }
+
+        .filter-select {
+            padding: 8px 10px;
+            font-size: 12px;
+        }
+
+        .action-buttons {
+            width: 100%;
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-export,
+        .btn-save-all {
+            flex: 1;
+            padding: 8px 12px;
+            font-size: 12px;
         }
 
         .grades-table {
@@ -385,6 +445,93 @@
         .grades-table th,
         .grades-table td {
             padding: 10px 8px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .grades-container {
+            padding: 10px;
+        }
+
+        .page-title {
+            font-size: 1.3rem;
+        }
+
+        .stats-summary {
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+        }
+
+        .stat-box {
+            padding: 8px 4px;
+        }
+
+        .stat-label {
+            font-size: 0.55rem;
+        }
+
+        .stat-value {
+            font-size: 1rem;
+        }
+
+        .controls-bar {
+            padding: 10px;
+            gap: 6px;
+        }
+
+        .search-input {
+            font-size: 12px;
+            padding: 6px 8px;
+        }
+
+        .filter-select {
+            font-size: 11px;
+            padding: 6px 8px;
+        }
+
+        .action-buttons {
+            gap: 6px;
+        }
+
+        .btn-export,
+        .btn-save-all {
+            padding: 6px 10px;
+            font-size: 11px;
+        }
+
+        .grades-table-container {
+            overflow-x: auto;
+            margin: 0 -10px;
+            padding: 0 10px;
+        }
+
+        .grades-table {
+            font-size: 11px;
+            min-width: 600px;
+        }
+
+        .grades-table th,
+        .grades-table td {
+            padding: 8px 6px;
+            white-space: nowrap;
+        }
+    }
+
+    @media (max-width: 360px) {
+        .stats-summary {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .stat-box {
+            padding: 8px;
+        }
+
+        .stat-label {
+            font-size: 0.6rem;
+        }
+
+        .stat-value {
+            font-size: 1.1rem;
         }
     }
 </style>

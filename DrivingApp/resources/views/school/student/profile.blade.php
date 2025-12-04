@@ -20,14 +20,14 @@
     .page-header {
         margin-bottom: 30px;
         padding-bottom: 15px;
-        border-bottom: 4px solid {{ $settings->primary_color ?? '#667eea' }};
+        border-bottom: 3px solid {{ $settings->primary_color ?? '#667eea' }};
     }
 
     .page-title {
-        font-size: 2rem;
-        color: #111827;
+        font-size: 1.75rem;
+        color: #1f2937;
         margin: 0;
-        font-weight: 400;
+        font-weight: 600;
     }
 
     .profile-card {
@@ -723,9 +723,9 @@
         formData.append('_token', '{{ csrf_token() }}');
         
         // Show loading state
-        const avatarCircle = document.querySelector('.profile-avatar-circle');
-        const originalContent = avatarCircle.innerHTML;
-        avatarCircle.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;">Uploading...</div>';
+        const overlay = document.querySelector('.avatar-upload-overlay span');
+        const originalText = overlay.textContent;
+        overlay.textContent = 'Uploading...';
         
         fetch('{{ $schoolRoute('student.profile.picture') }}', {
             method: 'POST',
@@ -738,26 +738,35 @@
         .then(data => {
             if (data.success) {
                 // Update avatar image
-                const avatarImg = document.querySelector('.profile-avatar-circle img');
-                if (avatarImg) {
-                    avatarImg.src = '/storage/' + data.path + '?t=' + new Date().getTime();
-                } else {
-                    // Replace letter with image
-                    avatarCircle.innerHTML = originalContent.replace(
-                        /<span class="avatar-letter">.*?<\/span>/,
-                        '<img src="/storage/' + data.path + '" alt="Profile Picture">'
-                    );
+                const avatarContainer = document.getElementById('avatarContainer');
+                const existingImg = document.getElementById('avatarImage');
+                const existingLetter = document.getElementById('avatarLetter');
+                
+                if (existingImg) {
+                    existingImg.src = '/storage/' + data.path + '?t=' + new Date().getTime();
+                } else if (existingLetter) {
+                    existingLetter.remove();
+                    const newImg = document.createElement('img');
+                    newImg.src = '/storage/' + data.path + '?t=' + new Date().getTime();
+                    newImg.alt = '{{ $student->name }}';
+                    newImg.id = 'avatarImage';
+                    newImg.style.width = '100%';
+                    newImg.style.height = '100%';
+                    newImg.style.objectFit = 'cover';
+                    avatarContainer.insertBefore(newImg, avatarContainer.firstChild);
                 }
+                
+                overlay.textContent = originalText;
                 alert(data.message);
             } else {
+                overlay.textContent = originalText;
                 alert(data.message || 'Failed to upload profile picture.');
-                avatarCircle.innerHTML = originalContent;
             }
         })
         .catch(error => {
+            overlay.textContent = originalText;
             console.error('Error:', error);
             alert('An error occurred while uploading the profile picture.');
-            avatarCircle.innerHTML = originalContent;
         })
         .finally(() => {
             input.value = '';

@@ -720,6 +720,87 @@
     .mobile-sidebar-btn {
         display: none;
     }
+    
+    /* Filter/Checkbox Container for Mobile */
+    .schedule-filters {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+    
+    .filter-checkbox {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        color: #6c757d;
+        white-space: nowrap;
+    }
+    
+    .filter-checkbox input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        accent-color: {{ $primaryColor }};
+    }
+    
+    @media (max-width: 768px) {
+        .schedule-filters {
+            gap: 8px;
+            margin-top: 8px;
+        }
+        
+        .filter-checkbox {
+            font-size: 11px;
+            gap: 4px;
+            background: #f8f9fa;
+            padding: 6px 10px;
+            border-radius: 16px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .filter-checkbox input[type="checkbox"] {
+            width: 14px;
+            height: 14px;
+        }
+        
+        .filter-checkbox span {
+            max-width: 100px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .schedule-header-controls {
+            flex-direction: column;
+            align-items: stretch !important;
+            gap: 8px !important;
+        }
+        
+        .schedule-filters {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+        }
+        
+        .filter-checkbox {
+            font-size: 10px;
+            padding: 5px 8px;
+            justify-content: center;
+        }
+        
+        .filter-checkbox input[type="checkbox"] {
+            width: 12px;
+            height: 12px;
+        }
+        
+        .filter-checkbox span {
+            max-width: none;
+        }
+    }
 </style>
 
 <div class="schedule-container">
@@ -796,20 +877,20 @@
                     </div>
                 </div>
                 
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; margin-top: 20px; flex-wrap: wrap; gap: 12px;">
-                    <h3 style="margin: 0; color: #000; font-size: 1.5rem; font-weight: 600;">My Scheduled Slots</h3>
-                    <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; color: #6c757d;">
-                            <input type="checkbox" id="collapse-all-my" onchange="toggleCollapseAllMySlots(this)" style="cursor: pointer;">
+                <div class="schedule-header-controls" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; margin-top: 20px; flex-wrap: wrap; gap: 12px;">
+                    <h3 style="margin: 0; color: #000; font-size: 1.2rem; font-weight: 600;">My Scheduled Slots</h3>
+                    <div class="schedule-filters">
+                        <label class="filter-checkbox">
+                            <input type="checkbox" id="collapse-all-my" onchange="toggleCollapseAllMySlots(this)">
                             <span>Collapse All</span>
                         </label>
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; color: #6c757d;">
-                            <input type="checkbox" id="show-past-my" onchange="toggleShowPastMySlots(this)" style="cursor: pointer;">
-                            <span>Show Past Schedules</span>
+                        <label class="filter-checkbox">
+                            <input type="checkbox" id="show-past-my" onchange="toggleShowPastMySlots(this)">
+                            <span>Show Past</span>
                         </label>
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; color: #6c757d;">
-                            <input type="checkbox" id="show-calendar-my" onchange="toggleInlineCalendarMy()" style="cursor: pointer;">
-                            <span>Show Calendar</span>
+                        <label class="filter-checkbox">
+                            <input type="checkbox" id="show-calendar-my" onchange="toggleInlineCalendarMy()">
+                            <span>Calendar</span>
                         </label>
                         <button class="collapse-btn mobile-sidebar-btn" onclick="toggleMobileSidebar()" style="padding: 6px 12px; font-size: 14px;">Today's Lesson</button>
                     </div>
@@ -872,7 +953,7 @@
                                                         </span>
                                                     @endif
                                                 @else
-                                                    <form method="POST" action="{{ route('schools.instructor.timeslots.toggle', ['school' => $school->slug, 'id' => $slot->id]) }}" style="display: inline;">
+                                                    <form method="POST" action="{{ route('schools.instructor.timeslots.toggle', ['school' => $school->slug, 'id' => $slot->id]) }}" style="display: inline;" data-no-ajax="true">
                                                         @csrf
                                                         <button type="submit" class="btn-slot btn-leave" onclick="return confirm('Are you sure you want to leave this slot?')">
                                                             Leave Slot
@@ -997,24 +1078,24 @@
                     </div>
                 </div>
                 
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; margin-top: 20px; flex-wrap: wrap; gap: 12px;">
-                    <h3 style="margin: 0; color: #000; font-size: 1.5rem; font-weight: 600;">Available Time Slots</h3>
-                    <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; color: #6c757d;">
-                            <input type="checkbox" id="collapse-all-available" onchange="toggleCollapseAllCheckbox(this)" style="cursor: pointer;">
+                <div class="schedule-header-controls" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; margin-top: 20px; flex-wrap: wrap; gap: 12px;">
+                    <h3 style="margin: 0; color: #000; font-size: 1.2rem; font-weight: 600;">Available Time Slots</h3>
+                    <div class="schedule-filters">
+                        <label class="filter-checkbox">
+                            <input type="checkbox" id="collapse-all-available" onchange="toggleCollapseAllCheckbox(this)">
                             <span>Collapse All</span>
                         </label>
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; color: #6c757d;">
-                            <input type="checkbox" id="show-past-available" onchange="toggleShowPastCheckbox(this)" style="cursor: pointer;">
-                            <span>Show Past Schedules</span>
+                        <label class="filter-checkbox">
+                            <input type="checkbox" id="show-past-available" onchange="toggleShowPastCheckbox(this)">
+                            <span>Show Past</span>
                         </label>
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; color: #6c757d;">
-                            <input type="checkbox" id="show-calendar-available" onchange="toggleInlineCalendar()" style="cursor: pointer;">
-                            <span>Show Calendar</span>
+                        <label class="filter-checkbox">
+                            <input type="checkbox" id="show-calendar-available" onchange="toggleInlineCalendar()">
+                            <span>Calendar</span>
                         </label>
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; color: #6c757d;">
-                            <input type="checkbox" id="show-all-courses" onchange="toggleShowAllCourses()" style="cursor: pointer;">
-                            <span>Show All Courses</span>
+                        <label class="filter-checkbox">
+                            <input type="checkbox" id="show-all-courses" onchange="toggleShowAllCourses()">
+                            <span>All Courses</span>
                         </label>
                     </div>
                 </div>
@@ -1347,7 +1428,6 @@
     
     // Select slot via AJAX without page reload
     function selectSlot(slotId, url, button) {
-        alert('selectSlot called for slot ' + slotId);
         const originalText = button.textContent;
         button.textContent = 'Selecting...';
         button.disabled = true;
@@ -2019,7 +2099,7 @@
                 `;
             } else {
                 actionHtml = `
-                    <form method="POST" action="${slot.toggle_url}" style="display: inline;">
+                    <form method="POST" action="${slot.toggle_url}" style="display: inline;" data-no-ajax="true">
                         <input type="hidden" name="_token" value="${document.querySelector('meta[name="csrf-token"]')?.content || ''}">
                         <button type="submit" class="btn-slot btn-leave" onclick="return confirm('Leave this slot?')">Leave Slot</button>
                     </form>

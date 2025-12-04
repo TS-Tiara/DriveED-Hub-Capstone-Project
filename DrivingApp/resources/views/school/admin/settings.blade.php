@@ -9,6 +9,8 @@
     $settings = $school->schoolSetting ?? null;
 @endphp
 
+@include('school.admin.partials.admin-styles')
+
 <style>
     .customization-container {
         padding: 20px;
@@ -21,18 +23,19 @@
     .page-header {
         margin-bottom: 30px;
         padding-bottom: 15px;
-        border-bottom: 2px solid #667eea;
+        border-bottom: 3px solid {{ $settings?->primary_color ?? '#667eea' }};
     }
 
     .page-title {
-        font-size: 2rem;
-        color: #333;
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: #1f2937;
         margin: 0 0 10px 0;
     }
 
     .page-subtitle {
-        color: #666;
-        font-size: 0.95rem;
+        color: #6b7280;
+        font-size: 0.9rem;
         margin: 0;
     }
 
@@ -559,15 +562,25 @@
     </div>
 
     @if (session('success'))
-        <div class="alert alert-success">
-            {{ session('success') }}
+    <div class="flash-message success">
+        <div class="flash-icon">✓</div>
+        <div class="flash-content">
+            <div class="flash-title">Success!</div>
+            <div class="flash-text">{{ session('success') }}</div>
         </div>
+        <button class="flash-close" onclick="this.parentElement.remove()">×</button>
+    </div>
     @endif
 
     @if ($errors->any())
-        <div class="alert alert-danger">
-            Please fix the errors below
+    <div class="flash-message error">
+        <div class="flash-icon">✕</div>
+        <div class="flash-content">
+            <div class="flash-title">Error!</div>
+            <div class="flash-text">Please fix the errors below</div>
         </div>
+        <button class="flash-close" onclick="this.parentElement.remove()">×</button>
+    </div>
     @endif
 
     <!-- Tab Navigation -->
@@ -1635,35 +1648,43 @@ function previewBackgroundImage(event) {
 }
 
 function resetToDefaults() {
-    if (confirm('Reset all settings to default values?')) {
-        document.getElementById('primary_color').value = '#667eea';
-        document.getElementById('secondary_color').value = '#764ba2';
-        document.getElementById('accent_color').value = '#5568d3';
-        document.getElementById('sidebar_bg_color').value = '#ffffff';
-        document.getElementById('sidebar_text_color').value = '#333333';
-        document.getElementById('sidebar_hover_color').value = '#f5f5f5';
-        document.getElementById('button_style').value = 'solid';
-        document.getElementById('button_primary_bg').value = '#667eea';
-        document.getElementById('button_secondary_bg').value = '#6c757d';
-        document.getElementById('button_success_bg').value = '#28a745';
-        document.getElementById('button_danger_bg').value = '#dc3545';
-        document.getElementById('button_border_radius').value = '8';
-        document.getElementById('modal_header_bg').value = '#667eea';
-        document.getElementById('modal_header_text').value = '#ffffff';
-        document.getElementById('badge_pending_bg').value = '#fbbf24';
-        document.getElementById('badge_approved_bg').value = '#10b981';
-        document.getElementById('badge_cancelled_bg').value = '#ef4444';
-        document.getElementById('border_radius').value = '8';
-        
-        // Update text inputs
-        document.querySelectorAll('.color-picker').forEach(picker => {
-            picker.nextElementSibling.value = picker.value;
-        });
-        
-        if (currentPreview) {
-            updatePreview();
+    showConfirm({
+        type: 'warning',
+        title: 'Reset Settings',
+        message: 'Are you sure you want to reset all settings to their default values? This cannot be undone.',
+        confirmText: 'Reset',
+        onConfirm: function() {
+            document.getElementById('primary_color').value = '#667eea';
+            document.getElementById('secondary_color').value = '#764ba2';
+            document.getElementById('accent_color').value = '#5568d3';
+            document.getElementById('sidebar_bg_color').value = '#ffffff';
+            document.getElementById('sidebar_text_color').value = '#333333';
+            document.getElementById('sidebar_hover_color').value = '#f5f5f5';
+            document.getElementById('button_style').value = 'solid';
+            document.getElementById('button_primary_bg').value = '#667eea';
+            document.getElementById('button_secondary_bg').value = '#6c757d';
+            document.getElementById('button_success_bg').value = '#28a745';
+            document.getElementById('button_danger_bg').value = '#dc3545';
+            document.getElementById('button_border_radius').value = '8';
+            document.getElementById('modal_header_bg').value = '#667eea';
+            document.getElementById('modal_header_text').value = '#ffffff';
+            document.getElementById('badge_pending_bg').value = '#fbbf24';
+            document.getElementById('badge_approved_bg').value = '#10b981';
+            document.getElementById('badge_cancelled_bg').value = '#ef4444';
+            document.getElementById('border_radius').value = '8';
+            
+            // Update text inputs
+            document.querySelectorAll('.color-picker').forEach(picker => {
+                picker.nextElementSibling.value = picker.value;
+            });
+            
+            if (currentPreview) {
+                updatePreview();
+            }
+            
+            Toast.success('Settings have been reset to defaults');
         }
-    }
+    });
 }
 
 // Initialize background type toggle on page load

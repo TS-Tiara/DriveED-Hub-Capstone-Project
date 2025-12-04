@@ -21,6 +21,8 @@
     $totalInactive = $inactiveStudents + $inactiveInstructors;
 @endphp
 
+@include('school.admin.partials.admin-styles')
+
 <style>
     .user-management-container {
         padding: 20px;
@@ -34,12 +36,13 @@
         align-items: center;
         margin-bottom: 30px;
         padding-bottom: 15px;
-        border-bottom: 2px solid #667eea;
+        border-bottom: 3px solid {{ $school->schoolSetting->primary_color ?? '#667eea' }};
     }
     
     .page-title {
-        font-size: 2rem;
-        color: #333;
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: #1f2937;
         margin: 0;
     }
     
@@ -507,7 +510,25 @@
     </div>
     
     @if(session('success'))
-        <div class="success-alert">{{ session('success') }}</div>
+    <div class="flash-message success">
+        <div class="flash-icon">✓</div>
+        <div class="flash-content">
+            <div class="flash-title">Success!</div>
+            <div class="flash-text">{{ session('success') }}</div>
+        </div>
+        <button class="flash-close" onclick="this.parentElement.remove()">×</button>
+    </div>
+    @endif
+    
+    @if(session('error'))
+    <div class="flash-message error">
+        <div class="flash-icon">✕</div>
+        <div class="flash-content">
+            <div class="flash-title">Error!</div>
+            <div class="flash-text">{{ session('error') }}</div>
+        </div>
+        <button class="flash-close" onclick="this.parentElement.remove()">×</button>
+    </div>
     @endif
     
     <!-- Tabs -->
@@ -798,7 +819,7 @@
         document.getElementById(tabName).classList.add('active');
         
         // Add active class to selected tab
-        event.target.classList.add('active');
+        event.currentTarget.classList.add('active');
     }
     
     // Table Search/Filter
@@ -852,32 +873,37 @@
     }
     
     function viewStudent(id) {
-        // You can implement a view modal here or redirect
-        alert('View student details - ID: ' + id);
+        Toast.info('Student details view coming soon!', 'Feature Info');
     }
     
     function toggleStudentStatus(id, currentStatus) {
-        if (confirm(`Are you sure you want to ${currentStatus === 'active' ? 'deactivate' : 'activate'} this student?`)) {
-            // Create and submit a form
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = `${studentBaseUrl}/${id}/toggle-status`;
-            
-            const csrfInput = document.createElement('input');
-            csrfInput.type = 'hidden';
-            csrfInput.name = '_token';
-            csrfInput.value = '{{ csrf_token() }}';
-            
-            const methodInput = document.createElement('input');
-            methodInput.type = 'hidden';
-            methodInput.name = '_method';
-            methodInput.value = 'PATCH';
-            
-            form.appendChild(csrfInput);
-            form.appendChild(methodInput);
-            document.body.appendChild(form);
-            form.submit();
-        }
+        const action = currentStatus === 'active' ? 'deactivate' : 'activate';
+        showConfirm({
+            type: currentStatus === 'active' ? 'warning' : 'success',
+            title: `${currentStatus === 'active' ? 'Deactivate' : 'Activate'} Student`,
+            message: `Are you sure you want to ${action} this student account?`,
+            confirmText: `Yes, ${action.charAt(0).toUpperCase() + action.slice(1)}`,
+            onConfirm: () => {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `${studentBaseUrl}/${id}/toggle-status`;
+                
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = '_token';
+                csrfInput.value = '{{ csrf_token() }}';
+                
+                const methodInput = document.createElement('input');
+                methodInput.type = 'hidden';
+                methodInput.name = '_method';
+                methodInput.value = 'PATCH';
+                
+                form.appendChild(csrfInput);
+                form.appendChild(methodInput);
+                document.body.appendChild(form);
+                form.submit();
+            }
+        });
     }
     
     // Instructor Modal Functions
@@ -904,54 +930,67 @@
     }
     
     function viewInstructor(id) {
-        // You can implement a view modal here or redirect
-        alert('View instructor details - ID: ' + id);
+        Toast.info('Instructor details view coming soon!', 'Feature Info');
     }
     
     function toggleInstructorStatus(id, currentStatus) {
-        if (confirm(`Are you sure you want to ${currentStatus === 'active' ? 'deactivate' : 'activate'} this instructor?`)) {
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = `${instructorBaseUrl}/${id}/toggle-status`;
-            
-            const csrfInput = document.createElement('input');
-            csrfInput.type = 'hidden';
-            csrfInput.name = '_token';
-            csrfInput.value = '{{ csrf_token() }}';
-            
-            const methodInput = document.createElement('input');
-            methodInput.type = 'hidden';
-            methodInput.name = '_method';
-            methodInput.value = 'PATCH';
-            
-            form.appendChild(csrfInput);
-            form.appendChild(methodInput);
-            document.body.appendChild(form);
-            form.submit();
-        }
+        const action = currentStatus === 'active' ? 'deactivate' : 'activate';
+        showConfirm({
+            type: currentStatus === 'active' ? 'warning' : 'success',
+            title: `${currentStatus === 'active' ? 'Deactivate' : 'Activate'} Instructor`,
+            message: `Are you sure you want to ${action} this instructor account?`,
+            confirmText: `Yes, ${action.charAt(0).toUpperCase() + action.slice(1)}`,
+            onConfirm: () => {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `${instructorBaseUrl}/${id}/toggle-status`;
+                
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = '_token';
+                csrfInput.value = '{{ csrf_token() }}';
+                
+                const methodInput = document.createElement('input');
+                methodInput.type = 'hidden';
+                methodInput.name = '_method';
+                methodInput.value = 'PATCH';
+                
+                form.appendChild(csrfInput);
+                form.appendChild(methodInput);
+                document.body.appendChild(form);
+                form.submit();
+            }
+        });
     }
     
     function toggleInstructorAvailability(id, currentAvailability) {
-        if (confirm(`Mark this instructor as ${currentAvailability === 'available' ? 'unavailable' : 'available'}?`)) {
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = `${instructorBaseUrl}/${id}/availability`;
-            
-            const csrfInput = document.createElement('input');
-            csrfInput.type = 'hidden';
-            csrfInput.name = '_token';
-            csrfInput.value = '{{ csrf_token() }}';
-            
-            const methodInput = document.createElement('input');
-            methodInput.type = 'hidden';
-            methodInput.name = '_method';
-            methodInput.value = 'PATCH';
-            
-            form.appendChild(csrfInput);
-            form.appendChild(methodInput);
-            document.body.appendChild(form);
-            form.submit();
-        }
+        const action = currentAvailability === 'available' ? 'unavailable' : 'available';
+        showConfirm({
+            type: 'info',
+            title: 'Change Availability',
+            message: `Mark this instructor as ${action}?`,
+            confirmText: `Yes, Mark ${action.charAt(0).toUpperCase() + action.slice(1)}`,
+            onConfirm: () => {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `${instructorBaseUrl}/${id}/availability`;
+                
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = '_token';
+                csrfInput.value = '{{ csrf_token() }}';
+                
+                const methodInput = document.createElement('input');
+                methodInput.type = 'hidden';
+                methodInput.name = '_method';
+                methodInput.value = 'PATCH';
+                
+                form.appendChild(csrfInput);
+                form.appendChild(methodInput);
+                document.body.appendChild(form);
+                form.submit();
+            }
+        });
     }
     
     // Close modal when clicking outside

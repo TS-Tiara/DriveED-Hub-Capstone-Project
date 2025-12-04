@@ -6,7 +6,10 @@
 @php
     $school = $school ?? $currentSchool ?? null;
     $schoolName = $school->name ?? 'Driving School';
+    $primaryColor = $school->schoolSetting->primary_color ?? '#667eea';
 @endphp
+
+@include('school.admin.partials.admin-styles')
 
 <style>
     .requests-container {
@@ -21,12 +24,13 @@
         align-items: center;
         margin-bottom: 30px;
         padding-bottom: 15px;
-        border-bottom: 2px solid #667eea;
+        border-bottom: 3px solid {{ $primaryColor }};
     }
     
     .page-title {
-        font-size: 2rem;
-        color: #333;
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: #1f2937;
         margin: 0;
         display: flex;
         align-items: center;
@@ -34,8 +38,8 @@
     }
     
     .page-subtitle {
-        color: #666;
-        font-size: 0.95rem;
+        color: #6b7280;
+        font-size: 0.9rem;
         margin-top: 5px;
     }
 
@@ -376,15 +380,25 @@
     </div>
 
     @if(session('success'))
-        <div class="alert alert-success" style="background: #d4edda; color: #155724; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #28a745;">
-            {{ session('success') }}
+    <div class="flash-message success">
+        <div class="flash-icon">✓</div>
+        <div class="flash-content">
+            <div class="flash-title">Success!</div>
+            <div class="flash-text">{{ session('success') }}</div>
         </div>
+        <button class="flash-close" onclick="this.parentElement.remove()">×</button>
+    </div>
     @endif
 
     @if(session('error'))
-        <div class="alert alert-danger" style="background: #f8d7da; color: #721c24; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #dc3545;">
-            {{ session('error') }}
-            </div>
+    <div class="flash-message error">
+        <div class="flash-icon">✕</div>
+        <div class="flash-content">
+            <div class="flash-title">Error!</div>
+            <div class="flash-text">{{ session('error') }}</div>
+        </div>
+        <button class="flash-close" onclick="this.parentElement.remove()">×</button>
+    </div>
     @endif
 
     <div class="tabs">

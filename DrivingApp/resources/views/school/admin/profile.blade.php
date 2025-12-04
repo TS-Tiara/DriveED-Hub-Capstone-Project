@@ -8,6 +8,8 @@
     $admin = Auth::guard('admin')->user();
 @endphp
 
+@include('school.admin.partials.admin-styles')
+
 <style>
     * {
         margin: 0;
@@ -26,9 +28,9 @@
     }
 
     .profile-page-title {
-        font-size: 32px;
-        font-weight: 700;
-        color: #000;
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: #1f2937;
         margin-bottom: 10px;
         padding-bottom: 8px;
         display: inline-block;
@@ -42,7 +44,7 @@
         left: -30px;
         width: calc(100% + 100px);
         height: 3px;
-        background: {{ $school->schoolSetting->primary_color ?? '#f59e0b' }};
+        background: {{ $school->schoolSetting->primary_color ?? '#667eea' }};
     }
 
     .profile-card {
@@ -259,19 +261,31 @@
     </div>
 
     @if(session('success'))
-        <div class="alert alert-success">
-            {{ session('success') }}
+    <div class="flash-message success">
+        <div class="flash-icon">✓</div>
+        <div class="flash-content">
+            <div class="flash-title">Success!</div>
+            <div class="flash-text">{{ session('success') }}</div>
         </div>
+        <button class="flash-close" onclick="this.parentElement.remove()">×</button>
+    </div>
     @endif
 
     @if($errors->any())
-        <div class="alert alert-error">
-            <ul style="margin: 0; padding-left: 20px;">
-                @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
+    <div class="flash-message error">
+        <div class="flash-icon">✕</div>
+        <div class="flash-content">
+            <div class="flash-title">Error!</div>
+            <div class="flash-text">
+                <ul style="margin: 0; padding-left: 20px;">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
         </div>
+        <button class="flash-close" onclick="this.parentElement.remove()">×</button>
+    </div>
     @endif
 
     <div class="profile-card">
@@ -360,13 +374,13 @@
             // Validate file type
             const validTypes = ['image/png', 'image/jpg', 'image/jpeg', 'image/webp'];
             if (!validTypes.includes(file.type)) {
-                alert('Please select a valid image file (PNG, JPG, JPEG, or WEBP)');
+                Toast.error('Please select a valid image file (PNG, JPG, JPEG, or WEBP)');
                 return;
             }
             
             // Validate file size (2MB)
             if (file.size > 2 * 1024 * 1024) {
-                alert('File size must be less than 2MB');
+                Toast.error('File size must be less than 2MB');
                 return;
             }
             
@@ -403,16 +417,16 @@
                     }
                     
                     overlay.textContent = originalText;
-                    alert(data.message);
+                    Toast.success(data.message);
                 } else {
                     overlay.textContent = originalText;
-                    alert('Failed to upload profile picture');
+                    Toast.error('Failed to upload profile picture');
                 }
             })
             .catch(error => {
                 overlay.textContent = originalText;
                 console.error('Error:', error);
-                alert('An error occurred while uploading');
+                Toast.error('An error occurred while uploading');
             });
         }
     }

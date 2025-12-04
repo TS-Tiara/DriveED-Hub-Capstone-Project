@@ -668,13 +668,17 @@
         /* Tablets in portrait mode (600px - 768px) */
         @media (min-width: 601px) and (max-width: 768px) {
             .topbar {
-                height: 55px;
-                padding: 0 15px;
+                height: 50px;
+                padding: 0 12px;
             }
             
             .topbar-logo {
-                font-size: 1.2rem;
-                gap: 8px;
+                font-size: 1rem;
+                gap: 6px;
+                max-width: 150px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
             }
             
             .burger-menu {
@@ -896,23 +900,27 @@
         /* Small phones (320px - 360px) */
         @media (max-width: 360px) {
             .topbar {
-                height: 45px;
-                padding: 0 8px;
+                height: 44px;
+                padding: 0 6px;
             }
             
             .topbar-logo {
-                font-size: 0.9rem;
-                gap: 4px;
+                font-size: 0.75rem;
+                gap: 3px;
+                max-width: 100px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
             }
             
             .burger-menu {
-                font-size: 1.1rem;
-                padding: 4px;
+                font-size: 1rem;
+                padding: 3px;
             }
             
             .notification-icon, .profile-dropdown {
-                padding: 4px;
-                font-size: 0.9rem;
+                padding: 3px;
+                font-size: 0.8rem;
             }
             
             .topbar-left, .topbar-right {
@@ -969,32 +977,45 @@
             }
             
             .notification-badge {
-                width: 16px;
-                height: 16px;
-                font-size: 9px;
+                width: 12px;
+                height: 12px;
+                font-size: 7px;
+                top: -2px;
+                right: -2px;
+            }
+            
+            .profile-picture,
+            .profile-picture-default {
+                width: 26px;
+                height: 26px;
+                font-size: 12px;
             }
         }
         
         /* Extra optimizations for very small devices (max-width: 320px) */
         @media (max-width: 320px) {
             .topbar {
-                height: 42px;
-                padding: 0 6px;
+                height: 40px;
+                padding: 0 4px;
             }
             
             .topbar-logo {
-                font-size: 0.85rem;
-                gap: 3px;
+                font-size: 0.7rem;
+                gap: 2px;
+                max-width: 80px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
             }
             
             .burger-menu {
-                font-size: 1rem;
-                padding: 3px;
+                font-size: 0.9rem;
+                padding: 2px;
             }
             
             .notification-icon, .profile-dropdown {
-                padding: 3px;
-                font-size: 0.85rem;
+                padding: 2px;
+                font-size: 0.75rem;
             }
             
             .topbar-left, .topbar-right {
@@ -1046,9 +1067,18 @@
             }
             
             .notification-badge {
-                width: 14px;
-                height: 14px;
-                font-size: 8px;
+                width: 10px;
+                height: 10px;
+                font-size: 6px;
+                top: -1px;
+                right: -1px;
+            }
+            
+            .profile-picture,
+            .profile-picture-default {
+                width: 22px;
+                height: 22px;
+                font-size: 10px;
             }
         }
         
@@ -1971,6 +2001,9 @@
                 });
                 
                 // NO generic initialization - pages handle their own
+                
+                // Re-initialize forms for AJAX handling (respects data-no-ajax)
+                initializeForms();
                 
                 // Update browser URL if requested
                 if (pushState) {

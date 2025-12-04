@@ -243,16 +243,107 @@
     }
 
     @media (max-width: 768px) {
+        .reports-container {
+            padding: 15px;
+        }
+
         .stats-grid {
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .stat-box {
+            padding: 10px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.65rem;
         }
 
         .stat-value {
-            font-size: 28px;
+            font-size: 1.25rem;
+        }
+
+        .stat-subtext {
+            font-size: 0.55rem;
         }
 
         .page-header h1 {
-            font-size: 22px;
+            font-size: 1.5rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .reports-container {
+            padding: 10px;
+        }
+
+        .page-header h1 {
+            font-size: 1.3rem;
+        }
+
+        .stats-grid {
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+        }
+
+        .stat-box {
+            padding: 8px 4px;
+        }
+
+        .stat-label {
+            font-size: 0.55rem;
+        }
+
+        .stat-value {
+            font-size: 1rem;
+        }
+
+        .stat-subtext {
+            font-size: 0.5rem;
+        }
+
+        .chart-card {
+            padding: 15px;
+        }
+
+        .chart-card h3 {
+            font-size: 15px;
+        }
+
+        .activity-list {
+            padding: 0 10px;
+        }
+
+        .activity-item {
+            padding: 12px 0;
+        }
+
+        .activity-date {
+            font-size: 11px;
+        }
+
+        .activity-details {
+            font-size: 13px;
+        }
+    }
+
+    @media (max-width: 360px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .stat-box {
+            padding: 8px;
+        }
+
+        .stat-label {
+            font-size: 0.6rem;
+        }
+
+        .stat-value {
+            font-size: 1.1rem;
         }
     }
 </style>

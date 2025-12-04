@@ -19,14 +19,14 @@
     .page-header {
         margin-bottom: 30px;
         padding-bottom: 15px;
-        border-bottom: 4px solid {{ $settings->primary_color ?? '#667eea' }};
+        border-bottom: 3px solid {{ $settings->primary_color ?? '#667eea' }};
     }
 
     .page-title {
-        font-size: 2rem;
-        color: #111827;
+        font-size: 1.75rem;
+        color: #1f2937;
         margin: 0;
-        font-weight: 400;
+        font-weight: 600;
     }
 
     .profile-card {
@@ -249,6 +249,132 @@
         color: #721c24;
         border: 1px solid #f5c6cb;
     }
+
+    /* Mobile Responsive Styles */
+    @media (max-width: 768px) {
+        .profile-container {
+            padding: 15px;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+        }
+
+        .profile-card {
+            margin: 0 auto;
+        }
+
+        .profile-card-header {
+            padding: 30px 20px 20px;
+        }
+
+        .profile-avatar-circle {
+            width: 140px;
+            height: 140px;
+        }
+
+        .profile-avatar-letter {
+            font-size: 60px;
+        }
+
+        .profile-name {
+            font-size: 20px;
+        }
+
+        .profile-card-body {
+            padding: 0 20px 20px;
+        }
+
+        .profile-field {
+            grid-template-columns: 1fr;
+            gap: 5px;
+            padding: 12px 0;
+        }
+
+        .profile-field-label {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .profile-field-value {
+            font-size: 14px;
+        }
+
+        .profile-actions {
+            padding: 15px 20px 25px;
+        }
+
+        .btn-edit-profile {
+            width: 100%;
+            padding: 12px 20px;
+        }
+
+        .edit-form {
+            padding: 20px;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+
+        .btn-save,
+        .btn-cancel {
+            width: 100%;
+        }
+
+        .alert {
+            margin-left: 0;
+            margin-right: 0;
+            max-width: 100%;
+        }
+
+        .status-badge-top {
+            top: 15px;
+            left: 15px;
+            font-size: 11px;
+            padding: 5px 10px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .profile-container {
+            padding: 10px;
+        }
+
+        .page-title {
+            font-size: 1.25rem;
+        }
+
+        .profile-card-header {
+            padding: 25px 15px 15px;
+        }
+
+        .profile-avatar-circle {
+            width: 110px;
+            height: 110px;
+        }
+
+        .profile-avatar-letter {
+            font-size: 48px;
+        }
+
+        .profile-name {
+            font-size: 18px;
+        }
+
+        .profile-card-body {
+            padding: 0 15px 15px;
+        }
+
+        .profile-field {
+            padding: 10px 0;
+        }
+
+        .profile-field-label,
+        .profile-field-value {
+            font-size: 13px;
+        }
+    }
 </style>
 
 <div class="profile-container">
@@ -403,9 +529,9 @@
         formData.append('_token', '{{ csrf_token() }}');
         
         // Show loading state
-        const avatarCircle = document.querySelector('.profile-avatar-circle');
-        const originalContent = avatarCircle.innerHTML;
-        avatarCircle.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;">Uploading...</div>';
+        const overlay = document.querySelector('.avatar-upload-overlay span');
+        const originalText = overlay.textContent;
+        overlay.textContent = 'Uploading...';
         
         fetch('{{ $schoolRoute('instructor.profile.picture') }}', {
             method: 'POST',
@@ -418,26 +544,35 @@
         .then(data => {
             if (data.success) {
                 // Update avatar image
-                const avatarImg = document.querySelector('.profile-avatar-circle img');
-                if (avatarImg) {
-                    avatarImg.src = '/storage/' + data.path + '?t=' + new Date().getTime();
-                } else {
-                    // Replace letter with image
-                    avatarCircle.innerHTML = originalContent.replace(
-                        /<span class="avatar-letter">.*?<\/span>/,
-                        '<img src="/storage/' + data.path + '" alt="Profile Picture">'
-                    );
+                const avatarContainer = document.getElementById('avatarContainer');
+                const existingImg = document.getElementById('avatarImage');
+                const existingLetter = document.getElementById('avatarLetter');
+                
+                if (existingImg) {
+                    existingImg.src = '/storage/' + data.path + '?t=' + new Date().getTime();
+                } else if (existingLetter) {
+                    existingLetter.remove();
+                    const newImg = document.createElement('img');
+                    newImg.src = '/storage/' + data.path + '?t=' + new Date().getTime();
+                    newImg.alt = '{{ $instructor->name }}';
+                    newImg.id = 'avatarImage';
+                    newImg.style.width = '100%';
+                    newImg.style.height = '100%';
+                    newImg.style.objectFit = 'cover';
+                    avatarContainer.insertBefore(newImg, avatarContainer.firstChild);
                 }
+                
+                overlay.textContent = originalText;
                 alert(data.message);
             } else {
+                overlay.textContent = originalText;
                 alert(data.message || 'Failed to upload profile picture.');
-                avatarCircle.innerHTML = originalContent;
             }
         })
         .catch(error => {
+            overlay.textContent = originalText;
             console.error('Error:', error);
             alert('An error occurred while uploading the profile picture.');
-            avatarCircle.innerHTML = originalContent;
         })
         .finally(() => {
             input.value = '';

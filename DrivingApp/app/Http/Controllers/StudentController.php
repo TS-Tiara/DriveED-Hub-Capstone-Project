@@ -58,6 +58,7 @@ class StudentController extends Controller
                     'course' => $booking->course,
                     'instructor' => $booking->instructor,
                     'date' => $booking->timeSlot->date ?? $booking->booking_date,
+                    'timeSlot' => $booking->timeSlot,
                 ];
             });
         

@@ -4,247 +4,164 @@
 
 @section('content')
 @php
+    $school = $school ?? $currentSchool ?? null;
     $schoolName = $school->name ?? 'Driving School';
+    $settings = $school?->schoolSetting;
+    $primaryColor = $settings?->primary_color ?? '#667eea';
 @endphp
 
+@include('school.admin.partials.admin-styles')
+
 <style>
-.bookings-container {
-    padding: 20px;
-    margin: 20px auto;
-    max-width: 1600px;
-}
+    /* Booking Cards */
+    .bookings-list {
+        display: grid;
+        gap: 20px;
+    }
 
-.page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 30px;
-    padding-bottom: 15px;
-    border-bottom: 2px solid {{ $school->schoolSetting->primary_color ?? '#667eea' }};
-}
+    .booking-card {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
 
-.page-title {
-    font-size: 2rem;
-    color: #333;
-    margin: 0;
-}
+    .booking-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+    }
 
-.page-subtitle {
-    color: #666;
-    font-size: 0.95rem;
-    margin-top: 5px;
-}
+    .booking-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
 
-/* Stats Cards */
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
-    margin-bottom: 30px;
-}
+    .booking-info h3 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin: 0 0 8px 0;
+    }
 
-.stat-card {
-    @if($school->schoolSetting->use_gradient_header)
-        background: linear-gradient(135deg, {{ $school->schoolSetting->primary_color }} 0%, {{ $school->schoolSetting->secondary_color }} 100%);
-    @else
-        background: {{ $school->schoolSetting->primary_color }};
-    @endif
-    color: white;
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-    transition: transform 0.3s ease;
-}
+    .booking-date {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #6b7280;
+        font-size: 0.9rem;
+    }
 
-.stat-card:hover {
-    transform: translateY(-5px);
-}
+    .booking-time {
+        font-weight: 600;
+        color: {{ $primaryColor }};
+    }
 
-.stat-card.scheduled {
-    background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-}
+    .booking-details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+        padding: 20px;
+        background: #f9fafb;
+        border-radius: 8px;
+    }
 
-.stat-card.completed {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-}
+    .detail-item {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
 
-.stat-card.cancelled {
-    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-}
+    .detail-label {
+        font-size: 0.8rem;
+        color: #6b7280;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
 
-.stat-card.pending {
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-}
+    .detail-value {
+        color: #1f2937;
+        font-weight: 500;
+    }
 
-.stat-number {
-    font-size: 2.5rem;
-    font-weight: 700;
-    margin-bottom: 5px;
-}
+    .booking-actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
 
-.stat-label {
-    font-size: 0.9rem;
-    opacity: 0.9;
-}
+    .status-select {
+        padding: 8px 14px;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        background: white;
+        cursor: pointer;
+        min-width: 160px;
+    }
 
-.bookings-filters {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 30px;
-    flex-wrap: wrap;
-}
+    .status-select:focus {
+        outline: none;
+        border-color: {{ $primaryColor }};
+    }
 
-.filter-btn {
-    padding: 10px 20px;
-    border: 2px solid #e5e7eb;
-    background: white;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.3s;
-    font-weight: 600;
-}
+    .paid-indicator {
+        color: #059669;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
 
-.filter-btn.active {
-    @if($school->schoolSetting->use_gradient_header)
-        background: linear-gradient(135deg, {{ $school->schoolSetting->primary_color }} 0%, {{ $school->schoolSetting->secondary_color }} 100%);
-    @else
-        background: {{ $school->schoolSetting->primary_color }};
-    @endif
-    color: white;
-    border-color: {{ $school->schoolSetting->primary_color ?? '#667eea' }};
-}
-
-.bookings-list {
-    display: grid;
-    gap: 20px;
-}
-
-.booking-card {
-    background: white;
-    border-radius: 12px;
-    padding: 25px;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-    transition: transform 0.3s, box-shadow 0.3s;
-}
-
-.booking-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
-}
-
-.booking-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: start;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-    gap: 15px;
-}
-
-.booking-info h3 {
-    font-size: 1.3rem;
-    color: #333;
-    margin-bottom: 5px;
-}
-
-.booking-date {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    color: #666;
-}
-
-.time {
-    font-weight: 600;
-    color: {{ $school->schoolSetting->primary_color ?? '#667eea' }};
-}
-
-.booking-details {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 15px;
-    margin-bottom: 20px;
-    padding: 20px;
-    background: #f9fafb;
-    border-radius: 8px;
-}
-
-.detail-row {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-
-.detail-row .label {
-    font-size: 0.85rem;
-    color: #6b7280;
-    font-weight: 600;
-}
-
-.detail-row .value {
-    color: #1f2937;
-    font-weight: 500;
-}
-
-.booking-actions {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    align-items: center;
-}
-
-.badge {
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    text-transform: uppercase;
-}
-
-.badge-scheduled { background: #dbeafe; color: #1e40af; }
-.badge-confirmed { background: #d1fae5; color: #065f46; }
-.badge-completed { background: #d1fae5; color: #065f46; }
-.badge-cancelled { background: #fee2e2; color: #991b1b; }
-.badge-pending { background: #fef3c7; color: #92400e; }
-.badge-no-show { background: #fef3c7; color: #92400e; }
-.badge-paid { background: #d1fae5; color: #065f46; }
-.badge-partial { background: #fef3c7; color: #92400e; }
-.badge-refunded { background: #fee2e2; color: #991b1b; }
-
-.btn {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s;
-    font-size: 0.9rem;
-}
-
-.btn-primary { background: var(--btn-primary-bg); color: var(--btn-primary-text); }
-.btn-secondary { background: var(--btn-secondary-bg); color: var(--btn-secondary-text); }
-.btn-success { background: var(--btn-success-bg); color: var(--btn-success-text); }
-.btn-danger { background: var(--btn-danger-bg); color: var(--btn-danger-text); }
-.btn-sm { padding: 8px 16px; font-size: 0.85rem; }
-
-.form-select {
-    padding: 8px 15px;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    font-size: 0.9rem;
-}
-
-@media (max-width: 768px) {
-    .booking-details { grid-template-columns: 1fr; }
-    .booking-actions { flex-direction: column; width: 100%; }
-    .booking-actions .btn, .booking-actions .form-select { width: 100%; }
-}
+    @media (max-width: 768px) {
+        .booking-details { 
+            grid-template-columns: 1fr 1fr; 
+        }
+        .booking-actions { 
+            flex-direction: column; 
+            width: 100%; 
+        }
+        .booking-actions .btn, 
+        .booking-actions .status-select { 
+            width: 100%; 
+        }
+    }
 </style>
 
-<div class="bookings-container">
+<div class="admin-container">
+    <!-- Flash Messages -->
+    @if(session('success'))
+    <div class="flash-message success">
+        <div class="flash-icon">✓</div>
+        <div class="flash-content">
+            <div class="flash-title">Success!</div>
+            <div class="flash-text">{{ session('success') }}</div>
+        </div>
+        <button class="flash-close" onclick="this.parentElement.remove()">×</button>
+    </div>
+    @endif
+    
+    @if(session('error'))
+    <div class="flash-message error">
+        <div class="flash-icon">✕</div>
+        <div class="flash-content">
+            <div class="flash-title">Error!</div>
+            <div class="flash-text">{{ session('error') }}</div>
+        </div>
+        <button class="flash-close" onclick="this.parentElement.remove()">×</button>
+    </div>
+    @endif
+
     <!-- Page Header -->
     <div class="page-header">
-        <div>
+        <div class="page-header-left">
             <h1 class="page-title">Bookings Management</h1>
             <p class="page-subtitle">Manage and track all driving session bookings for {{ $schoolName }}</p>
         </div>
@@ -252,98 +169,102 @@
 
     <!-- Statistics Cards -->
     <div class="stats-grid">
-        <div class="stat-card scheduled">
-            <div class="stat-number">{{ $bookings->where('status', 'scheduled')->count() }}</div>
-            <div class="stat-label">Scheduled Bookings</div>
+        <div class="stat-card info">
+            <div class="stat-label">Scheduled</div>
+            <div class="stat-value">{{ $bookings->where('status', 'scheduled')->count() }}</div>
         </div>
-        <div class="stat-card completed">
-            <div class="stat-number">{{ $bookings->where('status', 'completed')->count() }}</div>
-            <div class="stat-label">Completed Sessions</div>
+        <div class="stat-card success">
+            <div class="stat-label">Completed</div>
+            <div class="stat-value">{{ $bookings->where('status', 'completed')->count() }}</div>
         </div>
-        <div class="stat-card cancelled">
-            <div class="stat-number">{{ $bookings->where('status', 'cancelled')->count() }}</div>
-            <div class="stat-label">Cancelled Bookings</div>
+        <div class="stat-card danger">
+            <div class="stat-label">Cancelled</div>
+            <div class="stat-value">{{ $bookings->where('status', 'cancelled')->count() }}</div>
         </div>
-        <div class="stat-card pending">
-            <div class="stat-number">{{ $bookings->where('status', 'pending')->count() }}</div>
-            <div class="stat-label">Pending Bookings</div>
+        <div class="stat-card warning">
+            <div class="stat-label">Pending</div>
+            <div class="stat-value">{{ $bookings->where('status', 'pending')->count() }}</div>
         </div>
     </div>
 
     <!-- Filter Buttons -->
-    <div class="bookings-filters">
-        <button class="filter-btn active" data-filter="all" onclick="filterBookings('all')">All Bookings ({{ $bookings->count() }})</button>
-        <button class="filter-btn" data-filter="scheduled" onclick="filterBookings('scheduled')">Scheduled ({{ $bookings->where('status', 'scheduled')->count() }})</button>
-        <button class="filter-btn" data-filter="completed" onclick="filterBookings('completed')">Completed ({{ $bookings->where('status', 'completed')->count() }})</button>
-        <button class="filter-btn" data-filter="cancelled" onclick="filterBookings('cancelled')">Cancelled ({{ $bookings->where('status', 'cancelled')->count() }})</button>
-        <button class="filter-btn" data-filter="pending" onclick="filterBookings('pending')">Pending ({{ $bookings->where('status', 'pending')->count() }})</button>
+    <div class="filter-group">
+        <button class="filter-btn active" data-filter="all" onclick="filterBookings('all', this)">All ({{ $bookings->count() }})</button>
+        <button class="filter-btn" data-filter="scheduled" onclick="filterBookings('scheduled', this)">Scheduled ({{ $bookings->where('status', 'scheduled')->count() }})</button>
+        <button class="filter-btn" data-filter="completed" onclick="filterBookings('completed', this)">Completed ({{ $bookings->where('status', 'completed')->count() }})</button>
+        <button class="filter-btn" data-filter="cancelled" onclick="filterBookings('cancelled', this)">Cancelled ({{ $bookings->where('status', 'cancelled')->count() }})</button>
+        <button class="filter-btn" data-filter="pending" onclick="filterBookings('pending', this)">Pending ({{ $bookings->where('status', 'pending')->count() }})</button>
     </div>
 
     <!-- Bookings List -->
     <div class="bookings-list" id="bookingsList">
-            @forelse($bookings as $booking)
-            <div class="booking-card" data-status="{{ $booking->status }}">
-                <div class="booking-header">
-                    <div class="booking-info">
-                        <h3>{{ $booking->course->title ?? 'N/A' }}</h3>
-                        <span class="badge badge-{{ $booking->status }}">{{ ucfirst($booking->status) }}</span>
+        @forelse($bookings as $booking)
+        <div class="booking-card" data-status="{{ $booking->status }}">
+            <div class="booking-header">
+                <div class="booking-info">
+                    <h3>{{ $booking->course->title ?? 'N/A' }}</h3>
+                    <span class="badge badge-{{ $booking->status === 'completed' ? 'success' : ($booking->status === 'cancelled' ? 'danger' : ($booking->status === 'pending' ? 'warning' : 'info')) }}">
+                        {{ ucfirst($booking->status) }}
+                    </span>
                 </div>
                 <div class="booking-date">
                     @if($booking->timeSlot)
-                        📅 <span>{{ \Carbon\Carbon::parse($booking->timeSlot->date)->format('M d, Y') }}</span>
-                        <span class="time">{{ \Carbon\Carbon::parse($booking->timeSlot->start_time)->format('h:i A') }} - {{ \Carbon\Carbon::parse($booking->timeSlot->end_time)->format('h:i A') }}</span>
+                        <span>{{ \Carbon\Carbon::parse($booking->timeSlot->date)->format('M d, Y') }}</span>
+                        <span class="booking-time">{{ \Carbon\Carbon::parse($booking->timeSlot->start_time)->format('h:i A') }} - {{ \Carbon\Carbon::parse($booking->timeSlot->end_time)->format('h:i A') }}</span>
                     @elseif($booking->scheduled_at)
-                        📅 <span>{{ $booking->scheduled_at->format('M d, Y') }}</span>
-                        <span class="time">{{ $booking->scheduled_at->format('h:i A') }}</span>
+                        <span>{{ $booking->scheduled_at->format('M d, Y') }}</span>
+                        <span class="booking-time">{{ $booking->scheduled_at->format('h:i A') }}</span>
                     @else
-                        📅 <span>{{ $booking->booking_date ? \Carbon\Carbon::parse($booking->booking_date)->format('M d, Y') : 'Not scheduled' }}</span>
+                        <span>{{ $booking->booking_date ? \Carbon\Carbon::parse($booking->booking_date)->format('M d, Y') : 'Not scheduled' }}</span>
                     @endif
                 </div>
             </div>
 
             <div class="booking-details">
-                <div class="detail-row">
-                    <span class="label">Student</span>
-                    <span class="value">{{ $booking->student->name ?? 'N/A' }}</span>
+                <div class="detail-item">
+                    <span class="detail-label">Student</span>
+                    <span class="detail-value">{{ $booking->student->name ?? 'N/A' }}</span>
                 </div>
                 @if($booking->instructor)
-                <div class="detail-row">
-                    <span class="label">Instructor</span>
-                    <span class="value">{{ $booking->instructor->name }}</span>
+                <div class="detail-item">
+                    <span class="detail-label">Instructor</span>
+                    <span class="detail-value">{{ $booking->instructor->name }}</span>
                 </div>
                 @endif
                 @if($booking->package)
-                <div class="detail-row">
-                    <span class="label">Package</span>
-                    <span class="value">{{ $booking->package->name }} - {{ $booking->package->transmission_type }}</span>
+                <div class="detail-item">
+                    <span class="detail-label">Package</span>
+                    <span class="detail-value">{{ $booking->package->name }} - {{ $booking->package->transmission_type }}</span>
                 </div>
                 @endif
                 @if($booking->package && $booking->package->training_hours)
-                <div class="detail-row">
-                    <span class="label">Duration</span>
-                    <span class="value">{{ $booking->package->training_hours }} hours</span>
+                <div class="detail-item">
+                    <span class="detail-label">Duration</span>
+                    <span class="detail-value">{{ $booking->package->training_hours }} hours</span>
                 </div>
                 @endif
-                <div class="detail-row">
-                    <span class="label">Price</span>
-                    <span class="value">₱{{ number_format($booking->total_amount, 2) }}</span>
+                <div class="detail-item">
+                    <span class="detail-label">Price</span>
+                    <span class="detail-value" style="color: #059669; font-weight: 600;">₱{{ number_format($booking->total_amount, 2) }}</span>
                 </div>
-                <div class="detail-row">
-                    <span class="label">Payment</span>
-                    <span class="value">
-                        <span class="badge badge-{{ $booking->payment_status }}">{{ ucfirst($booking->payment_status) }}</span>
+                <div class="detail-item">
+                    <span class="detail-label">Payment</span>
+                    <span class="detail-value">
+                        <span class="badge badge-{{ $booking->payment_status === 'paid' ? 'success' : ($booking->payment_status === 'partial' ? 'warning' : 'secondary') }}">
+                            {{ ucfirst($booking->payment_status) }}
+                        </span>
                     </span>
                 </div>
                 @if($booking->notes)
-                <div class="detail-row">
-                    <span class="label">Notes</span>
-                    <span class="value">{{ $booking->notes }}</span>
+                <div class="detail-item" style="grid-column: 1 / -1;">
+                    <span class="detail-label">Notes</span>
+                    <span class="detail-value">{{ $booking->notes }}</span>
                 </div>
                 @endif
             </div>
 
             <div class="booking-actions">
-                <select class="form-select" onchange="updateStatus({{ $booking->id }}, this.value)" style="max-width: 200px;">
+                <select class="status-select" onchange="updateStatus({{ $booking->id }}, this.value)">
                     <option value="">Change Status</option>
                     <option value="scheduled" {{ $booking->status == 'scheduled' ? 'selected' : '' }}>Scheduled</option>
                     <option value="completed" {{ $booking->status == 'completed' ? 'selected' : '' }}>Completed</option>
@@ -352,15 +273,20 @@
                 </select>
                 
                 @if(!$booking->payment)
-                <button class="btn btn-sm btn-success" onclick="createPayment({{ $booking->id }})">Record Payment</button>
+                <button class="btn btn-success btn-sm" onclick="createPayment({{ $booking->id }})">Record Payment</button>
                 @else
-                <span style="color: #10b981; font-weight: 600;">✓ Paid</span>
+                <span class="paid-indicator">✓ Paid</span>
                 @endif
             </div>
         </div>
         @empty
-        <div style="text-align: center; padding: 60px 20px; color: #9ca3af;">
-            <p style="font-size: 1.2rem;">No bookings found</p>
+        <div class="content-card">
+            <div class="content-card-body">
+                <div class="empty-state">
+                    <div class="empty-state-title">No bookings found</div>
+                    <div class="empty-state-text">Booking records will appear here once students make reservations.</div>
+                </div>
+            </div>
         </div>
         @endforelse
     </div>
@@ -369,12 +295,12 @@
 <script>
 const schoolSlug = '{{ $school->slug }}';
 
-function filterBookings(status) {
+function filterBookings(status, btn) {
     const cards = document.querySelectorAll('.booking-card');
     const buttons = document.querySelectorAll('.filter-btn');
     
-    buttons.forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
+    buttons.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
     
     cards.forEach(card => {
         const cardStatus = card.dataset.status;
@@ -389,31 +315,36 @@ function filterBookings(status) {
 function updateStatus(bookingId, status) {
     if (!status) return;
     
-    if (!confirm(`Are you sure you want to change the booking status to "${status}"?`)) {
-        location.reload();
-        return;
-    }
-    
-    fetch(`/${schoolSlug}/admin/bookings/${bookingId}/status`, {
-        method: 'PATCH',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-            'X-Requested-With': 'XMLHttpRequest',
-            'Accept': 'application/json'
-        },
-        body: JSON.stringify({ status: status })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('Status updated successfully!');
-            location.reload();
+    showConfirm({
+        type: 'warning',
+        title: 'Change Booking Status',
+        message: `Are you sure you want to change this booking status to "${status}"?`,
+        confirmText: 'Yes, Update Status',
+        onConfirm: () => {
+            fetch(`/${schoolSlug}/admin/bookings/${bookingId}/status`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ status: status })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Toast.success('Booking status has been updated successfully.', 'Status Updated!');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    Toast.error(data.message || 'Failed to update booking status.', 'Update Failed');
+                }
+            })
+            .catch(error => {
+                Toast.error('An error occurred while updating the status.', 'Error');
+                console.error(error);
+            });
         }
-    })
-    .catch(error => {
-        alert('Error updating status');
-        console.error(error);
     });
 }
 

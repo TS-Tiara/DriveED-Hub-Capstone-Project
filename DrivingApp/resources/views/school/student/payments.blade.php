@@ -84,17 +84,53 @@ td {
 .badge-completed { background: #d1fae5; color: #065f46; }
 .badge-pending { background: #fef3c7; color: #92400e; }
 
+/* Mobile card styles for payments */
+.payment-card {
+    display: none;
+    background: white;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    border-left: 4px solid {{ $settings->primary_color ?? '#667eea' }};
+}
+
+.payment-card-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.payment-card-row:last-child {
+    margin-bottom: 0;
+}
+
+.payment-card-label {
+    color: #6b7280;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.payment-card-value {
+    font-weight: 600;
+    color: #1f2937;
+    font-size: 0.9rem;
+}
+
+.payment-card-amount {
+    font-size: 1.1rem;
+    color: #10b981;
+    font-weight: 700;
+}
+
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
-    body {
-        padding: 10px;
-    }
-    
-    .container {
+    .payments-container {
         padding: 15px;
     }
     
-    .page-header h1 {
+    .page-title {
         font-size: 1.5rem;
     }
     
@@ -110,28 +146,22 @@ td {
         font-size: 1rem !important;
     }
     
-    /* Make table scrollable on mobile */
-    .payments-table {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
+    /* Hide table, show cards on mobile */
+    .payments-table table {
+        display: none;
     }
     
-    table {
-        min-width: 600px;
-    }
-    
-    th, td {
-        padding: 10px;
-        font-size: 14px;
+    .payment-card {
+        display: block;
     }
 }
 
 @media (max-width: 480px) {
-    .container {
+    .payments-container {
         padding: 10px;
     }
     
-    .page-header h1 {
+    .page-title {
         font-size: 1.25rem;
     }
     
@@ -148,9 +178,8 @@ td {
         font-size: 0.9rem !important;
     }
     
-    th, td {
-        padding: 8px;
-        font-size: 13px;
+    .payment-card {
+        padding: 12px;
     }
     
     .badge {
@@ -190,12 +219,38 @@ td {
                     <td>{{ ucfirst($payment->method ?? 'N/A') }}</td>
                     <td><span class="badge badge-{{ $payment->status }}">{{ ucfirst($payment->status) }}</span></td>
                 </tr>
+                <!-- Mobile card view -->
+                <div class="payment-card">
+                    <div class="payment-card-row">
+                        <span class="payment-card-label">Date</span>
+                        <span class="payment-card-value">{{ $payment->paid_on ? $payment->paid_on->format('M d, Y') : 'N/A' }}</span>
+                    </div>
+                    <div class="payment-card-row">
+                        <span class="payment-card-label">Course</span>
+                        <span class="payment-card-value">{{ $payment->booking->course->title }}</span>
+                    </div>
+                    <div class="payment-card-row">
+                        <span class="payment-card-label">Amount</span>
+                        <span class="payment-card-amount">₱{{ number_format($payment->amount, 2) }}</span>
+                    </div>
+                    <div class="payment-card-row">
+                        <span class="payment-card-label">Method</span>
+                        <span class="payment-card-value">{{ ucfirst($payment->method ?? 'N/A') }}</span>
+                    </div>
+                    <div class="payment-card-row">
+                        <span class="payment-card-label">Status</span>
+                        <span class="badge badge-{{ $payment->status }}">{{ ucfirst($payment->status) }}</span>
+                    </div>
+                </div>
                 @empty
                 <tr>
                     <td colspan="5" style="text-align: center; padding: 60px 20px; color: #9ca3af;">
                         <p style="font-size: 1.2rem;">No payment records found</p>
                     </td>
                 </tr>
+                <div class="payment-card" style="text-align: center; color: #9ca3af;">
+                    <p style="font-size: 1rem;">No payment records found</p>
+                </div>
                 @endforelse
             </tbody>
         </table>

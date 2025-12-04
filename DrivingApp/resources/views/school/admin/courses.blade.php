@@ -8,6 +8,8 @@
     $schoolName = $school->name ?? 'Driving School';
 @endphp
 
+@include('school.admin.partials.admin-styles')
+
 <style>
     .courses-container {
         padding: 20px;
@@ -21,12 +23,13 @@
         align-items: center;
         margin-bottom: 30px;
         padding-bottom: 15px;
-        border-bottom: 2px solid {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        border-bottom: 3px solid {{ $school->schoolSetting->primary_color ?? '#667eea' }};
     }
 
     .page-title {
-        font-size: 2rem;
-        color: #333;
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: #1f2937;
         margin: 0;
         display: flex;
         align-items: center;
@@ -34,8 +37,8 @@
     }
     
     .page-subtitle {
-        color: #666;
-        font-size: 0.95rem;
+        color: #6b7280;
+        font-size: 0.9rem;
         margin-top: 5px;
     }
 
@@ -787,17 +790,25 @@
     </div>
 
     @if(session('success'))
-        <div class="alert alert-success" id="successAlert">
-            {{ session('success') }}
-            <button class="close-btn" onclick="this.parentElement.style.display='none'">&times;</button>
+    <div class="flash-message success">
+        <div class="flash-icon">✓</div>
+        <div class="flash-content">
+            <div class="flash-title">Success!</div>
+            <div class="flash-text">{{ session('success') }}</div>
         </div>
+        <button class="flash-close" onclick="this.parentElement.remove()">×</button>
+    </div>
     @endif
 
     @if(session('error'))
-        <div class="alert alert-error" id="errorAlert">
-            {{ session('error') }}
-            <button class="close-btn" onclick="this.parentElement.style.display='none'">&times;</button>
+    <div class="flash-message error">
+        <div class="flash-icon">✕</div>
+        <div class="flash-content">
+            <div class="flash-title">Error!</div>
+            <div class="flash-text">{{ session('error') }}</div>
         </div>
+        <button class="flash-close" onclick="this.parentElement.remove()">×</button>
+    </div>
     @endif
 
     @if($courses->isEmpty())
@@ -1262,28 +1273,32 @@
     }
 
     function deleteCourse(courseId) {
-        if (!confirm('Are you sure you want to delete this course? This will also delete all associated packages.')) {
-            return;
-        }
-
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = `{{ url($school->slug . '/admin/courses') }}/${courseId}`;
-        
-        const csrfToken = document.createElement('input');
-        csrfToken.type = 'hidden';
-        csrfToken.name = '_token';
-        csrfToken.value = '{{ csrf_token() }}';
-        
-        const methodInput = document.createElement('input');
-        methodInput.type = 'hidden';
-        methodInput.name = '_method';
-        methodInput.value = 'DELETE';
-        
-        form.appendChild(csrfToken);
-        form.appendChild(methodInput);
-        document.body.appendChild(form);
-        form.submit();
+        showConfirm({
+            type: 'danger',
+            title: 'Delete Course',
+            message: 'Are you sure you want to delete this course? This will also delete all associated packages.',
+            confirmText: 'Yes, Delete Course',
+            onConfirm: () => {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `{{ url($school->slug . '/admin/courses') }}/${courseId}`;
+                
+                const csrfToken = document.createElement('input');
+                csrfToken.type = 'hidden';
+                csrfToken.name = '_token';
+                csrfToken.value = '{{ csrf_token() }}';
+                
+                const methodInput = document.createElement('input');
+                methodInput.type = 'hidden';
+                methodInput.name = '_method';
+                methodInput.value = 'DELETE';
+                
+                form.appendChild(csrfToken);
+                form.appendChild(methodInput);
+                document.body.appendChild(form);
+                form.submit();
+            }
+        });
     }
 
     // Package Modal Functions
@@ -1340,28 +1355,32 @@
     }
 
     function deletePackage(courseId, packageId) {
-        if (!confirm('Are you sure you want to delete this package?')) {
-            return;
-        }
-
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = `{{ url($school->slug . '/admin/courses') }}/${courseId}/packages/${packageId}`;
-        
-        const csrfToken = document.createElement('input');
-        csrfToken.type = 'hidden';
-        csrfToken.name = '_token';
-        csrfToken.value = '{{ csrf_token() }}';
-        
-        const methodInput = document.createElement('input');
-        methodInput.type = 'hidden';
-        methodInput.name = '_method';
-        methodInput.value = 'DELETE';
-        
-        form.appendChild(csrfToken);
-        form.appendChild(methodInput);
-        document.body.appendChild(form);
-        form.submit();
+        showConfirm({
+            type: 'danger',
+            title: 'Delete Package',
+            message: 'Are you sure you want to delete this package?',
+            confirmText: 'Yes, Delete',
+            onConfirm: () => {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `{{ url($school->slug . '/admin/courses') }}/${courseId}/packages/${packageId}`;
+                
+                const csrfToken = document.createElement('input');
+                csrfToken.type = 'hidden';
+                csrfToken.name = '_token';
+                csrfToken.value = '{{ csrf_token() }}';
+                
+                const methodInput = document.createElement('input');
+                methodInput.type = 'hidden';
+                methodInput.name = '_method';
+                methodInput.value = 'DELETE';
+                
+                form.appendChild(csrfToken);
+                form.appendChild(methodInput);
+                document.body.appendChild(form);
+                form.submit();
+            }
+        });
     }
 
     // Feature Management

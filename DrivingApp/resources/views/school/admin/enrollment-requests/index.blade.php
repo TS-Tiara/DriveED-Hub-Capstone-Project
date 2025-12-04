@@ -6,7 +6,10 @@
 @php
     $school = $school ?? $currentSchool ?? null;
     $schoolName = $school->name ?? 'Driving School';
+    $primaryColor = $school->schoolSetting->primary_color ?? '#667eea';
 @endphp
+
+@include('school.admin.partials.admin-styles')
 
 <style>
     .enrollment-requests-container {
@@ -21,18 +24,19 @@
         align-items: center;
         margin-bottom: 30px;
         padding-bottom: 15px;
-        border-bottom: 2px solid #667eea;
+        border-bottom: 3px solid {{ $primaryColor }};
     }
     
     .page-title {
-        font-size: 2rem;
-        color: #333;
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: #1f2937;
         margin: 0;
     }
     
     .page-subtitle {
-        color: #666;
-        font-size: 0.95rem;
+        color: #6b7280;
+        font-size: 0.9rem;
         margin-top: 5px;
     }
     
@@ -287,18 +291,6 @@
         margin-bottom: 25px;
         font-weight: 500;
     }
-    
-    .alert-success {
-        background: #d1fae5;
-        color: #065f46;
-        border: 1px solid #a7f3d0;
-    }
-    
-    .alert-error {
-        background: #fee2e2;
-        color: #991b1b;
-        border: 1px solid #fecaca;
-    }
 </style>
 
 <div class="enrollment-requests-container">
@@ -312,15 +304,25 @@
     
     <!-- Alert Messages -->
     @if(session('success'))
-        <div class="alert alert-success">
-            ✓ {{ session('success') }}
+    <div class="flash-message success">
+        <div class="flash-icon">✓</div>
+        <div class="flash-content">
+            <div class="flash-title">Success!</div>
+            <div class="flash-text">{{ session('success') }}</div>
         </div>
+        <button class="flash-close" onclick="this.parentElement.remove()">×</button>
+    </div>
     @endif
-    
+
     @if(session('error'))
-        <div class="alert alert-error">
-            ✗ {{ session('error') }}
+    <div class="flash-message error">
+        <div class="flash-icon">✕</div>
+        <div class="flash-content">
+            <div class="flash-title">Error!</div>
+            <div class="flash-text">{{ session('error') }}</div>
         </div>
+        <button class="flash-close" onclick="this.parentElement.remove()">×</button>
+    </div>
     @endif
     
     @php
@@ -410,9 +412,9 @@
                         <td>
                             @if($request->status === 'pending')
                                 <div class="action-buttons">
-                                    <form method="POST" action="{{ route('schools.admin.enrollmentRequests.approve', ['school' => $school, 'enrollmentRequest' => $request->id]) }}" style="display: inline;">
+                                    <form method="POST" action="{{ route('schools.admin.enrollmentRequests.approve', ['school' => $school, 'enrollmentRequest' => $request->id]) }}" style="display: inline;" id="approveForm{{ $request->id }}">
                                         @csrf
-                                        <button type="submit" class="btn btn-approve" onclick="return confirm('Approve this enrollment request? This will promote the guest to a student.')">
+                                        <button type="button" class="btn btn-approve" onclick="approveRequest({{ $request->id }})">
                                             ✓ Approve
                                         </button>
                                     </form>
@@ -493,6 +495,18 @@ function showRejectModal(requestId) {
     const form = document.getElementById('rejectForm');
     form.action = `{{ route('schools.admin.enrollmentRequests.reject', ['school' => $school, 'enrollmentRequest' => ':id']) }}`.replace(':id', requestId);
     modal.style.display = 'flex';
+}
+
+function approveRequest(requestId) {
+    showConfirm({
+        type: 'success',
+        title: 'Approve Enrollment',
+        message: 'Are you sure you want to approve this enrollment request? This will promote the guest to a student.',
+        confirmText: 'Approve',
+        onConfirm: function() {
+            document.getElementById('approveForm' + requestId).submit();
+        }
+    });
 }
 
 function closeRejectModal() {

@@ -955,6 +955,87 @@
     .queue-popup-body::-webkit-scrollbar {
         display: none;
     }
+    
+    /* Filter/Checkbox Container for Mobile */
+    .schedule-filters {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+    
+    .filter-checkbox {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        color: #6c757d;
+        white-space: nowrap;
+    }
+    
+    .filter-checkbox input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        accent-color: {{ $primaryColor }};
+    }
+    
+    @media (max-width: 768px) {
+        .schedule-filters {
+            gap: 8px;
+            margin-top: 8px;
+        }
+        
+        .filter-checkbox {
+            font-size: 11px;
+            gap: 4px;
+            background: #f8f9fa;
+            padding: 6px 10px;
+            border-radius: 16px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .filter-checkbox input[type="checkbox"] {
+            width: 14px;
+            height: 14px;
+        }
+        
+        .filter-checkbox span {
+            max-width: 100px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .schedule-header-controls {
+            flex-direction: column;
+            align-items: stretch !important;
+            gap: 8px !important;
+        }
+        
+        .schedule-filters {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+        }
+        
+        .filter-checkbox {
+            font-size: 10px;
+            padding: 5px 8px;
+            justify-content: center;
+        }
+        
+        .filter-checkbox input[type="checkbox"] {
+            width: 12px;
+            height: 12px;
+        }
+        
+        .filter-checkbox span {
+            max-width: none;
+        }
+    }
 </style>
 
 <div class="schedule-container">
@@ -989,16 +1070,16 @@
     <div class="schedule-grid">
         <!-- Left: Schedule List -->
         <div class="schedule-main">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; margin-top: 20px; flex-wrap: wrap; gap: 12px;">
-                <h3 style="margin: 0; color: #000; font-size: 1.5rem; font-weight: 600;">My Confirmed Schedule</h3>
-                <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; color: #6c757d;">
-                        <input type="checkbox" id="collapse-all-my" onchange="toggleCollapseAllMySchedule(this)" style="cursor: pointer;">
+            <div class="schedule-header-controls" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; margin-top: 20px; flex-wrap: wrap; gap: 12px;">
+                <h3 style="margin: 0; color: #000; font-size: 1.2rem; font-weight: 600;">My Confirmed Schedule</h3>
+                <div class="schedule-filters">
+                    <label class="filter-checkbox">
+                        <input type="checkbox" id="collapse-all-my" onchange="toggleCollapseAllMySchedule(this)">
                         <span>Collapse All</span>
                     </label>
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; color: #6c757d;">
-                        <input type="checkbox" id="show-past-my" onchange="toggleShowPastMySchedule(this)" style="cursor: pointer;">
-                        <span>Show Past Schedules</span>
+                    <label class="filter-checkbox">
+                        <input type="checkbox" id="show-past-my" onchange="toggleShowPastMySchedule(this)">
+                        <span>Show Past</span>
                     </label>
                     <button class="collapse-btn mobile-queue-btn" onclick="toggleQueuePopup()" style="display: none; padding: 6px 12px; font-size: 14px;">Booked Schedule</button>
                 </div>
@@ -1215,20 +1296,20 @@
     <div class="schedule-grid">
         <!-- Left: Available Time Slots -->
         <div class="schedule-main">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; margin-top: 20px; flex-wrap: wrap; gap: 12px;">
-                <h3 style="margin: 0; color: #000; font-size: 1.5rem; font-weight: 600;">Available Schedules</h3>
-                <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; color: #6c757d;">
-                        <input type="checkbox" id="collapse-all-available" onchange="toggleCollapseAllAvailable(this)" style="cursor: pointer;">
+            <div class="schedule-header-controls" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; margin-top: 20px; flex-wrap: wrap; gap: 12px;">
+                <h3 style="margin: 0; color: #000; font-size: 1.2rem; font-weight: 600;">Available Schedules</h3>
+                <div class="schedule-filters">
+                    <label class="filter-checkbox">
+                        <input type="checkbox" id="collapse-all-available" onchange="toggleCollapseAllAvailable(this)">
                         <span>Collapse All</span>
                     </label>
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; color: #6c757d;">
-                        <input type="checkbox" id="show-past-available" onchange="toggleShowPastAvailable(this)" style="cursor: pointer;">
-                        <span>Show Past Schedules</span>
+                    <label class="filter-checkbox">
+                        <input type="checkbox" id="show-past-available" onchange="toggleShowPastAvailable(this)">
+                        <span>Show Past</span>
                     </label>
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; color: #6c757d;">
-                        <input type="checkbox" id="show-all-courses" onchange="toggleShowAllCourses()" style="cursor: pointer;">
-                        <span>Show All Courses</span>
+                    <label class="filter-checkbox">
+                        <input type="checkbox" id="show-all-courses" onchange="toggleShowAllCourses()">
+                        <span>All Courses</span>
                     </label>
                     <button class="collapse-btn mobile-queue-btn" onclick="toggleQueuePopup()" style="display: none; padding: 6px 12px; font-size: 14px;">Booked Schedule</button>
                 </div>
@@ -2130,10 +2211,10 @@ function openBookingModal(timeSlotId, courseId, courseName, instructorId, instru
     document.getElementById('modal_instructor_name').value = instructorName || 'To be assigned';
     document.getElementById('modal_datetime').value = `${date} at ${startTime} - ${endTime}`;
     
-    // Set scheduled_at field
-    const scheduledDateTime = `${date}T${startTime}`;
+    // Format scheduled_at correctly as Y-m-d H:i:s format
+    // startTime is in HH:mm format, so we add :00 for seconds
+    const scheduledDateTime = `${date} ${startTime}:00`;
     document.getElementById('scheduled_at').value = scheduledDateTime;
-    document.getElementById('scheduled_at').min = scheduledDateTime;
     
     // Show modal
     document.getElementById('bookingModal').style.display = 'flex';
@@ -2338,3 +2419,4 @@ function closeConfirmModal(confirmed = false) {
 </style>
 
 @endsection
+

@@ -8,7 +8,11 @@
     $schoolName = $school->name ?? 'Driving School';
     $instructors = $instructors ?? collect();
     $currentFilter = request('type', 'all');
+    $primaryColor = $school->schoolSetting->primary_color ?? '#667eea';
+    $secondaryColor = $school->schoolSetting->secondary_color ?? '#764ba2';
 @endphp
+
+@include('school.admin.partials.admin-styles')
 
 <style>
     /* Custom Button Styles (replacing Bootstrap) */
@@ -154,7 +158,7 @@
     
     .form-control:focus {
         outline: none;
-        border-color: #667eea;
+        border-color: {{ $primaryColor }};
         box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
     }
     
@@ -230,20 +234,20 @@
         justify-content: space-between;
         align-items: center;
         margin-bottom: 30px;
-        padding-bottom: 20px;
-        border-bottom: 2px solid #667eea;
+        padding-bottom: 15px;
+        border-bottom: 3px solid {{ $school->schoolSetting->primary_color ?? '#667eea' }};
     }
     
     .page-title {
-        font-size: 2rem;
-        color: #333;
-        margin: 0;
+        font-size: 1.75rem;
         font-weight: 600;
+        color: #1f2937;
+        margin: 0;
     }
     
     .page-subtitle {
-        color: #666;
-        font-size: 0.95rem;
+        color: #6b7280;
+        font-size: 0.9rem;
         margin-top: 5px;
     }
     
@@ -294,7 +298,7 @@
     
     .filter-dropdown select {
         padding: 12px 40px 12px 16px;
-        border: 2px solid #667eea;
+        border: 2px solid {{ $primaryColor }};
         border-radius: 8px;
         background: white;
         color: #333;
@@ -307,13 +311,13 @@
     }
     
     .filter-dropdown select:hover {
-        border-color: #764ba2;
+        border-color: {{ $secondaryColor }};
         box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
     }
     
     .filter-dropdown select:focus {
         outline: none;
-        border-color: #667eea;
+        border-color: {{ $primaryColor }};
         box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
     }
     
@@ -324,7 +328,7 @@
         top: 50%;
         transform: translateY(-50%);
         pointer-events: none;
-        color: #667eea;
+        color: {{ $primaryColor }};
         font-size: 12px;
     }
     
@@ -362,13 +366,13 @@
     }
     
     .nav-tabs .nav-link:hover {
-        color: #667eea;
+        color: {{ $primaryColor }};
         background: #f9fafb;
     }
     
     .nav-tabs .nav-link.active {
-        color: #667eea;
-        border-bottom: 3px solid #667eea;
+        color: {{ $primaryColor }};
+        border-bottom: 3px solid {{ $primaryColor }};
         background: transparent;
     }
     
@@ -387,7 +391,7 @@
     }
     
     .date-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
         color: white;
         padding: 15px 20px;
         font-size: 1.1rem;
@@ -560,7 +564,7 @@
     }
     
     .form-control:focus, .form-select:focus {
-        border-color: #667eea;
+        border-color: {{ $primaryColor }};
         box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
     }
     
@@ -586,7 +590,7 @@
     }
     
     select[multiple] option:checked {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
         color: white;
         font-weight: 500;
     }
@@ -616,16 +620,16 @@
     
     .instructor-checkbox:hover {
         background: white;
-        border-color: #667eea;
+        border-color: {{ $primaryColor }};
     }
     
     .instructor-checkbox:has(.checkbox:checked) {
         background: #f0f4ff;
-        border-color: #667eea;
+        border-color: {{ $primaryColor }};
     }
     
     .instructor-checkbox:has(.checkbox:checked) .checkbox-label {
-        color: #667eea;
+        color: {{ $primaryColor }};
         font-weight: 500;
     }
     
@@ -655,7 +659,7 @@
     
     .modal-header {
         position: relative;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
         color: white;
         padding: 32px;
         border-radius: 16px 16px 0 0;
@@ -724,7 +728,7 @@
         align-items: center;
         margin-bottom: 25px;
         padding: 15px 20px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
         border-radius: 10px;
         color: white;
     }
@@ -786,7 +790,7 @@
     }
     
     .calendar-day:hover {
-        border-color: #667eea;
+        border-color: {{ $primaryColor }};
         box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
         transform: translateY(-2px);
     }
@@ -797,7 +801,7 @@
     }
     
     .calendar-day.today {
-        border-color: #667eea;
+        border-color: {{ $primaryColor }};
         background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
     }
     
@@ -864,17 +868,25 @@
     </div>
 
     @if(session('success'))
-        <div class="alert alert-success" id="successAlert">
-            {{ session('success') }}
-            <button type="button" class="close-btn" onclick="this.parentElement.style.display='none'">&times;</button>
+    <div class="flash-message success">
+        <div class="flash-icon">✓</div>
+        <div class="flash-content">
+            <div class="flash-title">Success!</div>
+            <div class="flash-text">{{ session('success') }}</div>
         </div>
+        <button class="flash-close" onclick="this.parentElement.remove()">×</button>
+    </div>
     @endif
 
     @if(session('error'))
-        <div class="alert alert-danger" id="errorAlert">
-            {{ session('error') }}
-            <button type="button" class="close-btn" onclick="this.parentElement.style.display='none'">&times;</button>
+    <div class="flash-message error">
+        <div class="flash-icon">✕</div>
+        <div class="flash-content">
+            <div class="flash-title">Error!</div>
+            <div class="flash-text">{{ session('error') }}</div>
         </div>
+        <button class="flash-close" onclick="this.parentElement.remove()">×</button>
+    </div>
     @endif
 
     <!-- View Toggle -->
@@ -939,7 +951,7 @@
                                 </div>
                                 <div class="timeslot-details">
                                     @if($timeslot->course)
-                                        <div class="course-badge" style="margin-bottom: 12px; padding: 8px 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 8px; display: inline-block; font-weight: 500; box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);">
+                                        <div class="course-badge" style="margin-bottom: 12px; padding: 8px 12px; background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%); color: white; border-radius: 8px; display: inline-block; font-weight: 500; box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);">
                                             <i class="bi bi-book"></i> {{ $timeslot->course->title }}
                                             <span style="opacity: 0.9; font-size: 0.85em; margin-left: 5px;">({{ ucfirst($timeslot->course->type) }})</span>
                                         </div>
@@ -992,12 +1004,12 @@
                                         <button type="button" class="btn btn-sm btn-primary btn-sm-custom" onclick="showSlotDetails({{ $timeslot->id }})" style="margin-right: 8px;">
                                             <i class="bi bi-eye"></i> View/Edit
                                         </button>
-                                        <form method="POST" action="{{ route('schools.admin.schedules.delete', [$school, $timeslot->id]) }}" onsubmit="return confirm('Are you sure you want to delete this schedule?');" style="display: inline;">
+                                        <button type="button" class="btn btn-sm btn-danger btn-sm-custom" onclick="confirmDeleteSchedule({{ $timeslot->id }})">
+                                            <i class="bi bi-trash"></i> Delete
+                                        </button>
+                                        <form id="deleteScheduleForm{{ $timeslot->id }}" method="POST" action="{{ route('schools.admin.schedules.delete', [$school, $timeslot->id]) }}" style="display: none;">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-danger btn-sm-custom">
-                                                <i class="bi bi-trash"></i> Delete
-                                            </button>
                                         </form>
                                     </div>
                                 </div>
@@ -1440,7 +1452,7 @@
         
         if (!slotItem) {
             console.error('Could not find slot item with ID:', slotId);
-            alert('Could not find schedule details. Please refresh the page and try again.');
+            Toast.error('Could not find schedule details. Please refresh the page and try again.', 'Not Found');
             return;
         }
         
@@ -1672,6 +1684,19 @@
                 <textarea name="notes" class="form-control" rows="3">${slotData.notes !== 'No notes' ? slotData.notes : ''}</textarea>
             </div>
         `;
+    }
+    
+    // Confirm Delete Schedule
+    function confirmDeleteSchedule(scheduleId) {
+        showConfirm({
+            type: 'danger',
+            title: 'Delete Schedule',
+            message: 'Are you sure you want to delete this schedule? This action cannot be undone.',
+            confirmText: 'Yes, Delete',
+            onConfirm: () => {
+                document.getElementById('deleteScheduleForm' + scheduleId).submit();
+            }
+        });
     }
 </script>
 

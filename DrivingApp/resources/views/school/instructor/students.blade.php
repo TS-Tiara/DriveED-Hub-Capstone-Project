@@ -274,34 +274,211 @@
         }
 
         .stats-grid {
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
         }
 
         .stat-box {
-            padding: 15px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.65rem;
         }
 
         .stat-value {
-            font-size: 2rem;
+            font-size: 1.25rem;
         }
 
         .controls-bar {
-            padding: 15px;
-            flex-direction: column;
-            align-items: stretch;
+            padding: 12px;
+            flex-direction: row;
+            flex-wrap: wrap;
+            gap: 8px;
         }
 
         .search-wrapper {
-            min-width: 100%;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .search-input {
+            padding: 8px 10px;
+            font-size: 13px;
         }
 
         .filter-group {
-            flex-wrap: wrap;
+            flex: 0 0 auto;
+        }
+
+        .filter-label {
+            display: none;
+        }
+
+        .filter-select {
+            padding: 8px 10px;
+            font-size: 12px;
+        }
+
+        .view-count {
+            width: 100%;
+            text-align: center;
+            font-size: 12px;
         }
 
         .students-grid {
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .student-card {
+            padding: 12px;
+        }
+
+        .student-card-header {
+            flex-direction: column;
+            text-align: center;
+            gap: 8px;
+        }
+
+        .student-avatar {
+            width: 45px;
+            height: 45px;
+            font-size: 18px;
+        }
+
+        .student-info {
+            text-align: center;
+        }
+
+        .student-name {
+            font-size: 14px;
+        }
+
+        .student-detail {
+            font-size: 11px;
+            display: none;
+        }
+
+        .student-detail:first-of-type {
+            display: block;
+        }
+
+        .student-grade {
+            font-size: 12px;
+        }
+
+        .assignment-badge {
+            font-size: 9px;
+            padding: 2px 6px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .students-container {
+            padding: 10px;
+        }
+
+        .page-title {
+            font-size: 1.3rem;
+        }
+
+        .stats-grid {
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+        }
+
+        .stat-box {
+            padding: 8px 4px;
+        }
+
+        .stat-label {
+            font-size: 0.55rem;
+        }
+
+        .stat-value {
+            font-size: 1rem;
+        }
+
+        .controls-bar {
+            padding: 10px;
+            gap: 6px;
+        }
+
+        .search-input {
+            padding: 6px 8px;
+            font-size: 12px;
+        }
+
+        .filter-select {
+            padding: 6px 8px;
+            font-size: 11px;
+        }
+
+        .students-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .student-card {
+            padding: 10px;
+        }
+
+        .student-avatar {
+            width: 40px;
+            height: 40px;
+            font-size: 16px;
+        }
+
+        .student-name {
+            font-size: 13px;
+        }
+
+        .student-grade {
+            font-size: 11px;
+        }
+
+        .assignment-badge {
+            font-size: 8px;
+            padding: 2px 5px;
+        }
+    }
+
+    @media (max-width: 360px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .stat-box {
+            padding: 8px;
+        }
+
+        .stat-label {
+            font-size: 0.6rem;
+        }
+
+        .stat-value {
+            font-size: 1.1rem;
+        }
+        
+        .students-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+        }
+
+        .student-card {
+            padding: 8px;
+        }
+
+        .student-avatar {
+            width: 35px;
+            height: 35px;
+            font-size: 14px;
+        }
+
+        .student-name {
+            font-size: 12px;
         }
     }
 </style>

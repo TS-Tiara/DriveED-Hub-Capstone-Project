@@ -12,6 +12,9 @@
     $useGradient = $settings?->use_gradient_header ?? true;
     $headerTextColor = $settings?->header_text_color ?? '#ffffff';
 ?>
+
+@include('school.admin.partials.admin-styles')
+
 <style>
     .reports-container { 
         padding: 20px; 
@@ -24,15 +27,15 @@
         justify-content: space-between;
         align-items: center;
         margin-bottom: 30px;
-        padding-bottom: 20px;
-        border-bottom: 4px solid <?php echo $primaryColor; ?>;
+        padding-bottom: 15px;
+        border-bottom: 3px solid <?php echo $primaryColor; ?>;
     }
     
     .page-header h1 { 
-        color: #333; 
-        font-size: 2rem; 
+        color: #1f2937; 
+        font-size: 1.75rem; 
         margin: 0;
-        font-weight: 400;
+        font-weight: 600;
     }
     
     .metrics-grid { 
