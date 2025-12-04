@@ -1177,8 +1177,7 @@
             @elseif(Auth::guard('instructor')->check())
                 <a href="{{ $schoolRoute('instructor.dashboard') }}" class="nav-item" data-page="dashboard">Dashboard</a>
                 <a href="{{ $schoolRoute('instructor.schedule') }}" class="nav-item" data-page="my-schedule">My Schedule</a>
-                <a href="{{ $schoolRoute('instructor.bookings.index') }}" class="nav-item" data-page="bookings">My Bookings</a>
-                <a href="{{ $schoolRoute('instructor.students.index') }}" class="nav-item" data-page="students">Students</a>
+                <a href="{{ $schoolRoute('instructor.students.index') }}" class="nav-item" data-page="students">My Students</a>
                 <a href="{{ $schoolRoute('instructor.grades') }}" class="nav-item" data-page="grades">Grades</a>
                 <a href="{{ $schoolRoute('instructor.reports') }}" class="nav-item" data-page="reports">Reports</a>
             @elseif(Auth::guard('student')->check())

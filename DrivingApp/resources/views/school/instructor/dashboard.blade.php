@@ -717,22 +717,16 @@
     <div class="quick-actions">
         <h2>Quick Actions</h2>
         <div class="actions-grid">
-            <a href="/{{ $school->slug }}/instructor/schedule" class="action-btn">
+            <a href="{{ $schoolRoute('instructor.schedule') }}" class="action-btn" onclick="loadContent(this.href); return false;">
                 <span>View Schedule</span>
             </a>
-            <a href="/{{ $school->slug }}/instructor/bookings" class="action-btn">
-                <span>Manage Bookings</span>
-                @if($pendingBookings > 0)
-                    <span class="badge">{{ $pendingBookings }}</span>
-                @endif
+            <a href="{{ $schoolRoute('instructor.students.index') }}" class="action-btn" onclick="loadContent(this.href); return false;">
+                <span>My Students</span>
             </a>
-            <a href="/{{ $school->slug }}/instructor/students" class="action-btn">
-                <span>View Students</span>
+            <a href="{{ $schoolRoute('instructor.grades') }}" class="action-btn" onclick="loadContent(this.href); return false;">
+                <span>Manage Grades</span>
             </a>
-            <a href="/{{ $school->slug }}/instructor/progress" class="action-btn">
-                <span>Update Progress</span>
-            </a>
-            <a href="/{{ $school->slug }}/instructor/reports" class="action-btn">
+            <a href="{{ $schoolRoute('instructor.reports') }}" class="action-btn" onclick="loadContent(this.href); return false;">
                 <span>Performance Reports</span>
             </a>
         </div>
