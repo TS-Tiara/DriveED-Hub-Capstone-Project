@@ -238,12 +238,12 @@
             </div>
 
             <div class="schools-list">
-                @foreach($schools as $school)
+                <?php $__currentLoopData = $schools; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $school): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                 <div class="school-card">
-                    <h3>{{ $school->name }}</h3>
-                    <a href="{{ route('schools.login', ['school' => $school->slug]) }}" class="enter-btn">Enter</a>
+                    <h3><?php echo e($school->name); ?></h3>
+                    <a href="<?php echo e(route('schools.login', ['school' => $school->slug])); ?>" class="enter-btn">Enter</a>
                 </div>
-                @endforeach
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </div>
         </div>
     </div>
@@ -251,7 +251,8 @@
     <!-- Footer with hidden admin link -->
     <div class="footer">
         <span>© 2025 DriveED Hub. All rights reserved.</span>
-        <a href="{{ route('system-admin.login') }}">Admin</a>
+        <a href="<?php echo e(route('system-admin.login')); ?>">Admin</a>
     </div>
 </body>
 </html>
+<?php /**PATH C:\Users\jcsdi\Documents\Driving School Management System\DrivingApp\resources\views/welcome.blade.php ENDPATH**/ ?>

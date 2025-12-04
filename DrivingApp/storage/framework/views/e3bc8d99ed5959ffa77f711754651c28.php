@@ -21,13 +21,41 @@
             padding: 20px;
         }
 
-        .login-container {
-            max-width: 420px;
+        .login-wrapper {
+            display: flex;
+            max-width: 900px;
             width: 100%;
             background: white;
             border-radius: 20px;
-            padding: 40px;
+            overflow: hidden;
             box-shadow: 0 25px 80px rgba(0,0,0,0.4);
+        }
+
+        .login-brand {
+            flex: 0 0 45%;
+            background: #053d86;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        .login-brand img {
+            max-width: 80%;
+            height: auto;
+            margin-bottom: 20px;
+        }
+
+        .login-brand h2 {
+            color: white;
+            font-size: 1.5rem;
+            text-align: center;
+        }
+
+        .login-container {
+            flex: 1;
+            padding: 50px 40px;
         }
 
         .login-header {
@@ -36,19 +64,19 @@
         }
 
         .login-header .icon {
-            width: 70px;
-            height: 70px;
+            width: 60px;
+            height: 60px;
             background: #053d86;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto 15px;
-            font-size: 1.8rem;
+            font-size: 1.5rem;
         }
 
         .login-header h1 {
-            font-size: 1.5rem;
+            font-size: 1.6rem;
             color: #053d86;
             margin-bottom: 5px;
         }
@@ -152,7 +180,19 @@
             text-decoration: underline;
         }
 
-        @media (max-width: 480px) {
+        @media (max-width: 768px) {
+            .login-wrapper {
+                flex-direction: column;
+            }
+
+            .login-brand {
+                padding: 30px;
+            }
+
+            .login-brand img {
+                max-width: 200px;
+            }
+
             .login-container {
                 padding: 30px 25px;
             }
@@ -160,27 +200,34 @@
     </style>
 </head>
 <body>
-    <div class="login-container">
-        <div class="login-header">
-            <div class="icon">🔐</div>
-            <h1>System Administrator</h1>
-            <p>Secure Access Portal</p>
+    <div class="login-wrapper">
+        <div class="login-brand">
+            <img src="<?php echo e(asset('images/SystemLogo1.png')); ?>" alt="DriveED Hub">
         </div>
 
-            @if(session('success'))
+        <div class="login-container">
+            <div class="login-header">
+                <div class="icon">🔐</div>
+                <h1>System Administrator</h1>
+                <p>Secure Access Portal</p>
+            </div>
+
+            <?php if(session('success')): ?>
                 <div class="alert alert-success">
-                    {{ session('success') }}
-                </div>
-            @endif
+                    <?php echo e(session('success')); ?>
 
-            @if(session('error'))
+                </div>
+            <?php endif; ?>
+
+            <?php if(session('error')): ?>
                 <div class="alert alert-error">
-                    {{ session('error') }}
-                </div>
-            @endif
+                    <?php echo e(session('error')); ?>
 
-            <form method="POST" action="{{ route('system-admin.login.submit') }}">
-                @csrf
+                </div>
+            <?php endif; ?>
+
+            <form method="POST" action="<?php echo e(route('system-admin.login.submit')); ?>">
+                <?php echo csrf_field(); ?>
 
                 <div class="form-group">
                     <label for="email">Email Address</label>
@@ -188,15 +235,29 @@
                         type="email" 
                         id="email" 
                         name="email" 
-                        class="@error('email') is-invalid @enderror"
-                        value="{{ old('email') }}"
+                        class="<?php $__errorArgs = ['email'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>"
+                        value="<?php echo e(old('email')); ?>"
                         required 
                         autofocus
                         placeholder="admin@example.com"
                     >
-                    @error('email')
-                        <span class="invalid-feedback">{{ $message }}</span>
-                    @enderror
+                    <?php $__errorArgs = ['email'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                        <span class="invalid-feedback"><?php echo e($message); ?></span>
+                    <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                 </div>
 
                 <div class="form-group">
@@ -205,13 +266,27 @@
                         type="password" 
                         id="password" 
                         name="password" 
-                        class="@error('password') is-invalid @enderror"
+                        class="<?php $__errorArgs = ['password'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>"
                         required
                         placeholder="Enter your password"
                     >
-                    @error('password')
-                        <span class="invalid-feedback">{{ $message }}</span>
-                    @enderror
+                    <?php $__errorArgs = ['password'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                        <span class="invalid-feedback"><?php echo e($message); ?></span>
+                    <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                 </div>
 
                 <button type="submit" class="btn">
@@ -220,8 +295,10 @@
             </form>
 
             <div class="login-footer">
-                <a href="{{ route('welcome') }}">← Back to Home</a>
+                <a href="<?php echo e(route('welcome')); ?>">← Back to Home</a>
             </div>
         </div>
+    </div>
 </body>
 </html>
+<?php /**PATH C:\Users\jcsdi\Documents\Driving School Management System\DrivingApp\resources\views/system-admin/login.blade.php ENDPATH**/ ?>

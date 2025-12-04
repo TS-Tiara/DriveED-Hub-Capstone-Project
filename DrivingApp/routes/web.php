@@ -21,7 +21,7 @@ Route::get('/', function () {
     // Eager load schoolSetting to prevent N+1 queries
     $schools = \App\Models\School::with('schoolSetting')->orderBy('name')->get();
     return view('welcome', compact('schools'));
-});
+})->name('welcome');
 
 // System Admin Routes (Global - Not School Specific)
 Route::prefix('system-admin')->name('system-admin.')->group(function () {
