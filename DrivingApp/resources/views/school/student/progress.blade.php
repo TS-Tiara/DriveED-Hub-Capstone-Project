@@ -5,25 +5,27 @@
 @section('content')
 @php
     $schoolName = $school->name ?? 'Driving School';
+    $settings = $school->schoolSetting;
 @endphp
 
 <style>
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: white;
+.progress-container {
     padding: 20px;
-}
-
-.container {
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
-    padding: 30px;
 }
 
-.page-header h1 {
-    font-size: 2rem;
-    color: #1f2937;
+.page-header {
     margin-bottom: 30px;
+    padding-bottom: 15px;
+    border-bottom: 4px solid {{ $settings->primary_color ?? '#667eea' }};
+}
+
+.page-title {
+    font-size: 2rem;
+    color: #111827;
+    margin: 0;
+    font-weight: 400;
 }
 
 .progress-grid {
@@ -53,7 +55,11 @@ body {
 .progress-percentage {
     font-size: 3rem;
     font-weight: 700;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    @if($settings->use_gradient_header ?? true)
+        background: linear-gradient(135deg, {{ $settings->primary_color ?? '#667eea' }}, {{ $settings->secondary_color ?? '#764ba2' }});
+    @else
+        background: {{ $settings->primary_color ?? '#667eea' }};
+    @endif
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -69,7 +75,11 @@ body {
 
 .progress-bar-fill {
     height: 100%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    @if($settings->use_gradient_header ?? true)
+        background: linear-gradient(135deg, {{ $settings->primary_color ?? '#667eea' }} 0%, {{ $settings->secondary_color ?? '#764ba2' }} 100%);
+    @else
+        background: {{ $settings->primary_color ?? '#667eea' }};
+    @endif
     display: flex;
     align-items: center;
     justify-content: flex-end;
@@ -125,11 +135,133 @@ body {
     color: #78350f;
     line-height: 1.6;
 }
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .container {
+        padding: 20px 15px;
+    }
+    
+    .page-header h1 {
+        font-size: 24px;
+    }
+    
+    .progress-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .progress-card {
+        padding: 20px;
+    }
+    
+    .progress-header h3 {
+        font-size: 1.5rem;
+    }
+    
+    .progress-percentage {
+        font-size: 2rem;
+    }
+    
+    .progress-bar {
+        height: 30px;
+    }
+    
+    .progress-bar-fill {
+        font-size: 13px;
+    }
+    
+    .progress-details {
+        padding: 15px;
+    }
+    
+    .stat-item {
+        padding: 10px;
+    }
+    
+    .stat-item .label {
+        font-size: 13px;
+    }
+    
+    .stat-item .value {
+        font-size: 20px;
+    }
+    
+    .notes-section {
+        padding: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 15px 10px;
+    }
+    
+    .page-header h1 {
+        font-size: 20px;
+    }
+    
+    .progress-card {
+        padding: 15px;
+    }
+    
+    .progress-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .progress-header h3 {
+        font-size: 1.25rem;
+    }
+    
+    .progress-percentage {
+        font-size: 1.75rem;
+    }
+    
+    .progress-bar {
+        height: 25px;
+    }
+    
+    .progress-bar-fill {
+        font-size: 12px;
+    }
+    
+    .progress-details {
+        grid-template-columns: 1fr;
+        padding: 12px;
+        gap: 8px;
+    }
+    
+    .stat-item {
+        padding: 8px;
+    }
+    
+    .stat-item .label {
+        font-size: 12px;
+    }
+    
+    .stat-item .value {
+        font-size: 18px;
+    }
+    
+    .notes-section {
+        padding: 12px;
+    }
+    
+    .notes-section h4 {
+        font-size: 14px;
+    }
+    
+    .notes-section p {
+        font-size: 13px;
+    }
+}
 </style>
 
-<div class="container">
+<div class="progress-container">
     <div class="page-header">
-        <h1>📊 My Progress - {{ $schoolName }}</h1>
+        <h1 class="page-title">My Progress</h1>
     </div>
 
     <div class="progress-grid">
@@ -173,7 +305,7 @@ body {
 
             @if($progress->notes)
             <div class="notes-section">
-                <h4>📝 Instructor's Notes</h4>
+                <h4>Instructor's Notes</h4>
                 <p>{{ $progress->notes }}</p>
             </div>
             @endif

@@ -25,6 +25,7 @@ return new class extends Migration
         $table->string('status')->default('active');
         $table->enum('role', ['guest', 'student'])->default('guest');
         $table->date('enrollment_date')->nullable();
+        $table->rememberToken();
         $table->timestamps();
         
         // Composite unique key for email within school

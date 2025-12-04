@@ -18,7 +18,8 @@ use App\Http\Controllers\SystemAdminController;
 use App\Models\School;
 
 Route::get('/', function () {
-    $schools = \App\Models\School::orderBy('name')->get();
+    // Eager load schoolSetting to prevent N+1 queries
+    $schools = \App\Models\School::with('schoolSetting')->orderBy('name')->get();
     return view('welcome', compact('schools'));
 });
 
@@ -80,12 +81,10 @@ Route::prefix('{school:slug}')
 
             Route::post('/store-account', [AdminController::class, 'storeAccount'])->name('storeAccount');
 
-            Route::get('/students/{id}/edit', [AdminController::class, 'editStudent'])->name('students.edit');
             Route::put('/students/{id}', [AdminController::class, 'updateStudent'])->name('students.update');
             Route::patch('/students/{id}/toggle-status', [AdminController::class, 'toggleStudentStatus'])->name('students.toggleStatus');
 
             Route::post('/instructors', [AdminController::class, 'storeAccount'])->name('instructors.store');
-            Route::get('/instructors/{id}/edit', [AdminController::class, 'editInstructor'])->name('instructors.edit');
             Route::put('/instructors/{id}', [AdminController::class, 'updateInstructor'])->name('instructors.update');
             Route::patch('/instructors/{id}/toggle-status', [AdminController::class, 'toggleInstructorStatus'])->name('instructors.toggleStatus');
             Route::patch('/instructors/{id}/availability', [AdminController::class, 'toggleAvailability'])->name('instructors.availability');
@@ -152,10 +151,6 @@ Route::prefix('{school:slug}')
             // Payments management
             Route::resource('payments', PaymentController::class);
             Route::get('/payments/statistics', [PaymentController::class, 'statistics'])->name('payments.statistics');
-
-            // Progress tracking
-            Route::resource('progress', ProgressController::class);
-            Route::get('/progress/student/{student}/summary', [ProgressController::class, 'studentSummary'])->name('progress.studentSummary');
             
             Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
         });
@@ -163,17 +158,25 @@ Route::prefix('{school:slug}')
         Route::prefix('instructor')->name('instructor.')->middleware(['auth:instructor', 'ajax'])->group(function (): void {
             Route::get('/', [InstructorController::class, 'dashboard'])->name('dashboard');
 
-            Route::get('/timeslots', [InstructorTimeSlotController::class, 'index'])->name('timeslots.index');
+            Route::get('/my-schedule', [InstructorTimeSlotController::class, 'mySchedule'])->name('schedule');
             Route::post('/timeslots/{id}/toggle', [InstructorTimeSlotController::class, 'toggle'])->name('timeslots.toggle');
             Route::post('/timeslots/{id}/request-removal', [InstructorTimeSlotController::class, 'requestRemoval'])->name('timeslots.requestRemoval');
-            Route::get('/my-schedule', [InstructorTimeSlotController::class, 'mySchedule'])->name('schedule');
+            
+            // Instructor bookings
+            Route::get('/bookings', [InstructorController::class, 'bookings'])->name('bookings.index');
+            Route::get('/bookings/{booking}', [InstructorController::class, 'showBooking'])->name('bookings.show');
+            
             Route::get('/profile', [InstructorTimeSlotController::class, 'profile'])->name('profile');
             Route::put('/profile', [InstructorTimeSlotController::class, 'updateProfile'])->name('profile.update');
+            Route::post('/profile/picture', [InstructorTimeSlotController::class, 'updateProfilePicture'])->name('profile.picture');
 
-            // Instructor bookings
-            Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');
-            Route::get('/bookings/{booking}', [BookingController::class, 'show'])->name('bookings.show');
-            Route::patch('/bookings/{booking}/status', [BookingController::class, 'updateStatus'])->name('bookings.updateStatus');
+            // Instructor attendance and feedback
+            Route::post('/bookings/{booking}/attendance', [InstructorTimeSlotController::class, 'updateAttendance'])->name('bookings.attendance');
+            Route::post('/bookings/{booking}/feedback', [InstructorTimeSlotController::class, 'updateFeedback'])->name('bookings.feedback');
+            
+            // Instructor lesson details
+            Route::get('/lessons/{booking}', [InstructorTimeSlotController::class, 'getLessonDetails'])->name('lessons.details');
+            Route::post('/lessons/{booking}/update', [InstructorTimeSlotController::class, 'updateLessonDetails'])->name('lessons.update');
 
             // Instructor students
             Route::get('/students', [InstructorController::class, 'myStudents'])->name('students.index');
@@ -186,26 +189,30 @@ Route::prefix('{school:slug}')
             Route::get('/progress/{progress}/edit', [ProgressController::class, 'edit'])->name('progress.edit');
             Route::put('/progress/{progress}', [ProgressController::class, 'update'])->name('progress.update');
             
+            // Instructor performance reports
+            Route::get('/reports', [InstructorController::class, 'reports'])->name('reports');
+            
+            // Instructor grade management
+            Route::get('/grades', [InstructorController::class, 'grades'])->name('grades');
+            
             Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
         });
 
         Route::prefix('student')->name('student.')->middleware(['auth:student', 'student.role', 'ajax'])->group(function (): void {
-            Route::get('/', function (School $school) {
-                return view($school->resolveView('student.dashboard'), ['school' => $school]);
-            })->name('dashboard');
+            Route::get('/', [StudentController::class, 'dashboard'])->name('dashboard');
 
             Route::get('/profile', [StudentController::class, 'profile'])->name('profile');
             Route::put('/profile', [StudentController::class, 'updateProfile'])->name('profile.update');
+            Route::post('/profile/picture', [StudentController::class, 'updateProfilePicture'])->name('profile.picture');
 
             // Student courses
             Route::get('/courses', [CourseController::class, 'index'])->name('courses.index');
             Route::get('/courses/{course}', [CourseController::class, 'show'])->name('courses.show');
 
-            // Student bookings
-            Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');
-            Route::get('/bookings/create', [BookingController::class, 'create'])->name('bookings.create');
+            // Booking queue management (used in schedule page)
             Route::post('/bookings', [BookingController::class, 'store'])->name('bookings.store');
-            Route::get('/bookings/{booking}', [BookingController::class, 'show'])->name('bookings.show');
+            Route::post('/bookings/{booking}/confirm', [BookingController::class, 'confirmBooking'])->name('bookings.confirm');
+            Route::delete('/bookings/{booking}/queue', [BookingController::class, 'removeFromQueue'])->name('bookings.removeQueue');
 
             // Student progress
             Route::get('/progress', [ProgressController::class, 'index'])->name('progress.index');
@@ -216,18 +223,7 @@ Route::prefix('{school:slug}')
             Route::get('/payments/{payment}', [PaymentController::class, 'show'])->name('payments.show');
 
             // Student schedule
-            Route::get('/schedule', function (School $school) {
-                $student = auth()->guard('student')->user();
-                $bookings = \App\Models\Booking::where('student_id', $student->id)
-                    ->with(['course', 'schedule.instructor'])
-                    ->orderBy('created_at', 'desc')
-                    ->get();
-                
-                if (request()->expectsJson()) {
-                    return view($school->resolveView('student.schedule', 'ajax'), compact('school', 'bookings', 'isAjax'))->with('isAjax', true);
-                }
-                return view($school->resolveView('student.schedule'), compact('school', 'bookings'));
-            })->name('schedule');
+            Route::get('/schedule', [StudentController::class, 'schedule'])->name('schedule');
             
             Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
         });

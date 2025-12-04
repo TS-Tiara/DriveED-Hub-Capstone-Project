@@ -3,6 +3,10 @@
 @section('title', 'Available Courses')
 
 @section('content')
+@php
+    $school = $school ?? $currentSchool ?? null;
+@endphp
+
 <style>
     .container {
         background: white;
@@ -50,7 +54,11 @@
     }
     
     .course-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        @if($school->schoolSetting->use_gradient_header)
+            background: linear-gradient(135deg, {{ $school->schoolSetting->primary_color }} 0%, {{ $school->schoolSetting->secondary_color }} 100%);
+        @else
+            background: {{ $school->schoolSetting->primary_color }};
+        @endif
         color: white;
         padding: 25px;
         text-align: center;
@@ -215,7 +223,7 @@
 </style>
 
 <div class="container">
-    <h1>📚 Available Courses</h1>
+    <h1>Available Courses</h1>
     <p class="subtitle">Choose a course and submit an enrollment request</p>
     
     @if(session('success'))
@@ -253,7 +261,6 @@
             @foreach($courses as $course)
                 <div class="course-card">
                     <div class="course-header">
-                        <div class="course-icon">🚗</div>
                         <h2 class="course-name">{{ $course->title }}</h2>
                     </div>
                     
@@ -306,7 +313,6 @@
         </div>
     @else
         <div class="no-courses">
-            <div class="no-courses-icon">📚</div>
             <div class="no-courses-text">No courses available at the moment</div>
             <p>Please check back later for new courses.</p>
         </div>

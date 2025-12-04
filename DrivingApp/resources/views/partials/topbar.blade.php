@@ -18,7 +18,7 @@
         </button>
         
         <button class="topbar-notification" onclick="toggleNotifications()">
-            🔔
+            <span class="icon">Notifications</span>
             <span class="notification-badge">3</span>
         </button>
         

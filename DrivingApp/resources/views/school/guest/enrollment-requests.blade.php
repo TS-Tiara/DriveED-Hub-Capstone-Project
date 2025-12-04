@@ -3,6 +3,10 @@
 @section('title', 'My Enrollment Requests')
 
 @section('content')
+@php
+    $school = $school ?? $currentSchool ?? null;
+@endphp
+
 <style>
     .container {
         background: white;
@@ -37,7 +41,7 @@
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
         margin-bottom: 20px;
         overflow: hidden;
-        border-left: 5px solid #667eea;
+        border-left: 5px solid {{ $school->schoolSetting->primary_color ?? '#667eea' }};
         transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
     
@@ -207,18 +211,19 @@
     .btn-primary {
         display: inline-block;
         padding: 14px 35px;
-        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-        color: white;
+        background: var(--btn-primary-bg);
+        color: var(--btn-primary-text);
         text-decoration: none;
-        border-radius: 10px;
+        border-radius: var(--button-border-radius);
         font-weight: 600;
         font-size: 1.1rem;
-        transition: transform 0.2s ease;
+        transition: all 0.3s ease;
     }
     
     .btn-primary:hover {
+        filter: brightness(1.1);
         transform: translateY(-2px);
-        color: white;
+        color: var(--btn-primary-text);
     }
     
     .timeline {
@@ -250,7 +255,7 @@
 </style>
 
 <div class="container">
-    <h1>📋 My Enrollment Requests</h1>
+    <h1>My Enrollment Requests</h1>
     <p class="subtitle">Track the status of your course enrollment requests</p>
     
     @php
@@ -267,7 +272,7 @@
                 <div class="request-card status-{{ $request->status }}">
                     <div class="request-header">
                         <div class="course-info">
-                            <div class="course-name">{{ $request->course->name }}</div>
+                            <div class="course-name">{{ $request->course->title }}</div>
                             <div class="course-type">{{ ucfirst($request->course->type) }} Course</div>
                         </div>
                         <span class="status-badge status-{{ $request->status }}">
@@ -291,7 +296,7 @@
                             
                             <div class="info-item">
                                 <span class="info-label">Duration</span>
-                                <span class="info-value">{{ $request->course->duration }} hours</span>
+                                <span class="info-value">{{ $request->course->duration_hours }} hours</span>
                             </div>
                             
                             <div class="info-item">
@@ -314,7 +319,7 @@
                         @if($request->status === 'approved')
                             <div class="timeline">
                                 <div class="timeline-item">
-                                    <span class="timeline-icon">📝</span>
+                                    <span class="timeline-icon"></span>
                                     <div class="timeline-content">
                                         <div class="timeline-date">Request Submitted</div>
                                         <div>{{ $request->created_at->format('M d, Y h:i A') }}</div>
@@ -334,7 +339,7 @@
                                 </div>
                                 @if($request->payment_status === 'paid')
                                     <div class="timeline-item">
-                                        <span class="timeline-icon">💳</span>
+                                        <span class="timeline-icon"></span>
                                         <div class="timeline-content">
                                             <div class="timeline-date">Payment Completed</div>
                                             <div>Payment has been processed successfully</div>
@@ -357,7 +362,7 @@
         </div>
     @else
         <div class="no-requests">
-            <div class="no-requests-icon">📋</div>
+            <div class="no-requests-icon"></div>
             <div class="no-requests-text">No Enrollment Requests Yet</div>
             <div class="no-requests-description">
                 You haven't submitted any course enrollment requests yet. Browse our courses to get started!

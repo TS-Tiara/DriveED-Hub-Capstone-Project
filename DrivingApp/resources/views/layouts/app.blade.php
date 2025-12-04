@@ -20,14 +20,34 @@
         $sidebarHover = $settings->sidebar_hover_color ?? '#f5f5f5';
         $useGradient = $settings->use_gradient_header ?? true;
         
+        // Background settings
+        $backgroundType = $settings->background_type ?? 'color';
+        $backgroundColor = $settings->background_color ?? '#f5f5f5';
+        $backgroundImage = $settings->background_image ?? null;
+        $backgroundOpacity = $settings->background_opacity ?? 100;
+        
         // Calculate RGB values for transparency effects
         $primaryRgb = sscanf($primaryColor, "#%02x%02x%02x");
         $accentRgb = sscanf($accentColor, "#%02x%02x%02x");
+        $backgroundRgb = sscanf($backgroundColor, "#%02x%02x%02x");
         
         // Generate header background
         $headerBg = $useGradient 
             ? "linear-gradient(135deg, {$primaryColor} 0%, {$secondaryColor} 100%)"
             : $primaryColor;
+            
+        // Generate body background
+        if ($backgroundType === 'image' && $backgroundImage) {
+            $bodyBg = "url('" . asset('storage/' . $backgroundImage) . "')";
+            $bodyBgSize = "cover";
+            $bodyBgPosition = "center";
+            $bodyBgAttachment = "fixed";
+        } else {
+            $bodyBg = "rgba(" . implode(', ', $backgroundRgb) . ", " . ($backgroundOpacity / 100) . ")";
+            $bodyBgSize = "auto";
+            $bodyBgPosition = "initial";
+            $bodyBgAttachment = "scroll";
+        }
     @endphp
     
     <style>
@@ -88,13 +108,34 @@
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f5f5;
             margin: 0;
             padding: 0;
             overflow-x: hidden;
             width: 100%;
             position: relative;
         }
+        
+        @if($backgroundType === 'image' && $backgroundImage)
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: {{ $bodyBg }};
+            background-size: {{ $bodyBgSize }};
+            background-position: {{ $bodyBgPosition }};
+            background-attachment: {{ $bodyBgAttachment }};
+            background-repeat: no-repeat;
+            opacity: {{ $backgroundOpacity / 100 }};
+            z-index: -1;
+        }
+        @else
+        body {
+            background: {{ $bodyBg }};
+        }
+        @endif
         
         html {
             overflow-y: scroll;
@@ -173,6 +214,32 @@
         .profile-dropdown {
             position: relative;
             display: inline-block;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .profile-picture {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .profile-picture-default {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: white;
+            font-weight: 600;
         }
         
         .dropdown-menu {
@@ -409,7 +476,11 @@
         }
         
         .btn-primary, button.btn-primary, input[type="submit"].btn-primary {
+            @if(($settings->button_style ?? 'solid') === 'gradient')
+            background: linear-gradient(135deg, var(--btn-primary-bg) 0%, var(--btn-secondary-bg) 100%);
+            @else
             background: var(--btn-primary-bg);
+            @endif
             color: var(--btn-primary-text);
         }
         
@@ -1005,27 +1076,46 @@
             
             <div class="profile-dropdown" onclick="toggleProfileDropdown()">
                 @if(Auth::guard('admin')->check())
-                    👤 {{ Auth::guard('admin')->user()->name }}
+                    @php $user = Auth::guard('admin')->user(); @endphp
+                    @if($user->profile_picture)
+                        <img src="{{ asset('storage/' . $user->profile_picture) }}" alt="Profile" class="profile-picture">
+                    @else
+                        <div class="profile-picture-default">{{ strtoupper(substr($user->name, 0, 1)) }}</div>
+                    @endif
+                    {{ $user->name }}
                 @elseif(Auth::guard('instructor')->check())
-                    👨‍🏫 {{ Auth::guard('instructor')->user()->name }}
+                    @php $user = Auth::guard('instructor')->user(); @endphp
+                    @if($user->profile_picture)
+                        <img src="{{ asset('storage/' . $user->profile_picture) }}" alt="Profile" class="profile-picture">
+                    @else
+                        <div class="profile-picture-default">{{ strtoupper(substr($user->name, 0, 1)) }}</div>
+                    @endif
+                    {{ $user->name }}
                 @elseif(Auth::guard('student')->check())
-                    🎓 {{ Auth::guard('student')->user()->name }}
+                    @php $user = Auth::guard('student')->user(); @endphp
+                    @if($user->profile_picture)
+                        <img src="{{ asset('storage/' . $user->profile_picture) }}" alt="Profile" class="profile-picture">
+                    @else
+                        <div class="profile-picture-default">{{ strtoupper(substr($user->name, 0, 1)) }}</div>
+                    @endif
+                    {{ $user->name }}
                 @else
-                    👤 User
+                    <div class="profile-picture-default">U</div>
+                    User
                 @endif
                 
                 <div class="dropdown-menu" id="profileDropdownMenu">
                     @if(Auth::guard('admin')->check())
                         <a href="{{ $schoolRoute('admin.profile') }}" class="dropdown-item nav-item" data-page="profile">
-                            👤 View Profile
+                            View Profile
                         </a>
                     @elseif(Auth::guard('instructor')->check())
                         <a href="{{ $schoolRoute('instructor.profile') }}" class="dropdown-item nav-item" data-page="profile">
-                            👤 View Profile
+                            View Profile
                         </a>
                     @elseif(Auth::guard('student')->check())
                         <a href="{{ $schoolRoute('student.profile') }}" class="dropdown-item nav-item" data-page="profile">
-                            👤 View Profile
+                            View Profile
                         </a>
                     @endif
                     <div class="dropdown-divider"></div>
@@ -1033,21 +1123,21 @@
                         <form method="POST" action="{{ $schoolRoute('admin.logout') }}" style="margin: 0;">
                             @csrf
                             <button type="submit" class="dropdown-item">
-                                🚪 Logout
+                                Logout
                             </button>
                         </form>
                     @elseif(Auth::guard('instructor')->check())
                         <form method="POST" action="{{ $schoolRoute('instructor.logout') }}" style="margin: 0;">
                             @csrf
                             <button type="submit" class="dropdown-item">
-                                🚪 Logout
+                                Logout
                             </button>
                         </form>
                     @elseif(Auth::guard('student')->check())
                         <form method="POST" action="{{ $schoolRoute('student.logout') }}" style="margin: 0;">
                             @csrf
                             <button type="submit" class="dropdown-item">
-                                🚪 Logout
+                                Logout
                             </button>
                         </form>
                     @endif
@@ -1082,7 +1172,6 @@
                 <a href="{{ $schoolRoute('admin.courses') }}" class="nav-item" data-page="courses">Courses</a>
                 <a href="{{ $schoolRoute('admin.bookings.index') }}" class="nav-item" data-page="bookings">Bookings</a>
                 <a href="{{ $schoolRoute('admin.payments.index') }}" class="nav-item" data-page="payments">Payments</a>
-                <a href="{{ $schoolRoute('admin.progress.index') }}" class="nav-item" data-page="progress">Student Progress</a>
                 <a href="{{ $schoolRoute('admin.reports.index') }}" class="nav-item" data-page="reports">Reports & Analytics</a>
                 <a href="{{ $schoolRoute('admin.settings') }}" class="nav-item" data-page="settings">Settings</a>
             @elseif(Auth::guard('instructor')->check())
@@ -1090,6 +1179,8 @@
                 <a href="{{ $schoolRoute('instructor.schedule') }}" class="nav-item" data-page="my-schedule">My Schedule</a>
                 <a href="{{ $schoolRoute('instructor.bookings.index') }}" class="nav-item" data-page="bookings">My Bookings</a>
                 <a href="{{ $schoolRoute('instructor.students.index') }}" class="nav-item" data-page="students">Students</a>
+                <a href="{{ $schoolRoute('instructor.grades') }}" class="nav-item" data-page="grades">Grades</a>
+                <a href="{{ $schoolRoute('instructor.reports') }}" class="nav-item" data-page="reports">Reports</a>
             @elseif(Auth::guard('student')->check())
                 @php
                     $currentStudent = Auth::guard('student')->user();
@@ -1105,9 +1196,8 @@
                     <a href="{{ $schoolRoute('student.dashboard') }}" class="nav-item" data-page="dashboard">Dashboard</a>
                     <a href="{{ $schoolRoute('student.schedule') }}" class="nav-item" data-page="schedule">My Schedule</a>
                     <a href="{{ $schoolRoute('student.courses.index') }}" class="nav-item" data-page="courses">Browse Courses</a>
-                    <a href="{{ $schoolRoute('student.bookings.index') }}" class="nav-item" data-page="bookings">My Bookings</a>
                     <a href="{{ $schoolRoute('student.payments.index') }}" class="nav-item" data-page="payments">My Payments</a>
-                    <a href="{{ $schoolRoute('student.progress.index') }}" class="nav-item" data-page="progress">📈 My Progress</a>
+                    <a href="{{ $schoolRoute('student.progress.index') }}" class="nav-item" data-page="progress">My Progress</a>
                 @endif
             @endif
         </nav>

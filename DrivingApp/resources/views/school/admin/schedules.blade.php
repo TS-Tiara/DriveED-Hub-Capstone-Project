@@ -599,6 +599,11 @@
         overflow-y: auto;
         background: #f9fafb;
         margin-bottom: 8px;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    .instructor-list::-webkit-scrollbar {
+        display: none;
     }
     
     .instructor-checkbox {
@@ -696,6 +701,11 @@
         padding: 32px;
         max-height: 70vh;
         overflow-y: auto;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    .modal-body::-webkit-scrollbar {
+        display: none;
     }
     
     .modal-footer {
@@ -843,7 +853,7 @@
 <div class="timeslots-container">
     <div class="page-header">
         <div>
-            <h1 class="page-title">📅 Schedule Management</h1>
+            <h1 class="page-title">Schedule Management</h1>
             <p class="page-subtitle">Dual assignment modes: Open (instructor self-select) or Assigned (admin-controlled)</p>
         </div>
         <div>
@@ -870,8 +880,8 @@
     <!-- View Toggle -->
     <div style="display: flex; justify-content: center; margin-bottom: 30px;">
         <div class="view-toggle">
-            <button class="view-btn active" onclick="switchView('list')">📋 List View</button>
-            <button class="view-btn" onclick="switchView('calendar')">📅 Calendar View</button>
+            <button class="view-btn active" onclick="switchView('list')">List View</button>
+            <button class="view-btn" onclick="switchView('calendar')">Calendar View</button>
         </div>
     </div>
 
@@ -919,7 +929,7 @@
                                     <br>
                                     @if($availableSpots > 0)
                                         <span class="badge badge-success">
-                                            🔓 {{ $availableSpots }} Spot{{ $availableSpots > 1 ? 's' : '' }} Available
+                                            {{ $availableSpots }} Spot{{ $availableSpots > 1 ? 's' : '' }} Available
                                         </span>
                                     @else
                                         <span class="badge badge-secondary">
@@ -963,7 +973,7 @@
                                                 @php
                                                     $assignmentType = $instructor->pivot->assignment_type ?? 'admin_assigned';
                                                     $badgeClass = $assignmentType === 'admin_assigned' ? 'badge-primary' : 'badge-success';
-                                                    $icon = $assignmentType === 'admin_assigned' ? '🔵' : '🟢';
+                                                    $icon = $assignmentType === 'admin_assigned' ? '[A]' : '[S]';
                                                 @endphp
                                                 <span class="badge {{ $badgeClass }}" title="{{ ucfirst(str_replace('_', ' ', $assignmentType)) }}">
                                                     {{ $icon }} {{ $instructor->name }}
@@ -1093,7 +1103,7 @@
         </div>
 
         <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; font-size: 0.9rem; color: #666;">
-            💡 <strong>Legend:</strong> 
+            <strong>Legend:</strong> 
             <span style="display: inline-block; width: 12px; height: 12px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 3px; margin: 0 5px;"></span> Has Available Spots
             <span style="display: inline-block; width: 12px; height: 12px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border-radius: 3px; margin: 0 5px 0 15px;"></span> Fully Assigned
             <br><small style="margin-top: 8px; display: block;">Click on a time slot to view details</small>
@@ -1113,7 +1123,7 @@
             @csrf
             <div class="modal-body">
                 <div style="padding: 15px; background: #f0f9ff; border-left: 4px solid #3b82f6; border-radius: 6px; margin-bottom: 20px;">
-                    <strong>💡 How it works:</strong>
+                    <strong>How it works:</strong>
                     <ul style="margin: 10px 0 0 0; padding-left: 20px; font-size: 0.9rem;">
                         <li>Select the course for this schedule</li>
                         <li>Set the max capacity for this schedule</li>
@@ -1184,7 +1194,7 @@
                         <small class="text-muted">
                             <i class="bi bi-info-circle"></i> Hold Ctrl (Windows) or Cmd (Mac) to select multiple instructors. 
                             Leave unselected to make all spots available for self-selection. 
-                            Selected instructors will be marked as "Admin Assigned" (🔵).
+                            Selected instructors will be marked as "Admin Assigned" [A].
                         </small>
                     @endif
                 </div>
@@ -1451,7 +1461,7 @@
         const instructorBadges = slotItem.querySelectorAll('.badge-primary, .badge-success');
         let instructorsList = [];
         instructorBadges.forEach(badge => {
-            const nameText = badge.textContent.trim().replace(/^[🔵🟢]\s*/, ''); // Remove emoji
+            const nameText = badge.textContent.trim().replace(/^\[A\]\s*|^\[S\]\s*/, ''); // Remove prefix
             instructorsList.push({
                 name: nameText,
                 type: badge.classList.contains('badge-primary') ? 'admin' : 'self'
@@ -1478,7 +1488,7 @@
             let instructorsHtml = '';
             if (instructorsList.length > 0) {
                 instructorsHtml = instructorsList.map(inst => {
-                    const icon = inst.type === 'admin' ? '🔵' : '🟢';
+                    const icon = inst.type === 'admin' ? '[A]' : '[S]';
                     const label = inst.type === 'admin' ? 'Admin Assigned' : 'Self Selected';
                     return `<span class="badge badge-${inst.type === 'admin' ? 'primary' : 'success'}" title="${label}">${icon} ${inst.name}</span>`;
                 }).join(' ');
@@ -1494,17 +1504,17 @@
                     </div>
                     
                     <div style="margin-bottom: 20px;">
-                        <strong style="color: #666; display: block; margin-bottom: 8px;">👥 Instructors:</strong>
+                        <strong style="color: #666; display: block; margin-bottom: 8px;">Instructors:</strong>
                         <div>${instructorsHtml}</div>
                     </div>
                     
                     <div style="margin-bottom: 20px;">
-                        <strong style="color: #666; display: block; margin-bottom: 8px;">📊 Availability:</strong>
+                        <strong style="color: #666; display: block; margin-bottom: 8px;">Availability:</strong>
                         <div>${availableText}</div>
                     </div>
                     
                     <div>
-                        <strong style="color: #666; display: block; margin-bottom: 8px;">📝 Notes:</strong>
+                        <strong style="color: #666; display: block; margin-bottom: 8px;">Notes:</strong>
                         <div style="background: #f9fafb; padding: 12px; border-radius: 6px; min-height: 40px;">
                             ${notes}
                         </div>
@@ -1557,7 +1567,7 @@
                 let instructorsHtml = '';
                 if (schedule.instructors.length > 0) {
                     schedule.instructors.forEach(instructor => {
-                        const icon = instructor.type === 'admin_assigned' ? '🔵' : '🟢';
+                        const icon = instructor.type === 'admin_assigned' ? '[A]' : '[S]';
                         const badgeClass = instructor.type === 'admin_assigned' ? 'badge-primary' : 'badge-success';
                         const title = instructor.type === 'admin_assigned' ? 'Admin Assigned' : 'Self Selected';
                         instructorsHtml += `<span class="badge ${badgeClass}" title="${title}">${icon} ${instructor.name}</span> `;

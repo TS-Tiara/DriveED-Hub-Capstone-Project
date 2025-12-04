@@ -6,879 +6,464 @@
 @php
     $school = $school ?? $currentSchool ?? null;
     $schoolName = $school->name ?? 'Driving School';
+    $settings = $school->schoolSetting;
     $instructorId = Auth::guard('instructor')->id();
+    
+    // Calculate statistics
+    $totalStudents = $students->count();
+    $myStudents = $students->where('is_assigned', true)->count();
+    $activeStudents = $students->where('status', 'active')->count();
+    $totalSessions = $students->sum('sessions_count');
+    $avgProgress = $students->avg('avg_progress') ?? 0;
 @endphp
 
 <style>
     .students-container {
-        padding: 0;
-        max-width: 1600px;
+        padding: 20px;
+        max-width: 1400px;
         margin: 0 auto;
     }
 
     .page-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 30px;
-        border-radius: 12px;
-        color: white;
         margin-bottom: 30px;
-        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        padding-bottom: 15px;
+        border-bottom: 4px solid {{ $settings->primary_color ?? '#667eea' }};
     }
 
     .page-title {
         font-size: 2rem;
-        font-weight: 700;
-        margin: 0 0 8px 0;
-    }
-
-    .page-subtitle {
-        font-size: 1rem;
-        opacity: 0.9;
+        color: #111827;
         margin: 0;
+        font-weight: 400;
     }
 
+    /* Stats Grid */
     .stats-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
         gap: 20px;
         margin-bottom: 30px;
     }
 
-    .stat-card {
+    .stat-box {
         background: white;
-        padding: 20px;
+        padding: 25px;
         border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        border-left: 4px solid #667eea;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        position: relative;
+        overflow: hidden;
     }
 
+    .stat-box::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+    }
+
+    .stat-box:nth-child(1)::before { background: #3b82f6; }
+    .stat-box:nth-child(2)::before { background: {{ $settings->primary_color ?? '#10b981' }}; }
+    .stat-box:nth-child(3)::before { background: #dc2626; }
+    .stat-box:nth-child(4)::before { background: {{ $settings->primary_color ?? '#f59e0b' }}; }
+
+    .stat-box:nth-child(1) .stat-value { color: #3b82f6; }
+    .stat-box:nth-child(2) .stat-value { color: {{ $settings->primary_color ?? '#10b981' }}; }
+    .stat-box:nth-child(3) .stat-value { color: #dc2626; }
+    .stat-box:nth-child(4) .stat-value { color: {{ $settings->primary_color ?? '#f59e0b' }}; }
+
     .stat-label {
-        font-size: 0.85rem;
-        color: #666;
+        font-size: 0.95rem;
+        color: #6b7280;
+        font-weight: 600;
+        margin-bottom: 8px;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        margin-bottom: 8px;
     }
 
     .stat-value {
-        font-size: 2rem;
+        font-size: 2.5rem;
         font-weight: 700;
-        color: #667eea;
     }
 
-    /* Search and Filter Bar */
+    /* Controls Bar */
     .controls-bar {
-        background: white;
-        padding: 20px;
+        background: {{ $settings->primary_color ?? '#1e40af' }};
+        padding: 20px 30px;
         border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        margin-bottom: 20px;
         display: flex;
-        gap: 15px;
         align-items: center;
+        gap: 20px;
+        margin-bottom: 20px;
         flex-wrap: wrap;
     }
 
-    .search-box {
+    .search-wrapper {
         flex: 1;
-        min-width: 250px;
-        position: relative;
+        min-width: 300px;
     }
 
-    .search-box input {
+    .search-input {
         width: 100%;
-        padding: 12px 45px 12px 15px;
-        border: 2px solid #e5e7eb;
+        padding: 12px 16px;
+        border: none;
         border-radius: 8px;
         font-size: 0.95rem;
-        transition: all 0.3s ease;
-    }
-
-    .search-box input:focus {
         outline: none;
-        border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    }
-
-    .search-box i {
-        position: absolute;
-        right: 15px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #9ca3af;
     }
 
     .filter-group {
         display: flex;
-        gap: 10px;
         align-items: center;
+        gap: 15px;
     }
 
     .filter-label {
-        font-size: 0.9rem;
-        color: #666;
+        color: white;
         font-weight: 600;
+        font-size: 0.9rem;
     }
 
     .filter-select {
         padding: 10px 35px 10px 15px;
-        border: 2px solid #e5e7eb;
+        border: none;
         border-radius: 8px;
-        font-size: 0.9rem;
         background: white;
+        font-size: 0.95rem;
         cursor: pointer;
-        transition: all 0.3s ease;
+        outline: none;
         appearance: none;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
         background-repeat: no-repeat;
         background-position: right 12px center;
     }
 
-    .filter-select:focus {
-        outline: none;
-        border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    }
-
     .view-count {
+        color: white;
         font-size: 0.9rem;
-        color: #666;
-        padding: 10px 15px;
-        background: #f3f4f6;
-        border-radius: 8px;
-        white-space: nowrap;
     }
 
-    /* Table View */
-    .students-table-container {
+    /* Students Grid */
+    .students-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .student-card {
         background: white;
         border-radius: 12px;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-        overflow: hidden;
-    }
-
-    .students-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-
-    .students-table thead {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-    }
-
-    .students-table th {
-        padding: 16px 20px;
-        text-align: left;
-        font-weight: 600;
-        font-size: 0.9rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+        padding: 25px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         cursor: pointer;
-        user-select: none;
-        white-space: nowrap;
-        position: relative;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
     }
 
-    .students-table th:hover {
-        background: rgba(255,255,255,0.1);
+    .student-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+        border-color: {{ $school->schoolSetting->primary_color ?? '#f59e0b' }};
     }
 
-    .students-table th i {
-        margin-left: 6px;
-        font-size: 0.8rem;
-        opacity: 0.7;
-    }
-
-    .students-table tbody tr {
-        border-bottom: 1px solid #f3f4f6;
-        transition: all 0.2s ease;
-        cursor: pointer;
-    }
-
-    .students-table tbody tr:hover {
-        background: #f8f9fa;
-        transform: scale(1.01);
-        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
-    }
-
-    .students-table td {
-        padding: 16px 20px;
-        font-size: 0.95rem;
-        color: #333;
-    }
-
-    .student-name-cell {
+    .student-card-header {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 15px;
+        margin-bottom: 15px;
     }
 
     .student-avatar {
-        width: 40px;
-        height: 40px;
+        width: 60px;
+        height: 60px;
         border-radius: 50%;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: #1e293b;
         display: flex;
         align-items: center;
         justify-content: center;
         color: white;
+        font-size: 1.5rem;
         font-weight: 700;
-        font-size: 1rem;
         flex-shrink: 0;
     }
 
-    .student-name-info {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
+    .student-info {
+        flex: 1;
         min-width: 0;
     }
 
     .student-name {
+        font-size: 1.25rem;
         font-weight: 700;
-        color: #333;
-        font-size: 1rem;
+        color: #1a202c;
+        margin-bottom: 4px;
     }
 
-    .student-email {
-        font-size: 0.85rem;
-        color: #666;
+    .student-detail {
+        font-size: 0.9rem;
+        color: #6b7280;
+        margin: 2px 0;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
     }
 
-    .progress-cell {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-
-    .progress-bar-mini {
-        flex: 1;
-        height: 8px;
-        background: #e5e7eb;
-        border-radius: 4px;
-        overflow: hidden;
-        max-width: 120px;
-    }
-
-    .progress-bar-mini-fill {
-        height: 100%;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        transition: width 0.5s ease;
-    }
-
-    .progress-percent {
-        font-weight: 700;
-        color: #667eea;
-        font-size: 0.95rem;
-        min-width: 45px;
-    }
-
-    .status-badge {
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 0.8rem;
+    .student-detail strong {
+        color: #374151;
         font-weight: 600;
+    }
+
+    .student-grade {
+        font-size: 1.1rem;
+        color: {{ $school->schoolSetting->primary_color ?? '#f59e0b' }};
+        font-weight: 700;
+        margin-top: 4px;
+    }
+
+    .assignment-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.3px;
+        letter-spacing: 0.5px;
+        margin-top: 6px;
     }
 
-    .status-active {
-        background: #d1fae5;
-        color: #065f46;
+    .badge-assigned {
+        background: rgba({{ hexdec(substr($school->schoolSetting->primary_color ?? '#1e40af', 1, 2)) }}, {{ hexdec(substr($school->schoolSetting->primary_color ?? '#1e40af', 3, 2)) }}, {{ hexdec(substr($school->schoolSetting->primary_color ?? '#1e40af', 5, 2)) }}, 0.15);
+        color: {{ $school->schoolSetting->primary_color ?? '#1e40af' }};
     }
 
-    .status-inactive {
-        background: #fee2e2;
-        color: #991b1b;
+    .badge-unassigned {
+        background: #f3f4f6;
+        color: #6b7280;
     }
 
-    .sessions-count {
-        font-weight: 700;
-        color: #333;
-        font-size: 1rem;
-    }
-
-    .date-text {
-        color: #666;
-        font-size: 0.9rem;
-    }
-
-    .recent-note-preview {
-        max-width: 300px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        color: #666;
-        font-style: italic;
-        font-size: 0.9rem;
-    }
-
-    .no-note {
-        color: #9ca3af;
-    }
-
-    .action-cell {
-        text-align: right;
-    }
-
-    .view-btn {
-        padding: 8px 16px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border: none;
-        border-radius: 6px;
-        font-weight: 600;
-        font-size: 0.85rem;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-
-    .view-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-    }
-
-    .empty-state {
+    .no-students {
+        grid-column: 1 / -1;
         text-align: center;
         padding: 60px 20px;
         background: white;
         border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     }
 
-    .empty-state i {
+    .no-students-icon {
         font-size: 4rem;
-        color: #ddd;
-        margin-bottom: 20px;
+        color: #d1d5db;
+        margin-bottom: 15px;
     }
 
-    .empty-state h3 {
-        font-size: 1.5rem;
-        color: #666;
-        margin-bottom: 10px;
-    }
-
-    .empty-state p {
-        color: #999;
-    }
-
-    /* Mobile Responsiveness */
-    @media (max-width: 1024px) {
-        .students-table {
-            font-size: 0.9rem;
-        }
-
-        .students-table th,
-        .students-table td {
-            padding: 12px 15px;
-        }
-
-        .recent-note-preview {
-            max-width: 200px;
-        }
+    .no-students-text {
+        font-size: 1.25rem;
+        color: #6b7280;
+        font-weight: 600;
     }
 
     @media (max-width: 768px) {
-        .page-header {
-            padding: 20px;
-            margin-bottom: 20px;
+        .students-container {
+            padding: 15px;
         }
 
         .page-title {
-            font-size: 1.4rem;
+            font-size: 1.75rem;
         }
 
         .stats-grid {
             grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
+            gap: 15px;
         }
 
-        .stat-card {
+        .stat-box {
             padding: 15px;
         }
 
         .stat-value {
-            font-size: 1.5rem;
+            font-size: 2rem;
         }
 
         .controls-bar {
             padding: 15px;
-        }
-
-        /* Mobile: Card Layout */
-        .students-table-container {
-            background: transparent;
-            box-shadow: none;
-        }
-
-        .students-table thead {
-            display: none;
-        }
-
-        .students-table,
-        .students-table tbody,
-        .students-table tr,
-        .students-table td {
-            display: block;
-            width: 100%;
-        }
-
-        .students-table tbody tr {
-            background: white;
-            margin-bottom: 15px;
-            border-radius: 12px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-            padding: 20px;
-            border: 2px solid transparent;
-        }
-
-        .students-table tbody tr:hover {
-            transform: none;
-            border-color: #667eea;
-        }
-
-        .students-table td {
-            padding: 10px 0;
-            border: none;
-            text-align: left;
-            position: relative;
-            padding-left: 45%;
-        }
-
-        .students-table td::before {
-            content: attr(data-label);
-            position: absolute;
-            left: 0;
-            width: 40%;
-            padding-right: 10px;
-            font-weight: 700;
-            color: #667eea;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .students-table td:first-child {
-            padding-left: 0;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #f3f4f6;
-            margin-bottom: 10px;
-        }
-
-        .students-table td:first-child::before {
-            display: none;
-        }
-
-        .student-name-cell {
-            justify-content: flex-start;
-        }
-
-        .action-cell {
-            padding-left: 0 !important;
-            text-align: left !important;
-            margin-top: 10px;
-        }
-
-        .action-cell::before {
-            display: none;
-        }
-
-        .view-btn {
-            width: 100%;
-            padding: 12px;
-        }
-
-        .progress-cell {
-            justify-content: flex-start;
-        }
-
-        .progress-bar-mini {
-            max-width: 100%;
-            flex: 1;
-        }
-
-        .recent-note-preview {
-            max-width: 100%;
-            white-space: normal;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .page-header {
-            padding: 16px;
-        }
-
-        .page-title {
-            font-size: 1.2rem;
-        }
-
-        .page-subtitle {
-            font-size: 0.85rem;
-        }
-
-        .stat-card {
-            padding: 12px;
-        }
-
-        .stat-label {
-            font-size: 0.75rem;
-        }
-
-        .stat-value {
-            font-size: 1.3rem;
-        }
-
-        .controls-bar {
-            padding: 12px;
             flex-direction: column;
             align-items: stretch;
         }
 
-        .search-box {
+        .search-wrapper {
             min-width: 100%;
         }
 
         .filter-group {
-            width: 100%;
-            justify-content: space-between;
+            flex-wrap: wrap;
         }
 
-        .view-count {
-            text-align: center;
-        }
-
-        .students-table tbody tr {
-            padding: 15px;
-        }
-
-        .students-table td {
-            padding-left: 40%;
-            font-size: 0.9rem;
-        }
-
-        .students-table td::before {
-            font-size: 0.75rem;
-            width: 35%;
-        }
-
-        .student-avatar {
-            width: 35px;
-            height: 35px;
-            font-size: 0.9rem;
-        }
-
-        .student-name {
-            font-size: 0.95rem;
-        }
-
-        .student-email {
-            font-size: 0.8rem;
+        .students-grid {
+            grid-template-columns: 1fr;
         }
     }
 </style>
 
 <div class="students-container">
-    <!-- Header -->
     <div class="page-header">
         <h1 class="page-title">My Students</h1>
-        <p class="page-subtitle">View and track your students' progress</p>
     </div>
 
-    <!-- Stats -->
     <div class="stats-grid">
-        <div class="stat-card">
+        <div class="stat-box">
             <div class="stat-label">Total Students</div>
-            <div class="stat-value">{{ $students->count() }}</div>
+            <div class="stat-value">{{ $totalStudents }}</div>
         </div>
-        <div class="stat-card">
-            <div class="stat-label">Active Students</div>
-            <div class="stat-value">{{ $students->where('status', 'active')->count() }}</div>
+        <div class="stat-box">
+            <div class="stat-label">My Students</div>
+            <div class="stat-value">{{ $myStudents }}</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-box">
             <div class="stat-label">Total Sessions</div>
-            <div class="stat-value">{{ $students->sum('total_sessions') }}</div>
+            <div class="stat-value">{{ $totalSessions }}</div>
         </div>
-        <div class="stat-card">
-            <div class="stat-label">Avg Progress</div>
-            <div class="stat-value">{{ $students->count() > 0 ? number_format($students->avg('overall_progress'), 0) : 0 }}%</div>
+        <div class="stat-box">
+            <div class="stat-label">AVG Progress</div>
+            <div class="stat-value">{{ number_format($avgProgress, 0) }}</div>
         </div>
     </div>
 
-    <!-- Search and Filter Controls -->
     <div class="controls-bar">
-        <div class="search-box">
-            <input type="text" id="searchInput" placeholder="Search students by name or email..." onkeyup="filterStudents()">
-            <i class="fas fa-search"></i>
+        <div class="search-wrapper">
+            <input type="text" class="search-input" id="searchInput" 
+                   placeholder="Select students by name or email..." onkeyup="filterStudents()">
         </div>
-        
         <div class="filter-group">
-            <label class="filter-label">Status:</label>
-            <select id="statusFilter" class="filter-select" onchange="filterStudents()">
+            <span class="filter-label">Assignment:</span>
+            <select class="filter-select" id="assignmentFilter" onchange="filterStudents()">
                 <option value="all">All Students</option>
-                <option value="active">Active Only</option>
-                <option value="inactive">Inactive Only</option>
+                <option value="assigned">My Students</option>
+                <option value="unassigned">Other Students</option>
             </select>
         </div>
-
         <div class="filter-group">
-            <label class="filter-label">Sort:</label>
-            <select id="sortBy" class="filter-select" onchange="sortStudents()">
+            <span class="filter-label">Status:</span>
+            <select class="filter-select" id="statusFilter" onchange="filterStudents()">
+                <option value="all">All</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <span class="filter-label">Sort:</span>
+            <select class="filter-select" id="sortFilter" onchange="sortStudents()">
+                <option value="assigned-first">My Students First</option>
                 <option value="name-asc">Name (A-Z)</option>
                 <option value="name-desc">Name (Z-A)</option>
                 <option value="progress-desc">Progress (High-Low)</option>
                 <option value="progress-asc">Progress (Low-High)</option>
-                <option value="sessions-desc">Sessions (High-Low)</option>
-                <option value="date-desc">Recently Enrolled</option>
             </select>
         </div>
-
-        <div class="view-count" id="viewCount">
-            Showing {{ $students->count() }} students
+        <div class="view-count">
+            Showing <span id="showingCount">{{ $totalStudents }}</span> Students
         </div>
     </div>
 
-    <!-- Students Table -->
-    @if($students->count() > 0)
-        <div class="students-table-container">
-            <table class="students-table" id="studentsTable">
-                <thead>
-                    <tr>
-                        <th onclick="sortTable(0)">Student <i class="fas fa-sort"></i></th>
-                        <th onclick="sortTable(1)">Progress <i class="fas fa-sort"></i></th>
-                        <th onclick="sortTable(2)">Sessions <i class="fas fa-sort"></i></th>
-                        <th onclick="sortTable(3)">Status <i class="fas fa-sort"></i></th>
-                        <th onclick="sortTable(4)">Enrolled <i class="fas fa-sort"></i></th>
-                        <th>Recent Note</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody id="studentsTableBody">
-                    @foreach($students as $student)
-                        <tr class="student-row" 
-                            data-name="{{ strtolower($student->name) }}" 
-                            data-email="{{ strtolower($student->email) }}"
-                            data-status="{{ $student->status }}"
-                            data-progress="{{ $student->overall_progress }}"
-                            data-sessions="{{ $student->total_sessions }}"
-                            onclick="viewStudent({{ $student->id }})">
-                            <td data-label="Student">
-                                <div class="student-name-cell">
-                                    <div class="student-avatar">
-                                        {{ strtoupper(substr($student->name, 0, 1)) }}
-                                    </div>
-                                    <div class="student-name-info">
-                                        <span class="student-name">{{ $student->name }}</span>
-                                        <span class="student-email">{{ $student->email }}</span>
-                                    </div>
-                                </div>
-                            </td>
-                            <td data-label="Progress">
-                                <div class="progress-cell">
-                                    <div class="progress-bar-mini">
-                                        <div class="progress-bar-mini-fill" style="width: {{ $student->overall_progress }}%"></div>
-                                    </div>
-                                    <span class="progress-percent">{{ number_format($student->overall_progress, 0) }}%</span>
-                                </div>
-                            </td>
-                            <td data-label="Sessions">
-                                <span class="sessions-count">{{ $student->total_sessions }}</span>
-                            </td>
-                            <td data-label="Status">
-                                <span class="status-badge status-{{ $student->status }}">
-                                    {{ ucfirst($student->status) }}
-                                </span>
-                            </td>
-                            <td data-label="Enrolled">
-                                <span class="date-text">{{ \Carbon\Carbon::parse($student->enrollment_date)->format('M d, Y') }}</span>
-                            </td>
-                            <td data-label="Recent Note">
-                                @if($student->recent_note && $student->recent_note !== 'No notes yet')
-                                    <div class="recent-note-preview" title="{{ $student->recent_note }}">
-                                        "{{ Str::limit($student->recent_note, 50) }}"
-                                    </div>
-                                @else
-                                    <span class="recent-note-preview no-note">No notes yet</span>
-                                @endif
-                            </td>
-                            <td class="action-cell">
-                                <button class="view-btn" onclick="event.stopPropagation(); viewStudent({{ $student->id }})">
-                                    View
-                                </button>
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-    @else
-        <div class="empty-state">
-            <i class="fas fa-users"></i>
-            <h3>No Students Yet</h3>
-            <p>You haven't taught any students yet. Students will appear here once you have bookings.</p>
-        </div>
-    @endif
+    <div class="students-grid" id="studentsGrid">
+        @forelse($students as $student)
+            <div class="student-card" 
+                 data-name="{{ strtolower($student->name) }}"
+                 data-email="{{ strtolower($student->email) }}"
+                 data-status="{{ $student->status }}"
+                 data-progress="{{ $student->avg_progress ?? 0 }}"
+                 data-sessions="{{ $student->sessions_count }}"
+                 data-assigned="{{ $student->is_assigned ? 'true' : 'false' }}"
+                 onclick="window.location.href='{{ $schoolRoute('instructor.students.show', ['id' => $student->id]) }}'">
+                <div class="student-card-header">
+                    <div class="student-avatar">
+                        {{ strtoupper(substr($student->name, 0, 1)) }}
+                    </div>
+                    <div class="student-info">
+                        <div class="student-name">{{ $student->name }}</div>
+                        <div class="student-detail"><strong>Email:</strong> {{ $student->email }}</div>
+                        <div class="student-detail"><strong>Contact:</strong> {{ $student->contact ?? 'N/A' }}</div>
+                        @if($student->avg_progress)
+                            <div class="student-grade"><strong>Grade:</strong> {{ number_format($student->avg_progress, 1) }}%</div>
+                        @else
+                            <div class="student-grade"><strong>Grade:</strong> -</div>
+                        @endif
+                        <div class="assignment-badge {{ $student->is_assigned ? 'badge-assigned' : 'badge-unassigned' }}">
+                            {{ $student->is_assigned ? 'My Student' : 'Other' }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @empty
+            <div class="no-students">
+                <div class="no-students-icon">👥</div>
+                <div class="no-students-text">No students found</div>
+            </div>
+        @endforelse
+    </div>
 </div>
 
 <script>
-function viewStudent(studentId) {
-    const url = `{{ url($school->slug . '/instructor/students') }}/${studentId}`;
-    if (typeof loadContent === 'function') {
-        loadContent(url);
-    } else {
-        window.location.href = url;
-    }
-}
-
 function filterStudents() {
     const searchInput = document.getElementById('searchInput').value.toLowerCase();
     const statusFilter = document.getElementById('statusFilter').value;
-    const rows = document.querySelectorAll('.student-row');
+    const assignmentFilter = document.getElementById('assignmentFilter').value;
+    const cards = document.querySelectorAll('.student-card');
     let visibleCount = 0;
 
-    rows.forEach(row => {
-        const name = row.getAttribute('data-name');
-        const email = row.getAttribute('data-email');
-        const status = row.getAttribute('data-status');
+    cards.forEach(card => {
+        const name = card.dataset.name;
+        const email = card.dataset.email;
+        const status = card.dataset.status;
+        const isAssigned = card.dataset.assigned === 'true';
 
         const matchesSearch = name.includes(searchInput) || email.includes(searchInput);
         const matchesStatus = statusFilter === 'all' || status === statusFilter;
+        const matchesAssignment = assignmentFilter === 'all' || 
+                                 (assignmentFilter === 'assigned' && isAssigned) ||
+                                 (assignmentFilter === 'unassigned' && !isAssigned);
 
-        if (matchesSearch && matchesStatus) {
-            row.style.display = '';
+        if (matchesSearch && matchesStatus && matchesAssignment) {
+            card.style.display = 'block';
             visibleCount++;
         } else {
-            row.style.display = 'none';
+            card.style.display = 'none';
         }
     });
 
-    updateViewCount(visibleCount);
+    document.getElementById('showingCount').textContent = visibleCount;
 }
 
 function sortStudents() {
-    const sortBy = document.getElementById('sortBy').value;
-    const tbody = document.getElementById('studentsTableBody');
-    const rows = Array.from(tbody.querySelectorAll('.student-row'));
+    const sortBy = document.getElementById('sortFilter').value;
+    const grid = document.getElementById('studentsGrid');
+    const cards = Array.from(document.querySelectorAll('.student-card'));
 
-    rows.sort((a, b) => {
-        let aValue, bValue;
+    cards.sort((a, b) => {
+        const aAssigned = a.dataset.assigned === 'true';
+        const bAssigned = b.dataset.assigned === 'true';
 
         switch(sortBy) {
+            case 'assigned-first':
+                if (aAssigned === bAssigned) {
+                    return a.dataset.name.localeCompare(b.dataset.name);
+                }
+                return aAssigned ? -1 : 1;
             case 'name-asc':
-                aValue = a.getAttribute('data-name');
-                bValue = b.getAttribute('data-name');
-                return aValue.localeCompare(bValue);
-            
+                return a.dataset.name.localeCompare(b.dataset.name);
             case 'name-desc':
-                aValue = a.getAttribute('data-name');
-                bValue = b.getAttribute('data-name');
-                return bValue.localeCompare(aValue);
-            
+                return b.dataset.name.localeCompare(a.dataset.name);
             case 'progress-desc':
-                aValue = parseFloat(a.getAttribute('data-progress'));
-                bValue = parseFloat(b.getAttribute('data-progress'));
-                return bValue - aValue;
-            
+                return parseFloat(b.dataset.progress) - parseFloat(a.dataset.progress);
             case 'progress-asc':
-                aValue = parseFloat(a.getAttribute('data-progress'));
-                bValue = parseFloat(b.getAttribute('data-progress'));
-                return aValue - bValue;
-            
-            case 'sessions-desc':
-                aValue = parseInt(a.getAttribute('data-sessions'));
-                bValue = parseInt(b.getAttribute('data-sessions'));
-                return bValue - aValue;
-            
-            case 'date-desc':
-                aValue = a.querySelector('.date-text').textContent;
-                bValue = b.querySelector('.date-text').textContent;
-                return new Date(bValue) - new Date(aValue);
-            
+                return parseFloat(a.dataset.progress) - parseFloat(b.dataset.progress);
             default:
                 return 0;
         }
     });
 
-    // Re-append sorted rows
-    rows.forEach(row => tbody.appendChild(row));
-}
-
-function sortTable(columnIndex) {
-    const table = document.getElementById('studentsTable');
-    const tbody = table.querySelector('tbody');
-    const rows = Array.from(tbody.querySelectorAll('tr'));
-    
-    // Determine current sort direction
-    const th = table.querySelectorAll('th')[columnIndex];
-    const currentDirection = th.getAttribute('data-direction') || 'asc';
-    const newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
-    
-    // Reset all column sort indicators
-    table.querySelectorAll('th').forEach(header => {
-        header.setAttribute('data-direction', '');
-        const icon = header.querySelector('i');
-        if (icon) icon.className = 'fas fa-sort';
-    });
-    
-    // Set new direction
-    th.setAttribute('data-direction', newDirection);
-    const icon = th.querySelector('i');
-    if (icon) {
-        icon.className = newDirection === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down';
-    }
-    
-    // Sort rows
-    rows.sort((a, b) => {
-        let aValue, bValue;
-        const aCells = a.querySelectorAll('td');
-        const bCells = b.querySelectorAll('td');
-        
-        switch(columnIndex) {
-            case 0: // Name
-                aValue = aCells[0].querySelector('.student-name').textContent.toLowerCase();
-                bValue = bCells[0].querySelector('.student-name').textContent.toLowerCase();
-                break;
-            case 1: // Progress
-                aValue = parseFloat(a.getAttribute('data-progress'));
-                bValue = parseFloat(b.getAttribute('data-progress'));
-                break;
-            case 2: // Sessions
-                aValue = parseInt(a.getAttribute('data-sessions'));
-                bValue = parseInt(b.getAttribute('data-sessions'));
-                break;
-            case 3: // Status
-                aValue = aCells[3].textContent.toLowerCase();
-                bValue = bCells[3].textContent.toLowerCase();
-                break;
-            case 4: // Date
-                aValue = new Date(aCells[4].textContent);
-                bValue = new Date(bCells[4].textContent);
-                break;
-            default:
-                return 0;
-        }
-        
-        if (typeof aValue === 'string') {
-            return newDirection === 'asc' 
-                ? aValue.localeCompare(bValue)
-                : bValue.localeCompare(aValue);
-        } else {
-            return newDirection === 'asc'
-                ? aValue - bValue
-                : bValue - aValue;
-        }
-    });
-    
-    // Re-append sorted rows
-    rows.forEach(row => tbody.appendChild(row));
-}
-
-function updateViewCount(count) {
-    const viewCount = document.getElementById('viewCount');
-    viewCount.textContent = `Showing ${count} student${count !== 1 ? 's' : ''}`;
+    cards.forEach(card => grid.appendChild(card));
 }
 </script>
 

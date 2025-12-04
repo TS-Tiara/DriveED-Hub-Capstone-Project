@@ -8,7 +8,6 @@ use App\Models\Instructor;
 use App\Models\InstructorRemovalRequest;
 use App\Models\Log;
 use App\Models\RegistrationRequest;
-use App\Models\Schedule;
 use App\Models\School;
 use App\Models\SchoolSetting;
 use App\Models\Student;
@@ -18,9 +17,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log as LogFacade;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\Storage;
 
 class AdminController extends Controller
 {
@@ -42,13 +41,15 @@ class AdminController extends Controller
                 ->where('availability', 'available')
                 ->count();
             
-            // Get recent activities (last 5)
+            // Get recent activities (last 5) - Optimized with select to reduce data transfer
             $recentStudents = Student::where('school_id', $school->id)
+                ->select('id', 'school_id', 'name', 'email', 'status', 'created_at')
                 ->orderBy('created_at', 'desc')
                 ->limit(5)
                 ->get();
                 
             $recentInstructors = Instructor::where('school_id', $school->id)
+                ->select('id', 'school_id', 'name', 'email', 'status', 'availability', 'created_at')
                 ->orderBy('created_at', 'desc')
                 ->limit(5)
                 ->get();
@@ -101,8 +102,15 @@ class AdminController extends Controller
     public function userManagement(School $school)
     {
         try {
-            $students = Student::where('school_id', $school->id)->orderBy('name')->get();
-            $instructors = Instructor::where('school_id', $school->id)->orderBy('name')->get();
+            // Select only needed columns to reduce memory footprint
+            $students = Student::where('school_id', $school->id)
+                ->select('id', 'school_id', 'name', 'email', 'contact', 'status', 'role', 'created_at')
+                ->orderBy('name')
+                ->get();
+            $instructors = Instructor::where('school_id', $school->id)
+                ->select('id', 'school_id', 'name', 'email', 'contact', 'status', 'availability', 'created_at')
+                ->orderBy('name')
+                ->get();
 
             $isAjax = request()->ajax() || request()->header('X-Requested-With') === 'XMLHttpRequest';
 
@@ -183,18 +191,6 @@ class AdminController extends Controller
     // ==========================
     // STUDENTS MANAGEMENT
     // ==========================
-    public function editStudent(School $school, $id)
-    {
-        $student = Student::where('school_id', $school->id)
-            ->where('id', $id)
-            ->firstOrFail();
-
-        return view($school->resolveView('admin.edit-student'), [
-            'school' => $school,
-            'student' => $student,
-        ]);
-    }
-
     public function updateStudent(Request $request, School $school, $id)
     {
         try {
@@ -288,18 +284,6 @@ class AdminController extends Controller
     // ==========================
     // INSTRUCTORS MANAGEMENT
     // ==========================
-    public function editInstructor(School $school, $id)
-    {
-        $instructor = Instructor::where('school_id', $school->id)
-            ->where('id', $id)
-            ->firstOrFail();
-
-        return view($school->resolveView('admin.edit-instructor'), [
-            'school' => $school,
-            'instructor' => $instructor,
-        ]);
-    }
-
     public function updateInstructor(Request $request, School $school, $id)
     {
         $instructor = Instructor::where('school_id', $school->id)
@@ -615,9 +599,17 @@ class AdminController extends Controller
 
             $request->validate([
                 'instructor_removal_notice_days' => 'required|integer|min:0|max:30',
+                'instructor_selection_mode' => 'required|in:student_chooses,auto_assign,admin_assigns',
+                'advance_booking_days' => 'nullable|integer|min:0|max:30',
+                'enable_booking_queue' => 'nullable|boolean',
+                'booking_queue_days' => 'nullable|integer|min:1|max:14',
                 'primary_color' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
                 'secondary_color' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
                 'accent_color' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
+                'background_type' => 'required|in:color,image',
+                'background_color' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
+                'background_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'background_opacity' => 'required|integer|min:0|max:100',
                 'sidebar_bg_color' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
                 'sidebar_text_color' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
                 'sidebar_hover_color' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
@@ -632,6 +624,7 @@ class AdminController extends Controller
                 'button_danger_text' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
                 'border_radius' => 'nullable|integer|min:0|max:30',
                 'button_border_radius' => 'nullable|integer|min:0|max:30',
+                'button_style' => 'nullable|in:solid,gradient',
                 'modal_header_bg' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
                 'modal_header_text' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
                 'modal_border_color' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
@@ -644,6 +637,31 @@ class AdminController extends Controller
                 'badge_approved_text' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
                 'badge_cancelled_bg' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
                 'badge_cancelled_text' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
+                // Login page settings
+                'login_header_layout' => 'nullable|in:horizontal,vertical,centered,logo-only',
+                'login_logo_image' => 'nullable|string|max:255',
+                'login_logo_position' => 'nullable|in:left,center,right',
+                'login_logo_size' => 'nullable|integer|min:20|max:100',
+                'login_show_school_name' => 'nullable|boolean',
+                'login_school_name_text' => 'nullable|string|max:255',
+                'login_school_name_position' => 'nullable|in:left,center,right',
+                'login_school_name_size' => 'nullable|integer|min:16|max:48',
+                'login_show_welcome_text' => 'nullable|boolean',
+                'login_welcome_text' => 'nullable|string|max:255',
+                'login_welcome_position' => 'nullable|in:left,center,right',
+                'login_welcome_size' => 'nullable|integer|min:12|max:32',
+                'login_header_bg_type' => 'nullable|in:gradient,solid,image',
+                'login_header_bg_color' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
+                'login_header_bg_image' => 'nullable|string|max:255',
+                'login_header_height' => 'nullable|integer|min:50|max:200',
+                'login_header_text_color' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
+                'login_header_shadow' => 'nullable|boolean',
+                'register_welcome_text' => 'nullable|string|max:255',
+                'register_subtitle_text' => 'nullable|string|max:255',
+                'login_page_bg_type' => 'nullable|in:color,image',
+                'login_page_bg_color' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
+                'login_page_bg_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'login_page_bg_opacity' => 'nullable|integer|min:0|max:100',
             ], [
                 'instructor_removal_notice_days.required' => 'Minimum notice period is required.',
                 'instructor_removal_notice_days.integer' => 'Notice period must be a number.',
@@ -670,14 +688,44 @@ class AdminController extends Controller
                 $schoolSetting = new SchoolSetting(['school_id' => $school->id]);
             }
 
+            // Handle background image upload
+            $backgroundImagePath = $schoolSetting->background_image;
+            if ($request->hasFile('background_image')) {
+                // Delete old background image if exists
+                if ($backgroundImagePath) {
+                    Storage::disk('public')->delete($backgroundImagePath);
+                }
+                
+                $backgroundImagePath = $request->file('background_image')->store('backgrounds/' . $school->slug, 'public');
+            }
+
+            // Handle login page background image upload
+            $loginBgImagePath = $schoolSetting->login_page_bg_image;
+            if ($request->hasFile('login_page_bg_image')) {
+                // Delete old background image if exists
+                if ($loginBgImagePath) {
+                    Storage::disk('public')->delete($loginBgImagePath);
+                }
+                
+                $loginBgImagePath = $request->file('login_page_bg_image')->store('backgrounds/' . $school->slug . '/login', 'public');
+            }
+
             $schoolSetting->fill([
                 'primary_color' => $request->primary_color ?? '#2563eb',
                 'secondary_color' => $request->secondary_color ?? '#fbbf24',
                 'accent_color' => $request->accent_color ?? '#1e40af',
+                'background_type' => $request->background_type ?? 'color',
+                'background_color' => $request->background_color ?? '#f5f5f5',
+                'background_image' => $backgroundImagePath,
+                'background_opacity' => $request->background_opacity ?? 100,
                 'sidebar_bg_color' => $request->sidebar_bg_color ?? '#ffffff',
                 'sidebar_text_color' => $request->sidebar_text_color ?? '#333333',
                 'sidebar_hover_color' => $request->sidebar_hover_color ?? '#f5f5f5',
-                'use_gradient_header' => $request->has('use_gradient_header'),
+                'use_gradient_header' => $request->input('use_gradient_header') == '1',
+                'header_text_color' => $request->header_text_color ?? '#ffffff',
+                'calendar_day_border' => $request->calendar_day_border ?? '#dee2e6',
+                'calendar_day_hover' => $request->calendar_day_hover ?? '#667eea',
+                'calendar_today_color' => $request->calendar_today_color ?? '#667eea',
                 'button_primary_bg' => $request->button_primary_bg ?? '#667eea',
                 'button_primary_text' => $request->button_primary_text ?? '#ffffff',
                 'button_secondary_bg' => $request->button_secondary_bg ?? '#6c757d',
@@ -688,6 +736,7 @@ class AdminController extends Controller
                 'button_danger_text' => $request->button_danger_text ?? '#ffffff',
                 'border_radius' => $request->border_radius ?? 8,
                 'button_border_radius' => $request->button_border_radius ?? 8,
+                'button_style' => $request->button_style ?? 'solid',
                 'modal_header_bg' => $request->modal_header_bg ?? '#667eea',
                 'modal_header_text' => $request->modal_header_text ?? '#ffffff',
                 'modal_border_color' => $request->modal_border_color ?? '#667eea',
@@ -700,6 +749,35 @@ class AdminController extends Controller
                 'badge_approved_text' => $request->badge_approved_text ?? '#065f46',
                 'badge_cancelled_bg' => $request->badge_cancelled_bg ?? '#ef4444',
                 'badge_cancelled_text' => $request->badge_cancelled_text ?? '#7f1d1d',
+                'instructor_selection_mode' => $request->instructor_selection_mode ?? 'auto_assign',
+                'advance_booking_days' => $request->advance_booking_days ?? 0,
+                'enable_booking_queue' => $request->has('enable_booking_queue'),
+                'booking_queue_days' => $request->booking_queue_days ?? 3,
+                // Login page settings
+                'login_header_layout' => $request->login_header_layout ?? 'horizontal',
+                'login_logo_image' => $request->login_logo_image,
+                'login_logo_position' => $request->login_logo_position ?? 'left',
+                'login_logo_size' => $request->login_logo_size ?? 40,
+                'login_show_school_name' => $request->has('login_show_school_name'),
+                'login_school_name_text' => $request->login_school_name_text,
+                'login_school_name_position' => $request->login_school_name_position ?? 'left',
+                'login_school_name_size' => $request->login_school_name_size ?? 24,
+                'login_show_welcome_text' => $request->has('login_show_welcome_text'),
+                'login_welcome_text' => $request->login_welcome_text ?? 'Welcome!',
+                'login_welcome_position' => $request->login_welcome_position ?? 'right',
+                'login_welcome_size' => $request->login_welcome_size ?? 16,
+                'login_header_bg_type' => $request->login_header_bg_type ?? 'gradient',
+                'login_header_bg_color' => $request->login_header_bg_color ?? '#2563eb',
+                'login_header_bg_image' => $request->login_header_bg_image,
+                'login_header_height' => $request->login_header_height ?? 60,
+                'login_header_text_color' => $request->login_header_text_color ?? '#ffffff',
+                'login_header_shadow' => $request->has('login_header_shadow'),
+                'register_welcome_text' => $request->register_welcome_text ?? 'Student Registration',
+                'register_subtitle_text' => $request->register_subtitle_text,
+                'login_page_bg_type' => $request->login_page_bg_type ?? 'color',
+                'login_page_bg_color' => $request->login_page_bg_color ?? '#f5f5f5',
+                'login_page_bg_image' => $loginBgImagePath,
+                'login_page_bg_opacity' => $request->login_page_bg_opacity ?? 100,
             ]);
 
             $schoolSetting->save();

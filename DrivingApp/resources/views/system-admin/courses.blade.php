@@ -18,7 +18,7 @@
             <tbody>
                 @foreach($courses as $course)
                 <tr>
-                    <td><strong>{{ $course->name }}</strong></td>
+                    <td><strong>{{ $course->title }}</strong></td>
                     <td>{{ $course->school->name }}</td>
                     <td>{{ $course->duration_hours ?? 'N/A' }} hours</td>
                     <td>₱{{ number_format($course->price ?? 0, 2) }}</td>

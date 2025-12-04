@@ -347,7 +347,7 @@
                         <td>
                             @if($currentBooking && $currentBooking->instructor)
                                 <span class="instructor-badge">
-                                    👤 {{ $currentBooking->instructor->name }}
+                                    {{ $currentBooking->instructor->name }}
                                 </span>
                             @else
                                 <span style="color: #9ca3af; font-style: italic;">Not assigned</span>
@@ -356,7 +356,7 @@
                         <td>
                             @if($nextBooking)
                                 <span class="schedule-badge">
-                                    📅 {{ $nextBooking->scheduled_at->format('M d, Y h:i A') }}
+                                    {{ $nextBooking->scheduled_at->format('M d, Y h:i A') }}
                                 </span>
                             @else
                                 <span style="color: #9ca3af; font-style: italic;">No upcoming schedule</span>
@@ -371,7 +371,7 @@
                                 <div class="detail-grid">
                                     <!-- Student Information -->
                                     <div class="detail-section">
-                                        <h4 class="detail-section-title">👤 Student Information</h4>
+                                        <h4 class="detail-section-title">Student Information</h4>
                                         <div class="detail-item">
                                             <span class="detail-label">Full Name</span>
                                             <span class="detail-value">{{ $progress->student->name }}</span>
@@ -396,7 +396,7 @@
 
                                     <!-- Course Information -->
                                     <div class="detail-section">
-                                        <h4 class="detail-section-title">📚 Course Information</h4>
+                                        <h4 class="detail-section-title">Course Information</h4>
                                         <div class="detail-item">
                                             <span class="detail-label">Course Title</span>
                                             <span class="detail-value">{{ $progress->course->title }}</span>
@@ -417,7 +417,7 @@
 
                                     <!-- Session Progress -->
                                     <div class="detail-section">
-                                        <h4 class="detail-section-title">📊 Session Progress</h4>
+                                        <h4 class="detail-section-title">Session Progress</h4>
                                         <div class="detail-item">
                                             <span class="detail-label">Completed Sessions</span>
                                             <span class="detail-value">{{ $completedSessions }} / {{ $totalSessions }}</span>
@@ -440,7 +440,7 @@
 
                                     <!-- Instructor Details -->
                                     <div class="detail-section">
-                                        <h4 class="detail-section-title">👨‍🏫 Instructor Details</h4>
+                                        <h4 class="detail-section-title">Instructor Details</h4>
                                         @if($currentBooking && $currentBooking->instructor)
                                             <div class="detail-item">
                                                 <span class="detail-label">Current Instructor</span>
@@ -464,7 +464,7 @@
 
                                 <!-- Overall Progress Bar -->
                                 <div class="progress-bar-section">
-                                    <h4 class="detail-section-title">📈 Overall Completion Progress</h4>
+                                    <h4 class="detail-section-title">Overall Completion Progress</h4>
                                     <div class="progress-bar-wrapper">
                                         <div class="progress-bar-container">
                                             <div class="progress-bar-fill" style="width: {{ $progress->completion_percent }}%;">
@@ -492,7 +492,7 @@
                                 <!-- Instructor Notes -->
                                 @if($progress->notes)
                                 <div class="notes-section">
-                                    <h4 class="notes-section-title">📝 Instructor Notes</h4>
+                                    <h4 class="notes-section-title">Instructor Notes</h4>
                                     <p class="notes-text">{{ $progress->notes }}</p>
                                 </div>
                                 @endif

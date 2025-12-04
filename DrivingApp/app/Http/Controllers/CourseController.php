@@ -16,9 +16,12 @@ class CourseController extends Controller
     public function index(School $school)
     {
         $courses = Course::where('school_id', $school->id)
+            ->with('packages')
             ->when(request('status'), function ($query, $status) {
                 return $query->where('status', $status);
             })
+            ->orderBy('sort_order')
+            ->orderBy('is_featured', 'desc')
             ->latest()
             ->get();
 
@@ -40,7 +43,10 @@ class CourseController extends Controller
             $instructors = \App\Models\Instructor::where('school_id', $school->id)->get();
         }
 
-        return view($school->resolveView($view), compact('school', 'courses', 'instructors'));
+        // Check if this is an AJAX request
+        $isAjax = request()->ajax();
+
+        return view($school->resolveView($view), compact('school', 'courses', 'instructors', 'isAjax'));
     }
 
     /**
@@ -76,27 +82,11 @@ class CourseController extends Controller
         $validated['school_id'] = $school->id;
         $course = Course::create($validated);
 
-        // Create course schedules if provided
-        if ($request->has('schedules') && is_array($request->schedules)) {
-            foreach ($request->schedules as $schedule) {
-                $course->courseSchedules()->create([
-                    'instructor_id' => $schedule['instructor_id'] ?? null,
-                    'date' => $schedule['date'],
-                    'start_time' => $schedule['start_time'],
-                    'end_time' => $schedule['end_time'],
-                    'max_students' => $schedule['max_students'] ?? 1,
-                    'notes' => $schedule['notes'] ?? null,
-                    'status' => 'available',
-                ]);
-            }
-        }
-
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
                 'success' => true,
                 'message' => 'Course created successfully',
-                'course' => $course->load('courseSchedules'),
-                'schedules_created' => $request->has('schedules') ? count($request->schedules) : 0
+                'course' => $course
             ], 201);
         }
 
@@ -190,7 +180,6 @@ class CourseController extends Controller
             }
             
             // Delete related records first
-            $course->courseSchedules()->delete();
             $course->progresses()->delete();
             
             // Now delete the course

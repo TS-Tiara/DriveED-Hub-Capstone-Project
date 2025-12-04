@@ -10,19 +10,19 @@
 
 <style>
     .student-detail-container {
-        padding: 0;
+        padding: 30px;
         max-width: 1400px;
         margin: 0 auto;
     }
 
     .back-btn {
-        background: #f3f4f6;
-        border: none;
-        padding: 10px 20px;
+        background: white;
+        border: 2px solid #e5e7eb;
+        padding: 12px 20px;
         border-radius: 8px;
         cursor: pointer;
         font-weight: 600;
-        color: #667eea;
+        color: #1a202c;
         margin-bottom: 20px;
         display: inline-flex;
         align-items: center;
@@ -31,17 +31,18 @@
     }
 
     .back-btn:hover {
-        background: #667eea;
+        background: {{ $school->schoolSetting->primary_color ?? '#1e40af' }};
         color: white;
+        border-color: {{ $school->schoolSetting->primary_color ?? '#1e40af' }};
     }
 
     .student-header-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 30px;
+        background: white;
+        padding: 40px;
         border-radius: 12px;
-        color: white;
         margin-bottom: 30px;
-        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        border-left: 6px solid {{ $school->schoolSetting->primary_color ?? '#f59e0b' }};
     }
 
     .student-header-content {
@@ -51,153 +52,109 @@
         gap: 30px;
     }
 
+    .student-main-info {
+        flex: 1;
+    }
+
     .student-main-info h1 {
-        font-size: 2.2rem;
+        font-size: 2.5rem;
         font-weight: 700;
-        margin: 0 0 12px 0;
+        color: #1a202c;
+        margin: 0 0 16px 0;
     }
 
     .student-main-info p {
-        opacity: 0.9;
-        margin: 6px 0;
+        color: #6b7280;
+        margin: 10px 0;
         display: flex;
         align-items: center;
         gap: 10px;
+        font-size: 1rem;
+    }
+
+    .student-main-info p strong {
+        color: #374151;
+        min-width: 90px;
     }
 
     .progress-summary {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: 15px;
-        background: rgba(255,255,255,0.15);
-        padding: 20px;
-        border-radius: 8px;
+        gap: 20px;
+        min-width: 300px;
     }
 
     .progress-item {
         text-align: center;
+        background: #f9fafb;
+        padding: 20px;
+        border-radius: 8px;
     }
 
     .progress-value {
         font-size: 2rem;
         font-weight: 700;
+        color: {{ $school->schoolSetting->primary_color ?? '#1e40af' }};
         display: block;
     }
 
     .progress-label {
-        font-size: 0.85rem;
-        opacity: 0.9;
+        font-size: 0.9rem;
+        color: #6b7280;
         display: block;
-        margin-top: 4px;
-    }
-
-    .content-tabs {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 25px;
-        background: white;
-        padding: 8px;
-        border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    }
-
-    .tab-btn {
-        flex: 1;
-        padding: 12px 20px;
-        background: transparent;
-        border: none;
-        border-radius: 6px;
+        margin-top: 6px;
         font-weight: 600;
-        color: #666;
-        cursor: pointer;
-        transition: all 0.3s ease;
     }
 
-    .tab-btn.active {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-    }
-
-    .tab-btn:hover:not(.active) {
-        background: #f3f4f6;
-    }
-
-    .tab-content {
-        display: none;
-    }
-
-    .tab-content.active {
-        display: block;
-    }
-
-    /* Progress Tab */
-    .progress-grid {
-        display: grid;
-        gap: 20px;
-    }
-
-    .course-progress-card {
-        background: white;
-        padding: 25px;
-        border-radius: 12px;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-    }
-
-    .course-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+    .section-header {
         margin-bottom: 20px;
     }
 
-    .course-name {
-        font-size: 1.3rem;
-        font-weight: 700;
-        color: #333;
+    .section-header h2 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #374151;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0;
     }
 
-    .course-percent {
-        font-size: 1.8rem;
-        font-weight: 700;
-        color: #667eea;
+    .section-header h2 i {
+        color: {{ $school->schoolSetting->primary_color ?? '#1e40af' }};
     }
 
-    .progress-bar {
-        width: 100%;
-        height: 24px;
-        background: #e5e7eb;
+    .section-subtitle {
+        font-size: 0.9rem;
+        color: #6b7280;
+        margin: 8px 0 0 0;
+    }
+
+    /* Sessions List */
+    .sessions-container {
+        background: white;
         border-radius: 12px;
-        overflow: hidden;
-        margin-bottom: 15px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
 
-    .progress-bar-fill {
-        height: 100%;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        transition: width 0.5s ease;
-    }
-
-    .course-notes {
-        padding: 15px;
-        background: #f8f9fa;
-        border-radius: 8px;
-        font-size: 0.95rem;
-        color: #666;
-        font-style: italic;
-    }
-
-    /* Sessions Tab */
     .sessions-list {
         display: grid;
-        gap: 15px;
+        gap: 16px;
     }
 
     .session-card {
-        background: white;
-        padding: 20px;
+        background: #fafafa;
+        padding: 24px;
         border-radius: 12px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+        border-left: 4px solid #9ca3af;
+    }
+
+    .session-card.my-session {
+        background: white;
+        border-left: 4px solid {{ $school->schoolSetting->primary_color ?? '#1e40af' }};
         box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        border-left: 4px solid #667eea;
     }
 
     .session-header {
@@ -208,22 +165,49 @@
     }
 
     .session-date {
-        font-size: 1.1rem;
+        font-size: 1.15rem;
         font-weight: 700;
-        color: #333;
+        color: #1a202c;
     }
 
     .session-course {
         font-size: 0.9rem;
-        color: #667eea;
+        color: {{ $school->schoolSetting->primary_color ?? '#1e40af' }};
         margin-top: 4px;
+        font-weight: 600;
+    }
+
+    .session-instructor {
+        font-size: 0.85rem;
+        color: #6b7280;
+        margin-top: 6px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .session-badges {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 6px;
+    }
+
+    .my-session-badge {
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        background: {{ $school->schoolSetting->primary_color ?? '#1e40af' }}20;
+        color: {{ $school->schoolSetting->primary_color ?? '#1e40af' }};
+        text-transform: uppercase;
     }
 
     .session-status {
-        padding: 6px 12px;
+        padding: 6px 14px;
         border-radius: 20px;
         font-size: 0.8rem;
-        font-weight: 600;
+        font-weight: 700;
         text-transform: uppercase;
     }
 
@@ -247,22 +231,13 @@
         color: #92400e;
     }
 
-    .session-instructor {
-        font-size: 0.85rem;
-        color: #666;
-        margin-bottom: 10px;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-
     .session-notes {
-        padding: 12px;
+        padding: 14px;
         background: #fffbeb;
         border-left: 3px solid #f59e0b;
-        border-radius: 4px;
+        border-radius: 6px;
         font-size: 0.9rem;
-        color: #78350f;
+        color: #92400e;
     }
 
     .no-notes {
@@ -279,19 +254,24 @@
     }
 
     .empty-state i {
-        font-size: 3rem;
-        color: #ddd;
+        font-size: 3.5rem;
+        color: #d1d5db;
         margin-bottom: 15px;
     }
 
     .empty-state p {
-        color: #999;
+        color: #6b7280;
+        font-size: 1rem;
     }
 
     /* Mobile Responsiveness */
     @media (max-width: 768px) {
+        .student-detail-container {
+            padding: 15px;
+        }
+
         .student-header-card {
-            padding: 20px;
+            padding: 25px;
         }
 
         .student-header-content {
@@ -300,32 +280,38 @@
         }
 
         .student-main-info h1 {
-            font-size: 1.6rem;
+            font-size: 1.8rem;
         }
 
         .progress-summary {
             grid-template-columns: repeat(2, 1fr);
+            min-width: auto;
+        }
+
+        .progress-item {
             padding: 15px;
         }
 
         .progress-value {
-            font-size: 1.5rem;
+            font-size: 1.6rem;
         }
 
         .content-tabs {
-            flex-direction: column;
+            padding: 6px;
         }
 
         .tab-btn {
-            padding: 10px 15px;
+            padding: 12px 16px;
+            font-size: 0.9rem;
         }
 
-        .course-progress-card {
-            padding: 18px;
+        .course-progress-card,
+        .session-card {
+            padding: 20px;
         }
 
         .course-name {
-            font-size: 1.1rem;
+            font-size: 1.15rem;
         }
 
         .course-percent {
@@ -378,92 +364,60 @@
         <div class="student-header-content">
             <div class="student-main-info">
                 <h1>{{ $student->name }}</h1>
-                <p><i class="fas fa-envelope"></i> {{ $student->email }}</p>
                 @if($student->contact)
                     <p><i class="fas fa-phone"></i> {{ $student->contact }}</p>
                 @endif
-                @if($student->address)
-                    <p><i class="fas fa-map-marker-alt"></i> {{ $student->address }}</p>
-                @endif
-                <p><i class="fas fa-calendar"></i> Enrolled: {{ \Carbon\Carbon::parse($student->enrollment_date)->format('M d, Y') }}</p>
+                <p><i class="fas fa-circle" style="color: {{ $student->status === 'active' ? '#10b981' : '#ef4444' }}; font-size: 0.6rem;"></i> {{ ucfirst($student->status) }} Student</p>
             </div>
 
             <div class="progress-summary">
                 <div class="progress-item">
-                    <span class="progress-value">{{ $student->progresses->avg('completion_percent') ? number_format($student->progresses->avg('completion_percent'), 0) : 0 }}%</span>
-                    <span class="progress-label">Overall Progress</span>
+                    <span class="progress-value">{{ $myCompletedCount }}</span>
+                    <span class="progress-label">Sessions with You</span>
                 </div>
                 <div class="progress-item">
-                    <span class="progress-value">{{ $sessions->where('status', 'completed')->count() }}</span>
-                    <span class="progress-label">Completed Sessions</span>
+                    <span class="progress-value">{{ $myUpcomingCount }}</span>
+                    <span class="progress-label">Your Upcoming</span>
                 </div>
                 <div class="progress-item">
-                    <span class="progress-value">{{ $student->progresses->count() }}</span>
-                    <span class="progress-label">Courses Enrolled</span>
-                </div>
-                <div class="progress-item">
-                    <span class="progress-value" style="color: {{ $student->status === 'active' ? '#10b981' : '#ef4444' }}">{{ ucfirst($student->status) }}</span>
-                    <span class="progress-label">Status</span>
+                    <span class="progress-value">{{ $sessions->count() }}</span>
+                    <span class="progress-label">Total Sessions</span>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Tabs -->
-    <div class="content-tabs">
-        <button class="tab-btn active" onclick="switchTab(event, 'progress')">Course Progress</button>
-        <button class="tab-btn" onclick="switchTab(event, 'sessions')">Session History</button>
+    <!-- Session History Header -->
+    <div class="section-header">
+        <h2><i class="fas fa-history"></i> Session History for {{ $student->name }}</h2>
+        <p class="section-subtitle">View notes from all instructors to maintain teaching continuity</p>
     </div>
 
-    <!-- Progress Tab -->
-    <div id="progress-tab" class="tab-content active">
-        @if($student->progresses->count() > 0)
-            <div class="progress-grid">
-                @foreach($student->progresses as $progress)
-                    <div class="course-progress-card">
-                        <div class="course-header">
-                            <h3 class="course-name">{{ $progress->course->name ?? 'Unknown Course' }}</h3>
-                            <span class="course-percent">{{ number_format($progress->completion_percent, 0) }}%</span>
-                        </div>
-                        <div class="progress-bar">
-                            <div class="progress-bar-fill" style="width: {{ $progress->completion_percent }}%"></div>
-                        </div>
-                        @if($progress->notes)
-                            <div class="course-notes">
-                                <strong>Notes:</strong> {{ $progress->notes }}
-                            </div>
-                        @endif
-                    </div>
-                @endforeach
-            </div>
-        @else
-            <div class="empty-state">
-                <i class="fas fa-chart-line"></i>
-                <p>No course progress records found</p>
-            </div>
-        @endif
-    </div>
-
-    <!-- Sessions Tab -->
-    <div id="sessions-tab" class="tab-content">
+    <!-- Sessions List -->
+    <div class="sessions-container">
         @if($sessions->count() > 0)
             <div class="sessions-list">
                 @foreach($sessions as $session)
-                    <div class="session-card">
+                    <div class="session-card {{ $session['is_mine'] ? 'my-session' : '' }}">
                         <div class="session-header">
                             <div>
                                 <div class="session-date">{{ \Carbon\Carbon::parse($session['date'])->format('l, M d, Y - g:i A') }}</div>
                                 <div class="session-course">{{ $session['course'] }}</div>
+                                <div class="session-instructor">
+                                    <i class="fas fa-user-tie"></i> 
+                                    {{ $session['is_mine'] ? 'You' : $session['instructor_name'] }}
+                                </div>
                             </div>
-                            <span class="session-status status-{{ $session['status'] }}">{{ $session['status'] }}</span>
-                        </div>
-                        <div class="session-instructor">
-                            <i class="fas fa-user-tie"></i>
-                            Instructor: {{ $session['instructor_name'] }}
+                            <div class="session-badges">
+                                @if($session['is_mine'])
+                                    <span class="my-session-badge">Your Session</span>
+                                @endif
+                                <span class="session-status status-{{ $session['status'] }}">{{ ucfirst($session['status']) }}</span>
+                            </div>
                         </div>
                         @if($session['notes'])
                             <div class="session-notes">
-                                <strong><i class="fas fa-sticky-note"></i> Session Notes:</strong><br>
+                                <strong><i class="fas fa-sticky-note"></i> Notes:</strong><br>
                                 {{ $session['notes'] }}
                             </div>
                         @else
@@ -477,42 +431,13 @@
         @else
             <div class="empty-state">
                 <i class="fas fa-calendar-times"></i>
-                <p>No session history found</p>
+                <p>No session history with this student yet</p>
             </div>
         @endif
     </div>
 </div>
 
 <script>
-function switchTab(event, tabName) {
-    // Prevent default behavior
-    if (event) {
-        event.preventDefault();
-        event.stopPropagation();
-    }
-
-    // Update tab buttons
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    
-    // Add active class to clicked button
-    if (event && event.currentTarget) {
-        event.currentTarget.classList.add('active');
-    }
-
-    // Update tab content
-    document.querySelectorAll('.tab-content').forEach(content => {
-        content.classList.remove('active');
-    });
-    
-    // Show selected tab
-    const selectedTab = document.getElementById(tabName + '-tab');
-    if (selectedTab) {
-        selectedTab.classList.add('active');
-    }
-}
-
 function goBack() {
     const url = `{{ url($school->slug . '/instructor/students') }}`;
     if (typeof loadContent === 'function') {

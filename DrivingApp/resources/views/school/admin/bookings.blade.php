@@ -20,7 +20,7 @@
     align-items: center;
     margin-bottom: 30px;
     padding-bottom: 15px;
-    border-bottom: 2px solid #667eea;
+    border-bottom: 2px solid {{ $school->schoolSetting->primary_color ?? '#667eea' }};
 }
 
 .page-title {
@@ -44,7 +44,11 @@
 }
 
 .stat-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    @if($school->schoolSetting->use_gradient_header)
+        background: linear-gradient(135deg, {{ $school->schoolSetting->primary_color }} 0%, {{ $school->schoolSetting->secondary_color }} 100%);
+    @else
+        background: {{ $school->schoolSetting->primary_color }};
+    @endif
     color: white;
     border-radius: 12px;
     padding: 20px;
@@ -101,9 +105,13 @@
 }
 
 .filter-btn.active {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    @if($school->schoolSetting->use_gradient_header)
+        background: linear-gradient(135deg, {{ $school->schoolSetting->primary_color }} 0%, {{ $school->schoolSetting->secondary_color }} 100%);
+    @else
+        background: {{ $school->schoolSetting->primary_color }};
+    @endif
     color: white;
-    border-color: #667eea;
+    border-color: {{ $school->schoolSetting->primary_color ?? '#667eea' }};
 }
 
 .bookings-list {
@@ -148,7 +156,7 @@
 
 .time {
     font-weight: 600;
-    color: #667eea;
+    color: {{ $school->schoolSetting->primary_color ?? '#667eea' }};
 }
 
 .booking-details {
@@ -199,6 +207,9 @@
 .badge-cancelled { background: #fee2e2; color: #991b1b; }
 .badge-pending { background: #fef3c7; color: #92400e; }
 .badge-no-show { background: #fef3c7; color: #92400e; }
+.badge-paid { background: #d1fae5; color: #065f46; }
+.badge-partial { background: #fef3c7; color: #92400e; }
+.badge-refunded { background: #fee2e2; color: #991b1b; }
 
 .btn {
     padding: 10px 20px;
@@ -210,9 +221,10 @@
     font-size: 0.9rem;
 }
 
-.btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
-.btn-secondary { background: #6c757d; color: white; }
-.btn-success { background: #10b981; color: white; }
+.btn-primary { background: var(--btn-primary-bg); color: var(--btn-primary-text); }
+.btn-secondary { background: var(--btn-secondary-bg); color: var(--btn-secondary-text); }
+.btn-success { background: var(--btn-success-bg); color: var(--btn-success-text); }
+.btn-danger { background: var(--btn-danger-bg); color: var(--btn-danger-text); }
 .btn-sm { padding: 8px 16px; font-size: 0.85rem; }
 
 .form-select {
@@ -273,19 +285,26 @@
             <div class="booking-card" data-status="{{ $booking->status }}">
                 <div class="booking-header">
                     <div class="booking-info">
-                        <h3>{{ $booking->course->title }}</h3>
+                        <h3>{{ $booking->course->title ?? 'N/A' }}</h3>
                         <span class="badge badge-{{ $booking->status }}">{{ ucfirst($booking->status) }}</span>
                 </div>
                 <div class="booking-date">
-                    📅 <span>{{ $booking->scheduled_at->format('M d, Y') }}</span>
-                    <span class="time">{{ $booking->scheduled_at->format('h:i A') }}</span>
+                    @if($booking->timeSlot)
+                        📅 <span>{{ \Carbon\Carbon::parse($booking->timeSlot->date)->format('M d, Y') }}</span>
+                        <span class="time">{{ \Carbon\Carbon::parse($booking->timeSlot->start_time)->format('h:i A') }} - {{ \Carbon\Carbon::parse($booking->timeSlot->end_time)->format('h:i A') }}</span>
+                    @elseif($booking->scheduled_at)
+                        📅 <span>{{ $booking->scheduled_at->format('M d, Y') }}</span>
+                        <span class="time">{{ $booking->scheduled_at->format('h:i A') }}</span>
+                    @else
+                        📅 <span>{{ $booking->booking_date ? \Carbon\Carbon::parse($booking->booking_date)->format('M d, Y') : 'Not scheduled' }}</span>
+                    @endif
                 </div>
             </div>
 
             <div class="booking-details">
                 <div class="detail-row">
                     <span class="label">Student</span>
-                    <span class="value">{{ $booking->student->name }}</span>
+                    <span class="value">{{ $booking->student->name ?? 'N/A' }}</span>
                 </div>
                 @if($booking->instructor)
                 <div class="detail-row">
@@ -293,13 +312,27 @@
                     <span class="value">{{ $booking->instructor->name }}</span>
                 </div>
                 @endif
+                @if($booking->package)
+                <div class="detail-row">
+                    <span class="label">Package</span>
+                    <span class="value">{{ $booking->package->name }} - {{ $booking->package->transmission_type }}</span>
+                </div>
+                @endif
+                @if($booking->package && $booking->package->training_hours)
                 <div class="detail-row">
                     <span class="label">Duration</span>
-                    <span class="value">{{ $booking->course->duration_hours }} hours</span>
+                    <span class="value">{{ $booking->package->training_hours }} hours</span>
                 </div>
+                @endif
                 <div class="detail-row">
                     <span class="label">Price</span>
-                    <span class="value">₱{{ number_format($booking->course->price, 2) }}</span>
+                    <span class="value">₱{{ number_format($booking->total_amount, 2) }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">Payment</span>
+                    <span class="value">
+                        <span class="badge badge-{{ $booking->payment_status }}">{{ ucfirst($booking->payment_status) }}</span>
+                    </span>
                 </div>
                 @if($booking->notes)
                 <div class="detail-row">

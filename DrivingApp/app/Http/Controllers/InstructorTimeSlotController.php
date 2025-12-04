@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\School;
 use App\Models\TimeSlot;
+use App\Models\Booking;
 use App\Models\InstructorRemovalRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -22,7 +23,10 @@ class InstructorTimeSlotController extends Controller
 
         abort_unless($instructor && $instructor->school_id === $school->id, 403);
 
-        $availableSlots = TimeSlot::with('instructors')
+        // Get instructor's course specializations
+        $instructorCourses = $instructor->course_specializations ?? [];
+
+        $availableSlots = TimeSlot::with(['instructors', 'course'])
             ->where('school_id', $school->id)
             ->where('status', 'open')
             ->where('date', '>=', now()->toDateString())
@@ -30,7 +34,7 @@ class InstructorTimeSlotController extends Controller
             ->orderBy('start_time')
             ->get();
 
-        $mySlots = TimeSlot::with('instructors')
+        $mySlots = TimeSlot::with(['instructors', 'course'])
             ->where('school_id', $school->id)
             ->whereHas('instructors', function ($query) use ($instructor): void {
                 $query->where('instructor_id', $instructor->id);
@@ -44,6 +48,7 @@ class InstructorTimeSlotController extends Controller
             'school' => $school,
             'availableSlots' => $availableSlots,
             'mySlots' => $mySlots,
+            'instructorCourses' => $instructorCourses,
         ]);
     }
 
@@ -58,14 +63,20 @@ class InstructorTimeSlotController extends Controller
             ->where('id', $id)
             ->firstOrFail();
 
+        $isAjax = request()->ajax() || request()->header('X-Requested-With') === 'XMLHttpRequest';
+
         if ($timeSlot->status !== 'open') {
-            return redirect()->back()
-                ->with('error', 'This time slot is closed and cannot be selected.');
+            if ($isAjax) {
+                return response()->json(['success' => false, 'message' => 'This time slot is closed and cannot be selected.'], 400);
+            }
+            return redirect()->back()->with('error', 'This time slot is closed and cannot be selected.');
         }
 
         if ($timeSlot->date->isPast()) {
-            return redirect()->back()
-                ->with('error', 'Cannot select past time slots.');
+            if ($isAjax) {
+                return response()->json(['success' => false, 'message' => 'Cannot select past time slots.'], 400);
+            }
+            return redirect()->back()->with('error', 'Cannot select past time slots.');
         }
 
         if ($timeSlot->hasInstructor($instructor->id)) {
@@ -75,19 +86,36 @@ class InstructorTimeSlotController extends Controller
                 ->first();
 
             if ($pivot && $pivot->pivot->assignment_type === 'admin_assigned') {
-                return redirect()->back()
-                    ->with('error', 'You cannot leave this slot as it was assigned by an admin.');
+                if ($isAjax) {
+                    return response()->json(['success' => false, 'message' => 'You cannot leave this slot as it was assigned by an admin.'], 400);
+                }
+                return redirect()->back()->with('error', 'You cannot leave this slot as it was assigned by an admin.');
             }
 
             $timeSlot->instructors()->detach($instructor->id);
 
-            return redirect()->back()
-                ->with('success', 'You have left this time slot.');
+            if ($isAjax) {
+                return response()->json(['success' => true, 'message' => 'You have left this time slot.', 'action' => 'left']);
+            }
+            return redirect()->back()->with('success', 'You have left this time slot.');
         }
 
         if ($timeSlot->isFull()) {
-            return redirect()->back()
-                ->with('error', 'This time slot is full.');
+            if ($isAjax) {
+                return response()->json(['success' => false, 'message' => 'This time slot is full.'], 400);
+            }
+            return redirect()->back()->with('error', 'This time slot is full.');
+        }
+
+        // Check if instructor is qualified for this course
+        $instructorCourses = $instructor->course_specializations ?? [];
+        $isQualified = empty($instructorCourses) || in_array($timeSlot->course_id, $instructorCourses);
+
+        if (!$isQualified) {
+            if ($isAjax) {
+                return response()->json(['success' => false, 'message' => 'You are not qualified for this course. Please contact your admin for course assignment approval.'], 400);
+            }
+            return redirect()->back()->with('error', 'You are not qualified for this course. Please contact your admin for course assignment approval.');
         }
 
         $hasConflict = TimeSlot::where('school_id', $school->id)
@@ -113,8 +141,10 @@ class InstructorTimeSlotController extends Controller
             ->exists();
 
         if ($hasConflict) {
-            return redirect()->back()
-                ->with('error', 'You already have a time slot that conflicts with this one.');
+            if ($isAjax) {
+                return response()->json(['success' => false, 'message' => 'You already have a time slot that conflicts with this one.'], 400);
+            }
+            return redirect()->back()->with('error', 'You already have a time slot that conflicts with this one.');
         }
 
         $timeSlot->instructors()->attach($instructor->id, [
@@ -122,39 +152,20 @@ class InstructorTimeSlotController extends Controller
             'assignment_type' => 'self_selected',
         ]);
 
-        return redirect()->back()
-            ->with('success', 'You have successfully selected this time slot!');
+        if ($isAjax) {
+            return response()->json(['success' => true, 'message' => 'You have successfully selected this time slot!', 'action' => 'selected']);
+        }
+        return redirect()->back()->with('success', 'You have successfully selected this time slot!');
     }
 
     // View instructor's schedule/calendar
     public function mySchedule(School $school)
     {
         $instructor = Auth::guard('instructor')->user();
-
         abort_unless($instructor && $instructor->school_id === $school->id, 403);
 
-        $schedule = TimeSlot::with(['instructors' => function ($query) use ($instructor): void {
-                $query->where('instructor_id', $instructor->id);
-            }])
-            ->where('school_id', $school->id)
-            ->whereHas('instructors', function ($query) use ($instructor): void {
-                $query->where('instructor_id', $instructor->id);
-            })
-            ->orderBy('date')
-            ->orderBy('start_time')
-            ->get();
-
-        // Get pending removal requests for this instructor
-        $pendingRequests = InstructorRemovalRequest::where('instructor_id', $instructor->id)
-            ->where('school_id', $school->id)
-            ->where('status', 'pending')
-            ->pluck('time_slot_id')
-            ->toArray();
-
-        return view($school->resolveView('instructor.schedule'), [
+        return view('school.instructor.schedule', [
             'school' => $school,
-            'schedule' => $schedule,
-            'pendingRequests' => $pendingRequests,
         ]);
     }
 
@@ -200,6 +211,33 @@ class InstructorTimeSlotController extends Controller
         return redirect()
             ->route('schools.instructor.profile', $school)
             ->with('success', 'Profile updated successfully!');
+    }
+
+    public function updateProfilePicture(Request $request, School $school)
+    {
+        $instructor = Auth::guard('instructor')->user();
+
+        $request->validate([
+            'profile_picture' => 'required|image|mimes:png,jpg,jpeg,webp|max:2048',
+        ]);
+
+        // Delete old profile picture if exists
+        if ($instructor->profile_picture) {
+            \Storage::disk('public')->delete($instructor->profile_picture);
+        }
+
+        // Store new profile picture
+        $path = $request->file('profile_picture')->store('profile_pictures', 'public');
+
+        $instructor->update([
+            'profile_picture' => $path,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profile picture updated successfully!',
+            'path' => $path,
+        ]);
     }
 
     // Request removal from an admin-assigned time slot
@@ -268,4 +306,105 @@ class InstructorTimeSlotController extends Controller
         return redirect()->back()
             ->with('success', 'Your removal request has been submitted to the admin for review.');
     }
+
+    public function updateAttendance(School $school, Booking $booking, Request $request)
+    {
+        $instructor = Auth::guard('instructor')->user();
+        abort_unless($instructor && $instructor->school_id === $school->id, 403);
+        abort_unless($booking->school_id === $school->id, 403);
+
+        $request->validate([
+            'attendance_status' => 'nullable|in:attended,late,absent'
+        ]);
+
+        $booking->update([
+            'attendance_status' => $request->attendance_status,
+            'attendance_marked_at' => now()
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Attendance updated successfully'
+        ]);
+    }
+
+    public function updateFeedback(School $school, Booking $booking, Request $request)
+    {
+        $instructor = Auth::guard('instructor')->user();
+        abort_unless($instructor && $instructor->school_id === $school->id, 403);
+        abort_unless($booking->school_id === $school->id, 403);
+
+        $request->validate([
+            'instructor_feedback' => 'nullable|string|max:1000'
+        ]);
+
+        $booking->update([
+            'instructor_feedback' => $request->instructor_feedback
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Feedback updated successfully'
+        ]);
+    }
+
+    public function getLessonDetails(School $school, Booking $booking)
+    {
+        $instructor = Auth::guard('instructor')->user();
+        abort_unless($instructor && $instructor->school_id === $school->id, 403);
+        abort_unless($booking->school_id === $school->id, 403);
+        abort_unless($booking->instructor_id === $instructor->id, 403, 'This lesson is not assigned to you');
+
+        $booking->load(['student', 'course', 'timeSlot']);
+
+        return response()->json([
+            'success' => true,
+            'booking' => $booking
+        ]);
+    }
+
+    public function updateLessonDetails(School $school, Booking $booking, Request $request)
+    {
+        $instructor = Auth::guard('instructor')->user();
+        abort_unless($instructor && $instructor->school_id === $school->id, 403);
+        abort_unless($booking->school_id === $school->id, 403);
+        abort_unless($booking->instructor_id === $instructor->id, 403, 'This lesson is not assigned to you');
+
+        $validated = $request->validate([
+            'attendance_status' => 'required|in:attended,late,absent',
+            'session_status' => 'required|in:completed,cancelled,rescheduled,no-show',
+            'session_grade' => 'nullable|numeric|min:0|max:100',
+            'instructor_feedback' => 'nullable|string|max:1000',
+            'student_feedback' => 'nullable|string|max:1000',
+            'skills_practiced' => 'nullable|array',
+            'cancellation_reason' => 'nullable|string|max:500'
+        ]);
+
+        $updateData = [
+            'attendance_status' => $validated['attendance_status'],
+            'session_status' => $validated['session_status'],
+            'session_grade' => $validated['session_grade'],
+            'instructor_feedback' => $validated['instructor_feedback'],
+            'student_feedback' => $validated['student_feedback'],
+            'skills_practiced' => $validated['skills_practiced'] ?? [],
+            'attendance_marked_at' => now()
+        ];
+
+        // If session is being marked as cancelled, update the main booking status too
+        if ($validated['session_status'] === 'cancelled' && $booking->status !== 'cancelled') {
+            $updateData['status'] = 'cancelled';
+            $updateData['cancelled_by'] = 'instructor';
+            $updateData['cancelled_at'] = now();
+            $updateData['cancellation_reason'] = $validated['cancellation_reason'] ?? 'Session cancelled by instructor';
+        }
+
+        $booking->update($updateData);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Lesson details updated successfully'
+        ]);
+    }
 }
+
+

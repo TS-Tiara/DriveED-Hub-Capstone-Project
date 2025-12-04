@@ -3,33 +3,29 @@
 @section('title', 'Instructor Dashboard')
 
 @section('content')
+@php
+    $school = $school ?? $currentSchool ?? null;
+    $settings = $school->schoolSetting;
+@endphp
+
 <style>
     .instructor-dashboard {
         padding: 20px;
         max-width: 1400px;
         margin: 0 auto;
-        box-sizing: border-box;
     }
 
-    .dashboard-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 30px;
-        border-radius: 12px;
+    .page-header {
         margin-bottom: 30px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        padding-bottom: 15px;
+        border-bottom: 4px solid {{ $settings->primary_color ?? '#667eea' }};
     }
 
-    .dashboard-header h1 {
-        margin: 0 0 10px 0;
-        font-size: 28px;
-        font-weight: 600;
-    }
-
-    .dashboard-header p {
+    .page-title {
+        font-size: 2rem;
+        color: #111827;
         margin: 0;
-        opacity: 0.9;
-        font-size: 16px;
+        font-weight: 400;
     }
 
     .stats-grid {
@@ -65,7 +61,7 @@
     .stat-value {
         font-size: 36px;
         font-weight: 700;
-        color: #667eea;
+        color: {{ $settings->primary_color ?? '#667eea' }};
     }
 
     .dashboard-grid {
@@ -87,7 +83,7 @@
         font-size: 18px;
         font-weight: 600;
         color: #333;
-        border-bottom: 2px solid #667eea;
+        border-bottom: 2px solid {{ $settings->primary_color ?? '#667eea' }};
         padding-bottom: 10px;
     }
 
@@ -95,7 +91,7 @@
         background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
         padding: 20px;
         border-radius: 8px;
-        border-left: 4px solid #667eea;
+        border-left: 4px solid {{ $settings->primary_color ?? '#667eea' }};
     }
 
     .lesson-label {
@@ -171,7 +167,7 @@
     .metric-value {
         font-size: 20px;
         font-weight: 700;
-        color: #667eea;
+        color: {{ $school->schoolSetting->primary_color ?? '#667eea' }};
     }
 
     .bookings-list,
@@ -185,7 +181,7 @@
         padding: 15px;
         background: #f8f9fa;
         border-radius: 8px;
-        border-left: 3px solid #667eea;
+        border-left: 3px solid {{ $school->schoolSetting->primary_color ?? '#667eea' }};
     }
 
     .booking-student {
@@ -237,7 +233,7 @@
     .progress-percent {
         font-size: 16px;
         font-weight: 700;
-        color: #667eea;
+        color: {{ $school->schoolSetting->primary_color ?? '#667eea' }};
     }
 
     .progress-course {
@@ -255,7 +251,11 @@
     }
 
     .progress-fill {
-        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        @if($school->schoolSetting->use_gradient_header)
+            background: linear-gradient(90deg, {{ $school->schoolSetting->primary_color }} 0%, {{ $school->schoolSetting->secondary_color }} 100%);
+        @else
+            background: {{ $school->schoolSetting->primary_color }};
+        @endif
         height: 100%;
         transition: width 0.3s ease;
     }
@@ -299,7 +299,11 @@
         justify-content: center;
         gap: 8px;
         padding: 15px 20px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        @if($school->schoolSetting->use_gradient_header)
+            background: linear-gradient(135deg, {{ $school->schoolSetting->primary_color }} 0%, {{ $school->schoolSetting->secondary_color }} 100%);
+        @else
+            background: {{ $school->schoolSetting->primary_color }};
+        @endif
         color: white;
         text-decoration: none;
         border-radius: 8px;
@@ -597,9 +601,8 @@
 </style>
 
 <div class="instructor-dashboard">
-    <div class="dashboard-header">
-        <h1>Welcome back, {{ Auth::guard('instructor')->user()->name }}!</h1>
-        <p>Dashboard with real data</p>
+    <div class="page-header">
+        <h1 class="page-title">Dashboard</h1>
     </div>
     
     <div class="stats-grid">
@@ -672,7 +675,7 @@
                     @foreach($upcomingBookings as $booking)
                         <div class="booking-item">
                             <div class="booking-student">{{ $booking->student->name }}</div>
-                            <div class="booking-course">{{ $booking->course->name }}</div>
+                            <div class="booking-course">{{ $booking->course->title }}</div>
                             <div class="booking-datetime">{{ \Carbon\Carbon::parse($booking->scheduled_at)->format('M j, Y g:i A') }}</div>
                             <div class="booking-status status-{{ $booking->status }}">{{ ucfirst($booking->status) }}</div>
                         </div>
@@ -694,7 +697,7 @@
                                 <span class="progress-student">{{ $progress->student->name }}</span>
                                 <span class="progress-percent">{{ $progress->completion_percent }}%</span>
                             </div>
-                            <div class="progress-course">{{ $progress->course->name }}</div>
+                            <div class="progress-course">{{ $progress->course->title }}</div>
                             <div class="progress-bar">
                                 <div class="progress-fill" style="width: {{ $progress->completion_percent }}%"></div>
                             </div>
@@ -728,6 +731,9 @@
             </a>
             <a href="/{{ $school->slug }}/instructor/progress" class="action-btn">
                 <span>Update Progress</span>
+            </a>
+            <a href="/{{ $school->slug }}/instructor/reports" class="action-btn">
+                <span>Performance Reports</span>
             </a>
         </div>
     </div>

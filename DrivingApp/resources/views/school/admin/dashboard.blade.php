@@ -75,19 +75,21 @@
     
     .action-btn {
         padding: 15px 20px;
-        background: #667eea;
-        color: white;
+        background: var(--btn-primary-bg);
+        color: var(--btn-primary-text);
         text-decoration: none;
-        border-radius: 8px;
+        border-radius: var(--button-border-radius);
         text-align: center;
         font-weight: 500;
-        transition: background 0.3s;
+        transition: all 0.3s ease;
         display: block;
     }
     
     .action-btn:hover {
-        background: #5568d3;
-        color: white;
+        filter: brightness(1.1);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        color: var(--btn-primary-text);
     }
     
     /* Content Sections */

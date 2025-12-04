@@ -1,1725 +1,1189 @@
-@extends($isAjax ?? false ? 'layouts.ajax' : 'layouts.app')
+@extends('layouts.app')
 
 @section('title', 'My Schedule')
 
 @section('content')
-@php
+<?php
     $school = $school ?? $currentSchool ?? null;
-    $schoolName = $school->name ?? 'Driving School';
+    $settings = $school?->schoolSetting;
     $instructorId = Auth::guard('instructor')->id();
-@endphp
+    
+    $primaryColor = $settings?->primary_color ?? '#0d6efd';
+    $secondaryColor = $settings?->secondary_color ?? '#6c757d';
+    $borderRadius = $settings?->border_radius ?? 8;
+    
+    // Today's date for comparison
+    $todayDate = now()->toDateString();
+    
+    // Minimum notice days for removal requests
+    $minimumNoticeDays = $school->instructor_removal_notice_days ?? 7;
+    
+    // Get instructor's qualified courses
+    $instructor = Auth::guard('instructor')->user();
+    $qualifiedCourseIds = $instructor->course_specializations ?? [];
+    
+    // Get all time slots for this school
+    $allTimeSlots = App\Models\TimeSlot::where('school_id', $school->id)
+        ->with(['instructors', 'bookings.student', 'bookings.course', 'course'])
+        ->orderBy('date')
+        ->orderBy('start_time')
+        ->get();
+    
+    // My Slots - slots where this instructor is assigned
+    $mySlots = $allTimeSlots->filter(function($slot) use ($instructorId) {
+        return $slot->instructors->contains('id', $instructorId);
+    });
+    
+    // Available Slots - open slots not yet at capacity, future dates only
+    $availableTimeSlots = $allTimeSlots->filter(function($slot) use ($instructorId, $todayDate) {
+        return $slot->status === 'open' 
+            && !$slot->instructors->contains('id', $instructorId)
+            && $slot->instructors->count() < ($slot->max_instructors ?? 1)
+            && $slot->date->format('Y-m-d') >= $todayDate;
+    });
+    
+    // Today's Slots - my slots for today with bookings
+    $todaySlots = $mySlots->filter(function($slot) use ($todayDate) {
+        return $slot->date->format('Y-m-d') === $todayDate;
+    });
+    
+    // Group my slots by date
+    $groupedMySlots = $mySlots->groupBy(function($slot) {
+        return $slot->date->format('Y-m-d');
+    })->sortKeys();
+    
+    // Group available slots by date
+    $groupedAvailableSlots = $availableTimeSlots->groupBy(function($slot) {
+        return $slot->date->format('Y-m-d');
+    })->sortKeys();
+    
+    // Upcoming slots for sidebar (next 7 days)
+    $upcomingSlots = $mySlots->filter(function($slot) use ($todayDate) {
+        return $slot->date->format('Y-m-d') >= $todayDate 
+            && $slot->date->format('Y-m-d') <= now()->addDays(7)->format('Y-m-d');
+    })->sortBy('date')->take(5);
+    
+    // Get pending removal requests for this instructor
+    $pendingRemovalRequests = App\Models\InstructorRemovalRequest::where('instructor_id', $instructorId)
+        ->where('status', 'pending')
+        ->pluck('time_slot_id')
+        ->toArray();
+    
+    // Build instructor's current schedule for conflict checking (date => array of time ranges)
+    $instructorSchedule = [];
+    foreach ($mySlots as $slot) {
+        $dateKey = $slot->date->format('Y-m-d');
+        if (!isset($instructorSchedule[$dateKey])) {
+            $instructorSchedule[$dateKey] = [];
+        }
+        $instructorSchedule[$dateKey][] = [
+            'id' => $slot->id,
+            'start' => \Carbon\Carbon::parse($slot->start_time)->format('H:i:s'),
+            'end' => \Carbon\Carbon::parse($slot->end_time)->format('H:i:s'),
+            'course' => $slot->course->title ?? 'General',
+        ];
+    }
+?>
 
 <style>
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
-
     .schedule-container {
         padding: 20px;
-        background: transparent;
-        border-radius: 0;
-        box-shadow: none;
-        margin: 20px auto;
         max-width: 1400px;
-        width: 100%;
-        box-sizing: border-box;
-        overflow-x: hidden;
+        margin: 0 auto;
     }
     
-    .page-header {
-        margin-bottom: 30px;
-        padding-bottom: 20px;
-        border-bottom: 3px solid #FFC107;
+    .schedule-header {
+        margin-bottom: 20px;
+        border-bottom: 4px solid {{ $primaryColor }};
+        padding-bottom: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
     }
     
-    .page-title {
+    .schedule-header h1 {
         font-size: 2rem;
         font-weight: 400;
-        color: #333;
         margin: 0;
+        color: #1a202c;
     }
-
-    .page-subtitle {
-        color: #666;
-        font-size: 1rem;
-        margin-top: 8px;
-    }
-
-    /* Mobile Responsiveness */
-    @media (max-width: 768px) {
-        .schedule-container {
-            padding: 12px;
-            margin: 10px auto;
-            width: calc(100% - 20px);
-        }
-
-        .page-title {
-            font-size: 1.2rem;
-        }
-
-        .page-subtitle {
-            font-size: 0.8rem;
-        }
-
-        .page-header {
-            margin-bottom: 15px;
-            padding-bottom: 12px;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .schedule-container {
-            padding: 10px;
-            margin: 8px auto;
-            width: calc(100% - 16px);
-        }
-
-        .page-title {
-            font-size: 1.1rem;
-        }
-
-        .page-subtitle {
-            font-size: 0.75rem;
-        }
-    }
-
-    .view-toggle {
+    
+    .main-toggle {
         display: flex;
         gap: 0;
-        margin-bottom: 30px;
-        background: #6c757d;
+        background: white;
+        border: 2px solid {{ $primaryColor }};
         border-radius: 8px;
         overflow: hidden;
-        width: fit-content;
+        position: relative;
+        z-index: 10;
     }
-
-    @media (max-width: 768px) {
-        .view-toggle {
-            width: 100%;
-            margin-bottom: 15px;
-        }
-    }
-
-    .view-btn {
+    
+    .main-toggle-btn {
         padding: 12px 28px;
-        background: #6c757d;
-        color: white;
+        background: white;
+        color: #495057;
         border: none;
         cursor: pointer;
         font-size: 15px;
-        font-weight: 500;
-        transition: background 0.3s;
+        font-weight: 600;
+        transition: all 0.3s;
     }
-
-    @media (max-width: 768px) {
-        .view-btn {
-            flex: 1;
-            padding: 10px 16px;
-            font-size: 14px;
-        }
+    
+    .main-toggle-btn.active {
+        background: {{ $primaryColor }};
+        color: white;
     }
-
-    @media (max-width: 480px) {
-        .view-btn {
-            padding: 8px 12px;
-            font-size: 13px;
-        }
+    
+    .main-toggle-btn:hover:not(.active) {
+        background: #f8f9fa;
     }
-
-    .view-btn.active {
-        background: #5a6268;
-    }
-
-    .view-btn:hover {
-        background: #5a6268;
-    }
-
-    .view-content {
+    
+    .main-view-section {
         display: none;
     }
-
-    .view-content.active {
+    
+    .main-view-section.active {
         display: block;
     }
-
+    
+    .schedule-grid {
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 20px;
+        margin-top: 20px;
+        align-items: start;
+    }
+    
+    @media (max-width: 992px) {
+        .schedule-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    .schedule-main {
+        background: transparent;
+        border: none;
+        border-radius: 0;
+        padding: 0;
+        width: 100%;
+    }
+    
+    .collapse-btn {
+        background: #212529;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        margin-bottom: 20px;
+    }
+    
+    .collapse-btn:hover {
+        background: #000;
+    }
+    
+    .schedule-item {
+        margin-bottom: 12px;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    .schedule-date-header {
+        @if($settings?->use_gradient_header)
+            background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $settings?->secondary_color ?? '#0a58ca' }} 100%);
+        @else
+            background: {{ $primaryColor }};
+        @endif
+        color: white;
+        padding: 12px 16px;
+        border-radius: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .schedule-date-header:hover {
+        opacity: 0.9;
+    }
+    
+    .schedule-date-header .date-text {
+        flex: 1;
+        font-weight: 500;
+    }
+    
+    .schedule-date-header .toggle-icon {
+        transition: transform 0.3s;
+    }
+    
+    .schedule-date-header.collapsed .toggle-icon {
+        transform: rotate(-90deg);
+    }
+    
+    .schedule-bookings {
+        padding-left: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+        background: white;
+    }
+    
+    .schedule-bookings.collapsed {
+        max-height: 0 !important;
+    }
+    
+    .slot-item {
+        border-left: none;
+        border-bottom: 1px solid #dee2e6;
+        background: white;
+        padding: 16px;
+        margin: 0;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .slot-item:last-child {
+        border-bottom: none;
+    }
+    
+    .slot-indicator {
+        width: 4px;
+        border-radius: 2px;
+        flex-shrink: 0;
+        align-self: stretch;
+    }
+    
+    .slot-indicator.my-slot {
+        background: #28a745;
+    }
+    
+    .slot-indicator.available {
+        background: {{ $primaryColor }};
+    }
+    
+    .slot-indicator.admin-assigned {
+        background: #ff9800;
+    }
+    
+    .slot-details {
+        flex: 1;
+    }
+    
+    .slot-time {
+        font-weight: 600;
+        color: #000;
+        margin-bottom: 4px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .slot-badge {
+        padding: 3px 10px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+    
+    .slot-badge.my-slot {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .slot-badge.available {
+        background: #cce5ff;
+        color: #004085;
+    }
+    
+    .slot-badge.admin-assigned {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .slot-badge.pending {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    .slot-info {
+        color: #6c757d;
+        font-size: 14px;
+        margin-bottom: 4px;
+    }
+    
+    .slot-actions {
+        margin-top: 8px;
+    }
+    
+    .btn-slot {
+        padding: 6px 16px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        transition: all 0.3s;
+    }
+    
+    .btn-select {
+        background: {{ $primaryColor }};
+        color: white;
+    }
+    
+    .btn-select:hover {
+        opacity: 0.9;
+    }
+    
+    .btn-leave {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .btn-leave:hover {
+        background: #c82333;
+    }
+    
+    .btn-request {
+        background: #ffc107;
+        color: #000;
+    }
+    
+    .btn-request:hover {
+        background: #e0a800;
+    }
+    
+    /* Sidebar */
+    .schedule-sidebar {
+        align-self: start;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        position: sticky;
+        top: 20px;
+        margin-top: 20px;
+    }
+    
+    .sidebar-section {
+        margin-bottom: 0;
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 16px;
+    }
+    
+    .sidebar-section-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #000;
+        margin: 0 0 12px 0;
+        padding-bottom: 8px;
+        border-bottom: 2px solid {{ $primaryColor }};
+    }
+    
+    .mini-schedule-card {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-left: 3px solid {{ $primaryColor }};
+        border-radius: 6px;
+        padding: 12px;
+        margin-bottom: 10px;
+        font-size: 13px;
+    }
+    
+    .mini-schedule-card:last-child {
+        margin-bottom: 0;
+    }
+    
+    .mini-schedule-date {
+        font-weight: 600;
+        color: #000;
+        margin-bottom: 6px;
+        font-size: 14px;
+    }
+    
+    .mini-schedule-info {
+        color: #6c757d;
+        margin-bottom: 4px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    /* Today's Lesson Card */
+    .today-lesson-card {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-left: 4px solid #28a745;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 12px;
+    }
+    
+    .lesson-date {
+        font-weight: 600;
+        color: #000;
+        margin-bottom: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .lesson-time {
+        color: #6c757d;
+        font-size: 14px;
+        margin-bottom: 12px;
+    }
+    
+    .student-item {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        padding: 12px;
+        margin-bottom: 8px;
+    }
+    
+    .student-item:last-child {
+        margin-bottom: 0;
+    }
+    
+    .student-name {
+        font-weight: 600;
+        color: #000;
+        margin-bottom: 4px;
+    }
+    
+    .student-course {
+        color: #6c757d;
+        font-size: 13px;
+        margin-bottom: 8px;
+    }
+    
+    .view-lesson-btn {
+        background: {{ $primaryColor }};
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-size: 12px;
+        cursor: pointer;
+    }
+    
+    .view-lesson-btn:hover {
+        opacity: 0.9;
+    }
+    
+    .no-lessons {
+        text-align: center;
+        color: #6c757d;
+        padding: 20px;
+        font-size: 14px;
+    }
+    
+    /* Inline Calendar Wrapper */
+    .inline-calendar-wrapper {
+        display: block;
+        margin-bottom: 20px;
+        clear: both;
+    }
+    
     /* Calendar View Styles */
+    .calendar-container {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        overflow: visible;
+    }
+    
     .calendar-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 25px;
-        padding: 15px 20px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 10px;
+        padding: 16px;
+        background: {{ $primaryColor }};
         color: white;
     }
-
-    .calendar-nav {
-        display: flex;
-        gap: 15px;
-        align-items: center;
-    }
-
-    .nav-btn {
-        background: rgba(255, 255, 255, 0.2);
-        border: 1px solid rgba(255, 255, 255, 0.3);
+    
+    .calendar-nav-btn {
+        background: rgba(255,255,255,0.2);
+        border: none;
         color: white;
-        padding: 8px 16px;
-        border-radius: 6px;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
         cursor: pointer;
-        font-weight: 500;
-        transition: all 0.3s ease;
+        font-size: 18px;
     }
-
-    .nav-btn:hover {
-        background: rgba(255, 255, 255, 0.3);
-        transform: translateY(-2px);
+    
+    .calendar-nav-btn:hover {
+        background: rgba(255,255,255,0.3);
     }
-
-    .current-month {
-        font-size: 1.4rem;
+    
+    .calendar-title {
+        font-size: 1.25rem;
         font-weight: 600;
     }
-
-    @media (max-width: 768px) {
-        .calendar-header {
-            flex-direction: row;
-            gap: 10px;
-            padding: 12px;
-            margin-bottom: 15px;
-        }
-
-        .calendar-nav {
-            gap: 6px;
-        }
-
-        .nav-btn {
-            padding: 6px 10px;
-            font-size: 0.75rem;
-        }
-
-        .current-month {
-            font-size: 1rem;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .calendar-header {
-            padding: 10px;
-            border-radius: 6px;
-            gap: 6px;
-        }
-
-        .nav-btn {
-            padding: 5px 8px;
-            font-size: 0.7rem;
-        }
-
-        .current-month {
-            font-size: 0.9rem;
-        }
-    }
-
+    
     .calendar-grid {
         display: grid;
         grid-template-columns: repeat(7, 1fr);
-        gap: 10px;
-        margin-top: 20px;
-        transition: opacity 0.15s ease;
-        width: 100%;
-        max-width: 100%;
-        box-sizing: border-box;
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 0 0 8px 8px;
     }
-
-    @media (max-width: 768px) {
-        .calendar-grid {
-            gap: 6px;
-            margin-top: 12px;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .calendar-grid {
-            gap: 4px;
-            margin-top: 10px;
-        }
-    }
-
+    
     .calendar-day-header {
-        text-align: center;
-        font-weight: 600;
-        padding: 12px;
-        background: #f8f9fa;
-        border-radius: 6px;
-        color: #495057;
-        font-size: 0.9rem;
-    }
-
-    @media (max-width: 768px) {
-        .calendar-day-header {
-            padding: 8px 4px;
-            font-size: 0.7rem;
-            border-radius: 4px;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .calendar-day-header {
-            padding: 6px 3px;
-            font-size: 0.65rem;
-        }
-    }
-
-    .calendar-day {
-        min-height: 120px;
-        border: 2px solid #e9ecef;
-        border-radius: 8px;
         padding: 10px;
-        background: white;
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .calendar-day:hover {
-        border-color: #667eea;
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
-        transform: translateY(-2px);
-    }
-
-    @media (max-width: 768px) {
-        .calendar-day {
-            min-height: 70px;
-            padding: 5px;
-            border-radius: 4px;
-            border-width: 1px;
-        }
-
-        .calendar-day:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 2px 6px rgba(102, 126, 234, 0.1);
-        }
-    }
-
-    @media (max-width: 480px) {
-        .calendar-day {
-            min-height: 55px;
-            padding: 3px;
-            border-width: 1px;
-        }
-    }
-
-    .calendar-day.other-month {
-        background: #f8f9fa;
-        opacity: 0.5;
-    }
-
-    .calendar-day.today {
-        border-color: #667eea;
-        background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
-    }
-
-    .calendar-day.has-schedule {
-        border-color: #4CAF50;
-        background: linear-gradient(135deg, rgba(76, 175, 80, 0.05) 0%, rgba(76, 175, 80, 0.02) 100%);
-    }
-
-    .day-number {
-        font-weight: 600;
-        font-size: 1.1rem;
-        color: #333;
-        margin-bottom: 8px;
-    }
-
-    .day-slots {
-        font-size: 0.75rem;
-        margin-top: 5px;
-    }
-
-    .slot-badge {
-        display: block;
-        padding: 4px 6px;
-        margin: 3px 0;
-        border-radius: 4px;
-        font-size: 0.7rem;
-        font-weight: 500;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    @media (max-width: 768px) {
-        .day-number {
-            font-size: 0.7rem;
-            margin-bottom: 3px;
-        }
-
-        .day-slots {
-            font-size: 0.55rem;
-        }
-
-        .slot-badge {
-            font-size: 0.5rem;
-            padding: 1px 2px;
-            margin: 1px 0;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .day-number {
-            font-size: 0.6rem;
-            margin-bottom: 2px;
-        }
-
-        .day-slots {
-            font-size: 0.5rem;
-        }
-
-        .slot-badge {
-            font-size: 0.45rem;
-            padding: 1px 2px;
-            margin: 1px 0;
-        }
-    }
-
-    .slot-badge.assigned {
-        background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-        color: white;
-    }
-
-    .slot-badge.available {
-        background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
-        color: white;
-    }
-
-    /* List View Styles */
-    .week-section {
-        margin-bottom: 20px;
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
-        overflow: hidden;
-    }
-
-    @media (max-width: 768px) {
-        .week-section {
-            margin-bottom: 20px;
-            border-width: 1px;
-            border-radius: 8px;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .week-section {
-            margin-bottom: 15px;
-            border-radius: 6px;
-        }
-    }
-
-    .week-header {
-        background: #0d6efd;
-        color: white;
-        padding: 15px 20px;
-        font-weight: 600;
-        font-size: 1rem;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        cursor: pointer;
-        user-select: none;
-    }
-
-    .day-section {
-        border-bottom: 1px solid #dee2e6;
-        padding: 0;
-        transition: all 0.3s ease;
-    }
-
-    .day-section:last-child {
-        border-bottom: none;
-    }
-
-    .day-section:hover {
-        background: transparent;
-    }
-
-    @media (max-width: 768px) {
-        .day-section {
-            padding: 15px;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .day-section {
-            padding: 12px 10px;
-        }
-    }
-
-    .day-title {
-        font-size: 1rem;
-        font-weight: 600;
-        color: #333;
-        margin-bottom: 0;
-        padding: 15px 20px;
-        background: #f8f9fa;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        flex-wrap: wrap;
-    }
-
-    .day-badge {
-        display: inline-block;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        font-weight: 600;
-    }
-
-    .day-badge.today {
-        background: #FFC107;
-        color: #000;
-    }
-
-    @media (max-width: 768px) {
-        .day-title {
-            font-size: 1.1rem;
-            margin-bottom: 12px;
-        }
-
-        .day-badge {
-            padding: 3px 10px;
-            font-size: 0.75rem;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .day-title {
-            font-size: 1rem;
-            margin-bottom: 10px;
-        }
-
-        .day-badge {
-            padding: 2px 8px;
-            font-size: 0.7rem;
-        }
-    }
-
-    .schedule-card {
-        margin: 0;
-        padding: 20px;
-        border-left: 4px solid transparent;
-        border-radius: 0;
-        background: white;
-        box-shadow: none;
-        transition: all 0.3s ease;
-        border-bottom: none;
-    }
-
-    .schedule-card:hover {
-        box-shadow: none;
-        transform: none;
-        background: #f8f9fa;
-    }
-
-    @media (max-width: 768px) {
-        .schedule-card {
-            padding: 12px;
-            margin: 8px 0;
-        }
-
-        .schedule-card:hover {
-            transform: translateX(2px);
-        }
-    }
-
-    @media (max-width: 480px) {
-        .schedule-card {
-            padding: 10px;
-            margin: 6px 0;
-            border-left-width: 3px;
-        }
-
-        .schedule-card:hover {
-            transform: translateX(1px);
-        }
-    }
-
-    .schedule-card.my-schedule {
-        border-left-color: #28a745;
-        background: white;
-    }
-
-    .schedule-card.available {
-        border-left-color: #28a745;
-        background: white;
-    }
-
-    .schedule-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 12px;
-        flex-wrap: wrap;
-        gap: 8px;
-    }
-
-    .schedule-time {
-        font-size: 1.1rem;
-        font-weight: 600;
-        color: #333;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .schedule-status {
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 0.85rem;
-        font-weight: 600;
-        white-space: nowrap;
-    }
-
-    @media (max-width: 768px) {
-        .schedule-time {
-            font-size: 0.9rem;
-            gap: 5px;
-        }
-
-        .schedule-status {
-            padding: 4px 9px;
-            font-size: 0.7rem;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .schedule-header {
-            gap: 6px;
-        }
-
-        .schedule-time {
-            font-size: 0.85rem;
-        }
-
-        .schedule-status {
-            padding: 3px 8px;
-            font-size: 0.65rem;
-        }
-    }
-
-    .schedule-status.assigned {
-        background: #d4edda;
-        color: #155724;
-    }
-
-    .schedule-status.available {
-        background: #d4edda;
-        color: #155724;
-    }
-
-    .schedule-status.admin {
-        background: #FFC107;
-        color: #000;
-    }
-
-    .schedule-details {
-        font-size: 0.95rem;
-        color: #666;
-        margin-top: 8px;
-    }
-
-    .schedule-detail-item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin: 6px 0;
-        flex-wrap: wrap;
-    }
-
-    @media (max-width: 768px) {
-        .schedule-details {
-            font-size: 0.9rem;
-        }
-
-        .schedule-detail-item {
-            gap: 6px;
-            margin: 5px 0;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .schedule-details {
-            font-size: 0.85rem;
-        }
-
-        .schedule-detail-item {
-            gap: 5px;
-            margin: 4px 0;
-        }
-    }
-
-    .schedule-action {
-        margin-top: 12px;
-        padding-top: 12px;
-        border-top: 1px solid #e9ecef;
-    }
-
-    @media (max-width: 768px) {
-        .schedule-action {
-            margin-top: 10px;
-            padding-top: 10px;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .schedule-action {
-            margin-top: 8px;
-            padding-top: 8px;
-        }
-    }
-
-    .btn {
-        padding: 10px 20px;
-        cursor: pointer;
-        border: none;
-        border-radius: 6px;
-        font-size: 0.95rem;
-        font-weight: 500;
-        transition: all 0.3s ease;
-        width: 100%;
-        max-width: 200px;
-    }
-
-    @media (max-width: 768px) {
-        .btn {
-            padding: 10px 16px;
-            font-size: 0.9rem;
-            max-width: 100%;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .btn {
-            padding: 8px 12px;
-            font-size: 0.85rem;
-        }
-    }
-
-    .btn-select {
-        background: #FFC107;
-        color: #000;
-    }
-
-    .btn-select:hover {
-        background: #FFB300;
-        transform: none;
-        box-shadow: none;
-    }
-
-    @media (max-width: 480px) {
-        .btn-select:hover {
-            transform: none;
-        }
-    }
-
-    .btn-leave {
-        background: #FFC107;
-        color: #000;
-    }
-
-    .btn-leave:hover {
-        background: #FFB300;
-        transform: none;
-        box-shadow: none;
-    }
-
-    @media (max-width: 480px) {
-        .btn-leave:hover {
-            transform: none;
-        }
-    }
-
-    .btn-request {
-        background: #FFC107;
-        color: #000;
-    }
-
-    .btn-request:hover {
-        background: #FFB300;
-        transform: none;
-        box-shadow: none;
-    }
-
-    .btn-disabled {
-        background: #e0e0e0;
-        color: #999;
-        cursor: not-allowed;
-    }
-
-    .schedule-status.pending {
-        background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
-    }
-
-    @media (max-width: 768px) {
-        .btn {
-            padding: 8px 16px;
-            font-size: 0.9rem;
-            max-width: 180px;
-        }
-
-        .btn-select:hover,
-        .btn-leave:hover {
-            transform: none;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .btn {
-            padding: 8px 12px;
-            font-size: 0.85rem;
-            max-width: 100%;
-        }
-    }
-
-    .no-schedule {
         text-align: center;
-        padding: 60px 20px;
-        color: #999;
-    }
-
-    .no-schedule h3 {
-        font-size: 1.5rem;
-        margin-bottom: 10px;
-        color: #666;
-    }
-
-    @media (max-width: 768px) {
-        .no-schedule {
-            padding: 40px 15px;
-        }
-
-        .no-schedule h3 {
-            font-size: 1.3rem;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .no-schedule {
-            padding: 30px 10px;
-        }
-
-        .no-schedule h3 {
-            font-size: 1.1rem;
-        }
-    }
-
-    .success-alert {
-        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-        color: #155724;
-        padding: 15px 20px;
-        border-radius: 8px;
-        margin-bottom: 20px;
-        border-left: 4px solid #28a745;
-        font-weight: 500;
-    }
-
-    @media (max-width: 768px) {
-        .success-alert {
-            padding: 12px 15px;
-            font-size: 0.9rem;
-            margin-bottom: 15px;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .success-alert {
-            padding: 10px 12px;
-            font-size: 0.85rem;
-            margin-bottom: 12px;
-            border-left-width: 3px;
-        }
-    }
-
-    .error-alert {
-        background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
-        color: #721c24;
-        padding: 15px 20px;
-        border-radius: 8px;
-        margin-bottom: 20px;
-        border-left: 4px solid #dc3545;
-        font-weight: 500;
-    }
-
-    @media (max-width: 768px) {
-        .error-alert {
-            padding: 12px 15px;
-            font-size: 0.9rem;
-            margin-bottom: 15px;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .error-alert {
-            padding: 10px 12px;
-            font-size: 0.85rem;
-            margin-bottom: 12px;
-            border-left-width: 3px;
-        }
-    }
-
-    .legend {
-        display: flex;
-        gap: 20px;
-        margin-bottom: 20px;
-        padding: 15px;
-        background: #f8f9fa;
-        border-radius: 8px;
-        flex-wrap: wrap;
-    }
-
-    .legend-item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 0.9rem;
-    }
-
-    .legend-color {
-        width: 20px;
-        height: 20px;
-        border-radius: 4px;
-        flex-shrink: 0;
-    }
-
-    @media (max-width: 768px) {
-        .legend {
-            gap: 12px;
-            padding: 12px;
-            margin-bottom: 15px;
-        }
-
-        .legend-item {
-            font-size: 0.85rem;
-            gap: 6px;
-        }
-
-        .legend-color {
-            width: 16px;
-            height: 16px;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .legend {
-            gap: 10px;
-            padding: 10px;
-        }
-
-        .legend-item {
-            font-size: 0.8rem;
-            gap: 5px;
-        }
-
-        .legend-color {
-            width: 14px;
-            height: 14px;
-        }
-    }
-
-        .legend-color {
-            width: 16px;
-            height: 16px;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .legend {
-            gap: 10px;
-            padding: 10px;
-            flex-direction: column;
-        }
-
-        .legend-item {
-            font-size: 0.8rem;
-        }
-
-        .legend-color {
-            width: 14px;
-            height: 14px;
-        }
-    }
-
-    .stats-row {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 15px;
-        margin-bottom: 25px;
-    }
-
-    .stat-card {
-        padding: 20px;
-        border-radius: 8px;
-        background: white;
-        border: 1px solid #dee2e6;
-        text-align: center;
-        transition: all 0.3s ease;
-    }
-
-    .stat-card:hover {
-        border-color: #0d6efd;
-        transform: none;
-        box-shadow: none;
-    }
-
-    .stat-number {
-        font-size: 2rem;
-        font-weight: 700;
-        color: #0d6efd;
-    }
-
-    .stat-label {
-        font-size: 0.9rem;
+        font-weight: 600;
         color: #6c757d;
-        margin-top: 5px;
+        font-size: 12px;
+        border-bottom: 1px solid #dee2e6;
     }
-
-    @media (max-width: 768px) {
-        .stats-row {
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .stat-card {
-            padding: 15px 10px;
-        }
-
-        .stat-number {
-            font-size: 1.6rem;
-        }
-
-        .stat-label {
-            font-size: 0.8rem;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .stats-row {
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-        }
-
-        .stat-card {
-            padding: 12px 8px;
-        }
-
-        .stat-number {
-            font-size: 1.4rem;
-        }
-
-        .stat-label {
-            font-size: 0.75rem;
-        }
-    }
-
-    /* Collapsible Sections */
-    .collapsible-header {
+    
+    .calendar-day {
+        min-height: 80px;
+        padding: 8px;
+        border: 1px solid #f0f0f0;
         cursor: pointer;
-        user-select: none;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 10px;
+        transition: background 0.2s;
     }
-
-    .collapsible-header:hover {
-        opacity: 0.8;
+    
+    .calendar-day:hover {
+        background: #f8f9fa;
     }
-
-    .collapse-icon {
-        margin-left: auto;
-        font-size: 1.2rem;
-        transition: transform 0.3s ease;
-        display: inline-block;
+    
+    .calendar-day.other-month {
+        background: #fafafa;
+        color: #ccc;
     }
-
-    .collapse-icon.collapsed {
-        transform: rotate(-90deg);
+    
+    .calendar-day.today {
+        background: #e3f2fd;
     }
-
-    .collapsible-content {
-        max-height: 10000px;
-        overflow: hidden;
-        transition: max-height 0.4s ease, opacity 0.3s ease, margin 0.3s ease;
-        opacity: 1;
-    }
-
-    .collapsible-content.collapsed {
-        max-height: 0;
-        opacity: 0;
-        margin: 0;
-    }
-
-    .week-header {
-        background: #0d6efd;
-        color: white;
-        padding: 15px 20px;
+    
+    .calendar-day-number {
         font-weight: 600;
-        font-size: 1rem;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        cursor: pointer;
-        user-select: none;
+        margin-bottom: 4px;
     }
-
-    .week-stats {
-        font-size: 0.9rem;
+    
+    .calendar-indicators {
         display: flex;
-        gap: 15px;
         flex-wrap: wrap;
-        margin-left: auto;
+        gap: 4px;
+        margin-top: 4px;
     }
-
-    .week-stat-badge {
-        background: rgba(255, 255, 255, 0.2);
-        padding: 4px 10px;
-        border-radius: 12px;
-        font-size: 0.85rem;
-        white-space: nowrap;
-    }
-
-    /* Day Details Modal */
-    .day-modal {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.7);
-        backdrop-filter: blur(8px);
-        z-index: 9999;
-        overflow-y: auto;
-        padding: 20px;
-    }
-
-    .day-modal.active {
-        display: flex;
+    
+    .calendar-indicator {
+        display: inline-flex;
         align-items: center;
-        justify-content: center;
-    }
-
-    .day-modal-content {
-        background: white;
-        border-radius: 16px;
-        max-width: 700px;
-        width: 100%;
-        max-height: 90vh;
-        overflow-y: auto;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        animation: modalSlideIn 0.3s ease;
-    }
-
-    @keyframes modalSlideIn {
-        from {
-            opacity: 0;
-            transform: translateY(-30px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .day-modal-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        gap: 3px;
+        padding: 2px 6px;
+        border-radius: 10px;
+        font-size: 11px;
+        font-weight: 600;
         color: white;
-        padding: 25px 30px;
-        border-radius: 16px 16px 0 0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        position: sticky;
-        top: 0;
-        z-index: 10;
     }
-
-    .day-modal-title {
-        font-size: 1.5rem;
-        font-weight: 700;
-        margin: 0;
+    
+    .calendar-indicator.my-slot {
+        background: #28a745;
     }
-
-    .day-modal-date {
-        font-size: 0.95rem;
-        opacity: 0.9;
-        margin-top: 5px;
+    
+    .calendar-indicator.available {
+        background: {{ $primaryColor }};
     }
-
-    .modal-close-btn {
-        background: rgba(255, 255, 255, 0.2);
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        color: white;
-        width: 40px;
-        height: 40px;
+    
+    .calendar-dot {
+        width: 8px;
+        height: 8px;
         border-radius: 50%;
-        cursor: pointer;
-        font-size: 1.5rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.3s ease;
-        padding: 0;
-        flex-shrink: 0;
+        display: inline-block;
+        margin-right: 2px;
     }
-
-    .modal-close-btn:hover {
-        background: rgba(255, 255, 255, 0.3);
-        transform: rotate(90deg);
+    
+    .calendar-dot.my-slot {
+        background: #28a745;
     }
-
-    .day-modal-body {
-        padding: 30px;
+    
+    .calendar-dot.available {
+        background: {{ $primaryColor }};
     }
-
-    .modal-schedule-card {
-        margin-bottom: 15px;
-        padding: 16px;
-        border-left: 4px solid;
-        border-radius: 8px;
-        background: white;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        transition: all 0.3s ease;
-    }
-
-    .modal-schedule-card:hover {
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        transform: translateX(4px);
-    }
-
-    .modal-schedule-card.my-schedule {
-        border-left-color: #4CAF50;
-        background: linear-gradient(to right, rgba(76, 175, 80, 0.05), white);
-    }
-
-    .modal-schedule-card.available {
-        border-left-color: #2196F3;
-        background: linear-gradient(to right, rgba(33, 150, 243, 0.05), white);
-    }
-
-    .modal-empty-state {
-        text-align: center;
-        padding: 40px 20px;
-        color: #999;
-    }
-
-    .modal-empty-state h4 {
-        font-size: 1.2rem;
-        color: #666;
-        margin-bottom: 10px;
-    }
-
-    .calendar-day.clickable {
-        cursor: pointer;
-    }
-
-    .calendar-day.clickable:hover {
-        border-color: #667eea;
-        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.25);
-        transform: translateY(-3px);
-    }
-
-    @media (max-width: 768px) {
-        .day-modal {
-            padding: 10px;
+    
+    /* Tablet Responsiveness */
+    @media (max-width: 992px) {
+        .schedule-grid {
+            grid-template-columns: 1fr;
+            gap: 15px;
         }
-
-        .day-modal-content {
-            max-height: 95vh;
-            border-radius: 12px;
-        }
-
-        .day-modal-header {
-            padding: 20px;
-            border-radius: 12px 12px 0 0;
-        }
-
-        .day-modal-title {
-            font-size: 1.3rem;
-        }
-
-        .day-modal-date {
-            font-size: 0.85rem;
-        }
-
-        .modal-close-btn {
-            width: 35px;
-            height: 35px;
-            font-size: 1.3rem;
-        }
-
-        .day-modal-body {
-            padding: 20px;
-        }
-
-        .modal-schedule-card {
-            padding: 12px;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .day-modal {
-            padding: 5px;
-        }
-
-        .day-modal-content {
-            border-radius: 10px;
-        }
-
-        .day-modal-header {
-            padding: 15px;
-            border-radius: 10px 10px 0 0;
-        }
-
-        .day-modal-title {
-            font-size: 1.1rem;
-        }
-
-        .day-modal-date {
-            font-size: 0.8rem;
-        }
-
-        .modal-close-btn {
-            width: 30px;
-            height: 30px;
-            font-size: 1.1rem;
-        }
-
-        .day-modal-body {
-            padding: 15px;
-        }
-
-        .modal-empty-state {
-            padding: 30px 15px;
-        }
-    }
-
-    @media (max-width: 768px) {
-        .week-header {
-            padding: 12px 15px;
-            font-size: 1rem;
-        }
-
-        .week-stats {
-            gap: 10px;
-            font-size: 0.85rem;
-        }
-
-        .week-stat-badge {
-            padding: 3px 8px;
-            font-size: 0.75rem;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .week-header {
-            padding: 10px 12px;
-            font-size: 0.9rem;
+        
+        .schedule-header {
             flex-direction: column;
             align-items: flex-start;
+            gap: 15px;
         }
-
-        .week-stats {
-            gap: 8px;
+        
+        .schedule-header h1 {
+            font-size: 1.75rem;
+        }
+        
+        .main-toggle {
+            width: 100%;
+        }
+        
+        .main-toggle-btn {
+            flex: 1;
+            padding: 12px 20px;
+            font-size: 14px;
+        }
+        
+        .schedule-sidebar {
+            width: 100%;
+            max-width: none;
+            margin-top: 0;
+        }
+    }
+    
+    /* Mobile Responsiveness */
+    @media (max-width: 768px) {
+        .schedule-container {
+            padding: 10px;
+        }
+        
+        .schedule-header h1 {
+            font-size: 1.2rem;
+        }
+        
+        .main-toggle-btn {
+            padding: 8px 12px;
+            font-size: 0.75rem;
+        }
+        
+        .schedule-date-header {
+            padding: 10px 12px;
+            font-size: 0.85rem;
+        }
+        
+        .slot-item {
+            padding: 12px;
+        }
+        
+        .slot-time {
+            font-size: 0.9rem;
+        }
+        
+        .slot-info {
             font-size: 0.8rem;
         }
-
-        .week-stat-badge {
-            padding: 2px 6px;
-            font-size: 0.7rem;
+        
+        .collapse-btn {
+            padding: 8px 14px;
+            font-size: 0.75rem;
         }
+        
+        .sidebar-section {
+            padding: 12px;
+        }
+        
+        .calendar-day {
+            min-height: 60px;
+            padding: 4px;
+        }
+    }
+    
+    /* Small Mobile */
+    @media (max-width: 480px) {
+        .schedule-container {
+            padding: 8px;
+        }
+        
+        .main-toggle-btn {
+            padding: 6px 10px;
+            font-size: 11px;
+        }
+        
+        .schedule-sidebar {
+            display: none;
+        }
+        
+        .mobile-sidebar-btn {
+            display: inline-block !important;
+        }
+    }
+    
+    /* Mobile Sidebar Button */
+    .mobile-sidebar-btn {
+        display: none;
     }
 </style>
 
 <div class="schedule-container">
-    <div class="page-header">
-        <h1 class="page-title">📅 My Schedule</h1>
-        <p class="page-subtitle">View your assigned time slots and select available ones</p>
-    </div>
-
-    @if(session('success'))
-        <div class="success-alert">{{ session('success') }}</div>
-    @endif
-
-    @if(session('error'))
-        <div class="error-alert">{{ session('error') }}</div>
-    @endif
-
-    @php
-        // Get all time slots (both assigned and available)
-        $allTimeSlots = \App\Models\TimeSlot::with('instructors')
-            ->where('school_id', $school->id)
-            ->where('date', '>=', now()->toDateString())
-            ->orderBy('date')
-            ->orderBy('start_time')
-            ->get();
-        
-        // Separate my slots and available slots
-        $mySlots = $allTimeSlots->filter(function($slot) use ($instructorId) {
-            return $slot->hasInstructor($instructorId);
-        });
-        
-        $availableSlots = $allTimeSlots->filter(function($slot) {
-            return $slot->status === 'open' && !$slot->isFull();
-        });
-        
-        // Calculate stats
-        $totalMySlots = $mySlots->count();
-        $adminAssigned = $mySlots->filter(function($slot) use ($instructorId) {
-            $instructor = $slot->instructors->firstWhere('id', $instructorId);
-            return $instructor && $instructor->pivot->assignment_type === 'admin_assigned';
-        })->count();
-        $selfSelected = $totalMySlots - $adminAssigned;
-        $availableCount = $availableSlots->count();
-    @endphp
-
-    <!-- Stats Row -->
-    <div class="stats-row">
-        <div class="stat-card">
-            <div class="stat-number">{{ $totalMySlots }}</div>
-            <div class="stat-label">My Scheduled Slots</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number">{{ $adminAssigned }}</div>
-            <div class="stat-label">Admin Assigned</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number">{{ $selfSelected }}</div>
-            <div class="stat-label">Self Selected</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number">{{ $availableCount }}</div>
-            <div class="stat-label">Available to Select</div>
-        </div>
-    </div>
-
-    <!-- View Toggle -->
-    <div class="view-toggle">
-        <button class="view-btn active" onclick="switchView('list')">📋 List View</button>
-        <button class="view-btn" onclick="switchView('calendar')">📅 Calendar View</button>
-    </div>
-
-    <!-- Legend -->
-    <div class="legend">
-        <div class="legend-item">
-            <div class="legend-color" style="background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);"></div>
-            <span>My Scheduled Slots</span>
-        </div>
-        <div class="legend-item">
-            <div class="legend-color" style="background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);"></div>
-            <span>Available Slots</span>
-        </div>
-        <div class="legend-item">
-            <div class="legend-color" style="background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);"></div>
-            <span>Admin Assigned</span>
-        </div>
-    </div>
-
-    <!-- List View -->
-    <div id="list-view" class="view-content active">
-        @php
-            $groupedSlots = $allTimeSlots->groupBy(function($slot) {
-                return \Carbon\Carbon::parse($slot->date)->startOfWeek()->format('Y-m-d');
-            });
-        @endphp
-
-        @if($allTimeSlots->isEmpty())
-            <div class="no-schedule">
-                <h3>No Schedule Available</h3>
-                <p>There are currently no time slots available</p>
+    <div class="schedule-header">
+        <h1>Schedule</h1>
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <div class="main-toggle">
+                <button class="main-toggle-btn active" id="toggle-my-slots" type="button" onclick="
+                    document.getElementById('toggle-my-slots').classList.add('active');
+                    document.getElementById('toggle-available-slots').classList.remove('active');
+                    document.getElementById('my-slots-view').classList.add('active');
+                    document.getElementById('available-slots-view').classList.remove('active');
+                ">My Slots</button>
+                <button class="main-toggle-btn" id="toggle-available-slots" type="button" onclick="
+                    document.getElementById('toggle-available-slots').classList.add('active');
+                    document.getElementById('toggle-my-slots').classList.remove('active');
+                    document.getElementById('available-slots-view').classList.add('active');
+                    document.getElementById('my-slots-view').classList.remove('active');
+                ">Available Slots</button>
             </div>
-        @else
-            @foreach($groupedSlots as $weekStart => $weekSlots)
-                @php
-                    $weekEnd = \Carbon\Carbon::parse($weekStart)->endOfWeek();
-                    $weekId = 'week-' . str_replace('-', '', $weekStart);
-                    
-                    // Calculate week stats
-                    $weekMySlots = $weekSlots->filter(function($slot) use ($instructorId) {
-                        return $slot->hasInstructor($instructorId);
-                    })->count();
-                    
-                    $weekAvailableSlots = $weekSlots->filter(function($slot) {
-                        return $slot->status === 'open' && !$slot->isFull();
-                    })->count();
-                @endphp
-                <div class="week-section">
-                    <div class="week-header collapsible-header" onclick="toggleWeek('{{ $weekId }}')">
-                        <span style="font-size: 1.2rem;">📅</span>
-                        <span>Week of {{ \Carbon\Carbon::parse($weekStart)->format('M j') }} - {{ $weekEnd->format('M j, Y') }}</span>
-                        <div class="week-stats">
-                            <span class="week-stat-badge">{{ $weekMySlots }} My Slots</span>
-                            <span class="week-stat-badge">{{ $weekAvailableSlots }} Available</span>
+        </div>
+    </div>
+    
+    @if(session('success'))
+        <div id="success-alert" style="background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 12px 16px; border-radius: 6px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;">
+            <span>{{ session('success') }}</span>
+            <button onclick="this.parentElement.remove()" style="background: none; border: none; color: #155724; font-size: 1.2rem; cursor: pointer;">&times;</button>
+        </div>
+    @endif
+    
+    @if(session('error'))
+        <div id="error-alert" style="background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 12px 16px; border-radius: 6px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;">
+            <span>{{ session('error') }}</span>
+            <button onclick="this.parentElement.remove()" style="background: none; border: none; color: #721c24; font-size: 1.2rem; cursor: pointer;">&times;</button>
+        </div>
+    @endif
+    
+    @if($errors->any())
+        <div id="error-alert" style="background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 12px 16px; border-radius: 6px; margin-bottom: 16px;">
+            <button onclick="this.parentElement.remove()" style="position: absolute; top: 8px; right: 8px; background: none; border: none; color: #721c24; font-size: 1.2rem; cursor: pointer;">&times;</button>
+            <ul style="margin: 0; padding-left: 20px;">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+    
+    <!-- My Slots View -->
+    <div id="my-slots-view" class="main-view-section active">
+        <div class="schedule-grid">
+            <div class="schedule-main">
+                <!-- Inline Calendar (hidden by default) -->
+                <div id="inline-calendar" class="inline-calendar-wrapper" style="display: none;">
+                    <div class="calendar-container">
+                        <div class="calendar-header">
+                            <button class="calendar-nav-btn" onclick="changeMonth(-1)">‹</button>
+                            <span class="calendar-title" id="currentMonth">{{ now()->format('F Y') }}</span>
+                            <button class="calendar-nav-btn" onclick="changeMonth(1)">›</button>
                         </div>
-                        <span class="collapse-icon" id="{{ $weekId }}-icon">▼</span>
+                        <div class="calendar-grid" id="calendarGrid">
+                            <!-- Calendar days rendered by JavaScript -->
+                        </div>
                     </div>
-                    
-                    <div class="collapsible-content" id="{{ $weekId }}-content">
-                    @foreach($weekSlots->groupBy('date') as $date => $daySlots)
-                        <div class="day-section">
-                            <div class="day-title">
-                                {{ \Carbon\Carbon::parse($date)->format('l, F j, Y') }}
-                                @if(\Carbon\Carbon::parse($date)->isToday())
-                                    <span class="day-badge today">TODAY</span>
-                                @endif
-                            </div>
-
-                            @foreach($daySlots as $slot)
-                                @php
-                                    $isMySlot = $slot->hasInstructor($instructorId);
-                                    $isFull = $slot->isFull();
-                                    $isAvailable = $slot->status === 'open';
-                                    
-                                    $assignmentType = null;
-                                    $hasPendingRequest = false;
-                                    $minimumNoticeDays = $school->instructor_removal_notice_days ?? 7;
-                                    $daysUntilSlot = now()->startOfDay()->diffInDays(\Carbon\Carbon::parse($slot->date)->startOfDay(), false);
-                                    $canRequestRemoval = $daysUntilSlot >= $minimumNoticeDays;
-                                    
-                                    if ($isMySlot) {
-                                        $instructor = $slot->instructors->firstWhere('id', $instructorId);
-                                        $assignmentType = $instructor ? $instructor->pivot->assignment_type : null;
-                                        $hasPendingRequest = $instructor && $instructor->pivot->has_pending_removal_request;
-                                    }
-                                @endphp
-
-                                <div class="schedule-card {{ $isMySlot ? 'my-schedule' : 'available' }}">
-                                    <div class="schedule-header">
-                                        <div class="schedule-time">
-                                            <span style="color: #6c757d;">🕐</span>
-                                            <span>{{ \Carbon\Carbon::parse($slot->start_time)->format('g:i A') }}
-                                            - {{ \Carbon\Carbon::parse($slot->end_time)->format('g:i A') }}</span>
-                                        </div>
-                                        @if($isMySlot)
-                                            @if($hasPendingRequest)
-                                                <span class="schedule-status pending">
-                                                    REMOVAL REQUESTED
-                                                </span>
-                                            @else
-                                                <span class="schedule-status {{ $assignmentType === 'admin_assigned' ? 'admin' : 'assigned' }}">
-                                                {{ $assignmentType === 'admin_assigned' ? 'ADMIN ASSIGNED' : 'MY SLOT' }}
-                                            @endif
-                                        @else
-                                            <span class="schedule-status available">
-                                                AVAILABLE
-                                            </span>
-                                        @endif
-                                    </div>
-
-                                    <div class="schedule-details">
-                                        <div class="schedule-detail-item">
-                                            <span>Instructors:</span>
-                                            <span>{{ $slot->instructors->count() }} / {{ $slot->max_instructors }}</span>
-                                        </div>
-                                        @if($slot->notes)
-                                            <div class="schedule-detail-item">
-                                                <span>Notes:</span>
-                                                <span>{{ $slot->notes }}</span>
-                                            </div>
-                                        @endif
-                                        @if($isMySlot && $assignmentType === 'admin_assigned' && !$hasPendingRequest)
-                                            <div class="schedule-detail-item" style="color: #FF9800;">
-                                                <span>Info:</span>
-                                                <span>This slot was assigned to you by an administrator</span>
-                                            </div>
-                                            @if(!$canRequestRemoval)
-                                                <div class="schedule-detail-item" style="color: #f44336;">
-                                                    <span>Warning:</span>
-                                                    <span>Must request removal at least {{ $minimumNoticeDays }} days in advance ({{ $daysUntilSlot }} day(s) remaining)</span>
-                                                </div>
-                                            @endif
-                                        @endif
-                                        @if($hasPendingRequest)
-                                            <div class="schedule-detail-item" style="color: #FF6B6B;">
-                                                <span>Status:</span>
-                                                <span>Pending removal request - waiting for admin approval</span>
-                                            </div>
-                                        @endif
-                                    </div>
-
-                                    @if($isMySlot && $assignmentType === 'admin_assigned' && !$hasPendingRequest)
-                                        <div class="schedule-action">
-                                            <button type="button" class="btn btn-request" 
-                                                    onclick="showRemovalRequestModal({{ $slot->id }}, {{ $canRequestRemoval ? 'true' : 'false' }}, {{ $minimumNoticeDays }}, {{ $daysUntilSlot }})"
-                                                    @if(!$canRequestRemoval) disabled style="opacity: 0.5; cursor: not-allowed;" @endif>
-                                                Request Removal
-                                            </button>
-                                        </div>
-                                    @elseif(!$isMySlot || ($isMySlot && $assignmentType === 'self_selected'))
-                                        <div class="schedule-action">
-                                            <form method="POST" action="{{ $schoolRoute('instructor.timeslots.toggle', ['id' => $slot->id]) }}">
-                                                @csrf
-                                                @if($isMySlot)
-                                                    <button type="submit" class="btn btn-leave">
-                                                        Leave This Slot
-                                                    </button>
-                                                @elseif(!$isAvailable)
-                                                    <button type="button" class="btn btn-disabled" disabled>
-                                                        Slot Closed
-                                                    </button>
-                                                @elseif($isFull)
-                                                    <button type="button" class="btn btn-disabled" disabled>
-                                                        Slot Full
-                                                    </button>
-                                                @else
-                                                    <button type="submit" class="btn btn-select">
-                                                        Select This Slot
-                                                    </button>
-                                                @endif
-                                            </form>
-                                        </div>
-                                    @endif
-                                </div>
-                            @endforeach
+                    <div style="display: flex; gap: 20px; margin-top: 12px; padding: 12px; background: white; border-radius: 8px; border: 1px solid #dee2e6;">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span class="calendar-dot my-slot"></span>
+                            <span style="font-size: 13px; color: #6c757d;">My Slots</span>
                         </div>
-                    @endforeach
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span class="calendar-dot available"></span>
+                            <span style="font-size: 13px; color: #6c757d;">Available</span>
+                        </div>
                     </div>
                 </div>
-            @endforeach
-        @endif
-    </div>
-
-    <!-- Calendar View -->
-    <div id="calendar-view" class="view-content">
-        @php
-            $currentMonth = request('month', now()->format('Y-m'));
-            $calendar = \Carbon\Carbon::parse($currentMonth . '-01');
-            $monthStart = $calendar->copy()->startOfMonth();
-            $monthEnd = $calendar->copy()->endOfMonth();
-            $calendarStart = $monthStart->copy()->startOfWeek();
-            $calendarEnd = $monthEnd->copy()->endOfWeek();
-            
-            $slotsByDate = $allTimeSlots->groupBy(function($slot) {
-                return \Carbon\Carbon::parse($slot->date)->format('Y-m-d');
-            });
-        @endphp
-
-        <div class="calendar-header">
-            <div class="calendar-nav">
-                <button type="button" class="nav-btn" onclick="changeMonth(-1)">← Previous</button>
-            </div>
-            <div class="current-month" id="currentMonth">
-                {{ $calendar->format('F Y') }}
-            </div>
-            <div class="calendar-nav">
-                <button type="button" class="nav-btn" onclick="changeMonth(1)">Next →</button>
-            </div>
-        </div>
-
-        <div class="calendar-grid" id="calendarGrid">
-            @foreach(['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as $day)
-                <div class="calendar-day-header">{{ $day }}</div>
-            @endforeach
-
-            @php
-                $currentDate = $calendarStart->copy();
-            @endphp
-
-            @while($currentDate <= $calendarEnd)
-                @php
-                    $dateStr = $currentDate->format('Y-m-d');
-                    $daySlots = $slotsByDate->get($dateStr, collect());
-                    
-                    $myDaySlots = $daySlots->filter(function($slot) use ($instructorId) {
-                        return $slot->hasInstructor($instructorId);
-                    });
-                    
-                    $availableDaySlots = $daySlots->filter(function($slot) {
-                        return $slot->status === 'open' && !$slot->isFull();
-                    });
-                    
-                    $isOtherMonth = $currentDate->month !== $calendar->month;
-                    $isToday = $currentDate->isToday();
-                    $hasSchedule = $daySlots->isNotEmpty();
-                @endphp
-
-                <div class="calendar-day {{ $isOtherMonth ? 'other-month' : '' }} {{ $isToday ? 'today' : '' }} {{ $hasSchedule && !$isOtherMonth ? 'has-schedule clickable' : '' }}"
-                     data-date="{{ $dateStr }}"
-                     @if($hasSchedule && !$isOtherMonth)
-                     onclick="showDayModal('{{ $dateStr }}', '{{ $currentDate->format('l, F j, Y') }}')"
-                     @endif>
-                    <div class="day-number">{{ $currentDate->day }}</div>
-                    
-                    @if(!$isOtherMonth && $hasSchedule)
-                        <div class="day-slots">
-                            @foreach($myDaySlots as $slot)
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; margin-top: 20px; flex-wrap: wrap; gap: 12px;">
+                    <h3 style="margin: 0; color: #000; font-size: 1.5rem; font-weight: 600;">My Scheduled Slots</h3>
+                    <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; color: #6c757d;">
+                            <input type="checkbox" id="collapse-all-my" onchange="toggleCollapseAllMySlots(this)" style="cursor: pointer;">
+                            <span>Collapse All</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; color: #6c757d;">
+                            <input type="checkbox" id="show-past-my" onchange="toggleShowPastMySlots(this)" style="cursor: pointer;">
+                            <span>Show Past Schedules</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; color: #6c757d;">
+                            <input type="checkbox" id="show-calendar-my" onchange="toggleInlineCalendarMy()" style="cursor: pointer;">
+                            <span>Show Calendar</span>
+                        </label>
+                        <button class="collapse-btn mobile-sidebar-btn" onclick="toggleMobileSidebar()" style="padding: 6px 12px; font-size: 14px;">Today's Lesson</button>
+                    </div>
+                </div>
+                
+                @forelse($groupedMySlots as $date => $dateSlots)
+                    @php
+                        $isPast = \Carbon\Carbon::parse($date)->lt(now()->startOfDay());
+                    @endphp
+                    <div class="schedule-item" data-is-past="{{ $isPast ? 'true' : 'false' }}" style="{{ $isPast ? 'display: none;' : '' }}">
+                        <div class="schedule-date-header" onclick="toggleDate(this)">
+                            <span class="date-text">{{ \Carbon\Carbon::parse($date)->format('l, F d, Y') }}</span>
+                            <span class="toggle-icon">▼</span>
+                        </div>
+                        <div class="schedule-bookings" style="max-height: 800px;">
+                            @foreach($dateSlots as $slot)
                                 @php
                                     $instructor = $slot->instructors->firstWhere('id', $instructorId);
-                                    $isAdminAssigned = $instructor && $instructor->pivot->assignment_type === 'admin_assigned';
+                                    $assignmentType = $instructor ? $instructor->pivot->assignment_type : 'self_selected';
+                                    $hasPendingRequest = in_array($slot->id, $pendingRemovalRequests);
+                                    $daysUntilSlot = now()->startOfDay()->diffInDays(\Carbon\Carbon::parse($slot->date)->startOfDay(), false);
+                                    $canRequestRemoval = $daysUntilSlot >= $minimumNoticeDays;
+                                    // Show only bookings assigned to this instructor
+                                    $slotBookings = $slot->bookings->where('instructor_id', $instructorId)->where('status', '!=', 'cancelled');
                                 @endphp
-                                <div class="slot-badge assigned" title="{{ \Carbon\Carbon::parse($slot->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($slot->end_time)->format('g:i A') }} {{ $isAdminAssigned ? '(Admin)' : '' }}">
-                                    {{ \Carbon\Carbon::parse($slot->start_time)->format('g:i A') }}
-                                    {{ $isAdminAssigned ? '(A)' : '' }}
+                                <div class="slot-item">
+                                    <div class="slot-indicator {{ $assignmentType === 'admin_assigned' ? 'admin-assigned' : 'my-slot' }}"></div>
+                                    <div class="slot-details">
+                                        <div class="slot-time">
+                                            {{ \Carbon\Carbon::parse($slot->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($slot->end_time)->format('g:i A') }}
+                                            @if($hasPendingRequest)
+                                                <span class="slot-badge pending">Removal Requested</span>
+                                            @elseif($assignmentType === 'admin_assigned')
+                                                <span class="slot-badge admin-assigned">Admin Assigned</span>
+                                            @else
+                                                <span class="slot-badge my-slot">My Slot</span>
+                                            @endif
+                                        </div>
+                                        <div class="slot-info">
+                                            {{ $slot->instructors->count() }} / {{ $slot->max_instructors ?? 1 }} instructors
+                                            @if($slotBookings->count() > 0)
+                                                • {{ $slotBookings->count() }} student(s) booked
+                                            @endif
+                                        </div>
+                                        @if($slot->notes)
+                                            <div class="slot-info">{{ $slot->notes }}</div>
+                                        @endif
+                                        
+                                        @if(!$hasPendingRequest)
+                                            <div class="slot-actions">
+                                                @if($assignmentType === 'admin_assigned')
+                                                    <button type="button" class="btn-slot btn-request" 
+                                                            onclick="showRemovalRequestModal({{ $slot->id }}, {{ $canRequestRemoval ? 'true' : 'false' }}, {{ $minimumNoticeDays }}, {{ $daysUntilSlot }})"
+                                                            {{ !$canRequestRemoval ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : '' }}>
+                                                        Request Removal
+                                                    </button>
+                                                    @if(!$canRequestRemoval)
+                                                        <span style="font-size: 11px; color: #dc3545; margin-left: 8px;">
+                                                            (Minimum {{ $minimumNoticeDays }} days notice required)
+                                                        </span>
+                                                    @endif
+                                                @else
+                                                    <form method="POST" action="{{ route('schools.instructor.timeslots.toggle', ['school' => $school->slug, 'id' => $slot->id]) }}" style="display: inline;">
+                                                        @csrf
+                                                        <button type="submit" class="btn-slot btn-leave" onclick="return confirm('Are you sure you want to leave this slot?')">
+                                                            Leave Slot
+                                                        </button>
+                                                    </form>
+                                                @endif
+                                            </div>
+                                        @endif
+                                    </div>
                                 </div>
                             @endforeach
-                            
-                            @foreach($availableDaySlots->take(2) as $slot)
-                                @if(!$slot->hasInstructor($instructorId))
-                                    <div class="slot-badge available" title="Available: {{ \Carbon\Carbon::parse($slot->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($slot->end_time)->format('g:i A') }}">
-                                        {{ \Carbon\Carbon::parse($slot->start_time)->format('g:i A') }}
+                        </div>
+                    </div>
+                @empty
+                    <p style="text-align: center; color: #6c757d; padding: 40px;">
+                        No slots selected yet. Go to "Available Slots" to select time slots.
+                    </p>
+                @endforelse
+            </div>
+            
+            <div class="schedule-sidebar">
+                <!-- Today's Lesson Section -->
+                <div class="sidebar-section">
+                    <h3 class="sidebar-section-title">Today's Lesson</h3>
+                    @if($todaySlots->isNotEmpty())
+                        @foreach($todaySlots->sortBy('start_time') as $slot)
+                            @php
+                                // Show only bookings assigned to this instructor
+                                $slotBookings = $slot->bookings->where('instructor_id', $instructorId)->where('status', '!=', 'cancelled');
+                            @endphp
+                            <div class="today-lesson-card">
+                                <div class="lesson-date">
+                                    <span>{{ \Carbon\Carbon::parse($slot->date)->format('l, F j, Y') }}</span>
+                                </div>
+                                <div class="lesson-time">
+                                    {{ \Carbon\Carbon::parse($slot->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($slot->end_time)->format('g:i A') }}
+                                </div>
+                                
+                                @if($slotBookings->isNotEmpty())
+                                    @foreach($slotBookings as $booking)
+                                        <div class="student-item">
+                                            <div class="student-name">{{ $booking->student->name ?? 'Student' }}</div>
+                                            <div class="student-course">{{ $booking->course->title ?? 'Course' }}</div>
+                                            @if($booking->session_status)
+                                                <span class="slot-badge {{ $booking->session_status === 'completed' ? 'my-slot' : 'pending' }}">
+                                                    {{ ucfirst($booking->session_status) }}
+                                                </span>
+                                            @endif
+                                            <button type="button" class="view-lesson-btn" onclick="openLessonModal({{ $booking->id }})">
+                                                View Details
+                                            </button>
+                                        </div>
+                                    @endforeach
+                                @else
+                                    <div class="no-lessons" style="padding: 10px;">
+                                        <p>No students booked for this slot</p>
                                     </div>
                                 @endif
-                            @endforeach
-                            
-                            @if($availableDaySlots->count() > 2)
-                                <div class="slot-badge available">
-                                    +{{ $availableDaySlots->count() - 2 }} more
-                                </div>
-                            @endif
+                            </div>
+                        @endforeach
+                    @else
+                        <div class="no-lessons">
+                            <p>No lessons scheduled for today</p>
                         </div>
                     @endif
                 </div>
-
-                @php
-                    $currentDate->addDay();
-                @endphp
-            @endwhile
+                
+                <!-- Upcoming Schedule Section -->
+                <div class="sidebar-section">
+                    <h3 class="sidebar-section-title">Upcoming This Week</h3>
+                    @forelse($upcomingSlots as $slot)
+                        @php
+                            $instructor = $slot->instructors->firstWhere('id', $instructorId);
+                            $assignmentType = $instructor ? $instructor->pivot->assignment_type : 'self_selected';
+                        @endphp
+                        <div class="mini-schedule-card" style="border-left-color: {{ $assignmentType === 'admin_assigned' ? '#ff9800' : '#28a745' }};">
+                            <div class="mini-schedule-date">
+                                {{ \Carbon\Carbon::parse($slot->date)->format('D, M d, Y') }}
+                            </div>
+                            <div class="mini-schedule-info">
+                                {{ \Carbon\Carbon::parse($slot->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($slot->end_time)->format('g:i A') }}
+                            </div>
+                            <span class="slot-badge {{ $assignmentType === 'admin_assigned' ? 'admin-assigned' : 'my-slot' }}" style="font-size: 10px; padding: 2px 6px;">
+                                {{ $assignmentType === 'admin_assigned' ? 'Admin' : 'Self' }}
+                            </span>
+                        </div>
+                    @empty
+                        <p style="text-align: center; color: #6c757d; padding: 20px; font-size: 14px;">
+                            No upcoming slots scheduled.
+                        </p>
+                    @endforelse
+                </div>
+            </div>
         </div>
-
-        <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; font-size: 0.9rem; color: #666;">
-            💡 <strong>Tip:</strong> Click on dates in the calendar to see detailed information about available slots and manage your schedule.
+    </div>
+    
+    <!-- Available Slots View -->
+    <div id="available-slots-view" class="main-view-section">
+        <div class="schedule-grid">
+            <div class="schedule-main">
+                <!-- Inline Calendar for Available Slots (hidden by default) -->
+                <div id="inline-calendar-available" class="inline-calendar-wrapper" style="display: none;">
+                    <div class="calendar-container">
+                        <div class="calendar-header">
+                            <button class="calendar-nav-btn" onclick="changeMonth(-1)">‹</button>
+                            <span class="calendar-title" id="currentMonthAvailable">{{ now()->format('F Y') }}</span>
+                            <button class="calendar-nav-btn" onclick="changeMonth(1)">›</button>
+                        </div>
+                        <div class="calendar-grid" id="calendarGridAvailable">
+                            <!-- Calendar days rendered by JavaScript -->
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 20px; margin-top: 12px; padding: 12px; background: white; border-radius: 8px; border: 1px solid #dee2e6;">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span class="calendar-dot my-slot"></span>
+                            <span style="font-size: 13px; color: #6c757d;">My Slots</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span class="calendar-dot available"></span>
+                            <span style="font-size: 13px; color: #6c757d;">Available</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; margin-top: 20px; flex-wrap: wrap; gap: 12px;">
+                    <h3 style="margin: 0; color: #000; font-size: 1.5rem; font-weight: 600;">Available Time Slots</h3>
+                    <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; color: #6c757d;">
+                            <input type="checkbox" id="collapse-all-available" onchange="toggleCollapseAllCheckbox(this)" style="cursor: pointer;">
+                            <span>Collapse All</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; color: #6c757d;">
+                            <input type="checkbox" id="show-past-available" onchange="toggleShowPastCheckbox(this)" style="cursor: pointer;">
+                            <span>Show Past Schedules</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; color: #6c757d;">
+                            <input type="checkbox" id="show-calendar-available" onchange="toggleInlineCalendar()" style="cursor: pointer;">
+                            <span>Show Calendar</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; color: #6c757d;">
+                            <input type="checkbox" id="show-all-courses" onchange="toggleShowAllCourses()" style="cursor: pointer;">
+                            <span>Show All Courses</span>
+                        </label>
+                    </div>
+                </div>
+                
+                @forelse($groupedAvailableSlots as $date => $dateSlots)
+                    @php
+                        $isPast = \Carbon\Carbon::parse($date)->lt(now()->startOfDay());
+                        // Check if any slots are visible (qualified) for this date
+                        $hasVisibleSlots = $dateSlots->filter(function($slot) use ($qualifiedCourseIds) {
+                            return empty($qualifiedCourseIds) || in_array($slot->course_id, $qualifiedCourseIds);
+                        })->count() > 0;
+                    @endphp
+                    <div class="schedule-item" data-is-past="{{ $isPast ? 'true' : 'false' }}" data-has-visible="{{ $hasVisibleSlots ? 'true' : 'false' }}" style="{{ $isPast || !$hasVisibleSlots ? 'display: none;' : '' }}">
+                        <div class="schedule-date-header" onclick="toggleDate(this)">
+                            <span class="date-text">{{ \Carbon\Carbon::parse($date)->format('l, F d, Y') }}</span>
+                            <span class="toggle-icon">▼</span>
+                        </div>
+                        <div class="schedule-bookings" style="max-height: 800px;">
+                            @foreach($dateSlots as $slot)
+                                @php
+                                    $spotsLeft = ($slot->max_instructors ?? 1) - $slot->instructors->count();
+                                    $isQualifiedForCourse = empty($qualifiedCourseIds) || in_array($slot->course_id, $qualifiedCourseIds);
+                                    $courseName = $slot->course->title ?? 'General';
+                                @endphp
+                                <div class="slot-item" data-qualified="{{ $isQualifiedForCourse ? 'true' : 'false' }}" style="{{ !$isQualifiedForCourse ? 'display: none;' : '' }}">
+                                    <div class="slot-indicator available"></div>
+                                    <div class="slot-details">
+                                        <div class="slot-time">
+                                            {{ \Carbon\Carbon::parse($slot->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($slot->end_time)->format('g:i A') }}
+                                            <span class="slot-badge available">Available</span>
+                                            @if($isQualifiedForCourse)
+                                                <span class="slot-badge" style="background: #d4edda; color: #155724;">{{ $courseName }} ✓</span>
+                                            @else
+                                                <span class="slot-badge" style="background: #fff3cd; color: #856404;">{{ $courseName }}</span>
+                                            @endif
+                                        </div>
+                                        <div class="slot-info">
+                                            {{ $slot->instructors->count() }} / {{ $slot->max_instructors ?? 1 }} instructors
+                                            • {{ $spotsLeft }} spot(s) left
+                                            @if(!$isQualifiedForCourse)
+                                                • <span style="color: #856404;">Not your specialty</span>
+                                            @endif
+                                        </div>
+                                        @if($slot->notes)
+                                            <div class="slot-info">{{ $slot->notes }}</div>
+                                        @endif
+                                        
+                                        <div class="slot-actions">
+                                            <form method="POST" action="{{ route('schools.instructor.timeslots.toggle', ['school' => $school->slug, 'id' => $slot->id]) }}" style="display: inline;" data-no-ajax="true">
+                                                @csrf
+                                                <button type="submit" class="btn-slot btn-select">
+                                                    Select Slot
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @empty
+                    <p style="text-align: center; color: #6c757d; padding: 40px;">
+                        No available time slots at the moment.
+                    </p>
+                @endforelse
+            </div>
+            
+            <div class="schedule-sidebar">
+                <!-- Today's Lesson Section -->
+                <div class="sidebar-section">
+                    <h3 class="sidebar-section-title">Today's Lesson</h3>
+                    @if($todaySlots->isNotEmpty())
+                        @foreach($todaySlots->sortBy('start_time') as $slot)
+                            @php
+                                // Show only bookings assigned to this instructor
+                                $slotBookings = $slot->bookings->where('instructor_id', $instructorId)->where('status', '!=', 'cancelled');
+                            @endphp
+                            <div class="today-lesson-card">
+                                <div class="lesson-date">
+                                    <span>{{ \Carbon\Carbon::parse($slot->date)->format('l, F j, Y') }}</span>
+                                </div>
+                                <div class="lesson-time">
+                                    {{ \Carbon\Carbon::parse($slot->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($slot->end_time)->format('g:i A') }}
+                                </div>
+                                
+                                @if($slotBookings->isNotEmpty())
+                                    @foreach($slotBookings as $booking)
+                                        <div class="student-item">
+                                            <div class="student-name">{{ $booking->student->name ?? 'Student' }}</div>
+                                            <div class="student-course">{{ $booking->course->title ?? 'Course' }}</div>
+                                            <button type="button" class="view-lesson-btn" onclick="openLessonModal({{ $booking->id }})">
+                                                View Details
+                                            </button>
+                                        </div>
+                                    @endforeach
+                                @else
+                                    <div class="no-lessons" style="padding: 10px;">
+                                        <p>No students booked</p>
+                                    </div>
+                                @endif
+                            </div>
+                        @endforeach
+                    @else
+                        <div class="no-lessons">
+                            <p>No lessons scheduled for today</p>
+                        </div>
+                    @endif
+                </div>
+                
+                <!-- Your Schedule Section -->
+                <div class="sidebar-section">
+                    <h3 class="sidebar-section-title">Your Schedule</h3>
+                    @forelse($upcomingSlots as $slot)
+                        <div class="mini-schedule-card">
+                            <div class="mini-schedule-date">
+                                {{ \Carbon\Carbon::parse($slot->date)->format('D, M d, Y') }}
+                            </div>
+                            <div class="mini-schedule-info">
+                                {{ \Carbon\Carbon::parse($slot->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($slot->end_time)->format('g:i A') }}
+                            </div>
+                        </div>
+                    @empty
+                        <p style="text-align: center; color: #6c757d; padding: 20px; font-size: 14px;">
+                            No upcoming slots scheduled.
+                        </p>
+                    @endforelse
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- Day Details Modal -->
-<div class="day-modal" id="dayModal" onclick="if(event.target === this) closeDayModal()">
-    <div class="day-modal-content" onclick="event.stopPropagation()">
-        <div class="day-modal-header">
+<!-- Modal scrollbar hiding styles -->
+<style>
+    .modal-body-scroll {
+        overflow-y: auto;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    .modal-body-scroll::-webkit-scrollbar {
+        display: none;
+    }
+</style>
+
+<!-- Day Details Modal (for calendar clicks) -->
+<div class="day-modal" id="dayModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;" onclick="if(event.target === this) closeDayModal()">
+    <div style="background: white; border-radius: 12px; max-width: 600px; width: 90%; max-height: 80vh; overflow: hidden;">
+        <div style="padding: 16px 20px; border-bottom: 1px solid #dee2e6; display: flex; justify-content: space-between; align-items: center; background: {{ $primaryColor }}; color: white;">
             <div>
-                <h2 class="day-modal-title" id="modalDayTitle">📅 Schedule Details</h2>
-                <div class="day-modal-date" id="modalDayDate"></div>
+                <h2 style="margin: 0; font-size: 1.25rem;">Schedule Details</h2>
+                <div id="modalDayDate" style="font-size: 0.9rem; opacity: 0.9;"></div>
             </div>
-            <button class="modal-close-btn" onclick="closeDayModal()" aria-label="Close">×</button>
+            <button onclick="closeDayModal()" style="background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer;">&times;</button>
         </div>
-        <div class="day-modal-body" id="modalDayBody">
-            <!-- Content will be loaded dynamically -->
+        <div id="modalDayBody" class="modal-body-scroll" style="padding: 20px; max-height: calc(80vh - 80px);">
+            <!-- Content loaded dynamically -->
         </div>
     </div>
 </div>
 
 <!-- Removal Request Modal -->
-<div class="day-modal" id="removalRequestModal" onclick="if(event.target === this) closeRemovalRequestModal()">
-    <div class="day-modal-content" onclick="event.stopPropagation()" style="max-width: 500px;">
-        <div class="day-modal-header">
-            <h2 class="day-modal-title">Request Removal from Time Slot</h2>
-            <button class="modal-close-btn" onclick="closeRemovalRequestModal()" aria-label="Close">×</button>
+<div class="day-modal" id="removalRequestModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;" onclick="if(event.target === this) closeRemovalRequestModal()">
+    <div style="background: white; border-radius: 12px; max-width: 500px; width: 90%; max-height: 80vh; overflow: hidden;">
+        <div style="padding: 16px 20px; border-bottom: 1px solid #dee2e6; display: flex; justify-content: space-between; align-items: center; background: {{ $primaryColor }}; color: white;">
+            <h2 style="margin: 0; font-size: 1.25rem;">Request Removal from Time Slot</h2>
+            <button onclick="closeRemovalRequestModal()" style="background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer;">&times;</button>
         </div>
-        <div class="day-modal-body">
-            <form id="removalRequestForm" method="POST" style="padding: 20px;">
+        <div style="padding: 20px;">
+            <form id="removalRequestForm" method="POST">
                 @csrf
                 <div id="removalWarning"></div>
                 <div style="margin-bottom: 20px;">
@@ -1727,7 +1191,7 @@
                         Please provide a reason for requesting removal from this admin-assigned time slot. Your request will be reviewed by an administrator.
                     </p>
                     <label for="removal_reason" style="display: block; font-weight: 600; margin-bottom: 8px;">
-                        Reason for Removal Request: <span style="color: #f44336;">*</span>
+                        Reason for Removal Request: <span style="color: #dc3545;">*</span>
                     </label>
                     <textarea 
                         id="removal_reason" 
@@ -1740,10 +1204,10 @@
                     <small style="color: #999; display: block; margin-top: 5px;">Maximum 500 characters</small>
                 </div>
                 <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                    <button type="button" onclick="closeRemovalRequestModal()" class="btn" style="background: #e0e0e0; color: #666;">
+                    <button type="button" onclick="closeRemovalRequestModal()" style="background: #e0e0e0; color: #666; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;">
                         Cancel
                     </button>
-                    <button type="submit" class="btn btn-request">
+                    <button type="submit" id="removalSubmitBtn" class="btn-slot btn-request">
                         Submit Request
                     </button>
                 </div>
@@ -1752,223 +1216,860 @@
     </div>
 </div>
 
-<!-- Hidden data for JavaScript -->
-<div id="schedulesData" style="display: none;">
-    @php
-        $schedulesJson = [];
-        $minimumNoticeDays = $school->instructor_removal_notice_days ?? 7;
-        
-        foreach($allTimeSlots as $slot) {
+<!-- Lesson Details Modal -->
+<div class="day-modal" id="lessonModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;" onclick="if(event.target === this) closeLessonModal()">
+    <div style="background: white; border-radius: 12px; max-width: 700px; width: 95%; max-height: 90vh; overflow: hidden;">
+        <div style="padding: 16px 20px; border-bottom: 1px solid #dee2e6; display: flex; justify-content: space-between; align-items: center; background: {{ $primaryColor }}; color: white;">
+            <h2 style="margin: 0; font-size: 1.25rem;">Lesson Details</h2>
+            <button onclick="closeLessonModal()" style="background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer;">&times;</button>
+        </div>
+        <div id="lessonModalBody" class="modal-body-scroll" style="padding: 20px; max-height: calc(90vh - 80px);">
+            <!-- Content loaded dynamically -->
+        </div>
+    </div>
+</div>
+
+<!-- Mobile Sidebar Popup -->
+<div id="mobileSidebarPopup" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;" onclick="if(event.target === this) toggleMobileSidebar()">
+    <div style="background: white; border-radius: 12px; max-width: 500px; width: 90%; max-height: 80vh; overflow: hidden; margin: 10vh auto;">
+        <div style="padding: 16px 20px; border-bottom: 1px solid #dee2e6; display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0;">Today's Schedule</h3>
+            <button onclick="toggleMobileSidebar()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+        </div>
+        <div class="modal-body-scroll" style="padding: 16px; max-height: calc(80vh - 70px);">
+            @if($todaySlots->isNotEmpty())
+                @foreach($todaySlots->sortBy('start_time') as $slot)
+                    @php
+                        // Show only bookings assigned to this instructor
+                        $slotBookings = $slot->bookings->where('instructor_id', $instructorId)->where('status', '!=', 'cancelled');
+                    @endphp
+                    <div class="today-lesson-card">
+                        <div class="lesson-time">
+                            {{ \Carbon\Carbon::parse($slot->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($slot->end_time)->format('g:i A') }}
+                        </div>
+                        @if($slotBookings->isNotEmpty())
+                            @foreach($slotBookings as $booking)
+                                <div class="student-item">
+                                    <div class="student-name">{{ $booking->student->name ?? 'Student' }}</div>
+                                    <div class="student-course">{{ $booking->course->title ?? 'Course' }}</div>
+                                    <button type="button" class="view-lesson-btn" onclick="openLessonModal({{ $booking->id }}); toggleMobileSidebar();">
+                                        View Details
+                                    </button>
+                                </div>
+                            @endforeach
+                        @else
+                            <p style="color: #6c757d; font-size: 13px;">No students booked</p>
+                        @endif
+                    </div>
+                @endforeach
+            @else
+                <div class="no-lessons">
+                    <p>No lessons scheduled for today</p>
+                </div>
+            @endif
+        </div>
+    </div>
+</div>
+
+<!-- Hidden data for calendar JavaScript -->
+<script>
+    // Schedule data for calendar
+    window.schedulesData = {};
+    
+    @foreach($allTimeSlots as $slot)
+        @php
             $dateKey = $slot->date->format('Y-m-d');
-            if (!isset($schedulesJson[$dateKey])) {
-                $schedulesJson[$dateKey] = [];
-            }
-            
-            $isMySlot = $slot->hasInstructor($instructorId);
-            $assignmentType = null;
-            $hasPendingRequest = false;
+            $isMySlot = $slot->instructors->contains('id', $instructorId);
+            $instructor = $slot->instructors->firstWhere('id', $instructorId);
+            $assignmentType = $instructor ? $instructor->pivot->assignment_type : null;
+            $hasPendingRequest = in_array($slot->id, $pendingRemovalRequests);
             $daysUntilSlot = now()->startOfDay()->diffInDays(\Carbon\Carbon::parse($slot->date)->startOfDay(), false);
             $canRequestRemoval = $daysUntilSlot >= $minimumNoticeDays;
-            
-            if ($isMySlot) {
-                $instructor = $slot->instructors->firstWhere('id', $instructorId);
-                $assignmentType = $instructor ? $instructor->pivot->assignment_type : null;
-                $hasPendingRequest = $instructor && $instructor->pivot->has_pending_removal_request;
-            }
-            
-            $schedulesJson[$dateKey][] = [
-                'id' => $slot->id,
-                'start_time' => $slot->start_time->format('g:i A'),
-                'end_time' => $slot->end_time->format('g:i A'),
-                'status' => $slot->status,
-                'is_my_slot' => $isMySlot,
-                'is_full' => $slot->isFull(),
-                'assignment_type' => $assignmentType,
-                'has_pending_request' => $hasPendingRequest,
-                'can_request_removal' => $canRequestRemoval,
-                'minimum_notice_days' => $minimumNoticeDays,
-                'days_until_slot' => $daysUntilSlot,
-                'instructors_count' => $slot->instructors->count(),
-                'max_instructors' => $slot->max_instructors,
-                'notes' => $slot->notes,
-                'toggle_url' => route('schools.instructor.timeslots.toggle', ['school' => $school->slug, 'id' => $slot->id]),
-                'request_removal_url' => route('schools.instructor.timeslots.requestRemoval', ['school' => $school->slug, 'id' => $slot->id])
-            ];
+        @endphp
+        if (!window.schedulesData["{{ $dateKey }}"]) {
+            window.schedulesData["{{ $dateKey }}"] = [];
         }
-    @endphp
-    <script>
-        window.schedulesData = @json($schedulesJson);
-    </script>
+        window.schedulesData["{{ $dateKey }}"].push({
+            id: {{ $slot->id }},
+            date: "{{ $dateKey }}",
+            start_time: "{{ \Carbon\Carbon::parse($slot->start_time)->format('g:i A') }}",
+            end_time: "{{ \Carbon\Carbon::parse($slot->end_time)->format('g:i A') }}",
+            start_time_raw: "{{ $slot->start_time }}",
+            end_time_raw: "{{ $slot->end_time }}",
+            course_name: "{{ addslashes($slot->course->title ?? 'General') }}",
+            is_my_slot: {{ $isMySlot ? 'true' : 'false' }},
+            assignment_type: "{{ $assignmentType ?? 'self_selected' }}",
+            has_pending_request: {{ $hasPendingRequest ? 'true' : 'false' }},
+            status: "{{ $slot->status }}",
+            instructors_count: {{ $slot->instructors->count() }},
+            max_instructors: {{ $slot->max_instructors ?? 1 }},
+            is_full: {{ $slot->instructors->count() >= ($slot->max_instructors ?? 1) ? 'true' : 'false' }},
+            notes: "{{ addslashes($slot->notes ?? '') }}",
+            toggle_url: "{{ route('schools.instructor.timeslots.toggle', ['school' => $school->slug, 'id' => $slot->id]) }}",
+            can_request_removal: {{ $canRequestRemoval ? 'true' : 'false' }},
+            minimum_notice_days: {{ $minimumNoticeDays }},
+            days_until_slot: {{ $daysUntilSlot }}
+        });
+    @endforeach
+    
+    // Instructor's current schedule for conflict checking
+    window.instructorSchedule = @json($instructorSchedule);
+</script>
+
+<!-- Conflict Warning Modal -->
+<div class="day-modal" id="conflictModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1001; align-items: center; justify-content: center;" onclick="if(event.target === this) closeConflictModal()">
+    <div style="background: white; border-radius: 12px; max-width: 500px; width: 90%; max-height: 80vh; overflow: hidden;">
+        <div style="padding: 16px 20px; border-bottom: 1px solid #dee2e6; display: flex; justify-content: space-between; align-items: center; background: #ffc107; color: #000;">
+            <div>
+                <h2 style="margin: 0; font-size: 1.25rem; display: flex; align-items: center; gap: 8px;">
+                    ⚠️ Schedule Conflict Warning
+                </h2>
+            </div>
+            <button onclick="closeConflictModal()" style="background: none; border: none; color: #000; font-size: 1.5rem; cursor: pointer;">&times;</button>
+        </div>
+        <div id="conflictModalBody" class="modal-body-scroll" style="padding: 20px; max-height: calc(80vh - 140px);">
+            <!-- Content loaded dynamically -->
+        </div>
+        <div style="padding: 16px 20px; border-top: 1px solid #dee2e6; display: flex; gap: 10px; justify-content: flex-end; background: #f8f9fa;">
+            <button onclick="closeConflictModal()" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 500;">
+                Cancel
+            </button>
+            <button id="confirmConflictBtn" onclick="confirmSlotSelection()" style="background: {{ $primaryColor }}; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 500;">
+                Select Anyway
+            </button>
+        </div>
+    </div>
 </div>
 
 <script>
-    // Current month tracking
-    let currentMonthDate = new Date('{{ $calendar->format('Y-m-01') }}');
-    const instructorId = {{ $instructorId }};
-    const schoolSlug = '{{ $school->slug }}';
-
-    function switchView(viewName) {
-        // Remove active class from all view buttons and contents
-        document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
-        document.querySelectorAll('.view-content').forEach(content => content.classList.remove('active'));
-
-        // Add active class to selected view
-        if (viewName === 'list') {
-            document.querySelectorAll('.view-btn')[0].classList.add('active');
-            document.getElementById('list-view').classList.add('active');
-        } else {
-            document.querySelectorAll('.view-btn')[1].classList.add('active');
-            document.getElementById('calendar-view').classList.add('active');
-        }
-    }
-
-    function toggleWeek(weekId) {
-        const content = document.getElementById(weekId + '-content');
-        const icon = document.getElementById(weekId + '-icon');
+    let inlineCalendarVisible = false;
+    let pendingSlotFormId = null;
+    
+    // Select slot via AJAX without page reload
+    function selectSlot(slotId, url, button) {
+        alert('selectSlot called for slot ' + slotId);
+        const originalText = button.textContent;
+        button.textContent = 'Selecting...';
+        button.disabled = true;
         
-        if (content.classList.contains('collapsed')) {
-            content.classList.remove('collapsed');
-            icon.classList.remove('collapsed');
-        } else {
-            content.classList.add('collapsed');
-            icon.classList.add('collapsed');
-        }
-    }
-
-    function changeMonth(direction) {
-        const calendarGrid = document.getElementById('calendarGrid');
-        const currentMonthEl = document.getElementById('currentMonth');
-        const navButtons = document.querySelectorAll('.calendar-nav button');
-        
-        // Add minimal loading state
-        calendarGrid.style.opacity = '0.6';
-        calendarGrid.style.pointerEvents = 'none';
-        navButtons.forEach(btn => btn.disabled = true);
-        
-        // Calculate new month
-        currentMonthDate.setMonth(currentMonthDate.getMonth() + direction);
-        const year = currentMonthDate.getFullYear();
-        const month = String(currentMonthDate.getMonth() + 1).padStart(2, '0');
-        const monthStr = `${year}-${month}`;
-        
-        // Fetch new calendar data
-        fetch(`{{ route('schools.instructor.schedule', ['school' => $school->slug]) }}?month=${monthStr}&ajax=1`, {
+        fetch(url, {
+            method: 'POST',
             headers: {
-                'X-Requested-With': 'XMLHttpRequest'
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
             }
         })
-        .then(response => response.text())
-        .then(html => {
-            // Parse the response to extract calendar data
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
-            
-            // Update month title
-            const newMonthTitle = doc.querySelector('#currentMonth');
-            if (newMonthTitle) {
-                currentMonthEl.textContent = newMonthTitle.textContent;
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success notification
+                showSlotNotification(data.message, 'success');
+                // Hide the slot item from available slots
+                const slotItem = button.closest('.slot-item');
+                if (slotItem) {
+                    slotItem.style.transition = 'opacity 0.3s';
+                    slotItem.style.opacity = '0';
+                    setTimeout(() => {
+                        slotItem.remove();
+                        // Check if the date group is now empty
+                        checkEmptyDateGroups();
+                    }, 300);
+                }
             } else {
-                // Fallback: format month name from date
-                const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
-                                   'July', 'August', 'September', 'October', 'November', 'December'];
-                currentMonthEl.textContent = `${monthNames[currentMonthDate.getMonth()]} ${year}`;
+                showSlotNotification(data.message || 'Failed to select slot', 'error');
+                button.textContent = originalText;
+                button.disabled = false;
             }
-            
-            // Update calendar grid
-            const newGrid = doc.querySelector('#calendarGrid');
-            if (newGrid) {
-                calendarGrid.innerHTML = newGrid.innerHTML;
-            }
-            
-            // Update schedules data
-            const newSchedulesScript = doc.querySelector('#schedulesData script');
-            if (newSchedulesScript) {
-                eval(newSchedulesScript.textContent);
-            }
-            
-            // Remove loading state
-            calendarGrid.style.opacity = '1';
-            calendarGrid.style.pointerEvents = 'auto';
-            navButtons.forEach(btn => btn.disabled = false);
         })
         .catch(error => {
-            console.error('Error loading calendar:', error);
-            alert('Failed to load calendar. Please try again.');
-            
-            // Remove loading state even on error
-            calendarGrid.style.opacity = '1';
-            calendarGrid.style.pointerEvents = 'auto';
-            navButtons.forEach(btn => btn.disabled = false);
+            console.error('Error:', error);
+            showSlotNotification('An error occurred. Please try again.', 'error');
+            button.textContent = originalText;
+            button.disabled = false;
         });
     }
-
+    
+    function showSlotNotification(message, type) {
+        // Remove existing notifications
+        const existing = document.querySelectorAll('.slot-notification');
+        existing.forEach(n => n.remove());
+        
+        const notification = document.createElement('div');
+        notification.className = 'slot-notification';
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 9999;
+            animation: fadeIn 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            background: ${type === 'success' ? '#28a745' : '#dc3545'};
+        `;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            notification.style.transition = 'opacity 0.3s';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+    
+    function checkEmptyDateGroups() {
+        // Check available slots view for empty date groups
+        const dateGroups = document.querySelectorAll('#available-slots-view .schedule-item');
+        dateGroups.forEach(group => {
+            const visibleSlots = group.querySelectorAll('.slot-item:not([style*="display: none"])');
+            if (visibleSlots.length === 0) {
+                group.style.display = 'none';
+            }
+        });
+    }
+    
+    // Conflict checking functions
+    function timeToMinutes(timeStr) {
+        // Convert time string like "09:00:00" or "9:00 AM" to minutes
+        if (timeStr.includes(':')) {
+            const parts = timeStr.split(':');
+            let hours = parseInt(parts[0]);
+            const minutes = parseInt(parts[1]);
+            
+            // Check if it's in AM/PM format
+            if (timeStr.toLowerCase().includes('pm') && hours !== 12) {
+                hours += 12;
+            } else if (timeStr.toLowerCase().includes('am') && hours === 12) {
+                hours = 0;
+            }
+            
+            return hours * 60 + minutes;
+        }
+        return 0;
+    }
+    
+    function formatTimeDisplay(timeStr) {
+        // Convert 24-hour time to 12-hour format for display
+        const parts = timeStr.split(':');
+        let hours = parseInt(parts[0]);
+        const minutes = parts[1];
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12 || 12;
+        return `${hours}:${minutes} ${ampm}`;
+    }
+    
+    function checkTimeOverlap(start1, end1, start2, end2) {
+        const s1 = timeToMinutes(start1);
+        const e1 = timeToMinutes(end1);
+        const s2 = timeToMinutes(start2);
+        const e2 = timeToMinutes(end2);
+        
+        // Check if time ranges overlap
+        return s1 < e2 && s2 < e1;
+    }
+    
+    function checkConflictAndSelect(slotId, date, startTime, endTime, courseName) {
+        const schedule = window.instructorSchedule[date] || [];
+        const conflicts = [];
+        
+        for (const existing of schedule) {
+            if (checkTimeOverlap(startTime, endTime, existing.start, existing.end)) {
+                conflicts.push({
+                    course: existing.course,
+                    start: formatTimeDisplay(existing.start),
+                    end: formatTimeDisplay(existing.end)
+                });
+            }
+        }
+        
+        if (conflicts.length > 0) {
+            showConflictModal(slotId, date, startTime, endTime, courseName, conflicts);
+        } else {
+            // No conflicts, submit the form
+            document.getElementById('select-slot-form-' + slotId).submit();
+        }
+    }
+    
+    function showConflictModal(slotId, date, startTime, endTime, courseName, conflicts) {
+        pendingSlotFormId = slotId;
+        
+        const dateObj = new Date(date + 'T00:00:00');
+        const formattedDate = dateObj.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        
+        let conflictHtml = `
+            <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+                <p style="margin: 0 0 8px 0; font-weight: 600; color: #856404;">
+                    You are trying to select:
+                </p>
+                <div style="background: white; border-radius: 6px; padding: 12px; margin-bottom: 0;">
+                    <div style="font-weight: 600; color: #000;">${courseName}</div>
+                    <div style="color: #666; font-size: 14px;">${formattedDate}</div>
+                    <div style="color: #666; font-size: 14px;">${formatTimeDisplay(startTime)} - ${formatTimeDisplay(endTime)}</div>
+                </div>
+            </div>
+            
+            <div style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; padding: 16px;">
+                <p style="margin: 0 0 12px 0; font-weight: 600; color: #721c24;">
+                    ⚠️ This conflicts with ${conflicts.length} existing slot${conflicts.length > 1 ? 's' : ''}:
+                </p>
+        `;
+        
+        for (const conflict of conflicts) {
+            conflictHtml += `
+                <div style="background: white; border-radius: 6px; padding: 12px; margin-bottom: 8px; border-left: 4px solid #dc3545;">
+                    <div style="font-weight: 600; color: #000;">${conflict.course}</div>
+                    <div style="color: #666; font-size: 14px;">${conflict.start} - ${conflict.end}</div>
+                </div>
+            `;
+        }
+        
+        conflictHtml += `
+            </div>
+            <p style="margin: 16px 0 0 0; color: #666; font-size: 14px;">
+                <strong>Note:</strong> Selecting this slot means you will be assigned to multiple overlapping time slots. 
+                Make sure you can handle both assignments or coordinate with the school admin.
+            </p>
+        `;
+        
+        document.getElementById('conflictModalBody').innerHTML = conflictHtml;
+        document.getElementById('conflictModal').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeConflictModal() {
+        document.getElementById('conflictModal').style.display = 'none';
+        document.body.style.overflow = '';
+        pendingSlotFormId = null;
+    }
+    
+    function confirmSlotSelection() {
+        if (pendingSlotFormId) {
+            document.getElementById('select-slot-form-' + pendingSlotFormId).submit();
+        } else if (pendingSlotUrl) {
+            // Submit via POST for modal-based selection
+            submitSlotSelection(pendingSlotUrl);
+        }
+        closeConflictModal();
+    }
+    
+    let pendingSlotUrl = null;
+    
+    function checkConflictFromModal(slotId, date, startTime, endTime, courseName, toggleUrl) {
+        const schedule = window.instructorSchedule[date] || [];
+        const conflicts = [];
+        
+        for (const existing of schedule) {
+            if (checkTimeOverlap(startTime, endTime, existing.start, existing.end)) {
+                conflicts.push({
+                    course: existing.course,
+                    start: formatTimeDisplay(existing.start),
+                    end: formatTimeDisplay(existing.end)
+                });
+            }
+        }
+        
+        if (conflicts.length > 0) {
+            closeDayModal(); // Close the day details modal first
+            pendingSlotUrl = toggleUrl;
+            pendingSlotFormId = null;
+            showConflictModalFromCalendar(slotId, date, startTime, endTime, courseName, conflicts);
+        } else {
+            // No conflicts, submit directly
+            submitSlotSelection(toggleUrl);
+        }
+    }
+    
+    function showConflictModalFromCalendar(slotId, date, startTime, endTime, courseName, conflicts) {
+        const dateObj = new Date(date + 'T00:00:00');
+        const formattedDate = dateObj.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        
+        let conflictHtml = `
+            <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+                <p style="margin: 0 0 8px 0; font-weight: 600; color: #856404;">
+                    You are trying to select:
+                </p>
+                <div style="background: white; border-radius: 6px; padding: 12px; margin-bottom: 0;">
+                    <div style="font-weight: 600; color: #000;">${courseName}</div>
+                    <div style="color: #666; font-size: 14px;">${formattedDate}</div>
+                    <div style="color: #666; font-size: 14px;">${formatTimeDisplay(startTime)} - ${formatTimeDisplay(endTime)}</div>
+                </div>
+            </div>
+            
+            <div style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; padding: 16px;">
+                <p style="margin: 0 0 12px 0; font-weight: 600; color: #721c24;">
+                    ⚠️ This conflicts with ${conflicts.length} existing slot${conflicts.length > 1 ? 's' : ''}:
+                </p>
+        `;
+        
+        for (const conflict of conflicts) {
+            conflictHtml += `
+                <div style="background: white; border-radius: 6px; padding: 12px; margin-bottom: 8px; border-left: 4px solid #dc3545;">
+                    <div style="font-weight: 600; color: #000;">${conflict.course}</div>
+                    <div style="color: #666; font-size: 14px;">${conflict.start} - ${conflict.end}</div>
+                </div>
+            `;
+        }
+        
+        conflictHtml += `
+            </div>
+            <p style="margin: 16px 0 0 0; color: #666; font-size: 14px;">
+                <strong>Note:</strong> Selecting this slot means you will be assigned to multiple overlapping time slots. 
+                Make sure you can handle both assignments or coordinate with the school admin.
+            </p>
+        `;
+        
+        document.getElementById('conflictModalBody').innerHTML = conflictHtml;
+        document.getElementById('conflictModal').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function submitSlotSelection(url) {
+        // Create and submit a form to the toggle URL
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = url;
+        
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = '_token';
+        csrfInput.value = csrfToken;
+        form.appendChild(csrfInput);
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+    
+    // View switching function
+    function switchMainView(viewName) {
+        // Remove active from all toggle buttons
+        document.getElementById('toggle-my-slots').classList.remove('active');
+        document.getElementById('toggle-available-slots').classList.remove('active');
+        
+        // Hide all views
+        document.getElementById('my-slots-view').classList.remove('active');
+        document.getElementById('available-slots-view').classList.remove('active');
+        
+        // Hide inline calendars when switching views
+        document.getElementById('inline-calendar').style.display = 'none';
+        document.getElementById('inline-calendar-available').style.display = 'none';
+        inlineCalendarVisible = false;
+        updateCalendarButtonText(false);
+        
+        // Show selected view
+        if (viewName === 'my-slots') {
+            document.getElementById('toggle-my-slots').classList.add('active');
+            document.getElementById('my-slots-view').classList.add('active');
+        } else if (viewName === 'available-slots') {
+            document.getElementById('toggle-available-slots').classList.add('active');
+            document.getElementById('available-slots-view').classList.add('active');
+        }
+    }
+    
+    function updateCalendarButtonText(showingCalendar) {
+        const calendarBtn = document.getElementById('toggle-calendar');
+        const calendarBtnAvailable = document.getElementById('toggle-calendar-available');
+        
+        if (showingCalendar) {
+            if (calendarBtn) calendarBtn.textContent = 'Hide Calendar';
+            if (calendarBtnAvailable) calendarBtnAvailable.textContent = 'Hide Calendar';
+        } else {
+            if (calendarBtn) calendarBtn.textContent = 'Show Calendar';
+            if (calendarBtnAvailable) calendarBtnAvailable.textContent = 'Show Calendar';
+        }
+    }
+    
+    function toggleInlineCalendar() {
+        const mySlotsView = document.getElementById('my-slots-view');
+        const availableSlotsView = document.getElementById('available-slots-view');
+        
+        // Determine which view is active
+        const isMySlots = mySlotsView.classList.contains('active');
+        const calendarId = isMySlots ? 'inline-calendar' : 'inline-calendar-available';
+        const calendar = document.getElementById(calendarId);
+        const checkbox = document.getElementById('show-calendar-available');
+        
+        // Use checkbox state if available, otherwise toggle
+        const shouldShow = checkbox ? checkbox.checked : !inlineCalendarVisible;
+        
+        if (shouldShow) {
+            // Show calendar
+            calendar.style.display = 'block';
+            inlineCalendarVisible = true;
+            updateCalendarButtonText(true);
+            renderCalendar(isMySlots ? 'calendarGrid' : 'calendarGridAvailable', isMySlots ? 'currentMonth' : 'currentMonthAvailable');
+        } else {
+            // Hide calendar
+            calendar.style.display = 'none';
+            inlineCalendarVisible = false;
+            updateCalendarButtonText(false);
+        }
+    }
+    
+    // Add event listeners when DOM is ready
+    document.addEventListener('DOMContentLoaded', function() {
+        // Toggle button event listeners
+        document.getElementById('toggle-my-slots').addEventListener('click', function() {
+            switchMainView('my-slots');
+        });
+        
+        document.getElementById('toggle-available-slots').addEventListener('click', function() {
+            switchMainView('available-slots');
+        });
+        
+        // Initialize calendar
+        renderCalendar();
+    });
+    
+    function toggleDate(header) {
+        const content = header.nextElementSibling;
+        header.classList.toggle('collapsed');
+        content.classList.toggle('collapsed');
+    }
+    
+    function toggleCollapseAll(button) {
+        const headers = document.querySelectorAll('.schedule-date-header');
+        const contents = document.querySelectorAll('.schedule-bookings');
+        const isCollapsed = button.textContent === 'Expand All';
+        
+        if (isCollapsed) {
+            headers.forEach(header => header.classList.remove('collapsed'));
+            contents.forEach(content => content.classList.remove('collapsed'));
+            document.querySelectorAll('.collapse-btn').forEach(btn => {
+                if (btn.textContent === 'Expand All') btn.textContent = 'Collapse All';
+            });
+        } else {
+            headers.forEach(header => header.classList.add('collapsed'));
+            contents.forEach(content => content.classList.add('collapsed'));
+            document.querySelectorAll('.collapse-btn').forEach(btn => {
+                if (btn.textContent === 'Collapse All') btn.textContent = 'Expand All';
+            });
+        }
+    }
+    
+    function toggleCollapseAllCheckbox(checkbox) {
+        const headers = document.querySelectorAll('#available-slots-view .schedule-date-header');
+        const contents = document.querySelectorAll('#available-slots-view .schedule-bookings');
+        
+        if (checkbox.checked) {
+            headers.forEach(header => header.classList.add('collapsed'));
+            contents.forEach(content => content.classList.add('collapsed'));
+        } else {
+            headers.forEach(header => header.classList.remove('collapsed'));
+            contents.forEach(content => content.classList.remove('collapsed'));
+        }
+    }
+    
+    function toggleCollapseAllMySlots(checkbox) {
+        const headers = document.querySelectorAll('#my-slots-view .schedule-date-header');
+        const contents = document.querySelectorAll('#my-slots-view .schedule-bookings');
+        
+        if (checkbox.checked) {
+            headers.forEach(header => header.classList.add('collapsed'));
+            contents.forEach(content => content.classList.add('collapsed'));
+        } else {
+            headers.forEach(header => header.classList.remove('collapsed'));
+            contents.forEach(content => content.classList.remove('collapsed'));
+        }
+    }
+    
+    function toggleShowPastSchedules(button) {
+        const isShowingPast = button.textContent === 'Hide Past Schedules';
+        const pastItems = document.querySelectorAll('.schedule-item[data-is-past="true"]');
+        
+        if (isShowingPast) {
+            pastItems.forEach(item => item.style.display = 'none');
+            document.querySelectorAll('.collapse-btn').forEach(btn => {
+                if (btn.textContent === 'Hide Past Schedules') btn.textContent = 'Show Past Schedules';
+            });
+        } else {
+            pastItems.forEach(item => item.style.display = '');
+            document.querySelectorAll('.collapse-btn').forEach(btn => {
+                if (btn.textContent === 'Show Past Schedules') btn.textContent = 'Hide Past Schedules';
+            });
+        }
+    }
+    
+    function toggleShowPastCheckbox(checkbox) {
+        const pastItems = document.querySelectorAll('#available-slots-view .schedule-item[data-is-past="true"]');
+        const showAllCourses = document.getElementById('show-all-courses')?.checked || false;
+        
+        if (checkbox.checked) {
+            pastItems.forEach(item => {
+                // Only show past items that have visible slots (or if showing all courses)
+                const hasVisibleSlots = item.getAttribute('data-has-visible') === 'true';
+                item.style.display = (hasVisibleSlots || showAllCourses) ? '' : 'none';
+            });
+        } else {
+            pastItems.forEach(item => item.style.display = 'none');
+        }
+    }
+    
+    function toggleShowPastMySlots(checkbox) {
+        const pastItems = document.querySelectorAll('#my-slots-view .schedule-item[data-is-past="true"]');
+        
+        if (checkbox.checked) {
+            pastItems.forEach(item => item.style.display = '');
+        } else {
+            pastItems.forEach(item => item.style.display = 'none');
+        }
+    }
+    
+    function toggleInlineCalendarMy() {
+        const calendar = document.getElementById('inline-calendar');
+        const checkbox = document.getElementById('show-calendar-my');
+        
+        if (checkbox.checked) {
+            calendar.style.display = 'block';
+            renderCalendar('calendarGrid', 'currentMonth');
+        } else {
+            calendar.style.display = 'none';
+        }
+    }
+    
+    function toggleShowAllCourses() {
+        const checkbox = document.getElementById('show-all-courses');
+        const showAll = checkbox.checked;
+        const nonQualifiedSlots = document.querySelectorAll('.slot-item[data-qualified="false"]');
+        
+        nonQualifiedSlots.forEach(slot => {
+            slot.style.display = showAll ? '' : 'none';
+        });
+        
+        // Show/hide date groups based on whether they have visible slots
+        document.querySelectorAll('#available-slots-view .schedule-item').forEach(dateGroup => {
+            const isPast = dateGroup.getAttribute('data-is-past') === 'true';
+            const showPast = document.getElementById('show-past-available')?.checked || false;
+            
+            // If it's a past date and we're not showing past, keep it hidden
+            if (isPast && !showPast) {
+                dateGroup.style.display = 'none';
+                return;
+            }
+            
+            if (showAll) {
+                // When showing all courses, show the date group if it's not past (or past is enabled)
+                dateGroup.style.display = '';
+            } else {
+                // When filtering courses, check if any qualified slots are visible
+                const hasVisibleSlots = dateGroup.getAttribute('data-has-visible') === 'true';
+                dateGroup.style.display = hasVisibleSlots ? '' : 'none';
+            }
+        });
+    }
+    
+    function toggleMobileSidebar() {
+        const popup = document.getElementById('mobileSidebarPopup');
+        if (popup.style.display === 'none') {
+            popup.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        } else {
+            popup.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+    }
+    
+    // Calendar functions
+    let currentMonthDate = new Date();
+    
+    function renderCalendar(gridId = 'calendarGrid', monthTitleId = 'currentMonth') {
+        const grid = document.getElementById(gridId);
+        const monthTitle = document.getElementById(monthTitleId);
+        
+        if (!grid || !monthTitle) return;
+        
+        const year = currentMonthDate.getFullYear();
+        const month = currentMonthDate.getMonth();
+        
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                           'July', 'August', 'September', 'October', 'November', 'December'];
+        monthTitle.textContent = `${monthNames[month]} ${year}`;
+        
+        // Clear grid and recreate headers
+        grid.innerHTML = '';
+        
+        // Recreate day headers
+        const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        dayNames.forEach(dayName => {
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'calendar-day-header';
+            headerDiv.textContent = dayName;
+            grid.appendChild(headerDiv);
+        });
+        
+        // Get first day of month and total days
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const daysInPrevMonth = new Date(year, month, 0).getDate();
+        
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
+        
+        // Previous month days
+        for (let i = firstDay - 1; i >= 0; i--) {
+            const day = daysInPrevMonth - i;
+            const div = document.createElement('div');
+            div.className = 'calendar-day other-month';
+            div.innerHTML = `<div class="calendar-day-number">${day}</div>`;
+            grid.appendChild(div);
+        }
+        
+        // Current month days
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const div = document.createElement('div');
+            div.className = 'calendar-day';
+            if (dateStr === todayStr) {
+                div.classList.add('today');
+            }
+            
+            // Count slots by type
+            const daySchedules = window.schedulesData[dateStr] || [];
+            const mySlotCount = daySchedules.filter(s => s.is_my_slot).length;
+            const availableCount = daySchedules.filter(s => !s.is_my_slot && s.status === 'open' && !s.is_full).length;
+            
+            let indicatorsHtml = '<div class="calendar-indicators">';
+            if (mySlotCount > 0) {
+                indicatorsHtml += `<span class="calendar-indicator my-slot">${mySlotCount}</span>`;
+            }
+            if (availableCount > 0) {
+                indicatorsHtml += `<span class="calendar-indicator available">${availableCount}</span>`;
+            }
+            indicatorsHtml += '</div>';
+            
+            div.innerHTML = `<div class="calendar-day-number">${day}</div>${indicatorsHtml}`;
+            div.onclick = () => showDayModal(dateStr, `${monthNames[month]} ${day}, ${year}`);
+            grid.appendChild(div);
+        }
+        
+        // Next month days
+        const totalCells = grid.querySelectorAll('.calendar-day').length + 7;
+        const remaining = 42 - (totalCells - 7);
+        for (let day = 1; day <= remaining; day++) {
+            const div = document.createElement('div');
+            div.className = 'calendar-day other-month';
+            div.innerHTML = `<div class="calendar-day-number">${day}</div>`;
+            grid.appendChild(div);
+        }
+    }
+    
+    function changeMonth(direction) {
+        currentMonthDate.setMonth(currentMonthDate.getMonth() + direction);
+        // Render both calendars if they exist
+        renderCalendar('calendarGrid', 'currentMonth');
+        renderCalendar('calendarGridAvailable', 'currentMonthAvailable');
+    }
+    
     function showDayModal(dateStr, formattedDate) {
         const modal = document.getElementById('dayModal');
-        const modalTitle = document.getElementById('modalDayTitle');
-        const modalDate = document.getElementById('modalDayDate');
-        const modalBody = document.getElementById('modalDayBody');
+        const dateEl = document.getElementById('modalDayDate');
+        const body = document.getElementById('modalDayBody');
         
-        modalDate.textContent = formattedDate;
+        dateEl.textContent = formattedDate;
         
         const daySchedules = window.schedulesData[dateStr] || [];
         
         if (daySchedules.length === 0) {
-            modalBody.innerHTML = `
-                <div class="modal-empty-state">
-                    <h4>No Schedules</h4>
-                    <p>There are no time slots scheduled for this date.</p>
-                </div>
-            `;
+            body.innerHTML = '<p style="text-align: center; color: #6c757d; padding: 40px;">No schedules for this date.</p>';
         } else {
             let html = '';
             const mySlots = daySchedules.filter(s => s.is_my_slot);
             const availableSlots = daySchedules.filter(s => !s.is_my_slot && s.status === 'open' && !s.is_full);
             
             if (mySlots.length > 0) {
-                html += '<h3 style="margin-bottom: 15px; color: #4CAF50; font-size: 1.1rem;">My Scheduled Slots</h3>';
+                html += '<h3 style="margin-bottom: 15px; color: #28a745; font-size: 1.1rem;">My Scheduled Slots</h3>';
                 mySlots.forEach(slot => {
-                    html += generateScheduleCard(slot, true);
+                    html += generateModalSlotCard(slot, true);
                 });
             }
             
             if (availableSlots.length > 0) {
-                html += `<h3 style="margin-top: ${mySlots.length > 0 ? '25px' : '0'}; margin-bottom: 15px; color: #2196F3; font-size: 1.1rem;">Available Slots</h3>`;
+                html += `<h3 style="margin-top: ${mySlots.length > 0 ? '25px' : '0'}; margin-bottom: 15px; color: {{ $primaryColor }}; font-size: 1.1rem;">Available Slots</h3>`;
                 availableSlots.forEach(slot => {
-                    html += generateScheduleCard(slot, false);
+                    html += generateModalSlotCard(slot, false);
                 });
             }
             
-            modalBody.innerHTML = html;
+            body.innerHTML = html;
         }
         
-        modal.classList.add('active');
-        document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function generateModalSlotCard(slot, isMySlot) {
+        let badgeClass = isMySlot ? (slot.assignment_type === 'admin_assigned' ? 'admin-assigned' : 'my-slot') : 'available';
+        let badgeText = isMySlot ? (slot.has_pending_request ? 'Removal Requested' : (slot.assignment_type === 'admin_assigned' ? 'Admin Assigned' : 'My Slot')) : 'Available';
+        
+        if (slot.has_pending_request) badgeClass = 'pending';
+        
+        let actionHtml = '';
+        if (isMySlot && !slot.has_pending_request) {
+            if (slot.assignment_type === 'admin_assigned') {
+                actionHtml = `
+                    <button type="button" class="btn-slot btn-request" 
+                            onclick="showRemovalRequestModal(${slot.id}, ${slot.can_request_removal}, ${slot.minimum_notice_days}, ${slot.days_until_slot}); closeDayModal();"
+                            ${!slot.can_request_removal ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>
+                        Request Removal
+                    </button>
+                `;
+            } else {
+                actionHtml = `
+                    <form method="POST" action="${slot.toggle_url}" style="display: inline;">
+                        <input type="hidden" name="_token" value="${document.querySelector('meta[name="csrf-token"]')?.content || ''}">
+                        <button type="submit" class="btn-slot btn-leave" onclick="return confirm('Leave this slot?')">Leave Slot</button>
+                    </form>
+                `;
+            }
+        } else if (!isMySlot) {
+            // Use conflict checking for available slots
+            actionHtml = `
+                <button type="button" class="btn-slot btn-select" onclick="checkConflictFromModal(${slot.id}, '${slot.date}', '${slot.start_time_raw}', '${slot.end_time_raw}', '${slot.course_name}', '${slot.toggle_url}')">
+                    Select Slot
+                </button>
+            `;
+        }
+        }
+        
+        return `
+            <div style="background: #f8f9fa; border-radius: 8px; padding: 16px; margin-bottom: 12px; border-left: 4px solid ${isMySlot ? (slot.assignment_type === 'admin_assigned' ? '#ff9800' : '#28a745') : '{{ $primaryColor }}'};">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <strong>${slot.start_time} - ${slot.end_time}</strong>
+                    <span class="slot-badge ${badgeClass}">${badgeText}</span>
+                </div>
+                <div style="color: #6c757d; font-size: 14px; margin-bottom: 8px;">
+                    ${slot.instructors_count} / ${slot.max_instructors} instructors
+                </div>
+                ${slot.notes ? `<div style="color: #6c757d; font-size: 13px; margin-bottom: 8px;">${slot.notes}</div>` : ''}
+                ${actionHtml}
+            </div>
+        `;
     }
     
     function closeDayModal() {
-        const modal = document.getElementById('dayModal');
-        modal.classList.remove('active');
-        document.body.style.overflow = ''; // Restore scrolling
+        document.getElementById('dayModal').style.display = 'none';
+        document.body.style.overflow = '';
     }
-
+    
+    // Removal Request Modal
     function showRemovalRequestModal(slotId, canRequest, minimumDays, daysRemaining) {
         const modal = document.getElementById('removalRequestModal');
         const form = document.getElementById('removalRequestForm');
         const textarea = document.getElementById('removal_reason');
-        const submitBtn = modal.querySelector('button[type="submit"]');
+        const submitBtn = document.getElementById('removalSubmitBtn');
         const warningDiv = document.getElementById('removalWarning');
         
-        // Set form action with the correct slot ID
-        form.action = `{{ route('schools.instructor.timeslots.requestRemoval', ['school' => $school->slug, 'id' => '__SLOT_ID__']) }}`.replace('__SLOT_ID__', slotId);
-        
-        // Clear previous input
+        form.action = `{{ url($school->slug) }}/instructor/timeslots/${slotId}/request-removal`;
         textarea.value = '';
         
-        // Show warning if cannot request
         if (!canRequest) {
             warningDiv.innerHTML = `
-                <div style="background: #ffebee; border-left: 4px solid #f44336; padding: 15px; border-radius: 4px; margin-bottom: 15px;">
-                    <strong style="color: #c62828;">Cannot Submit Request</strong><br>
+                <div style="background: #f8d7da; border-left: 4px solid #dc3545; padding: 15px; border-radius: 4px; margin-bottom: 15px;">
+                    <strong style="color: #721c24;">Cannot Submit Request</strong><br>
                     <span style="color: #666;">You must request removal at least ${minimumDays} days in advance. This slot is in ${daysRemaining} day(s).</span>
                 </div>
             `;
@@ -1977,8 +2078,8 @@
             submitBtn.style.cursor = 'not-allowed';
         } else {
             warningDiv.innerHTML = `
-                <div style="background: #e3f2fd; border-left: 4px solid #2196F3; padding: 15px; border-radius: 4px; margin-bottom: 15px;">
-                    <strong style="color: #1976D2;">Minimum Notice Period</strong><br>
+                <div style="background: #cce5ff; border-left: 4px solid {{ $primaryColor }}; padding: 15px; border-radius: 4px; margin-bottom: 15px;">
+                    <strong style="color: #004085;">Minimum Notice Period</strong><br>
                     <span style="color: #666;">Requests must be submitted at least ${minimumDays} days before the scheduled time slot.</span>
                 </div>
             `;
@@ -1987,161 +2088,221 @@
             submitBtn.style.cursor = 'pointer';
         }
         
-        modal.classList.add('active');
+        modal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
         
-        // Focus on textarea if enabled
         if (canRequest) {
             setTimeout(() => textarea.focus(), 100);
         }
     }
-
+    
     function closeRemovalRequestModal() {
-        const modal = document.getElementById('removalRequestModal');
-        modal.classList.remove('active');
+        document.getElementById('removalRequestModal').style.display = 'none';
         document.body.style.overflow = '';
     }
     
-    function generateScheduleCard(slot, isMySlot) {
-        const cardClass = isMySlot ? 'my-schedule' : 'available';
+    // Lesson Details Modal
+    function openLessonModal(bookingId) {
+        const modal = document.getElementById('lessonModal');
+        const modalBody = document.getElementById('lessonModalBody');
         
-        let statusBadge, statusColor;
-        if (isMySlot && slot.has_pending_request) {
-            statusBadge = 'REMOVAL REQUESTED';
-            statusColor = 'schedule-status pending';
-        } else if (isMySlot) {
-            statusBadge = slot.assignment_type === 'admin_assigned' ? 'ADMIN ASSIGNED' : 'MY SLOT';
-            statusColor = slot.assignment_type === 'admin_assigned' ? 'schedule-status admin' : 'schedule-status assigned';
-        } else {
-            statusBadge = 'AVAILABLE';
-            statusColor = 'schedule-status available';
-        }
+        modal.style.display = 'flex';
+        modalBody.innerHTML = '<div style="text-align: center; padding: 40px;">Loading...</div>';
         
-        let actionButton = '';
-        let extraInfo = '';
+        fetch(`/{{ $school->slug }}/instructor/lessons/${bookingId}`)
+            .then(response => response.json())
+            .then(data => {
+                modalBody.innerHTML = generateLessonForm(data);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                modalBody.innerHTML = '<div style="text-align: center; padding: 40px; color: #dc3545;">Error loading lesson details. Please try again.</div>';
+            });
+    }
+    
+    function closeLessonModal() {
+        document.getElementById('lessonModal').style.display = 'none';
+        document.body.style.overflow = '';
+    }
+    
+    function generateLessonForm(data) {
+        const booking = data.booking;
+        const student = booking.student;
+        const course = booking.course;
+        const timeSlot = booking.time_slot;
         
-        if (isMySlot && slot.has_pending_request) {
-            extraInfo = `
-                <div class="schedule-detail-item" style="color: #FF6B6B;">
-                    <span>Status:</span>
-                    <span>Pending removal request - waiting for admin approval</span>
-                </div>
-            `;
-        } else if (isMySlot && slot.assignment_type === 'admin_assigned') {
-            extraInfo = `
-                <div class="schedule-detail-item" style="color: #FF9800;">
-                    <span>Info:</span>
-                    <span>This slot was assigned to you by an administrator</span>
-                </div>
-            `;
-            if (!slot.can_request_removal) {
-                extraInfo += `
-                    <div class="schedule-detail-item" style="color: #f44336;">
-                        <span>Warning:</span>
-                        <span>Must request removal at least ${slot.minimum_notice_days} days in advance (${slot.days_until_slot} day(s) remaining)</span>
-                    </div>
-                `;
-            }
-            actionButton = `
-                <div class="schedule-action">
-                    <button type="button" class="btn btn-request" 
-                            onclick="showRemovalRequestModal(${slot.id}, ${slot.can_request_removal}, ${slot.minimum_notice_days}, ${slot.days_until_slot}); closeDayModal();"
-                            ${!slot.can_request_removal ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>
-                        Request Removal
-                    </button>
-                </div>
-            `;
-        } else if (isMySlot && slot.assignment_type === 'self_selected') {
-            actionButton = `
-                <div class="schedule-action">
-                    <form method="POST" action="${slot.toggle_url}" style="margin: 0;">
-                        <input type="hidden" name="_token" value="${document.querySelector('meta[name="csrf-token"]')?.content || ''}">
-                        <button type="submit" class="btn btn-leave">Leave This Slot</button>
-                    </form>
-                </div>
-            `;
-        } else if (!isMySlot) {
-            if (slot.status !== 'open') {
-                actionButton = `
-                    <div class="schedule-action">
-                        <button type="button" class="btn btn-disabled" disabled>Slot Closed</button>
-                    </div>
-                `;
-            } else if (slot.is_full) {
-                actionButton = `
-                    <div class="schedule-action">
-                        <button type="button" class="btn btn-disabled" disabled>Slot Full</button>
-                    </div>
-                `;
-            } else {
-                actionButton = `
-                    <div class="schedule-action">
-                        <form method="POST" action="${slot.toggle_url}" style="margin: 0;">
-                            <input type="hidden" name="_token" value="${document.querySelector('meta[name="csrf-token"]')?.content || ''}">
-                            <button type="submit" class="btn btn-select">Select This Slot</button>
-                        </form>
-                    </div>
-                `;
-            }
-        }
+        const availableSkills = [
+            'Basic Vehicle Control',
+            'Parking (90° / Angled)',
+            'Parallel Parking',
+            'Lane Changing',
+            'Turns & Intersections',
+            'Highway Driving',
+            'Reverse Driving',
+            'Night Driving',
+            'Weather Conditions',
+            'Emergency Procedures'
+        ];
+        
+        const selectedSkills = booking.skills_practiced || [];
         
         return `
-            <div class="modal-schedule-card ${cardClass}">
-                <div class="schedule-header">
-                    <div class="schedule-time">
-                        ${slot.start_time} - ${slot.end_time}
+            <form onsubmit="saveLessonDetails(event, ${booking.id})">
+                <!-- Session Information -->
+                <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div><strong>Student:</strong> ${student.name}</div>
+                        <div><strong>Course:</strong> ${course.title}</div>
+                        <div><strong>Date:</strong> ${timeSlot ? new Date(timeSlot.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A'}</div>
+                        <div><strong>Time:</strong> ${timeSlot ? formatTime(timeSlot.start_time) + ' - ' + formatTime(timeSlot.end_time) : 'N/A'}</div>
                     </div>
-                    <span class="${statusColor}">
-                        ${statusBadge}
-                    </span>
                 </div>
-                <div class="schedule-details">
-                    <div class="schedule-detail-item">
-                        <span>Instructors:</span>
-                        <span>${slot.instructors_count} / ${slot.max_instructors}</span>
-                    </div>
-                    ${slot.notes ? `
-                        <div class="schedule-detail-item">
-                            <span>Notes:</span>
-                            <span>${slot.notes}</span>
+                
+                <!-- Session Status -->
+                <div style="margin-bottom: 20px;">
+                    <h4 style="margin: 0 0 12px 0; color: #333;">Session Status</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div>
+                            <label style="display: block; font-weight: 500; margin-bottom: 6px;">Attendance</label>
+                            <select name="attendance_status" required style="width: 100%; padding: 10px; border: 1px solid #dee2e6; border-radius: 6px;">
+                                <option value="">Select attendance</option>
+                                <option value="attended" ${booking.attendance_status === 'attended' ? 'selected' : ''}>Attended</option>
+                                <option value="late" ${booking.attendance_status === 'late' ? 'selected' : ''}>Late</option>
+                                <option value="absent" ${booking.attendance_status === 'absent' ? 'selected' : ''}>Absent</option>
+                            </select>
                         </div>
-                    ` : ''}
-                    ${extraInfo}
+                        <div>
+                            <label style="display: block; font-weight: 500; margin-bottom: 6px;">Session Status</label>
+                            <select name="session_status" required style="width: 100%; padding: 10px; border: 1px solid #dee2e6; border-radius: 6px;">
+                                <option value="">Select status</option>
+                                <option value="completed" ${booking.session_status === 'completed' ? 'selected' : ''}>Completed</option>
+                                <option value="cancelled" ${booking.session_status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                                <option value="rescheduled" ${booking.session_status === 'rescheduled' ? 'selected' : ''}>Rescheduled</option>
+                                <option value="no-show" ${booking.session_status === 'no-show' ? 'selected' : ''}>No-Show</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
-                ${actionButton}
-            </div>
+                
+                <!-- Performance -->
+                <div style="margin-bottom: 20px;">
+                    <h4 style="margin: 0 0 12px 0; color: #333;">Performance</h4>
+                    <div>
+                        <label style="display: block; font-weight: 500; margin-bottom: 6px;">Session Grade (0-100)</label>
+                        <input type="number" name="session_grade" min="0" max="100" step="0.01" value="${booking.session_grade || ''}" 
+                               placeholder="Enter grade (optional)" style="width: 100%; padding: 10px; border: 1px solid #dee2e6; border-radius: 6px;">
+                    </div>
+                </div>
+                
+                <!-- Skills Practiced -->
+                <div style="margin-bottom: 20px;">
+                    <h4 style="margin: 0 0 12px 0; color: #333;">Skills Practiced</h4>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
+                        ${availableSkills.map(skill => `
+                            <label style="display: flex; align-items: center; gap: 8px; padding: 8px; background: #f8f9fa; border-radius: 6px; cursor: pointer;">
+                                <input type="checkbox" name="skills_practiced[]" value="${skill}" ${selectedSkills.includes(skill) ? 'checked' : ''}>
+                                <span style="font-size: 13px;">${skill}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>
+                
+                <!-- Feedback -->
+                <div style="margin-bottom: 20px;">
+                    <h4 style="margin: 0 0 12px 0; color: #333;">Feedback</h4>
+                    <div style="margin-bottom: 12px;">
+                        <label style="display: block; font-weight: 500; margin-bottom: 6px;">Instructor Feedback</label>
+                        <textarea name="instructor_feedback" rows="3" placeholder="Enter your feedback about the session..." 
+                                  style="width: 100%; padding: 10px; border: 1px solid #dee2e6; border-radius: 6px; resize: vertical;">${booking.instructor_feedback || ''}</textarea>
+                    </div>
+                    <div>
+                        <label style="display: block; font-weight: 500; margin-bottom: 6px;">Student Feedback</label>
+                        <textarea name="student_feedback" rows="3" placeholder="Enter student's feedback about the session..." 
+                                  style="width: 100%; padding: 10px; border: 1px solid #dee2e6; border-radius: 6px; resize: vertical;">${booking.student_feedback || ''}</textarea>
+                    </div>
+                </div>
+                
+                <!-- Actions -->
+                <div style="display: flex; gap: 12px; justify-content: flex-end; padding-top: 16px; border-top: 1px solid #dee2e6;">
+                    <button type="button" onclick="closeLessonModal()" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn-save-lesson" style="background: {{ $primaryColor }}; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;">
+                        Save Lesson Report
+                    </button>
+                </div>
+            </form>
         `;
     }
     
-    // Close modal on ESC key
+    function formatTime(timeString) {
+        if (!timeString) return '';
+        const date = new Date(`2000-01-01 ${timeString}`);
+        return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    }
+    
+    function saveLessonDetails(event, bookingId) {
+        event.preventDefault();
+        
+        const form = event.target;
+        const formData = new FormData(form);
+        
+        const skills = [];
+        formData.getAll('skills_practiced[]').forEach(skill => skills.push(skill));
+        
+        const data = {
+            attendance_status: formData.get('attendance_status'),
+            session_status: formData.get('session_status'),
+            session_grade: formData.get('session_grade') || null,
+            instructor_feedback: formData.get('instructor_feedback'),
+            student_feedback: formData.get('student_feedback'),
+            skills_practiced: skills
+        };
+        
+        const submitBtn = form.querySelector('.btn-save-lesson');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Saving...';
+        submitBtn.disabled = true;
+        
+        fetch(`/{{ $school->slug }}/instructor/lessons/${bookingId}/update`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                alert('Lesson details saved successfully!');
+                closeLessonModal();
+                window.location.reload();
+            } else {
+                alert('Error: ' + (result.message || 'Failed to save lesson details'));
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while saving. Please try again.');
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+        });
+    }
+    
+    // Close modals on ESC
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             closeDayModal();
             closeRemovalRequestModal();
+            closeLessonModal();
+            if (document.getElementById('mobileSidebarPopup').style.display !== 'none') {
+                toggleMobileSidebar();
+            }
         }
     });
-
-    // Auto-submit month navigation forms
-    document.addEventListener('DOMContentLoaded', function() {
-        const monthInputs = document.querySelectorAll('input[name="month"]');
-        monthInputs.forEach(input => {
-            input.addEventListener('change', function() {
-                this.form.submit();
-            });
-        });
-        
-        // Initialize calendar grid with current data
-        renderCalendar();
-    });
-    
-    // Render calendar function
-    function renderCalendar() {
-        const calendarGrid = document.getElementById('calendarGrid');
-        if (!calendarGrid) return;
-        
-        // Calendar is already rendered by PHP on page load
-        // This function is for future AJAX updates
-    }
 </script>
 
 @endsection

@@ -9,6 +9,7 @@ use App\Models\Course;
 use App\Models\EnrollmentRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules;
 
 class GuestController extends Controller
@@ -18,6 +19,9 @@ class GuestController extends Controller
      */
     public function showRegistrationForm(School $school)
     {
+        // Eager load schoolSetting to prevent N+1 query in registration view
+        $school->load('schoolSetting');
+        
         return view($school->resolveView('register'), compact('school'));
     }
 
@@ -96,7 +100,7 @@ class GuestController extends Controller
      */
     public function enroll(Request $request, School $school, Course $course)
     {
-        \Log::info('Enroll method called', [
+        Log::info('Enroll method called', [
             'school' => $school->id,
             'course' => $course->id,
             'user' => Auth::guard('student')->user()?->id
@@ -106,7 +110,7 @@ class GuestController extends Controller
 
         // Ensure user is logged in and is a guest
         if (!$guest || !$guest->isGuest()) {
-            \Log::warning('User is not a guest', ['user' => $guest?->id, 'role' => $guest?->role]);
+            Log::warning('User is not a guest', ['user' => $guest?->id, 'role' => $guest?->role]);
             return redirect()->back()->with('error', 'Only guests can submit enrollment requests.');
         }
 
@@ -138,12 +142,12 @@ class GuestController extends Controller
                 'location' => $validated['location'] ?? $guest->location,
             ]);
 
-            \Log::info('Enrollment request created successfully', [
+            Log::info('Enrollment request created successfully', [
                 'learner_id' => $guest->id,
                 'course_id' => $course->id
             ]);
         } catch (\Exception $e) {
-            \Log::error('Failed to create enrollment request', [
+            Log::error('Failed to create enrollment request', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);

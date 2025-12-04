@@ -460,7 +460,7 @@
     <div id="processed-tab" class="tab-content">
         @if($processedRequests->count() === 0)
             <div class="empty-state">
-                <div class="empty-state-icon">📋</div>
+                <div class="empty-state-icon"></div>
                 <div class="empty-state-text">No processed requests</div>
                 <p style="color: #999; margin-top: 10px;">There are no approved or rejected requests yet.</p>
             </div>

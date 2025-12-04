@@ -37,10 +37,10 @@ return [
             'database' => env('DB_DATABASE', database_path('database.sqlite')),
             'prefix' => '',
             'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
-            'busy_timeout' => null,
-            'journal_mode' => null,
-            'synchronous' => null,
-            'transaction_mode' => 'DEFERRED',
+            'busy_timeout' => env('DB_BUSY_TIMEOUT', 5000), // 5 seconds wait if database is locked
+            'journal_mode' => 'WAL', // Write-Ahead Logging for better concurrency
+            'synchronous' => 'NORMAL', // Balance between safety and performance
+            'transaction_mode' => 'IMMEDIATE', // Better for write-heavy operations
         ],
 
         'mysql' => [
@@ -60,6 +60,8 @@ return [
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+                PDO::ATTR_TIMEOUT => env('DB_TIMEOUT', 5), // Connection timeout in seconds
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             ]) : [],
         ],
 

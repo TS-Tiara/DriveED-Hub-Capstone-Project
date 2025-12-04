@@ -191,22 +191,28 @@
     
     .btn-create {
         padding: 10px 20px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
+        @if(($settings->button_style ?? 'solid') === 'gradient')
+        background: linear-gradient(135deg, var(--btn-primary-bg) 0%, var(--btn-secondary-bg) 100%);
+        @else
+        background: var(--btn-primary-bg);
+        @endif
+        color: var(--btn-primary-text);
         border: none;
-        border-radius: 8px;
+        border-radius: var(--button-border-radius);
         font-size: 1rem;
         font-weight: 500;
         cursor: pointer;
-        transition: transform 0.2s, box-shadow 0.2s;
+        transition: all 0.3s;
         display: flex;
         align-items: center;
         gap: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.10);
     }
     
     .btn-create:hover {
+        filter: brightness(1.1);
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.18);
     }
     
     /* Table Styles */
@@ -519,7 +525,7 @@
                 <input type="text" id="studentSearch" placeholder="Search students by name or email..." onkeyup="filterTable('studentSearch', 'studentsTable')">
             </div>
             <button class="btn-create" onclick="openCreateStudentModal()">
-                Add New Student
+                <i class="bi bi-person-plus"></i> Add New Student
             </button>
         </div>
         
@@ -574,7 +580,7 @@
                 <input type="text" id="instructorSearch" placeholder="Search instructors by name or email..." onkeyup="filterTable('instructorSearch', 'instructorsTable')">
             </div>
             <button class="btn-create" onclick="openCreateInstructorModal()">
-                Add New Instructor
+                <i class="bi bi-person-plus"></i> Add New Instructor
             </button>
         </div>
         

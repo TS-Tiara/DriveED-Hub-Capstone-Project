@@ -12,11 +12,18 @@ class SchoolSetting extends Model
         'primary_color',
         'secondary_color',
         'accent_color',
+        'background_type',
+        'background_color',
+        'background_image',
+        'background_opacity',
         'sidebar_bg_color',
         'sidebar_text_color',
         'sidebar_hover_color',
         'use_gradient_header',
         'header_text_color',
+        'calendar_day_border',
+        'calendar_day_hover',
+        'calendar_today_color',
         'button_primary_bg',
         'button_primary_text',
         'button_secondary_bg',
@@ -27,6 +34,7 @@ class SchoolSetting extends Model
         'button_danger_text',
         'border_radius',
         'button_border_radius',
+        'button_style',
         'modal_header_bg',
         'modal_header_text',
         'modal_border_color',
@@ -41,10 +49,44 @@ class SchoolSetting extends Model
         'badge_cancelled_text',
         'custom_css',
         'additional_settings',
+        'instructor_selection_mode',
+        'enable_booking_queue',
+        'booking_queue_days',
+        'advance_booking_days',
+        // Login/Signup Header Customization
+        'login_header_layout',
+        'login_logo_image',
+        'login_logo_position',
+        'login_logo_size',
+        'login_school_name_text',
+        'login_show_school_name',
+        'login_school_name_position',
+        'login_school_name_size',
+        'login_welcome_text',
+        'login_show_welcome_text',
+        'login_welcome_position',
+        'login_welcome_size',
+        'login_header_bg_type',
+        'login_header_bg_color',
+        'login_header_bg_image',
+        'login_header_height',
+        'login_header_text_color',
+        'login_header_shadow',
+        'register_welcome_text',
+        'register_subtitle_text',
+        // Login Page Background Customization
+        'login_page_bg_type',
+        'login_page_bg_color',
+        'login_page_bg_image',
+        'login_page_bg_opacity',
     ];
 
     protected $casts = [
         'use_gradient_header' => 'boolean',
+        'enable_booking_queue' => 'boolean',
+        'login_show_school_name' => 'boolean',
+        'login_show_welcome_text' => 'boolean',
+        'login_header_shadow' => 'boolean',
         'custom_css' => 'array',
         'additional_settings' => 'array',
     ];
@@ -79,6 +121,23 @@ class SchoolSetting extends Model
             'sidebar_hover' => $this->sidebar_hover_color,
             'header_text' => $this->header_text_color,
         ];
+    }
+
+    /**
+     * Get the login header background CSS
+     */
+    public function getLoginHeaderBackground(): string
+    {
+        $bgType = $this->login_header_bg_type ?? 'gradient';
+        
+        if ($bgType === 'solid' && $this->login_header_bg_color) {
+            return $this->login_header_bg_color;
+        } elseif ($bgType === 'image' && $this->login_header_bg_image) {
+            return "url('" . asset('storage/' . $this->login_header_bg_image) . "')";
+        } else {
+            // Default gradient
+            return "linear-gradient(135deg, {$this->primary_color} 0%, {$this->secondary_color} 100%)";
+        }
     }
 
     /**

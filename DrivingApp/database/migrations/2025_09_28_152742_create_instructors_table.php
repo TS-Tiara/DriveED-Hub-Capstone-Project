@@ -22,7 +22,9 @@ return new class extends Migration
         $table->text('bio')->nullable();
         $table->string('profile_picture')->nullable();
         $table->string('status')->default('active');
+        $table->json('course_specializations')->nullable();
         $table->enum('availability', ['available', 'unavailable'])->default('available');
+        $table->rememberToken();
         $table->timestamps();
         
         // Composite unique key for email within school

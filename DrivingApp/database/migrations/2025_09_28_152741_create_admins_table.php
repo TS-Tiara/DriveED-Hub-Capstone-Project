@@ -20,6 +20,7 @@ return new class extends Migration
         $table->string('contact', 20)->nullable();
         $table->string('profile_picture')->nullable();
         $table->string('role')->default('school_admin');
+        $table->rememberToken();
         $table->timestamps();
         
         // Composite unique key for email within school

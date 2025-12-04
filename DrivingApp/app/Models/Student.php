@@ -57,6 +57,21 @@ class Student extends Authenticatable
         return $this->hasMany(EnrollmentRequest::class, 'learner_id');
     }
 
+    /**
+     * Get courses the student is enrolled in through their bookings
+     */
+    public function enrolledCourses()
+    {
+        return $this->hasManyThrough(
+            Course::class,
+            Booking::class,
+            'student_id', // Foreign key on bookings table
+            'id', // Foreign key on courses table
+            'id', // Local key on students table
+            'course_id' // Local key on bookings table
+        )->distinct();
+    }
+
     // Helper methods for role
     public function isGuest()
     {

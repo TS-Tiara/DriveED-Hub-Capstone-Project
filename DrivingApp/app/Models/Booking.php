@@ -16,13 +16,32 @@ class Booking extends Model
         'student_id',
         'instructor_id',
         'course_id',
+        'package_id',
+        'time_slot_id',
         'scheduled_at',
+        'booking_date',
         'status',
+        'cancelled_by',
+        'cancellation_reason',
+        'cancelled_at',
+        'attendance_status',
+        'payment_status',
+        'total_amount',
         'notes',
+        'instructor_feedback',
+        'attendance_marked_at',
+        'session_grade',
+        'student_feedback',
+        'skills_practiced',
+        'session_status',
     ];
 
     protected $casts = [
+        'booking_date' => 'datetime',
         'scheduled_at' => 'datetime',
+        'attendance_marked_at' => 'datetime',
+        'cancelled_at' => 'datetime',
+        'skills_practiced' => 'array',
     ];
 
     /**
@@ -55,6 +74,22 @@ class Booking extends Model
     public function course(): BelongsTo
     {
         return $this->belongsTo(Course::class);
+    }
+
+    /**
+     * Get the package for the booking.
+     */
+    public function package(): BelongsTo
+    {
+        return $this->belongsTo(CoursePackage::class, 'package_id');
+    }
+
+    /**
+     * Get the time slot for the booking.
+     */
+    public function timeSlot(): BelongsTo
+    {
+        return $this->belongsTo(TimeSlot::class, 'time_slot_id');
     }
 
     /**

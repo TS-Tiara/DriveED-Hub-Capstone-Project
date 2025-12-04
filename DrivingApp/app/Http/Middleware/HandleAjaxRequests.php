@@ -15,15 +15,12 @@ class HandleAjaxRequests
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $response = $next($request);
-        
-        // If this is an AJAX request, we need to return only the content
+        // If this is an AJAX request, set the flag BEFORE the view is rendered
         if ($request->ajax() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
-            // Set a flag that views can use to determine if they should extend layout
             $request->attributes->set('is_ajax', true);
             view()->share('isAjax', true);
         }
         
-        return $response;
+        return $next($request);
     }
 }

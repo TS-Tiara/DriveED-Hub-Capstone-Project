@@ -5,285 +5,362 @@
 @section('content')
 @php
     $school = $school ?? $currentSchool ?? null;
-    $schoolName = $school->name ?? 'Driving School';
     $instructor = Auth::guard('instructor')->user();
+    $settings = $school->schoolSetting;
 @endphp
 
 <style>
     .profile-container {
+        padding: 20px;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .page-header {
+        margin-bottom: 30px;
+        padding-bottom: 15px;
+        border-bottom: 4px solid {{ $settings->primary_color ?? '#667eea' }};
+    }
+
+    .page-title {
+        font-size: 2rem;
+        color: #111827;
+        margin: 0;
+        font-weight: 400;
+    }
+
+    .profile-card {
         max-width: 600px;
         margin: 0 auto;
         background: white;
-        padding: 40px;
-        border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        border-radius: 12px;
+        padding: 0;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        position: relative;
     }
-    
-    .profile-header {
+
+    .status-badge-top {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        background: #10b981;
+        color: white;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .profile-card-header {
         text-align: center;
-        margin-bottom: 30px;
+        padding: 40px 30px 30px;
     }
-    
-    .profile-title {
-        color: #333;
-        margin: 0;
-        font-size: 28px;
-    }
-    
-    .profile-avatar {
-        width: 100px;
-        height: 100px;
-        background-color: #333;
+
+    .profile-avatar-circle {
+        width: 180px;
+        height: 180px;
         border-radius: 50%;
+        background: #000;
         margin: 0 auto 20px;
         display: flex;
         align-items: center;
         justify-content: center;
-    }
-    
-    .avatar-icon {
-        color: white;
-        font-size: 40px;
-    }
-    
-    .profile-info {
-        margin-bottom: 30px;
-    }
-    
-    .info-row {
-        display: flex;
-        margin-bottom: 15px;
-        padding: 10px 0;
-        border-bottom: 1px solid #eee;
-    }
-    
-    .info-label {
-        font-weight: bold;
-        width: 150px;
-        color: #555;
-    }
-    
-    .info-value {
-        flex: 1;
-        color: #333;
-    }
-    
-    .profile-buttons {
-        text-align: center;
-        margin-top: 30px;
-    }
-    
-    .btn {
-        padding: 12px 24px;
-        margin: 0 10px;
-        border: none;
-        border-radius: 5px;
+        overflow: hidden;
+        position: relative;
         cursor: pointer;
-        font-size: 14px;
-        text-decoration: none;
-        display: inline-block;
     }
-    
-    .btn-edit {
+
+    .profile-avatar-circle:hover .avatar-upload-overlay {
+        opacity: 1;
+    }
+
+    .avatar-upload-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s;
+        cursor: pointer;
+    }
+
+    .avatar-upload-overlay span {
+        color: white;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .profile-avatar-circle img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .profile-avatar-letter {
+        font-size: 80px;
+        font-weight: 700;
+        color: white;
+    }
+
+    .profile-name {
+        font-size: 24px;
+        font-weight: 600;
+        color: #000;
+    }
+
+    .profile-card-body {
+        padding: 0 30px 30px;
+    }
+
+    .profile-field {
+        display: grid;
+        grid-template-columns: 140px 1fr;
+        padding: 15px 0;
+        border-bottom: 1px solid #e0e0e0;
+        gap: 20px;
+    }
+
+    .profile-field:last-child {
+        border-bottom: none;
+    }
+
+    .profile-field-label {
+        font-weight: 600;
+        color: #000;
+        font-size: 15px;
+    }
+
+    .profile-field-value {
+        color: #666;
+        font-size: 15px;
+    }
+
+    .profile-actions {
+        text-align: center;
+        padding: 20px 30px 30px;
+    }
+
+    .btn-edit-profile {
         background: #007bff;
         color: white;
+        border: none;
+        padding: 12px 40px;
+        border-radius: 6px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
     }
-    
-    .btn-edit:hover {
+
+    .btn-edit-profile:hover {
         background: #0056b3;
     }
-    
-    .back-button {
-        background: #6c757d;
-        color: white;
-        padding: 10px 20px;
-        border-radius: 5px;
-        text-decoration: none;
-        margin-bottom: 20px;
-        display: inline-block;
-    }
-    
-    .back-button:hover {
-        background: #545b62;
-    }
-    
+
     .edit-form {
         display: none;
+        padding: 30px;
     }
-    
-    .form-group {
+
+    .form-field {
         margin-bottom: 20px;
     }
-    
-    .form-group label {
+
+    .form-field label {
         display: block;
-        font-weight: bold;
-        margin-bottom: 5px;
-        color: #555;
-    }
-    
-    .form-group input {
-        width: 100%;
-        padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 5px;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #000;
         font-size: 14px;
-        box-sizing: border-box;
     }
-    
-    .form-buttons {
-        text-align: center;
-        margin-top: 20px;
+
+    .form-field input {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 15px;
     }
-    
+
+    .form-field input:focus {
+        outline: none;
+        border-color: {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        margin-top: 30px;
+    }
+
     .btn-save {
-        background: #28a745;
+        background: {{ $school->schoolSetting->primary_color ?? '#667eea' }};
         color: white;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 6px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
     }
-    
+
     .btn-save:hover {
-        background: #218838;
+        opacity: 0.9;
     }
-    
+
     .btn-cancel {
         background: #6c757d;
         color: white;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 6px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
     }
-    
+
     .btn-cancel:hover {
-        background: #545b62;
+        background: #5a6268;
     }
-    
-    .success-message {
-        background-color: #d4edda;
-        color: #155724;
+
+    .alert {
         padding: 15px;
-        border-radius: 5px;
         margin-bottom: 20px;
+        border-radius: 6px;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .alert-success {
+        background: #d4edda;
+        color: #155724;
         border: 1px solid #c3e6cb;
     }
-    
-    .error-message {
-        background-color: #f8d7da;
+
+    .alert-error {
+        background: #f8d7da;
         color: #721c24;
-        padding: 15px;
-        border-radius: 5px;
-        margin-bottom: 20px;
         border: 1px solid #f5c6cb;
     }
 </style>
 
-<div style="background: white; border-radius: 15px; padding: 30px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); margin-bottom: 20px;">
-    <div class="profile-container">
-        <a href="{{ $schoolRoute('instructor.dashboard') }}" onclick="loadContent(this.href); return false;" class="back-button">← Back to Dashboard</a>
+<div class="profile-container">
+    <div class="page-header">
+        <h1 class="page-title">Profile</h1>
+    </div>
+
+    @if(session('success'))
+        <div class="alert alert-success">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    @if($errors->any())
+        <div class="alert alert-error">
+            <ul style="margin: 0; padding-left: 20px;">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    <div class="profile-card">
+        <div class="status-badge-top">Active</div>
         
-        @if(session('success'))
-            <div class="success-message">
-                {{ session('success') }}
+        <div id="profileView">
+            <div class="profile-card-header">
+                <div class="profile-avatar-circle" id="avatarContainer">
+                    @if($instructor->profile_picture && file_exists(public_path('storage/' . $instructor->profile_picture)))
+                        <img src="{{ asset('storage/' . $instructor->profile_picture) }}" alt="{{ $instructor->name }}" id="avatarImage">
+                    @else
+                        <span class="profile-avatar-letter" id="avatarLetter">{{ strtoupper(substr($instructor->name ?? 'I', 0, 1)) }}</span>
+                    @endif
+                    <div class="avatar-upload-overlay" onclick="document.getElementById('profilePictureInput').click()">
+                        <span>Change Photo</span>
+                    </div>
+                </div>
+                <input type="file" id="profilePictureInput" accept="image/png,image/jpg,image/jpeg,image/webp" style="display: none;" onchange="uploadProfilePicture(this)">
+                <div class="profile-name">{{ $instructor->name ?? "Instructor's Name" }}</div>
             </div>
-        @endif
-        
-        @if($errors->any())
-            <div class="error-message">
-                <ul style="margin: 0; padding-left: 20px;">
-                    @foreach($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
+
+            <div class="profile-card-body">
+                <div class="profile-field">
+                    <div class="profile-field-label">Email:</div>
+                    <div class="profile-field-value">{{ $instructor->email ?? 'N/A' }}</div>
+                </div>
+
+                <div class="profile-field">
+                    <div class="profile-field-label">Contact:</div>
+                    <div class="profile-field-value">{{ $instructor->contact ?? 'N/A' }}</div>
+                </div>
+
+                <div class="profile-field">
+                    <div class="profile-field-label">Specialization:</div>
+                    <div class="profile-field-value">{{ $instructor->specialization ?? 'N/A' }}</div>
+                </div>
+
+                <div class="profile-field">
+                    <div class="profile-field-label">Experience:</div>
+                    <div class="profile-field-value">{{ $instructor->experience ?? 'N/A' }}</div>
+                </div>
+
+                <div class="profile-field">
+                    <div class="profile-field-label">License Number:</div>
+                    <div class="profile-field-value">{{ $instructor->license_number ?? 'N/A' }}</div>
+                </div>
             </div>
-        @endif
-        
-        <div class="profile-header">
-            <h1 class="profile-title">Instructor Profile</h1>
-            
-            <div class="profile-avatar">
-                <span class="avatar-icon">👨‍🏫</span>
+
+            <div class="profile-actions">
+                <button type="button" class="btn-edit-profile" onclick="showEditForm()">Edit Profile</button>
             </div>
         </div>
-        
-        <!-- Profile Display -->
-        <div id="profileDisplay">
-            <div class="profile-info">
-                <div class="info-row">
-                    <span class="info-label">Name:</span>
-                    <span class="info-value">{{ $instructor->name ?? 'N/A' }}</span>
-                </div>
-                
-                <div class="info-row">
-                    <span class="info-label">Email:</span>
-                    <span class="info-value">{{ $instructor->email ?? 'N/A' }}</span>
-                </div>
-                
-                <div class="info-row">
-                    <span class="info-label">Contact:</span>
-                    <span class="info-value">{{ $instructor->contact ?? 'N/A' }}</span>
-                </div>
-                
-                <div class="info-row">
-                    <span class="info-label">Specialization:</span>
-                    <span class="info-value">{{ $instructor->specialization ?? 'N/A' }}</span>
-                </div>
-                
-                <div class="info-row">
-                    <span class="info-label">Experience:</span>
-                    <span class="info-value">{{ $instructor->experience ?? 'N/A' }}</span>
-                </div>
-                
-                <div class="info-row">
-                    <span class="info-label">License Number:</span>
-                    <span class="info-value">{{ $instructor->license_number ?? 'N/A' }}</span>
-                </div>
-                
-                <div class="info-row">
-                    <span class="info-label">Status:</span>
-                    <span class="info-value">{{ ucfirst($instructor->status ?? 'active') }}</span>
-                </div>
-            </div>
-            
-            <div class="profile-buttons" id="profileButtons">
-                <button onclick="showEditForm()" class="btn btn-edit">Edit Profile</button>
-            </div>
-        </div>
-        
-        <!-- Edit Form -->
+
         <div id="editForm" class="edit-form">
             <form method="POST" action="{{ $schoolRoute('instructor.profile.update') }}">
                 @csrf
                 @method('PUT')
-                
-                <div class="form-group">
-                    <label for="name">Name:</label>
+
+                <div class="form-field">
+                    <label for="name">Name</label>
                     <input type="text" id="name" name="name" value="{{ old('name', $instructor->name) }}" required>
                 </div>
-                
-                <div class="form-group">
-                    <label for="email">Email:</label>
+
+                <div class="form-field">
+                    <label for="email">Email</label>
                     <input type="email" id="email" name="email" value="{{ old('email', $instructor->email) }}" required>
                 </div>
-                
-                <div class="form-group">
-                    <label for="contact">Contact:</label>
+
+                <div class="form-field">
+                    <label for="contact">Contact</label>
                     <input type="text" id="contact" name="contact" value="{{ old('contact', $instructor->contact) }}">
                 </div>
-                
-                <div class="form-group">
-                    <label for="specialization">Specialization:</label>
+
+                <div class="form-field">
+                    <label for="specialization">Specialization</label>
                     <input type="text" id="specialization" name="specialization" value="{{ old('specialization', $instructor->specialization) }}">
                 </div>
-                
-                <div class="form-group">
-                    <label for="experience">Experience (years):</label>
+
+                <div class="form-field">
+                    <label for="experience">Experience</label>
                     <input type="text" id="experience" name="experience" value="{{ old('experience', $instructor->experience) }}">
                 </div>
-                
-                <div class="form-group">
-                    <label for="license_number">License Number:</label>
+
+                <div class="form-field">
+                    <label for="license_number">License Number</label>
                     <input type="text" id="license_number" name="license_number" value="{{ old('license_number', $instructor->license_number) }}">
                 </div>
-                
-                <div class="form-buttons">
-                    <button type="submit" class="btn btn-save">Save Changes</button>
-                    <button type="button" onclick="cancelEdit()" class="btn btn-cancel">Cancel</button>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-save">Save Changes</button>
+                    <button type="button" class="btn-cancel" onclick="hideEditForm()">Cancel</button>
                 </div>
             </form>
         </div>
@@ -292,15 +369,80 @@
 
 <script>
     function showEditForm() {
-        document.getElementById('profileDisplay').style.display = 'none';
-        document.getElementById('profileButtons').style.display = 'none';
+        document.getElementById('profileView').style.display = 'none';
         document.getElementById('editForm').style.display = 'block';
     }
-    
-    function cancelEdit() {
-        document.getElementById('profileDisplay').style.display = 'block';
-        document.getElementById('profileButtons').style.display = 'block';
+
+    function hideEditForm() {
+        document.getElementById('profileView').style.display = 'block';
         document.getElementById('editForm').style.display = 'none';
     }
+
+    function uploadProfilePicture(input) {
+        if (!input.files || !input.files[0]) return;
+        
+        const file = input.files[0];
+        
+        // Validate file type
+        const allowedTypes = ['image/png', 'image/jpg', 'image/jpeg', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+            alert('Please upload a valid image file (PNG, JPG, JPEG, or WebP).');
+            input.value = '';
+            return;
+        }
+        
+        // Validate file size (2MB)
+        if (file.size > 2 * 1024 * 1024) {
+            alert('File size must be less than 2MB.');
+            input.value = '';
+            return;
+        }
+        
+        const formData = new FormData();
+        formData.append('profile_picture', file);
+        formData.append('_token', '{{ csrf_token() }}');
+        
+        // Show loading state
+        const avatarCircle = document.querySelector('.profile-avatar-circle');
+        const originalContent = avatarCircle.innerHTML;
+        avatarCircle.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;">Uploading...</div>';
+        
+        fetch('{{ $schoolRoute('instructor.profile.picture') }}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update avatar image
+                const avatarImg = document.querySelector('.profile-avatar-circle img');
+                if (avatarImg) {
+                    avatarImg.src = '/storage/' + data.path + '?t=' + new Date().getTime();
+                } else {
+                    // Replace letter with image
+                    avatarCircle.innerHTML = originalContent.replace(
+                        /<span class="avatar-letter">.*?<\/span>/,
+                        '<img src="/storage/' + data.path + '" alt="Profile Picture">'
+                    );
+                }
+                alert(data.message);
+            } else {
+                alert(data.message || 'Failed to upload profile picture.');
+                avatarCircle.innerHTML = originalContent;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while uploading the profile picture.');
+            avatarCircle.innerHTML = originalContent;
+        })
+        .finally(() => {
+            input.value = '';
+        });
+    }
 </script>
+
 @endsection

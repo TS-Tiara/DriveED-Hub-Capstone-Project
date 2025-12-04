@@ -23,6 +23,7 @@ class Instructor extends Authenticatable
         'license_number',
         'bio',
         'profile_picture',
+        'course_specializations',
     ];
 
     protected $hidden = [
@@ -34,6 +35,7 @@ class Instructor extends Authenticatable
     {
         return [
             'password' => 'hashed',
+            'course_specializations' => 'array',
         ];
     }
 

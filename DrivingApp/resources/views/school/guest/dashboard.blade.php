@@ -3,6 +3,10 @@
 @section('title', 'Guest Dashboard')
 
 @section('content')
+@php
+    $school = $school ?? $currentSchool ?? null;
+@endphp
+
 <style>
     .container {
         background: white;
@@ -28,7 +32,11 @@
     }
     
     .welcome-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        @if($school->schoolSetting->use_gradient_header)
+            background: linear-gradient(135deg, {{ $school->schoolSetting->primary_color }} 0%, {{ $school->schoolSetting->secondary_color }} 100%);
+        @else
+            background: {{ $school->schoolSetting->primary_color }};
+        @endif
         color: white;
         border-radius: 15px;
         padding: 30px;
@@ -179,23 +187,24 @@
     .btn-primary {
         display: inline-block;
         padding: 12px 30px;
-        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-        color: white;
+        background: var(--btn-primary-bg);
+        color: var(--btn-primary-text);
         text-decoration: none;
-        border-radius: 8px;
+        border-radius: var(--button-border-radius);
         font-weight: 600;
         text-align: center;
-        transition: transform 0.2s ease;
+        transition: all 0.3s ease;
     }
     
     .btn-primary:hover {
+        filter: brightness(1.1);
         transform: translateY(-2px);
-        color: white;
+        color: var(--btn-primary-text);
     }
 </style>
 
 <div class="container">
-    <h1>👋 Welcome, {{ auth()->guard('student')->user()->name }}!</h1>
+    <h1>Welcome, {{ auth()->guard('student')->user()->name }}!</h1>
     <p class="subtitle">You're logged in as a Guest</p>
     
     <div class="welcome-card">
@@ -215,7 +224,6 @@
     <div class="action-grid">
         <a href="{{ route('schools.guest.courses', $school) }}" class="action-card">
             <div class="action-card-icon" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">
-                📚
             </div>
             <div class="action-card-body">
                 <div class="action-card-title">Browse Courses</div>
@@ -227,7 +235,7 @@
         
         <a href="{{ route('schools.guest.enrollmentRequests', $school) }}" class="action-card">
             <div class="action-card-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
-                📋
+                
             </div>
             <div class="action-card-body">
                 <div class="action-card-title">My Enrollment Requests</div>
@@ -254,7 +262,7 @@
             @foreach($recentRequests as $request)
                 <div class="status-item">
                     <div>
-                        <div class="status-label">{{ $request->course->name }}</div>
+                        <div class="status-label">{{ $request->course->title }}</div>
                         <div style="font-size: 0.85rem; color: #9ca3af; margin-top: 4px;">
                             Requested: {{ $request->created_at->format('M d, Y') }}
                         </div>

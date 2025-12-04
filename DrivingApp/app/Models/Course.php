@@ -68,27 +68,6 @@ class Course extends Model
     }
 
     /**
-     * Get the predefined schedules for the course.
-     */
-    public function courseSchedules(): HasMany
-    {
-        return $this->hasMany(CourseSchedule::class);
-    }
-
-    /**
-     * Get available schedules for the course.
-     */
-    public function availableSchedules()
-    {
-        return $this->courseSchedules()
-            ->where('status', 'available')
-            ->where('booked_count', '<', DB::raw('max_students'))
-            ->where('date', '>=', now()->toDateString())
-            ->orderBy('date')
-            ->orderBy('start_time');
-    }
-
-    /**
      * Scope a query to only include courses for a specific school.
      */
     public function scopeForSchool($query, $schoolId)

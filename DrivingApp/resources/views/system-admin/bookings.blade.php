@@ -21,7 +21,7 @@
                 <tr>
                     <td>{{ $booking->id }}</td>
                     <td>{{ $booking->student->name ?? 'N/A' }}</td>
-                    <td>{{ $booking->course->name ?? 'N/A' }}</td>
+                    <td>{{ $booking->course->title ?? 'N/A' }}</td>
                     <td>{{ $booking->school->name }}</td>
                     <td>
                         <span class="badge 

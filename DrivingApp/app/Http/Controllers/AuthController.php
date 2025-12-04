@@ -14,6 +14,9 @@ class AuthController extends Controller
 {
     public function showLogin(School $school)
     {
+        // Eager load schoolSetting to prevent N+1 query in login view
+        $school->load('schoolSetting');
+        
         return view($school->resolveView('login'), [
             'school' => $school,
         ]);
@@ -32,15 +35,30 @@ class AuthController extends Controller
 
         $request->session()->put('school_id', $school->id);
 
+        // Optimize: Try to find user in single query by checking all tables
+        // Check admin first (most privileged)
         $admin = Admin::where('school_id', $school->id)->where('email', $email)->first();
-        if ($admin && Hash::check($password, $admin->password)) {
-            Auth::guard('admin')->login($admin, $remember);
-            return redirect()->route('schools.admin.dashboard', $school)
-                ->with('success', 'Welcome back, ' . $admin->name . '!');
+        if ($admin) {
+            if (Hash::check($password, $admin->password)) {
+                Auth::guard('admin')->login($admin, $remember);
+                return redirect()->route('schools.admin.dashboard', $school)
+                    ->with('success', 'Welcome back, ' . $admin->name . '!');
+            }
+            // Wrong password for admin
+            return back()->withErrors([
+                'email' => 'The provided credentials do not match our records.',
+            ])->withInput($request->only('email', 'remember'));
         }
 
+        // Check instructor
         $instructor = Instructor::where('school_id', $school->id)->where('email', $email)->first();
-        if ($instructor && Hash::check($password, $instructor->password)) {
+        if ($instructor) {
+            if (!Hash::check($password, $instructor->password)) {
+                return back()->withErrors([
+                    'email' => 'The provided credentials do not match our records.',
+                ])->withInput($request->only('email', 'remember'));
+            }
+            
             if ($instructor->status !== 'active') {
                 return back()->withErrors(['email' => 'Your account has been deactivated. Please contact the administrator.']);
             }
@@ -50,8 +68,15 @@ class AuthController extends Controller
                 ->with('success', 'Welcome back, ' . $instructor->name . '!');
         }
 
+        // Check student
         $student = Student::where('school_id', $school->id)->where('email', $email)->first();
-        if ($student && Hash::check($password, $student->password)) {
+        if ($student) {
+            if (!Hash::check($password, $student->password)) {
+                return back()->withErrors([
+                    'email' => 'The provided credentials do not match our records.',
+                ])->withInput($request->only('email', 'remember'));
+            }
+            
             if ($student->status !== 'active') {
                 return back()->withErrors(['email' => 'Your account has been deactivated. Please contact the administrator.']);
             }
@@ -68,6 +93,7 @@ class AuthController extends Controller
             }
         }
 
+        // No user found with this email
         return back()->withErrors([
             'email' => 'The provided credentials do not match our records.',
         ])->withInput($request->only('email', 'remember'));

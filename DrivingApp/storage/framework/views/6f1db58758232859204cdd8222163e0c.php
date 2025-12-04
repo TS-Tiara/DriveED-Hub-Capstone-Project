@@ -20,14 +20,34 @@
         $sidebarHover = $settings->sidebar_hover_color ?? '#f5f5f5';
         $useGradient = $settings->use_gradient_header ?? true;
         
+        // Background settings
+        $backgroundType = $settings->background_type ?? 'color';
+        $backgroundColor = $settings->background_color ?? '#f5f5f5';
+        $backgroundImage = $settings->background_image ?? null;
+        $backgroundOpacity = $settings->background_opacity ?? 100;
+        
         // Calculate RGB values for transparency effects
         $primaryRgb = sscanf($primaryColor, "#%02x%02x%02x");
         $accentRgb = sscanf($accentColor, "#%02x%02x%02x");
+        $backgroundRgb = sscanf($backgroundColor, "#%02x%02x%02x");
         
         // Generate header background
         $headerBg = $useGradient 
             ? "linear-gradient(135deg, {$primaryColor} 0%, {$secondaryColor} 100%)"
             : $primaryColor;
+            
+        // Generate body background
+        if ($backgroundType === 'image' && $backgroundImage) {
+            $bodyBg = "url('" . asset('storage/' . $backgroundImage) . "')";
+            $bodyBgSize = "cover";
+            $bodyBgPosition = "center";
+            $bodyBgAttachment = "fixed";
+        } else {
+            $bodyBg = "rgba(" . implode(', ', $backgroundRgb) . ", " . ($backgroundOpacity / 100) . ")";
+            $bodyBgSize = "auto";
+            $bodyBgPosition = "initial";
+            $bodyBgAttachment = "scroll";
+        }
     ?>
     
     <style>
@@ -88,13 +108,34 @@
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f5f5;
             margin: 0;
             padding: 0;
             overflow-x: hidden;
             width: 100%;
             position: relative;
         }
+        
+        <?php if($backgroundType === 'image' && $backgroundImage): ?>
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: <?php echo e($bodyBg); ?>;
+            background-size: <?php echo e($bodyBgSize); ?>;
+            background-position: <?php echo e($bodyBgPosition); ?>;
+            background-attachment: <?php echo e($bodyBgAttachment); ?>;
+            background-repeat: no-repeat;
+            opacity: <?php echo e($backgroundOpacity / 100); ?>;
+            z-index: -1;
+        }
+        <?php else: ?>
+        body {
+            background: <?php echo e($bodyBg); ?>;
+        }
+        <?php endif; ?>
         
         html {
             overflow-y: scroll;
@@ -173,6 +214,32 @@
         .profile-dropdown {
             position: relative;
             display: inline-block;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .profile-picture {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .profile-picture-default {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: white;
+            font-weight: 600;
         }
         
         .dropdown-menu {
@@ -409,7 +476,11 @@
         }
         
         .btn-primary, button.btn-primary, input[type="submit"].btn-primary {
+            <?php if(($settings->button_style ?? 'solid') === 'gradient'): ?>
+            background: linear-gradient(135deg, var(--btn-primary-bg) 0%, var(--btn-secondary-bg) 100%);
+            <?php else: ?>
             background: var(--btn-primary-bg);
+            <?php endif; ?>
             color: var(--btn-primary-text);
         }
         
@@ -1006,30 +1077,49 @@
             
             <div class="profile-dropdown" onclick="toggleProfileDropdown()">
                 <?php if(Auth::guard('admin')->check()): ?>
-                    👤 <?php echo e(Auth::guard('admin')->user()->name); ?>
+                    <?php $user = Auth::guard('admin')->user(); ?>
+                    <?php if($user->profile_picture): ?>
+                        <img src="<?php echo e(asset('storage/' . $user->profile_picture)); ?>" alt="Profile" class="profile-picture">
+                    <?php else: ?>
+                        <div class="profile-picture-default"><?php echo e(strtoupper(substr($user->name, 0, 1))); ?></div>
+                    <?php endif; ?>
+                    <?php echo e($user->name); ?>
 
                 <?php elseif(Auth::guard('instructor')->check()): ?>
-                    👨‍🏫 <?php echo e(Auth::guard('instructor')->user()->name); ?>
+                    <?php $user = Auth::guard('instructor')->user(); ?>
+                    <?php if($user->profile_picture): ?>
+                        <img src="<?php echo e(asset('storage/' . $user->profile_picture)); ?>" alt="Profile" class="profile-picture">
+                    <?php else: ?>
+                        <div class="profile-picture-default"><?php echo e(strtoupper(substr($user->name, 0, 1))); ?></div>
+                    <?php endif; ?>
+                    <?php echo e($user->name); ?>
 
                 <?php elseif(Auth::guard('student')->check()): ?>
-                    🎓 <?php echo e(Auth::guard('student')->user()->name); ?>
+                    <?php $user = Auth::guard('student')->user(); ?>
+                    <?php if($user->profile_picture): ?>
+                        <img src="<?php echo e(asset('storage/' . $user->profile_picture)); ?>" alt="Profile" class="profile-picture">
+                    <?php else: ?>
+                        <div class="profile-picture-default"><?php echo e(strtoupper(substr($user->name, 0, 1))); ?></div>
+                    <?php endif; ?>
+                    <?php echo e($user->name); ?>
 
                 <?php else: ?>
-                    👤 User
+                    <div class="profile-picture-default">U</div>
+                    User
                 <?php endif; ?>
                 
                 <div class="dropdown-menu" id="profileDropdownMenu">
                     <?php if(Auth::guard('admin')->check()): ?>
                         <a href="<?php echo e($schoolRoute('admin.profile')); ?>" class="dropdown-item nav-item" data-page="profile">
-                            👤 View Profile
+                            View Profile
                         </a>
                     <?php elseif(Auth::guard('instructor')->check()): ?>
                         <a href="<?php echo e($schoolRoute('instructor.profile')); ?>" class="dropdown-item nav-item" data-page="profile">
-                            👤 View Profile
+                            View Profile
                         </a>
                     <?php elseif(Auth::guard('student')->check()): ?>
                         <a href="<?php echo e($schoolRoute('student.profile')); ?>" class="dropdown-item nav-item" data-page="profile">
-                            👤 View Profile
+                            View Profile
                         </a>
                     <?php endif; ?>
                     <div class="dropdown-divider"></div>
@@ -1037,21 +1127,21 @@
                         <form method="POST" action="<?php echo e($schoolRoute('admin.logout')); ?>" style="margin: 0;">
                             <?php echo csrf_field(); ?>
                             <button type="submit" class="dropdown-item">
-                                🚪 Logout
+                                Logout
                             </button>
                         </form>
                     <?php elseif(Auth::guard('instructor')->check()): ?>
                         <form method="POST" action="<?php echo e($schoolRoute('instructor.logout')); ?>" style="margin: 0;">
                             <?php echo csrf_field(); ?>
                             <button type="submit" class="dropdown-item">
-                                🚪 Logout
+                                Logout
                             </button>
                         </form>
                     <?php elseif(Auth::guard('student')->check()): ?>
                         <form method="POST" action="<?php echo e($schoolRoute('student.logout')); ?>" style="margin: 0;">
                             <?php echo csrf_field(); ?>
                             <button type="submit" class="dropdown-item">
-                                🚪 Logout
+                                Logout
                             </button>
                         </form>
                     <?php endif; ?>
@@ -1086,7 +1176,6 @@
                 <a href="<?php echo e($schoolRoute('admin.courses')); ?>" class="nav-item" data-page="courses">Courses</a>
                 <a href="<?php echo e($schoolRoute('admin.bookings.index')); ?>" class="nav-item" data-page="bookings">Bookings</a>
                 <a href="<?php echo e($schoolRoute('admin.payments.index')); ?>" class="nav-item" data-page="payments">Payments</a>
-                <a href="<?php echo e($schoolRoute('admin.progress.index')); ?>" class="nav-item" data-page="progress">Student Progress</a>
                 <a href="<?php echo e($schoolRoute('admin.reports.index')); ?>" class="nav-item" data-page="reports">Reports & Analytics</a>
                 <a href="<?php echo e($schoolRoute('admin.settings')); ?>" class="nav-item" data-page="settings">Settings</a>
             <?php elseif(Auth::guard('instructor')->check()): ?>
@@ -1094,6 +1183,8 @@
                 <a href="<?php echo e($schoolRoute('instructor.schedule')); ?>" class="nav-item" data-page="my-schedule">My Schedule</a>
                 <a href="<?php echo e($schoolRoute('instructor.bookings.index')); ?>" class="nav-item" data-page="bookings">My Bookings</a>
                 <a href="<?php echo e($schoolRoute('instructor.students.index')); ?>" class="nav-item" data-page="students">Students</a>
+                <a href="<?php echo e($schoolRoute('instructor.grades')); ?>" class="nav-item" data-page="grades">Grades</a>
+                <a href="<?php echo e($schoolRoute('instructor.reports')); ?>" class="nav-item" data-page="reports">Reports</a>
             <?php elseif(Auth::guard('student')->check()): ?>
                 <?php
                     $currentStudent = Auth::guard('student')->user();
@@ -1109,9 +1200,8 @@
                     <a href="<?php echo e($schoolRoute('student.dashboard')); ?>" class="nav-item" data-page="dashboard">Dashboard</a>
                     <a href="<?php echo e($schoolRoute('student.schedule')); ?>" class="nav-item" data-page="schedule">My Schedule</a>
                     <a href="<?php echo e($schoolRoute('student.courses.index')); ?>" class="nav-item" data-page="courses">Browse Courses</a>
-                    <a href="<?php echo e($schoolRoute('student.bookings.index')); ?>" class="nav-item" data-page="bookings">My Bookings</a>
                     <a href="<?php echo e($schoolRoute('student.payments.index')); ?>" class="nav-item" data-page="payments">My Payments</a>
-                    <a href="<?php echo e($schoolRoute('student.progress.index')); ?>" class="nav-item" data-page="progress">📈 My Progress</a>
+                    <a href="<?php echo e($schoolRoute('student.progress.index')); ?>" class="nav-item" data-page="progress">My Progress</a>
                 <?php endif; ?>
             <?php endif; ?>
         </nav>

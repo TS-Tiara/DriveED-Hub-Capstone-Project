@@ -5,12 +5,65 @@
         $school = $school ?? $currentSchool ?? null;
         $slug = $school?->slug ?? 'default';
         $backgroundImage = asset('images/bg' . $slug . '.jpg');
+        $settings = $school?->schoolSetting;
+        
+        // School branding
         $schoolName = $school->name ?? 'DriveEd Hub';
         
         // Get custom colors from school settings or use defaults
-        $primaryColor = $school?->settings?->primary_color ?? '#2563eb';
-        $secondaryColor = $school?->settings?->secondary_color ?? '#f59e0b';
+        $primaryColor = $settings?->primary_color ?? '#2563eb';
+        $secondaryColor = $settings?->secondary_color ?? '#f59e0b';
+        
+        // Login Header Customization Settings (shared with registration)
+        $headerLayout = $settings?->login_header_layout ?? 'horizontal';
+        $logoImage = $settings?->login_logo_image;
+        $logoPosition = $settings?->login_logo_position ?? 'left';
+        $logoSize = $settings?->login_logo_size ?? 40;
+        $schoolNameText = $settings?->login_school_name_text ?? $schoolName;
+        $showSchoolName = $settings?->login_show_school_name ?? true;
+        $schoolNamePosition = $settings?->login_school_name_position ?? 'left';
+        $schoolNameSize = $settings?->login_school_name_size ?? 24;
+        // Use registration-specific text or fall back to default
+        $welcomeText = $settings?->register_welcome_text ?? 'Student Registration';
+        $subtitleText = $settings?->register_subtitle_text;
+        $showWelcomeText = $settings?->login_show_welcome_text ?? false;
+        $welcomePosition = $settings?->login_welcome_position ?? 'right';
+        $welcomeSize = $settings?->login_welcome_size ?? 16;
+        $headerBgType = $settings?->login_header_bg_type ?? 'gradient';
+        $headerBgColor = $settings?->login_header_bg_color;
+        $headerBgImage = $settings?->login_header_bg_image;
+        $headerHeight = $settings?->login_header_height ?? 60;
+        $headerTextColor = $settings?->login_header_text_color ?? '#ffffff';
+        $headerShadow = $settings?->login_header_shadow ?? true;
+        
+        // Check if gradient is enabled
+        $useGradient = $settings?->use_gradient_header ?? true;
+        
+        // Generate header background
+        if ($headerBgType === 'solid' && $headerBgColor) {
+            $headerBackground = $headerBgColor;
+        } elseif ($headerBgType === 'image' && $headerBgImage) {
+            $headerBackground = "url('" . asset('storage/' . $headerBgImage) . "')";
+        } elseif ($useGradient) {
+            $headerBackground = "linear-gradient(135deg, {$primaryColor} 0%, {$secondaryColor} 100%)";
+        } else {
+            $headerBackground = $primaryColor;
+        }
+        
+        // Login Page Background Settings (same as main app)
+        $pageBgType = $settings?->login_page_bg_type ?? 'color';
+        $pageBgColor = $settings?->login_page_bg_color ?? '#f5f5f5';
+        $pageBgImage = $settings?->login_page_bg_image;
+        $pageBgOpacity = $settings?->login_page_bg_opacity ?? 100;
+        
+        // Generate page background
+        if ($pageBgType === 'image' && $pageBgImage) {
+            $pageBackground = "url('" . asset('storage/' . $pageBgImage) . "')";
+        } else {
+            $pageBackground = $pageBgColor;
+        }
     @endphp
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>{{ $schoolName }} - Guest Registration</title>
     <style>
         * {
@@ -33,118 +86,194 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: var(--school-bg) no-repeat center center fixed;
+            @if($pageBgType === 'image' && $pageBgImage)
+            background: {{ $pageBackground }} no-repeat center center fixed;
             background-size: cover;
-            filter: blur(3px);
-            z-index: -2;
+            @else
+            background: {{ $pageBackground }};
+            @endif
+            opacity: {{ $pageBgOpacity / 100 }};
+            z-index: -1;
         }
 
-        body::after {
-            content: "";
+        /* Customizable Registration Header Styles */
+        .login-header {
             position: fixed;
             top: 0;
             left: 0;
+            right: 0;
             width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.1);
-            z-index: -1;
+            height: {{ $headerHeight }}px;
+            background: {{ $headerBgType === 'image' && $headerBgImage ? 'transparent' : $headerBackground }};
+            @if($headerBgType === 'image' && $headerBgImage)
+            background-image: {{ $headerBackground }};
+            background-size: cover;
+            background-position: center;
+            @endif
+            color: {{ $headerTextColor }};
+            z-index: 1000;
+            @if($headerShadow)
+            box-shadow: 0 3px 20px rgba(0,0,0,0.15);
+            @endif
+            box-sizing: border-box;
         }
-
-        .header {
-            display: flex;
-            width: 100%;
-            height: 80px;
-            position: relative;
-            z-index: 10;
-        }
-
-        .logo-section {
-            background: var(--primary-gradient);
-            flex: 1;
+        
+        /* Horizontal Layout */
+        .login-header-horizontal {
             display: flex;
             align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 28px;
-            font-weight: bold;
-            position: relative;
+            justify-content: space-between;
+            padding: 0 25px;
         }
-
-        .logo-section::before {
-            content: "🎓";
-            font-size: 32px;
-            margin-right: 10px;
+        
+        .header-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
-
-        .logo-section::after {
-            content: "";
-            position: absolute;
-            right: -20px;
-            top: 0;
-            bottom: 0;
-            width: 40px;
-            background: var(--primary-gradient);
-            transform: skew(-20deg);
-            z-index: -1;
-        }
-
-        .welcome-section {
-            background: var(--secondary-gradient);
+        
+        .header-left {
+            justify-content: flex-start;
             flex: 1;
+        }
+        
+        .header-center {
+            justify-content: center;
+            flex: 1;
+        }
+        
+        .header-right {
+            justify-content: flex-end;
+            flex: 1;
+        }
+        
+        /* Vertical Layout */
+        .login-header-vertical {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            color: #1f2937;
-            padding-left: 30px;
+            padding: 15px 25px;
         }
-
-        .welcome-section h1 {
-            font-size: 26px;
-            font-weight: bold;
-            margin-bottom: 5px;
+        
+        .header-vertical-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
         }
-
-        .welcome-section p {
-            font-size: 16px;
+        
+        /* Centered Layout */
+        .login-header-centered {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 15px 25px;
+        }
+        
+        .header-centered-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .header-main {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        /* Logo Only Layout */
+        .login-header-logo-only {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px 25px;
+        }
+        
+        .header-logo-only {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Header Elements */
+        .header-logo .logo-image {
+            height: {{ $logoSize }}px;
+            width: auto;
+            object-fit: contain;
+        }
+        
+        .header-school-name {
+            font-size: {{ $schoolNameSize }}px;
+            font-weight: 600;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            white-space: nowrap;
+        }
+        
+        .header-welcome {
+            font-size: {{ $welcomeSize }}px;
             font-weight: 500;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+        
+        .header-subtitle {
+            font-size: {{ max(12, $welcomeSize - 4) }}px;
+            font-weight: 400;
+            opacity: 0.9;
+            margin-top: 2px;
         }
 
         .container {
-            max-width: 500px;
-            margin: 20px auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: calc(100vh - {{ $headerHeight }}px);
+            margin-top: {{ $headerHeight }}px;
             padding: 15px;
         }
 
         .registration-card {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-            padding: 30px;
+            background: rgba(255, 255, 255, 0.98);
+            padding: 35px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
 
         h2 {
-            color: #333;
+            font-size: 22px;
+            font-weight: bold;
+            color: #1f2937;
             margin-bottom: 8px;
             text-align: center;
-            font-size: 1.6rem;
         }
 
         .subtitle {
-            color: #666;
-            text-align: center;
+            font-size: 11px;
+            color: #6b7280;
             margin-bottom: 20px;
-            font-size: 13px;
+            text-align: center;
         }
 
         .form-group {
-            margin-bottom: 18px;
+            margin-bottom: 12px;
+            text-align: left;
         }
 
         .form-group label {
             display: block;
-            margin-bottom: 6px;
-            color: #2c3e50;
+            margin-bottom: 5px;
+            color: #374151;
             font-weight: 500;
             font-size: 13px;
         }
@@ -154,11 +283,15 @@
         input[type="password"],
         textarea {
             width: 100%;
-            padding: 10px 12px;
-            border: 2px solid #e0e0e0;
+            padding: 9px;
+            border: 2px solid #e5e7eb;
             border-radius: 8px;
-            font-size: 14px;
-            transition: all 0.3s ease;
+            font-size: 13px;
+        }
+
+        textarea {
+            min-height: 60px;
+            resize: vertical;
         }
 
         input[type="text"]:focus,
@@ -167,44 +300,56 @@
         textarea:focus {
             outline: none;
             border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
         }
 
         .error {
             color: #e74c3c;
-            font-size: 13px;
-            margin-top: 5px;
+            font-size: 11px;
+            margin-top: 4px;
         }
 
         .success {
-            background: #d4edda;
-            color: #155724;
-            padding: 12px;
+            padding: 10px 12px;
             border-radius: 8px;
-            margin-bottom: 20px;
-            border: 1px solid #c3e6cb;
+            margin-bottom: 15px;
+            font-size: 13px;
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #6ee7b7;
+            text-align: left;
+        }
+
+        .alert-error {
+            padding: 10px 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+            text-align: left;
         }
 
         .submit-btn {
             width: 100%;
-            padding: 12px;
-            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            padding: 10px;
+            @if($school->schoolSetting->use_gradient_header ?? false)
+                background: linear-gradient(135deg, {{ $school->schoolSetting->primary_color ?? '#2563eb' }} 0%, {{ $school->schoolSetting->secondary_color ?? '#1e40af' }} 100%);
+            @else
+                background: {{ $school->schoolSetting->primary_color ?? '#2563eb' }};
+            @endif
             color: white;
             border: none;
             border-radius: 8px;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 600;
             cursor: pointer;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            transition: opacity 0.2s ease;
         }
 
         .submit-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(37, 99, 235, 0.4);
-        }
-
-        .submit-btn:active {
-            transform: translateY(0);
+            opacity: 0.85;
         }
 
         .back-to-login {
@@ -216,7 +361,7 @@
             color: #2563eb;
             text-decoration: none;
             font-weight: 500;
-            font-size: 14px;
+            font-size: 12px;
         }
 
         .back-to-login a:hover {
@@ -224,33 +369,189 @@
         }
 
         @media (max-width: 768px) {
-            .header {
-                height: auto;
-                flex-direction: column;
+            .login-header {
+                height: {{ max(50, $headerHeight - 10) }}px;
+                padding: 0 15px;
+            }
+            
+            .header-school-name {
+                font-size: {{ max(18, $schoolNameSize - 6) }}px;
+            }
+            
+            .header-welcome {
+                font-size: {{ max(14, $welcomeSize - 2) }}px;
+            }
+            
+            .header-logo .logo-image {
+                height: {{ max(32, $logoSize - 8) }}px;
             }
 
-            .logo-section::after {
+            .container {
+                padding: 15px 10px;
+                margin: {{ max(50, $headerHeight - 10) + 20 }}px auto 15px auto;
+            }
+
+            .registration-card {
+                padding: 25px 20px;
+                border-radius: 12px;
+            }
+
+            h2 {
+                font-size: 1.4rem;
+            }
+
+            .subtitle {
+                font-size: 12px;
+            }
+
+            input[type="text"],
+            input[type="email"],
+            input[type="password"],
+            textarea {
+                padding: 12px;
+                font-size: 16px;
+            }
+
+            .submit-btn {
+                padding: 14px;
+                font-size: 16px;
+            }
+
+            .form-group label {
+                font-size: 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .login-header {
+                height: {{ max(45, $headerHeight - 15) }}px;
+                padding: 0 12px;
+            }
+            
+            .login-header-horizontal .header-right,
+            .login-header-horizontal .header-center {
                 display: none;
             }
-
-            .welcome-section {
-                padding-left: 0;
+            
+            .header-school-name {
+                font-size: {{ max(16, $schoolNameSize - 8) }}px;
             }
-
-            .welcome-section h1 {
-                font-size: 20px;
+            
+            .header-welcome {
+                display: none;
             }
-
-            .welcome-section p {
-                font-size: 14px;
+            
+            .header-logo .logo-image {
+                height: {{ max(28, $logoSize - 12) }}px;
             }
 
             .container {
                 padding: 10px;
+                margin: {{ max(45, $headerHeight - 15) + 20 }}px auto 10px auto;
             }
 
             .registration-card {
-                padding: 25px;
+                padding: 14px 18px;
+                width: 280px;
+                max-width: 90%;
+                border-radius: 8px;
+            }
+
+            h2 {
+                font-size: 18px;
+                margin-bottom: 6px;
+            }
+
+            .subtitle {
+                font-size: 10px;
+                margin-bottom: 8px;
+            }
+
+            .form-group {
+                margin-bottom: 6px;
+            }
+
+            .form-group label {
+                font-size: 10px;
+                margin-bottom: 2px;
+            }
+
+            input[type="text"],
+            input[type="email"],
+            input[type="password"],
+            textarea {
+                padding: 6px 8px;
+                font-size: 12px;
+                border: 1px solid #d1d5db;
+                border-radius: 5px;
+            }
+
+            textarea {
+                min-height: 50px;
+            }
+
+            .error {
+                font-size: 11px;
+                margin-top: 2px;
+            }
+
+            .success {
+                padding: 6px 8px;
+                border-radius: 5px;
+                margin-bottom: 6px;
+                font-size: 11px;
+            }
+
+            .alert-error {
+                padding: 6px 8px;
+                border-radius: 5px;
+                margin-bottom: 6px;
+                font-size: 11px;
+            }
+
+            .submit-btn {
+                padding: 8px;
+                font-size: 12px;
+                border-radius: 5px;
+            }
+
+            .back-to-login {
+                margin-top: 10px;
+            }
+
+            .back-to-login a {
+                font-size: 10px;
+            }
+        }
+                padding: 13px;
+                font-size: 16px;
+            }
+
+            .error {
+                font-size: 12px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .login-header {
+                height: {{ max(42, $headerHeight - 18) }}px;
+                padding: 0 10px;
+            }
+            
+            .header-school-name {
+                font-size: {{ max(14, $schoolNameSize - 10) }}px;
+            }
+            
+            .header-logo .logo-image {
+                height: {{ max(24, $logoSize - 16) }}px;
+            }
+
+            .registration-card {
+                padding: 18px 12px;
+            }
+
+            h2 {
+                font-size: 1.2rem;
             }
         }
     </style>
@@ -263,15 +564,101 @@
     </style>
 </head>
 <body style="--school-bg: url('{{ $backgroundImage }}')">
-    <div class="header">
-        <div class="logo-section">
-            {{ $schoolName }}
-        </div>
-        <div class="welcome-section">
-            <h1>Student Registration</h1>
-            <p>Join us today and start your journey</p>
-        </div>
-    </div>
+    <!-- Customizable Registration Header -->
+    <nav class="login-header login-header-{{ $headerLayout }}">
+        @if($headerLayout === 'horizontal')
+            <div class="header-section header-left">
+                @if($logoImage && $logoPosition === 'left')
+                    <div class="header-logo">
+                        <img src="{{ asset('storage/' . $logoImage) }}" alt="Logo" class="logo-image">
+                    </div>
+                @endif
+                @if($showSchoolName && $schoolNamePosition === 'left')
+                    <div class="header-school-name">
+                        {{ $schoolNameText }}
+                    </div>
+                @endif
+            </div>
+            
+            <div class="header-section header-center">
+                @if($logoImage && $logoPosition === 'center')
+                    <div class="header-logo">
+                        <img src="{{ asset('storage/' . $logoImage) }}" alt="Logo" class="logo-image">
+                    </div>
+                @endif
+                @if($showSchoolName && $schoolNamePosition === 'center')
+                    <div class="header-school-name">
+                        {{ $schoolNameText }}
+                    </div>
+                @endif
+            </div>
+            
+            <div class="header-section header-right">
+                @if($logoImage && $logoPosition === 'right')
+                    <div class="header-logo">
+                        <img src="{{ asset('storage/' . $logoImage) }}" alt="Logo" class="logo-image">
+                    </div>
+                @endif
+                @if($showSchoolName && $schoolNamePosition === 'right')
+                    <div class="header-school-name">
+                        {{ $schoolNameText }}
+                    </div>
+                @endif
+            </div>
+        @elseif($headerLayout === 'vertical')
+            <div class="header-vertical-content">
+                @if($logoImage)
+                    <div class="header-logo">
+                        <img src="{{ asset('storage/' . $logoImage) }}" alt="Logo" class="logo-image">
+                    </div>
+                @endif
+                @if($showSchoolName)
+                    <div class="header-school-name">
+                        {{ $schoolNameText }}
+                    </div>
+                @endif
+                @if($showWelcomeText)
+                    <div class="header-welcome">
+                        {{ $welcomeText }}
+                        @if($subtitleText)
+                            <span class="header-subtitle">{{ $subtitleText }}</span>
+                        @endif
+                    </div>
+                @endif
+            </div>
+        @elseif($headerLayout === 'centered')
+            <div class="header-centered-content">
+                <div class="header-main">
+                    @if($logoImage)
+                        <div class="header-logo">
+                            <img src="{{ asset('storage/' . $logoImage) }}" alt="Logo" class="logo-image">
+                        </div>
+                    @endif
+                    @if($showSchoolName)
+                        <div class="header-school-name">
+                            {{ $schoolNameText }}
+                        </div>
+                    @endif
+                </div>
+                @if($showWelcomeText)
+                    <div class="header-welcome">
+                        {{ $welcomeText }}
+                        @if($subtitleText)
+                            <span class="header-subtitle">{{ $subtitleText }}</span>
+                        @endif
+                    </div>
+                @endif
+            </div>
+        @elseif($headerLayout === 'logo-only')
+            <div class="header-logo-only">
+                @if($logoImage)
+                    <img src="{{ asset('storage/' . $logoImage) }}" alt="Logo" class="logo-image">
+                @else
+                    <div class="header-school-name">{{ $schoolNameText }}</div>
+                @endif
+            </div>
+        @endif
+    </nav>
 
     <div class="container">
         <div class="registration-card">
@@ -340,6 +727,7 @@
                     <input type="password" id="password_confirmation" name="password_confirmation" required>
                 </div>
 
+                <br>
                 <button type="submit" class="submit-btn">Create Account</button>
             </form>
 

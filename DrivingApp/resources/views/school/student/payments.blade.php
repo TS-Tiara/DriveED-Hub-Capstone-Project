@@ -5,31 +5,37 @@
 @section('content')
 @php
     $schoolName = $school->name ?? 'Driving School';
+    $settings = $school->schoolSetting;
 @endphp
 
 <style>
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: white;
+.payments-container {
     padding: 20px;
-}
-
-.container {
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
-    padding: 30px;
 }
 
-.page-header h1 {
-    font-size: 2rem;
-    color: #1f2937;
+.page-header {
     margin-bottom: 30px;
+    padding-bottom: 15px;
+    border-bottom: 4px solid {{ $settings->primary_color ?? '#667eea' }};
+}
+
+.page-title {
+    font-size: 2rem;
+    color: #111827;
+    margin: 0;
+    font-weight: 400;
 }
 
 .total-spent {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    @if($settings->use_gradient_header ?? true)
+        background: linear-gradient(135deg, {{ $settings->primary_color ?? '#667eea' }} 0%, {{ $settings->secondary_color ?? '#764ba2' }} 100%);
+    @else
+        background: {{ $settings->primary_color ?? '#667eea' }};
+    @endif
     color: white;
-    border-radius: 15px;
+    border-radius: 12px;
     padding: 30px;
     margin-bottom: 30px;
     text-align: center;
@@ -44,7 +50,7 @@ body {
     background: white;
     border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 table {
@@ -77,11 +83,86 @@ td {
 
 .badge-completed { background: #d1fae5; color: #065f46; }
 .badge-pending { background: #fef3c7; color: #92400e; }
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+    
+    .container {
+        padding: 15px;
+    }
+    
+    .page-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .total-spent {
+        padding: 20px;
+    }
+    
+    .total-spent h2 {
+        font-size: 2rem;
+    }
+    
+    .total-spent p {
+        font-size: 1rem !important;
+    }
+    
+    /* Make table scrollable on mobile */
+    .payments-table {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    table {
+        min-width: 600px;
+    }
+    
+    th, td {
+        padding: 10px;
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .page-header h1 {
+        font-size: 1.25rem;
+    }
+    
+    .total-spent {
+        padding: 15px;
+        border-radius: 10px;
+    }
+    
+    .total-spent h2 {
+        font-size: 1.75rem;
+    }
+    
+    .total-spent p {
+        font-size: 0.9rem !important;
+    }
+    
+    th, td {
+        padding: 8px;
+        font-size: 13px;
+    }
+    
+    .badge {
+        padding: 4px 10px;
+        font-size: 0.7rem;
+    }
+}
 </style>
 
-<div class="container">
+<div class="payments-container">
     <div class="page-header">
-        <h1>💰 My Payments - {{ $schoolName }}</h1>
+        <h1 class="page-title">My Payments</h1>
     </div>
 
     <div class="total-spent">

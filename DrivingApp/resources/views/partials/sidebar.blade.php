@@ -15,29 +15,61 @@
             <a href="{{ $schoolRoute('admin.schedules') }}" class="nav-item {{ request()->routeIs('schools.admin.schedules*') ? 'active' : '' }}">
                 Schedules
             </a>
-            <a href="{{ $schoolRoute('admin.reports.students') }}" class="nav-item {{ request()->routeIs('schools.admin.reports*') ? 'active' : '' }}">
-                Reports
+            <a href="{{ $schoolRoute('admin.courses.index') }}" class="nav-item {{ request()->routeIs('schools.admin.courses*') ? 'active' : '' }}">
+                Courses
+            </a>
+            <a href="{{ $schoolRoute('admin.bookings.index') }}" class="nav-item {{ request()->routeIs('schools.admin.bookings*') ? 'active' : '' }}">
+                Bookings
+            </a>
+            <a href="{{ $schoolRoute('admin.payments.index') }}" class="nav-item {{ request()->routeIs('schools.admin.payments*') ? 'active' : '' }}">
+                Payments
+            </a>
+            <a href="{{ $schoolRoute('admin.reports.index') }}" class="nav-item {{ request()->routeIs('schools.admin.reports*') ? 'active' : '' }}">
+                Reports & Analytics
+            </a>
+            <a href="{{ $schoolRoute('admin.settings') }}" class="nav-item {{ request()->routeIs('schools.admin.settings') ? 'active' : '' }}">
+                Settings
+            </a>
+            <a href="{{ $schoolRoute('admin.profile') }}" class="nav-item {{ request()->routeIs('schools.admin.profile') ? 'active' : '' }}">
+                Profile
             </a>
         @elseif(Auth::guard('instructor')->check())
             <a href="{{ $schoolRoute('instructor.dashboard') }}" class="nav-item {{ request()->routeIs('schools.instructor.dashboard') ? 'active' : '' }}">
                 Dashboard
             </a>
-            <a href="{{ $schoolRoute('instructor.timeslots.index') }}" class="nav-item {{ request()->routeIs('schools.instructor.timeslots*') ? 'active' : '' }}">
-                Schedule
-            </a>
-            <a href="{{ $schoolRoute('instructor.schedule') }}" class="nav-item {{ request()->routeIs('schools.instructor.schedule') ? 'active' : '' }}">
+            <a href="{{ $schoolRoute('instructor.schedule') }}" class="nav-item {{ request()->routeIs('schools.instructor.schedule') || request()->routeIs('schools.instructor.timeslots*') ? 'active' : '' }}">
                 My Schedule
             </a>
+            <a href="{{ $schoolRoute('instructor.students.index') }}" class="nav-item {{ request()->routeIs('schools.instructor.students*') ? 'active' : '' }}">
+                My Students
             </a>
-            <a href="#" class="nav-item">
-                Notification
+            <a href="{{ $schoolRoute('instructor.grades') }}" class="nav-item {{ request()->routeIs('schools.instructor.grades') ? 'active' : '' }}">
+                Grades
+            </a>
+            <a href="{{ $schoolRoute('instructor.reports') }}" class="nav-item {{ request()->routeIs('schools.instructor.reports') ? 'active' : '' }}">
+                Reports
+            </a>
+            <a href="{{ $schoolRoute('instructor.profile') }}" class="nav-item {{ request()->routeIs('schools.instructor.profile') ? 'active' : '' }}">
+                Profile
             </a>
         @elseif(Auth::guard('student')->check())
             <a href="{{ $schoolRoute('student.dashboard') }}" class="nav-item {{ request()->routeIs('schools.student.dashboard') ? 'active' : '' }}">
                 Dashboard
             </a>
+            <a href="{{ $schoolRoute('student.courses.index') }}" class="nav-item {{ request()->routeIs('schools.student.courses*') ? 'active' : '' }}">
+                Courses
+            </a>
             <a href="{{ $schoolRoute('student.schedule') }}" class="nav-item {{ request()->routeIs('schools.student.schedule') ? 'active' : '' }}">
                 My Schedule
+            </a>
+            <a href="{{ $schoolRoute('student.payments.index') }}" class="nav-item {{ request()->routeIs('schools.student.payments*') ? 'active' : '' }}">
+                Payments
+            </a>
+            <a href="{{ $schoolRoute('student.progress.index') }}" class="nav-item {{ request()->routeIs('schools.student.progress*') ? 'active' : '' }}">
+                Progress
+            </a>
+            <a href="{{ $schoolRoute('student.profile') }}" class="nav-item {{ request()->routeIs('schools.student.profile') ? 'active' : '' }}">
+                Profile
             </a>
         @endif
     </nav>

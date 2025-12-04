@@ -43,6 +43,11 @@ class TimeSlot extends Model
             ->withPivot(['school_id', 'assignment_type']);
     }
 
+    public function bookings()
+    {
+        return $this->hasMany(Booking::class, 'time_slot_id');
+    }
+
     public function hasInstructor(int $instructorId): bool
     {
         return $this->instructors()->wherePivot('instructor_id', $instructorId)->exists();

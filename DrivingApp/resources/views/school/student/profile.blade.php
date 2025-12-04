@@ -7,108 +7,375 @@
     $school = $school ?? $currentSchool ?? null;
     $schoolName = $school->name ?? 'Driving School';
     $student = Auth::guard('student')->user();
+    $settings = $school->schoolSetting;
 @endphp
 
 <style>
     .profile-container {
+        padding: 20px;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .page-header {
+        margin-bottom: 30px;
+        padding-bottom: 15px;
+        border-bottom: 4px solid {{ $settings->primary_color ?? '#667eea' }};
+    }
+
+    .page-title {
+        font-size: 2rem;
+        color: #111827;
+        margin: 0;
+        font-weight: 400;
+    }
+
+    .profile-card {
         max-width: 600px;
         margin: 0 auto;
         background: white;
-        padding: 40px;
-        border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        border-radius: 12px;
+        padding: 0;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        position: relative;
     }
-    
-    .profile-header {
+
+    .status-badge-top {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        background: #10b981;
+        color: white;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .profile-card-header {
         text-align: center;
-        margin-bottom: 30px;
+        padding: 40px 30px 30px;
     }
-    
-    .profile-title {
-        color: #333;
-        margin: 0;
-        font-size: 28px;
-    }
-    
-    .profile-avatar {
-        width: 100px;
-        height: 100px;
-        background-color: #007bff;
+
+    .profile-avatar-circle {
+        width: 180px;
+        height: 180px;
         border-radius: 50%;
+        background: #000;
         margin: 0 auto 20px;
         display: flex;
         align-items: center;
         justify-content: center;
+        overflow: hidden;
+        position: relative;
+        cursor: pointer;
+    }
+
+    .profile-avatar-circle:hover .avatar-upload-overlay {
+        opacity: 1;
+    }
+
+    .avatar-upload-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s;
+        cursor: pointer;
+        z-index: 10;
+    }
+
+    .avatar-upload-overlay span {
+        color: white;
+        font-size: 16px;
+        font-weight: 500;
+    }
+
+    .profile-avatar-circle img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .profile-avatar-letter {
+        font-size: 80px;
+        font-weight: 700;
+        color: white;
+    }
+
+    .profile-name {
+        font-size: 24px;
+        font-weight: 600;
+        color: #000;
+    }
+    
+    .profile-card-body {
+        padding: 0 30px 30px;
+    }
+
+    .profile-field {
+        display: grid;
+        grid-template-columns: 140px 1fr;
+        padding: 15px 0;
+        border-bottom: 1px solid #e0e0e0;
+        gap: 20px;
+    }
+
+    .profile-field:last-child {
+        border-bottom: none;
+    }
+
+    .profile-field-label {
+        font-weight: 600;
+        color: #000;
+        font-size: 15px;
+    }
+
+    .profile-field-value {
+        color: #666;
+        font-size: 15px;
+    }
+
+    .profile-actions {
+        text-align: center;
+        padding: 20px 30px 30px;
+    }
+
+    .btn-edit-profile {
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 12px 40px;
+        border-radius: 6px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .btn-edit-profile:hover {
+        background: #0056b3;
+    }
+
+    .edit-form {
+        display: none;
+        padding: 30px;
+    }
+
+    .form-field {
+        margin-bottom: 20px;
+    }
+
+    .form-field label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #000;
+        font-size: 14px;
+    }
+
+    .form-field input {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 15px;
+    }
+
+    .form-field input:focus {
+        outline: none;
+        border-color: {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 10px;
+        justify-center;
+        margin-top: 30px;
+    }
+
+    .btn-save {
+        background: {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 6px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .btn-save:hover {
+        opacity: 0.9;
+    }
+
+    .btn-cancel {
+        background: #6c757d;
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 6px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .btn-cancel:hover {
+        background: #5a6268;
+    }
+
+    .alert {
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: 6px;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .alert-success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .alert-error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+    
+    .status-badge {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        background: #10b981;
+        color: white;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .profile-header {
+        text-align: center;
+        padding: 40px 30px 30px;
+    }
+
+    .profile-avatar {
+        width: 180px;
+        height: 180px;
+        background: #000;
+        border-radius: 50%;
+        margin: 0 auto 25px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        position: relative;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        border: 4px solid #f3f4f6;
+    }
+    
+    .profile-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
     }
     
     .avatar-icon {
         color: white;
-        font-size: 40px;
+        font-size: 80px;
+        font-weight: bold;
+        text-transform: uppercase;
     }
     
     .profile-info {
-        margin-bottom: 30px;
+        padding: 0 40px 30px;
     }
     
     .info-row {
-        display: flex;
-        margin-bottom: 15px;
-        padding: 10px 0;
-        border-bottom: 1px solid #eee;
+        display: grid;
+        grid-template-columns: 160px 1fr;
+        padding: 16px 0;
+        border-bottom: 1px solid #e5e7eb;
+        align-items: center;
+    }
+
+    .info-row:last-child {
+        border-bottom: none;
     }
     
     .info-label {
-        font-weight: bold;
-        width: 150px;
-        color: #555;
+        font-weight: 600;
+        color: #111827;
+        font-size: 15px;
     }
     
     .info-value {
-        flex: 1;
-        color: #333;
+        color: #4b5563;
+        font-size: 15px;
     }
-    
+
     .profile-buttons {
         text-align: center;
-        margin-top: 30px;
+        padding: 0 40px 40px;
     }
     
     .btn {
-        padding: 12px 24px;
-        margin: 0 10px;
+        padding: 12px 32px;
+        margin: 0;
         border: none;
-        border-radius: 5px;
+        border-radius: 8px;
         cursor: pointer;
-        font-size: 14px;
+        font-size: 15px;
+        font-weight: 600;
         text-decoration: none;
         display: inline-block;
+        transition: all 0.3s ease;
     }
     
     .btn-edit {
-        background: #007bff;
+        background: {{ $school->schoolSetting->primary_color ?? '#3b82f6' }};
         color: white;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
     
     .btn-edit:hover {
-        background: #0056b3;
+        background: {{ $school->schoolSetting->secondary_color ?? '#2563eb' }};
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        transform: translateY(-1px);
     }
     
     .back-button {
-        background: #6c757d;
-        color: white;
+        background: white;
+        color: {{ $school->schoolSetting->primary_color ?? '#3b82f6' }};
         padding: 10px 20px;
-        border-radius: 5px;
+        border-radius: 8px;
         text-decoration: none;
         margin-bottom: 20px;
         display: inline-block;
+        border: 2px solid {{ $school->schoolSetting->primary_color ?? '#3b82f6' }};
+        transition: all 0.3s ease;
+        font-weight: 500;
     }
     
     .back-button:hover {
-        background: #545b62;
+        background: {{ $school->schoolSetting->primary_color ?? '#3b82f6' }};
+        color: white;
     }
-    
+
     .edit-form {
         display: none;
+        padding: 40px;
     }
     
     .form-group {
@@ -117,98 +384,241 @@
     
     .form-group label {
         display: block;
-        font-weight: bold;
-        margin-bottom: 5px;
-        color: #555;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #111827;
+        font-size: 14px;
     }
     
     .form-group input {
         width: 100%;
-        padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        font-size: 14px;
+        padding: 12px 16px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 15px;
         box-sizing: border-box;
+        transition: all 0.2s;
+    }
+
+    .form-group input:focus {
+        outline: none;
+        border-color: {{ $school->schoolSetting->primary_color ?? '#3b82f6' }};
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
     
     .form-buttons {
         text-align: center;
-        margin-top: 20px;
+        margin-top: 30px;
+        display: flex;
+        gap: 12px;
+        justify-content: center;
     }
     
     .btn-save {
-        background: #28a745;
+        background: {{ $school->schoolSetting->primary_color ?? '#3b82f6' }};
         color: white;
     }
     
     .btn-save:hover {
-        background: #218838;
+        background: {{ $school->schoolSetting->secondary_color ?? '#2563eb' }};
+        transform: translateY(-1px);
     }
     
     .btn-cancel {
-        background: #6c757d;
+        background: #6b7280;
         color: white;
     }
     
     .btn-cancel:hover {
-        background: #545b62;
+        background: #4b5563;
+        transform: translateY(-1px);
     }
-    
+
     .success-message {
         background-color: #d4edda;
         color: #155724;
         padding: 15px;
-        border-radius: 5px;
+        border-radius: 8px;
         margin-bottom: 20px;
-        border: 1px solid #c3e6cb;
+        border-left: 4px solid #28a745;
     }
     
     .error-message {
         background-color: #f8d7da;
         color: #721c24;
         padding: 15px;
-        border-radius: 5px;
+        border-radius: 8px;
         margin-bottom: 20px;
-        border: 1px solid #f5c6cb;
+        border-left: 4px solid #dc3545;
+    }
+    
+    /* Mobile Responsiveness */
+    @media (max-width: 768px) {
+        .profile-page {
+            padding: 20px 15px;
+        }
+        
+        .profile-page-title {
+            font-size: 24px;
+        }
+        
+        .profile-page-title::after {
+            left: -15px;
+            width: calc(100% + 60px);
+        }
+        
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+        }
+        
+        .profile-avatar-letter {
+            font-size: 50px;
+        }
+        
+        .profile-name {
+            font-size: 20px;
+        }
+        
+        .profile-header {
+            padding: 30px 20px 20px;
+        }
+        
+        .profile-card-body {
+            padding: 0 20px 20px;
+        }
+        
+        .profile-field {
+            grid-template-columns: 1fr;
+            gap: 8px;
+            padding: 12px 0;
+        }
+        
+        .profile-field-label {
+            font-size: 14px;
+            font-weight: 700;
+        }
+        
+        .profile-field-value {
+            font-size: 14px;
+        }
+        
+        .profile-actions {
+            padding: 15px 20px 20px;
+        }
+        
+        .btn-edit-profile {
+            padding: 10px 30px;
+            font-size: 14px;
+        }
+        
+        .edit-form {
+            padding: 20px;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+        }
+        
+        .btn-save,
+        .btn-cancel {
+            width: 100%;
+            padding: 12px 20px;
+        }
+        
+        .status-badge {
+            top: 15px;
+            left: 15px;
+            font-size: 11px;
+            padding: 5px 12px;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .profile-page {
+            padding: 15px 10px;
+        }
+        
+        .profile-page-title {
+            font-size: 20px;
+        }
+        
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            border: 3px solid #f3f4f6;
+        }
+        
+        .profile-avatar-letter {
+            font-size: 42px;
+        }
+        
+        .profile-name {
+            font-size: 18px;
+        }
+        
+        .profile-header {
+            padding: 20px 15px 15px;
+        }
+        
+        .profile-card-body {
+            padding: 0 15px 15px;
+        }
+        
+        .profile-field {
+            padding: 10px 0;
+        }
+        
+        .alert {
+            padding: 12px;
+            font-size: 14px;
+        }
     }
 </style>
 
-<div style="background: white; border-radius: 15px; padding: 30px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); margin-bottom: 20px;">
-    <div class="profile-container">
-        <a href="{{ $schoolRoute('student.dashboard') }}" onclick="loadContent(this.href); return false;" class="back-button">← Back to Dashboard</a>
-        
-        @if(session('success'))
-            <div class="success-message">
-                {{ session('success') }}
-            </div>
-        @endif
-        
-        @if($errors->any())
-            <div class="error-message">
-                <ul style="margin: 0; padding-left: 20px;">
-                    @foreach($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
+<div class="profile-container">
+    <div class="page-header">
+        <h1 class="page-title">Profile</h1>
+    </div>
+    
+    @if(session('success'))
+        <div class="success-message">
+            {{ session('success') }}
+        </div>
+    @endif
+    
+    @if($errors->any())
+        <div class="error-message">
+            <ul style="margin: 0; padding-left: 20px;">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    <div class="profile-card">
+        <div class="status-badge">Active</div>
         
         <div class="profile-header">
-            <h1 class="profile-title">Student Profile</h1>
-            
-            <div class="profile-avatar">
-                <span class="avatar-icon">👨‍🎓</span>
+            <div class="profile-avatar" id="avatarContainer" style="position: relative;">
+                @if($student->profile_picture && file_exists(public_path('storage/' . $student->profile_picture)))
+                    <img src="{{ asset('storage/' . $student->profile_picture) }}" alt="{{ $student->name }}" id="avatarImage">
+                @else
+                    <span class="avatar-icon" id="avatarLetter">{{ strtoupper(substr($student->name ?? 'S', 0, 1)) }}</span>
+                @endif
+                <div class="avatar-upload-overlay" onclick="document.getElementById('profilePictureInput').click()">
+                    <span>Change Photo</span>
+                </div>
             </div>
+            <input type="file" id="profilePictureInput" accept="image/png,image/jpg,image/jpeg,image/webp" style="display: none;" onchange="uploadProfilePicture(this)">
+            
+            <h1 class="profile-title">{{ $student->name ?? 'Student\'s Name' }}</h1>
         </div>
         
         <!-- Profile Display -->
         <div id="profileDisplay">
             <div class="profile-info">
-                <div class="info-row">
-                    <span class="info-label">Name:</span>
-                    <span class="info-value">{{ $student->name ?? 'N/A' }}</span>
-                </div>
-                
                 <div class="info-row">
                     <span class="info-label">Email:</span>
                     <span class="info-value">{{ $student->email ?? 'N/A' }}</span>
@@ -225,13 +635,8 @@
                 </div>
                 
                 <div class="info-row">
-                    <span class="info-label">Status:</span>
-                    <span class="info-value">{{ ucfirst($student->status ?? 'active') }}</span>
-                </div>
-                
-                <div class="info-row">
-                    <span class="info-label">Enrollment Date:</span>
-                    <span class="info-value">{{ $student->enrollment_date ? $student->enrollment_date->format('F d, Y') : 'N/A' }}</span>
+                    <span class="info-label">Date of Birth:</span>
+                    <span class="info-value">{{ $student->date_of_birth ? \Carbon\Carbon::parse($student->date_of_birth)->format('F d, Y') : 'N/A' }}</span>
                 </div>
             </div>
             
@@ -266,6 +671,11 @@
                     <input type="text" id="address" name="address" value="{{ old('address', $student->address) }}">
                 </div>
                 
+                <div class="form-group">
+                    <label for="date_of_birth">Date of Birth:</label>
+                    <input type="date" id="date_of_birth" name="date_of_birth" value="{{ old('date_of_birth', $student->date_of_birth) }}">
+                </div>
+                
                 <div class="form-buttons">
                     <button type="submit" class="btn btn-save">Save Changes</button>
                     <button type="button" onclick="cancelEdit()" class="btn btn-cancel">Cancel</button>
@@ -287,5 +697,72 @@
         document.getElementById('profileButtons').style.display = 'block';
         document.getElementById('editForm').style.display = 'none';
     }
+
+    function uploadProfilePicture(input) {
+        if (!input.files || !input.files[0]) return;
+        
+        const file = input.files[0];
+        
+        // Validate file type
+        const allowedTypes = ['image/png', 'image/jpg', 'image/jpeg', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+            alert('Please upload a valid image file (PNG, JPG, JPEG, or WebP).');
+            input.value = '';
+            return;
+        }
+        
+        // Validate file size (2MB)
+        if (file.size > 2 * 1024 * 1024) {
+            alert('File size must be less than 2MB.');
+            input.value = '';
+            return;
+        }
+        
+        const formData = new FormData();
+        formData.append('profile_picture', file);
+        formData.append('_token', '{{ csrf_token() }}');
+        
+        // Show loading state
+        const avatarCircle = document.querySelector('.profile-avatar-circle');
+        const originalContent = avatarCircle.innerHTML;
+        avatarCircle.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;">Uploading...</div>';
+        
+        fetch('{{ $schoolRoute('student.profile.picture') }}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update avatar image
+                const avatarImg = document.querySelector('.profile-avatar-circle img');
+                if (avatarImg) {
+                    avatarImg.src = '/storage/' + data.path + '?t=' + new Date().getTime();
+                } else {
+                    // Replace letter with image
+                    avatarCircle.innerHTML = originalContent.replace(
+                        /<span class="avatar-letter">.*?<\/span>/,
+                        '<img src="/storage/' + data.path + '" alt="Profile Picture">'
+                    );
+                }
+                alert(data.message);
+            } else {
+                alert(data.message || 'Failed to upload profile picture.');
+                avatarCircle.innerHTML = originalContent;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while uploading the profile picture.');
+            avatarCircle.innerHTML = originalContent;
+        })
+        .finally(() => {
+            input.value = '';
+        });
+    }
 </script>
+</div>
 @endsection

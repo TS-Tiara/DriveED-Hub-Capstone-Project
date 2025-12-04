@@ -53,9 +53,9 @@ class School extends Model
         return $this->hasMany(Course::class);
     }
 
-    public function schedules()
+    public function bookings()
     {
-        return $this->hasMany(Schedule::class);
+        return $this->hasMany(Booking::class);
     }
 
     public function timeSlots()
