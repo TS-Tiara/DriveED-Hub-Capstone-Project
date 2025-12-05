@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title') - {{ $schoolName ?? 'Driving School' }}</title>
+    <meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
+    <title><?php echo $__env->yieldContent('title'); ?> - <?php echo e($schoolName ?? 'Driving School'); ?></title>
     
-    @php
+    <?php
         // Get school and its color settings
         $currentSchool = $school ?? $currentSchool ?? null;
         $settings = $currentSchool?->schoolSetting;
@@ -48,56 +48,56 @@
             $bodyBgPosition = "initial";
             $bodyBgAttachment = "scroll";
         }
-    @endphp
+    ?>
     
     <style>
         :root {
             /* Brand Colors */
-            --primary-color: {{ $primaryColor }};
-            --secondary-color: {{ $secondaryColor }};
-            --accent-color: {{ $accentColor }};
-            --primary-rgb: {{ implode(', ', $primaryRgb) }};
-            --accent-rgb: {{ implode(', ', $accentRgb) }};
+            --primary-color: <?php echo e($primaryColor); ?>;
+            --secondary-color: <?php echo e($secondaryColor); ?>;
+            --accent-color: <?php echo e($accentColor); ?>;
+            --primary-rgb: <?php echo e(implode(', ', $primaryRgb)); ?>;
+            --accent-rgb: <?php echo e(implode(', ', $accentRgb)); ?>;
             
             /* Sidebar */
-            --sidebar-bg: {{ $sidebarBg }};
-            --sidebar-text: {{ $sidebarText }};
-            --sidebar-hover: {{ $sidebarHover }};
+            --sidebar-bg: <?php echo e($sidebarBg); ?>;
+            --sidebar-text: <?php echo e($sidebarText); ?>;
+            --sidebar-hover: <?php echo e($sidebarHover); ?>;
             
             /* Header */
-            --header-gradient: {{ $headerBg }};
-            --page-header-border: {{ $settings->page_header_border ?? '#667eea' }};
+            --header-gradient: <?php echo e($headerBg); ?>;
+            --page-header-border: <?php echo e($settings->page_header_border ?? '#667eea'); ?>;
             
             /* Buttons */
-            --btn-primary-bg: {{ $settings->button_primary_bg ?? '#667eea' }};
-            --btn-primary-text: {{ $settings->button_primary_text ?? '#ffffff' }};
-            --btn-secondary-bg: {{ $settings->button_secondary_bg ?? '#6c757d' }};
-            --btn-secondary-text: {{ $settings->button_secondary_text ?? '#ffffff' }};
-            --btn-success-bg: {{ $settings->button_success_bg ?? '#28a745' }};
-            --btn-success-text: {{ $settings->button_success_text ?? '#ffffff' }};
-            --btn-danger-bg: {{ $settings->button_danger_bg ?? '#dc3545' }};
-            --btn-danger-text: {{ $settings->button_danger_text ?? '#ffffff' }};
+            --btn-primary-bg: <?php echo e($settings->button_primary_bg ?? '#667eea'); ?>;
+            --btn-primary-text: <?php echo e($settings->button_primary_text ?? '#ffffff'); ?>;
+            --btn-secondary-bg: <?php echo e($settings->button_secondary_bg ?? '#6c757d'); ?>;
+            --btn-secondary-text: <?php echo e($settings->button_secondary_text ?? '#ffffff'); ?>;
+            --btn-success-bg: <?php echo e($settings->button_success_bg ?? '#28a745'); ?>;
+            --btn-success-text: <?php echo e($settings->button_success_text ?? '#ffffff'); ?>;
+            --btn-danger-bg: <?php echo e($settings->button_danger_bg ?? '#dc3545'); ?>;
+            --btn-danger-text: <?php echo e($settings->button_danger_text ?? '#ffffff'); ?>;
             
             /* Borders & Shapes */
-            --border-radius: {{ $settings->border_radius ?? 8 }}px;
-            --button-border-radius: {{ $settings->button_border_radius ?? 8 }}px;
+            --border-radius: <?php echo e($settings->border_radius ?? 8); ?>px;
+            --button-border-radius: <?php echo e($settings->button_border_radius ?? 8); ?>px;
             
             /* Modals */
-            --modal-header-bg: {{ $settings->modal_header_bg ?? '#667eea' }};
-            --modal-header-text: {{ $settings->modal_header_text ?? '#ffffff' }};
-            --modal-border-color: {{ $settings->modal_border_color ?? '#667eea' }};
+            --modal-header-bg: <?php echo e($settings->modal_header_bg ?? '#667eea'); ?>;
+            --modal-header-text: <?php echo e($settings->modal_header_text ?? '#ffffff'); ?>;
+            --modal-border-color: <?php echo e($settings->modal_border_color ?? '#667eea'); ?>;
             
             /* Cards */
-            --card-border-color: {{ $settings->card_border_color ?? '#e5e7eb' }};
-            --card-header-bg: {{ $settings->card_header_bg ?? '#f9fafb' }};
+            --card-border-color: <?php echo e($settings->card_border_color ?? '#e5e7eb'); ?>;
+            --card-header-bg: <?php echo e($settings->card_header_bg ?? '#f9fafb'); ?>;
             
             /* Badges */
-            --badge-pending-bg: {{ $settings->badge_pending_bg ?? '#fbbf24' }};
-            --badge-pending-text: {{ $settings->badge_pending_text ?? '#78350f' }};
-            --badge-approved-bg: {{ $settings->badge_approved_bg ?? '#10b981' }};
-            --badge-approved-text: {{ $settings->badge_approved_text ?? '#065f46' }};
-            --badge-cancelled-bg: {{ $settings->badge_cancelled_bg ?? '#ef4444' }};
-            --badge-cancelled-text: {{ $settings->badge_cancelled_text ?? '#7f1d1d' }};
+            --badge-pending-bg: <?php echo e($settings->badge_pending_bg ?? '#fbbf24'); ?>;
+            --badge-pending-text: <?php echo e($settings->badge_pending_text ?? '#78350f'); ?>;
+            --badge-approved-bg: <?php echo e($settings->badge_approved_bg ?? '#10b981'); ?>;
+            --badge-approved-text: <?php echo e($settings->badge_approved_text ?? '#065f46'); ?>;
+            --badge-cancelled-bg: <?php echo e($settings->badge_cancelled_bg ?? '#ef4444'); ?>;
+            --badge-cancelled-text: <?php echo e($settings->badge_cancelled_text ?? '#7f1d1d'); ?>;
         }
         
         * {
@@ -115,7 +115,7 @@
             position: relative;
         }
         
-        @if($backgroundType === 'image' && $backgroundImage)
+        <?php if($backgroundType === 'image' && $backgroundImage): ?>
         body::before {
             content: '';
             position: fixed;
@@ -123,19 +123,19 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: {{ $bodyBg }};
-            background-size: {{ $bodyBgSize }};
-            background-position: {{ $bodyBgPosition }};
-            background-attachment: {{ $bodyBgAttachment }};
+            background: <?php echo e($bodyBg); ?>;
+            background-size: <?php echo e($bodyBgSize); ?>;
+            background-position: <?php echo e($bodyBgPosition); ?>;
+            background-attachment: <?php echo e($bodyBgAttachment); ?>;
             background-repeat: no-repeat;
-            opacity: {{ $backgroundOpacity / 100 }};
+            opacity: <?php echo e($backgroundOpacity / 100); ?>;
             z-index: -1;
         }
-        @else
+        <?php else: ?>
         body {
-            background: {{ $bodyBg }};
+            background: <?php echo e($bodyBg); ?>;
         }
-        @endif
+        <?php endif; ?>
         
         html {
             overflow-y: scroll;
@@ -151,7 +151,7 @@
             right: 0;
             width: 100%;
             height: 60px;
-            background: {{ $headerBg }};
+            background: <?php echo e($headerBg); ?>;
             color: white;
             display: flex;
             align-items: center;
@@ -409,7 +409,7 @@
             top: 0;
             height: 100%;
             width: 4px;
-            background: {{ $useGradient ? "linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%)" : "var(--primary-color)" }};
+            background: <?php echo e($useGradient ? "linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%)" : "var(--primary-color)"); ?>;
             transform: scaleY(0);
             transition: transform 0.3s ease;
             z-index: -1;
@@ -428,7 +428,7 @@
         }
         
         .nav-item.active {
-            background: {{ $headerBg }};
+            background: <?php echo e($headerBg); ?>;
             color: white !important;
             font-weight: 600;
             box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
@@ -476,11 +476,11 @@
         }
         
         .btn-primary, button.btn-primary, input[type="submit"].btn-primary {
-            @if(($settings->button_style ?? 'solid') === 'gradient')
+            <?php if(($settings->button_style ?? 'solid') === 'gradient'): ?>
             background: linear-gradient(135deg, var(--btn-primary-bg) 0%, var(--btn-secondary-bg) 100%);
-            @else
+            <?php else: ?>
             background: var(--btn-primary-bg);
-            @endif
+            <?php endif; ?>
             color: var(--btn-primary-text);
         }
         
@@ -1082,7 +1082,7 @@
             }
         }
         
-        @stack('styles')
+        <?php echo $__env->yieldPushContent('styles'); ?>
     </style>
 </head>
 <body>
@@ -1090,7 +1090,8 @@
     <nav class="topbar">
         <div class="topbar-left">
             <div class="topbar-logo">
-                {{ $schoolName ?? 'Driving School' }}
+                <?php echo e($schoolName ?? 'Driving School'); ?>
+
             </div>
         </div>
         
@@ -1105,84 +1106,87 @@
             </div>
             
             <div class="profile-dropdown" onclick="toggleProfileDropdown()">
-                @if(Auth::guard('admin')->check())
-                    @php $user = Auth::guard('admin')->user(); @endphp
-                    @if($user->profile_picture)
-                        <img src="{{ asset('storage/' . $user->profile_picture) }}" alt="Profile" class="profile-picture">
-                    @else
-                        <div class="profile-picture-default">{{ strtoupper(substr($user->name, 0, 1)) }}</div>
-                    @endif
-                    {{ $user->name }}
-                @elseif(Auth::guard('instructor')->check())
-                    @php $user = Auth::guard('instructor')->user(); @endphp
-                    @if($user->profile_picture)
-                        <img src="{{ asset('storage/' . $user->profile_picture) }}" alt="Profile" class="profile-picture">
-                    @else
-                        <div class="profile-picture-default">{{ strtoupper(substr($user->name, 0, 1)) }}</div>
-                    @endif
-                    {{ $user->name }}
-                @elseif(Auth::guard('student')->check())
-                    @php $user = Auth::guard('student')->user(); @endphp
-                    @if($user->profile_picture)
-                        <img src="{{ asset('storage/' . $user->profile_picture) }}" alt="Profile" class="profile-picture">
-                    @else
-                        <div class="profile-picture-default">{{ strtoupper(substr($user->name, 0, 1)) }}</div>
-                    @endif
-                    {{ $user->name }}
-                @else
+                <?php if(Auth::guard('admin')->check()): ?>
+                    <?php $user = Auth::guard('admin')->user(); ?>
+                    <?php if($user->profile_picture): ?>
+                        <img src="<?php echo e(asset('storage/' . $user->profile_picture)); ?>" alt="Profile" class="profile-picture">
+                    <?php else: ?>
+                        <div class="profile-picture-default"><?php echo e(strtoupper(substr($user->name, 0, 1))); ?></div>
+                    <?php endif; ?>
+                    <?php echo e($user->name); ?>
+
+                <?php elseif(Auth::guard('instructor')->check()): ?>
+                    <?php $user = Auth::guard('instructor')->user(); ?>
+                    <?php if($user->profile_picture): ?>
+                        <img src="<?php echo e(asset('storage/' . $user->profile_picture)); ?>" alt="Profile" class="profile-picture">
+                    <?php else: ?>
+                        <div class="profile-picture-default"><?php echo e(strtoupper(substr($user->name, 0, 1))); ?></div>
+                    <?php endif; ?>
+                    <?php echo e($user->name); ?>
+
+                <?php elseif(Auth::guard('student')->check()): ?>
+                    <?php $user = Auth::guard('student')->user(); ?>
+                    <?php if($user->profile_picture): ?>
+                        <img src="<?php echo e(asset('storage/' . $user->profile_picture)); ?>" alt="Profile" class="profile-picture">
+                    <?php else: ?>
+                        <div class="profile-picture-default"><?php echo e(strtoupper(substr($user->name, 0, 1))); ?></div>
+                    <?php endif; ?>
+                    <?php echo e($user->name); ?>
+
+                <?php else: ?>
                     <div class="profile-picture-default">U</div>
                     User
-                @endif
+                <?php endif; ?>
                 
                 <div class="dropdown-menu" id="profileDropdownMenu">
-                    @if(Auth::guard('admin')->check())
-                        <a href="{{ $schoolRoute('admin.profile') }}" class="dropdown-item nav-item" data-page="profile">
+                    <?php if(Auth::guard('admin')->check()): ?>
+                        <a href="<?php echo e($schoolRoute('admin.profile')); ?>" class="dropdown-item nav-item" data-page="profile">
                             View Profile
                         </a>
-                    @elseif(Auth::guard('instructor')->check())
-                        <a href="{{ $schoolRoute('instructor.profile') }}" class="dropdown-item nav-item" data-page="profile">
+                    <?php elseif(Auth::guard('instructor')->check()): ?>
+                        <a href="<?php echo e($schoolRoute('instructor.profile')); ?>" class="dropdown-item nav-item" data-page="profile">
                             View Profile
                         </a>
-                    @elseif(Auth::guard('student')->check())
-                        @php $studentUser = Auth::guard('student')->user(); @endphp
-                        @if($studentUser->role !== 'guest')
-                            <a href="{{ $schoolRoute('student.profile') }}" class="dropdown-item nav-item" data-page="profile">
+                    <?php elseif(Auth::guard('student')->check()): ?>
+                        <?php $studentUser = Auth::guard('student')->user(); ?>
+                        <?php if($studentUser->role !== 'guest'): ?>
+                            <a href="<?php echo e($schoolRoute('student.profile')); ?>" class="dropdown-item nav-item" data-page="profile">
                                 View Profile
                             </a>
-                        @endif
-                    @endif
+                        <?php endif; ?>
+                    <?php endif; ?>
                     <div class="dropdown-divider"></div>
-                    @if(Auth::guard('admin')->check())
-                        <form method="POST" action="{{ $schoolRoute('admin.logout') }}" style="margin: 0;">
-                            @csrf
+                    <?php if(Auth::guard('admin')->check()): ?>
+                        <form method="POST" action="<?php echo e($schoolRoute('admin.logout')); ?>" style="margin: 0;">
+                            <?php echo csrf_field(); ?>
                             <button type="submit" class="dropdown-item">
                                 Logout
                             </button>
                         </form>
-                    @elseif(Auth::guard('instructor')->check())
-                        <form method="POST" action="{{ $schoolRoute('instructor.logout') }}" style="margin: 0;">
-                            @csrf
+                    <?php elseif(Auth::guard('instructor')->check()): ?>
+                        <form method="POST" action="<?php echo e($schoolRoute('instructor.logout')); ?>" style="margin: 0;">
+                            <?php echo csrf_field(); ?>
                             <button type="submit" class="dropdown-item">
                                 Logout
                             </button>
                         </form>
-                    @elseif(Auth::guard('student')->check())
-                        @if($studentUser->role === 'guest')
-                            <form method="POST" action="{{ $schoolRoute('logout') }}" style="margin: 0;">
-                                @csrf
+                    <?php elseif(Auth::guard('student')->check()): ?>
+                        <?php if($studentUser->role === 'guest'): ?>
+                            <form method="POST" action="<?php echo e($schoolRoute('logout')); ?>" style="margin: 0;">
+                                <?php echo csrf_field(); ?>
                                 <button type="submit" class="dropdown-item">
                                     Logout
                                 </button>
                             </form>
-                        @else
-                            <form method="POST" action="{{ $schoolRoute('student.logout') }}" style="margin: 0;">
-                                @csrf
+                        <?php else: ?>
+                            <form method="POST" action="<?php echo e($schoolRoute('student.logout')); ?>" style="margin: 0;">
+                                <?php echo csrf_field(); ?>
                                 <button type="submit" class="dropdown-item">
                                     Logout
                                 </button>
                             </form>
-                        @endif
-                    @endif
+                        <?php endif; ?>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -1192,55 +1196,55 @@
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <h3>
-                @if(Auth::guard('admin')->check())
+                <?php if(Auth::guard('admin')->check()): ?>
                     Admin Menu
-                @elseif(Auth::guard('instructor')->check())
+                <?php elseif(Auth::guard('instructor')->check()): ?>
                     Instructor Menu
-                @elseif(Auth::guard('student')->check())
+                <?php elseif(Auth::guard('student')->check()): ?>
                     Student Menu
-                @else
+                <?php else: ?>
                     Menu
-                @endif
+                <?php endif; ?>
             </h3>
         </div>
         
         <nav class="sidebar-nav">
-            @if(Auth::guard('admin')->check())
-                <a href="{{ $schoolRoute('admin.dashboard') }}" class="nav-item" data-page="dashboard">Dashboard</a>
-                <a href="{{ $schoolRoute('admin.userManagement') }}" class="nav-item" data-page="user-management">User Management</a>
-                <a href="{{ $schoolRoute('admin.schedules') }}" class="nav-item" data-page="schedules">Schedules</a>
-                <a href="{{ $schoolRoute('admin.removalRequests') }}" class="nav-item" data-page="removal-requests">Removal Requests</a>
-                <a href="{{ $schoolRoute('admin.enrollmentRequests.index') }}" class="nav-item" data-page="enrollment-requests">Enrollment Requests</a>
-                <a href="{{ $schoolRoute('admin.courses') }}" class="nav-item" data-page="courses">Courses</a>
-                <a href="{{ $schoolRoute('admin.bookings.index') }}" class="nav-item" data-page="bookings">Bookings</a>
-                <a href="{{ $schoolRoute('admin.payments.index') }}" class="nav-item" data-page="payments">Payments</a>
-                <a href="{{ $schoolRoute('admin.reports.index') }}" class="nav-item" data-page="reports">Reports & Analytics</a>
-                <a href="{{ $schoolRoute('admin.settings') }}" class="nav-item" data-page="settings">Settings</a>
-            @elseif(Auth::guard('instructor')->check())
-                <a href="{{ $schoolRoute('instructor.dashboard') }}" class="nav-item" data-page="dashboard">Dashboard</a>
-                <a href="{{ $schoolRoute('instructor.schedule') }}" class="nav-item" data-page="my-schedule">My Schedule</a>
-                <a href="{{ $schoolRoute('instructor.students.index') }}" class="nav-item" data-page="students">My Students</a>
-                <a href="{{ $schoolRoute('instructor.grades') }}" class="nav-item" data-page="grades">Grades</a>
-                <a href="{{ $schoolRoute('instructor.reports') }}" class="nav-item" data-page="reports">Reports</a>
-            @elseif(Auth::guard('student')->check())
-                @php
+            <?php if(Auth::guard('admin')->check()): ?>
+                <a href="<?php echo e($schoolRoute('admin.dashboard')); ?>" class="nav-item" data-page="dashboard">Dashboard</a>
+                <a href="<?php echo e($schoolRoute('admin.userManagement')); ?>" class="nav-item" data-page="user-management">User Management</a>
+                <a href="<?php echo e($schoolRoute('admin.schedules')); ?>" class="nav-item" data-page="schedules">Schedules</a>
+                <a href="<?php echo e($schoolRoute('admin.removalRequests')); ?>" class="nav-item" data-page="removal-requests">Removal Requests</a>
+                <a href="<?php echo e($schoolRoute('admin.enrollmentRequests.index')); ?>" class="nav-item" data-page="enrollment-requests">Enrollment Requests</a>
+                <a href="<?php echo e($schoolRoute('admin.courses')); ?>" class="nav-item" data-page="courses">Courses</a>
+                <a href="<?php echo e($schoolRoute('admin.bookings.index')); ?>" class="nav-item" data-page="bookings">Bookings</a>
+                <a href="<?php echo e($schoolRoute('admin.payments.index')); ?>" class="nav-item" data-page="payments">Payments</a>
+                <a href="<?php echo e($schoolRoute('admin.reports.index')); ?>" class="nav-item" data-page="reports">Reports & Analytics</a>
+                <a href="<?php echo e($schoolRoute('admin.settings')); ?>" class="nav-item" data-page="settings">Settings</a>
+            <?php elseif(Auth::guard('instructor')->check()): ?>
+                <a href="<?php echo e($schoolRoute('instructor.dashboard')); ?>" class="nav-item" data-page="dashboard">Dashboard</a>
+                <a href="<?php echo e($schoolRoute('instructor.schedule')); ?>" class="nav-item" data-page="my-schedule">My Schedule</a>
+                <a href="<?php echo e($schoolRoute('instructor.students.index')); ?>" class="nav-item" data-page="students">My Students</a>
+                <a href="<?php echo e($schoolRoute('instructor.grades')); ?>" class="nav-item" data-page="grades">Grades</a>
+                <a href="<?php echo e($schoolRoute('instructor.reports')); ?>" class="nav-item" data-page="reports">Reports</a>
+            <?php elseif(Auth::guard('student')->check()): ?>
+                <?php
                     $currentStudent = Auth::guard('student')->user();
-                @endphp
+                ?>
                 
-                @if($currentStudent->role === 'guest')
-                    {{-- Guest Navigation --}}
-                    <a href="{{ $schoolRoute('guest.dashboard') }}" class="nav-item" data-page="dashboard">Dashboard</a>
-                    <a href="{{ $schoolRoute('guest.courses') }}" class="nav-item" data-page="courses">Browse Courses</a>
-                    <a href="{{ $schoolRoute('guest.enrollmentRequests') }}" class="nav-item" data-page="enrollment-requests">My Enrollment Requests</a>
-                @else
-                    {{-- Student Navigation --}}
-                    <a href="{{ $schoolRoute('student.dashboard') }}" class="nav-item" data-page="dashboard">Dashboard</a>
-                    <a href="{{ $schoolRoute('student.schedule') }}" class="nav-item" data-page="schedule">My Schedule</a>
-                    <a href="{{ $schoolRoute('student.courses.index') }}" class="nav-item" data-page="courses">Browse Courses</a>
-                    <a href="{{ $schoolRoute('student.payments.index') }}" class="nav-item" data-page="payments">My Payments</a>
-                    <a href="{{ $schoolRoute('student.progress.index') }}" class="nav-item" data-page="progress">My Progress</a>
-                @endif
-            @endif
+                <?php if($currentStudent->role === 'guest'): ?>
+                    
+                    <a href="<?php echo e($schoolRoute('guest.dashboard')); ?>" class="nav-item" data-page="dashboard">Dashboard</a>
+                    <a href="<?php echo e($schoolRoute('guest.courses')); ?>" class="nav-item" data-page="courses">Browse Courses</a>
+                    <a href="<?php echo e($schoolRoute('guest.enrollmentRequests')); ?>" class="nav-item" data-page="enrollment-requests">My Enrollment Requests</a>
+                <?php else: ?>
+                    
+                    <a href="<?php echo e($schoolRoute('student.dashboard')); ?>" class="nav-item" data-page="dashboard">Dashboard</a>
+                    <a href="<?php echo e($schoolRoute('student.schedule')); ?>" class="nav-item" data-page="schedule">My Schedule</a>
+                    <a href="<?php echo e($schoolRoute('student.courses.index')); ?>" class="nav-item" data-page="courses">Browse Courses</a>
+                    <a href="<?php echo e($schoolRoute('student.payments.index')); ?>" class="nav-item" data-page="payments">My Payments</a>
+                    <a href="<?php echo e($schoolRoute('student.progress.index')); ?>" class="nav-item" data-page="progress">My Progress</a>
+                <?php endif; ?>
+            <?php endif; ?>
         </nav>
     </div>
     
@@ -1254,7 +1258,7 @@
     
     <!-- Main Content -->
     <main class="main-content" id="mainContent">
-        @yield('content')
+        <?php echo $__env->yieldContent('content'); ?>
     </main>
     
     <script>
@@ -2125,6 +2129,6 @@
         });
     </script>
     
-    @stack('scripts')
+    <?php echo $__env->yieldPushContent('scripts'); ?>
 </body>
-</html>
+</html><?php /**PATH C:\Users\jcsdi\Documents\Driving School Management System\DrivingApp\resources\views/layouts/app.blade.php ENDPATH**/ ?>

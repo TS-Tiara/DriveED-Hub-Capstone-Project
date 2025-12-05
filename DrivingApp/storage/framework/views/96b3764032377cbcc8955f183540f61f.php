@@ -1,8 +1,8 @@
-@extends($isAjax ?? false ? 'layouts.ajax' : 'layouts.app')
 
-@section('title', 'Browse Courses')
 
-@section('content')
+<?php $__env->startSection('title', 'Browse Courses'); ?>
+
+<?php $__env->startSection('content'); ?>
 <?php
     $school = $school ?? $currentSchool ?? null;
     $settings = $school?->schoolSetting;
@@ -436,143 +436,145 @@
         <p>Browse our courses and submit an enrollment request to get started</p>
     </div>
 
-    @if(session('success'))
+    <?php if(session('success')): ?>
         <div class="alert alert-success">
-            <span>✓ {{ session('success') }}</span>
+            <span>✓ <?php echo e(session('success')); ?></span>
             <button class="alert-close" onclick="this.parentElement.remove()">&times;</button>
         </div>
-    @endif
+    <?php endif; ?>
     
-    @if(session('error'))
+    <?php if(session('error')): ?>
         <div class="alert alert-error">
-            <span>✕ {{ session('error') }}</span>
+            <span>✕ <?php echo e(session('error')); ?></span>
             <button class="alert-close" onclick="this.parentElement.remove()">&times;</button>
         </div>
-    @endif
+    <?php endif; ?>
     
-    @if(session('warning'))
+    <?php if(session('warning')): ?>
         <div class="alert alert-warning">
-            <span>⚠ {{ session('warning') }}</span>
+            <span>⚠ <?php echo e(session('warning')); ?></span>
             <button class="alert-close" onclick="this.parentElement.remove()">&times;</button>
         </div>
-    @endif
+    <?php endif; ?>
     
-    @if(session('info'))
+    <?php if(session('info')): ?>
         <div class="alert alert-info">
-            <span>ℹ {{ session('info') }}</span>
+            <span>ℹ <?php echo e(session('info')); ?></span>
             <button class="alert-close" onclick="this.parentElement.remove()">&times;</button>
         </div>
-    @endif
+    <?php endif; ?>
 
     <div class="courses-grid">
         <?php $activeCourses = $courses->where('status', 'active'); ?>
         
-        @forelse($activeCourses as $course)
+        <?php $__empty_1 = true; $__currentLoopData = $activeCourses; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $course): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
         <div class="course-card">
             <div class="course-banner">
-                @if($course->banner_image && file_exists(public_path($course->banner_image)))
-                    <img src="{{ asset($course->banner_image) }}" alt="{{ $course->title }}">
-                @else
+                <?php if($course->banner_image && file_exists(public_path($course->banner_image))): ?>
+                    <img src="<?php echo e(asset($course->banner_image)); ?>" alt="<?php echo e($course->title); ?>">
+                <?php else: ?>
                     <svg class="course-banner-icon" xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" viewBox="0 0 16 16">
                         <path d="M2.52 3.515A2.5 2.5 0 0 1 4.82 2h6.362c1 0 1.904.596 2.298 1.515l.792 1.848c.075.175.21.319.38.404.5.25.855.715.965 1.262l.335 1.679c.033.161.049.325.049.49v.413c0 .814-.39 1.543-1 1.997V13.5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-1.338c-1.292.048-2.745.088-4 .088s-2.708-.04-4-.088V13.5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-1.892c-.61-.454-1-1.183-1-1.997v-.413a2.5 2.5 0 0 1 .049-.49l.335-1.68c.11-.546.465-1.012.964-1.261a.807.807 0 0 0 .381-.404l.792-1.848ZM3 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm10 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2ZM6 8a1 1 0 0 0 0 2h4a1 1 0 1 0 0-2H6ZM2.906 5.189a.51.51 0 0 0 .497.731c.91-.073 3.35-.17 4.597-.17 1.247 0 3.688.097 4.597.17a.51.51 0 0 0 .497-.731l-.956-1.913A.5.5 0 0 0 11.691 3H4.309a.5.5 0 0 0-.447.276L2.906 5.19Z"/>
                     </svg>
-                @endif
+                <?php endif; ?>
                 
-                @if($course->is_featured)
+                <?php if($course->is_featured): ?>
                     <span class="featured-badge">⭐ Featured</span>
-                @endif
+                <?php endif; ?>
             </div>
             
             <div class="course-body">
                 <div class="course-badges">
-                    <span class="badge-type">{{ ucfirst($course->type ?? 'Standard') }}</span>
-                    @if($course->vehicle_type)
-                        <span class="badge-vehicle">{{ $course->vehicle_type }}</span>
-                    @endif
+                    <span class="badge-type"><?php echo e(ucfirst($course->type ?? 'Standard')); ?></span>
+                    <?php if($course->vehicle_type): ?>
+                        <span class="badge-vehicle"><?php echo e($course->vehicle_type); ?></span>
+                    <?php endif; ?>
                 </div>
                 
-                <h3 class="course-title">{{ $course->title }}</h3>
+                <h3 class="course-title"><?php echo e($course->title); ?></h3>
                 
-                @if($course->description)
-                    <p class="course-description">{{ Str::limit($course->description, 120) }}</p>
-                @endif
+                <?php if($course->description): ?>
+                    <p class="course-description"><?php echo e(Str::limit($course->description, 120)); ?></p>
+                <?php endif; ?>
                 
                 <?php $features = $course->features; ?>
-                @if($features && is_array($features) && count($features) > 0)
+                <?php if($features && is_array($features) && count($features) > 0): ?>
                     <ul class="course-features">
-                        @foreach(array_slice($features, 0, 3) as $feature)
-                            <li>{{ $feature }}</li>
-                        @endforeach
-                        @if(count($features) > 3)
-                            <li style="color: <?php echo $primaryColor; ?>; font-weight: 600;">+{{ count($features) - 3 }} more</li>
-                        @endif
+                        <?php $__currentLoopData = array_slice($features, 0, 3); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $feature): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <li><?php echo e($feature); ?></li>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                        <?php if(count($features) > 3): ?>
+                            <li style="color: <?php echo $primaryColor; ?>; font-weight: 600;">+<?php echo e(count($features) - 3); ?> more</li>
+                        <?php endif; ?>
                     </ul>
-                @endif
+                <?php endif; ?>
                 
-                @if($course->packages && $course->packages->count() > 0)
+                <?php if($course->packages && $course->packages->count() > 0): ?>
                     <div class="packages-section">
                         <div class="packages-title">Available Packages</div>
-                        @foreach($course->packages->take(2) as $package)
+                        <?php $__currentLoopData = $course->packages->take(2); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $package): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                             <div class="package-item">
                                 <div>
                                     <div class="package-name">
-                                        {{ $package->name }}
-                                        @if($package->transmission_type)
-                                            <span class="package-tag tag-{{ $package->transmission_type }}">{{ strtoupper($package->transmission_type) }}</span>
-                                        @endif
-                                        @if($package->is_popular)
+                                        <?php echo e($package->name); ?>
+
+                                        <?php if($package->transmission_type): ?>
+                                            <span class="package-tag tag-<?php echo e($package->transmission_type); ?>"><?php echo e(strtoupper($package->transmission_type)); ?></span>
+                                        <?php endif; ?>
+                                        <?php if($package->is_popular): ?>
                                             <span class="package-tag tag-popular">POPULAR</span>
-                                        @endif
+                                        <?php endif; ?>
                                     </div>
                                     <div class="package-details">
-                                        @if($package->training_hours){{ $package->training_hours }} hours @endif
+                                        <?php if($package->training_hours): ?><?php echo e($package->training_hours); ?> hours <?php endif; ?>
                                     </div>
                                 </div>
-                                <span class="package-price">₱{{ number_format($package->price, 2) }}</span>
+                                <span class="package-price">₱<?php echo e(number_format($package->price, 2)); ?></span>
                             </div>
-                        @endforeach
-                        @if($course->packages->count() > 2)
-                            <div class="more-packages">+{{ $course->packages->count() - 2 }} more packages</div>
-                        @endif
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                        <?php if($course->packages->count() > 2): ?>
+                            <div class="more-packages">+<?php echo e($course->packages->count() - 2); ?> more packages</div>
+                        <?php endif; ?>
                     </div>
-                @else
+                <?php else: ?>
                     <div class="course-info">
-                        @if($course->duration_hours)
+                        <?php if($course->duration_hours): ?>
                         <div class="info-row">
                             <span class="info-label">Duration</span>
-                            <span class="info-value">{{ $course->duration_hours }} hours</span>
+                            <span class="info-value"><?php echo e($course->duration_hours); ?> hours</span>
                         </div>
-                        @endif
-                        @if($course->price > 0)
+                        <?php endif; ?>
+                        <?php if($course->price > 0): ?>
                         <div class="info-row">
                             <span class="info-label">Price</span>
-                            <span class="info-value">₱{{ number_format($course->price, 2) }}</span>
+                            <span class="info-value">₱<?php echo e(number_format($course->price, 2)); ?></span>
                         </div>
-                        @endif
+                        <?php endif; ?>
                     </div>
-                @endif
+                <?php endif; ?>
 
-                @if(in_array($course->id, $enrolledCourseIds))
+                <?php if(in_array($course->id, $enrolledCourseIds)): ?>
                     <?php $status = $enrollmentStatuses[$course->id] ?? 'pending'; ?>
-                    <div class="enrollment-status status-{{ $status }}">
-                        @if($status === 'approved')
+                    <div class="enrollment-status status-<?php echo e($status); ?>">
+                        <?php if($status === 'approved'): ?>
                             ✓ Enrollment Approved
-                        @else
+                        <?php else: ?>
                             ⏳ Enrollment Request Pending
-                        @endif
+                        <?php endif; ?>
                     </div>
-                    <button class="btn-enroll btn-{{ $status === 'approved' ? 'enrolled' : 'pending' }}" disabled>
-                        {{ $status === 'approved' ? 'Already Enrolled' : 'Request Pending' }}
+                    <button class="btn-enroll btn-<?php echo e($status === 'approved' ? 'enrolled' : 'pending'); ?>" disabled>
+                        <?php echo e($status === 'approved' ? 'Already Enrolled' : 'Request Pending'); ?>
+
                     </button>
-                @else
-                    <form method="POST" action="{{ route('schools.guest.enroll', ['school' => $school, 'course' => $course->id]) }}" style="margin-top: auto;">
-                        @csrf
+                <?php else: ?>
+                    <form method="POST" action="<?php echo e(route('schools.guest.enroll', ['school' => $school, 'course' => $course->id])); ?>" style="margin-top: auto;">
+                        <?php echo csrf_field(); ?>
                         <button type="submit" class="btn-enroll">Request Enrollment</button>
                     </form>
-                @endif
+                <?php endif; ?>
             </div>
         </div>
-        @empty
+        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
         <div class="empty-state">
             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" viewBox="0 0 16 16">
                 <path d="M8.211 2.047a.5.5 0 0 0-.422 0l-7.5 3.5a.5.5 0 0 0 .025.917l7.5 3a.5.5 0 0 0 .372 0L14 7.14V13a1 1 0 0 0-1 1v2h3v-2a1 1 0 0 0-1-1V6.739l.686-.275a.5.5 0 0 0 .025-.917l-7.5-3.5Z"/>
@@ -581,8 +583,10 @@
             <p style="font-size: 1.1rem;">No courses available at the moment</p>
             <p style="font-size: 0.9rem;">Please check back later for new courses.</p>
         </div>
-        @endforelse
+        <?php endif; ?>
     </div>
 </div>
-@endsection
+<?php $__env->stopSection(); ?>
 
+
+<?php echo $__env->make($isAjax ?? false ? 'layouts.ajax' : 'layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\jcsdi\Documents\Driving School Management System\DrivingApp\resources\views/school/guest/courses.blade.php ENDPATH**/ ?>
