@@ -164,8 +164,92 @@ class InstructorTimeSlotController extends Controller
         $instructor = Auth::guard('instructor')->user();
         abort_unless($instructor && $instructor->school_id === $school->id, 403);
 
-        return view('school.instructor.schedule', [
+        $instructorId = $instructor->id;
+        $todayDate = now()->toDateString();
+        $endOfWeek = now()->endOfWeek()->toDateString();
+        $minimumNoticeDays = $school->instructor_removal_notice_days ?? 7;
+        
+        // Get instructor's qualified courses
+        $qualifiedCourseIds = $instructor->course_specializations ?? [];
+        
+        // Get pending removal requests
+        $pendingRemovalRequests = InstructorRemovalRequest::where('instructor_id', $instructorId)
+            ->where('school_id', $school->id)
+            ->where('status', 'pending')
+            ->pluck('time_slot_id')
+            ->toArray();
+        
+        // My slots (instructor's selected and admin-assigned slots)
+        $mySlots = TimeSlot::with(['instructors', 'course', 'bookings.student', 'bookings.course'])
+            ->where('school_id', $school->id)
+            ->whereHas('instructors', function ($query) use ($instructorId) {
+                $query->where('instructor_id', $instructorId);
+            })
+            ->orderBy('date')
+            ->orderBy('start_time')
+            ->get();
+        
+        // Group my slots by date
+        $groupedMySlots = $mySlots->groupBy(function ($slot) {
+            return $slot->date->format('Y-m-d');
+        });
+        
+        // Today's slots
+        $todaySlots = $mySlots->filter(function ($slot) use ($todayDate) {
+            return $slot->date->format('Y-m-d') === $todayDate;
+        });
+        
+        // Upcoming slots this week (excluding today)
+        $upcomingSlots = $mySlots->filter(function ($slot) use ($todayDate, $endOfWeek) {
+            $slotDate = $slot->date->format('Y-m-d');
+            return $slotDate > $todayDate && $slotDate <= $endOfWeek;
+        })->take(5);
+        
+        // Available slots (not taken by this instructor)
+        $availableSlots = TimeSlot::with(['instructors', 'course'])
+            ->where('school_id', $school->id)
+            ->where('status', 'open')
+            ->whereDoesntHave('instructors', function ($query) use ($instructorId) {
+                $query->where('instructor_id', $instructorId);
+            })
+            ->whereRaw('(SELECT COUNT(*) FROM schedule_instructors WHERE schedule_instructors.time_slot_id = time_slots.id) < COALESCE(time_slots.max_instructors, 1)')
+            ->orderBy('date')
+            ->orderBy('start_time')
+            ->get();
+        
+        // Group available slots by date
+        $groupedAvailableSlots = $availableSlots->groupBy(function ($slot) {
+            return $slot->date->format('Y-m-d');
+        });
+        
+        // Instructor's schedule for conflict checking (slot IDs by date and time)
+        $instructorSchedule = [];
+        foreach ($mySlots as $slot) {
+            $dateKey = $slot->date->format('Y-m-d');
+            if (!isset($instructorSchedule[$dateKey])) {
+                $instructorSchedule[$dateKey] = [];
+            }
+            $instructorSchedule[$dateKey][] = [
+                'id' => $slot->id,
+                'start' => $slot->start_time->format('H:i'),
+                'end' => $slot->end_time->format('H:i'),
+            ];
+        }
+
+        return view('school.instructor.schedule-new', [
             'school' => $school,
+            'instructorId' => $instructorId,
+            'todayDate' => $todayDate,
+            'minimumNoticeDays' => $minimumNoticeDays,
+            'qualifiedCourseIds' => $qualifiedCourseIds,
+            'pendingRemovalRequests' => $pendingRemovalRequests,
+            'mySlots' => $mySlots,
+            'groupedMySlots' => $groupedMySlots,
+            'todaySlots' => $todaySlots,
+            'upcomingSlots' => $upcomingSlots,
+            'availableSlots' => $availableSlots,
+            'groupedAvailableSlots' => $groupedAvailableSlots,
+            'instructorSchedule' => $instructorSchedule,
         ]);
     }
 

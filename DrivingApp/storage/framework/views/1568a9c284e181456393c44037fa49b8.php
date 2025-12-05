@@ -1,8 +1,6 @@
-@extends('layouts.app')
+<?php $__env->startSection('title', 'My Schedule'); ?>
 
-@section('title', 'My Schedule')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <?php
     $school = $school ?? $currentSchool ?? null;
     $settings = $school?->schoolSetting;
@@ -94,7 +92,7 @@
     
     .schedule-header {
         margin-bottom: 20px;
-        border-bottom: 4px solid {{ $primaryColor }};
+        border-bottom: 4px solid <?php echo e($primaryColor); ?>;
         padding-bottom: 15px;
         display: flex;
         justify-content: space-between;
@@ -114,7 +112,7 @@
         display: flex;
         gap: 0;
         background: white;
-        border: 2px solid {{ $primaryColor }};
+        border: 2px solid <?php echo e($primaryColor); ?>;
         border-radius: 8px;
         overflow: hidden;
         position: relative;
@@ -133,7 +131,7 @@
     }
     
     .main-toggle-btn.active {
-        background: {{ $primaryColor }};
+        background: <?php echo e($primaryColor); ?>;
         color: white;
     }
     
@@ -195,11 +193,11 @@
     }
     
     .schedule-date-header {
-        @if($settings?->use_gradient_header)
-            background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $settings?->secondary_color ?? '#0a58ca' }} 100%);
-        @else
-            background: {{ $primaryColor }};
-        @endif
+        <?php if($settings?->use_gradient_header): ?>
+            background: linear-gradient(135deg, <?php echo e($primaryColor); ?> 0%, <?php echo e($settings?->secondary_color ?? '#0a58ca'); ?> 100%);
+        <?php else: ?>
+            background: <?php echo e($primaryColor); ?>;
+        <?php endif; ?>
         color: white;
         padding: 12px 16px;
         border-radius: 0;
@@ -265,7 +263,7 @@
     }
     
     .slot-indicator.available {
-        background: {{ $primaryColor }};
+        background: <?php echo e($primaryColor); ?>;
     }
     
     .slot-indicator.admin-assigned {
@@ -333,7 +331,7 @@
     }
     
     .btn-select {
-        background: {{ $primaryColor }};
+        background: <?php echo e($primaryColor); ?>;
         color: white;
     }
     
@@ -384,13 +382,13 @@
         color: #000;
         margin: 0 0 12px 0;
         padding-bottom: 8px;
-        border-bottom: 2px solid {{ $primaryColor }};
+        border-bottom: 2px solid <?php echo e($primaryColor); ?>;
     }
     
     .mini-schedule-card {
         background: white;
         border: 1px solid #dee2e6;
-        border-left: 3px solid {{ $primaryColor }};
+        border-left: 3px solid <?php echo e($primaryColor); ?>;
         border-radius: 6px;
         padding: 12px;
         margin-bottom: 10px;
@@ -466,7 +464,7 @@
     }
     
     .view-lesson-btn {
-        background: {{ $primaryColor }};
+        background: <?php echo e($primaryColor); ?>;
         color: white;
         border: none;
         padding: 6px 12px;
@@ -506,7 +504,7 @@
         justify-content: space-between;
         align-items: center;
         padding: 16px;
-        background: {{ $primaryColor }};
+        background: <?php echo e($primaryColor); ?>;
         color: white;
     }
     
@@ -596,7 +594,7 @@
     }
     
     .calendar-indicator.available {
-        background: {{ $primaryColor }};
+        background: <?php echo e($primaryColor); ?>;
     }
     
     .calendar-dot {
@@ -612,7 +610,7 @@
     }
     
     .calendar-dot.available {
-        background: {{ $primaryColor }};
+        background: <?php echo e($primaryColor); ?>;
     }
     
     /* Tablet Responsiveness */
@@ -743,7 +741,7 @@
         width: 18px;
         height: 18px;
         cursor: pointer;
-        accent-color: {{ $primaryColor }};
+        accent-color: <?php echo e($primaryColor); ?>;
     }
     
     @media (max-width: 768px) {
@@ -824,30 +822,30 @@
         </div>
     </div>
     
-    @if(session('success'))
+    <?php if(session('success')): ?>
         <div id="success-alert" style="background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 12px 16px; border-radius: 6px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;">
-            <span>{{ session('success') }}</span>
+            <span><?php echo e(session('success')); ?></span>
             <button onclick="this.parentElement.remove()" style="background: none; border: none; color: #155724; font-size: 1.2rem; cursor: pointer;">&times;</button>
         </div>
-    @endif
+    <?php endif; ?>
     
-    @if(session('error'))
+    <?php if(session('error')): ?>
         <div id="error-alert" style="background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 12px 16px; border-radius: 6px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;">
-            <span>{{ session('error') }}</span>
+            <span><?php echo e(session('error')); ?></span>
             <button onclick="this.parentElement.remove()" style="background: none; border: none; color: #721c24; font-size: 1.2rem; cursor: pointer;">&times;</button>
         </div>
-    @endif
+    <?php endif; ?>
     
-    @if($errors->any())
+    <?php if($errors->any()): ?>
         <div id="error-alert" style="background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 12px 16px; border-radius: 6px; margin-bottom: 16px;">
             <button onclick="this.parentElement.remove()" style="position: absolute; top: 8px; right: 8px; background: none; border: none; color: #721c24; font-size: 1.2rem; cursor: pointer;">&times;</button>
             <ul style="margin: 0; padding-left: 20px;">
-                @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
+                <?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $error): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <li><?php echo e($error); ?></li>
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </ul>
         </div>
-    @endif
+    <?php endif; ?>
     
     <!-- My Slots View -->
     <div id="my-slots-view" class="main-view-section active">
@@ -858,7 +856,7 @@
                     <div class="calendar-container">
                         <div class="calendar-header">
                             <button class="calendar-nav-btn" onclick="changeMonth(-1)">‹</button>
-                            <span class="calendar-title" id="currentMonth">{{ now()->format('F Y') }}</span>
+                            <span class="calendar-title" id="currentMonth"><?php echo e(now()->format('F Y')); ?></span>
                             <button class="calendar-nav-btn" onclick="changeMonth(1)">›</button>
                         </div>
                         <div class="calendar-grid" id="calendarGrid">
@@ -896,18 +894,18 @@
                     </div>
                 </div>
                 
-                @forelse($groupedMySlots as $date => $dateSlots)
-                    @php
+                <?php $__empty_1 = true; $__currentLoopData = $groupedMySlots; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $date => $dateSlots): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                    <?php
                         $isPast = \Carbon\Carbon::parse($date)->lt(now()->startOfDay());
-                    @endphp
-                    <div class="schedule-item" data-is-past="{{ $isPast ? 'true' : 'false' }}" style="{{ $isPast ? 'display: none;' : '' }}">
+                    ?>
+                    <div class="schedule-item" data-is-past="<?php echo e($isPast ? 'true' : 'false'); ?>" style="<?php echo e($isPast ? 'display: none;' : ''); ?>">
                         <div class="schedule-date-header" onclick="toggleDate(this)">
-                            <span class="date-text">{{ \Carbon\Carbon::parse($date)->format('l, F d, Y') }}</span>
+                            <span class="date-text"><?php echo e(\Carbon\Carbon::parse($date)->format('l, F d, Y')); ?></span>
                             <span class="toggle-icon">▼</span>
                         </div>
                         <div class="schedule-bookings" style="max-height: 800px;">
-                            @foreach($dateSlots as $slot)
-                                @php
+                            <?php $__currentLoopData = $dateSlots; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $slot): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <?php
                                     $instructor = $slot->instructors->firstWhere('id', $instructorId);
                                     $assignmentType = $instructor ? $instructor->pivot->assignment_type : 'self_selected';
                                     $hasPendingRequest = in_array($slot->id, $pendingRemovalRequests);
@@ -915,133 +913,139 @@
                                     $canRequestRemoval = $daysUntilSlot >= $minimumNoticeDays;
                                     // Show only bookings assigned to this instructor
                                     $slotBookings = $slot->bookings->where('instructor_id', $instructorId)->where('status', '!=', 'cancelled');
-                                @endphp
+                                ?>
                                 <div class="slot-item">
-                                    <div class="slot-indicator {{ $assignmentType === 'admin_assigned' ? 'admin-assigned' : 'my-slot' }}"></div>
+                                    <div class="slot-indicator <?php echo e($assignmentType === 'admin_assigned' ? 'admin-assigned' : 'my-slot'); ?>"></div>
                                     <div class="slot-details">
                                         <div class="slot-time">
-                                            {{ \Carbon\Carbon::parse($slot->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($slot->end_time)->format('g:i A') }}
-                                            @if($hasPendingRequest)
+                                            <?php echo e(\Carbon\Carbon::parse($slot->start_time)->format('g:i A')); ?> - <?php echo e(\Carbon\Carbon::parse($slot->end_time)->format('g:i A')); ?>
+
+                                            <?php if($hasPendingRequest): ?>
                                                 <span class="slot-badge pending">Removal Requested</span>
-                                            @elseif($assignmentType === 'admin_assigned')
+                                            <?php elseif($assignmentType === 'admin_assigned'): ?>
                                                 <span class="slot-badge admin-assigned">Admin Assigned</span>
-                                            @else
+                                            <?php else: ?>
                                                 <span class="slot-badge my-slot">My Slot</span>
-                                            @endif
+                                            <?php endif; ?>
                                         </div>
                                         <div class="slot-info">
-                                            {{ $slot->instructors->count() }} / {{ $slot->max_instructors ?? 1 }} instructors
-                                            @if($slotBookings->count() > 0)
-                                                • {{ $slotBookings->count() }} student(s) booked
-                                            @endif
+                                            <?php echo e($slot->instructors->count()); ?> / <?php echo e($slot->max_instructors ?? 1); ?> instructors
+                                            <?php if($slotBookings->count() > 0): ?>
+                                                • <?php echo e($slotBookings->count()); ?> student(s) booked
+                                            <?php endif; ?>
                                         </div>
-                                        @if($slot->notes)
-                                            <div class="slot-info">{{ $slot->notes }}</div>
-                                        @endif
+                                        <?php if($slot->notes): ?>
+                                            <div class="slot-info"><?php echo e($slot->notes); ?></div>
+                                        <?php endif; ?>
                                         
-                                        @if(!$hasPendingRequest)
+                                        <?php if(!$hasPendingRequest): ?>
                                             <div class="slot-actions">
-                                                @if($assignmentType === 'admin_assigned')
+                                                <?php if($assignmentType === 'admin_assigned'): ?>
                                                     <button type="button" class="btn-slot btn-request" 
-                                                            onclick="showRemovalRequestModal({{ $slot->id }}, {{ $canRequestRemoval ? 'true' : 'false' }}, {{ $minimumNoticeDays }}, {{ $daysUntilSlot }})"
-                                                            {{ !$canRequestRemoval ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : '' }}>
+                                                            onclick="showRemovalRequestModal(<?php echo e($slot->id); ?>, <?php echo e($canRequestRemoval ? 'true' : 'false'); ?>, <?php echo e($minimumNoticeDays); ?>, <?php echo e($daysUntilSlot); ?>)"
+                                                            <?php echo e(!$canRequestRemoval ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''); ?>>
                                                         Request Removal
                                                     </button>
-                                                    @if(!$canRequestRemoval)
+                                                    <?php if(!$canRequestRemoval): ?>
                                                         <span style="font-size: 11px; color: #dc3545; margin-left: 8px;">
-                                                            (Minimum {{ $minimumNoticeDays }} days notice required)
+                                                            (Minimum <?php echo e($minimumNoticeDays); ?> days notice required)
                                                         </span>
-                                                    @endif
-                                                @else
-                                                    <button type="button" class="btn-slot btn-leave" onclick="leaveTimeSlot({{ $slot->id }}, this)">
+                                                    <?php endif; ?>
+                                                <?php else: ?>
+                                                    <button type="button" class="btn-slot btn-leave" onclick="leaveTimeSlot(<?php echo e($slot->id); ?>, this)">
                                                         Leave Slot
                                                     </button>
-                                                @endif
+                                                <?php endif; ?>
                                             </div>
-                                        @endif
+                                        <?php endif; ?>
                                     </div>
                                 </div>
-                            @endforeach
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </div>
                     </div>
-                @empty
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                     <p style="text-align: center; color: #6c757d; padding: 40px;">
                         No slots selected yet. Go to "Available Slots" to select time slots.
                     </p>
-                @endforelse
+                <?php endif; ?>
             </div>
             
             <div class="schedule-sidebar">
                 <!-- Today's Lesson Section -->
                 <div class="sidebar-section">
                     <h3 class="sidebar-section-title">Today's Lesson</h3>
-                    @if($todaySlots->isNotEmpty())
-                        @foreach($todaySlots->sortBy('start_time') as $slot)
-                            @php
+                    <?php if($todaySlots->isNotEmpty()): ?>
+                        <?php $__currentLoopData = $todaySlots->sortBy('start_time'); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $slot): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <?php
                                 // Show only bookings assigned to this instructor
                                 $slotBookings = $slot->bookings->where('instructor_id', $instructorId)->where('status', '!=', 'cancelled');
-                            @endphp
+                            ?>
                             <div class="today-lesson-card">
                                 <div class="lesson-date">
-                                    <span>{{ \Carbon\Carbon::parse($slot->date)->format('l, F j, Y') }}</span>
+                                    <span><?php echo e(\Carbon\Carbon::parse($slot->date)->format('l, F j, Y')); ?></span>
                                 </div>
                                 <div class="lesson-time">
-                                    {{ \Carbon\Carbon::parse($slot->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($slot->end_time)->format('g:i A') }}
+                                    <?php echo e(\Carbon\Carbon::parse($slot->start_time)->format('g:i A')); ?> - <?php echo e(\Carbon\Carbon::parse($slot->end_time)->format('g:i A')); ?>
+
                                 </div>
                                 
-                                @if($slotBookings->isNotEmpty())
-                                    @foreach($slotBookings as $booking)
+                                <?php if($slotBookings->isNotEmpty()): ?>
+                                    <?php $__currentLoopData = $slotBookings; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $booking): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                         <div class="student-item">
-                                            <div class="student-name">{{ $booking->student->name ?? 'Student' }}</div>
-                                            <div class="student-course">{{ $booking->course->title ?? 'Course' }}</div>
-                                            @if($booking->session_status)
-                                                <span class="slot-badge {{ $booking->session_status === 'completed' ? 'my-slot' : 'pending' }}">
-                                                    {{ ucfirst($booking->session_status) }}
+                                            <div class="student-name"><?php echo e($booking->student->name ?? 'Student'); ?></div>
+                                            <div class="student-course"><?php echo e($booking->course->title ?? 'Course'); ?></div>
+                                            <?php if($booking->session_status): ?>
+                                                <span class="slot-badge <?php echo e($booking->session_status === 'completed' ? 'my-slot' : 'pending'); ?>">
+                                                    <?php echo e(ucfirst($booking->session_status)); ?>
+
                                                 </span>
-                                            @endif
-                                            <button type="button" class="view-lesson-btn" onclick="openLessonModal({{ $booking->id }})">
+                                            <?php endif; ?>
+                                            <button type="button" class="view-lesson-btn" onclick="openLessonModal(<?php echo e($booking->id); ?>)">
                                                 View Details
                                             </button>
                                         </div>
-                                    @endforeach
-                                @else
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                <?php else: ?>
                                     <div class="no-lessons" style="padding: 10px;">
                                         <p>No students booked for this slot</p>
                                     </div>
-                                @endif
+                                <?php endif; ?>
                             </div>
-                        @endforeach
-                    @else
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                    <?php else: ?>
                         <div class="no-lessons">
                             <p>No lessons scheduled for today</p>
                         </div>
-                    @endif
+                    <?php endif; ?>
                 </div>
                 
                 <!-- Upcoming Schedule Section -->
                 <div class="sidebar-section">
                     <h3 class="sidebar-section-title">Upcoming This Week</h3>
-                    @forelse($upcomingSlots as $slot)
-                        @php
+                    <?php $__empty_1 = true; $__currentLoopData = $upcomingSlots; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $slot): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                        <?php
                             $instructor = $slot->instructors->firstWhere('id', $instructorId);
                             $assignmentType = $instructor ? $instructor->pivot->assignment_type : 'self_selected';
-                        @endphp
-                        <div class="mini-schedule-card" style="border-left-color: {{ $assignmentType === 'admin_assigned' ? '#ff9800' : '#28a745' }};">
+                        ?>
+                        <div class="mini-schedule-card" style="border-left-color: <?php echo e($assignmentType === 'admin_assigned' ? '#ff9800' : '#28a745'); ?>;">
                             <div class="mini-schedule-date">
-                                {{ \Carbon\Carbon::parse($slot->date)->format('D, M d, Y') }}
+                                <?php echo e(\Carbon\Carbon::parse($slot->date)->format('D, M d, Y')); ?>
+
                             </div>
                             <div class="mini-schedule-info">
-                                {{ \Carbon\Carbon::parse($slot->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($slot->end_time)->format('g:i A') }}
+                                <?php echo e(\Carbon\Carbon::parse($slot->start_time)->format('g:i A')); ?> - <?php echo e(\Carbon\Carbon::parse($slot->end_time)->format('g:i A')); ?>
+
                             </div>
-                            <span class="slot-badge {{ $assignmentType === 'admin_assigned' ? 'admin-assigned' : 'my-slot' }}" style="font-size: 10px; padding: 2px 6px;">
-                                {{ $assignmentType === 'admin_assigned' ? 'Admin' : 'Self' }}
+                            <span class="slot-badge <?php echo e($assignmentType === 'admin_assigned' ? 'admin-assigned' : 'my-slot'); ?>" style="font-size: 10px; padding: 2px 6px;">
+                                <?php echo e($assignmentType === 'admin_assigned' ? 'Admin' : 'Self'); ?>
+
                             </span>
                         </div>
-                    @empty
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                         <p style="text-align: center; color: #6c757d; padding: 20px; font-size: 14px;">
                             No upcoming slots scheduled.
                         </p>
-                    @endforelse
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -1056,7 +1060,7 @@
                     <div class="calendar-container">
                         <div class="calendar-header">
                             <button class="calendar-nav-btn" onclick="changeMonth(-1)">‹</button>
-                            <span class="calendar-title" id="currentMonthAvailable">{{ now()->format('F Y') }}</span>
+                            <span class="calendar-title" id="currentMonthAvailable"><?php echo e(now()->format('F Y')); ?></span>
                             <button class="calendar-nav-btn" onclick="changeMonth(1)">›</button>
                         </div>
                         <div class="calendar-grid" id="calendarGridAvailable">
@@ -1097,125 +1101,129 @@
                     </div>
                 </div>
                 
-                @forelse($groupedAvailableSlots as $date => $dateSlots)
-                    @php
+                <?php $__empty_1 = true; $__currentLoopData = $groupedAvailableSlots; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $date => $dateSlots): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                    <?php
                         $isPast = \Carbon\Carbon::parse($date)->lt(now()->startOfDay());
                         // Check if any slots are visible (qualified) for this date
                         $hasVisibleSlots = $dateSlots->filter(function($slot) use ($qualifiedCourseIds) {
                             return empty($qualifiedCourseIds) || in_array($slot->course_id, $qualifiedCourseIds);
                         })->count() > 0;
-                    @endphp
-                    <div class="schedule-item" data-is-past="{{ $isPast ? 'true' : 'false' }}" data-has-visible="{{ $hasVisibleSlots ? 'true' : 'false' }}" style="{{ $isPast || !$hasVisibleSlots ? 'display: none;' : '' }}">
+                    ?>
+                    <div class="schedule-item" data-is-past="<?php echo e($isPast ? 'true' : 'false'); ?>" data-has-visible="<?php echo e($hasVisibleSlots ? 'true' : 'false'); ?>" style="<?php echo e($isPast || !$hasVisibleSlots ? 'display: none;' : ''); ?>">
                         <div class="schedule-date-header" onclick="toggleDate(this)">
-                            <span class="date-text">{{ \Carbon\Carbon::parse($date)->format('l, F d, Y') }}</span>
+                            <span class="date-text"><?php echo e(\Carbon\Carbon::parse($date)->format('l, F d, Y')); ?></span>
                             <span class="toggle-icon">▼</span>
                         </div>
                         <div class="schedule-bookings" style="max-height: 800px;">
-                            @foreach($dateSlots as $slot)
-                                @php
+                            <?php $__currentLoopData = $dateSlots; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $slot): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <?php
                                     $spotsLeft = ($slot->max_instructors ?? 1) - $slot->instructors->count();
                                     $isQualifiedForCourse = empty($qualifiedCourseIds) || in_array($slot->course_id, $qualifiedCourseIds);
                                     $courseName = $slot->course->title ?? 'General';
-                                @endphp
-                                <div class="slot-item" data-qualified="{{ $isQualifiedForCourse ? 'true' : 'false' }}" style="{{ !$isQualifiedForCourse ? 'display: none;' : '' }}">
+                                ?>
+                                <div class="slot-item" data-qualified="<?php echo e($isQualifiedForCourse ? 'true' : 'false'); ?>" style="<?php echo e(!$isQualifiedForCourse ? 'display: none;' : ''); ?>">
                                     <div class="slot-indicator available"></div>
                                     <div class="slot-details">
                                         <div class="slot-time">
-                                            {{ \Carbon\Carbon::parse($slot->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($slot->end_time)->format('g:i A') }}
+                                            <?php echo e(\Carbon\Carbon::parse($slot->start_time)->format('g:i A')); ?> - <?php echo e(\Carbon\Carbon::parse($slot->end_time)->format('g:i A')); ?>
+
                                             <span class="slot-badge available">Available</span>
-                                            @if($isQualifiedForCourse)
-                                                <span class="slot-badge" style="background: #d4edda; color: #155724;">{{ $courseName }} ✓</span>
-                                            @else
-                                                <span class="slot-badge" style="background: #fff3cd; color: #856404;">{{ $courseName }}</span>
-                                            @endif
+                                            <?php if($isQualifiedForCourse): ?>
+                                                <span class="slot-badge" style="background: #d4edda; color: #155724;"><?php echo e($courseName); ?> ✓</span>
+                                            <?php else: ?>
+                                                <span class="slot-badge" style="background: #fff3cd; color: #856404;"><?php echo e($courseName); ?></span>
+                                            <?php endif; ?>
                                         </div>
                                         <div class="slot-info">
-                                            {{ $slot->instructors->count() }} / {{ $slot->max_instructors ?? 1 }} instructors
-                                            • {{ $spotsLeft }} spot(s) left
-                                            @if(!$isQualifiedForCourse)
+                                            <?php echo e($slot->instructors->count()); ?> / <?php echo e($slot->max_instructors ?? 1); ?> instructors
+                                            • <?php echo e($spotsLeft); ?> spot(s) left
+                                            <?php if(!$isQualifiedForCourse): ?>
                                                 • <span style="color: #856404;">Not your specialty</span>
-                                            @endif
+                                            <?php endif; ?>
                                         </div>
-                                        @if($slot->notes)
-                                            <div class="slot-info">{{ $slot->notes }}</div>
-                                        @endif
+                                        <?php if($slot->notes): ?>
+                                            <div class="slot-info"><?php echo e($slot->notes); ?></div>
+                                        <?php endif; ?>
                                         
                                         <div class="slot-actions">
-                                            <button type="button" class="btn-slot btn-select" onclick="selectTimeSlot({{ $slot->id }}, this)">
+                                            <button type="button" class="btn-slot btn-select" onclick="selectTimeSlot(<?php echo e($slot->id); ?>, this)">
                                                 Select Slot
                                             </button>
                                         </div>
                                     </div>
                                 </div>
-                            @endforeach
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </div>
                     </div>
-                @empty
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                     <p style="text-align: center; color: #6c757d; padding: 40px;">
                         No available time slots at the moment.
                     </p>
-                @endforelse
+                <?php endif; ?>
             </div>
             
             <div class="schedule-sidebar">
                 <!-- Today's Lesson Section -->
                 <div class="sidebar-section">
                     <h3 class="sidebar-section-title">Today's Lesson</h3>
-                    @if($todaySlots->isNotEmpty())
-                        @foreach($todaySlots->sortBy('start_time') as $slot)
-                            @php
+                    <?php if($todaySlots->isNotEmpty()): ?>
+                        <?php $__currentLoopData = $todaySlots->sortBy('start_time'); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $slot): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <?php
                                 // Show only bookings assigned to this instructor
                                 $slotBookings = $slot->bookings->where('instructor_id', $instructorId)->where('status', '!=', 'cancelled');
-                            @endphp
+                            ?>
                             <div class="today-lesson-card">
                                 <div class="lesson-date">
-                                    <span>{{ \Carbon\Carbon::parse($slot->date)->format('l, F j, Y') }}</span>
+                                    <span><?php echo e(\Carbon\Carbon::parse($slot->date)->format('l, F j, Y')); ?></span>
                                 </div>
                                 <div class="lesson-time">
-                                    {{ \Carbon\Carbon::parse($slot->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($slot->end_time)->format('g:i A') }}
+                                    <?php echo e(\Carbon\Carbon::parse($slot->start_time)->format('g:i A')); ?> - <?php echo e(\Carbon\Carbon::parse($slot->end_time)->format('g:i A')); ?>
+
                                 </div>
                                 
-                                @if($slotBookings->isNotEmpty())
-                                    @foreach($slotBookings as $booking)
+                                <?php if($slotBookings->isNotEmpty()): ?>
+                                    <?php $__currentLoopData = $slotBookings; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $booking): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                         <div class="student-item">
-                                            <div class="student-name">{{ $booking->student->name ?? 'Student' }}</div>
-                                            <div class="student-course">{{ $booking->course->title ?? 'Course' }}</div>
-                                            <button type="button" class="view-lesson-btn" onclick="openLessonModal({{ $booking->id }})">
+                                            <div class="student-name"><?php echo e($booking->student->name ?? 'Student'); ?></div>
+                                            <div class="student-course"><?php echo e($booking->course->title ?? 'Course'); ?></div>
+                                            <button type="button" class="view-lesson-btn" onclick="openLessonModal(<?php echo e($booking->id); ?>)">
                                                 View Details
                                             </button>
                                         </div>
-                                    @endforeach
-                                @else
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                <?php else: ?>
                                     <div class="no-lessons" style="padding: 10px;">
                                         <p>No students booked</p>
                                     </div>
-                                @endif
+                                <?php endif; ?>
                             </div>
-                        @endforeach
-                    @else
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                    <?php else: ?>
                         <div class="no-lessons">
                             <p>No lessons scheduled for today</p>
                         </div>
-                    @endif
+                    <?php endif; ?>
                 </div>
                 
                 <!-- Your Schedule Section -->
                 <div class="sidebar-section">
                     <h3 class="sidebar-section-title">Your Schedule</h3>
-                    @forelse($upcomingSlots as $slot)
+                    <?php $__empty_1 = true; $__currentLoopData = $upcomingSlots; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $slot): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                         <div class="mini-schedule-card">
                             <div class="mini-schedule-date">
-                                {{ \Carbon\Carbon::parse($slot->date)->format('D, M d, Y') }}
+                                <?php echo e(\Carbon\Carbon::parse($slot->date)->format('D, M d, Y')); ?>
+
                             </div>
                             <div class="mini-schedule-info">
-                                {{ \Carbon\Carbon::parse($slot->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($slot->end_time)->format('g:i A') }}
+                                <?php echo e(\Carbon\Carbon::parse($slot->start_time)->format('g:i A')); ?> - <?php echo e(\Carbon\Carbon::parse($slot->end_time)->format('g:i A')); ?>
+
                             </div>
                         </div>
-                    @empty
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                         <p style="text-align: center; color: #6c757d; padding: 20px; font-size: 14px;">
                             No upcoming slots scheduled.
                         </p>
-                    @endforelse
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -1237,7 +1245,7 @@
 <!-- Day Details Modal (for calendar clicks) -->
 <div class="day-modal" id="dayModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;" onclick="if(event.target === this) closeDayModal()">
     <div style="background: white; border-radius: 12px; max-width: 600px; width: 90%; max-height: 80vh; overflow: hidden;">
-        <div style="padding: 16px 20px; border-bottom: 1px solid #dee2e6; display: flex; justify-content: space-between; align-items: center; background: {{ $primaryColor }}; color: white;">
+        <div style="padding: 16px 20px; border-bottom: 1px solid #dee2e6; display: flex; justify-content: space-between; align-items: center; background: <?php echo e($primaryColor); ?>; color: white;">
             <div>
                 <h2 style="margin: 0; font-size: 1.25rem;">Schedule Details</h2>
                 <div id="modalDayDate" style="font-size: 0.9rem; opacity: 0.9;"></div>
@@ -1253,13 +1261,13 @@
 <!-- Removal Request Modal -->
 <div class="day-modal" id="removalRequestModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;" onclick="if(event.target === this) closeRemovalRequestModal()">
     <div style="background: white; border-radius: 12px; max-width: 500px; width: 90%; max-height: 80vh; overflow: hidden;">
-        <div style="padding: 16px 20px; border-bottom: 1px solid #dee2e6; display: flex; justify-content: space-between; align-items: center; background: {{ $primaryColor }}; color: white;">
+        <div style="padding: 16px 20px; border-bottom: 1px solid #dee2e6; display: flex; justify-content: space-between; align-items: center; background: <?php echo e($primaryColor); ?>; color: white;">
             <h2 style="margin: 0; font-size: 1.25rem;">Request Removal from Time Slot</h2>
             <button onclick="closeRemovalRequestModal()" style="background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer;">&times;</button>
         </div>
         <div style="padding: 20px;">
             <form id="removalRequestForm" method="POST">
-                @csrf
+                <?php echo csrf_field(); ?>
                 <div id="removalWarning"></div>
                 <div style="margin-bottom: 20px;">
                     <p style="color: #666; margin-bottom: 15px;">
@@ -1294,7 +1302,7 @@
 <!-- Lesson Details Modal -->
 <div class="day-modal" id="lessonModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;" onclick="if(event.target === this) closeLessonModal()">
     <div style="background: white; border-radius: 12px; max-width: 700px; width: 95%; max-height: 90vh; overflow: hidden;">
-        <div style="padding: 16px 20px; border-bottom: 1px solid #dee2e6; display: flex; justify-content: space-between; align-items: center; background: {{ $primaryColor }}; color: white;">
+        <div style="padding: 16px 20px; border-bottom: 1px solid #dee2e6; display: flex; justify-content: space-between; align-items: center; background: <?php echo e($primaryColor); ?>; color: white;">
             <h2 style="margin: 0; font-size: 1.25rem;">Lesson Details</h2>
             <button onclick="closeLessonModal()" style="background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer;">&times;</button>
         </div>
@@ -1312,36 +1320,37 @@
             <button onclick="toggleMobileSidebar()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
         </div>
         <div class="modal-body-scroll" style="padding: 16px; max-height: calc(80vh - 70px);">
-            @if($todaySlots->isNotEmpty())
-                @foreach($todaySlots->sortBy('start_time') as $slot)
-                    @php
+            <?php if($todaySlots->isNotEmpty()): ?>
+                <?php $__currentLoopData = $todaySlots->sortBy('start_time'); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $slot): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <?php
                         // Show only bookings assigned to this instructor
                         $slotBookings = $slot->bookings->where('instructor_id', $instructorId)->where('status', '!=', 'cancelled');
-                    @endphp
+                    ?>
                     <div class="today-lesson-card">
                         <div class="lesson-time">
-                            {{ \Carbon\Carbon::parse($slot->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($slot->end_time)->format('g:i A') }}
+                            <?php echo e(\Carbon\Carbon::parse($slot->start_time)->format('g:i A')); ?> - <?php echo e(\Carbon\Carbon::parse($slot->end_time)->format('g:i A')); ?>
+
                         </div>
-                        @if($slotBookings->isNotEmpty())
-                            @foreach($slotBookings as $booking)
+                        <?php if($slotBookings->isNotEmpty()): ?>
+                            <?php $__currentLoopData = $slotBookings; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $booking): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                 <div class="student-item">
-                                    <div class="student-name">{{ $booking->student->name ?? 'Student' }}</div>
-                                    <div class="student-course">{{ $booking->course->title ?? 'Course' }}</div>
-                                    <button type="button" class="view-lesson-btn" onclick="openLessonModal({{ $booking->id }}); toggleMobileSidebar();">
+                                    <div class="student-name"><?php echo e($booking->student->name ?? 'Student'); ?></div>
+                                    <div class="student-course"><?php echo e($booking->course->title ?? 'Course'); ?></div>
+                                    <button type="button" class="view-lesson-btn" onclick="openLessonModal(<?php echo e($booking->id); ?>); toggleMobileSidebar();">
                                         View Details
                                     </button>
                                 </div>
-                            @endforeach
-                        @else
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                        <?php else: ?>
                             <p style="color: #6c757d; font-size: 13px;">No students booked</p>
-                        @endif
+                        <?php endif; ?>
                     </div>
-                @endforeach
-            @else
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+            <?php else: ?>
                 <div class="no-lessons">
                     <p>No lessons scheduled for today</p>
                 </div>
-            @endif
+            <?php endif; ?>
         </div>
     </div>
 </div>
@@ -1351,8 +1360,8 @@
     // Schedule data for calendar
     window.schedulesData = {};
     
-    @foreach($allTimeSlots as $slot)
-        @php
+    <?php $__currentLoopData = $allTimeSlots; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $slot): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+        <?php
             $dateKey = $slot->date->format('Y-m-d');
             $isMySlot = $slot->instructors->contains('id', $instructorId);
             $instructor = $slot->instructors->firstWhere('id', $instructorId);
@@ -1360,35 +1369,36 @@
             $hasPendingRequest = in_array($slot->id, $pendingRemovalRequests);
             $daysUntilSlot = now()->startOfDay()->diffInDays(\Carbon\Carbon::parse($slot->date)->startOfDay(), false);
             $canRequestRemoval = $daysUntilSlot >= $minimumNoticeDays;
-        @endphp
-        if (!window.schedulesData["{{ $dateKey }}"]) {
-            window.schedulesData["{{ $dateKey }}"] = [];
+        ?>
+        if (!window.schedulesData["<?php echo e($dateKey); ?>"]) {
+            window.schedulesData["<?php echo e($dateKey); ?>"] = [];
         }
-        window.schedulesData["{{ $dateKey }}"].push({
-            id: {{ $slot->id }},
-            date: "{{ $dateKey }}",
-            start_time: "{{ \Carbon\Carbon::parse($slot->start_time)->format('g:i A') }}",
-            end_time: "{{ \Carbon\Carbon::parse($slot->end_time)->format('g:i A') }}",
-            start_time_raw: "{{ $slot->start_time }}",
-            end_time_raw: "{{ $slot->end_time }}",
-            course_name: "{{ addslashes($slot->course->title ?? 'General') }}",
-            is_my_slot: {{ $isMySlot ? 'true' : 'false' }},
-            assignment_type: "{{ $assignmentType ?? 'self_selected' }}",
-            has_pending_request: {{ $hasPendingRequest ? 'true' : 'false' }},
-            status: "{{ $slot->status }}",
-            instructors_count: {{ $slot->instructors->count() }},
-            max_instructors: {{ $slot->max_instructors ?? 1 }},
-            is_full: {{ $slot->instructors->count() >= ($slot->max_instructors ?? 1) ? 'true' : 'false' }},
-            notes: "{{ addslashes($slot->notes ?? '') }}",
-            toggle_url: "{{ route('schools.instructor.timeslots.toggle', ['school' => $school->slug, 'id' => $slot->id]) }}",
-            can_request_removal: {{ $canRequestRemoval ? 'true' : 'false' }},
-            minimum_notice_days: {{ $minimumNoticeDays }},
-            days_until_slot: {{ $daysUntilSlot }}
+        window.schedulesData["<?php echo e($dateKey); ?>"].push({
+            id: <?php echo e($slot->id); ?>,
+            date: "<?php echo e($dateKey); ?>",
+            start_time: "<?php echo e(\Carbon\Carbon::parse($slot->start_time)->format('g:i A')); ?>",
+            end_time: "<?php echo e(\Carbon\Carbon::parse($slot->end_time)->format('g:i A')); ?>",
+            start_time_raw: "<?php echo e($slot->start_time); ?>",
+            end_time_raw: "<?php echo e($slot->end_time); ?>",
+            course_name: "<?php echo e(addslashes($slot->course->title ?? 'General')); ?>",
+            is_my_slot: <?php echo e($isMySlot ? 'true' : 'false'); ?>,
+            assignment_type: "<?php echo e($assignmentType ?? 'self_selected'); ?>",
+            has_pending_request: <?php echo e($hasPendingRequest ? 'true' : 'false'); ?>,
+            status: "<?php echo e($slot->status); ?>",
+            instructors_count: <?php echo e($slot->instructors->count()); ?>,
+            max_instructors: <?php echo e($slot->max_instructors ?? 1); ?>,
+            is_full: <?php echo e($slot->instructors->count() >= ($slot->max_instructors ?? 1) ? 'true' : 'false'); ?>,
+            notes: "<?php echo e(addslashes($slot->notes ?? '')); ?>",
+            toggle_url: "<?php echo e(route('schools.instructor.timeslots.toggle', ['school' => $school->slug, 'id' => $slot->id])); ?>",
+            can_request_removal: <?php echo e($canRequestRemoval ? 'true' : 'false'); ?>,
+            minimum_notice_days: <?php echo e($minimumNoticeDays); ?>,
+            days_until_slot: <?php echo e($daysUntilSlot); ?>
+
         });
-    @endforeach
+    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
     
     // Instructor's current schedule for conflict checking
-    window.instructorSchedule = @json($instructorSchedule);
+    window.instructorSchedule = <?php echo json_encode($instructorSchedule, 15, 512) ?>;
 </script>
 
 <!-- Conflict Warning Modal -->
@@ -1409,7 +1419,7 @@
             <button onclick="closeConflictModal()" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 500;">
                 Cancel
             </button>
-            <button id="confirmConflictBtn" onclick="confirmSlotSelection()" style="background: {{ $primaryColor }}; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 500;">
+            <button id="confirmConflictBtn" onclick="confirmSlotSelection()" style="background: <?php echo e($primaryColor); ?>; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 500;">
                 Select Anyway
             </button>
         </div>
@@ -1431,7 +1441,7 @@
         button.disabled = true;
         
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        const url = '{{ url($school->slug) }}/instructor/timeslots/' + slotId + '/toggle';
+        const url = '<?php echo e(url($school->slug)); ?>/instructor/timeslots/' + slotId + '/toggle';
         console.log('URL:', url);
         
         fetch(url, {
@@ -1475,7 +1485,7 @@
         button.disabled = true;
         
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        const url = '{{ url($school->slug) }}/instructor/timeslots/' + slotId + '/toggle';
+        const url = '<?php echo e(url($school->slug)); ?>/instructor/timeslots/' + slotId + '/toggle';
         console.log('URL:', url);
         
         fetch(url, {
@@ -2148,7 +2158,7 @@
             }
             
             if (availableSlots.length > 0) {
-                html += `<h3 style="margin-top: ${mySlots.length > 0 ? '25px' : '0'}; margin-bottom: 15px; color: {{ $primaryColor }}; font-size: 1.1rem;">Available Slots</h3>`;
+                html += `<h3 style="margin-top: ${mySlots.length > 0 ? '25px' : '0'}; margin-bottom: 15px; color: <?php echo e($primaryColor); ?>; font-size: 1.1rem;">Available Slots</h3>`;
                 availableSlots.forEach(slot => {
                     html += generateModalSlotCard(slot, false);
                 });
@@ -2196,7 +2206,7 @@
         }
         
         return `
-            <div style="background: #f8f9fa; border-radius: 8px; padding: 16px; margin-bottom: 12px; border-left: 4px solid ${isMySlot ? (slot.assignment_type === 'admin_assigned' ? '#ff9800' : '#28a745') : '{{ $primaryColor }}'};">
+            <div style="background: #f8f9fa; border-radius: 8px; padding: 16px; margin-bottom: 12px; border-left: 4px solid ${isMySlot ? (slot.assignment_type === 'admin_assigned' ? '#ff9800' : '#28a745') : '<?php echo e($primaryColor); ?>'};">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                     <strong>${slot.start_time} - ${slot.end_time}</strong>
                     <span class="slot-badge ${badgeClass}">${badgeText}</span>
@@ -2223,7 +2233,7 @@
         const submitBtn = document.getElementById('removalSubmitBtn');
         const warningDiv = document.getElementById('removalWarning');
         
-        form.action = `{{ url($school->slug) }}/instructor/timeslots/${slotId}/request-removal`;
+        form.action = `<?php echo e(url($school->slug)); ?>/instructor/timeslots/${slotId}/request-removal`;
         textarea.value = '';
         
         if (!canRequest) {
@@ -2238,7 +2248,7 @@
             submitBtn.style.cursor = 'not-allowed';
         } else {
             warningDiv.innerHTML = `
-                <div style="background: #cce5ff; border-left: 4px solid {{ $primaryColor }}; padding: 15px; border-radius: 4px; margin-bottom: 15px;">
+                <div style="background: #cce5ff; border-left: 4px solid <?php echo e($primaryColor); ?>; padding: 15px; border-radius: 4px; margin-bottom: 15px;">
                     <strong style="color: #004085;">Minimum Notice Period</strong><br>
                     <span style="color: #666;">Requests must be submitted at least ${minimumDays} days before the scheduled time slot.</span>
                 </div>
@@ -2269,7 +2279,7 @@
         modal.style.display = 'flex';
         modalBody.innerHTML = '<div style="text-align: center; padding: 40px;">Loading...</div>';
         
-        fetch(`/{{ $school->slug }}/instructor/lessons/${bookingId}`)
+        fetch(`/<?php echo e($school->slug); ?>/instructor/lessons/${bookingId}`)
             .then(response => response.json())
             .then(data => {
                 modalBody.innerHTML = generateLessonForm(data);
@@ -2387,7 +2397,7 @@
                     <button type="button" onclick="closeLessonModal()" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;">
                         Cancel
                     </button>
-                    <button type="submit" class="btn-save-lesson" style="background: {{ $primaryColor }}; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;">
+                    <button type="submit" class="btn-save-lesson" style="background: <?php echo e($primaryColor); ?>; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;">
                         Save Lesson Report
                     </button>
                 </div>
@@ -2424,7 +2434,7 @@
         submitBtn.textContent = 'Saving...';
         submitBtn.disabled = true;
         
-        fetch(`/{{ $school->slug }}/instructor/lessons/${bookingId}/update`, {
+        fetch(`/<?php echo e($school->slug); ?>/instructor/lessons/${bookingId}/update`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -2468,4 +2478,6 @@
     // No form submission needed - bypasses AJAX interception entirely
 </script>
 
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\jcsdi\Documents\Driving School Management System\DrivingApp\resources\views\school\instructor\schedule.blade.php ENDPATH**/ ?>
