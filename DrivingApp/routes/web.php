@@ -23,6 +23,16 @@ Route::get('/', function () {
     return view('welcome', compact('schools'));
 })->name('welcome');
 
+// ========================================
+// TEST ROUTES - Remove after testing
+// ========================================
+Route::prefix('test')->name('test.')->group(function () {
+    Route::get('/course-form', function() {
+        return view('test-components.course-form-enhanced');
+    })->name('course-form');
+});
+// ========================================
+
 // System Admin Routes (Global - Not School Specific)
 Route::prefix('system-admin')->name('system-admin.')->group(function () {
     // Login routes (no auth required)
