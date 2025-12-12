@@ -23,6 +23,9 @@ class Student extends Authenticatable
         'location',
         'enrollment_date',
         'profile_picture',
+        'experience_level',
+        'has_passed_theoretical',
+        'theoretical_passed_at',
     ];
 
     protected $hidden = [
@@ -34,6 +37,8 @@ class Student extends Authenticatable
     {
         return [
             'password' => 'hashed',
+            'has_passed_theoretical' => 'boolean',
+            'theoretical_passed_at' => 'datetime',
         ];
     }
 
@@ -86,5 +91,88 @@ class Student extends Authenticatable
     public function promoteToStudent()
     {
         $this->update(['role' => 'student']);
+    }
+
+    /**
+     * Get all enrollments for this student
+     */
+    public function enrollments()
+    {
+        return $this->hasMany(Enrollment::class);
+    }
+
+    /**
+     * Get active enrollments
+     */
+    public function activeEnrollments()
+    {
+        return $this->enrollments()->where('status', 'active');
+    }
+
+    /**
+     * Check if student has passed theoretical
+     */
+    public function hasPassedTheoretical(): bool
+    {
+        return $this->has_passed_theoretical === true;
+    }
+
+    /**
+     * Check if student is new driver
+     */
+    public function isNewDriver(): bool
+    {
+        return $this->experience_level === 'new_driver';
+    }
+
+    /**
+     * Check if student is experienced
+     */
+    public function isExperienced(): bool
+    {
+        return $this->experience_level === 'experienced';
+    }
+
+    /**
+     * Check if student can enroll in practical courses
+     */
+    public function canEnrollPractical(): bool
+    {
+        return $this->hasPassedTheoretical();
+    }
+
+    /**
+     * Mark student as passed theoretical
+     */
+    public function markTheoreticalPassed()
+    {
+        $this->update([
+            'has_passed_theoretical' => true,
+            'theoretical_passed_at' => now(),
+        ]);
+    }
+
+    /**
+     * Scope for students who passed theoretical
+     */
+    public function scopePassedTheoretical($query)
+    {
+        return $query->where('has_passed_theoretical', true);
+    }
+
+    /**
+     * Scope for new drivers
+     */
+    public function scopeNewDrivers($query)
+    {
+        return $query->where('experience_level', 'new_driver');
+    }
+
+    /**
+     * Scope for experienced drivers
+     */
+    public function scopeExperienced($query)
+    {
+        return $query->where('experience_level', 'experienced');
     }
 }

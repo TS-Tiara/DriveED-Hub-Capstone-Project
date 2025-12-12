@@ -20,6 +20,9 @@ class EnrollmentRequest extends Model
         'location',
         'approved_by',
         'approved_at',
+        'requested_license_type',
+        'experience_level',
+        'credentials_file_path',
     ];
 
     protected $casts = [

@@ -26,11 +26,15 @@ class Course extends Model
         'status',
         'is_featured',
         'sort_order',
+        'course_type',
+        'license_type',
+        'hours_required',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
         'duration_hours' => 'decimal:1',
+        'hours_required' => 'decimal:2',
         'features' => 'array',
         'is_featured' => 'boolean',
     ];
@@ -111,5 +115,85 @@ class Course extends Model
             return null; // Unlimited
         }
         return max(0, $this->max_students - $this->enrolledStudentsCount());
+    }
+
+    /**
+     * Get all modules for this course
+     */
+    public function modules(): HasMany
+    {
+        return $this->hasMany(CourseModule::class)->orderBy('sort_order');
+    }
+
+    /**
+     * Get all enrollments for this course
+     */
+    public function enrollments(): HasMany
+    {
+        return $this->hasMany(Enrollment::class);
+    }
+
+    /**
+     * Check if course is theoretical
+     */
+    public function isTheoretical(): bool
+    {
+        return $this->course_type === 'theoretical';
+    }
+
+    /**
+     * Check if course is practical
+     */
+    public function isPractical(): bool
+    {
+        return $this->course_type === 'practical';
+    }
+
+    /**
+     * Get license type display name
+     */
+    public function getLicenseTypeDisplayAttribute(): string
+    {
+        return match($this->license_type) {
+            'non_professional' => 'Non-Professional',
+            'professional' => 'Professional',
+            default => $this->license_type,
+        };
+    }
+
+    /**
+     * Get course type display name
+     */
+    public function getCourseTypeDisplayAttribute(): string
+    {
+        return match($this->course_type) {
+            'theoretical' => 'Theoretical',
+            'practical' => 'Practical',
+            default => $this->course_type,
+        };
+    }
+
+    /**
+     * Scope for theoretical courses
+     */
+    public function scopeTheoretical($query)
+    {
+        return $query->where('course_type', 'theoretical');
+    }
+
+    /**
+     * Scope for practical courses
+     */
+    public function scopePractical($query)
+    {
+        return $query->where('course_type', 'practical');
+    }
+
+    /**
+     * Scope for courses by license type
+     */
+    public function scopeLicenseType($query, $type)
+    {
+        return $query->where('license_type', $type);
     }
 }
