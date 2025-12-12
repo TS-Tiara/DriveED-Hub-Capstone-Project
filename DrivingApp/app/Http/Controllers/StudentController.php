@@ -6,6 +6,9 @@ use Illuminate\Http\Request;
 use App\Models\School;
 use App\Models\Booking;
 use App\Models\Progress;
+use App\Models\Student;
+use App\Models\Enrollment;
+use App\Models\Course;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -16,6 +19,20 @@ class StudentController extends Controller
     public function dashboard(School $school)
     {
         $student = Auth::guard('student')->user();
+        
+        // Get student model for enrollment checking
+        $studentModel = Student::where('user_id', $student->id)->first();
+        
+        // Get active enrollments with course and session data
+        $activeEnrollments = $studentModel ? Enrollment::where('student_id', $studentModel->id)
+            ->with(['course', 'sessionCompletions'])
+            ->where('status', 'active')
+            ->get() : collect();
+        
+        // Calculate total hours from all enrollments
+        $totalHours = $activeEnrollments->sum(function($enrollment) {
+            return $enrollment->total_hours;
+        });
         
         // Get all bookings for this student with optimized eager loading
         $allBookings = Booking::where('student_id', $student->id)
@@ -31,8 +48,8 @@ class StudentController extends Controller
         $completedBookings = $allBookings->where('status', 'completed');
         $totalLessons = $completedBookings->count();
         
-        // Calculate hours driven (assuming each lesson is 1 hour)
-        $hoursDriven = $totalLessons;
+        // Calculate hours driven (use enrollment hours if available, fallback to bookings)
+        $hoursDriven = $totalHours > 0 ? $totalHours : $totalLessons;
         
         // Get upcoming lessons (next 7 days) - only confirmed/scheduled
         $upcomingLessons = Booking::where('student_id', $student->id)
@@ -62,13 +79,19 @@ class StudentController extends Controller
                 ];
             });
         
-        // Calculate progress percentage
-        $enrolledCourses = $student->enrolledCourses ?? collect([]);
-        $requiredHours = $enrolledCourses->sum('duration_hours') ?? 40;
+        // Calculate progress percentage based on enrollments
+        $requiredHours = $activeEnrollments->sum(function($enrollment) {
+            return $enrollment->course->hours_required ?? 0;
+        });
+        $requiredHours = $requiredHours > 0 ? $requiredHours : 40; // Fallback to 40
         $progressPercentage = $requiredHours > 0 ? min(100, round(($hoursDriven / $requiredHours) * 100)) : 0;
         
         // Test readiness (based on completion and hours)
         $testReadiness = min(100, round($progressPercentage * 0.8 + ($totalLessons >= 10 ? 20 : 0)));
+        
+        // Theoretical status
+        $hasPassedTheoretical = $studentModel ? $studentModel->hasPassedTheoretical() : false;
+        $canEnrollPractical = $studentModel ? $studentModel->canEnrollPractical() : false;
         
         return view($school->resolveView('student.dashboard'), [
             'school' => $school,
@@ -79,6 +102,9 @@ class StudentController extends Controller
             'progressPercentage' => $progressPercentage,
             'requiredHours' => $requiredHours,
             'testReadiness' => $testReadiness,
+            'activeEnrollments' => $activeEnrollments,
+            'hasPassedTheoretical' => $hasPassedTheoretical,
+            'canEnrollPractical' => $canEnrollPractical,
         ]);
     }
 

@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\EnrollmentRequest;
+use App\Models\Enrollment;
 use App\Models\School;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class EnrollmentRequestController extends Controller
 {
@@ -15,7 +17,7 @@ class EnrollmentRequestController extends Controller
     public function index(School $school)
     {
         $requests = EnrollmentRequest::where('school_id', $school->id)
-            ->with(['learner', 'course'])
+            ->with(['student', 'course'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -23,7 +25,7 @@ class EnrollmentRequestController extends Controller
     }
 
     /**
-     * Approve an enrollment request - changes guest to student
+     * Approve an enrollment request - changes guest to student and creates enrollment
      */
     public function approve(School $school, EnrollmentRequest $enrollmentRequest)
     {
@@ -45,32 +47,52 @@ class EnrollmentRequestController extends Controller
                 ->with('error', 'This enrollment request has already been approved.');
         }
 
-        // Security Check 4: Verify the learner still exists and is a guest
-        if (!$enrollmentRequest->learner) {
+        // Security Check 4: Verify the student still exists and is a guest
+        if (!$enrollmentRequest->student) {
             return redirect()
                 ->back()
                 ->with('error', 'Student not found.');
         }
 
-        if ($enrollmentRequest->learner->role !== 'guest') {
+        if ($enrollmentRequest->student->role !== 'guest') {
             return redirect()
                 ->back()
                 ->with('error', 'This user is already a student.');
         }
 
-        // Update enrollment status
-        $enrollmentRequest->update([
-            'status' => 'approved',
-            'approved_by' => $admin->id,
-            'approved_at' => now(),
-        ]);
+        DB::beginTransaction();
+        try {
+            // Update enrollment status
+            $enrollmentRequest->update([
+                'status' => 'approved',
+                'approved_by' => $admin->id,
+                'approved_at' => now(),
+            ]);
 
-        // Update student role from guest to student (just like activating/deactivating)
-        $enrollmentRequest->learner->update(['role' => 'student']);
+            // Update student role from guest to student
+            $enrollmentRequest->student->update(['role' => 'student']);
 
-        return redirect()
-            ->back()
-            ->with('success', 'Student account activated! Role changed from Guest to Student.');
+            // Create active enrollment
+            Enrollment::create([
+                'student_id' => $enrollmentRequest->student_id,
+                'course_id' => $enrollmentRequest->course_id,
+                'enrollment_request_id' => $enrollmentRequest->id,
+                'status' => 'active',
+                'enrolled_at' => now(),
+            ]);
+
+            DB::commit();
+
+            return redirect()
+                ->back()
+                ->with('success', 'Student account activated! Role changed from Guest to Student. Enrollment created.');
+                
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()
+                ->back()
+                ->with('error', 'Failed to approve enrollment: ' . $e->getMessage());
+        }
     }
 
     /**

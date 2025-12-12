@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Course;
 use App\Models\School;
+use App\Models\Student;
+use App\Support\EnrollmentValidator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -16,9 +18,15 @@ class CourseController extends Controller
     public function index(School $school)
     {
         $courses = Course::where('school_id', $school->id)
-            ->with('packages')
+            ->with('packages', 'modules')
             ->when(request('status'), function ($query, $status) {
                 return $query->where('status', $status);
+            })
+            ->when(request('course_type'), function ($query, $type) {
+                return $query->where('course_type', $type);
+            })
+            ->when(request('license_type'), function ($query, $license) {
+                return $query->where('license_type', $license);
             })
             ->orderBy('sort_order')
             ->orderBy('is_featured', 'desc')
@@ -101,19 +109,33 @@ class CourseController extends Controller
     {
         // Authorization check can be added here if needed
         
-        $course->load(['bookings.student', 'bookings.instructor']);
+        $course->load(['bookings.student', 'bookings.instructor', 'modules.lessons']);
+        
+        // Check if student can enroll (for student view)
+        $canEnroll = null;
+        $enrollmentValidation = null;
+        
+        if (Auth::guard('student')->check()) {
+            $student = Student::where('user_id', Auth::id())->first();
+            if ($student) {
+                $enrollmentValidation = EnrollmentValidator::canEnrollInCourse($student, $course);
+                $canEnroll = $enrollmentValidation['allowed'];
+            }
+        }
 
         if (request()->ajax() || request()->wantsJson()) {
             return response()->json([
                 'success' => true,
-                'course' => $course
+                'course' => $course,
+                'can_enroll' => $canEnroll,
+                'enrollment_message' => $enrollmentValidation['message'] ?? null,
             ]);
         }
 
         $guard = Auth::guard('admin')->check() ? 'admin' : (Auth::guard('student')->check() ? 'student' : 'instructor');
         $view = $guard === 'admin' ? 'admin.course-show' : ($guard === 'student' ? 'student.course-show' : 'instructor.course-show');
         
-        return view($school->resolveView($view), compact('school', 'course'));
+        return view($school->resolveView($view), compact('school', 'course', 'canEnroll', 'enrollmentValidation'));
     }
 
     /**

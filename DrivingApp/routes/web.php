@@ -15,6 +15,11 @@ use App\Http\Controllers\StudentController;
 use App\Http\Controllers\GuestController;
 use App\Http\Controllers\EnrollmentRequestController;
 use App\Http\Controllers\SystemAdminController;
+use App\Http\Controllers\EnrollmentController;
+use App\Http\Controllers\SessionCompletionController;
+use App\Http\Controllers\TheoreticalCompletionController;
+use App\Http\Controllers\CourseModuleController;
+use App\Http\Controllers\ModuleLessonController;
 use App\Models\School;
 
 Route::get('/', function () {
@@ -131,6 +136,35 @@ Route::prefix('{school:slug}')
                 Route::post('/{enrollmentRequest}/payment-status', [EnrollmentRequestController::class, 'updatePaymentStatus'])->name('paymentStatus');
             });
 
+            // Enrollments management (Active student enrollments in courses)
+            Route::prefix('enrollments')->name('enrollments.')->group(function () {
+                Route::get('/', [EnrollmentController::class, 'index'])->name('index');
+                Route::get('/{enrollment}', [EnrollmentController::class, 'show'])->name('show');
+                Route::post('/{enrollmentRequest}/create', [EnrollmentController::class, 'createFromRequest'])->name('createFromRequest');
+                Route::post('/{enrollment}/complete', [EnrollmentController::class, 'complete'])->name('complete');
+                Route::post('/{enrollment}/cancel', [EnrollmentController::class, 'cancel'])->name('cancel');
+                Route::get('/stats/overview', [EnrollmentController::class, 'stats'])->name('stats');
+                Route::post('/validate', [EnrollmentController::class, 'validateEnrollment'])->name('validate');
+            });
+
+            // Theoretical completion management (Mark students as passed)
+            Route::prefix('theoretical')->name('theoretical.')->group(function () {
+                Route::get('/', [TheoreticalCompletionController::class, 'index'])->name('index');
+                Route::get('/{enrollment}', [TheoreticalCompletionController::class, 'show'])->name('show');
+                Route::post('/mark-passed', [TheoreticalCompletionController::class, 'markAsPassed'])->name('markAsPassed');
+                Route::get('/passed/list', [TheoreticalCompletionController::class, 'passed'])->name('passed');
+                Route::post('/{enrollment}/revoke', [TheoreticalCompletionController::class, 'revoke'])->name('revoke');
+                Route::get('/stats/overview', [TheoreticalCompletionController::class, 'stats'])->name('stats');
+            });
+
+            // Session completions management (View sessions logged by instructors)
+            Route::prefix('sessions')->name('sessions.')->group(function () {
+                Route::get('/', [SessionCompletionController::class, 'index'])->name('index');
+                Route::get('/{sessionCompletion}', [SessionCompletionController::class, 'show'])->name('show');
+                Route::delete('/{sessionCompletion}', [SessionCompletionController::class, 'destroy'])->name('destroy');
+                Route::get('/enrollment/{enrollment}/stats', [SessionCompletionController::class, 'enrollmentStats'])->name('enrollmentStats');
+            });
+
             // Course management with packages
             Route::get('/courses', [AdminController::class, 'courses'])->name('courses');
             Route::post('/courses', [AdminController::class, 'storeCourse'])->name('courses.store');
@@ -140,6 +174,34 @@ Route::prefix('{school:slug}')
             Route::post('/courses/{courseId}/packages', [AdminController::class, 'storePackage'])->name('courses.packages.store');
             Route::put('/courses/{courseId}/packages/{packageId}', [AdminController::class, 'updatePackage'])->name('courses.packages.update');
             Route::delete('/courses/{courseId}/packages/{packageId}', [AdminController::class, 'deletePackage'])->name('courses.packages.delete');
+
+            // Course modules and lessons management (LMS content)
+            Route::prefix('courses/{course}')->name('courses.')->group(function () {
+                // Modules
+                Route::prefix('modules')->name('modules.')->group(function () {
+                    Route::get('/', [CourseModuleController::class, 'index'])->name('index');
+                    Route::get('/create', [CourseModuleController::class, 'create'])->name('create');
+                    Route::post('/', [CourseModuleController::class, 'store'])->name('store');
+                    Route::get('/{module}', [CourseModuleController::class, 'show'])->name('show');
+                    Route::get('/{module}/edit', [CourseModuleController::class, 'edit'])->name('edit');
+                    Route::put('/{module}', [CourseModuleController::class, 'update'])->name('update');
+                    Route::delete('/{module}', [CourseModuleController::class, 'destroy'])->name('destroy');
+                    Route::post('/reorder', [CourseModuleController::class, 'reorder'])->name('reorder');
+                    Route::post('/{module}/duplicate', [CourseModuleController::class, 'duplicate'])->name('duplicate');
+                    
+                    // Lessons within modules
+                    Route::prefix('{module}/lessons')->name('lessons.')->group(function () {
+                        Route::get('/', [ModuleLessonController::class, 'index'])->name('index');
+                        Route::get('/create', [ModuleLessonController::class, 'create'])->name('create');
+                        Route::post('/', [ModuleLessonController::class, 'store'])->name('store');
+                        Route::get('/{lesson}', [ModuleLessonController::class, 'show'])->name('show');
+                        Route::get('/{lesson}/edit', [ModuleLessonController::class, 'edit'])->name('edit');
+                        Route::put('/{lesson}', [ModuleLessonController::class, 'update'])->name('update');
+                        Route::delete('/{lesson}', [ModuleLessonController::class, 'destroy'])->name('destroy');
+                        Route::post('/reorder', [ModuleLessonController::class, 'reorder'])->name('reorder');
+                    });
+                });
+            });
 
             // School settings
             Route::get('/settings', [AdminController::class, 'settings'])->name('settings');
@@ -206,6 +268,50 @@ Route::prefix('{school:slug}')
             Route::put('/progress/{progress}', [ProgressController::class, 'update'])->name('progress.update');
             Route::delete('/progress/{progress}', [ProgressController::class, 'destroy'])->name('progress.destroy');
             
+            // Instructor session logging
+            Route::prefix('sessions')->name('sessions.')->group(function () {
+                Route::get('/', [SessionCompletionController::class, 'index'])->name('index');
+                Route::get('/create', [SessionCompletionController::class, 'create'])->name('create');
+                Route::post('/', [SessionCompletionController::class, 'store'])->name('store');
+                Route::get('/{sessionCompletion}', [SessionCompletionController::class, 'show'])->name('show');
+                Route::get('/{sessionCompletion}/edit', [SessionCompletionController::class, 'edit'])->name('edit');
+                Route::put('/{sessionCompletion}', [SessionCompletionController::class, 'update'])->name('update');
+                Route::delete('/{sessionCompletion}', [SessionCompletionController::class, 'destroy'])->name('destroy');
+                Route::get('/enrollment/{enrollment}/stats', [SessionCompletionController::class, 'enrollmentStats'])->name('enrollmentStats');
+            });
+
+            // Instructor theoretical completion (Mark students as passed)
+            Route::prefix('theoretical')->name('theoretical.')->group(function () {
+                Route::get('/', [TheoreticalCompletionController::class, 'index'])->name('index');
+                Route::get('/{enrollment}', [TheoreticalCompletionController::class, 'show'])->name('show');
+                Route::post('/mark-passed', [TheoreticalCompletionController::class, 'markAsPassed'])->name('markAsPassed');
+                Route::get('/passed/list', [TheoreticalCompletionController::class, 'passed'])->name('passed');
+            });
+
+            // Student enrollments (View my active enrollments and course materials)
+            Route::prefix('enrollments')->name('enrollments.')->group(function () {
+                Route::get('/', [EnrollmentController::class, 'index'])->name('index');
+                Route::get('/{enrollment}', [EnrollmentController::class, 'show'])->name('show');
+                Route::post('/{enrollment}/cancel', [EnrollmentController::class, 'cancel'])->name('cancel');
+            });
+
+            // Instructor enrollments (View assigned students)
+            Route::prefix('enrollments')->name('enrollments.')->group(function () {
+                Route::get('/', [EnrollmentController::class, 'index'])->name('index');
+                Route::get('/{enrollment}', [EnrollmentController::class, 'show'])->name('show');
+            });
+            
+            // Instructor course modules (View course content)
+            Route::prefix('courses/{course}/modules')->name('courses.modules.')->group(function () {
+                Route::get('/', [CourseModuleController::class, 'index'])->name('index');
+                Route::get('/{module}', [CourseModuleController::class, 'show'])->name('show');
+                
+                Route::prefix('{module}/lessons')->name('lessons.')->group(function () {
+                    Route::get('/', [ModuleLessonController::class, 'index'])->name('index');
+                    Route::get('/{lesson}', [ModuleLessonController::class, 'show'])->name('show');
+                });
+            });
+            
             // Instructor performance reports
             Route::get('/reports', [InstructorController::class, 'reports'])->name('reports');
             
@@ -225,6 +331,24 @@ Route::prefix('{school:slug}')
             // Student courses
             Route::get('/courses', [CourseController::class, 'index'])->name('courses.index');
             Route::get('/courses/{course}', [CourseController::class, 'show'])->name('courses.show');
+
+            // Student enrollments (View my active enrollments and course materials)
+            Route::prefix('enrollments')->name('enrollments.')->group(function () {
+                Route::get('/', [EnrollmentController::class, 'index'])->name('index');
+                Route::get('/{enrollment}', [EnrollmentController::class, 'show'])->name('show');
+                Route::post('/{enrollment}/cancel', [EnrollmentController::class, 'cancel'])->name('cancel');
+            });
+
+            // Student course modules (View enrolled course content)
+            Route::prefix('courses/{course}/modules')->name('courses.modules.')->group(function () {
+                Route::get('/', [CourseModuleController::class, 'index'])->name('index');
+                Route::get('/{module}', [CourseModuleController::class, 'show'])->name('show');
+                
+                Route::prefix('{module}/lessons')->name('lessons.')->group(function () {
+                    Route::get('/', [ModuleLessonController::class, 'index'])->name('index');
+                    Route::get('/{lesson}', [ModuleLessonController::class, 'show'])->name('show');
+                });
+            });
 
             // Booking queue management (used in schedule page)
             Route::post('/bookings', [BookingController::class, 'store'])->name('bookings.store');

@@ -7,9 +7,12 @@ use App\Models\Student;
 use App\Models\School;
 use App\Models\Course;
 use App\Models\EnrollmentRequest;
+use App\Http\Requests\StoreEnrollmentRequestRequest;
+use App\Support\EnrollmentValidator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules;
 
 class GuestController extends Controller
@@ -89,16 +92,22 @@ class GuestController extends Controller
         
         $courses = Course::where('school_id', $school->id)
             ->where('status', 'active')
-            ->with('packages')
+            ->with('packages', 'modules')
+            ->when(request('course_type'), function($query, $type) {
+                $query->where('course_type', $type);
+            })
+            ->when(request('license_type'), function($query, $license) {
+                $query->where('license_type', $license);
+            })
             ->get();
 
         return view('school.guest.courses', compact('school', 'guest', 'courses'));
     }
 
     /**
-     * Handle enrollment request
+     * Handle enrollment request (using new validation system)
      */
-    public function enroll(Request $request, School $school, Course $course)
+    public function enroll(StoreEnrollmentRequestRequest $request, School $school, Course $course)
     {
         Log::info('Enroll method called', [
             'school' => $school->id,
@@ -115,36 +124,42 @@ class GuestController extends Controller
         }
 
         // Check if already enrolled for this course
-        $existingRequest = EnrollmentRequest::where('learner_id', $guest->id)
+        $existingRequest = EnrollmentRequest::where('student_id', $guest->id)
             ->where('course_id', $course->id)
-            ->where('status', 'pending')
+            ->whereIn('status', ['pending', 'approved'])
             ->first();
 
         if ($existingRequest) {
-            return redirect()->back()->with('warning', 'You already have a pending enrollment request for this course.');
+            return redirect()->back()->with('warning', 'You already have an enrollment request for this course.');
         }
 
-        $validated = $request->validate([
-            'remarks' => ['nullable', 'string', 'max:1000'],
-            'branch' => ['nullable', 'string', 'max:255'],
-            'location' => ['nullable', 'string', 'max:255'],
-        ]);
-
         try {
-            EnrollmentRequest::create([
+            $data = [
                 'school_id' => $school->id,
-                'learner_id' => $guest->id,
+                'student_id' => $guest->id,
                 'course_id' => $course->id,
                 'status' => 'pending',
                 'payment_status' => 'pending',
-                'remarks' => $validated['remarks'] ?? null,
-                'branch' => $validated['branch'] ?? $guest->branch,
-                'location' => $validated['location'] ?? $guest->location,
-            ]);
+                'requested_license_type' => $request->requested_license_type,
+                'experience_level' => $request->experience_level,
+                'remarks' => $request->remarks,
+                'branch' => $request->branch ?? $guest->branch,
+                'location' => $request->location ?? $guest->location,
+            ];
+
+            // Handle credential file upload for experienced drivers
+            if ($request->hasFile('credentials_file')) {
+                $file = $request->file('credentials_file');
+                $path = $file->store('credentials', 'public');
+                $data['credentials_file_path'] = $path;
+            }
+
+            EnrollmentRequest::create($data);
 
             Log::info('Enrollment request created successfully', [
-                'learner_id' => $guest->id,
-                'course_id' => $course->id
+                'student_id' => $guest->id,
+                'course_id' => $course->id,
+                'experience_level' => $request->experience_level
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to create enrollment request', [
@@ -170,7 +185,7 @@ class GuestController extends Controller
             return redirect()->route('schools.student.dashboard', ['school' => $school->slug]);
         }
 
-        $requests = EnrollmentRequest::where('learner_id', $guest->id)
+        $requests = EnrollmentRequest::where('student_id', $guest->id)
             ->with('course')
             ->orderBy('created_at', 'desc')
             ->get();
