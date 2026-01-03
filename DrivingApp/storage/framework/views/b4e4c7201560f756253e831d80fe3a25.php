@@ -117,13 +117,34 @@
         background: white;
         border-radius: 16px;
         overflow: hidden;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        transition: all 0.3s;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        border-left: 4px solid <?php echo e($school->schoolSetting->primary_color); ?>;
+        position: relative;
+    }
+
+    .course-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 100px;
+        height: 100px;
+        background: <?php echo e($school->schoolSetting->primary_color); ?>;
+        border-radius: 50%;
+        opacity: 0.05;
+        transition: all 0.3s ease;
+        pointer-events: none;
     }
 
     .course-card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    }
+
+    .course-card:hover::before {
+        transform: scale(1.2);
+        opacity: 0.08;
     }
 
     .course-banner {

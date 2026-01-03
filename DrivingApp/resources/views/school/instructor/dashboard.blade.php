@@ -619,7 +619,7 @@
             <div class="stat-value">{{ $activeStudents }}</div>
         </div>
         <div class="stat-card">
-            <h3>Pending Bookings</h3>
+            <h3>Pending Schedules</h3>
             <div class="stat-value">{{ $pendingBookings }}</div>
         </div>
     </div>
@@ -682,7 +682,7 @@
                     @endforeach
                 </div>
             @else
-                <p class="no-data">No upcoming bookings</p>
+                <p class="no-data">No upcoming schedules</p>
             @endif
         </div>
 
@@ -710,25 +710,6 @@
             @else
                 <p class="no-data">No recent progress updates</p>
             @endif
-        </div>
-    </div>
-
-    <!-- Quick Actions -->
-    <div class="quick-actions">
-        <h2>Quick Actions</h2>
-        <div class="actions-grid">
-            <a href="{{ $schoolRoute('instructor.schedule') }}" class="action-btn" onclick="loadContent(this.href); return false;">
-                <span>View Schedule</span>
-            </a>
-            <a href="{{ $schoolRoute('instructor.students.index') }}" class="action-btn" onclick="loadContent(this.href); return false;">
-                <span>My Students</span>
-            </a>
-            <a href="{{ $schoolRoute('instructor.grades') }}" class="action-btn" onclick="loadContent(this.href); return false;">
-                <span>Manage Grades</span>
-            </a>
-            <a href="{{ $schoolRoute('instructor.reports') }}" class="action-btn" onclick="loadContent(this.href); return false;">
-                <span>Performance Reports</span>
-            </a>
         </div>
     </div>
 </div>

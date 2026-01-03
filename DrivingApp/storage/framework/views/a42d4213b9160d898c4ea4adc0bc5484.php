@@ -60,57 +60,143 @@
     }
 
     .stat-card {
-        <?php if($useGradient): ?>
-            background: linear-gradient(135deg, <?php echo e($primaryColor); ?> 0%, <?php echo e($secondaryColor); ?> 100%);
-        <?php else: ?>
-            background: <?php echo e($primaryColor); ?>;
-        <?php endif; ?>
-        color: white;
-        padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        background: white;
+        padding: 24px;
+        border-radius: 16px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        border-left: 4px solid transparent;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        opacity: 0.1;
+        transition: all 0.3s ease;
     }
 
     .stat-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        transform: translateY(-5px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
     }
 
-    /* Predefined stat card colors */
-    .stat-card.success {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    .stat-card:hover::before {
+        transform: scale(1.2);
+        opacity: 0.15;
     }
 
-    .stat-card.warning {
-        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    /* Stat card color variants */
+    .stat-card.students {
+        border-left-color: #3b82f6;
+    }
+    .stat-card.students::before {
+        background: #3b82f6;
+    }
+    .stat-card.students .stat-icon {
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        color: #1e40af;
+    }
+
+    .stat-card.instructors {
+        border-left-color: #8b5cf6;
+    }
+    .stat-card.instructors::before {
+        background: #8b5cf6;
+    }
+    .stat-card.instructors .stat-icon {
+        background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+        color: #6d28d9;
+    }
+
+    .stat-card.growth {
+        border-left-color: #10b981;
+    }
+    .stat-card.growth::before {
+        background: #10b981;
+    }
+    .stat-card.growth .stat-icon {
+        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+        color: #047857;
+    }
+
+    .stat-card.active {
+        border-left-color: #06b6d4;
+    }
+    .stat-card.active::before {
+        background: #06b6d4;
+    }
+    .stat-card.active .stat-icon {
+        background: linear-gradient(135deg, #cffafe 0%, #a5f3fc 100%);
+        color: #0e7490;
     }
 
     .stat-card.danger {
-        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        border-left-color: #ef4444;
+    }
+    .stat-card.danger::before {
+        background: #ef4444;
+    }
+    .stat-card.danger .stat-icon {
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+        color: #b91c1c;
     }
 
-    .stat-card.info {
-        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    .stat-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    .stat-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 16px;
+    }
+
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        flex-shrink: 0;
     }
 
     .stat-label {
-        font-size: 0.85rem;
-        opacity: 0.9;
+        font-size: 0.875rem;
+        color: #6b7280;
+        font-weight: 500;
         margin-bottom: 8px;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.05em;
     }
 
     .stat-value {
-        font-size: 2rem;
+        font-size: 2.25rem;
         font-weight: 700;
-        margin-bottom: 5px;
+        color: #111827;
+        margin-bottom: 8px;
+        line-height: 1;
     }
 
     .stat-detail {
-        font-size: 0.8rem;
-        opacity: 0.8;
+        font-size: 0.875rem;
+        color: #6b7280;
+        line-height: 1.5;
+    }
+
+    .stat-detail strong {
+        color: #374151;
+        font-weight: 600;
     }
 
     /* Content Cards/Sections */
@@ -120,6 +206,10 @@
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         margin-bottom: 20px;
         overflow: hidden;
+    }
+
+    .content-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
 
     .content-card-header {
@@ -136,6 +226,101 @@
 
     .content-card-body {
         padding: 20px;
+    }
+
+    /* Activity Lists & Items */
+    .activity-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .activity-item {
+        padding: 16px;
+        border-bottom: 1px solid #f3f4f6;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: background 0.2s ease;
+        border-radius: 8px;
+        margin-bottom: 4px;
+    }
+
+    .activity-item:hover {
+        background: #f9fafb;
+    }
+
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+
+    .activity-name {
+        font-weight: 600;
+        color: #111827;
+        margin-bottom: 4px;
+    }
+
+    .activity-email {
+        font-size: 0.875rem;
+        color: #6b7280;
+    }
+
+    .view-all-link {
+        display: block;
+        text-align: center;
+        padding: 12px;
+        margin-top: 16px;
+        color: <?php echo e($primaryColor); ?>;
+        font-weight: 600;
+        text-decoration: none;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+
+    .view-all-link:hover {
+        background: #f9fafb;
+        color: <?php echo e($secondaryColor); ?>;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+    }
+
+    .empty-state-text {
+        color: #9ca3af;
+        font-size: 0.875rem;
+    }
+
+    /* Badges */
+    .badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .badge-success {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .badge-warning {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .badge-info {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .badge-danger {
+        background: #fee2e2;
+        color: #991b1b;
     }
 
     /* Buttons */

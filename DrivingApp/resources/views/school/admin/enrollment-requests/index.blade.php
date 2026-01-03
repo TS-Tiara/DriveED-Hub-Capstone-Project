@@ -1,6 +1,6 @@
 @extends($isAjax ?? false ? 'layouts.ajax' : 'layouts.app')
 
-@section('title', 'Enrollment Requests Management')
+@section('title', 'Manage Enrollments')
 
 @section('content')
 @php
@@ -53,6 +53,34 @@
         padding: 20px;
         border-radius: 12px;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 3px solid transparent;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    }
+    
+    .stat-card.active {
+        border-color: #ffffff;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+        transform: scale(1.05);
+    }
+    
+    .stat-card.active::before {
+        content: '';
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        width: 12px;
+        height: 12px;
+        background: #ffffff;
+        border-radius: 50%;
+        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
     }
     
     .stat-card.pending {
@@ -76,34 +104,6 @@
     .stat-label {
         font-size: 0.95rem;
         opacity: 0.9;
-    }
-    
-    .filter-tabs {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 25px;
-        border-bottom: 2px solid #e5e7eb;
-        padding-bottom: 0;
-    }
-    
-    .filter-tab {
-        padding: 12px 24px;
-        background: none;
-        border: none;
-        color: #6b7280;
-        font-weight: 600;
-        cursor: pointer;
-        border-bottom: 3px solid transparent;
-        transition: all 0.3s ease;
-    }
-    
-    .filter-tab:hover {
-        color: #3b82f6;
-    }
-    
-    .filter-tab.active {
-        color: #3b82f6;
-        border-bottom-color: #3b82f6;
     }
     
     .requests-table {
@@ -198,6 +198,16 @@
     .status-approved {
         background: #d1fae5;
         color: #065f46;
+    }
+    
+    .status-completed {
+        background: #dcfce7;
+        color: #166534;
+    }
+    
+    .status-cancelled {
+        background: #f3f4f6;
+        color: #374151;
     }
     
     .status-rejected {
@@ -297,8 +307,8 @@
     <!-- Page Header -->
     <div class="page-header">
         <div>
-            <h1 class="page-title">Enrollment Requests</h1>
-            <p class="page-subtitle">Review and manage guest enrollment requests for {{ $schoolName }}</p>
+            <h1 class="page-title">Manage Enrollments</h1>
+            <p class="page-subtitle">View and manage all enrollment requests and active student enrollments</p>
         </div>
     </div>
     
@@ -333,33 +343,102 @@
         
         $pendingRequests = $allRequests->where('status', 'pending');
         $approvedRequests = $allRequests->where('status', 'approved');
+        $completedRequests = $allRequests->where('status', 'completed');
+        $cancelledRequests = $allRequests->where('status', 'cancelled');
         $rejectedRequests = $allRequests->where('status', 'rejected');
     @endphp
     
     <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-number">{{ $allRequests->count() }}</div>
-            <div class="stat-label">Total Requests</div>
+        <div class="stat-card active" onclick="filterRequests('all', this)" data-status="all">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">All Enrollments</div>
+                        <div class="stat-number">{{ $allRequests->count() }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="stat-card pending">
-            <div class="stat-number">{{ $pendingRequests->count() }}</div>
-            <div class="stat-label">Pending</div>
+        <div class="stat-card pending" onclick="filterRequests('pending', this)" data-status="pending">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">Pending Approval</div>
+                        <div class="stat-number">{{ $pendingRequests->count() }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="stat-card approved">
-            <div class="stat-number">{{ $approvedRequests->count() }}</div>
-            <div class="stat-label">Approved</div>
+        <div class="stat-card approved" onclick="filterRequests('approved', this)" data-status="approved">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">Active</div>
+                        <div class="stat-number">{{ $approvedRequests->count() }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="stat-card rejected">
-            <div class="stat-number">{{ $rejectedRequests->count() }}</div>
-            <div class="stat-label">Rejected</div>
+        <div class="stat-card completed" onclick="filterRequests('completed', this)" data-status="completed">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">Completed</div>
+                        <div class="stat-number">{{ $completedRequests->count() }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
-    
-    <div class="filter-tabs">
-        <button class="filter-tab active" onclick="filterRequests('all')">All Requests</button>
-        <button class="filter-tab" onclick="filterRequests('pending')">Pending</button>
-        <button class="filter-tab" onclick="filterRequests('approved')">Approved</button>
-        <button class="filter-tab" onclick="filterRequests('rejected')">Rejected</button>
+        <div class="stat-card cancelled" onclick="filterRequests('cancelled', this)" data-status="cancelled">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">Cancelled</div>
+                        <div class="stat-number">{{ $cancelledRequests->count() }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="stat-card rejected" onclick="filterRequests('rejected', this)" data-status="rejected">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">Rejected</div>
+                        <div class="stat-number">{{ $rejectedRequests->count() }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
     
     @if($allRequests->count() > 0)
@@ -412,7 +491,7 @@
                         <td>
                             @if($request->status === 'pending')
                                 <div class="action-buttons">
-                                    <form method="POST" action="{{ route('schools.admin.enrollmentRequests.approve', ['school' => $school, 'enrollmentRequest' => $request->id]) }}" style="display: inline;" id="approveForm{{ $request->id }}">
+                                    <form method="POST" action="{{ route('schools.admin.enrollments.approve', ['school' => $school, 'enrollmentRequest' => $request->id]) }}" style="display: inline;" id="approveForm{{ $request->id }}">
                                         @csrf
                                         <button type="button" class="btn btn-approve" onclick="approveRequest({{ $request->id }})">
                                             ✓ Approve
@@ -422,11 +501,29 @@
                                         ✗ Reject
                                     </button>
                                 </div>
+                            @elseif($request->status === 'approved')
+                                <div class="action-buttons">
+                                    <form method="POST" action="{{ route('schools.admin.enrollments.complete', ['school' => $school, 'enrollmentRequest' => $request->id]) }}" style="display: inline;" id="completeForm{{ $request->id }}">
+                                        @csrf
+                                        <button type="button" class="btn btn-approve" onclick="completeEnrollment({{ $request->id }})">
+                                            ✓ Complete
+                                        </button>
+                                    </form>
+                                    <button class="btn btn-reject" onclick="showCancelModal({{ $request->id }})">
+                                        ✗ Cancel
+                                    </button>
+                                </div>
                             @else
                                 <span style="color: #9ca3af; font-size: 0.9rem;">
                                     {{ ucfirst($request->status) }}
                                     @if($request->approved_at)
                                         <br><small>{{ $request->approved_at->format('M d, Y') }}</small>
+                                    @endif
+                                    @if($request->completed_at)
+                                        <br><small>{{ $request->completed_at->format('M d, Y') }}</small>
+                                    @endif
+                                    @if($request->cancelled_at)
+                                        <br><small>{{ $request->cancelled_at->format('M d, Y') }}</small>
                                     @endif
                                 </span>
                             @endif
@@ -471,14 +568,42 @@
     </div>
 </div>
 
+<!-- Cancel Modal -->
+<div id="cancelModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+    <div style="background: white; border-radius: 15px; padding: 30px; max-width: 500px; width: 90%;">
+        <h3 style="margin: 0 0 20px 0; color: #333;">Cancel Enrollment</h3>
+        <form id="cancelForm" method="POST">
+            @csrf
+            <div style="margin-bottom: 20px;">
+                <label for="cancel_remarks" style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
+                    Reason for Cancellation (optional)
+                </label>
+                <textarea id="cancel_remarks" name="remarks" rows="4" 
+                    style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; font-family: inherit;"
+                    placeholder="Provide a reason for cancelling this enrollment..."></textarea>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" onclick="closeCancelModal()" 
+                    style="padding: 10px 20px; background: #e5e7eb; color: #333; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                    Cancel
+                </button>
+                <button type="submit" 
+                    style="padding: 10px 20px; background: #6b7280; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                    Cancel Enrollment
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
-function filterRequests(status) {
-    const tabs = document.querySelectorAll('.filter-tab');
+function filterRequests(status, cardElement) {
+    const cards = document.querySelectorAll('.stat-card');
     const rows = document.querySelectorAll('.requests-table tbody tr');
     
-    // Update active tab
-    tabs.forEach(tab => tab.classList.remove('active'));
-    event.target.classList.add('active');
+    // Update active card
+    cards.forEach(card => card.classList.remove('active'));
+    cardElement.classList.add('active');
     
     // Filter rows
     rows.forEach(row => {
@@ -493,7 +618,14 @@ function filterRequests(status) {
 function showRejectModal(requestId) {
     const modal = document.getElementById('rejectModal');
     const form = document.getElementById('rejectForm');
-    form.action = `{{ route('schools.admin.enrollmentRequests.reject', ['school' => $school, 'enrollmentRequest' => ':id']) }}`.replace(':id', requestId);
+    form.action = `{{ route('schools.admin.enrollments.reject', ['school' => $school, 'enrollmentRequest' => ':id']) }}`.replace(':id', requestId);
+    modal.style.display = 'flex';
+}
+
+function showCancelModal(requestId) {
+    const modal = document.getElementById('cancelModal');
+    const form = document.getElementById('cancelForm');
+    form.action = `{{ route('schools.admin.enrollments.cancel', ['school' => $school, 'enrollmentRequest' => ':id']) }}`.replace(':id', requestId);
     modal.style.display = 'flex';
 }
 
@@ -509,16 +641,40 @@ function approveRequest(requestId) {
     });
 }
 
+function completeEnrollment(requestId) {
+    showConfirm({
+        type: 'success',
+        title: 'Complete Enrollment',
+        message: 'Are you sure you want to mark this enrollment as completed? The student has finished the course.',
+        confirmText: 'Complete',
+        onConfirm: function() {
+            document.getElementById('completeForm' + requestId).submit();
+        }
+    });
+}
+
 function closeRejectModal() {
     const modal = document.getElementById('rejectModal');
     modal.style.display = 'none';
     document.getElementById('remarks').value = '';
 }
 
-// Close modal when clicking outside
+function closeCancelModal() {
+    const modal = document.getElementById('cancelModal');
+    modal.style.display = 'none';
+    document.getElementById('cancel_remarks').value = '';
+}
+
+// Close modals when clicking outside
 document.getElementById('rejectModal').addEventListener('click', function(e) {
     if (e.target === this) {
         closeRejectModal();
+    }
+});
+
+document.getElementById('cancelModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeCancelModal();
     }
 });
 </script>

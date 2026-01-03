@@ -46,7 +46,7 @@
         margin: 0;
     }
     
-    /* Statistics Cards */
+    /* Statistics Cards - Using shared styles from admin-styles.blade.php */
     .stats-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -54,55 +54,27 @@
         margin-bottom: 30px;
     }
     
-    .stat-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 20px;
-        border-radius: 12px;
-        color: white;
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-    
-    .stat-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-    }
-    
-    .stat-card.students {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
-    
-    .stat-card.instructors {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    }
-    
+    /* Additional stat card color variants for user management */
     .stat-card.total {
-        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        border-left-color: #6366f1;
     }
-    
-    .stat-card.active {
-        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    .stat-card.total::before {
+        background: #6366f1;
     }
-    
+    .stat-card.total .stat-icon {
+        background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+        color: #4338ca;
+    }
+
     .stat-card.inactive {
-        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        border-left-color: #f59e0b;
     }
-    
-    .stat-label {
-        font-size: 0.9rem;
-        opacity: 0.9;
-        margin-bottom: 8px;
+    .stat-card.inactive::before {
+        background: #f59e0b;
     }
-    
-    .stat-value {
-        font-size: 2.5rem;
-        font-weight: bold;
-        margin-bottom: 5px;
-    }
-    
-    .stat-breakdown {
-        font-size: 0.8rem;
-        opacity: 0.8;
+    .stat-card.inactive .stat-icon {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        color: #b45309;
     }
     
     /* Tabs */
@@ -478,34 +450,89 @@
     
     <!-- Statistics Cards -->
     <div class="stats-grid">
-        <div class="stat-card total">
-            <div class="stat-label">Total Users</div>
-            <div class="stat-value">{{ $totalUsers }}</div>
-            <div class="stat-breakdown">{{ $totalStudents }} Students · {{ $totalInstructors }} Instructors</div>
+        <div class="stat-card total active" onclick="filterUsers('all', this)">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">Total Users</div>
+                        <div class="stat-value">{{ $totalUsers }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="stat-detail"><strong>{{ $totalStudents }}</strong> Students · <strong>{{ $totalInstructors }}</strong> Instructors</div>
+            </div>
         </div>
         
-        <div class="stat-card active">
-            <div class="stat-label">Active Users</div>
-            <div class="stat-value">{{ $totalActive }}</div>
-            <div class="stat-breakdown">{{ $activeStudents }} Students · {{ $activeInstructors }} Instructors</div>
+        <div class="stat-card active" onclick="filterUsers('active', this)">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">Active Users</div>
+                        <div class="stat-value">{{ $totalActive }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="stat-detail"><strong>{{ $activeStudents }}</strong> Students · <strong>{{ $activeInstructors }}</strong> Instructors</div>
+            </div>
         </div>
         
-        <div class="stat-card inactive">
-            <div class="stat-label">Inactive Users</div>
-            <div class="stat-value">{{ $totalInactive }}</div>
-            <div class="stat-breakdown">{{ $inactiveStudents }} Students · {{ $inactiveInstructors }} Instructors</div>
+        <div class="stat-card inactive" onclick="filterUsers('inactive', this)">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">Inactive Users</div>
+                        <div class="stat-value">{{ $totalInactive }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="stat-detail"><strong>{{ $inactiveStudents }}</strong> Students · <strong>{{ $inactiveInstructors }}</strong> Instructors</div>
+            </div>
         </div>
         
-        <div class="stat-card students">
-            <div class="stat-label">Students</div>
-            <div class="stat-value">{{ $totalStudents }}</div>
-            <div class="stat-breakdown">{{ $activeStudents }} Active · {{ $inactiveStudents }} Inactive</div>
+        <div class="stat-card students" onclick="filterUsers('students', this)">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">Students</div>
+                        <div class="stat-value">{{ $totalStudents }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="stat-detail"><strong>{{ $activeStudents }}</strong> Active · <strong>{{ $inactiveStudents }}</strong> Inactive</div>
+            </div>
         </div>
         
-        <div class="stat-card instructors">
-            <div class="stat-label">Instructors</div>
-            <div class="stat-value">{{ $totalInstructors }}</div>
-            <div class="stat-breakdown">{{ $activeInstructors }} Active · {{ $inactiveInstructors }} Inactive</div>
+        <div class="stat-card instructors" onclick="filterUsers('instructors', this)">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">Instructors</div>
+                        <div class="stat-value">{{ $totalInstructors }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="stat-detail"><strong>{{ $activeInstructors }}</strong> Active · <strong>{{ $inactiveInstructors }}</strong> Inactive</div>
+            </div>
         </div>
     </div>
     
@@ -531,16 +558,8 @@
     </div>
     @endif
     
-    <!-- Tabs -->
-    <div class="tabs-container">
-        <div class="tabs">
-            <button class="tab active" onclick="switchTab('students')">Students ({{ $totalStudents }})</button>
-            <button class="tab" onclick="switchTab('instructors')">Instructors ({{ $totalInstructors }})</button>
-        </div>
-    </div>
-    
-    <!-- Students Tab Content -->
-    <div id="students" class="tab-content active">
+    <!-- Students Section -->
+    <div id="students" class="user-section">
         <div class="action-bar">
             <div class="search-box">
                 <input type="text" id="studentSearch" placeholder="Search students by name or email..." onkeyup="filterTable('studentSearch', 'studentsTable')">
@@ -594,8 +613,8 @@
         </div>
     </div>
     
-    <!-- Instructors Tab Content -->
-    <div id="instructors" class="tab-content">
+    <!-- Instructors Section -->
+    <div id="instructors" class="user-section">
         <div class="action-bar">
             <div class="search-box">
                 <input type="text" id="instructorSearch" placeholder="Search instructors by name or email..." onkeyup="filterTable('instructorSearch', 'instructorsTable')">
@@ -803,23 +822,103 @@
         initializeUserManagementPage();
     }
 
-    // Tab Switching
-    function switchTab(tabName) {
-        // Hide all tab contents
-        document.querySelectorAll('.tab-content').forEach(content => {
-            content.classList.remove('active');
+    // Filter Users by Type
+    function filterUsers(type, card) {
+        // Remove active class from all stat cards
+        document.querySelectorAll('.stat-card').forEach(c => {
+            c.classList.remove('active');
         });
         
-        // Remove active class from all tabs
-        document.querySelectorAll('.tab').forEach(tab => {
-            tab.classList.remove('active');
+        // Add active class to clicked card
+        card.classList.add('active');
+        
+        // Show/hide sections based on filter
+        const studentsSection = document.getElementById('students');
+        const instructorsSection = document.getElementById('instructors');
+        
+        // Reset all rows to visible first
+        document.querySelectorAll('.table-container table tbody tr').forEach(row => {
+            row.style.display = '';
         });
         
-        // Show selected tab content
-        document.getElementById(tabName).classList.add('active');
+        if (type === 'all') {
+            studentsSection.style.display = 'block';
+            instructorsSection.style.display = 'block';
+        } else if (type === 'students') {
+            studentsSection.style.display = 'block';
+            instructorsSection.style.display = 'none';
+        } else if (type === 'instructors') {
+            studentsSection.style.display = 'none';
+            instructorsSection.style.display = 'block';
+        } else if (type === 'active') {
+            studentsSection.style.display = 'block';
+            instructorsSection.style.display = 'block';
+            filterByStatus('active');
+        } else if (type === 'inactive') {
+            studentsSection.style.display = 'block';
+            instructorsSection.style.display = 'block';
+            filterByStatus('inactive');
+        }
+    }
+    
+    // Filter by Status (Active/Inactive)
+    function filterByStatus(status) {
+        const tables = document.querySelectorAll('.table-container table tbody tr');
         
-        // Add active class to selected tab
-        event.currentTarget.classList.add('active');
+        tables.forEach(row => {
+            const statusSpan = row.querySelector('.status-badge');
+            if (statusSpan) {
+                const rowStatus = statusSpan.textContent.trim().toLowerCase();
+                row.style.display = (rowStatus === status) ? '' : 'none';
+            }
+        });
+    }
+
+    // Filter Users by Type
+    function filterUsers(type, card) {
+        // Remove active class from all stat cards
+        document.querySelectorAll('.stat-card').forEach(c => {
+            c.classList.remove('active');
+        });
+        
+        // Add active class to clicked card
+        card.classList.add('active');
+        
+        // Show/hide sections based on filter
+        const studentsSection = document.getElementById('students');
+        const instructorsSection = document.getElementById('instructors');
+        
+        if (type === 'all') {
+            studentsSection.style.display = 'block';
+            instructorsSection.style.display = 'block';
+        } else if (type === 'students') {
+            studentsSection.style.display = 'block';
+            instructorsSection.style.display = 'none';
+        } else if (type === 'instructors') {
+            studentsSection.style.display = 'none';
+            instructorsSection.style.display = 'block';
+        } else if (type === 'active') {
+            studentsSection.style.display = 'block';
+            instructorsSection.style.display = 'block';
+            filterByStatus('active');
+        } else if (type === 'inactive') {
+            studentsSection.style.display = 'block';
+            instructorsSection.style.display = 'block';
+            filterByStatus('inactive');
+        }
+    }
+    
+    // Filter by Status (Active/Inactive)
+    function filterByStatus(status) {
+        const tables = document.querySelectorAll('.table-container table tbody tr');
+        
+        tables.forEach(row => {
+            const statusBadge = row.querySelector('.badge');
+            if (statusBadge) {
+                const rowStatus = statusBadge.classList.contains('badge-active') ? 'active' : 'inactive';
+                row.style.display = (rowStatus === status) ? '' : 'none';
+            }
+        });
     }
     
     // Table Search/Filter

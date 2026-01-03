@@ -422,7 +422,15 @@
 
 <div class="student-dashboard">
     <div class="page-header">
-        <h1 class="page-title">Dashboard</h1>
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="width: 60px; height: 60px; background: {{ $primaryColor }}; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; font-weight: bold;">
+                {{ strtoupper(substr(Auth::guard('student')->user()->name, 0, 1)) }}
+            </div>
+            <div>
+                <h1 class="page-title" style="margin-bottom: 4px;">Welcome, {{ Auth::guard('student')->user()->name }}</h1>
+                <p style="margin: 0; color: #6b7280; font-size: 0.9rem;">{{ Auth::guard('student')->user()->email }}</p>
+            </div>
+        </div>
     </div>
 
     <!-- Desktop: 3 column layout -->
@@ -431,20 +439,20 @@
             <div class="card-header">Learning Progress</div>
             <div class="card-body">
                 <div class="info-row">
-                    <span class="info-label">Lesson Completed</span>
-                    <span class="info-value">{{ $totalLessons }}</span>
+                    <span class="info-label">Lessons Completed</span>
+                    <span class="info-value">{{ $totalLessons }} of {{ $requiredHours }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Hours Driven</span>
-                    <span class="info-value">{{ $hoursDriven }}</span>
+                    <span class="info-label">Session Hours</span>
+                    <span class="info-value">{{ $hoursDriven }} hrs</span>
                 </div>
                 <div class="info-row">
                     <span class="info-label">Current Level</span>
                     <span class="info-value">Intermediate</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Status</span>
-                    <span class="info-value">{{ $progressPercentage }}%</span>
+                    <span class="info-label">Progress</span>
+                    <span class="info-value">{{ $progressPercentage }}% Complete</span>
                 </div>
             </div>
         </div>
@@ -508,8 +516,8 @@
                     <span class="info-value">{{ min(10, floor($totalLessons / 2)) }}/10</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Practice Hours</span>
-                    <span class="info-value">{{ $hoursDriven }}/{{ $requiredHours }}</span>
+                    <span class="info-label">Hours Completed</span>
+                    <span class="info-value">{{ $hoursDriven }} / {{ $requiredHours }} hrs</span>
                 </div>
                 <div class="info-row">
                     <span class="info-label">Est. Test Date</span>
@@ -570,20 +578,20 @@
             <div class="card-header">Learning Progress</div>
             <div class="card-body">
                 <div class="info-row">
-                    <span class="info-label">Lesson Completed</span>
-                    <span class="info-value">{{ $totalLessons }}</span>
+                    <span class="info-label">Lessons Completed</span>
+                    <span class="info-value">{{ $totalLessons }} of {{ $requiredHours }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Hours Driven</span>
-                    <span class="info-value">{{ $hoursDriven }}</span>
+                    <span class="info-label">Session Hours</span>
+                    <span class="info-value">{{ $hoursDriven }} hrs</span>
                 </div>
                 <div class="info-row">
                     <span class="info-label">Current Level</span>
                     <span class="info-value">Intermediate</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Status</span>
-                    <span class="info-value">{{ $progressPercentage }}%</span>
+                    <span class="info-label">Progress</span>
+                    <span class="info-value">{{ $progressPercentage }}% Complete</span>
                 </div>
             </div>
         </div>
@@ -600,33 +608,14 @@
                     <span class="info-value">{{ min(10, floor($totalLessons / 2)) }}/10</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Practice Hours</span>
-                    <span class="info-value">{{ $hoursDriven }}/{{ $requiredHours }}</span>
+                    <span class="info-label">Hours Completed</span>
+                    <span class="info-value">{{ $hoursDriven }} / {{ $requiredHours }} hrs</span>
                 </div>
                 <div class="info-row">
                     <span class="info-label">Est. Test Date</span>
                     <span class="info-value">{{ $progressPercentage >= 80 ? \Carbon\Carbon::now()->addWeeks(2)->format('M d, Y') : 'TBD' }}</span>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- Quick Actions -->
-    <div class="quick-actions-section">
-        <h2 class="quick-actions-title">Quick Actions</h2>
-        <div class="quick-actions-grid">
-            <a href="{{ $schoolRoute('student.courses.index') }}" class="action-btn" onclick="loadContent(this.href); return false;">
-                Browse Courses
-            </a>
-            <a href="{{ $schoolRoute('student.schedule') }}" class="action-btn" onclick="loadContent(this.href); return false;">
-                My Bookings
-            </a>
-            <a href="{{ $schoolRoute('student.progress.index') }}" class="action-btn" onclick="loadContent(this.href); return false;">
-                My Progress
-            </a>
-            <a href="{{ $schoolRoute('student.profile') }}" class="action-btn" onclick="loadContent(this.href); return false;">
-                Update Profile
-            </a>
         </div>
     </div>
 

@@ -20,14 +20,11 @@ class StudentController extends Controller
     {
         $student = Auth::guard('student')->user();
         
-        // Get student model for enrollment checking
-        $studentModel = Student::where('user_id', $student->id)->first();
-        
         // Get active enrollments with course and session data
-        $activeEnrollments = $studentModel ? Enrollment::where('student_id', $studentModel->id)
+        $activeEnrollments = Enrollment::where('student_id', $student->id)
             ->with(['course', 'sessionCompletions'])
             ->where('status', 'active')
-            ->get() : collect();
+            ->get();
         
         // Calculate total hours from all enrollments
         $totalHours = $activeEnrollments->sum(function($enrollment) {

@@ -52,11 +52,18 @@
     }
     
     .activity-item {
-        padding: 14px 0;
+        padding: 16px;
         border-bottom: 1px solid #f3f4f6;
         display: flex;
         justify-content: space-between;
         align-items: center;
+        transition: background 0.2s ease;
+        border-radius: 8px;
+        margin-bottom: 4px;
+    }
+
+    .activity-item:hover {
+        background: #f9fafb;
     }
     
     .activity-item:last-child {
@@ -64,13 +71,13 @@
     }
     
     .activity-name {
-        font-weight: 500;
-        color: #1f2937;
-        margin-bottom: 2px;
+        font-weight: 600;
+        color: #111827;
+        margin-bottom: 4px;
     }
     
     .activity-email {
-        font-size: 0.85rem;
+        font-size: 0.875rem;
         color: #6b7280;
     }
     
@@ -93,15 +100,18 @@
     .view-all-link {
         display: block;
         text-align: center;
-        margin-top: 15px;
+        padding: 12px;
+        margin-top: 16px;
         color: <?php echo e($primaryColor); ?>;
+        font-weight: 600;
         text-decoration: none;
-        font-size: 0.9rem;
-        font-weight: 500;
+        border-radius: 8px;
+        transition: all 0.2s ease;
     }
     
     .view-all-link:hover {
-        text-decoration: underline;
+        background: #f9fafb;
+        color: <?php echo e($secondaryColor); ?>;
     }
     
     /* Two Column Grid */
@@ -141,53 +151,89 @@
 
     <!-- Key Statistics -->
     <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-label">Total Students</div>
-            <div class="stat-value"><?php echo e($totalStudents); ?></div>
-            <div class="stat-detail"><?php echo e($activeStudents); ?> Active · <?php echo e($inactiveStudents); ?> Inactive</div>
-        </div>
-        
-        <div class="stat-card info">
-            <div class="stat-label">Total Instructors</div>
-            <div class="stat-value"><?php echo e($totalInstructors); ?></div>
-            <div class="stat-detail"><?php echo e($availableInstructors); ?> Available · <?php echo e($activeInstructors); ?> Active</div>
-        </div>
-        
-        <div class="stat-card success">
-            <div class="stat-label">Total Users</div>
-            <div class="stat-value"><?php echo e($totalStudents + $totalInstructors); ?></div>
-            <div class="stat-detail">Combined student & instructor count</div>
-        </div>
-        
-        <div class="stat-card warning">
-            <div class="stat-label">Active Users</div>
-            <div class="stat-value"><?php echo e($activeStudents + $activeInstructors); ?></div>
-            <div class="stat-detail">Currently active accounts</div>
-        </div>
-    </div>
-
-    <!-- Quick Actions -->
-    <div class="content-card">
-        <div class="content-card-header">Quick Actions</div>
-        <div class="content-card-body">
-            <div class="quick-actions">
-                <a href="<?php echo e($schoolRoute('admin.userManagement')); ?>" class="quick-action-btn" onclick="loadContent(this.href); return false;">
-                    Manage Users
-                </a>
-                <a href="<?php echo e($schoolRoute('admin.schedules')); ?>" class="quick-action-btn" onclick="loadContent(this.href); return false;">
-                    View Schedules
-                </a>
-                <a href="<?php echo e($schoolRoute('admin.courses')); ?>" class="quick-action-btn" onclick="loadContent(this.href); return false;">
-                    Manage Courses
-                </a>
-                <a href="<?php echo e($schoolRoute('admin.bookings.index')); ?>" class="quick-action-btn" onclick="loadContent(this.href); return false;">
-                    View Bookings
-                </a>
-                <a href="<?php echo e($schoolRoute('admin.reports.index')); ?>" class="quick-action-btn" onclick="loadContent(this.href); return false;">
-                    View Reports
-                </a>
+        <a href="<?php echo e($schoolRoute('admin.userManagement')); ?>" class="stat-card students" onclick="loadContent(this.href); return false;" style="text-decoration: none; cursor: pointer;">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">Total Students</div>
+                        <div class="stat-value"><?php echo e($totalStudents); ?></div>
+                    </div>
+                    <div class="stat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="stat-detail">
+                    <strong><?php echo e($activeStudents); ?></strong> Active · <strong><?php echo e($inactiveStudents); ?></strong> Inactive
+                    <?php if(isset($studentGrowth)): ?>
+                        <br>
+                        <span style="color: <?php echo e($studentGrowth >= 0 ? '#10b981' : '#ef4444'); ?>; font-weight: 600;">
+                            <?php echo e($studentGrowth >= 0 ? '↑' : '↓'); ?> <?php echo e(abs($studentGrowth)); ?>% this month
+                        </span>
+                    <?php endif; ?>
+                </div>
             </div>
-        </div>
+        </a>
+        
+        <a href="<?php echo e($schoolRoute('admin.userManagement')); ?>" class="stat-card instructors" onclick="loadContent(this.href); return false;" style="text-decoration: none; cursor: pointer;">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">Total Instructors</div>
+                        <div class="stat-value"><?php echo e($totalInstructors); ?></div>
+                    </div>
+                    <div class="stat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="stat-detail">
+                    <strong><?php echo e($availableInstructors); ?></strong> Available · <strong><?php echo e($activeInstructors); ?></strong> Active
+                    <?php if(isset($instructorGrowth)): ?>
+                        <br>
+                        <span style="color: <?php echo e($instructorGrowth >= 0 ? '#10b981' : '#ef4444'); ?>; font-weight: 600;">
+                            <?php echo e($instructorGrowth >= 0 ? '↑' : '↓'); ?> <?php echo e(abs($instructorGrowth)); ?>% this month
+                        </span>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </a>
+        
+        <a href="<?php echo e($schoolRoute('admin.userManagement')); ?>" class="stat-card growth" onclick="loadContent(this.href); return false;" style="text-decoration: none; cursor: pointer;">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">New Students</div>
+                        <div class="stat-value"><?php echo e($studentsThisMonth ?? 0); ?></div>
+                    </div>
+                    <div class="stat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="stat-detail">Registered this month</div>
+            </div>
+        </a>
+        
+        <a href="<?php echo e($schoolRoute('admin.userManagement')); ?>" class="stat-card active" onclick="loadContent(this.href); return false;" style="text-decoration: none; cursor: pointer;">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">Active Users</div>
+                        <div class="stat-value"><?php echo e($activeStudents + $activeInstructors); ?></div>
+                    </div>
+                    <div class="stat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="stat-detail">Currently active accounts</div>
+            </div>
+        </a>
     </div>
 
     <!-- Two Column Layout for Recent Activity -->

@@ -41,6 +41,13 @@ class GuestController extends Controller
             'address' => ['nullable', 'string', 'max:500'],
             'branch' => ['nullable', 'string', 'max:255'],
             'location' => ['nullable', 'string', 'max:255'],
+            'accept_privacy' => ['required', 'accepted'],
+            'accept_terms' => ['required', 'accepted'],
+        ], [
+            'accept_privacy.required' => 'You must accept the Data Privacy Policy.',
+            'accept_privacy.accepted' => 'You must accept the Data Privacy Policy.',
+            'accept_terms.required' => 'You must accept the Terms and Conditions.',
+            'accept_terms.accepted' => 'You must accept the Terms and Conditions.',
         ]);
 
         $guest = Student::create([
@@ -56,12 +63,28 @@ class GuestController extends Controller
             'status' => 'active',
         ]);
 
-        // Log in the guest automatically
-        Auth::guard('student')->login($guest);
+        // Generate OTP verification code
+        $otp = $guest->generateVerificationCode();
+
+        // Send verification email
+        try {
+            \Mail::raw(
+                "Welcome to {$school->name}!\n\nYour verification code is: {$otp}\n\nThis code will expire in 15 minutes.\n\nIf you didn't create this account, please ignore this email.",
+                function ($message) use ($guest, $school) {
+                    $message->to($guest->email)
+                        ->subject("{$school->name} - Email Verification");
+                }
+            );
+        } catch (\Exception $e) {
+            Log::error('Failed to send verification email: ' . $e->getMessage());
+        }
+
+        // Store email in session for verification page
+        session(['verification_email' => $guest->email, 'school_slug' => $school->slug]);
 
         return redirect()
-            ->route('schools.guest.dashboard', ['school' => $school->slug])
-            ->with('success', 'Registration successful! You can now browse courses and enroll.');
+            ->route('schools.verification.show', ['school' => $school->slug])
+            ->with('success', 'Registration successful! Please check your email for the verification code.');
     }
 
     /**
@@ -191,5 +214,106 @@ class GuestController extends Controller
             ->get();
 
         return view('school.guest.enrollment-requests', compact('school', 'guest', 'requests'));
+    }
+
+    /**
+     * Show email verification page
+     */
+    public function showVerificationForm(School $school)
+    {
+        if (!session('verification_email')) {
+            return redirect()->route('schools.register', $school);
+        }
+
+        return view($school->resolveView('verify-email'), [
+            'school' => $school,
+            'email' => session('verification_email')
+        ]);
+    }
+
+    /**
+     * Verify email with OTP code
+     */
+    public function verifyEmail(Request $request, School $school)
+    {
+        $request->validate([
+            'code' => 'required|string|size:6',
+        ]);
+
+        $email = session('verification_email');
+        if (!$email) {
+            return back()->withErrors(['code' => 'Session expired. Please register again.']);
+        }
+
+        $student = Student::where('email', $email)
+            ->where('school_id', $school->id)
+            ->first();
+
+        if (!$student) {
+            return back()->withErrors(['code' => 'Student not found.']);
+        }
+
+        if ($student->hasVerifiedEmail()) {
+            return redirect()->route('schools.login', $school)
+                ->with('success', 'Email already verified. Please login.');
+        }
+
+        if (!$student->isVerificationCodeValid($request->code)) {
+            return back()->withErrors(['code' => 'Invalid or expired verification code.']);
+        }
+
+        // Mark as verified
+        $student->markEmailAsVerified();
+
+        // Clear session
+        session()->forget(['verification_email', 'school_slug']);
+
+        // Auto login
+        Auth::guard('student')->login($student);
+
+        return redirect()->route('schools.guest.dashboard', $school)
+            ->with('success', 'Email verified successfully! Welcome to ' . $school->name);
+    }
+
+    /**
+     * Resend verification code
+     */
+    public function resendVerificationCode(School $school)
+    {
+        $email = session('verification_email');
+        if (!$email) {
+            return back()->withErrors(['error' => 'Session expired. Please register again.']);
+        }
+
+        $student = Student::where('email', $email)
+            ->where('school_id', $school->id)
+            ->first();
+
+        if (!$student) {
+            return back()->withErrors(['error' => 'Student not found.']);
+        }
+
+        if ($student->hasVerifiedEmail()) {
+            return back()->with('info', 'Email already verified.');
+        }
+
+        // Generate new OTP
+        $otp = $student->generateVerificationCode();
+
+        // Send email
+        try {
+            \Mail::raw(
+                "Your new verification code is: {$otp}\n\nThis code will expire in 15 minutes.",
+                function ($message) use ($student, $school) {
+                    $message->to($student->email)
+                        ->subject("{$school->name} - New Verification Code");
+                }
+            );
+        } catch (\Exception $e) {
+            Log::error('Failed to resend verification email: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Failed to send email. Please try again.']);
+        }
+
+        return back()->with('success', 'Verification code sent! Check your email.');
     }
 }

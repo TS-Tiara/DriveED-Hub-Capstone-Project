@@ -1,9 +1,9 @@
 @extends('layouts.system-admin')
-@section('title', 'Bookings')
-@section('page-title', 'All Bookings')
+@section('title', 'Schedules')
+@section('page-title', 'All Schedules')
 @section('content')
 <div class="card">
-    <div class="card-header"><h3>Bookings ({{ $bookings->total() }})</h3></div>
+    <div class="card-header"><h3>Schedules ({{ $bookings->total() }})</h3></div>
     <div class="card-body">
         <table>
             <thead>

@@ -146,6 +146,30 @@ class AuthController extends Controller
                 return back()->withErrors(['email' => 'Your account has been deactivated. Please contact the administrator.']);
             }
             
+            // Check email verification
+            if (!$student->hasVerifiedEmail()) {
+                // Regenerate verification code and send email
+                $otp = $student->generateVerificationCode();
+                
+                try {
+                    \Mail::raw(
+                        "Please verify your email.\n\nYour verification code is: {$otp}\n\nThis code will expire in 15 minutes.",
+                        function ($message) use ($student, $school) {
+                            $message->to($student->email)
+                                ->subject("{$school->name} - Email Verification Required");
+                        }
+                    );
+                } catch (\Exception $e) {
+                    \Log::error('Failed to send verification email: ' . $e->getMessage());
+                }
+                
+                // Store in session and redirect to verification
+                session(['verification_email' => $student->email, 'school_slug' => $school->slug]);
+                
+                return redirect()->route('schools.verification.show', $school)
+                    ->with('info', 'Please verify your email address. We sent a new verification code to your email.');
+            }
+            
             Auth::guard('student')->login($student, $remember);
             
             // Log successful student/guest login

@@ -92,6 +92,11 @@ Route::prefix('{school:slug}')
         Route::get('/register', [GuestController::class, 'showRegistrationForm'])->name('registration.form');
         Route::post('/register', [GuestController::class, 'register'])->name('registration.submit');
 
+        // Email verification routes
+        Route::get('/verify-email', [GuestController::class, 'showVerificationForm'])->name('verification.show');
+        Route::post('/verify-email', [GuestController::class, 'verifyEmail'])->name('verification.verify');
+        Route::post('/resend-verification', [GuestController::class, 'resendVerificationCode'])->name('verification.resend');
+
         // Guest-authenticated routes (must have guest role)
         Route::prefix('guest')->name('guest.')->group(function (): void {
             Route::middleware(['auth:student', 'guest.role'])->group(function (): void {
@@ -102,59 +107,95 @@ Route::prefix('{school:slug}')
             });
         });
 
-        Route::prefix('admin')->name('admin.')->middleware(['auth:admin', 'ajax', 'redirect.system.admin'])->group(function (): void {
-            Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
+        Route::prefix('admin')->name('admin.')->middleware(['auth:admin', 'redirect.system.admin'])->group(function (): void {
+            // Routes that need ajax middleware (existing modal-based pages)
+            Route::middleware(['ajax'])->group(function () {
+                Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
 
-            Route::get('/user-management', [AdminController::class, 'userManagement'])->name('userManagement');
+                Route::get('/user-management', [AdminController::class, 'userManagement'])->name('userManagement');
 
-            Route::post('/store-account', [AdminController::class, 'storeAccount'])->name('storeAccount');
+                Route::post('/store-account', [AdminController::class, 'storeAccount'])->name('storeAccount');
 
-            Route::put('/students/{id}', [AdminController::class, 'updateStudent'])->name('students.update');
-            Route::patch('/students/{id}/toggle-status', [AdminController::class, 'toggleStudentStatus'])->name('students.toggleStatus');
+                Route::put('/students/{id}', [AdminController::class, 'updateStudent'])->name('students.update');
+                Route::patch('/students/{id}/toggle-status', [AdminController::class, 'toggleStudentStatus'])->name('students.toggleStatus');
 
-            Route::post('/instructors', [AdminController::class, 'storeAccount'])->name('instructors.store');
-            Route::put('/instructors/{id}', [AdminController::class, 'updateInstructor'])->name('instructors.update');
-            Route::patch('/instructors/{id}/toggle-status', [AdminController::class, 'toggleInstructorStatus'])->name('instructors.toggleStatus');
-            Route::patch('/instructors/{id}/availability', [AdminController::class, 'toggleAvailability'])->name('instructors.availability');
+                Route::post('/instructors', [AdminController::class, 'storeAccount'])->name('instructors.store');
+                Route::put('/instructors/{id}', [AdminController::class, 'updateInstructor'])->name('instructors.update');
+                Route::patch('/instructors/{id}/toggle-status', [AdminController::class, 'toggleInstructorStatus'])->name('instructors.toggleStatus');
+                Route::patch('/instructors/{id}/availability', [AdminController::class, 'toggleAvailability'])->name('instructors.availability');
 
-            // Schedule management (unified system: admin creates, can pre-assign, instructors self-select remaining spots)
-            Route::get('/schedules', [AdminController::class, 'schedules'])->name('schedules');
-            Route::post('/schedules/create', [AdminController::class, 'createSchedule'])->name('schedules.create');
-            Route::put('/schedules/{id}', [AdminController::class, 'updateSchedule'])->name('schedules.update');
-            Route::delete('/schedules/{id}', [AdminController::class, 'deleteSchedule'])->name('schedules.delete');
+                // Schedule management (unified system: admin creates, can pre-assign, instructors self-select remaining spots)
+                Route::get('/schedules', [AdminController::class, 'schedules'])->name('schedules');
+                Route::post('/schedules/create', [AdminController::class, 'createSchedule'])->name('schedules.create');
+                Route::put('/schedules/{id}', [AdminController::class, 'updateSchedule'])->name('schedules.update');
+                Route::delete('/schedules/{id}', [AdminController::class, 'deleteSchedule'])->name('schedules.delete');
 
-            // Instructor removal requests
-            Route::get('/removal-requests', [AdminController::class, 'removalRequests'])->name('removalRequests');
-            Route::post('/removal-requests/{id}/approve', [AdminController::class, 'approveRemovalRequest'])->name('removalRequests.approve');
-            Route::post('/removal-requests/{id}/reject', [AdminController::class, 'rejectRemovalRequest'])->name('removalRequests.reject');
+                // Instructor removal requests
+                Route::get('/removal-requests', [AdminController::class, 'removalRequests'])->name('removalRequests');
+                Route::post('/removal-requests/{id}/approve', [AdminController::class, 'approveRemovalRequest'])->name('removalRequests.approve');
+                Route::post('/removal-requests/{id}/reject', [AdminController::class, 'rejectRemovalRequest'])->name('removalRequests.reject');
+                
+                // Course management with packages
+                Route::get('/courses', [AdminController::class, 'courses'])->name('courses');
+                Route::post('/courses', [AdminController::class, 'storeCourse'])->name('courses.store');
+                Route::put('/courses/{id}', [AdminController::class, 'updateCourse'])->name('courses.update');
+                Route::delete('/courses/{id}', [AdminController::class, 'deleteCourse'])->name('courses.delete');
+                
+                Route::post('/courses/{courseId}/packages', [AdminController::class, 'storePackage'])->name('courses.packages.store');
+                Route::put('/courses/{courseId}/packages/{packageId}', [AdminController::class, 'updatePackage'])->name('courses.packages.update');
+                Route::delete('/courses/{courseId}/packages/{packageId}', [AdminController::class, 'deletePackage'])->name('courses.packages.delete');
 
-            // Enrollment requests management (Guest → Student promotion)
-            Route::prefix('enrollment-requests')->name('enrollmentRequests.')->group(function () {
+                // School settings
+                Route::get('/settings', [AdminController::class, 'settings'])->name('settings');
+                Route::post('/settings', [AdminController::class, 'updateSettings'])->name('settings.update');
+
+                Route::get('/reports/students', [AdminController::class, 'studentReports'])->name('reports.students');
+                Route::get('/reports/instructors', [AdminController::class, 'instructorReports'])->name('reports.instructors');
+                Route::get('/reports/logs', [AdminController::class, 'logs'])->name('reports.logs');
+                
+                // Reports - consolidated in single index view
+                Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+                
+                // Report exports (CSV)
+                Route::get('/reports/export/students', [ReportController::class, 'exportStudents'])->name('reports.export.students');
+                Route::get('/reports/export/instructors', [ReportController::class, 'exportInstructors'])->name('reports.export.instructors');
+                Route::get('/reports/export/bookings', [ReportController::class, 'exportBookings'])->name('reports.export.bookings');
+                Route::get('/reports/export/payments', [ReportController::class, 'exportPayments'])->name('reports.export.payments');
+                Route::get('/reports/export/courses', [ReportController::class, 'exportCourses'])->name('reports.export.courses');
+                
+                Route::get('/profile', [AdminController::class, 'profile'])->name('profile');
+                Route::put('/profile', [AdminController::class, 'updateProfile'])->name('profile.update');
+                Route::post('/profile/picture', [AdminController::class, 'updateProfilePicture'])->name('profile.picture');
+
+                // Bookings management (no separate create/edit views - handled via modals)
+                Route::resource('bookings', BookingController::class)->except(['create', 'edit']);
+                Route::patch('/bookings/{booking}/status', [BookingController::class, 'updateStatus'])->name('bookings.updateStatus');
+
+                // Payments management (no separate create/edit views - handled via modals)
+                Route::resource('payments', PaymentController::class)->except(['create', 'edit']);
+                Route::get('/payments/statistics', [PaymentController::class, 'statistics'])->name('payments.statistics');
+            });
+
+            // New LMS routes WITHOUT ajax middleware (full page views)
+            // Enrollment management (combining enrollment requests and enrollments)
+            Route::prefix('enrollments')->name('enrollments.')->group(function () {
                 Route::get('/', [EnrollmentRequestController::class, 'index'])->name('index');
                 Route::post('/{enrollmentRequest}/approve', [EnrollmentRequestController::class, 'approve'])->name('approve');
                 Route::post('/{enrollmentRequest}/reject', [EnrollmentRequestController::class, 'reject'])->name('reject');
+                Route::post('/{enrollmentRequest}/complete', [EnrollmentRequestController::class, 'complete'])->name('complete');
+                Route::post('/{enrollmentRequest}/cancel', [EnrollmentRequestController::class, 'cancel'])->name('cancel');
                 Route::post('/{enrollmentRequest}/payment-status', [EnrollmentRequestController::class, 'updatePaymentStatus'])->name('paymentStatus');
-            });
-
-            // Enrollments management (Active student enrollments in courses)
-            Route::prefix('enrollments')->name('enrollments.')->group(function () {
-                Route::get('/', [EnrollmentController::class, 'index'])->name('index');
-                Route::get('/{enrollment}', [EnrollmentController::class, 'show'])->name('show');
-                Route::post('/{enrollmentRequest}/create', [EnrollmentController::class, 'createFromRequest'])->name('createFromRequest');
-                Route::post('/{enrollment}/complete', [EnrollmentController::class, 'complete'])->name('complete');
-                Route::post('/{enrollment}/cancel', [EnrollmentController::class, 'cancel'])->name('cancel');
-                Route::get('/stats/overview', [EnrollmentController::class, 'stats'])->name('stats');
-                Route::post('/validate', [EnrollmentController::class, 'validateEnrollment'])->name('validate');
+                Route::post('/{enrollmentRequest}/theoretical-passed', [EnrollmentRequestController::class, 'markTheoreticalPassed'])->name('theoreticalPassed');
             });
 
             // Theoretical completion management (Mark students as passed)
             Route::prefix('theoretical')->name('theoretical.')->group(function () {
                 Route::get('/', [TheoreticalCompletionController::class, 'index'])->name('index');
+                Route::get('/passed/list', [TheoreticalCompletionController::class, 'passed'])->name('passed');
+                Route::get('/stats/overview', [TheoreticalCompletionController::class, 'stats'])->name('stats');
                 Route::get('/{enrollment}', [TheoreticalCompletionController::class, 'show'])->name('show');
                 Route::post('/mark-passed', [TheoreticalCompletionController::class, 'markAsPassed'])->name('markAsPassed');
-                Route::get('/passed/list', [TheoreticalCompletionController::class, 'passed'])->name('passed');
                 Route::post('/{enrollment}/revoke', [TheoreticalCompletionController::class, 'revoke'])->name('revoke');
-                Route::get('/stats/overview', [TheoreticalCompletionController::class, 'stats'])->name('stats');
             });
 
             // Session completions management (View sessions logged by instructors)
@@ -164,16 +205,6 @@ Route::prefix('{school:slug}')
                 Route::delete('/{sessionCompletion}', [SessionCompletionController::class, 'destroy'])->name('destroy');
                 Route::get('/enrollment/{enrollment}/stats', [SessionCompletionController::class, 'enrollmentStats'])->name('enrollmentStats');
             });
-
-            // Course management with packages
-            Route::get('/courses', [AdminController::class, 'courses'])->name('courses');
-            Route::post('/courses', [AdminController::class, 'storeCourse'])->name('courses.store');
-            Route::put('/courses/{id}', [AdminController::class, 'updateCourse'])->name('courses.update');
-            Route::delete('/courses/{id}', [AdminController::class, 'deleteCourse'])->name('courses.delete');
-            
-            Route::post('/courses/{courseId}/packages', [AdminController::class, 'storePackage'])->name('courses.packages.store');
-            Route::put('/courses/{courseId}/packages/{packageId}', [AdminController::class, 'updatePackage'])->name('courses.packages.update');
-            Route::delete('/courses/{courseId}/packages/{packageId}', [AdminController::class, 'deletePackage'])->name('courses.packages.delete');
 
             // Course modules and lessons management (LMS content)
             Route::prefix('courses/{course}')->name('courses.')->group(function () {
@@ -202,72 +233,52 @@ Route::prefix('{school:slug}')
                     });
                 });
             });
-
-            // School settings
-            Route::get('/settings', [AdminController::class, 'settings'])->name('settings');
-            Route::post('/settings', [AdminController::class, 'updateSettings'])->name('settings.update');
-
-            Route::get('/reports/students', [AdminController::class, 'studentReports'])->name('reports.students');
-            Route::get('/reports/instructors', [AdminController::class, 'instructorReports'])->name('reports.instructors');
-            Route::get('/reports/logs', [AdminController::class, 'logs'])->name('reports.logs');
-            
-            // Reports - consolidated in single index view
-            Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
-            
-            // Report exports (CSV)
-            Route::get('/reports/export/students', [ReportController::class, 'exportStudents'])->name('reports.export.students');
-            Route::get('/reports/export/instructors', [ReportController::class, 'exportInstructors'])->name('reports.export.instructors');
-            Route::get('/reports/export/bookings', [ReportController::class, 'exportBookings'])->name('reports.export.bookings');
-            Route::get('/reports/export/payments', [ReportController::class, 'exportPayments'])->name('reports.export.payments');
-            Route::get('/reports/export/courses', [ReportController::class, 'exportCourses'])->name('reports.export.courses');
-            
-            Route::get('/profile', [AdminController::class, 'profile'])->name('profile');
-            Route::put('/profile', [AdminController::class, 'updateProfile'])->name('profile.update');
-            Route::post('/profile/picture', [AdminController::class, 'updateProfilePicture'])->name('profile.picture');
-
-            // Bookings management (no separate create/edit views - handled via modals)
-            Route::resource('bookings', BookingController::class)->except(['create', 'edit']);
-            Route::patch('/bookings/{booking}/status', [BookingController::class, 'updateStatus'])->name('bookings.updateStatus');
-
-            // Payments management (no separate create/edit views - handled via modals)
-            Route::resource('payments', PaymentController::class)->except(['create', 'edit']);
-            Route::get('/payments/statistics', [PaymentController::class, 'statistics'])->name('payments.statistics');
             
             Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
         });
 
-        Route::prefix('instructor')->name('instructor.')->middleware(['auth:instructor', 'ajax'])->group(function (): void {
-            Route::get('/', [InstructorController::class, 'dashboard'])->name('dashboard');
+        Route::prefix('instructor')->name('instructor.')->middleware(['auth:instructor'])->group(function (): void {
+            // Routes with ajax middleware (existing modal pages)
+            Route::middleware(['ajax'])->group(function () {
+                Route::get('/', [InstructorController::class, 'dashboard'])->name('dashboard');
 
-            Route::get('/my-schedule', [InstructorTimeSlotController::class, 'mySchedule'])->name('schedule');
-            Route::post('/timeslots/{id}/toggle', [InstructorTimeSlotController::class, 'toggle'])->name('timeslots.toggle');
-            Route::post('/timeslots/{id}/request-removal', [InstructorTimeSlotController::class, 'requestRemoval'])->name('timeslots.requestRemoval');
+                Route::get('/my-schedule', [InstructorTimeSlotController::class, 'mySchedule'])->name('schedule');
+                Route::post('/timeslots/{id}/toggle', [InstructorTimeSlotController::class, 'toggle'])->name('timeslots.toggle');
+                Route::post('/timeslots/{id}/request-removal', [InstructorTimeSlotController::class, 'requestRemoval'])->name('timeslots.requestRemoval');
+                
+                Route::get('/profile', [InstructorTimeSlotController::class, 'profile'])->name('profile');
+                Route::put('/profile', [InstructorTimeSlotController::class, 'updateProfile'])->name('profile.update');
+                Route::post('/profile/picture', [InstructorTimeSlotController::class, 'updateProfilePicture'])->name('profile.picture');
+
+                // Instructor attendance and feedback (used from schedule page)
+                Route::post('/bookings/{booking}/attendance', [InstructorTimeSlotController::class, 'updateAttendance'])->name('bookings.attendance');
+                Route::post('/bookings/{booking}/feedback', [InstructorTimeSlotController::class, 'updateFeedback'])->name('bookings.feedback');
+                
+                // Instructor lesson details
+                Route::get('/lessons/{booking}', [InstructorTimeSlotController::class, 'getLessonDetails'])->name('lessons.details');
+                Route::post('/lessons/{booking}/update', [InstructorTimeSlotController::class, 'updateLessonDetails'])->name('lessons.update');
+
+                // Instructor students
+                Route::get('/students', [InstructorController::class, 'myStudents'])->name('students.index');
+                Route::get('/students/{id}', [InstructorController::class, 'showStudent'])->name('students.show');
+
+                // Instructor progress updates
+                Route::get('/progress', [ProgressController::class, 'index'])->name('progress.index');
+                Route::get('/progress/create', [ProgressController::class, 'create'])->name('progress.create');
+                Route::post('/progress', [ProgressController::class, 'store'])->name('progress.store');
+                Route::get('/progress/{progress}', [ProgressController::class, 'show'])->name('progress.show');
+                Route::get('/progress/{progress}/edit', [ProgressController::class, 'edit'])->name('progress.edit');
+                Route::put('/progress/{progress}', [ProgressController::class, 'update'])->name('progress.update');
+                Route::delete('/progress/{progress}', [ProgressController::class, 'destroy'])->name('progress.destroy');
+                
+                // Instructor performance reports
+                Route::get('/reports', [InstructorController::class, 'reports'])->name('reports');
+                
+                // Instructor grade management
+                Route::get('/grades', [InstructorController::class, 'grades'])->name('grades');
+            });
             
-            Route::get('/profile', [InstructorTimeSlotController::class, 'profile'])->name('profile');
-            Route::put('/profile', [InstructorTimeSlotController::class, 'updateProfile'])->name('profile.update');
-            Route::post('/profile/picture', [InstructorTimeSlotController::class, 'updateProfilePicture'])->name('profile.picture');
-
-            // Instructor attendance and feedback (used from schedule page)
-            Route::post('/bookings/{booking}/attendance', [InstructorTimeSlotController::class, 'updateAttendance'])->name('bookings.attendance');
-            Route::post('/bookings/{booking}/feedback', [InstructorTimeSlotController::class, 'updateFeedback'])->name('bookings.feedback');
-            
-            // Instructor lesson details
-            Route::get('/lessons/{booking}', [InstructorTimeSlotController::class, 'getLessonDetails'])->name('lessons.details');
-            Route::post('/lessons/{booking}/update', [InstructorTimeSlotController::class, 'updateLessonDetails'])->name('lessons.update');
-
-            // Instructor students
-            Route::get('/students', [InstructorController::class, 'myStudents'])->name('students.index');
-            Route::get('/students/{id}', [InstructorController::class, 'showStudent'])->name('students.show');
-
-            // Instructor progress updates
-            Route::get('/progress', [ProgressController::class, 'index'])->name('progress.index');
-            Route::get('/progress/create', [ProgressController::class, 'create'])->name('progress.create');
-            Route::post('/progress', [ProgressController::class, 'store'])->name('progress.store');
-            Route::get('/progress/{progress}', [ProgressController::class, 'show'])->name('progress.show');
-            Route::get('/progress/{progress}/edit', [ProgressController::class, 'edit'])->name('progress.edit');
-            Route::put('/progress/{progress}', [ProgressController::class, 'update'])->name('progress.update');
-            Route::delete('/progress/{progress}', [ProgressController::class, 'destroy'])->name('progress.destroy');
-            
+            // New LMS routes WITHOUT ajax middleware
             // Instructor session logging
             Route::prefix('sessions')->name('sessions.')->group(function () {
                 Route::get('/', [SessionCompletionController::class, 'index'])->name('index');
@@ -288,13 +299,6 @@ Route::prefix('{school:slug}')
                 Route::get('/passed/list', [TheoreticalCompletionController::class, 'passed'])->name('passed');
             });
 
-            // Student enrollments (View my active enrollments and course materials)
-            Route::prefix('enrollments')->name('enrollments.')->group(function () {
-                Route::get('/', [EnrollmentController::class, 'index'])->name('index');
-                Route::get('/{enrollment}', [EnrollmentController::class, 'show'])->name('show');
-                Route::post('/{enrollment}/cancel', [EnrollmentController::class, 'cancel'])->name('cancel');
-            });
-
             // Instructor enrollments (View assigned students)
             Route::prefix('enrollments')->name('enrollments.')->group(function () {
                 Route::get('/', [EnrollmentController::class, 'index'])->name('index');
@@ -312,26 +316,39 @@ Route::prefix('{school:slug}')
                 });
             });
             
-            // Instructor performance reports
-            Route::get('/reports', [InstructorController::class, 'reports'])->name('reports');
-            
-            // Instructor grade management
-            Route::get('/grades', [InstructorController::class, 'grades'])->name('grades');
-            
             Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
         });
 
-        Route::prefix('student')->name('student.')->middleware(['auth:student', 'student.role', 'ajax'])->group(function (): void {
-            Route::get('/', [StudentController::class, 'dashboard'])->name('dashboard');
+        Route::prefix('student')->name('student.')->middleware(['auth:student', 'student.role'])->group(function (): void {
+            // Routes with ajax middleware (existing pages)
+            Route::middleware(['ajax'])->group(function () {
+                Route::get('/', [StudentController::class, 'dashboard'])->name('dashboard');
 
-            Route::get('/profile', [StudentController::class, 'profile'])->name('profile');
-            Route::put('/profile', [StudentController::class, 'updateProfile'])->name('profile.update');
-            Route::post('/profile/picture', [StudentController::class, 'updateProfilePicture'])->name('profile.picture');
+                Route::get('/profile', [StudentController::class, 'profile'])->name('profile');
+                Route::put('/profile', [StudentController::class, 'updateProfile'])->name('profile.update');
+                Route::post('/profile/picture', [StudentController::class, 'updateProfilePicture'])->name('profile.picture');
 
-            // Student courses
-            Route::get('/courses', [CourseController::class, 'index'])->name('courses.index');
-            Route::get('/courses/{course}', [CourseController::class, 'show'])->name('courses.show');
+                // Student courses
+                Route::get('/courses', [CourseController::class, 'index'])->name('courses.index');
+                Route::get('/courses/{course}', [CourseController::class, 'show'])->name('courses.show');
 
+                // Booking queue management (used in schedule page)
+                Route::post('/bookings', [BookingController::class, 'store'])->name('bookings.store');
+                Route::post('/bookings/{booking}/confirm', [BookingController::class, 'confirmBooking'])->name('bookings.confirm');
+                Route::delete('/bookings/{booking}/queue', [BookingController::class, 'removeFromQueue'])->name('bookings.removeQueue');
+
+                // Student progress (single page view - no individual progress detail page)
+                Route::get('/progress', [ProgressController::class, 'index'])->name('progress.index');
+
+                // Student payments
+                Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
+                Route::get('/payments/{payment}', [PaymentController::class, 'show'])->name('payments.show');
+
+                // Student schedule
+                Route::get('/schedule', [StudentController::class, 'schedule'])->name('schedule');
+            });
+
+            // New LMS routes WITHOUT ajax middleware
             // Student enrollments (View my active enrollments and course materials)
             Route::prefix('enrollments')->name('enrollments.')->group(function () {
                 Route::get('/', [EnrollmentController::class, 'index'])->name('index');
@@ -349,21 +366,6 @@ Route::prefix('{school:slug}')
                     Route::get('/{lesson}', [ModuleLessonController::class, 'show'])->name('show');
                 });
             });
-
-            // Booking queue management (used in schedule page)
-            Route::post('/bookings', [BookingController::class, 'store'])->name('bookings.store');
-            Route::post('/bookings/{booking}/confirm', [BookingController::class, 'confirmBooking'])->name('bookings.confirm');
-            Route::delete('/bookings/{booking}/queue', [BookingController::class, 'removeFromQueue'])->name('bookings.removeQueue');
-
-            // Student progress (single page view - no individual progress detail page)
-            Route::get('/progress', [ProgressController::class, 'index'])->name('progress.index');
-
-            // Student payments
-            Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
-            Route::get('/payments/{payment}', [PaymentController::class, 'show'])->name('payments.show');
-
-            // Student schedule
-            Route::get('/schedule', [StudentController::class, 'schedule'])->name('schedule');
             
             Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
         });

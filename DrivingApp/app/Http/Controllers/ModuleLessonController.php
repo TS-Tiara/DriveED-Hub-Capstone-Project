@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\ModuleLesson;
 use App\Models\CourseModule;
 use App\Models\Course;
+use App\Models\School;
+use App\Models\Student;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -15,9 +17,12 @@ class ModuleLessonController extends Controller
     /**
      * Display a listing of lessons for a specific module
      */
-    public function index(Course $course, CourseModule $module)
+    public function index(School $school, Course $course, CourseModule $module)
     {
-        $user = Auth::user();
+        // Verify course belongs to school
+        if ($course->school_id !== $school->id) {
+            abort(404);
+        }
         
         // Verify module belongs to course
         if ($module->course_id !== $course->id) {
@@ -26,26 +31,46 @@ class ModuleLessonController extends Controller
         
         $lessons = $module->lessons()->ordered()->get();
         
-        $viewPath = match($user->role) {
-            'student' => 'student.lessons.index',
-            'instructor' => 'instructor.lessons.index',
-            'admin', 'superadmin' => 'admin.lessons.index',
-            default => abort(403)
-        };
+        // Student view - must be enrolled
+        if (Auth::guard('student')->check()) {
+            $student = Auth::guard('student')->user();
+            $isEnrolled = $student->enrollments()
+                ->where('course_id', $course->id)
+                ->where('status', 'active')
+                ->exists();
+            
+            if (!$isEnrolled) {
+                abort(403, 'You must be enrolled in this course to view lessons.');
+            }
+            
+            return view('school.student.lessons.index', compact('school', 'course', 'module', 'lessons'));
+        }
         
-        return view($viewPath, compact('course', 'module', 'lessons'));
+        // Instructor view
+        if (Auth::guard('instructor')->check()) {
+            return view('school.instructor.lessons.index', compact('school', 'course', 'module', 'lessons'));
+        }
+        
+        // Admin view
+        if (Auth::guard('admin')->check()) {
+            return view('school.admin.lessons.index', compact('school', 'course', 'module', 'lessons'));
+        }
+        
+        abort(403);
     }
 
     /**
      * Show the form for creating a new lesson
      */
-    public function create(Course $course, CourseModule $module)
+    public function create(School $school, Course $course, CourseModule $module)
     {
-        $user = Auth::user();
-        
-        // Only admins can create lessons
-        if (!in_array($user->role, ['admin', 'superadmin'])) {
+        if (!Auth::guard('admin')->check()) {
             abort(403);
+        }
+        
+        // Verify course belongs to school
+        if ($course->school_id !== $school->id) {
+            abort(404);
         }
         
         // Verify module belongs to course
@@ -53,19 +78,21 @@ class ModuleLessonController extends Controller
             abort(404);
         }
         
-        return view('admin.lessons.create', compact('course', 'module'));
+        return view('school.admin.lessons.create', compact('school', 'course', 'module'));
     }
 
     /**
      * Store a newly created lesson
      */
-    public function store(Request $request, Course $course, CourseModule $module)
+    public function store(Request $request, School $school, Course $course, CourseModule $module)
     {
-        $user = Auth::user();
-        
-        // Only admins can create lessons
-        if (!in_array($user->role, ['admin', 'superadmin'])) {
+        if (!Auth::guard('admin')->check()) {
             abort(403);
+        }
+        
+        // Verify course belongs to school
+        if ($course->school_id !== $school->id) {
+            abort(404);
         }
         
         // Verify module belongs to course
@@ -122,7 +149,7 @@ class ModuleLessonController extends Controller
             }
             
             return redirect()
-                ->route('admin.courses.modules.show', [$course, $module])
+                ->route('schools.admin.courses.modules.show', ['school' => $school->slug, 'course' => $course->id, 'module' => $module->id])
                 ->with('success', 'Lesson created successfully.');
             
         } catch (\Exception $e) {
@@ -144,19 +171,22 @@ class ModuleLessonController extends Controller
     /**
      * Display the specified lesson
      */
-    public function show(Course $course, CourseModule $module, ModuleLesson $lesson)
+    public function show(School $school, Course $course, CourseModule $module, ModuleLesson $lesson)
     {
-        $user = Auth::user();
+        // Verify course belongs to school
+        if ($course->school_id !== $school->id) {
+            abort(404);
+        }
         
         // Verify lesson belongs to module and course
         if ($lesson->module_id !== $module->id || $module->course_id !== $course->id) {
             abort(404);
         }
         
-        // Students must be enrolled to view lessons
-        if ($user->role === 'student') {
-            $student = \App\Models\Student::where('user_id', $user->id)->first();
-            $isEnrolled = $student && $student->enrollments()
+        // Student view - must be enrolled
+        if (Auth::guard('student')->check()) {
+            $student = Auth::guard('student')->user();
+            $isEnrolled = $student->enrollments()
                 ->where('course_id', $course->id)
                 ->where('status', 'active')
                 ->exists();
@@ -164,28 +194,35 @@ class ModuleLessonController extends Controller
             if (!$isEnrolled) {
                 abort(403, 'You must be enrolled in this course to view lessons.');
             }
+            
+            return view('school.student.lessons.show', compact('school', 'course', 'module', 'lesson'));
         }
         
-        $viewPath = match($user->role) {
-            'student' => 'student.lessons.show',
-            'instructor' => 'instructor.lessons.show',
-            'admin', 'superadmin' => 'admin.lessons.show',
-            default => abort(403)
-        };
+        // Instructor view
+        if (Auth::guard('instructor')->check()) {
+            return view('school.instructor.lessons.show', compact('school', 'course', 'module', 'lesson'));
+        }
         
-        return view($viewPath, compact('course', 'module', 'lesson'));
+        // Admin view
+        if (Auth::guard('admin')->check()) {
+            return view('school.admin.lessons.show', compact('school', 'course', 'module', 'lesson'));
+        }
+        
+        abort(403);
     }
 
     /**
      * Show the form for editing the specified lesson
      */
-    public function edit(Course $course, CourseModule $module, ModuleLesson $lesson)
+    public function edit(School $school, Course $course, CourseModule $module, ModuleLesson $lesson)
     {
-        $user = Auth::user();
-        
-        // Only admins can edit lessons
-        if (!in_array($user->role, ['admin', 'superadmin'])) {
+        if (!Auth::guard('admin')->check()) {
             abort(403);
+        }
+        
+        // Verify course belongs to school
+        if ($course->school_id !== $school->id) {
+            abort(404);
         }
         
         // Verify lesson belongs to module and course
@@ -193,19 +230,21 @@ class ModuleLessonController extends Controller
             abort(404);
         }
         
-        return view('admin.lessons.edit', compact('course', 'module', 'lesson'));
+        return view('school.admin.lessons.edit', compact('school', 'course', 'module', 'lesson'));
     }
 
     /**
      * Update the specified lesson
      */
-    public function update(Request $request, Course $course, CourseModule $module, ModuleLesson $lesson)
+    public function update(Request $request, School $school, Course $course, CourseModule $module, ModuleLesson $lesson)
     {
-        $user = Auth::user();
-        
-        // Only admins can update lessons
-        if (!in_array($user->role, ['admin', 'superadmin'])) {
+        if (!Auth::guard('admin')->check()) {
             abort(403);
+        }
+        
+        // Verify course belongs to school
+        if ($course->school_id !== $school->id) {
+            abort(404);
         }
         
         // Verify lesson belongs to module and course
@@ -272,7 +311,7 @@ class ModuleLessonController extends Controller
             }
             
             return redirect()
-                ->route('admin.courses.modules.lessons.show', [$course, $module, $lesson])
+                ->route('schools.admin.courses.modules.lessons.show', ['school' => $school->slug, 'course' => $course->id, 'module' => $module->id, 'lesson' => $lesson->id])
                 ->with('success', 'Lesson updated successfully.');
             
         } catch (\Exception $e) {
@@ -294,13 +333,15 @@ class ModuleLessonController extends Controller
     /**
      * Remove the specified lesson
      */
-    public function destroy(Course $course, CourseModule $module, ModuleLesson $lesson)
+    public function destroy(School $school, Course $course, CourseModule $module, ModuleLesson $lesson)
     {
-        $user = Auth::user();
-        
-        // Only admins can delete lessons
-        if (!in_array($user->role, ['admin', 'superadmin'])) {
+        if (!Auth::guard('admin')->check()) {
             abort(403);
+        }
+        
+        // Verify course belongs to school
+        if ($course->school_id !== $school->id) {
+            abort(404);
         }
         
         // Verify lesson belongs to module and course
@@ -322,7 +363,7 @@ class ModuleLessonController extends Controller
             DB::commit();
             
             return redirect()
-                ->route('admin.courses.modules.show', [$course, $module])
+                ->route('schools.admin.courses.modules.show', ['school' => $school->slug, 'course' => $course->id, 'module' => $module->id])
                 ->with('success', 'Lesson deleted successfully.');
             
         } catch (\Exception $e) {
@@ -334,13 +375,15 @@ class ModuleLessonController extends Controller
     /**
      * Reorder lessons within a module
      */
-    public function reorder(Request $request, Course $course, CourseModule $module)
+    public function reorder(Request $request, School $school, Course $course, CourseModule $module)
     {
-        $user = Auth::user();
-        
-        // Only admins can reorder lessons
-        if (!in_array($user->role, ['admin', 'superadmin'])) {
+        if (!Auth::guard('admin')->check()) {
             abort(403);
+        }
+        
+        // Verify course belongs to school
+        if ($course->school_id !== $school->id) {
+            abort(404);
         }
         
         // Verify module belongs to course

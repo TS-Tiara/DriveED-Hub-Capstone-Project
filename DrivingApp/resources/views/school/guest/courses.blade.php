@@ -565,10 +565,9 @@
                         {{ $status === 'approved' ? 'Already Enrolled' : 'Request Pending' }}
                     </button>
                 @else
-                    <form method="POST" action="{{ route('schools.guest.enroll', ['school' => $school, 'course' => $course->id]) }}" style="margin-top: auto;">
-                        @csrf
-                        <button type="submit" class="btn-enroll">Request Enrollment</button>
-                    </form>
+                    <button type="button" class="btn-enroll" data-bs-toggle="modal" data-bs-target="#enrollModal{{ $course->id }}">
+                        Request Enrollment
+                    </button>
                 @endif
             </div>
         </div>
@@ -584,5 +583,134 @@
         @endforelse
     </div>
 </div>
+
+<!-- Enrollment Modals -->
+@foreach($activeCourses as $course)
+<div class="modal fade" id="enrollModal{{ $course->id }}" tabindex="-1" aria-labelledby="enrollModalLabel{{ $course->id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ route('schools.guest.enroll', ['school' => $school, 'course' => $course->id]) }}" enctype="multipart/form-data">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title" id="enrollModalLabel{{ $course->id }}">Enroll in {{ $course->title }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Course Type Badge -->
+                    <div class="mb-3">
+                        <span class="badge {{ $course->course_type == 'theoretical' ? 'bg-info' : 'bg-primary' }} me-2">
+                            {{ ucfirst($course->course_type) }} Course
+                        </span>
+                        <span class="badge bg-secondary">
+                            {{ ucfirst(str_replace('_', ' ', $course->license_type)) }}
+                        </span>
+                    </div>
+
+                    <!-- Experience Level Selection -->
+                    <div class="mb-3">
+                        <label for="experience_level{{ $course->id }}" class="form-label">
+                            <strong>Driver Experience Level</strong> <span class="text-danger">*</span>
+                        </label>
+                        <select name="experience_level" id="experience_level{{ $course->id }}" class="form-select @error('experience_level') is-invalid @enderror" required onchange="toggleCredentialUpload{{ $course->id }}()">
+                            <option value="">Select your experience...</option>
+                            <option value="new_driver" {{ old('experience_level') == 'new_driver' ? 'selected' : '' }}>
+                                New Driver (No license, learning from scratch)
+                            </option>
+                            <option value="experienced_driver" {{ old('experience_level') == 'experienced_driver' ? 'selected' : '' }}>
+                                Experienced Driver (Have license or experience)
+                            </option>
+                        </select>
+                        @error('experience_level')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                        <small class="text-muted">This helps us customize your learning path</small>
+                    </div>
+
+                    <!-- Credential Upload (shown only for experienced drivers) -->
+                    <div class="mb-3" id="credentialSection{{ $course->id }}" style="display: none;">
+                        <label for="credential_file{{ $course->id }}" class="form-label">
+                            <strong>Driving License/Credential</strong>
+                        </label>
+                        <input type="file" name="credential_file" id="credential_file{{ $course->id }}" class="form-control @error('credential_file') is-invalid @enderror" accept=".pdf,.jpg,.jpeg,.png">
+                        @error('credential_file')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                        <small class="text-muted">Upload a copy of your existing driver's license or credential (optional, PDF/Image, max 2MB)</small>
+                    </div>
+
+                    <!-- Package Selection (if available) -->
+                    @if($course->packages && $course->packages->count() > 0)
+                        <div class="mb-3">
+                            <label for="package_id{{ $course->id }}" class="form-label">
+                                <strong>Select Package</strong> <span class="text-danger">*</span>
+                            </label>
+                            <select name="package_id" id="package_id{{ $course->id }}" class="form-select @error('package_id') is-invalid @enderror" required>
+                                <option value="">Choose a package...</option>
+                                @foreach($course->packages as $package)
+                                    <option value="{{ $package->id }}" {{ old('package_id') == $package->id ? 'selected' : '' }}>
+                                        {{ $package->name }} 
+                                        @if($package->transmission_type)
+                                            ({{ ucfirst($package->transmission_type) }})
+                                        @endif
+                                        - ₱{{ number_format($package->price, 2) }}
+                                        @if($package->training_hours)
+                                            ({{ $package->training_hours }} hrs)
+                                        @endif
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('package_id')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    @endif
+
+                    <!-- Additional Notes -->
+                    <div class="mb-3">
+                        <label for="notes{{ $course->id }}" class="form-label">Additional Notes (Optional)</label>
+                        <textarea name="notes" id="notes{{ $course->id }}" class="form-control @error('notes') is-invalid @enderror" rows="3" placeholder="Any special requests or information we should know...">{{ old('notes') }}</textarea>
+                        @error('notes')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror>
+                    </div>
+
+                    <!-- Info Alert -->
+                    <div class="alert alert-info mb-0">
+                        <small>
+                            <i class="fas fa-info-circle me-1"></i>
+                            Your enrollment request will be reviewed by an administrator. You'll be notified once approved.
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Submit Enrollment Request</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleCredentialUpload{{ $course->id }}() {
+    const select = document.getElementById('experience_level{{ $course->id }}');
+    const credentialSection = document.getElementById('credentialSection{{ $course->id }}');
+    
+    if (select.value === 'experienced_driver') {
+        credentialSection.style.display = 'block';
+    } else {
+        credentialSection.style.display = 'none';
+        // Clear file input when hiding
+        document.getElementById('credential_file{{ $course->id }}').value = '';
+    }
+}
+
+// Initialize on page load if there's an old value
+document.addEventListener('DOMContentLoaded', function() {
+    toggleCredentialUpload{{ $course->id }}();
+});
+</script>
+@endforeach
+
 @endsection
 

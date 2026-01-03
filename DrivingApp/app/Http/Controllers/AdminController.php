@@ -70,6 +70,34 @@ class AdminController extends Controller
                 ];
             }
             
+            // Calculate growth indicators
+            $currentMonth = Carbon::now()->month;
+            $lastMonth = Carbon::now()->subMonth()->month;
+            
+            $studentsThisMonth = Student::where('school_id', $school->id)
+                ->whereMonth('created_at', $currentMonth)
+                ->count();
+                
+            $studentsLastMonth = Student::where('school_id', $school->id)
+                ->whereMonth('created_at', $lastMonth)
+                ->count();
+                
+            $studentGrowth = $studentsLastMonth > 0 
+                ? round((($studentsThisMonth - $studentsLastMonth) / $studentsLastMonth) * 100, 1)
+                : ($studentsThisMonth > 0 ? 100 : 0);
+                
+            $instructorsThisMonth = Instructor::where('school_id', $school->id)
+                ->whereMonth('created_at', $currentMonth)
+                ->count();
+                
+            $instructorsLastMonth = Instructor::where('school_id', $school->id)
+                ->whereMonth('created_at', $lastMonth)
+                ->count();
+                
+            $instructorGrowth = $instructorsLastMonth > 0
+                ? round((($instructorsThisMonth - $instructorsLastMonth) / $instructorsLastMonth) * 100, 1)
+                : ($instructorsThisMonth > 0 ? 100 : 0);
+            
             return view($school->resolveView('admin.dashboard'), [
                 'school' => $school,
                 'totalStudents' => $totalStudents,
@@ -81,6 +109,10 @@ class AdminController extends Controller
                 'recentStudents' => $recentStudents,
                 'recentInstructors' => $recentInstructors,
                 'enrollmentData' => $enrollmentData,
+                'studentGrowth' => $studentGrowth,
+                'instructorGrowth' => $instructorGrowth,
+                'studentsThisMonth' => $studentsThisMonth,
+                'instructorsThisMonth' => $instructorsThisMonth,
             ]);
         } catch (\Exception $e) {
             SystemLog::logError(
@@ -104,11 +136,11 @@ class AdminController extends Controller
         try {
             // Select only needed columns to reduce memory footprint
             $students = Student::where('school_id', $school->id)
-                ->select('id', 'school_id', 'name', 'email', 'contact', 'status', 'role', 'created_at')
+                ->select('id', 'school_id', 'name', 'email', 'contact_number', 'address', 'status', 'role', 'created_at')
                 ->orderBy('name')
                 ->get();
             $instructors = Instructor::where('school_id', $school->id)
-                ->select('id', 'school_id', 'name', 'email', 'contact', 'status', 'availability', 'created_at')
+                ->select('id', 'school_id', 'name', 'email', 'contact_number', 'license_number', 'status', 'availability', 'created_at')
                 ->orderBy('name')
                 ->get();
 

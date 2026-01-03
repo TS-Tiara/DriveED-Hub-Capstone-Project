@@ -685,6 +685,12 @@
                     </div>
                     </div>
                 </div>
+
+                <!-- Save Button for General Settings -->
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e5e7eb;">
+                    <button type="submit" class="save-button">Save Changes</button>
+                    <button type="button" class="reset-button" onclick="resetToDefaults()">↺ Reset to Defaults</button>
+                </div>
             </div>
 
             <!-- Colors & Branding Tab -->

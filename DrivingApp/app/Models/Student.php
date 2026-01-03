@@ -26,11 +26,15 @@ class Student extends Authenticatable
         'experience_level',
         'has_passed_theoretical',
         'theoretical_passed_at',
+        'email_verified_at',
+        'verification_code',
+        'verification_code_expires_at',
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
+        'verification_code',
     ];
 
     protected function casts(): array
@@ -39,6 +43,8 @@ class Student extends Authenticatable
             'password' => 'hashed',
             'has_passed_theoretical' => 'boolean',
             'theoretical_passed_at' => 'datetime',
+            'email_verified_at' => 'datetime',
+            'verification_code_expires_at' => 'datetime',
         ];
     }
 
@@ -94,11 +100,12 @@ class Student extends Authenticatable
     }
 
     /**
-     * Get all enrollments for this student
+     * Get all enrollments for this student (approved enrollment requests)
      */
     public function enrollments()
     {
-        return $this->hasMany(Enrollment::class);
+        return $this->hasMany(EnrollmentRequest::class, 'learner_id')
+                    ->whereIn('status', ['approved', 'completed', 'cancelled']);
     }
 
     /**
@@ -106,7 +113,8 @@ class Student extends Authenticatable
      */
     public function activeEnrollments()
     {
-        return $this->enrollments()->where('status', 'active');
+        return $this->hasMany(EnrollmentRequest::class, 'learner_id')
+                    ->where('status', 'approved');
     }
 
     /**
@@ -175,4 +183,43 @@ class Student extends Authenticatable
     {
         return $query->where('experience_level', 'experienced');
     }
-}
+    /**
+     * Generate a 6-digit OTP code
+     */
+    public function generateVerificationCode()
+    {
+        $this->verification_code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $this->verification_code_expires_at = now()->addMinutes(15);
+        $this->save();
+        
+        return $this->verification_code;
+    }
+
+    /**
+     * Check if verification code is valid
+     */
+    public function isVerificationCodeValid($code)
+    {
+        return $this->verification_code === $code 
+            && $this->verification_code_expires_at 
+            && $this->verification_code_expires_at->isFuture();
+    }
+
+    /**
+     * Mark email as verified
+     */
+    public function markEmailAsVerified()
+    {
+        $this->email_verified_at = now();
+        $this->verification_code = null;
+        $this->verification_code_expires_at = null;
+        $this->save();
+    }
+
+    /**
+     * Check if email is verified
+     */
+    public function hasVerifiedEmail()
+    {
+        return !is_null($this->email_verified_at);
+    }}

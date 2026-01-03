@@ -62,30 +62,22 @@ class EnrollmentRequestController extends Controller
 
         DB::beginTransaction();
         try {
-            // Update enrollment status
+            // Update enrollment status and set enrolled_at
             $enrollmentRequest->update([
                 'status' => 'approved',
                 'approved_by' => $admin->id,
                 'approved_at' => now(),
+                'enrolled_at' => now(),
             ]);
 
             // Update student role from guest to student
             $enrollmentRequest->student->update(['role' => 'student']);
 
-            // Create active enrollment
-            Enrollment::create([
-                'student_id' => $enrollmentRequest->student_id,
-                'course_id' => $enrollmentRequest->course_id,
-                'enrollment_request_id' => $enrollmentRequest->id,
-                'status' => 'active',
-                'enrolled_at' => now(),
-            ]);
-
             DB::commit();
 
             return redirect()
                 ->back()
-                ->with('success', 'Student account activated! Role changed from Guest to Student. Enrollment created.');
+                ->with('success', 'Student account activated! Role changed from Guest to Student.');
                 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -174,5 +166,97 @@ class EnrollmentRequestController extends Controller
         return redirect()
             ->back()
             ->with('success', 'Payment status updated successfully.');
+    }
+
+    /**
+     * Complete an enrollment (mark as finished)
+     */
+    public function complete(Request $request, School $school, EnrollmentRequest $enrollmentRequest)
+    {
+        // Security checks
+        if ($enrollmentRequest->school_id !== $school->id) {
+            abort(404);
+        }
+
+        $admin = Auth::guard('admin')->user();
+        if (!$admin || $admin->school_id !== $school->id) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        if ($enrollmentRequest->status !== 'approved') {
+            return redirect()
+                ->back()
+                ->with('error', 'Only active enrollments can be marked as completed.');
+        }
+
+        $enrollmentRequest->complete($admin->id);
+
+        return redirect()
+            ->back()
+            ->with('success', 'Enrollment marked as completed successfully.');
+    }
+
+    /**
+     * Cancel an enrollment
+     */
+    public function cancel(Request $request, School $school, EnrollmentRequest $enrollmentRequest)
+    {
+        $validated = $request->validate([
+            'remarks' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        // Security checks
+        if ($enrollmentRequest->school_id !== $school->id) {
+            abort(404);
+        }
+
+        $admin = Auth::guard('admin')->user();
+        if (!$admin || $admin->school_id !== $school->id) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        if (!in_array($enrollmentRequest->status, ['pending', 'approved'])) {
+            return redirect()
+                ->back()
+                ->with('error', 'Only pending or active enrollments can be cancelled.');
+        }
+
+        $enrollmentRequest->cancel($validated['remarks'] ?? null);
+
+        return redirect()
+            ->back()
+            ->with('success', 'Enrollment cancelled successfully.');
+    }
+
+    /**
+     * Mark theoretical portion as passed
+     */
+    public function markTheoreticalPassed(Request $request, School $school, EnrollmentRequest $enrollmentRequest)
+    {
+        $validated = $request->validate([
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        // Security checks
+        if ($enrollmentRequest->school_id !== $school->id) {
+            abort(404);
+        }
+
+        $admin = Auth::guard('admin')->user();
+        if (!$admin || $admin->school_id !== $school->id) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        if ($enrollmentRequest->status !== 'approved') {
+            return redirect()
+                ->back()
+                ->with('error', 'Only active enrollments can have theoretical status updated.');
+        }
+
+        $enrollmentRequest->markTheoreticalPassed($admin->id, $validated['notes'] ?? null);
+
+        return redirect()
+            ->back()
+            ->with('success', 'Theoretical portion marked as passed.');
     }
 }

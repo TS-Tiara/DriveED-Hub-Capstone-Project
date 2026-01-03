@@ -555,6 +555,37 @@
             color: #ffffff;
         }
         
+        /* NEW Badge for Sidebar */
+        .badge-new {
+            display: inline-block;
+            padding: 2px 8px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+            color: #ffffff;
+            border-radius: 12px;
+            margin-left: 8px;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse-glow {
+            0%, 100% {
+                box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+            }
+            50% {
+                box-shadow: 0 2px 8px rgba(239, 68, 68, 0.6);
+            }
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
         /* Global Card/Modal Styles */
         .card, .settings-card, .user-card, .booking-card, .course-card {
             border-radius: var(--border-radius);
@@ -1210,8 +1241,12 @@
                 <a href="{{ $schoolRoute('admin.userManagement') }}" class="nav-item" data-page="user-management">User Management</a>
                 <a href="{{ $schoolRoute('admin.schedules') }}" class="nav-item" data-page="schedules">Schedules</a>
                 <a href="{{ $schoolRoute('admin.removalRequests') }}" class="nav-item" data-page="removal-requests">Removal Requests</a>
-                <a href="{{ $schoolRoute('admin.enrollmentRequests.index') }}" class="nav-item" data-page="enrollment-requests">Enrollment Requests</a>
+                <a href="{{ $schoolRoute('admin.enrollments.index') }}" class="nav-item" data-page="enrollments">Enrollments</a>
                 <a href="{{ $schoolRoute('admin.courses') }}" class="nav-item" data-page="courses">Courses</a>
+                <a href="{{ $schoolRoute('admin.theoretical.index') }}" class="nav-item" data-page="theoretical">
+                    Theoretical Completions
+                    <span class="badge badge-new">NEW</span>
+                </a>
                 <a href="{{ $schoolRoute('admin.bookings.index') }}" class="nav-item" data-page="bookings">Bookings</a>
                 <a href="{{ $schoolRoute('admin.payments.index') }}" class="nav-item" data-page="payments">Payments</a>
                 <a href="{{ $schoolRoute('admin.reports.index') }}" class="nav-item" data-page="reports">Reports & Analytics</a>
@@ -1220,6 +1255,10 @@
                 <a href="{{ $schoolRoute('instructor.dashboard') }}" class="nav-item" data-page="dashboard">Dashboard</a>
                 <a href="{{ $schoolRoute('instructor.schedule') }}" class="nav-item" data-page="my-schedule">My Schedule</a>
                 <a href="{{ $schoolRoute('instructor.students.index') }}" class="nav-item" data-page="students">My Students</a>
+                <a href="{{ $schoolRoute('instructor.sessions.create') }}" class="nav-item" data-page="sessions">
+                    Log Session
+                    <span class="badge badge-new">NEW</span>
+                </a>
                 <a href="{{ $schoolRoute('instructor.grades') }}" class="nav-item" data-page="grades">Grades</a>
                 <a href="{{ $schoolRoute('instructor.reports') }}" class="nav-item" data-page="reports">Reports</a>
             @elseif(Auth::guard('student')->check())
@@ -1231,11 +1270,13 @@
                     {{-- Guest Navigation --}}
                     <a href="{{ $schoolRoute('guest.dashboard') }}" class="nav-item" data-page="dashboard">Dashboard</a>
                     <a href="{{ $schoolRoute('guest.courses') }}" class="nav-item" data-page="courses">Browse Courses</a>
-                    <a href="{{ $schoolRoute('guest.enrollmentRequests') }}" class="nav-item" data-page="enrollment-requests">My Enrollment Requests</a>
+                    <a href="{{ $schoolRoute('guest.enrollmentRequests') }}" class="nav-item" data-page="enrollment-requests">My Enrollments</a>
                 @else
                     {{-- Student Navigation --}}
                     <a href="{{ $schoolRoute('student.dashboard') }}" class="nav-item" data-page="dashboard">Dashboard</a>
                     <a href="{{ $schoolRoute('student.schedule') }}" class="nav-item" data-page="schedule">My Schedule</a>
+                    <a href="{{ $schoolRoute('student.enrollments.index') }}" class="nav-item" data-page="enrollments">My Enrollments</a>
+                    </a>
                     <a href="{{ $schoolRoute('student.courses.index') }}" class="nav-item" data-page="courses">Browse Courses</a>
                     <a href="{{ $schoolRoute('student.payments.index') }}" class="nav-item" data-page="payments">My Payments</a>
                     <a href="{{ $schoolRoute('student.progress.index') }}" class="nav-item" data-page="progress">My Progress</a>

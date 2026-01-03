@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\SessionCompletion;
 use App\Models\Enrollment;
 use App\Models\Instructor;
+use App\Models\School;
 use App\Http\Requests\StoreSessionCompletionRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,19 +16,17 @@ class SessionCompletionController extends Controller
     /**
      * Display a listing of session completions
      */
-    public function index(Request $request)
+    public function index(School $school, Request $request)
     {
-        $user = Auth::user();
-        
-        if ($user->role === 'instructor') {
-            $instructor = Instructor::where('user_id', $user->id)->first();
+        // Instructor view
+        if (Auth::guard('instructor')->check()) {
+            $instructor = Auth::guard('instructor')->user();
             
-            if (!$instructor) {
-                abort(403, 'Instructor profile not found.');
-            }
-            
-            $sessions = SessionCompletion::with(['enrollment.student.user', 'enrollment.course'])
+            $sessions = SessionCompletion::with(['enrollment.student', 'enrollment.course'])
                 ->where('instructor_id', $instructor->id)
+                ->whereHas('enrollment.course', function($query) use ($school) {
+                    $query->where('school_id', $school->id);
+                })
                 ->when($request->session_type, function($query, $type) {
                     $query->where('session_type', $type);
                 })
@@ -41,11 +40,15 @@ class SessionCompletionController extends Controller
                 ->latest('session_time')
                 ->paginate(20);
             
-            return view('instructor.sessions.index', compact('sessions'));
+            return view('school.instructor.sessions.index', compact('school', 'sessions'));
         }
         
-        if (in_array($user->role, ['admin', 'superadmin'])) {
-            $sessions = SessionCompletion::with(['enrollment.student.user', 'enrollment.course', 'instructor.user'])
+        // Admin view
+        if (Auth::guard('admin')->check()) {
+            $sessions = SessionCompletion::with(['enrollment.student', 'enrollment.course', 'instructor'])
+                ->whereHas('enrollment.course', function($query) use ($school) {
+                    $query->where('school_id', $school->id);
+                })
                 ->when($request->session_type, function($query, $type) {
                     $query->where('session_type', $type);
                 })
@@ -62,9 +65,9 @@ class SessionCompletionController extends Controller
                 ->latest('session_time')
                 ->paginate(20);
             
-            $instructors = Instructor::with('user')->get();
+            $instructors = Instructor::where('school_id', $school->id)->get();
             
-            return view('admin.sessions.index', compact('sessions', 'instructors'));
+            return view('school.admin.sessions.index', compact('school', 'sessions', 'instructors'));
         }
         
         abort(403);
@@ -73,22 +76,19 @@ class SessionCompletionController extends Controller
     /**
      * Show the form for creating a new session completion
      */
-    public function create(Request $request)
+    public function create(School $school, Request $request)
     {
-        $user = Auth::user();
-        
-        if ($user->role !== 'instructor') {
+        if (!Auth::guard('instructor')->check()) {
             abort(403);
         }
         
-        $instructor = Instructor::where('user_id', $user->id)->first();
+        $instructor = Auth::guard('instructor')->user();
         
-        if (!$instructor) {
-            abort(403, 'Instructor profile not found.');
-        }
-        
-        // Get active enrollments
-        $enrollments = Enrollment::with(['student.user', 'course'])
+        // Get active enrollments for this school
+        $enrollments = Enrollment::with(['student', 'course'])
+            ->whereHas('course', function($query) use ($school) {
+                $query->where('school_id', $school->id);
+            })
             ->where('status', 'active')
             ->get();
         
@@ -97,20 +97,24 @@ class SessionCompletionController extends Controller
             ? Enrollment::find($request->enrollment_id) 
             : null;
         
-        return view('instructor.sessions.create', compact('enrollments', 'selectedEnrollment'));
+        return view('school.instructor.sessions.create', compact('school', 'enrollments', 'selectedEnrollment'));
     }
 
     /**
      * Store a newly created session completion
      */
-    public function store(StoreSessionCompletionRequest $request)
+    public function store(School $school, StoreSessionCompletionRequest $request)
     {
-        $user = Auth::user();
+        if (!Auth::guard('instructor')->check()) {
+            abort(403);
+        }
         
-        $instructor = Instructor::where('user_id', $user->id)->first();
+        $instructor = Auth::guard('instructor')->user();
         
-        if (!$instructor) {
-            abort(403, 'Instructor profile not found.');
+        // Verify enrollment belongs to this school
+        $enrollment = Enrollment::findOrFail($request->enrollment_id);
+        if ($enrollment->course->school_id !== $school->id) {
+            abort(404);
         }
         
         DB::beginTransaction();
@@ -123,13 +127,13 @@ class SessionCompletionController extends Controller
                 'session_date' => $request->session_date,
                 'session_time' => $request->session_time,
                 'notes' => $request->notes,
-                'logged_by' => $user->id,
+                'logged_by' => $instructor->id,
             ]);
             
             DB::commit();
             
             return redirect()
-                ->route('instructor.sessions.index')
+                ->route('schools.instructor.sessions.index', ['school' => $school->slug])
                 ->with('success', 'Session logged successfully.');
             
         } catch (\Exception $e) {
@@ -143,64 +147,86 @@ class SessionCompletionController extends Controller
     /**
      * Display the specified session completion
      */
-    public function show(SessionCompletion $sessionCompletion)
+    public function show(School $school, $sessionCompletion)
     {
-        $user = Auth::user();
+        // Fetch session manually
+        $sessionCompletion = SessionCompletion::with([
+            'enrollment.student', 
+            'enrollment.course',
+            'instructor'
+        ])->findOrFail($sessionCompletion);
         
-        // Check authorization
-        if ($user->role === 'instructor') {
-            $instructor = Instructor::where('user_id', $user->id)->first();
-            if (!$instructor || $sessionCompletion->instructor_id !== $instructor->id) {
-                abort(403);
-            }
-        } elseif (!in_array($user->role, ['admin', 'superadmin'])) {
-            abort(403);
+        // Verify belongs to school
+        if ($sessionCompletion->enrollment->course->school_id !== $school->id) {
+            abort(404);
         }
         
-        $sessionCompletion->load([
-            'enrollment.student.user', 
-            'enrollment.course',
-            'instructor.user',
-            'loggedBy'
-        ]);
+        // Instructor view - only their sessions
+        if (Auth::guard('instructor')->check()) {
+            $instructor = Auth::guard('instructor')->user();
+            if ($sessionCompletion->instructor_id !== $instructor->id) {
+                abort(403);
+            }
+            return view('school.instructor.sessions.show', compact('school', 'sessionCompletion'));
+        }
         
-        $viewPath = $user->role === 'instructor' 
-            ? 'instructor.sessions.show' 
-            : 'admin.sessions.show';
+        // Admin view
+        if (Auth::guard('admin')->check()) {
+            return view('school.admin.sessions.show', compact('school', 'sessionCompletion'));
+        }
         
-        return view($viewPath, compact('sessionCompletion'));
+        abort(403);
     }
 
     /**
      * Show the form for editing the specified session completion
      */
-    public function edit(SessionCompletion $sessionCompletion)
+    public function edit(School $school, $sessionCompletion)
     {
-        $user = Auth::user();
-        
-        // Only the instructor who logged the session can edit it
-        $instructor = Instructor::where('user_id', $user->id)->first();
-        
-        if (!$instructor || $sessionCompletion->instructor_id !== $instructor->id) {
+        if (!Auth::guard('instructor')->check()) {
             abort(403);
         }
         
-        $sessionCompletion->load(['enrollment.student.user', 'enrollment.course']);
+        $instructor = Auth::guard('instructor')->user();
         
-        return view('instructor.sessions.edit', compact('sessionCompletion'));
+        // Fetch session manually
+        $sessionCompletion = SessionCompletion::with(['enrollment.student', 'enrollment.course'])
+            ->findOrFail($sessionCompletion);
+        
+        // Verify belongs to school
+        if ($sessionCompletion->enrollment->course->school_id !== $school->id) {
+            abort(404);
+        }
+        
+        // Only the instructor who logged the session can edit it
+        if ($sessionCompletion->instructor_id !== $instructor->id) {
+            abort(403);
+        }
+        
+        return view('school.instructor.sessions.edit', compact('school', 'sessionCompletion'));
     }
 
     /**
      * Update the specified session completion
      */
-    public function update(StoreSessionCompletionRequest $request, SessionCompletion $sessionCompletion)
+    public function update(School $school, StoreSessionCompletionRequest $request, $sessionCompletion)
     {
-        $user = Auth::user();
+        if (!Auth::guard('instructor')->check()) {
+            abort(403);
+        }
+        
+        $instructor = Auth::guard('instructor')->user();
+        
+        // Fetch session manually
+        $sessionCompletion = SessionCompletion::findOrFail($sessionCompletion);
+        
+        // Verify belongs to school
+        if ($sessionCompletion->enrollment->course->school_id !== $school->id) {
+            abort(404);
+        }
         
         // Only the instructor who logged the session can edit it
-        $instructor = Instructor::where('user_id', $user->id)->first();
-        
-        if (!$instructor || $sessionCompletion->instructor_id !== $instructor->id) {
+        if ($sessionCompletion->instructor_id !== $instructor->id) {
             abort(403);
         }
         
@@ -212,32 +238,44 @@ class SessionCompletionController extends Controller
         ]);
         
         return redirect()
-            ->route('instructor.sessions.show', $sessionCompletion)
+            ->route('schools.instructor.sessions.show', ['school' => $school->slug, 'sessionCompletion' => $sessionCompletion->id])
             ->with('success', 'Session updated successfully.');
     }
 
     /**
      * Remove the specified session completion
      */
-    public function destroy(SessionCompletion $sessionCompletion)
+    public function destroy(School $school, $sessionCompletion)
     {
-        $user = Auth::user();
+        // Fetch session manually
+        $sessionCompletion = SessionCompletion::findOrFail($sessionCompletion);
         
-        // Only admins or the instructor who logged it can delete
-        if (in_array($user->role, ['admin', 'superadmin'])) {
-            // Admin can delete any session
-        } else {
-            $instructor = Instructor::where('user_id', $user->id)->first();
-            if (!$instructor || $sessionCompletion->instructor_id !== $instructor->id) {
-                abort(403);
-            }
+        // Verify belongs to school
+        if ($sessionCompletion->enrollment->course->school_id !== $school->id) {
+            abort(404);
         }
         
-        $sessionCompletion->delete();
+        // Admin can delete any session
+        if (Auth::guard('admin')->check()) {
+            $sessionCompletion->delete();
+            return redirect()
+                ->route('schools.admin.sessions.index', ['school' => $school->slug])
+                ->with('success', 'Session deleted successfully.');
+        }
         
-        return redirect()
-            ->route($user->role === 'instructor' ? 'instructor.sessions.index' : 'admin.sessions.index')
-            ->with('success', 'Session deleted successfully.');
+        // Instructor can delete their own sessions
+        if (Auth::guard('instructor')->check()) {
+            $instructor = Auth::guard('instructor')->user();
+            if ($sessionCompletion->instructor_id !== $instructor->id) {
+                abort(403);
+            }
+            $sessionCompletion->delete();
+            return redirect()
+                ->route('schools.instructor.sessions.index', ['school' => $school->slug])
+                ->with('success', 'Session deleted successfully.');
+        }
+        
+        abort(403);
     }
 
     /**
@@ -247,15 +285,11 @@ class SessionCompletionController extends Controller
     {
         $stats = [
             'total_sessions' => $enrollment->sessionCompletions()->count(),
-            'total_hours' => $enrollment->total_hours,
-            'required_hours' => $enrollment->course->hours_required,
-            'completion_percentage' => $enrollment->completion_percentage,
-            'theoretical_sessions' => $enrollment->sessionCompletions()->theoretical()->count(),
-            'practical_sessions' => $enrollment->sessionCompletions()->practical()->count(),
+            'total_hours' => $enrollment->sessionCompletions()->sum('hours_completed'),
             'recent_sessions' => $enrollment->sessionCompletions()
-                ->with(['instructor.user'])
-                ->recent()
-                ->limit(5)
+                ->with(['instructor'])
+                ->latest('session_date')
+                ->take(5)
                 ->get(),
         ];
         

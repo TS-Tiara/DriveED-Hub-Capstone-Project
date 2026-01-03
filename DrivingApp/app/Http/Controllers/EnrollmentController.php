@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Enrollment;
 use App\Models\EnrollmentRequest;
+use App\Models\School;
 use App\Models\Student;
 use App\Models\Course;
 use App\Support\EnrollmentValidator;
@@ -16,39 +17,52 @@ class EnrollmentController extends Controller
     /**
      * Display a listing of enrollments for the authenticated user
      */
-    public function index()
+    public function index(School $school = null)
     {
-        $user = Auth::user();
-        
-        if ($user->role === 'student') {
-            $student = Student::where('user_id', $user->id)->first();
-            $enrollments = $student ? $student->enrollments()->with('course')->latest()->get() : collect();
+        // Student view
+        if (Auth::guard('student')->check()) {
+            $student = Auth::guard('student')->user();
+            $enrollments = $student->enrollments()
+                ->with(['course', 'sessionCompletions'])
+                ->latest()
+                ->get();
             
-            return view('student.enrollments.index', compact('enrollments', 'student'));
+            return view('school.student.enrollments.index', compact('student', 'enrollments', 'school'));
         }
         
-        if ($user->role === 'instructor') {
-            // Show enrollments for students assigned to this instructor
-            $enrollments = Enrollment::with(['student.user', 'course'])
-                ->whereHas('sessionCompletions', function($query) use ($user) {
-                    $instructor = \App\Models\Instructor::where('user_id', $user->id)->first();
-                    if ($instructor) {
-                        $query->where('instructor_id', $instructor->id);
-                    }
+        // Instructor view
+        if (Auth::guard('instructor')->check()) {
+            $instructor = Auth::guard('instructor')->user();
+            $school = $school ?? $instructor->school;
+            
+            // Show enrollments for students this instructor has taught
+            $enrollments = Enrollment::with(['student', 'course', 'sessionCompletions'])
+                ->whereHas('sessionCompletions', function($query) use ($instructor) {
+                    $query->where('instructor_id', $instructor->id);
+                })
+                ->whereHas('course', function($query) use ($school) {
+                    $query->where('school_id', $school->id);
                 })
                 ->latest()
                 ->paginate(20);
             
-            return view('instructor.enrollments.index', compact('enrollments'));
+            return view('school.instructor.enrollments.index', compact('school', 'enrollments'));
         }
         
-        if (in_array($user->role, ['admin', 'superadmin'])) {
-            // Show all enrollments
-            $enrollments = Enrollment::with(['student.user', 'course'])
+        // Admin view
+        if (Auth::guard('admin')->check()) {
+            $admin = Auth::guard('admin')->user();
+            $school = $school ?? $admin->school;
+            
+            // Show all enrollments for the school
+            $enrollments = Enrollment::with(['student', 'course', 'sessionCompletions'])
+                ->whereHas('course', function($query) use ($school) {
+                    $query->where('school_id', $school->id);
+                })
                 ->latest()
                 ->paginate(20);
             
-            return view('admin.enrollments.index', compact('enrollments'));
+            return view('school.admin.enrollments.index', compact('school', 'enrollments'));
         }
         
         abort(403);
@@ -57,40 +71,47 @@ class EnrollmentController extends Controller
     /**
      * Display the specified enrollment
      */
-    public function show(Enrollment $enrollment)
+    public function show(School $school, $enrollment)
     {
-        $user = Auth::user();
+        // Fetch enrollment manually
+        $enrollment = Enrollment::with(['student', 'course.modules.lessons', 'sessionCompletions.instructor'])
+            ->findOrFail($enrollment);
         
-        // Check authorization
-        if ($user->role === 'student') {
-            $student = Student::where('user_id', $user->id)->first();
-            if (!$student || $enrollment->student_id !== $student->id) {
-                abort(403);
-            }
+        // Verify enrollment belongs to this school
+        if ($enrollment->course->school_id !== $school->id) {
+            abort(404);
         }
         
-        $enrollment->load(['student.user', 'course.modules.lessons', 'sessionCompletions.instructor.user']);
+        // Student view - only their own enrollment
+        if (Auth::guard('student')->check()) {
+            $student = Auth::guard('student')->user();
+            if ($enrollment->student_id !== $student->id) {
+                abort(403);
+            }
+            return view('school.student.enrollments.show', compact('school', 'enrollment'));
+        }
         
-        $viewPath = match($user->role) {
-            'student' => 'student.enrollments.show',
-            'instructor' => 'instructor.enrollments.show',
-            'admin', 'superadmin' => 'admin.enrollments.show',
-            default => abort(403)
-        };
+        // Instructor view
+        if (Auth::guard('instructor')->check()) {
+            return view('school.instructor.enrollments.show', compact('school', 'enrollment'));
+        }
         
-        return view($viewPath, compact('enrollment'));
+        // Admin view
+        if (Auth::guard('admin')->check()) {
+            return view('school.admin.enrollments.show', compact('school', 'enrollment'));
+        }
+        
+        abort(403);
     }
 
     /**
      * Create enrollment from approved enrollment request
      * (Called by admin when approving an enrollment request)
      */
-    public function createFromRequest(EnrollmentRequest $enrollmentRequest)
+    public function createFromRequest(School $school, EnrollmentRequest $enrollmentRequest)
     {
-        $user = Auth::user();
-        
         // Only admins can create enrollments
-        if (!in_array($user->role, ['admin', 'superadmin'])) {
+        if (!Auth::guard('admin')->check()) {
             abort(403);
         }
         
@@ -118,7 +139,7 @@ class EnrollmentController extends Controller
             DB::commit();
             
             return redirect()
-                ->route('admin.enrollments.show', $enrollment)
+                ->route('schools.admin.enrollments.show', ['school' => $school->slug, 'enrollment' => $enrollment->id])
                 ->with('success', 'Enrollment created successfully.');
             
         } catch (\Exception $e) {
@@ -149,12 +170,18 @@ class EnrollmentController extends Controller
     /**
      * Mark enrollment as complete
      */
-    public function complete(Enrollment $enrollment)
+    public function complete(School $school, $enrollment)
     {
-        $user = Auth::user();
+        // Fetch enrollment
+        $enrollment = Enrollment::findOrFail($enrollment);
+        
+        // Verify belongs to school
+        if ($enrollment->course->school_id !== $school->id) {
+            abort(404);
+        }
         
         // Only instructors and admins can complete enrollments
-        if (!in_array($user->role, ['instructor', 'admin', 'superadmin'])) {
+        if (!Auth::guard('instructor')->check() && !Auth::guard('admin')->check()) {
             abort(403);
         }
         
@@ -176,17 +203,25 @@ class EnrollmentController extends Controller
     /**
      * Cancel/drop enrollment
      */
-    public function cancel(Enrollment $enrollment)
+    public function cancel(School $school, $enrollment)
     {
-        $user = Auth::user();
+        // Fetch enrollment
+        $enrollment = Enrollment::findOrFail($enrollment);
         
-        // Students can drop their own enrollments, admins can cancel any
-        if ($user->role === 'student') {
-            $student = Student::where('user_id', $user->id)->first();
-            if (!$student || $enrollment->student_id !== $student->id) {
+        // Verify belongs to school
+        if ($enrollment->course->school_id !== $school->id) {
+            abort(404);
+        }
+        
+        // Students can drop their own enrollments
+        if (Auth::guard('student')->check()) {
+            $student = Auth::guard('student')->user();
+            if ($enrollment->student_id !== $student->id) {
                 abort(403);
             }
-        } elseif (!in_array($user->role, ['admin', 'superadmin'])) {
+        } 
+        // Admins can cancel any
+        elseif (!Auth::guard('admin')->check()) {
             abort(403);
         }
         
@@ -205,26 +240,25 @@ class EnrollmentController extends Controller
     /**
      * Get enrollment statistics
      */
-    public function stats()
+    public function stats(School $school)
     {
-        $user = Auth::user();
-        
-        if (!in_array($user->role, ['admin', 'superadmin'])) {
+        if (!Auth::guard('admin')->check()) {
             abort(403);
         }
         
         $stats = [
-            'total' => Enrollment::count(),
-            'active' => Enrollment::where('status', 'active')->count(),
-            'completed' => Enrollment::where('status', 'completed')->count(),
-            'dropped' => Enrollment::where('status', 'dropped')->count(),
-            'theoretical_passed' => Enrollment::where('theoretical_passed', true)->count(),
-            'pending_theoretical' => Enrollment::whereHas('course', function($query) {
-                    $query->where('course_type', 'theoretical');
-                })
-                ->where('theoretical_passed', false)
-                ->where('status', 'active')
-                ->count(),
+            'total' => Enrollment::whereHas('course', function($query) use ($school) {
+                $query->where('school_id', $school->id);
+            })->count(),
+            'active' => Enrollment::whereHas('course', function($query) use ($school) {
+                $query->where('school_id', $school->id);
+            })->where('status', 'active')->count(),
+            'completed' => Enrollment::whereHas('course', function($query) use ($school) {
+                $query->where('school_id', $school->id);
+            })->where('status', 'completed')->count(),
+            'dropped' => Enrollment::whereHas('course', function($query) use ($school) {
+                $query->where('school_id', $school->id);
+            })->where('status', 'dropped')->count(),
         ];
         
         return response()->json($stats);

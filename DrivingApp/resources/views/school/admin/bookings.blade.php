@@ -13,7 +13,7 @@
 @include('school.admin.partials.admin-styles')
 
 <style>
-    /* Booking Cards */
+    /* Booking Cards - Using shared content-card styles */
     .bookings-list {
         display: grid;
         gap: 20px;
@@ -21,15 +21,36 @@
 
     .booking-card {
         background: white;
-        border-radius: 12px;
+        border-radius: 16px;
         padding: 25px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        transition: transform 0.3s, box-shadow 0.3s;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        border-left: 4px solid {{ $primaryColor }};
+        position: relative;
+        overflow: hidden;
+    }
+
+    .booking-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 120px;
+        height: 120px;
+        background: {{ $primaryColor }};
+        border-radius: 50%;
+        opacity: 0.05;
+        transition: all 0.3s ease;
     }
 
     .booking-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+        transform: translateY(-5px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    }
+
+    .booking-card:hover::before {
+        transform: scale(1.2);
+        opacity: 0.08;
     }
 
     .booking-header {
@@ -39,6 +60,8 @@
         margin-bottom: 20px;
         flex-wrap: wrap;
         gap: 15px;
+        position: relative;
+        z-index: 1;
     }
 
     .booking-info h3 {
