@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\SessionCompletion;
-use App\Models\Enrollment;
+use App\Models\EnrollmentRequest;
 use App\Models\Instructor;
 use App\Models\School;
 use App\Http\Requests\StoreSessionCompletionRequest;
@@ -85,16 +85,16 @@ class SessionCompletionController extends Controller
         $instructor = Auth::guard('instructor')->user();
         
         // Get active enrollments for this school
-        $enrollments = Enrollment::with(['student', 'course'])
+        $enrollments = EnrollmentRequest::with(['student', 'course'])
             ->whereHas('course', function($query) use ($school) {
                 $query->where('school_id', $school->id);
             })
-            ->where('status', 'active')
+            ->where('status', 'approved')
             ->get();
         
         // Pre-select enrollment if provided
         $selectedEnrollment = $request->enrollment_id 
-            ? Enrollment::find($request->enrollment_id) 
+            ? EnrollmentRequest::find($request->enrollment_id) 
             : null;
         
         return view('school.instructor.sessions.create', compact('school', 'enrollments', 'selectedEnrollment'));
@@ -112,7 +112,7 @@ class SessionCompletionController extends Controller
         $instructor = Auth::guard('instructor')->user();
         
         // Verify enrollment belongs to this school
-        $enrollment = Enrollment::findOrFail($request->enrollment_id);
+        $enrollment = EnrollmentRequest::findOrFail($request->enrollment_id);
         if ($enrollment->course->school_id !== $school->id) {
             abort(404);
         }

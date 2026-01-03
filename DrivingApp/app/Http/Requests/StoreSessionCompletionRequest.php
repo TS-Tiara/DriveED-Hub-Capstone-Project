@@ -67,7 +67,7 @@ class StoreSessionCompletionRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
-            $enrollment = \App\Models\Enrollment::find($this->enrollment_id);
+            $enrollment = \App\Models\EnrollmentRequest::find($this->enrollment_id);
 
             if ($enrollment) {
                 // Verify session type matches course type

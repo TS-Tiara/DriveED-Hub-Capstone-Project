@@ -7,7 +7,7 @@ use App\Models\School;
 use App\Models\Booking;
 use App\Models\Progress;
 use App\Models\Student;
-use App\Models\Enrollment;
+use App\Models\EnrollmentRequest;
 use App\Models\Course;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -21,9 +21,9 @@ class StudentController extends Controller
         $student = Auth::guard('student')->user();
         
         // Get active enrollments with course and session data
-        $activeEnrollments = Enrollment::where('student_id', $student->id)
+        $activeEnrollments = EnrollmentRequest::where('student_id', $student->id)
             ->with(['course', 'sessionCompletions'])
-            ->where('status', 'active')
+            ->where('status', 'approved')
             ->get();
         
         // Calculate total hours from all enrollments

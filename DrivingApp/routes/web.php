@@ -15,7 +15,6 @@ use App\Http\Controllers\StudentController;
 use App\Http\Controllers\GuestController;
 use App\Http\Controllers\EnrollmentRequestController;
 use App\Http\Controllers\SystemAdminController;
-use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\SessionCompletionController;
 use App\Http\Controllers\TheoreticalCompletionController;
 use App\Http\Controllers\CourseModuleController;
@@ -298,12 +297,6 @@ Route::prefix('{school:slug}')
                 Route::post('/mark-passed', [TheoreticalCompletionController::class, 'markAsPassed'])->name('markAsPassed');
                 Route::get('/passed/list', [TheoreticalCompletionController::class, 'passed'])->name('passed');
             });
-
-            // Instructor enrollments (View assigned students)
-            Route::prefix('enrollments')->name('enrollments.')->group(function () {
-                Route::get('/', [EnrollmentController::class, 'index'])->name('index');
-                Route::get('/{enrollment}', [EnrollmentController::class, 'show'])->name('show');
-            });
             
             // Instructor course modules (View course content)
             Route::prefix('courses/{course}/modules')->name('courses.modules.')->group(function () {
@@ -349,13 +342,6 @@ Route::prefix('{school:slug}')
             });
 
             // New LMS routes WITHOUT ajax middleware
-            // Student enrollments (View my active enrollments and course materials)
-            Route::prefix('enrollments')->name('enrollments.')->group(function () {
-                Route::get('/', [EnrollmentController::class, 'index'])->name('index');
-                Route::get('/{enrollment}', [EnrollmentController::class, 'show'])->name('show');
-                Route::post('/{enrollment}/cancel', [EnrollmentController::class, 'cancel'])->name('cancel');
-            });
-
             // Student course modules (View enrolled course content)
             Route::prefix('courses/{course}/modules')->name('courses.modules.')->group(function () {
                 Route::get('/', [CourseModuleController::class, 'index'])->name('index');

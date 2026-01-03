@@ -54,7 +54,7 @@ class MarkTheoreticalPassedRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
-            $enrollment = \App\Models\Enrollment::find($this->enrollment_id);
+            $enrollment = \App\Models\EnrollmentRequest::find($this->enrollment_id);
 
             if ($enrollment) {
                 // Use our custom validator to check if this enrollment can be marked as passed
