@@ -18,6 +18,8 @@ use App\Http\Controllers\SystemAdminController;
 use App\Http\Controllers\SessionCompletionController;
 use App\Http\Controllers\TheoreticalCompletionController;
 use App\Http\Controllers\CourseModuleController;
+use App\Http\Controllers\PasswordResetController;
+use App\Http\Controllers\ExportController;
 use App\Http\Controllers\ModuleLessonController;
 use App\Models\School;
 
@@ -86,6 +88,12 @@ Route::prefix('{school:slug}')
             Route::post('/login', 'login')->name('login.submit');
             Route::post('/logout', 'logout')->name('logout');
         });
+
+        // Password reset routes
+        Route::get('/forgot-password', [PasswordResetController::class, 'showForgotForm'])->name('password.request');
+        Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink'])->name('password.email');
+        Route::get('/reset-password/{token}', [PasswordResetController::class, 'showResetForm'])->name('password.reset');
+        Route::post('/reset-password', [PasswordResetController::class, 'reset'])->name('password.update');
 
         // Public guest registration (Main registration entry point)
         Route::get('/register', [GuestController::class, 'showRegistrationForm'])->name('registration.form');
@@ -166,6 +174,14 @@ Route::prefix('{school:slug}')
                 Route::put('/profile', [AdminController::class, 'updateProfile'])->name('profile.update');
                 Route::post('/profile/picture', [AdminController::class, 'updateProfilePicture'])->name('profile.picture');
 
+                // Export routes
+                Route::prefix('exports')->name('exports.')->group(function () {
+                    Route::get('/students/pdf', [ExportController::class, 'studentsPdf'])->name('students.pdf');
+                    Route::get('/students/excel', [ExportController::class, 'studentsExcel'])->name('students.excel');
+                    Route::get('/enrollments/pdf', [ExportController::class, 'enrollmentsPdf'])->name('enrollments.pdf');
+                    Route::get('/student/{student}/progress/pdf', [ExportController::class, 'studentProgressPdf'])->name('student.progress.pdf');
+                });
+
                 // Bookings management (no separate create/edit views - handled via modals)
                 Route::resource('bookings', BookingController::class)->except(['create', 'edit']);
                 Route::patch('/bookings/{booking}/status', [BookingController::class, 'updateStatus'])->name('bookings.updateStatus');
@@ -179,6 +195,8 @@ Route::prefix('{school:slug}')
             // Enrollment management (combining enrollment requests and enrollments)
             Route::prefix('enrollments')->name('enrollments.')->group(function () {
                 Route::get('/', [EnrollmentRequestController::class, 'index'])->name('index');
+                Route::post('/bulk-approve', [EnrollmentRequestController::class, 'bulkApprove'])->name('bulkApprove');
+                Route::post('/bulk-reject', [EnrollmentRequestController::class, 'bulkReject'])->name('bulkReject');
                 Route::post('/{enrollmentRequest}/approve', [EnrollmentRequestController::class, 'approve'])->name('approve');
                 Route::post('/{enrollmentRequest}/reject', [EnrollmentRequestController::class, 'reject'])->name('reject');
                 Route::post('/{enrollmentRequest}/complete', [EnrollmentRequestController::class, 'complete'])->name('complete');

@@ -715,7 +715,7 @@
                         <input type="checkbox" name="remember">
                         <span>Remember me</span>
                     </label>
-                    <a href="#" class="forgot-password">Forgot Password?</a>
+                    <a href="{{ route('schools.password.request', $school) }}" class="forgot-password">Forgot Password?</a>
                 </div>
                 <button type="submit" class="login-button">Log In</button>
             </form>
