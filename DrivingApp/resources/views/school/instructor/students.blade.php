@@ -6,7 +6,7 @@
 @php
     $school = $school ?? $currentSchool ?? null;
     $schoolName = $school->name ?? 'Driving School';
-    $settings = $school->schoolSetting;
+    $settings = $school?->schoolSetting;
     $instructorId = Auth::guard('instructor')->id();
     
     // Calculate statistics
@@ -165,7 +165,7 @@
     .student-card:hover {
         transform: translateY(-4px);
         box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-        border-color: {{ $school->schoolSetting->primary_color ?? '#f59e0b' }};
+        border-color: {{ $settings->primary_color ?? '#f59e0b' }};
     }
 
     .student-card-header {
@@ -217,7 +217,7 @@
 
     .student-grade {
         font-size: 1.1rem;
-        color: {{ $school->schoolSetting->primary_color ?? '#f59e0b' }};
+        color: {{ $settings->primary_color ?? '#f59e0b' }};
         font-weight: 700;
         margin-top: 4px;
     }
@@ -234,8 +234,8 @@
     }
 
     .badge-assigned {
-        background: rgba({{ hexdec(substr($school->schoolSetting->primary_color ?? '#1e40af', 1, 2)) }}, {{ hexdec(substr($school->schoolSetting->primary_color ?? '#1e40af', 3, 2)) }}, {{ hexdec(substr($school->schoolSetting->primary_color ?? '#1e40af', 5, 2)) }}, 0.15);
-        color: {{ $school->schoolSetting->primary_color ?? '#1e40af' }};
+        background: rgba({{ hexdec(substr($settings->primary_color ?? '#1e40af', 1, 2)) }}, {{ hexdec(substr($settings->primary_color ?? '#1e40af', 3, 2)) }}, {{ hexdec(substr($settings->primary_color ?? '#1e40af', 5, 2)) }}, 0.15);
+        color: {{ $settings->primary_color ?? '#1e40af' }};
     }
 
     .badge-unassigned {

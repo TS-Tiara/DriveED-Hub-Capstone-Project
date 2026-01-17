@@ -11,6 +11,9 @@
     $secondaryColor = $settings?->secondary_color ?? '#6c757d';
     $accentColor = $settings?->accent_color ?? '#8b5cf6';
     
+    // Calculate RGB values for transparency effects
+    $primaryRgb = sscanf($primaryColor, "#%02x%02x%02x");
+    
     // Get enrolled course IDs for this guest
     $enrolledCourseIds = [];
     $enrollmentStatuses = [];
@@ -428,6 +431,244 @@
             align-self: flex-end;
         }
     }
+    
+    /* Modal Styles */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .modal-dialog {
+        max-width: 600px;
+        width: 90%;
+    }
+    
+    .modal-content {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        max-height: 90vh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .modal-header {
+        padding: 20px 25px;
+        border-bottom: 2px solid #e5e7eb;
+        background: <?php echo $primaryColor; ?>;
+        color: white;
+        border-radius: 12px 12px 0 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .modal-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin: 0;
+    }
+    
+    .btn-close {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.5rem;
+        cursor: pointer;
+        opacity: 0.8;
+        padding: 0;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: all 0.2s;
+    }
+    
+    .btn-close:hover {
+        opacity: 1;
+        background: rgba(255,255,255,0.1);
+    }
+    
+    .btn-close::before {
+        content: '×';
+    }
+    
+    .modal-body {
+        padding: 25px;
+        overflow-y: auto;
+        flex: 1;
+    }
+    
+    .modal-footer {
+        padding: 15px 25px;
+        border-top: 2px solid #e5e7eb;
+        background: #f9fafb;
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        border-radius: 0 0 12px 12px;
+    }
+    
+    /* Form Styles */
+    .mb-3 {
+        margin-bottom: 1.5rem;
+    }
+    
+    .mb-0 {
+        margin-bottom: 0;
+    }
+    
+    .me-1 {
+        margin-right: 0.25rem;
+    }
+    
+    .me-2 {
+        margin-right: 0.5rem;
+    }
+    
+    .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: #374151;
+        font-size: 0.95rem;
+    }
+    
+    .form-label strong {
+        font-weight: 600;
+    }
+    
+    .form-select,
+    .form-control {
+        width: 100%;
+        padding: 10px 14px;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-family: inherit;
+        transition: all 0.2s;
+        background: white;
+    }
+    
+    .form-select:focus,
+    .form-control:focus {
+        outline: none;
+        border-color: <?php echo $primaryColor; ?>;
+        box-shadow: 0 0 0 3px rgba(<?php echo implode(',', $primaryRgb); ?>, 0.1);
+    }
+    
+    .form-control[type="file"] {
+        padding: 8px 14px;
+    }
+    
+    textarea.form-control {
+        resize: vertical;
+        min-height: 80px;
+    }
+    
+    .text-muted {
+        color: #6b7280;
+        font-size: 0.85rem;
+        display: block;
+        margin-top: 5px;
+    }
+    
+    .text-danger {
+        color: #ef4444;
+    }
+    
+    .invalid-feedback {
+        color: #ef4444;
+        font-size: 0.875rem;
+        margin-top: 5px;
+        display: block;
+    }
+    
+    .is-invalid {
+        border-color: #ef4444 !important;
+    }
+    
+    /* Badge Styles */
+    .badge {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .bg-info {
+        background: #3b82f6;
+        color: white;
+    }
+    
+    .bg-primary {
+        background: <?php echo $primaryColor; ?>;
+        color: white;
+    }
+    
+    .bg-secondary {
+        background: #6b7280;
+        color: white;
+    }
+    
+    /* Alert Styles */
+    .alert {
+        padding: 12px 16px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+    }
+    
+    .alert-info {
+        background: #dbeafe;
+        color: #1e40af;
+        border-left: 4px solid #3b82f6;
+    }
+    
+    /* Button Styles */
+    .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .btn-primary {
+        background: <?php echo $primaryColor; ?>;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(<?php echo implode(',', $primaryRgb); ?>, 0.3);
+    }
+    
+    .btn-secondary {
+        background: #6b7280;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background: #4b5563;
+    }
 </style>
 
 <div class="courses-container">
@@ -565,8 +806,8 @@
                         {{ $status === 'approved' ? 'Already Enrolled' : 'Request Pending' }}
                     </button>
                 @else
-                    <button type="button" class="btn-enroll" data-bs-toggle="modal" data-bs-target="#enrollModal{{ $course->id }}">
-                        Request Enrollment
+                    <button type="button" class="btn-enroll" onclick="openEnrollModal({{ $course->id }})">
+                        Enroll
                     </button>
                 @endif
             </div>
@@ -593,7 +834,7 @@
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title" id="enrollModalLabel{{ $course->id }}">Enroll in {{ $course->title }}</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" onclick="closeEnrollModal({{ $course->id }})" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <!-- Course Type Badge -->
@@ -671,7 +912,7 @@
                         <textarea name="notes" id="notes{{ $course->id }}" class="form-control @error('notes') is-invalid @enderror" rows="3" placeholder="Any special requests or information we should know...">{{ old('notes') }}</textarea>
                         @error('notes')
                             <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror>
+                        @enderror
                     </div>
 
                     <!-- Info Alert -->
@@ -683,7 +924,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeEnrollModal({{ $course->id }})">Cancel</button>
                     <button type="submit" class="btn btn-primary">Submit Enrollment Request</button>
                 </div>
             </form>
@@ -711,6 +952,30 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 @endforeach
+
+<script>
+// Modal control functions
+function openEnrollModal(courseId) {
+    const modal = document.getElementById('enrollModal' + courseId);
+    if (modal) {
+        modal.style.display = 'flex';
+    }
+}
+
+function closeEnrollModal(courseId) {
+    const modal = document.getElementById('enrollModal' + courseId);
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    if (event.target.classList.contains('modal')) {
+        event.target.style.display = 'none';
+    }
+}
+</script>
 
 @endsection
 

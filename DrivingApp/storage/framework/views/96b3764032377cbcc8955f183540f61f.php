@@ -11,6 +11,9 @@
     $secondaryColor = $settings?->secondary_color ?? '#6c757d';
     $accentColor = $settings?->accent_color ?? '#8b5cf6';
     
+    // Calculate RGB values for transparency effects
+    $primaryRgb = sscanf($primaryColor, "#%02x%02x%02x");
+    
     // Get enrolled course IDs for this guest
     $enrolledCourseIds = [];
     $enrollmentStatuses = [];
@@ -428,6 +431,244 @@
             align-self: flex-end;
         }
     }
+    
+    /* Modal Styles */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .modal-dialog {
+        max-width: 600px;
+        width: 90%;
+    }
+    
+    .modal-content {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        max-height: 90vh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .modal-header {
+        padding: 20px 25px;
+        border-bottom: 2px solid #e5e7eb;
+        background: <?php echo $primaryColor; ?>;
+        color: white;
+        border-radius: 12px 12px 0 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .modal-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin: 0;
+    }
+    
+    .btn-close {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.5rem;
+        cursor: pointer;
+        opacity: 0.8;
+        padding: 0;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: all 0.2s;
+    }
+    
+    .btn-close:hover {
+        opacity: 1;
+        background: rgba(255,255,255,0.1);
+    }
+    
+    .btn-close::before {
+        content: '×';
+    }
+    
+    .modal-body {
+        padding: 25px;
+        overflow-y: auto;
+        flex: 1;
+    }
+    
+    .modal-footer {
+        padding: 15px 25px;
+        border-top: 2px solid #e5e7eb;
+        background: #f9fafb;
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        border-radius: 0 0 12px 12px;
+    }
+    
+    /* Form Styles */
+    .mb-3 {
+        margin-bottom: 1.5rem;
+    }
+    
+    .mb-0 {
+        margin-bottom: 0;
+    }
+    
+    .me-1 {
+        margin-right: 0.25rem;
+    }
+    
+    .me-2 {
+        margin-right: 0.5rem;
+    }
+    
+    .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: #374151;
+        font-size: 0.95rem;
+    }
+    
+    .form-label strong {
+        font-weight: 600;
+    }
+    
+    .form-select,
+    .form-control {
+        width: 100%;
+        padding: 10px 14px;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-family: inherit;
+        transition: all 0.2s;
+        background: white;
+    }
+    
+    .form-select:focus,
+    .form-control:focus {
+        outline: none;
+        border-color: <?php echo $primaryColor; ?>;
+        box-shadow: 0 0 0 3px rgba(<?php echo implode(',', $primaryRgb); ?>, 0.1);
+    }
+    
+    .form-control[type="file"] {
+        padding: 8px 14px;
+    }
+    
+    textarea.form-control {
+        resize: vertical;
+        min-height: 80px;
+    }
+    
+    .text-muted {
+        color: #6b7280;
+        font-size: 0.85rem;
+        display: block;
+        margin-top: 5px;
+    }
+    
+    .text-danger {
+        color: #ef4444;
+    }
+    
+    .invalid-feedback {
+        color: #ef4444;
+        font-size: 0.875rem;
+        margin-top: 5px;
+        display: block;
+    }
+    
+    .is-invalid {
+        border-color: #ef4444 !important;
+    }
+    
+    /* Badge Styles */
+    .badge {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .bg-info {
+        background: #3b82f6;
+        color: white;
+    }
+    
+    .bg-primary {
+        background: <?php echo $primaryColor; ?>;
+        color: white;
+    }
+    
+    .bg-secondary {
+        background: #6b7280;
+        color: white;
+    }
+    
+    /* Alert Styles */
+    .alert {
+        padding: 12px 16px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+    }
+    
+    .alert-info {
+        background: #dbeafe;
+        color: #1e40af;
+        border-left: 4px solid #3b82f6;
+    }
+    
+    /* Button Styles */
+    .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .btn-primary {
+        background: <?php echo $primaryColor; ?>;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(<?php echo implode(',', $primaryRgb); ?>, 0.3);
+    }
+    
+    .btn-secondary {
+        background: #6b7280;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background: #4b5563;
+    }
 </style>
 
 <div class="courses-container">
@@ -567,10 +808,9 @@
 
                     </button>
                 <?php else: ?>
-                    <form method="POST" action="<?php echo e(route('schools.guest.enroll', ['school' => $school, 'course' => $course->id])); ?>" style="margin-top: auto;">
-                        <?php echo csrf_field(); ?>
-                        <button type="submit" class="btn-enroll">Request Enrollment</button>
-                    </form>
+                    <button type="button" class="btn-enroll" onclick="openEnrollModal(<?php echo e($course->id); ?>)">
+                        Enroll
+                    </button>
                 <?php endif; ?>
             </div>
         </div>
@@ -586,6 +826,217 @@
         <?php endif; ?>
     </div>
 </div>
+
+<!-- Enrollment Modals -->
+<?php $__currentLoopData = $activeCourses; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $course): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+<div class="modal fade" id="enrollModal<?php echo e($course->id); ?>" tabindex="-1" aria-labelledby="enrollModalLabel<?php echo e($course->id); ?>" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="<?php echo e(route('schools.guest.enroll', ['school' => $school, 'course' => $course->id])); ?>" enctype="multipart/form-data">
+                <?php echo csrf_field(); ?>
+                <div class="modal-header">
+                    <h5 class="modal-title" id="enrollModalLabel<?php echo e($course->id); ?>">Enroll in <?php echo e($course->title); ?></h5>
+                    <button type="button" class="btn-close" onclick="closeEnrollModal(<?php echo e($course->id); ?>)" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Course Type Badge -->
+                    <div class="mb-3">
+                        <span class="badge <?php echo e($course->course_type == 'theoretical' ? 'bg-info' : 'bg-primary'); ?> me-2">
+                            <?php echo e(ucfirst($course->course_type)); ?> Course
+                        </span>
+                        <span class="badge bg-secondary">
+                            <?php echo e(ucfirst(str_replace('_', ' ', $course->license_type))); ?>
+
+                        </span>
+                    </div>
+
+                    <!-- Experience Level Selection -->
+                    <div class="mb-3">
+                        <label for="experience_level<?php echo e($course->id); ?>" class="form-label">
+                            <strong>Driver Experience Level</strong> <span class="text-danger">*</span>
+                        </label>
+                        <select name="experience_level" id="experience_level<?php echo e($course->id); ?>" class="form-select <?php $__errorArgs = ['experience_level'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>" required onchange="toggleCredentialUpload<?php echo e($course->id); ?>()">
+                            <option value="">Select your experience...</option>
+                            <option value="new_driver" <?php echo e(old('experience_level') == 'new_driver' ? 'selected' : ''); ?>>
+                                New Driver (No license, learning from scratch)
+                            </option>
+                            <option value="experienced_driver" <?php echo e(old('experience_level') == 'experienced_driver' ? 'selected' : ''); ?>>
+                                Experienced Driver (Have license or experience)
+                            </option>
+                        </select>
+                        <?php $__errorArgs = ['experience_level'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                            <div class="invalid-feedback"><?php echo e($message); ?></div>
+                        <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                        <small class="text-muted">This helps us customize your learning path</small>
+                    </div>
+
+                    <!-- Credential Upload (shown only for experienced drivers) -->
+                    <div class="mb-3" id="credentialSection<?php echo e($course->id); ?>" style="display: none;">
+                        <label for="credential_file<?php echo e($course->id); ?>" class="form-label">
+                            <strong>Driving License/Credential</strong>
+                        </label>
+                        <input type="file" name="credential_file" id="credential_file<?php echo e($course->id); ?>" class="form-control <?php $__errorArgs = ['credential_file'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>" accept=".pdf,.jpg,.jpeg,.png">
+                        <?php $__errorArgs = ['credential_file'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                            <div class="invalid-feedback"><?php echo e($message); ?></div>
+                        <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                        <small class="text-muted">Upload a copy of your existing driver's license or credential (optional, PDF/Image, max 2MB)</small>
+                    </div>
+
+                    <!-- Package Selection (if available) -->
+                    <?php if($course->packages && $course->packages->count() > 0): ?>
+                        <div class="mb-3">
+                            <label for="package_id<?php echo e($course->id); ?>" class="form-label">
+                                <strong>Select Package</strong> <span class="text-danger">*</span>
+                            </label>
+                            <select name="package_id" id="package_id<?php echo e($course->id); ?>" class="form-select <?php $__errorArgs = ['package_id'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>" required>
+                                <option value="">Choose a package...</option>
+                                <?php $__currentLoopData = $course->packages; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $package): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <option value="<?php echo e($package->id); ?>" <?php echo e(old('package_id') == $package->id ? 'selected' : ''); ?>>
+                                        <?php echo e($package->name); ?> 
+                                        <?php if($package->transmission_type): ?>
+                                            (<?php echo e(ucfirst($package->transmission_type)); ?>)
+                                        <?php endif; ?>
+                                        - ₱<?php echo e(number_format($package->price, 2)); ?>
+
+                                        <?php if($package->training_hours): ?>
+                                            (<?php echo e($package->training_hours); ?> hrs)
+                                        <?php endif; ?>
+                                    </option>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                            </select>
+                            <?php $__errorArgs = ['package_id'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                                <div class="invalid-feedback"><?php echo e($message); ?></div>
+                            <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                        </div>
+                    <?php endif; ?>
+
+                    <!-- Additional Notes -->
+                    <div class="mb-3">
+                        <label for="notes<?php echo e($course->id); ?>" class="form-label">Additional Notes (Optional)</label>
+                        <textarea name="notes" id="notes<?php echo e($course->id); ?>" class="form-control <?php $__errorArgs = ['notes'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>" rows="3" placeholder="Any special requests or information we should know..."><?php echo e(old('notes')); ?></textarea>
+                        <?php $__errorArgs = ['notes'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                            <div class="invalid-feedback"><?php echo e($message); ?></div>
+                        <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                    </div>
+
+                    <!-- Info Alert -->
+                    <div class="alert alert-info mb-0">
+                        <small>
+                            <i class="fas fa-info-circle me-1"></i>
+                            Your enrollment request will be reviewed by an administrator. You'll be notified once approved.
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeEnrollModal(<?php echo e($course->id); ?>)">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Submit Enrollment Request</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleCredentialUpload<?php echo e($course->id); ?>() {
+    const select = document.getElementById('experience_level<?php echo e($course->id); ?>');
+    const credentialSection = document.getElementById('credentialSection<?php echo e($course->id); ?>');
+    
+    if (select.value === 'experienced_driver') {
+        credentialSection.style.display = 'block';
+    } else {
+        credentialSection.style.display = 'none';
+        // Clear file input when hiding
+        document.getElementById('credential_file<?php echo e($course->id); ?>').value = '';
+    }
+}
+
+// Initialize on page load if there's an old value
+document.addEventListener('DOMContentLoaded', function() {
+    toggleCredentialUpload<?php echo e($course->id); ?>();
+});
+</script>
+<?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+
+<script>
+// Modal control functions
+function openEnrollModal(courseId) {
+    const modal = document.getElementById('enrollModal' + courseId);
+    if (modal) {
+        modal.style.display = 'flex';
+    }
+}
+
+function closeEnrollModal(courseId) {
+    const modal = document.getElementById('enrollModal' + courseId);
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    if (event.target.classList.contains('modal')) {
+        event.target.style.display = 'none';
+    }
+}
+</script>
+
 <?php $__env->stopSection(); ?>
 
 

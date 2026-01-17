@@ -5,6 +5,7 @@
 @section('content')
 @php
     $school = $school ?? $currentSchool ?? null;
+    $settings = $school?->schoolSetting;
     $schoolName = $school->name ?? 'Driving School';
     
     // Calculate statistics
@@ -36,7 +37,7 @@
         align-items: center;
         margin-bottom: 30px;
         padding-bottom: 15px;
-        border-bottom: 3px solid {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        border-bottom: 3px solid {{ $settings->primary_color ?? '#667eea' }};
     }
     
     .page-title {

@@ -346,10 +346,10 @@
         .login-button {
             width: 100%;
             padding: 10px;
-            @if($school->schoolSetting->use_gradient_header ?? false)
-                background: linear-gradient(135deg, {{ $school->schoolSetting->primary_color ?? '#3b82f6' }} 0%, {{ $school->schoolSetting->secondary_color ?? '#2563eb' }} 100%);
+            @if($settings->use_gradient_header ?? false)
+                background: linear-gradient(135deg, {{ $settings->primary_color ?? '#3b82f6' }} 0%, {{ $settings->secondary_color ?? '#2563eb' }} 100%);
             @else
-                background: {{ $school->schoolSetting->primary_color ?? '#3b82f6' }};
+                background: {{ $settings->primary_color ?? '#3b82f6' }};
             @endif
             color: white;
             border: none;

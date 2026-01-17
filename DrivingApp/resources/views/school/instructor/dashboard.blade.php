@@ -5,7 +5,7 @@
 @section('content')
 @php
     $school = $school ?? $currentSchool ?? null;
-    $settings = $school->schoolSetting;
+    $settings = $school?->schoolSetting;
 @endphp
 
 <style>
@@ -167,7 +167,7 @@
     .metric-value {
         font-size: 20px;
         font-weight: 700;
-        color: {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        color: {{ $settings->primary_color ?? '#667eea' }};
     }
 
     .bookings-list,
@@ -181,7 +181,7 @@
         padding: 15px;
         background: #f8f9fa;
         border-radius: 8px;
-        border-left: 3px solid {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        border-left: 3px solid {{ $settings->primary_color ?? '#667eea' }};
     }
 
     .booking-student {
@@ -233,7 +233,7 @@
     .progress-percent {
         font-size: 16px;
         font-weight: 700;
-        color: {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        color: {{ $settings->primary_color ?? '#667eea' }};
     }
 
     .progress-course {
@@ -251,10 +251,10 @@
     }
 
     .progress-fill {
-        @if($school->schoolSetting->use_gradient_header)
-            background: linear-gradient(90deg, {{ $school->schoolSetting->primary_color }} 0%, {{ $school->schoolSetting->secondary_color }} 100%);
+        @if($settings->use_gradient_header)
+            background: linear-gradient(90deg, {{ $settings->primary_color }} 0%, {{ $settings->secondary_color }} 100%);
         @else
-            background: {{ $school->schoolSetting->primary_color }};
+            background: {{ $settings->primary_color }};
         @endif
         height: 100%;
         transition: width 0.3s ease;
@@ -299,10 +299,10 @@
         justify-content: center;
         gap: 8px;
         padding: 15px 20px;
-        @if($school->schoolSetting->use_gradient_header)
-            background: linear-gradient(135deg, {{ $school->schoolSetting->primary_color }} 0%, {{ $school->schoolSetting->secondary_color }} 100%);
+        @if($settings->use_gradient_header)
+            background: linear-gradient(135deg, {{ $settings->primary_color }} 0%, {{ $settings->secondary_color }} 100%);
         @else
-            background: {{ $school->schoolSetting->primary_color }};
+            background: {{ $settings->primary_color }};
         @endif
         color: white;
         text-decoration: none;

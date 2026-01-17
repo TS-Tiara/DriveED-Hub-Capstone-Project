@@ -4,8 +4,10 @@
 
 @section('content')
 @php
+    $school = $school ?? $currentSchool ?? null;
+    $settings = $school?->schoolSetting;
     $schoolName = $school->name ?? 'Driving School';
-    $primaryColor = $school->schoolSetting->primary_color ?? '#667eea';
+    $primaryColor = $settings->primary_color ?? '#667eea';
 @endphp
 
 @include('school.admin.partials.admin-styles')

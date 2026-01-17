@@ -10,7 +10,6 @@ use App\Models\Student;
 use App\Models\Instructor;
 use App\Models\Admin;
 use App\Models\User;
-use App\Models\Enrollment;
 use App\Models\CourseModule;
 use App\Models\ModuleLesson;
 use App\Models\SessionCompletion;
@@ -498,22 +497,22 @@ class Alpha2TestSeeder extends Seeder
     private function createEnrollmentsAndSessions(array $students, array $courses, array $instructors): void
     {
         // Student 1: Just started theoretical (1 session, 2 hours)
-        $enrollment1 = Enrollment::create([
-            'student_id' => $students[0]->id,
+        $enrollment1 = EnrollmentRequest::create([
+            'learner_id' => $students[0]->id,
             'course_id' => $courses['theoretical_nonpro']->id,
-            'enrolled_at' => now()->subDays(2),
-            'status' => 'active',
-            
+            'requested_at' => now()->subDays(3),
+            'approved_at' => now()->subDays(2),
+            'status' => 'approved',
         ]);
         $this->createSession($enrollment1, $instructors[0], now()->subDays(1), 2.0, 'theoretical');
 
         // Student 2: Halfway through theoretical (4 sessions, 8 hours)
-        $enrollment2 = Enrollment::create([
-            'student_id' => $students[1]->id,
+        $enrollment2 = EnrollmentRequest::create([
+            'learner_id' => $students[1]->id,
             'course_id' => $courses['theoretical_nonpro']->id,
-            'enrolled_at' => now()->subDays(10),
-            'status' => 'active',
-            
+            'requested_at' => now()->subDays(11),
+            'approved_at' => now()->subDays(10),
+            'status' => 'approved',
         ]);
         $this->createSession($enrollment2, $instructors[0], now()->subDays(9), 2.0, 'theoretical');
         $this->createSession($enrollment2, $instructors[0], now()->subDays(7), 2.0, 'theoretical');
@@ -521,98 +520,93 @@ class Alpha2TestSeeder extends Seeder
         $this->createSession($enrollment2, $instructors[1], now()->subDays(3), 2.0, 'theoretical');
 
         // Student 3: Completed required hours (8 sessions, 16 hours) - Ready to be marked passed
-        $enrollment3 = Enrollment::create([
-            'student_id' => $students[2]->id,
+        $enrollment3 = EnrollmentRequest::create([
+            'learner_id' => $students[2]->id,
             'course_id' => $courses['theoretical_nonpro']->id,
-            'enrolled_at' => now()->subDays(20),
-            'status' => 'active',
-            
-            'theoretical_passed' => false,
+            'requested_at' => now()->subDays(21),
+            'approved_at' => now()->subDays(20),
+            'status' => 'approved',
         ]);
         for ($i = 19; $i >= 5; $i -= 2) {
             $this->createSession($enrollment3, $instructors[0], now()->subDays($i), 2.0, 'theoretical');
         }
 
         // Student 4: Passed theoretical, now in practical (theoretical complete, practical started)
-        $theoreticalEnrollment4 = Enrollment::create([
-            'student_id' => $students[3]->id,
+        $theoreticalEnrollment4 = EnrollmentRequest::create([
+            'learner_id' => $students[3]->id,
             'course_id' => $courses['theoretical_nonpro']->id,
-            'enrolled_at' => now()->subDays(30),
+            'requested_at' => now()->subDays(31),
+            'approved_at' => now()->subDays(30),
+            'completed_at' => now()->subDays(7),
             'status' => 'completed',
-            
-            'theoretical_passed' => true,
-            'theoretical_passed_at' => now()->subDays(7),
         ]);
         for ($i = 0; $i < 8; $i++) {
             $this->createSession($theoreticalEnrollment4, $instructors[0], now()->subDays(28 - ($i * 3)), 2.0, 'theoretical');
         }
 
-        $practicalEnrollment4 = Enrollment::create([
-            'student_id' => $students[3]->id,
+        $practicalEnrollment4 = EnrollmentRequest::create([
+            'learner_id' => $students[3]->id,
             'course_id' => $courses['practical_nonpro']->id,
-            'enrolled_at' => now()->subDays(6),
-            'status' => 'active',
-            
+            'requested_at' => now()->subDays(7),
+            'approved_at' => now()->subDays(6),
+            'status' => 'approved',
         ]);
         $this->createSession($practicalEnrollment4, $instructors[1], now()->subDays(5), 2.0, 'practical');
         $this->createSession($practicalEnrollment4, $instructors[1], now()->subDays(3), 2.0, 'practical');
 
         // Student 5: Passed theoretical, no practical enrollment yet
-        $theoreticalEnrollment5 = Enrollment::create([
-            'student_id' => $students[4]->id,
+        $theoreticalEnrollment5 = EnrollmentRequest::create([
+            'learner_id' => $students[4]->id,
             'course_id' => $courses['theoretical_nonpro']->id,
-            'enrolled_at' => now()->subDays(18),
+            'requested_at' => now()->subDays(19),
+            'approved_at' => now()->subDays(18),
+            'completed_at' => now()->subDays(3),
             'status' => 'completed',
-            
-            'theoretical_passed' => true,
-            'theoretical_passed_at' => now()->subDays(3),
         ]);
         for ($i = 0; $i < 8; $i++) {
             $this->createSession($theoreticalEnrollment5, $instructors[0], now()->subDays(16 - ($i * 2)), 2.0, 'theoretical');
         }
 
         // Student 6: Experienced driver in theoretical (fewer sessions, 6 hours)
-        $enrollment6 = Enrollment::create([
-            'student_id' => $students[5]->id,
+        $enrollment6 = EnrollmentRequest::create([
+            'learner_id' => $students[5]->id,
             'course_id' => $courses['theoretical_nonpro']->id,
-            'enrolled_at' => now()->subDays(5),
-            'status' => 'active',
-            
+            'requested_at' => now()->subDays(6),
+            'approved_at' => now()->subDays(5),
+            'status' => 'approved',
         ]);
         $this->createSession($enrollment6, $instructors[1], now()->subDays(4), 3.0, 'theoretical');
         $this->createSession($enrollment6, $instructors[1], now()->subDays(2), 3.0, 'theoretical');
 
         // Student 7: Experienced driver, passed theoretical
-        $theoreticalEnrollment7 = Enrollment::create([
-            'student_id' => $students[6]->id,
+        $theoreticalEnrollment7 = EnrollmentRequest::create([
+            'learner_id' => $students[6]->id,
             'course_id' => $courses['theoretical_nonpro']->id,
-            'enrolled_at' => now()->subDays(21),
+            'requested_at' => now()->subDays(22),
+            'approved_at' => now()->subDays(21),
+            'completed_at' => now()->subDays(14),
             'status' => 'completed',
-            
-            'theoretical_passed' => true,
-            'theoretical_passed_at' => now()->subDays(14),
         ]);
         for ($i = 0; $i < 6; $i++) {
             $this->createSession($theoreticalEnrollment7, $instructors[0], now()->subDays(20 - ($i * 3)), 2.5, 'theoretical');
         }
 
         // Student 8: In practical training, making good progress (10 hours)
-        $theoreticalEnrollment8 = Enrollment::create([
-            'student_id' => $students[7]->id,
+        $theoreticalEnrollment8 = EnrollmentRequest::create([
+            'learner_id' => $students[7]->id,
             'course_id' => $courses['theoretical_nonpro']->id,
-            'enrolled_at' => now()->subDays(45),
+            'requested_at' => now()->subDays(46),
+            'approved_at' => now()->subDays(45),
+            'completed_at' => now()->subDays(30),
             'status' => 'completed',
-            
-            'theoretical_passed' => true,
-            'theoretical_passed_at' => now()->subDays(30),
         ]);
 
-        $practicalEnrollment8 = Enrollment::create([
-            'student_id' => $students[7]->id,
+        $practicalEnrollment8 = EnrollmentRequest::create([
+            'learner_id' => $students[7]->id,
             'course_id' => $courses['practical_nonpro']->id,
-            'enrolled_at' => now()->subDays(28),
-            'status' => 'active',
-            
+            'requested_at' => now()->subDays(29),
+            'approved_at' => now()->subDays(28),
+            'status' => 'approved',
         ]);
         $this->createSession($practicalEnrollment8, $instructors[1], now()->subDays(26), 2.0, 'practical', 'Good control, needs practice with parking');
         $this->createSession($practicalEnrollment8, $instructors[1], now()->subDays(23), 2.0, 'practical', 'Improving steering, worked on lane changes');

@@ -53,6 +53,12 @@ class EnrollmentRequest extends Model
         return $this->belongsTo(Student::class, 'learner_id');
     }
 
+    // Alias for backward compatibility
+    public function student()
+    {
+        return $this->learner();
+    }
+
     public function course()
     {
         return $this->belongsTo(Course::class);

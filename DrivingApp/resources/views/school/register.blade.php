@@ -334,10 +334,10 @@
         .submit-btn {
             width: 100%;
             padding: 10px;
-            @if($school->schoolSetting->use_gradient_header ?? false)
-                background: linear-gradient(135deg, {{ $school->schoolSetting->primary_color ?? '#2563eb' }} 0%, {{ $school->schoolSetting->secondary_color ?? '#1e40af' }} 100%);
+            @if($settings->use_gradient_header ?? false)
+                background: linear-gradient(135deg, {{ $settings->primary_color ?? '#2563eb' }} 0%, {{ $settings->secondary_color ?? '#1e40af' }} 100%);
             @else
-                background: {{ $school->schoolSetting->primary_color ?? '#2563eb' }};
+                background: {{ $settings->primary_color ?? '#2563eb' }};
             @endif
             color: white;
             border: none;

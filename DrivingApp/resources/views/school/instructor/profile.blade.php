@@ -6,7 +6,7 @@
 @php
     $school = $school ?? $currentSchool ?? null;
     $instructor = Auth::guard('instructor')->user();
-    $settings = $school->schoolSetting;
+    $settings = $school?->schoolSetting;
 @endphp
 
 <style>
@@ -189,7 +189,7 @@
 
     .form-field input:focus {
         outline: none;
-        border-color: {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        border-color: {{ $settings->primary_color ?? '#667eea' }};
     }
 
     .form-actions {
@@ -200,7 +200,7 @@
     }
 
     .btn-save {
-        background: {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        background: {{ $settings->primary_color ?? '#667eea' }};
         color: white;
         border: none;
         padding: 12px 30px;

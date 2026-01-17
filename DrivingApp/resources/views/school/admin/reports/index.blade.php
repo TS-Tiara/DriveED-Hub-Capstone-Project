@@ -692,7 +692,7 @@
                 </div>
                 <div class="stat-box">
                     <div class="label">Completion Rate</div>
-                    <div class="value" style="color: {{ $school->schoolSetting->primary_color ?? '#667eea' }};">{{ number_format($analytics['completion_rate'], 1) }}%</div>
+                    <div class="value" style="color: {{ $settings->primary_color ?? '#667eea' }};">{{ number_format($analytics['completion_rate'], 1) }}%</div>
                 </div>
             </div>
 
@@ -836,7 +836,7 @@
                 </div>
                 <div class="stat-box">
                     <div class="label">Total Expected</div>
-                    <div class="value" style="color: {{ $school->schoolSetting->primary_color ?? '#667eea' }};">₱{{ number_format($analytics['financial']['total_revenue'] + $analytics['financial']['pending_payments'], 2) }}</div>
+                    <div class="value" style="color: {{ $settings->primary_color ?? '#667eea' }};">₱{{ number_format($analytics['financial']['total_revenue'] + $analytics['financial']['pending_payments'], 2) }}</div>
                 </div>
             </div>
 

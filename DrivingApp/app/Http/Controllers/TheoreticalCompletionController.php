@@ -28,7 +28,7 @@ class TheoreticalCompletionController extends Controller
         }
         
         // Get active theoretical enrollments where student hasn't passed yet
-        $enrollments = EnrollmentRequest::with(['student', 'course', 'sessionCompletions'])
+        $enrollments = EnrollmentRequest::with(['learner', 'course', 'sessionCompletions'])
             ->whereHas('course', function($query) use ($school) {
                 $query->where('school_id', $school->id)
                       ->where('course_type', 'theoretical');
@@ -59,7 +59,7 @@ class TheoreticalCompletionController extends Controller
         }
         
         // Fetch enrollment manually since route binding isn't working with multiple parameters
-        $enrollment = EnrollmentRequest::with(['student', 'course', 'sessionCompletions'])
+        $enrollment = EnrollmentRequest::with(['learner', 'course', 'sessionCompletions'])
             ->findOrFail($enrollment);
         
         // Verify enrollment belongs to this school
@@ -80,7 +80,7 @@ class TheoreticalCompletionController extends Controller
     /**
      * Validate if a student can be marked as passed theoretical
      */
-    private function validateCanPassTheoretical(Enrollment $enrollment): array
+    private function validateCanPassTheoretical(EnrollmentRequest $enrollment): array
     {
         // Already passed
         if ($enrollment->student->has_passed_theoretical) {
@@ -137,7 +137,7 @@ class TheoreticalCompletionController extends Controller
             'notes' => 'nullable|string|max:1000'
         ]);
         
-        $enrollment = EnrollmentRequest::with(['student', 'course'])->findOrFail($request->enrollment_id);
+        $enrollment = EnrollmentRequest::with(['learner', 'course'])->findOrFail($request->enrollment_id);
         
         // Verify it's a theoretical course
         if ($enrollment->course->course_type !== 'theoretical') {

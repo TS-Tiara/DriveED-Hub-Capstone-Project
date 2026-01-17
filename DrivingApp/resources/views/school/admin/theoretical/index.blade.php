@@ -5,9 +5,10 @@
 @section('content')
 @php
     $school = $school ?? $currentSchool ?? null;
+    $settings = $school?->schoolSetting;
     $schoolName = $school->name ?? 'Driving School';
-    $primaryColor = $school->schoolSetting->primary_color ?? '#667eea';
-    $secondaryColor = $school->schoolSetting->secondary_color ?? '#764ba2';
+    $primaryColor = $settings->primary_color ?? '#667eea';
+    $secondaryColor = $settings->secondary_color ?? '#764ba2';
     
     // Helper function for school-scoped routes
     $schoolRoute = function($routeName, $params = []) use ($school) {

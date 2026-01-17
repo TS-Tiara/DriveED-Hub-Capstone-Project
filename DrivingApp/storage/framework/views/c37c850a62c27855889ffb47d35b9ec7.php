@@ -1,14 +1,14 @@
-@extends($isAjax ?? false ? 'layouts.ajax' : 'layouts.app')
 
-@section('title', 'My Enrollment Requests')
 
-@section('content')
-@php
+<?php $__env->startSection('title', 'My Enrollment Requests'); ?>
+
+<?php $__env->startSection('content'); ?>
+<?php
     $school = $school ?? $currentSchool ?? null;
     $settings = $school->schoolSetting;
-@endphp
+?>
 
-@include('school.admin.partials.admin-styles')
+<?php echo $__env->make('school.admin.partials.admin-styles', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
 <style>
     .container {
@@ -43,7 +43,7 @@
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
         margin-bottom: 20px;
         overflow: hidden;
-        border-left: 5px solid {{ $settings->primary_color ?? '#667eea' }};
+        border-left: 5px solid <?php echo e($settings->primary_color ?? '#667eea'); ?>;
         transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
     
@@ -111,7 +111,7 @@
     .detail-icon {
         width: 20px;
         height: 20px;
-        color: {{ $settings->primary_color ?? '#667eea' }};
+        color: <?php echo e($settings->primary_color ?? '#667eea'); ?>;
     }
     
     .detail-label {
@@ -150,7 +150,7 @@
         align-items: center;
         gap: 8px;
         padding: 12px 24px;
-        background: {{ $settings->primary_color }};
+        background: <?php echo e($settings->primary_color); ?>;
         color: white;
         text-decoration: none;
         border-radius: 8px;
@@ -172,13 +172,14 @@
     </div>
     
     <div class="requests-list">
-        @if($requests->count() > 0)
-            @foreach($requests as $request)
+        <?php if($requests->count() > 0): ?>
+            <?php $__currentLoopData = $requests; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $request): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                 <div class="request-card">
                     <div class="request-card-header">
-                        <h3 class="course-title">{{ $request->course->title }}</h3>
-                        <span class="status-badge {{ $request->status }}">
-                            {{ ucfirst($request->status) }}
+                        <h3 class="course-title"><?php echo e($request->course->title); ?></h3>
+                        <span class="status-badge <?php echo e($request->status); ?>">
+                            <?php echo e(ucfirst($request->status)); ?>
+
                         </span>
                     </div>
                     <div class="request-card-body">
@@ -188,55 +189,60 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                 </svg>
                                 <span>
-                                    <span class="detail-label">Requested:</span> {{ $request->created_at->format('M d, Y') }}
+                                    <span class="detail-label">Requested:</span> <?php echo e($request->created_at->format('M d, Y')); ?>
+
                                 </span>
                             </div>
                             
-                            @if($request->status === 'approved' && $request->enrolled_at)
+                            <?php if($request->status === 'approved' && $request->enrolled_at): ?>
                                 <div class="detail-item">
                                     <svg class="detail-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                     <span>
-                                        <span class="detail-label">Enrolled:</span> {{ $request->enrolled_at->format('M d, Y') }}
+                                        <span class="detail-label">Enrolled:</span> <?php echo e($request->enrolled_at->format('M d, Y')); ?>
+
                                     </span>
                                 </div>
-                            @endif
+                            <?php endif; ?>
                             
                             <div class="detail-item">
                                 <svg class="detail-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                                 <span>
-                                    <span class="detail-label">Last updated:</span> {{ $request->updated_at->diffForHumans() }}
+                                    <span class="detail-label">Last updated:</span> <?php echo e($request->updated_at->diffForHumans()); ?>
+
                                 </span>
                             </div>
                         </div>
                         
-                        @if($request->notes)
+                        <?php if($request->notes): ?>
                             <div style="margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
                                 <strong style="color: #444;">Notes:</strong>
-                                <p style="margin: 5px 0 0 0; color: #666;">{{ $request->notes }}</p>
+                                <p style="margin: 5px 0 0 0; color: #666;"><?php echo e($request->notes); ?></p>
                             </div>
-                        @endif
+                        <?php endif; ?>
                     </div>
                 </div>
-            @endforeach
-        @else
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+        <?php else: ?>
             <div class="empty-state">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
                 <h3>No Enrollment Requests Yet</h3>
                 <p>You haven't submitted any course enrollment requests. Browse our courses to get started!</p>
-                <a href="{{ route('schools.guest.courses', $school) }}" class="btn-primary">
+                <a href="<?php echo e(route('schools.guest.courses', $school)); ?>" class="btn-primary">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 20px; height: 20px;">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                     </svg>
                     Browse Courses
                 </a>
             </div>
-        @endif
+        <?php endif; ?>
     </div>
 </div>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make($isAjax ?? false ? 'layouts.ajax' : 'layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\jcsdi\Documents\Driving School Management System\DrivingApp\resources\views/school/guest/enrollment-requests.blade.php ENDPATH**/ ?>

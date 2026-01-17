@@ -5,8 +5,9 @@
 @section('content')
 @php
     $school = $school ?? $currentSchool ?? null;
+    $settings = $school?->schoolSetting;
     $schoolName = $school->name ?? 'Driving School';
-    $primaryColor = $school->schoolSetting->primary_color ?? '#667eea';
+    $primaryColor = $settings->primary_color ?? '#667eea';
 @endphp
 
 <div style="padding: 20px; margin: 20px auto; max-width: 1600px;">

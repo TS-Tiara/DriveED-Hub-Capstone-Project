@@ -6,6 +6,7 @@
 @php
     $school = $school ?? $currentSchool ?? null;
     $schoolName = $school->name ?? 'Driving School';
+    $settings = $school?->schoolSetting;
 @endphp
 
 @include('school.admin.partials.admin-styles')
@@ -23,7 +24,7 @@
         align-items: center;
         margin-bottom: 30px;
         padding-bottom: 15px;
-        border-bottom: 3px solid {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        border-bottom: 3px solid {{ $settings->primary_color ?? '#667eea' }};
     }
 
     .page-title {
@@ -44,10 +45,10 @@
 
     .btn-create {
         padding: 12px 24px;
-        @if($school->schoolSetting->use_gradient_header)
-            background: linear-gradient(135deg, {{ $school->schoolSetting->primary_color }} 0%, {{ $school->schoolSetting->secondary_color }} 100%);
+        @if($settings?->use_gradient_header)
+            background: linear-gradient(135deg, {{ $settings->primary_color }} 0%, {{ $settings->secondary_color }} 100%);
         @else
-            background: {{ $school->schoolSetting->primary_color }};
+            background: {{ $settings->primary_color ?? '#667eea' }};
         @endif
         color: white;
         border: none;
@@ -119,7 +120,7 @@
         overflow: hidden;
         box-shadow: 0 2px 12px rgba(0,0,0,0.08);
         transition: all 0.3s ease;
-        border-left: 4px solid {{ $school->schoolSetting->primary_color }};
+        border-left: 4px solid {{ $settings->primary_color ?? '#667eea' }};
         position: relative;
     }
 
@@ -130,7 +131,7 @@
         right: 0;
         width: 100px;
         height: 100px;
-        background: {{ $school->schoolSetting->primary_color }};
+        background: {{ $settings->primary_color ?? '#667eea' }};
         border-radius: 50%;
         opacity: 0.05;
         transition: all 0.3s ease;
@@ -151,10 +152,10 @@
         width: 100%;
         height: 220px;
         object-fit: cover;
-        @if($school->schoolSetting->use_gradient_header)
-            background: linear-gradient(135deg, {{ $school->schoolSetting->primary_color }} 0%, {{ $school->schoolSetting->secondary_color }} 100%);
+        @if($settings?->use_gradient_header)
+            background: linear-gradient(135deg, {{ $settings->primary_color }} 0%, {{ $settings->secondary_color }} 100%);
         @else
-            background: {{ $school->schoolSetting->primary_color }};
+            background: {{ $settings->primary_color ?? '#667eea' }};
         @endif
         display: flex;
         align-items: center;
@@ -286,7 +287,7 @@
     .package-price {
         font-size: 1.3rem;
         font-weight: 700;
-        color: {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        color: {{ $settings->primary_color ?? '#667eea' }};
         margin-right: 15px;
     }
 
@@ -310,7 +311,7 @@
     }
 
     .btn-preview {
-        background: {{ $school->schoolSetting->accent_color ?? '#8b5cf6' }};
+        background: {{ $settings->accent_color ?? '#8b5cf6' }};
         color: white;
     }
 
@@ -389,35 +390,25 @@
     .modal {
         display: none;
         position: fixed;
-        z-index: 1000;
-        left: 0;
         top: 0;
+        left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(0, 0, 0, 0.6);
-        align-items: center;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
         justify-content: center;
-        backdrop-filter: blur(4px);
+        align-items: center;
     }
 
     .modal-content {
         background: white;
-        border-radius: 16px;
-        width: 90%;
+        border-radius: 15px;
+        padding: 0;
         max-width: 700px;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-        animation: modalSlideIn 0.3s ease;
-    }
-
-    @keyframes modalSlideIn {
-        from {
-            opacity: 0;
-            transform: translateY(-50px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+        width: 90%;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        max-height: 90vh;
+        overflow-y: auto;
     }
 
     .modal-header {
@@ -426,7 +417,7 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        background: {{ $school->schoolSetting->modal_header_bg ?? $school->schoolSetting->primary_color }};
+        background: {{ $settings->modal_header_bg ?? $settings->primary_color ?? '#667eea' }};
         color: white;
         border-radius: 16px 16px 0 0;
     }
@@ -480,7 +471,7 @@
 
     .form-control:focus {
         outline: none;
-        border-color: {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        border-color: {{ $settings->primary_color ?? '#667eea' }};
         box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
     }
 
@@ -576,10 +567,10 @@
 
     .btn-primary {
         padding: 12px 24px;
-        @if($school->schoolSetting->use_gradient_header)
-            background: linear-gradient(135deg, {{ $school->schoolSetting->primary_color }} 0%, {{ $school->schoolSetting->secondary_color }} 100%);
+        @if($settings?->use_gradient_header)
+            background: linear-gradient(135deg, {{ $settings->primary_color }} 0%, {{ $settings->secondary_color }} 100%);
         @else
-            background: {{ $school->schoolSetting->primary_color }};
+            background: {{ $settings->primary_color ?? '#667eea' }};
         @endif
         color: white;
         border: none;
@@ -696,10 +687,10 @@
         border-radius: 10px;
         object-fit: cover;
         flex-shrink: 0;
-        @if($school->schoolSetting->use_gradient_header)
-            background: linear-gradient(135deg, {{ $school->schoolSetting->primary_color }} 0%, {{ $school->schoolSetting->secondary_color }} 100%);
+        @if($settings?->use_gradient_header)
+            background: linear-gradient(135deg, {{ $settings->primary_color }} 0%, {{ $settings->secondary_color }} 100%);
         @else
-            background: {{ $school->schoolSetting->primary_color }};
+            background: {{ $settings->primary_color ?? '#667eea' }};
         @endif
         display: flex;
         align-items: center;
@@ -780,7 +771,7 @@
     .package-inline-price {
         font-size: 1.1rem;
         font-weight: 700;
-        color: {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        color: {{ $settings->primary_color ?? '#667eea' }};
     }
 </style>
 
@@ -884,7 +875,7 @@
                                     <li>{{ $feature }}</li>
                                 @endforeach
                                 @if(count($course->features) > 3)
-                                    <li style="color: {{ $school->schoolSetting->primary_color ?? '#667eea' }}; font-weight: 600;">+{{ count($course->features) - 3 }} more features</li>
+                                    <li style="color: {{ $settings->primary_color ?? '#667eea' }}; font-weight: 600;">+{{ count($course->features) - 3 }} more features</li>
                                 @endif
                             </ul>
                         @endif
@@ -904,7 +895,7 @@
                                             <div class="package-name">
                                                 {{ $package->name }}
                                                 @if($package->vehicle_type)
-                                                    <span style="font-size: 0.8rem; padding: 2px 8px; background: {{ $school->schoolSetting->accent_color ?? '#8b5cf6' }}; color: white; border-radius: 10px; margin-left: 5px;">
+                                                    <span style="font-size: 0.8rem; padding: 2px 8px; background: {{ $settings->accent_color ?? '#8b5cf6' }}; color: white; border-radius: 10px; margin-left: 5px;">
                                                         {{ $package->vehicle_type }}
                                                     </span>
                                                 @endif
@@ -1031,7 +1022,7 @@
                                                 <div class="package-inline-name">
                                                     {{ $package->name }}
                                                     @if($package->vehicle_type)
-                                                        <span style="font-size: 0.75rem; padding: 2px 6px; background: {{ $school->schoolSetting->accent_color ?? '#8b5cf6' }}; color: white; border-radius: 8px; margin-left: 4px;">
+                                                        <span style="font-size: 0.75rem; padding: 2px 6px; background: {{ $settings->accent_color ?? '#8b5cf6' }}; color: white; border-radius: 8px; margin-left: 4px;">
                                                             {{ $package->vehicle_type }}
                                                         </span>
                                                     @endif
@@ -1151,7 +1142,7 @@
 <!-- Preview Modal (Guest View) -->
 <div class="modal" id="previewModal">
     <div class="modal-content" style="max-width: 900px;">
-        <div class="modal-header" style="background: {{ $school->schoolSetting->modal_header_bg ?? $school->schoolSetting->primary_color }};">
+        <div class="modal-header" style="background: {{ $settings->modal_header_bg ?? $settings->primary_color ?? '#667eea' }};">
             <h5><i class="bi bi-eye-fill"></i> Course Preview (Guest View)</h5>
             <button class="btn-close" onclick="closePreviewModal()">&times;</button>
         </div>
@@ -1476,7 +1467,7 @@
 
         // Build guest-view HTML
         const previewHTML = `
-            <div style="background: {{ $school->schoolSetting->use_gradient_header ? 'linear-gradient(135deg, ' . $school->schoolSetting->primary_color . ' 0%, ' . $school->schoolSetting->secondary_color . ' 100%)' : $school->schoolSetting->primary_color }}; padding: 40px; color: white; text-align: center;">
+            <div style="background: {{ $settings?->use_gradient_header ? 'linear-gradient(135deg, ' . $settings->primary_color . ' 0%, ' . $settings->secondary_color . ' 100%)' : ($settings->primary_color ?? '#667eea') }}; padding: 40px; color: white; text-align: center;">
                 ${course.banner_image ? 
                     `<img src="{{ asset('') }}${course.banner_image}" style="max-width: 600px; width: 100%; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">` : 
                     `<i class="bi bi-car-front-fill" style="font-size: 5rem; opacity: 0.8; display: block; margin-bottom: 20px;"></i>`
@@ -1496,7 +1487,7 @@
                         <h3 style="font-size: 1.8rem; font-weight: 700; color: #2d3748; margin-bottom: 25px; text-align: center;">✨ What's Included</h3>
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; max-width: 800px; margin: 0 auto;">
                             ${course.features.map(feature => `
-                                <div style="background: #f8fafc; padding: 15px 20px; border-radius: 10px; border-left: 4px solid {{ $school->schoolSetting->primary_color ?? '#667eea' }};">
+                                <div style="background: #f8fafc; padding: 15px 20px; border-radius: 10px; border-left: 4px solid {{ $settings->primary_color ?? '#667eea' }};">
                                     <i class="bi bi-check-circle-fill" style="color: #10b981; margin-right: 10px;"></i>
                                     ${feature}
                                 </div>
@@ -1514,7 +1505,7 @@
                                     ${pkg.is_popular ? `<div style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: #f59e0b; color: white; padding: 5px 20px; border-radius: 20px; font-weight: 700; font-size: 0.85rem;">MOST POPULAR</div>` : ''}
                                     <h4 style="font-size: 1.5rem; font-weight: 700; color: #2d3748; margin-bottom: 10px; ${pkg.is_popular ? 'margin-top: 10px;' : ''}">${pkg.name}</h4>
                                     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
-                                        ${pkg.vehicle_type ? `<span style="background: {{ $school->schoolSetting->accent_color ?? '#8b5cf6' }}; color: white; padding: 5px 12px; border-radius: 6px; font-weight: 600; font-size: 0.85rem;">${pkg.vehicle_type}</span>` : ''}
+                                        ${pkg.vehicle_type ? `<span style="background: {{ $settings->accent_color ?? '#8b5cf6' }}; color: white; padding: 5px 12px; border-radius: 6px; font-weight: 600; font-size: 0.85rem;">${pkg.vehicle_type}</span>` : ''}
                                         <span style="background: ${pkg.transmission_type === 'manual' ? '#fbbf24' : '#3b82f6'}; color: white; padding: 5px 12px; border-radius: 6px; font-weight: 600; font-size: 0.85rem;">
                                             ${pkg.transmission_type.toUpperCase()}
                                         </span>
@@ -1527,7 +1518,7 @@
                                         </ul>
                                     ` : ''}
                                     <div style="margin-top: 25px; padding-top: 20px; border-top: 2px solid #e2e8f0;">
-                                        <div style="font-size: 2.5rem; font-weight: 700; color: {{ $school->schoolSetting->primary_color ?? '#667eea' }};">₱${new Intl.NumberFormat().format(pkg.price)}</div>
+                                        <div style="font-size: 2.5rem; font-weight: 700; color: {{ $settings->primary_color ?? '#667eea' }};">₱${new Intl.NumberFormat().format(pkg.price)}</div>
                                     </div>
                                 </div>
                             `).join('')}
@@ -1595,3 +1586,4 @@
 </script>
 
 @endsection
+

@@ -11,6 +11,7 @@ use App\Models\EnrollmentRequest;
 use App\Models\Course;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Carbon\Carbon;
 
@@ -21,7 +22,7 @@ class StudentController extends Controller
         $student = Auth::guard('student')->user();
         
         // Get active enrollments with course and session data
-        $activeEnrollments = EnrollmentRequest::where('student_id', $student->id)
+        $activeEnrollments = EnrollmentRequest::where('learner_id', $student->id)
             ->with(['course', 'sessionCompletions'])
             ->where('status', 'approved')
             ->get();
@@ -85,6 +86,9 @@ class StudentController extends Controller
         
         // Test readiness (based on completion and hours)
         $testReadiness = min(100, round($progressPercentage * 0.8 + ($totalLessons >= 10 ? 20 : 0)));
+        
+        // Get student model for additional checks
+        $studentModel = Student::find($student->id);
         
         // Theoretical status
         $hasPassedTheoretical = $studentModel ? $studentModel->hasPassedTheoretical() : false;

@@ -5,6 +5,7 @@
 @section('content')
 @php
     $school = $school ?? $currentSchool ?? null;
+    $settings = $school?->schoolSetting;
     $schoolRoute = function($routeName, $params = []) use ($school) {
         return route('schools.' . $routeName, array_merge(['school' => $school->slug], $params));
     };
@@ -12,7 +13,7 @@
     $totalHours = $enrollment->sessionCompletions->sum('hours_completed');
     $requiredHours = $enrollment->course->theoretical_hours ?? 15;
     $progress = $requiredHours > 0 ? min(100, round(($totalHours / $requiredHours) * 100)) : 0;
-    $primaryColor = $school->schoolSetting->primary_color ?? '#667eea';
+    $primaryColor = $settings->primary_color ?? '#667eea';
 @endphp
 
 @include('school.admin.partials.admin-styles')

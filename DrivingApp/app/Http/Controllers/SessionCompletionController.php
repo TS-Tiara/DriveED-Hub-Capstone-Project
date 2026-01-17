@@ -85,7 +85,7 @@ class SessionCompletionController extends Controller
         $instructor = Auth::guard('instructor')->user();
         
         // Get active enrollments for this school
-        $enrollments = EnrollmentRequest::with(['student', 'course'])
+        $enrollments = EnrollmentRequest::with(['learner', 'course'])
             ->whereHas('course', function($query) use ($school) {
                 $query->where('school_id', $school->id);
             })

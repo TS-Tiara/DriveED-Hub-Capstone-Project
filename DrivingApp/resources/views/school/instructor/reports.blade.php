@@ -5,6 +5,7 @@
 @section('content')
 @php
     $school = $school ?? $currentSchool ?? null;
+    $settings = $school?->schoolSetting;
 @endphp
 
 <style>
@@ -17,7 +18,7 @@
     .page-header {
         margin-bottom: 30px;
         padding-bottom: 15px;
-        border-bottom: 4px solid {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        border-bottom: 4px solid {{ $settings->primary_color ?? '#667eea' }};
     }
 
     .page-title {
@@ -33,7 +34,7 @@
         gap: 8px;
         padding: 10px 20px;
         background: white;
-        color: {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        color: {{ $settings->primary_color ?? '#667eea' }};
         border-radius: 8px;
         text-decoration: none;
         font-weight: 500;
@@ -42,7 +43,7 @@
     }
 
     .back-button:hover {
-        background: {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        background: {{ $settings->primary_color ?? '#667eea' }};
         color: white;
         transform: translateX(-5px);
     }
@@ -61,7 +62,7 @@
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         text-align: center;
         transition: transform 0.2s;
-        border-left: 4px solid {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        border-left: 4px solid {{ $settings->primary_color ?? '#667eea' }};
     }
 
     .stat-box:hover {
@@ -81,7 +82,7 @@
     .stat-value {
         font-size: 36px;
         font-weight: 700;
-        color: {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        color: {{ $settings->primary_color ?? '#667eea' }};
     }
 
     .stat-subtext {
@@ -130,7 +131,7 @@
         font-size: 18px;
         font-weight: 600;
         color: #333;
-        border-bottom: 2px solid {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        border-bottom: 2px solid {{ $settings->primary_color ?? '#667eea' }};
         padding-bottom: 10px;
     }
 
@@ -151,7 +152,7 @@
         font-weight: 600;
         font-size: 14px;
         color: #374151;
-        border-bottom: 2px solid {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        border-bottom: 2px solid {{ $settings->primary_color ?? '#667eea' }};
     }
 
     .data-table td {
@@ -168,7 +169,7 @@
         width: 32px;
         height: 32px;
         border-radius: 50%;
-        background: {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        background: {{ $settings->primary_color ?? '#667eea' }};
         color: white;
         display: inline-flex;
         align-items: center;
@@ -210,7 +211,7 @@
         padding: 15px;
         border-radius: 8px;
         margin-bottom: 10px;
-        border-left: 3px solid {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        border-left: 3px solid {{ $settings->primary_color ?? '#667eea' }};
     }
 
     .lesson-time {
@@ -386,7 +387,7 @@
         <div style="display: flex; justify-content: space-around; align-items: center; padding: 20px;">
             <div style="text-align: center;">
                 <div style="font-size: 14px; color: #666; margin-bottom: 10px;">This Month</div>
-                <div style="font-size: 42px; font-weight: 700; color: {{ $school->schoolSetting->primary_color ?? '#667eea' }};">
+                <div style="font-size: 42px; font-weight: 700; color: {{ $settings->primary_color ?? '#667eea' }};">
                     {{ $thisMonthLessons }}
                 </div>
                 <div style="font-size: 12px; color: #999;">Completed Lessons</div>
@@ -499,7 +500,7 @@
         <div class="chart-card" style="margin-top: 20px;">
             <h3>Average Session Grade</h3>
             <div style="text-align: center; padding: 30px;">
-                <div style="font-size: 72px; font-weight: 700; color: {{ $school->schoolSetting->primary_color ?? '#667eea' }};">
+                <div style="font-size: 72px; font-weight: 700; color: {{ $settings->primary_color ?? '#667eea' }};">
                     {{ number_format($avgGrade, 1) }}
                 </div>
                 <div style="font-size: 18px; color: #666; margin-top: 10px;">out of 100</div>
@@ -534,8 +535,8 @@
             datasets: [{
                 label: 'Completed Lessons',
                 data: monthlyData.map(item => item.count),
-                borderColor: '{{ $school->schoolSetting->primary_color ?? "#667eea" }}',
-                backgroundColor: '{{ $school->schoolSetting->primary_color ?? "#667eea" }}20',
+                borderColor: '{{ $settings->primary_color ?? "#667eea" }}',
+                backgroundColor: '{{ $settings->primary_color ?? "#667eea" }}20',
                 tension: 0.4,
                 fill: true
             }]

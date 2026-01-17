@@ -5,6 +5,7 @@
 @section('content')
 @php
     $school = $school ?? $currentSchool ?? null;
+    $settings = $school?->schoolSetting;
     $schoolName = $school->name ?? 'Driving School';
 @endphp
 
@@ -31,9 +32,9 @@
     }
 
     .back-btn:hover {
-        background: {{ $school->schoolSetting->primary_color ?? '#1e40af' }};
+        background: {{ $settings->primary_color ?? '#1e40af' }};
         color: white;
-        border-color: {{ $school->schoolSetting->primary_color ?? '#1e40af' }};
+        border-color: {{ $settings->primary_color ?? '#1e40af' }};
     }
 
     .student-header-card {
@@ -42,7 +43,7 @@
         border-radius: 12px;
         margin-bottom: 30px;
         box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-        border-left: 6px solid {{ $school->schoolSetting->primary_color ?? '#f59e0b' }};
+        border-left: 6px solid {{ $settings->primary_color ?? '#f59e0b' }};
     }
 
     .student-header-content {
@@ -94,7 +95,7 @@
     .progress-value {
         font-size: 2rem;
         font-weight: 700;
-        color: {{ $school->schoolSetting->primary_color ?? '#1e40af' }};
+        color: {{ $settings->primary_color ?? '#1e40af' }};
         display: block;
     }
 
@@ -121,7 +122,7 @@
     }
 
     .section-header h2 i {
-        color: {{ $school->schoolSetting->primary_color ?? '#1e40af' }};
+        color: {{ $settings->primary_color ?? '#1e40af' }};
     }
 
     .section-subtitle {
@@ -153,7 +154,7 @@
 
     .session-card.my-session {
         background: white;
-        border-left: 4px solid {{ $school->schoolSetting->primary_color ?? '#1e40af' }};
+        border-left: 4px solid {{ $settings->primary_color ?? '#1e40af' }};
         box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
 
@@ -172,7 +173,7 @@
 
     .session-course {
         font-size: 0.9rem;
-        color: {{ $school->schoolSetting->primary_color ?? '#1e40af' }};
+        color: {{ $settings->primary_color ?? '#1e40af' }};
         margin-top: 4px;
         font-weight: 600;
     }
@@ -198,8 +199,8 @@
         border-radius: 12px;
         font-size: 0.7rem;
         font-weight: 600;
-        background: {{ $school->schoolSetting->primary_color ?? '#1e40af' }}20;
-        color: {{ $school->schoolSetting->primary_color ?? '#1e40af' }};
+        background: {{ $settings->primary_color ?? '#1e40af' }}20;
+        color: {{ $settings->primary_color ?? '#1e40af' }};
         text-transform: uppercase;
     }
 

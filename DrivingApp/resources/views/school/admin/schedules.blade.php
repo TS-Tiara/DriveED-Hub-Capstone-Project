@@ -5,11 +5,12 @@
 @section('content')
 @php
     $school = $school ?? $currentSchool ?? null;
+    $settings = $school?->schoolSetting;
     $schoolName = $school->name ?? 'Driving School';
     $instructors = $instructors ?? collect();
     $currentFilter = request('type', 'all');
-    $primaryColor = $school->schoolSetting->primary_color ?? '#667eea';
-    $secondaryColor = $school->schoolSetting->secondary_color ?? '#764ba2';
+    $primaryColor = $settings->primary_color ?? '#667eea';
+    $secondaryColor = $settings->secondary_color ?? '#764ba2';
 @endphp
 
 @include('school.admin.partials.admin-styles')
@@ -235,7 +236,7 @@
         align-items: center;
         margin-bottom: 30px;
         padding-bottom: 15px;
-        border-bottom: 3px solid {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        border-bottom: 3px solid {{ $settings->primary_color ?? '#667eea' }};
     }
     
     .page-title {

@@ -5,7 +5,7 @@
 @section('content')
 @php
     $school = $school ?? $currentSchool ?? null;
-    $settings = $school->schoolSetting;
+    $settings = $school?->schoolSetting;
 @endphp
 
 <style>
@@ -99,7 +99,7 @@
 
     .filter-select:focus {
         outline: none;
-        border-color: {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        border-color: {{ $settings->primary_color ?? '#667eea' }};
     }
 
     .action-buttons {
@@ -128,7 +128,7 @@
 
     .btn-save-all {
         padding: 10px 20px;
-        background: {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        background: {{ $settings->primary_color ?? '#667eea' }};
         color: white;
         border: none;
         border-radius: 8px;
@@ -141,7 +141,7 @@
     }
 
     .btn-save-all:hover {
-        background: {{ $school->schoolSetting->secondary_color ?? '#764ba2' }};
+        background: {{ $settings->secondary_color ?? '#764ba2' }};
         transform: translateY(-2px);
     }
 
@@ -159,7 +159,7 @@
 
     .grades-table thead {
         background: #f3f4f6;
-        border-bottom: 2px solid {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        border-bottom: 2px solid {{ $settings->primary_color ?? '#667eea' }};
     }
 
     .grades-table th {
@@ -200,7 +200,7 @@
         width: 40px;
         height: 40px;
         border-radius: 50%;
-        background: {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        background: {{ $settings->primary_color ?? '#667eea' }};
         color: white;
         display: flex;
         align-items: center;
@@ -239,7 +239,7 @@
 
     .grade-input:focus {
         outline: none;
-        border-color: {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        border-color: {{ $settings->primary_color ?? '#667eea' }};
     }
 
     .grade-input.changed {
@@ -305,11 +305,11 @@
     }
 
     .btn-view {
-        color: {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        color: {{ $settings->primary_color ?? '#667eea' }};
     }
 
     .btn-view:hover {
-        background: {{ $school->schoolSetting->primary_color ?? '#667eea' }}20;
+        background: {{ $settings->primary_color ?? '#667eea' }}20;
     }
 
     .btn-save {
@@ -355,7 +355,7 @@
     .stat-value {
         font-size: 28px;
         font-weight: 700;
-        color: {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        color: {{ $settings->primary_color ?? '#667eea' }};
     }
 
     @media (max-width: 1024px) {

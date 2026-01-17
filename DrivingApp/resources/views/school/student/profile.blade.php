@@ -7,7 +7,7 @@
     $school = $school ?? $currentSchool ?? null;
     $schoolName = $school->name ?? 'Driving School';
     $student = Auth::guard('student')->user();
-    $settings = $school->schoolSetting;
+    $settings = $school?->schoolSetting;
 @endphp
 
 <style>
@@ -191,7 +191,7 @@
 
     .form-field input:focus {
         outline: none;
-        border-color: {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        border-color: {{ $settings->primary_color ?? '#667eea' }};
     }
 
     .form-actions {
@@ -202,7 +202,7 @@
     }
 
     .btn-save {
-        background: {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        background: {{ $settings->primary_color ?? '#667eea' }};
         color: white;
         border: none;
         padding: 12px 30px;
@@ -344,32 +344,32 @@
     }
     
     .btn-edit {
-        background: {{ $school->schoolSetting->primary_color ?? '#3b82f6' }};
+        background: {{ $settings->primary_color ?? '#3b82f6' }};
         color: white;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
     
     .btn-edit:hover {
-        background: {{ $school->schoolSetting->secondary_color ?? '#2563eb' }};
+        background: {{ $settings->secondary_color ?? '#2563eb' }};
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
         transform: translateY(-1px);
     }
     
     .back-button {
         background: white;
-        color: {{ $school->schoolSetting->primary_color ?? '#3b82f6' }};
+        color: {{ $settings->primary_color ?? '#3b82f6' }};
         padding: 10px 20px;
         border-radius: 8px;
         text-decoration: none;
         margin-bottom: 20px;
         display: inline-block;
-        border: 2px solid {{ $school->schoolSetting->primary_color ?? '#3b82f6' }};
+        border: 2px solid {{ $settings->primary_color ?? '#3b82f6' }};
         transition: all 0.3s ease;
         font-weight: 500;
     }
     
     .back-button:hover {
-        background: {{ $school->schoolSetting->primary_color ?? '#3b82f6' }};
+        background: {{ $settings->primary_color ?? '#3b82f6' }};
         color: white;
     }
 
@@ -402,7 +402,7 @@
 
     .form-group input:focus {
         outline: none;
-        border-color: {{ $school->schoolSetting->primary_color ?? '#3b82f6' }};
+        border-color: {{ $settings->primary_color ?? '#3b82f6' }};
         box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
     
@@ -415,12 +415,12 @@
     }
     
     .btn-save {
-        background: {{ $school->schoolSetting->primary_color ?? '#3b82f6' }};
+        background: {{ $settings->primary_color ?? '#3b82f6' }};
         color: white;
     }
     
     .btn-save:hover {
-        background: {{ $school->schoolSetting->secondary_color ?? '#2563eb' }};
+        background: {{ $settings->secondary_color ?? '#2563eb' }};
         transform: translateY(-1px);
     }
     

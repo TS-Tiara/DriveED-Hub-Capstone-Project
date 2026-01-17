@@ -82,9 +82,15 @@ class GuestController extends Controller
         // Store email in session for verification page
         session(['verification_email' => $guest->email, 'school_slug' => $school->slug]);
 
+        // For development: Show the code in the success message
+        $message = 'Registration successful! Please check your email for the verification code.';
+        if (config('app.env') === 'local') {
+            $message .= " (Dev Mode - Code: {$otp})";
+        }
+
         return redirect()
             ->route('schools.verification.show', ['school' => $school->slug])
-            ->with('success', 'Registration successful! Please check your email for the verification code.');
+            ->with('success', $message);
     }
 
     /**
@@ -208,7 +214,7 @@ class GuestController extends Controller
             return redirect()->route('schools.student.dashboard', ['school' => $school->slug]);
         }
 
-        $requests = EnrollmentRequest::where('student_id', $guest->id)
+        $requests = $guest->enrollmentRequests()
             ->with('course')
             ->orderBy('created_at', 'desc')
             ->get();
@@ -221,14 +227,32 @@ class GuestController extends Controller
      */
     public function showVerificationForm(School $school)
     {
-        if (!session('verification_email')) {
-            return redirect()->route('schools.register', $school);
+        // Allow authenticated guests to verify if they haven't yet
+        $guest = Auth::guard('student')->user();
+        
+        if ($guest && $guest->isGuest() && !$guest->hasVerifiedEmail()) {
+            return view($school->resolveView('verify-email'), [
+                'school' => $school,
+                'email' => $guest->email
+            ]);
+        }
+        
+        // For new registrations via session
+        if (session('verification_email')) {
+            return view($school->resolveView('verify-email'), [
+                'school' => $school,
+                'email' => session('verification_email')
+            ]);
+        }
+        
+        // Already verified or no session
+        if ($guest && $guest->hasVerifiedEmail()) {
+            return redirect()->route('schools.guest.dashboard', $school)
+                ->with('info', 'Your email is already verified.');
         }
 
-        return view($school->resolveView('verify-email'), [
-            'school' => $school,
-            'email' => session('verification_email')
-        ]);
+        return redirect()->route('schools.register', $school)
+            ->with('info', 'Please register first to verify your email.');
     }
 
     /**
@@ -240,9 +264,16 @@ class GuestController extends Controller
             'code' => 'required|string|size:6',
         ]);
 
+        // Try to get email from session first, then from authenticated user
         $email = session('verification_email');
+        $guest = Auth::guard('student')->user();
+        
+        if (!$email && $guest && $guest->isGuest()) {
+            $email = $guest->email;
+        }
+        
         if (!$email) {
-            return back()->withErrors(['code' => 'Session expired. Please register again.']);
+            return back()->withErrors(['code' => 'Session expired. Please login or register again.']);
         }
 
         $student = Student::where('email', $email)

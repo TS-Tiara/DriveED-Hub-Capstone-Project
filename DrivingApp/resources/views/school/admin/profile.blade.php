@@ -5,6 +5,7 @@
 @section('content')
 @php
     $school = $school ?? $currentSchool ?? null;
+    $settings = $school?->schoolSetting;
     $admin = Auth::guard('admin')->user();
 @endphp
 
@@ -44,7 +45,7 @@
         left: -30px;
         width: calc(100% + 100px);
         height: 3px;
-        background: {{ $school->schoolSetting->primary_color ?? '#667eea' }};
+        background: {{ $settings->primary_color ?? '#667eea' }};
     }
 
     .profile-card {
@@ -193,7 +194,7 @@
 
     .form-field input:focus {
         outline: none;
-        border-color: {{ $school->schoolSetting->primary_color ?? '#007bff' }};
+        border-color: {{ $settings->primary_color ?? '#007bff' }};
     }
 
     .form-actions {
@@ -204,7 +205,7 @@
     }
 
     .btn-save {
-        background: {{ $school->schoolSetting->primary_color ?? '#007bff' }};
+        background: {{ $settings->primary_color ?? '#007bff' }};
         color: white;
         border: none;
         padding: 12px 30px;
