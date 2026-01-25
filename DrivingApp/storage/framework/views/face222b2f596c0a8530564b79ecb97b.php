@@ -1,1 +1,0 @@
-<?php echo $__env->yieldContent('content'); ?><?php /**PATH C:\Users\jcsdi\Documents\Driving School Management System\DrivingApp\resources\views\layouts\ajax.blade.php ENDPATH**/ ?>

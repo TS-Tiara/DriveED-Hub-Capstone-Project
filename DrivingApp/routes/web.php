@@ -36,6 +36,14 @@ Route::prefix('test')->name('test.')->group(function () {
     Route::get('/course-form', function() {
         return view('test-components.course-form-enhanced');
     })->name('course-form');
+    
+    // Test credentials page (dev only)
+    Route::get('/credentials/{school:slug}', function(School $school) {
+        if (!app()->environment('local', 'development')) {
+            abort(404);
+        }
+        return view('test-credentials', compact('school'));
+    })->name('credentials');
 });
 // ========================================
 

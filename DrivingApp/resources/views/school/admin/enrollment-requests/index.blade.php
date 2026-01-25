@@ -442,10 +442,62 @@
         </div>
     </div>
     
+    <!-- Action Bar with Export and Bulk Operations -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 15px; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <!-- Bulk Operations (Left Side) -->
+        <div id="bulkActionsBar" style="display: none; gap: 10px; align-items: center;">
+            <span id="selectedCount" style="font-weight: 600; color: #374151;">0 selected</span>
+            <button type="button" class="btn btn-approve" onclick="bulkApprove()" style="padding: 8px 16px;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 16px; height: 16px; display: inline;">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                Approve Selected
+            </button>
+            <button type="button" class="btn btn-reject" onclick="bulkReject()" style="padding: 8px 16px;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 16px; height: 16px; display: inline;">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Reject Selected
+            </button>
+        </div>
+        
+        <!-- Export Buttons (Right Side) -->
+        <div style="display: flex; gap: 10px; margin-left: auto;">
+            <div style="position: relative;">
+                <button type="button" class="btn btn-primary" onclick="toggleExportMenu()" style="padding: 8px 16px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); display: flex; align-items: center; gap: 8px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 16px; height: 16px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                    </svg>
+                    Export PDF
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 14px; height: 14px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+                <div id="exportMenu" style="display: none; position: absolute; top: 100%; right: 0; margin-top: 5px; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 180px; z-index: 10;">
+                    <a href="{{ route('exports.enrollments.pdf', ['school' => $school->slug]) }}" style="display: block; padding: 10px 15px; text-decoration: none; color: #374151; transition: background 0.2s;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='white'">
+                        All Enrollments
+                    </a>
+                    <a href="{{ route('exports.enrollments.pdf', ['school' => $school->slug, 'status' => 'pending']) }}" style="display: block; padding: 10px 15px; text-decoration: none; color: #374151; transition: background 0.2s; border-top: 1px solid #e5e7eb;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='white'">
+                        Pending Only
+                    </a>
+                    <a href="{{ route('exports.enrollments.pdf', ['school' => $school->slug, 'status' => 'approved']) }}" style="display: block; padding: 10px 15px; text-decoration: none; color: #374151; transition: background 0.2s; border-top: 1px solid #e5e7eb;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='white'">
+                        Active Only
+                    </a>
+                    <a href="{{ route('exports.enrollments.pdf', ['school' => $school->slug, 'status' => 'completed']) }}" style="display: block; padding: 10px 15px; text-decoration: none; color: #374151; transition: background 0.2s; border-top: 1px solid #e5e7eb;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='white'">
+                        Completed Only
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     @if($allRequests->count() > 0)
         <table class="requests-table">
             <thead>
                 <tr>
+                    <th style="width: 40px;">
+                        <input type="checkbox" id="selectAll" onchange="toggleSelectAll()" style="cursor: pointer; width: 18px; height: 18px;">
+                    </th>
                     <th>Learner</th>
                     <th>Course</th>
                     <th>Fee</th>
@@ -457,7 +509,12 @@
             </thead>
             <tbody>
                 @foreach($allRequests as $request)
-                    <tr data-status="{{ $request->status }}">
+                    <tr data-status="{{ $request->status }}" data-request-id="{{ $request->id }}">
+                        <td>
+                            @if($request->status === 'pending')
+                                <input type="checkbox" class="request-checkbox" value="{{ $request->id }}" onchange="updateBulkActions()" style="cursor: pointer; width: 18px; height: 18px;">
+                            @endif
+                        </td>
                         <td>
                             <div class="learner-info">
                                 <div class="learner-name">{{ $request->learner->name }}</div>
@@ -676,6 +733,135 @@ document.getElementById('rejectModal').addEventListener('click', function(e) {
 document.getElementById('cancelModal').addEventListener('click', function(e) {
     if (e.target === this) {
         closeCancelModal();
+    }
+});
+
+// Bulk Operations JavaScript
+function toggleSelectAll() {
+    const selectAll = document.getElementById('selectAll');
+    const checkboxes = document.querySelectorAll('.request-checkbox');
+    checkboxes.forEach(cb => {
+        cb.checked = selectAll.checked;
+    });
+    updateBulkActions();
+}
+
+function updateBulkActions() {
+    const checkboxes = document.querySelectorAll('.request-checkbox:checked');
+    const bulkBar = document.getElementById('bulkActionsBar');
+    const countSpan = document.getElementById('selectedCount');
+    const selectAll = document.getElementById('selectAll');
+    
+    const count = checkboxes.length;
+    countSpan.textContent = `${count} selected`;
+    
+    if (count > 0) {
+        bulkBar.style.display = 'flex';
+    } else {
+        bulkBar.style.display = 'none';
+    }
+    
+    // Update selectAll checkbox state
+    const allCheckboxes = document.querySelectorAll('.request-checkbox');
+    selectAll.checked = allCheckboxes.length > 0 && allCheckboxes.length === count;
+}
+
+function bulkApprove() {
+    const checkboxes = document.querySelectorAll('.request-checkbox:checked');
+    const ids = Array.from(checkboxes).map(cb => cb.value);
+    
+    if (ids.length === 0) {
+        alert('Please select at least one enrollment request');
+        return;
+    }
+    
+    showConfirm({
+        type: 'success',
+        title: 'Bulk Approve Enrollments',
+        message: `Are you sure you want to approve ${ids.length} enrollment request(s)? Selected guests will be promoted to students.`,
+        confirmText: 'Approve All',
+        onConfirm: function() {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ route('schools.admin.enrollments.bulkApprove', $school) }}';
+            
+            const csrf = document.createElement('input');
+            csrf.type = 'hidden';
+            csrf.name = '_token';
+            csrf.value = '{{ csrf_token() }}';
+            form.appendChild(csrf);
+            
+            ids.forEach(id => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'enrollment_ids[]';
+                input.value = id;
+                form.appendChild(input);
+            });
+            
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
+}
+
+function bulkReject() {
+    const checkboxes = document.querySelectorAll('.request-checkbox:checked');
+    const ids = Array.from(checkboxes).map(cb => cb.value);
+    
+    if (ids.length === 0) {
+        alert('Please select at least one enrollment request');
+        return;
+    }
+    
+    const remarks = prompt(`Enter rejection reason for ${ids.length} request(s):`);
+    if (remarks === null) return; // User cancelled
+    
+    if (!remarks.trim()) {
+        alert('Rejection reason is required');
+        return;
+    }
+    
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '{{ route('schools.admin.enrollments.bulkReject', $school) }}';
+    
+    const csrf = document.createElement('input');
+    csrf.type = 'hidden';
+    csrf.name = '_token';
+    csrf.value = '{{ csrf_token() }}';
+    form.appendChild(csrf);
+    
+    const remarksInput = document.createElement('input');
+    remarksInput.type = 'hidden';
+    remarksInput.name = 'remarks';
+    remarksInput.value = remarks;
+    form.appendChild(remarksInput);
+    
+    ids.forEach(id => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'enrollment_ids[]';
+        input.value = id;
+        form.appendChild(input);
+    });
+    
+    document.body.appendChild(form);
+    form.submit();
+}
+
+// Export Menu Toggle
+function toggleExportMenu() {
+    const menu = document.getElementById('exportMenu');
+    menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+}
+
+// Close export menu when clicking outside
+document.addEventListener('click', function(e) {
+    const menu = document.getElementById('exportMenu');
+    const button = e.target.closest('button');
+    if (menu && menu.style.display === 'block' && (!button || !button.onclick || button.onclick.toString().indexOf('toggleExportMenu') === -1)) {
+        menu.style.display = 'none';
     }
 });
 </script>

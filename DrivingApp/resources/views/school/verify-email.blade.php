@@ -383,6 +383,125 @@
     </div>
     </div>
 
+    @if(session('test_credentials') && config('app.env') === 'local')
+    <!-- Test Credentials Popup Modal (Development Only) -->
+    <div id="testCredentialsModal" style="display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+        <div style="background: white; border-radius: 20px; max-width: 500px; width: 90%; box-shadow: 0 25px 50px rgba(0,0,0,0.5); overflow: hidden; animation: slideIn 0.3s ease;">
+            <!-- Header -->
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 25px; text-align: center; color: white;">
+                <div style="font-size: 48px; margin-bottom: 10px;">🎉</div>
+                <h2 style="margin: 0; font-size: 1.8rem;">Registration Successful!</h2>
+                <p style="margin: 10px 0 0 0; opacity: 0.95; font-size: 0.95rem;">Testing Credentials</p>
+            </div>
+            
+            <!-- Warning Banner -->
+            <div style="background: #fbbf24; color: #78350f; padding: 12px 20px; display: flex; align-items: center; gap: 10px; font-size: 0.85rem; font-weight: 600;">
+                <span style="font-size: 1.2rem;">⚠️</span>
+                <span>DEVELOPMENT MODE ONLY - This popup won't appear in production</span>
+            </div>
+            
+            <!-- Content -->
+            <div style="padding: 30px;">
+                <p style="margin-bottom: 25px; color: #4b5563; text-align: center; font-size: 0.95rem;">
+                    Save these credentials for testing. You can copy them with one click:
+                </p>
+                
+                <!-- Email -->
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-size: 0.75rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; font-weight: 600;">Email Address</label>
+                    <div style="display: flex; align-items: center; gap: 10px; background: #f9fafb; padding: 14px 16px; border-radius: 10px; border: 2px solid #e5e7eb;">
+                        <input type="text" value="{{ session('test_credentials')['email'] }}" readonly style="flex: 1; background: transparent; border: none; font-family: 'Courier New', monospace; font-size: 1rem; color: #1f2937; outline: none;">
+                        <button onclick="copyText('{{ session('test_credentials')['email'] }}', this)" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; transition: all 0.2s;">
+                            Copy
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Password -->
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-size: 0.75rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; font-weight: 600;">Password</label>
+                    <div style="display: flex; align-items: center; gap: 10px; background: #f9fafb; padding: 14px 16px; border-radius: 10px; border: 2px solid #e5e7eb;">
+                        <input type="text" value="{{ session('test_credentials')['password'] }}" readonly style="flex: 1; background: transparent; border: none; font-family: 'Courier New', monospace; font-size: 1rem; color: #1f2937; outline: none;">
+                        <button onclick="copyText('{{ session('test_credentials')['password'] }}', this)" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; transition: all 0.2s;">
+                            Copy
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- OTP Code -->
+                <div style="margin-bottom: 25px;">
+                    <label style="display: block; font-size: 0.75rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; font-weight: 600;">Verification Code (OTP)</label>
+                    <div style="display: flex; align-items: center; gap: 10px; background: #f0fdf4; padding: 14px 16px; border-radius: 10px; border: 2px solid #86efac;">
+                        <input type="text" value="{{ session('test_credentials')['otp'] }}" readonly style="flex: 1; background: transparent; border: none; font-family: 'Courier New', monospace; font-size: 1.3rem; color: #166534; font-weight: 700; outline: none; letter-spacing: 4px;">
+                        <button onclick="copyText('{{ session('test_credentials')['otp'] }}', this)" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; transition: all 0.2s;">
+                            Copy
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Info Box -->
+                <div style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #3b82f6;">
+                    <div style="display: flex; gap: 10px; align-items: start;">
+                        <span style="font-size: 1.2rem; flex-shrink: 0;">💡</span>
+                        <p style="margin: 0; font-size: 0.85rem; color: #1e40af; line-height: 1.5;">
+                            <strong>Quick Tip:</strong> The verification code is already displayed above and in your email. Just copy and paste it into the form below!
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Close Button -->
+                <button onclick="closeModal()" style="width: 100%; padding: 14px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; font-size: 1.05rem; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
+                    Got it! Continue to Verification
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+    </style>
+
+    <script>
+        function copyText(text, button) {
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = button.textContent;
+                button.textContent = '✓ Copied!';
+                button.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    if (originalText === 'Copy') {
+                        button.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                    }
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                alert('Failed to copy to clipboard');
+            });
+        }
+
+        function closeModal() {
+            document.getElementById('testCredentialsModal').style.display = 'none';
+        }
+
+        // Auto-focus on code input after closing modal
+        document.getElementById('testCredentialsModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+    </script>
+    @endif
+
     <script>
         // Auto-format code input
         const codeInput = document.getElementById('code');

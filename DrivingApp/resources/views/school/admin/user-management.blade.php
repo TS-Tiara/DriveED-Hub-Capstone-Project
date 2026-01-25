@@ -565,9 +565,23 @@
             <div class="search-box">
                 <input type="text" id="studentSearch" placeholder="Search students by name or email..." onkeyup="filterTable('studentSearch', 'studentsTable')">
             </div>
-            <button class="btn-create" onclick="openCreateStudentModal()">
-                <i class="bi bi-person-plus"></i> Add New Student
-            </button>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <a href="{{ route('exports.students.pdf', $school->slug) }}" class="btn-create" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); text-decoration: none;">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 20px; height: 20px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                    Export PDF
+                </a>
+                <a href="{{ route('exports.students.excel', $school->slug) }}" class="btn-create" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); text-decoration: none;">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 20px; height: 20px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    Export Excel
+                </a>
+                <button class="btn-create" onclick="openCreateStudentModal()">
+                    <i class="bi bi-person-plus"></i> Add New Student
+                </button>
+            </div>
         </div>
         
         <div class="table-container">
