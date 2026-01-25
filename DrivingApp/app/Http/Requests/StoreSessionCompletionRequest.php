@@ -30,6 +30,9 @@ class StoreSessionCompletionRequest extends FormRequest
             'hours_completed' => ['required', 'numeric', 'min:0.5', 'max:8'],
             'session_date' => ['required', 'date', 'before_or_equal:today'],
             'session_time' => ['required', 'date_format:H:i'],
+            'start_time' => ['nullable', 'date_format:H:i'],
+            'end_time' => ['nullable', 'date_format:H:i', 'after:start_time'],
+            'status' => ['nullable', 'in:scheduled,completed,cancelled'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ];
     }
@@ -54,6 +57,9 @@ class StoreSessionCompletionRequest extends FormRequest
             'session_date.before_or_equal' => 'Session date cannot be in the future.',
             'session_time.required' => 'Please enter the session time.',
             'session_time.date_format' => 'Session time must be in HH:MM format (e.g., 14:30).',
+            'start_time.date_format' => 'Start time must be in HH:MM format (e.g., 14:30).',
+            'end_time.date_format' => 'End time must be in HH:MM format (e.g., 16:30).',
+            'end_time.after' => 'End time must be after start time.',
             'notes.max' => 'Notes must not exceed 1000 characters.',
         ];
     }

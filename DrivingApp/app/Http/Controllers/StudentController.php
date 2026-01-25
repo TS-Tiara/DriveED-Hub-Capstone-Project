@@ -9,6 +9,7 @@ use App\Models\Progress;
 use App\Models\Student;
 use App\Models\EnrollmentRequest;
 use App\Models\Course;
+use App\Rules\StrongPassword;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -133,7 +134,7 @@ class StudentController extends Controller
             'contact' => ['nullable', 'string', 'max:20', 'regex:/^(09\d{9}|\+639\d{9})$/'],
             'address' => 'nullable|string|max:255',
             'current_password' => 'nullable|string|min:6',
-            'new_password' => 'nullable|string|min:6|confirmed',
+            'new_password' => ['nullable', 'confirmed', new StrongPassword()],
         ]);
 
         $data = $request->only(['name', 'email', 'contact', 'address']);

@@ -11,6 +11,7 @@ use App\Models\Course;
 use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\TimeSlot;
+use App\Rules\StrongPassword;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -210,7 +211,7 @@ class SystemAdminController extends Controller
                 'address' => 'nullable|string',
                 'admin_name' => 'required|string|max:255',
                 'admin_email' => 'required|email|unique:admins,email',
-                'admin_password' => 'required|string|min:8',
+                'admin_password' => ['required', 'string', new StrongPassword()],
             ]);
 
             DB::beginTransaction();
@@ -396,7 +397,7 @@ class SystemAdminController extends Controller
                 'school_id' => 'required|exists:schools,id',
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|unique:admins,email',
-                'password' => 'required|string|min:8|confirmed',
+                'password' => ['required', 'confirmed', new StrongPassword()],
             ]);
 
             $school = School::findOrFail($request->school_id);

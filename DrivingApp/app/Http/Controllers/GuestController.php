@@ -9,6 +9,7 @@ use App\Models\Course;
 use App\Models\EnrollmentRequest;
 use App\Http\Requests\StoreEnrollmentRequestRequest;
 use App\Support\EnrollmentValidator;
+use App\Rules\StrongPassword;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -36,7 +37,7 @@ class GuestController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:students,email'],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'password' => ['required', 'confirmed', new StrongPassword()],
             'contact' => ['required', 'string', 'max:20'],
             'address' => ['nullable', 'string', 'max:500'],
             'branch' => ['nullable', 'string', 'max:255'],

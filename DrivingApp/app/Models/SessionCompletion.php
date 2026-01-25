@@ -17,6 +17,9 @@ class SessionCompletion extends Model
         'hours_completed',
         'session_date',
         'session_time',
+        'start_time',
+        'end_time',
+        'status',
         'notes',
         'logged_by',
     ];

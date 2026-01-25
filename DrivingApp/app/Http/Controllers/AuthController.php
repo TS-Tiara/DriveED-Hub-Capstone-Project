@@ -40,7 +40,29 @@ class AuthController extends Controller
         // Check admin first (most privileged)
         $admin = Admin::where('school_id', $school->id)->where('email', $email)->first();
         if ($admin) {
+            // Check if account is locked
+            if ($admin->locked_until && now()->lessThan($admin->locked_until)) {
+                $remainingMinutes = now()->diffInMinutes($admin->locked_until) + 1;
+                SystemLog::logWarning(
+                    "Locked admin account login attempt: {$email}",
+                    'authentication',
+                    ['email' => $email, 'admin_id' => $admin->id, 'locked_until' => $admin->locked_until],
+                    $school->id,
+                    'locked_login_attempt'
+                );
+                return back()->withErrors([
+                    'email' => "Your account is locked due to multiple failed login attempts. Please try again in {$remainingMinutes} minutes.",
+                ])->withInput($request->only('email', 'remember'));
+            }
+
             if (Hash::check($password, $admin->password)) {
+                // Reset failed attempts and update last login
+                $admin->update([
+                    'failed_login_attempts' => 0,
+                    'locked_until' => null,
+                    'last_login_at' => now(),
+                ]);
+                
                 Auth::guard('admin')->login($admin, $remember);
                 
                 // Log successful school admin login
@@ -55,36 +77,74 @@ class AuthController extends Controller
                 return redirect()->route('schools.admin.dashboard', $school)
                     ->with('success', 'Welcome back, ' . $admin->name . '!');
             }
-            // Wrong password for admin - log failed attempt
+            
+            // Wrong password for admin - increment failed attempts
+            $failedAttempts = $admin->failed_login_attempts + 1;
+            $lockAccount = $failedAttempts >= 5;
+            
+            $admin->update([
+                'failed_login_attempts' => $failedAttempts,
+                'locked_until' => $lockAccount ? now()->addMinutes(30) : null,
+            ]);
+            
             SystemLog::logWarning(
                 "Failed login attempt for school admin: {$email}",
                 'authentication',
-                ['email' => $email, 'reason' => 'incorrect_password'],
+                ['email' => $email, 'failed_attempts' => $failedAttempts, 'locked' => $lockAccount],
                 $school->id,
                 'failed_login'
             );
             
-            return back()->withErrors([
-                'email' => 'The provided credentials do not match our records.',
-            ])->withInput($request->only('email', 'remember'));
+            $attemptsRemaining = max(0, 5 - $failedAttempts);
+            $errorMessage = $lockAccount
+                ? 'Your account has been locked for 30 minutes due to multiple failed login attempts.'
+                : "The provided credentials do not match our records. {$attemptsRemaining} attempts remaining.";
+            
+            return back()->withErrors(['email' => $errorMessage])->withInput($request->only('email', 'remember'));
         }
 
         // Check instructor
         $instructor = Instructor::where('school_id', $school->id)->where('email', $email)->first();
         if ($instructor) {
+            // Check if account is locked
+            if ($instructor->locked_until && now()->lessThan($instructor->locked_until)) {
+                $remainingMinutes = now()->diffInMinutes($instructor->locked_until) + 1;
+                SystemLog::logWarning(
+                    "Locked instructor account login attempt: {$email}",
+                    'authentication',
+                    ['email' => $email, 'instructor_id' => $instructor->id, 'locked_until' => $instructor->locked_until],
+                    $school->id,
+                    'locked_login_attempt'
+                );
+                return back()->withErrors([
+                    'email' => "Your account is locked due to multiple failed login attempts. Please try again in {$remainingMinutes} minutes.",
+                ])->withInput($request->only('email', 'remember'));
+            }
+
             if (!Hash::check($password, $instructor->password)) {
-                // Log failed attempt
+                // Increment failed attempts
+                $failedAttempts = $instructor->failed_login_attempts + 1;
+                $lockAccount = $failedAttempts >= 5;
+                
+                $instructor->update([
+                    'failed_login_attempts' => $failedAttempts,
+                    'locked_until' => $lockAccount ? now()->addMinutes(30) : null,
+                ]);
+                
                 SystemLog::logWarning(
                     "Failed login attempt for instructor: {$email}",
                     'authentication',
-                    ['email' => $email, 'reason' => 'incorrect_password'],
+                    ['email' => $email, 'failed_attempts' => $failedAttempts, 'locked' => $lockAccount],
                     $school->id,
                     'failed_login'
                 );
                 
-                return back()->withErrors([
-                    'email' => 'The provided credentials do not match our records.',
-                ])->withInput($request->only('email', 'remember'));
+                $attemptsRemaining = max(0, 5 - $failedAttempts);
+                $errorMessage = $lockAccount
+                    ? 'Your account has been locked for 30 minutes due to multiple failed login attempts.'
+                    : "The provided credentials do not match our records. {$attemptsRemaining} attempts remaining.";
+                
+                return back()->withErrors(['email' => $errorMessage])->withInput($request->only('email', 'remember'));
             }
             
             if ($instructor->status !== 'active') {
@@ -99,6 +159,13 @@ class AuthController extends Controller
                 
                 return back()->withErrors(['email' => 'Your account has been deactivated. Please contact the administrator.']);
             }
+            
+            // Reset failed attempts and update last login
+            $instructor->update([
+                'failed_login_attempts' => 0,
+                'locked_until' => null,
+                'last_login_at' => now(),
+            ]);
             
             Auth::guard('instructor')->login($instructor, $remember);
             
@@ -118,19 +185,45 @@ class AuthController extends Controller
         // Check student
         $student = Student::where('school_id', $school->id)->where('email', $email)->first();
         if ($student) {
+            // Check if account is locked
+            if ($student->locked_until && now()->lessThan($student->locked_until)) {
+                $remainingMinutes = now()->diffInMinutes($student->locked_until) + 1;
+                SystemLog::logWarning(
+                    "Locked student account login attempt: {$email}",
+                    'authentication',
+                    ['email' => $email, 'student_id' => $student->id, 'locked_until' => $student->locked_until],
+                    $school->id,
+                    'locked_login_attempt'
+                );
+                return back()->withErrors([
+                    'email' => "Your account is locked due to multiple failed login attempts. Please try again in {$remainingMinutes} minutes.",
+                ])->withInput($request->only('email', 'remember'));
+            }
+
             if (!Hash::check($password, $student->password)) {
-                // Log failed attempt
+                // Increment failed attempts
+                $failedAttempts = $student->failed_login_attempts + 1;
+                $lockAccount = $failedAttempts >= 5;
+                
+                $student->update([
+                    'failed_login_attempts' => $failedAttempts,
+                    'locked_until' => $lockAccount ? now()->addMinutes(30) : null,
+                ]);
+                
                 SystemLog::logWarning(
                     "Failed login attempt for student: {$email}",
                     'authentication',
-                    ['email' => $email, 'reason' => 'incorrect_password'],
+                    ['email' => $email, 'failed_attempts' => $failedAttempts, 'locked' => $lockAccount],
                     $school->id,
                     'failed_login'
                 );
                 
-                return back()->withErrors([
-                    'email' => 'The provided credentials do not match our records.',
-                ])->withInput($request->only('email', 'remember'));
+                $attemptsRemaining = max(0, 5 - $failedAttempts);
+                $errorMessage = $lockAccount
+                    ? 'Your account has been locked for 30 minutes due to multiple failed login attempts.'
+                    : "The provided credentials do not match our records. {$attemptsRemaining} attempts remaining.";
+                
+                return back()->withErrors(['email' => $errorMessage])->withInput($request->only('email', 'remember'));
             }
             
             if ($student->status !== 'active') {
@@ -169,6 +262,13 @@ class AuthController extends Controller
                 return redirect()->route('schools.verification.show', $school)
                     ->with('info', 'Please verify your email address. We sent a new verification code to your email.');
             }
+            
+            // Reset failed attempts and update last login
+            $student->update([
+                'failed_login_attempts' => 0,
+                'locked_until' => null,
+                'last_login_at' => now(),
+            ]);
             
             Auth::guard('student')->login($student, $remember);
             

@@ -7,9 +7,11 @@ use App\Models\EnrollmentRequest;
 use App\Models\Instructor;
 use App\Models\School;
 use App\Http\Requests\StoreSessionCompletionRequest;
+use App\Services\SchedulingConflictService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class SessionCompletionController extends Controller
 {
@@ -117,6 +119,33 @@ class SessionCompletionController extends Controller
             abort(404);
         }
         
+        // Calculate start and end times if provided, or use session_time and hours_completed
+        $startTime = $request->start_time ?? $request->session_time;
+        $endTime = $request->end_time;
+        
+        if (!$endTime && $request->hours_completed) {
+            // Calculate end time based on hours_completed
+            $endTime = Carbon::parse($startTime)->addHours($request->hours_completed)->format('H:i');
+        }
+        
+        // Check for scheduling conflicts if we have start and end times
+        if ($startTime && $endTime) {
+            $conflictService = new SchedulingConflictService();
+            $check = $conflictService->checkInstructorAvailability(
+                $instructor->id,
+                $request->session_date,
+                $startTime,
+                $endTime
+            );
+            
+            if (!$check['available']) {
+                return back()
+                    ->withInput()
+                    ->with('error', 'Scheduling Conflict: ' . $check['message'])
+                    ->with('conflicts', $check['conflicts']);
+            }
+        }
+        
         DB::beginTransaction();
         try {
             $sessionCompletion = SessionCompletion::create([
@@ -126,6 +155,9 @@ class SessionCompletionController extends Controller
                 'hours_completed' => $request->hours_completed,
                 'session_date' => $request->session_date,
                 'session_time' => $request->session_time,
+                'start_time' => $startTime,
+                'end_time' => $endTime,
+                'status' => $request->status ?? 'completed',
                 'notes' => $request->notes,
                 'logged_by' => $instructor->id,
             ]);
@@ -230,10 +262,41 @@ class SessionCompletionController extends Controller
             abort(403);
         }
         
+        // Calculate start and end times if provided, or use session_time and hours_completed
+        $startTime = $request->start_time ?? $request->session_time;
+        $endTime = $request->end_time;
+        
+        if (!$endTime && $request->hours_completed) {
+            // Calculate end time based on hours_completed
+            $endTime = Carbon::parse($startTime)->addHours($request->hours_completed)->format('H:i');
+        }
+        
+        // Check for scheduling conflicts if we have start and end times
+        if ($startTime && $endTime) {
+            $conflictService = new SchedulingConflictService();
+            $check = $conflictService->checkInstructorAvailability(
+                $instructor->id,
+                $request->session_date,
+                $startTime,
+                $endTime,
+                $sessionCompletion->id // Exclude current session from conflict check
+            );
+            
+            if (!$check['available']) {
+                return back()
+                    ->withInput()
+                    ->with('error', 'Scheduling Conflict: ' . $check['message'])
+                    ->with('conflicts', $check['conflicts']);
+            }
+        }
+        
         $sessionCompletion->update([
             'hours_completed' => $request->hours_completed,
             'session_date' => $request->session_date,
             'session_time' => $request->session_time,
+            'start_time' => $startTime,
+            'end_time' => $endTime,
+            'status' => $request->status ?? $sessionCompletion->status ?? 'completed',
             'notes' => $request->notes,
         ]);
         
