@@ -6,6 +6,9 @@
 @php
     $school = $school ?? $currentSchool ?? null;
     $settings = $school?->schoolSetting;
+    $primaryColor = $settings?->primary_color ?? '#667eea';
+    $secondaryColor = $settings?->secondary_color ?? '#764ba2';
+    $useGradient = $settings?->use_gradient_header ?? true;
 @endphp
 
 <style>
@@ -18,7 +21,7 @@
     .page-header {
         margin-bottom: 30px;
         padding-bottom: 15px;
-        border-bottom: 4px solid {{ $settings->primary_color ?? '#667eea' }};
+        border-bottom: 4px solid {{ $primaryColor }};
     }
 
     .page-title {
@@ -61,7 +64,7 @@
     .stat-value {
         font-size: 36px;
         font-weight: 700;
-        color: {{ $settings->primary_color ?? '#667eea' }};
+        color: {{ $primaryColor }};
     }
 
     .dashboard-grid {
@@ -83,7 +86,7 @@
         font-size: 18px;
         font-weight: 600;
         color: #333;
-        border-bottom: 2px solid {{ $settings->primary_color ?? '#667eea' }};
+        border-bottom: 2px solid {{ $primaryColor }};
         padding-bottom: 10px;
     }
 
@@ -91,7 +94,7 @@
         background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
         padding: 20px;
         border-radius: 8px;
-        border-left: 4px solid {{ $settings->primary_color ?? '#667eea' }};
+        border-left: 4px solid {{ $primaryColor }};
     }
 
     .lesson-label {
@@ -167,7 +170,7 @@
     .metric-value {
         font-size: 20px;
         font-weight: 700;
-        color: {{ $settings->primary_color ?? '#667eea' }};
+        color: {{ $primaryColor }};
     }
 
     .bookings-list,
@@ -181,7 +184,7 @@
         padding: 15px;
         background: #f8f9fa;
         border-radius: 8px;
-        border-left: 3px solid {{ $settings->primary_color ?? '#667eea' }};
+        border-left: 3px solid {{ $primaryColor }};
     }
 
     .booking-student {
@@ -233,7 +236,7 @@
     .progress-percent {
         font-size: 16px;
         font-weight: 700;
-        color: {{ $settings->primary_color ?? '#667eea' }};
+        color: {{ $primaryColor }};
     }
 
     .progress-course {
@@ -251,10 +254,10 @@
     }
 
     .progress-fill {
-        @if($settings->use_gradient_header)
-            background: linear-gradient(90deg, {{ $settings->primary_color }} 0%, {{ $settings->secondary_color }} 100%);
+        @if($useGradient)
+            background: linear-gradient(90deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
         @else
-            background: {{ $settings->primary_color }};
+            background: {{ $primaryColor }};
         @endif
         height: 100%;
         transition: width 0.3s ease;
@@ -299,10 +302,10 @@
         justify-content: center;
         gap: 8px;
         padding: 15px 20px;
-        @if($settings->use_gradient_header)
-            background: linear-gradient(135deg, {{ $settings->primary_color }} 0%, {{ $settings->secondary_color }} 100%);
+        @if($useGradient)
+            background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
         @else
-            background: {{ $settings->primary_color }};
+            background: {{ $primaryColor }};
         @endif
         color: white;
         text-decoration: none;
