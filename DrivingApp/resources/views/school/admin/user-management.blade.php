@@ -441,12 +441,243 @@
         font-size: 1.2rem;
         color: #666;
     }
+    
+    /* Export Buttons */
+    .export-buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    
+    .btn-export {
+        padding: 10px 16px;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+    }
+    
+    .btn-export-pdf {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+    }
+    
+    .btn-export-pdf:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        color: white;
+    }
+    
+    .btn-export-excel {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+    }
+    
+    .btn-export-excel:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        color: white;
+    }
+    
+    /* Mobile Responsive Styles */
+    @media (max-width: 768px) {
+        .user-management-container {
+            padding: 15px;
+            margin: 10px auto;
+        }
+        
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+        }
+        
+        .page-title {
+            font-size: 1.4rem;
+        }
+        
+        .stats-grid {
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+        
+        .stat-card {
+            padding: 18px;
+        }
+        
+        .stat-value {
+            font-size: 1.8rem;
+        }
+        
+        .tabs {
+            flex-wrap: wrap;
+        }
+        
+        .tab {
+            padding: 10px 16px;
+            font-size: 0.9rem;
+            flex: 1;
+            min-width: 120px;
+            text-align: center;
+        }
+        
+        .action-bar {
+            flex-direction: column;
+            gap: 15px;
+            padding: 12px;
+        }
+        
+        .search-box {
+            max-width: 100%;
+            width: 100%;
+        }
+        
+        .export-buttons {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .btn-create {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .table-container {
+            border-radius: 8px;
+        }
+        
+        table {
+            font-size: 0.85rem;
+        }
+        
+        th, td {
+            padding: 10px 8px;
+        }
+        
+        .btn-action {
+            padding: 5px 8px;
+            font-size: 0.8rem;
+            margin: 2px;
+        }
+        
+        .status-badge {
+            padding: 4px 8px;
+            font-size: 0.75rem;
+        }
+        
+        /* Hide less important columns on mobile */
+        .hide-mobile {
+            display: none;
+        }
+        
+        .modal-content {
+            width: 95%;
+            max-width: 95%;
+            margin: 10px;
+        }
+        
+        .modal-content h3 {
+            padding: 20px;
+            font-size: 1.3rem;
+        }
+        
+        .modal-content form {
+            padding: 20px;
+        }
+        
+        .modal-buttons {
+            padding: 15px 20px 20px;
+            flex-direction: column;
+        }
+        
+        .btn-cancel, .btn-submit {
+            width: 100%;
+            padding: 14px;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .user-management-container {
+            padding: 10px;
+            margin: 5px auto;
+        }
+        
+        .page-title {
+            font-size: 1.2rem;
+        }
+        
+        .stat-card {
+            padding: 14px;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+        }
+        
+        .stat-label {
+            font-size: 0.75rem;
+        }
+        
+        .stat-detail {
+            font-size: 0.75rem;
+        }
+        
+        .tab {
+            padding: 8px 12px;
+            font-size: 0.85rem;
+            min-width: 100px;
+        }
+        
+        table {
+            font-size: 0.8rem;
+        }
+        
+        th, td {
+            padding: 8px 6px;
+        }
+        
+        .btn-action {
+            padding: 4px 6px;
+            font-size: 0.75rem;
+        }
+        
+        .btn-export {
+            padding: 8px 12px;
+            font-size: 0.8rem;
+        }
+        
+        .form-group label {
+            font-size: 0.9rem;
+        }
+        
+        .form-group input,
+        .form-group select {
+            padding: 10px 12px;
+            font-size: 0.95rem;
+        }
+    }
 </style>
 
 <div class="user-management-container">
     <!-- Page Header -->
     <div class="page-header">
-        <h1 class="page-title">User Management</h1>
+        <div class="page-header-left">
+            <h1 class="page-title">User Management</h1>
+        </div>
+        <div class="export-buttons">
+            <a href="{{ $schoolRoute('admin.exports.students.pdf') }}" class="btn-export btn-export-pdf">
+                📄 Students PDF
+            </a>
+            <a href="{{ $schoolRoute('admin.exports.students.excel') }}" class="btn-export btn-export-excel">
+                📊 Students Excel
+            </a>
+        </div>
     </div>
     
     <!-- Statistics Cards -->

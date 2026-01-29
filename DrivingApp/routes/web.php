@@ -188,6 +188,12 @@ Route::prefix('{school:slug}')
                     Route::get('/students/excel', [ExportController::class, 'studentsExcel'])->name('students.excel');
                     Route::get('/enrollments/pdf', [ExportController::class, 'enrollmentsPdf'])->name('enrollments.pdf');
                     Route::get('/student/{student}/progress/pdf', [ExportController::class, 'studentProgressPdf'])->name('student.progress.pdf');
+                    Route::get('/instructors/pdf', [ExportController::class, 'instructorsPdf'])->name('instructors.pdf');
+                    Route::get('/instructors/excel', [ExportController::class, 'instructorsExcel'])->name('instructors.excel');
+                    Route::get('/schedules/pdf', [ExportController::class, 'schedulesPdf'])->name('schedules.pdf');
+                    Route::get('/payments/pdf', [ExportController::class, 'paymentsPdf'])->name('payments.pdf');
+                    Route::get('/payments/excel', [ExportController::class, 'paymentsExcel'])->name('payments.excel');
+                    Route::get('/courses/pdf', [ExportController::class, 'coursesPdf'])->name('courses.pdf');
                 });
 
                 // Bookings management (no separate create/edit views - handled via modals)

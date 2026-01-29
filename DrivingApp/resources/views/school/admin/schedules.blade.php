@@ -853,6 +853,223 @@
         background: linear-gradient(135deg, #10b981 0%, #059669 100%);
         color: white;
     }
+    
+    /* Export Buttons */
+    .export-buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+    }
+    
+    .btn-export {
+        padding: 10px 16px;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+    }
+    
+    .btn-export-pdf {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+    }
+    
+    .btn-export-pdf:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        color: white;
+    }
+    
+    /* Mobile Responsive Styles */
+    @media (max-width: 768px) {
+        .timeslots-container {
+            padding: 15px;
+            margin: 10px auto;
+        }
+        
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+        }
+        
+        .page-title {
+            font-size: 1.4rem;
+        }
+        
+        .page-subtitle {
+            font-size: 0.85rem;
+        }
+        
+        .view-toggle {
+            width: 100%;
+        }
+        
+        .view-btn {
+            flex: 1;
+            padding: 10px 15px;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+        
+        .filter-dropdown {
+            width: 100%;
+        }
+        
+        .filter-dropdown select {
+            width: 100%;
+            min-width: auto;
+        }
+        
+        .row {
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .col-half, .col-third, .col-two-thirds {
+            flex: 1 1 100%;
+        }
+        
+        .timeslot-card {
+            margin-bottom: 15px;
+        }
+        
+        .date-header {
+            padding: 12px 15px;
+            font-size: 1rem;
+        }
+        
+        .timeslot-table th,
+        .timeslot-table td {
+            padding: 10px 8px;
+            font-size: 0.85rem;
+        }
+        
+        .slot-badge {
+            font-size: 0.65rem;
+            padding: 3px 5px;
+        }
+        
+        .modal-content {
+            width: 95%;
+            max-width: 95%;
+            margin: 10px;
+        }
+        
+        .modal-header {
+            padding: 20px;
+        }
+        
+        .modal-header h5 {
+            font-size: 1.3rem;
+        }
+        
+        .modal-body {
+            padding: 20px;
+        }
+        
+        .modal-footer {
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .modal-footer .btn {
+            width: 100%;
+        }
+        
+        /* Calendar View Responsive */
+        .calendar-grid {
+            gap: 3px;
+        }
+        
+        .calendar-day {
+            min-height: 60px;
+            padding: 5px;
+        }
+        
+        .day-number {
+            font-size: 0.9rem;
+        }
+        
+        .day-slots {
+            display: none;
+        }
+        
+        .calendar-day.has-slots::after {
+            content: '•';
+            display: block;
+            color: #3b82f6;
+            font-size: 1.5rem;
+            line-height: 1;
+        }
+        
+        .btn-create {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .export-buttons {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .timeslots-container {
+            padding: 10px;
+            margin: 5px auto;
+        }
+        
+        .page-title {
+            font-size: 1.2rem;
+        }
+        
+        .view-btn {
+            padding: 8px 10px;
+            font-size: 0.8rem;
+        }
+        
+        .timeslot-table th,
+        .timeslot-table td {
+            padding: 8px 6px;
+            font-size: 0.8rem;
+        }
+        
+        .btn-sm {
+            padding: 4px 8px;
+            font-size: 0.75rem;
+        }
+        
+        .calendar-day {
+            min-height: 50px;
+            padding: 3px;
+        }
+        
+        .day-number {
+            font-size: 0.8rem;
+        }
+        
+        .form-control {
+            padding: 8px 12px;
+            font-size: 0.9rem;
+        }
+        
+        .form-label {
+            font-size: 0.85rem;
+        }
+        
+        .btn-export {
+            padding: 8px 12px;
+            font-size: 0.8rem;
+        }
+    }
 </style>
 
 <div class="timeslots-container">
@@ -865,6 +1082,11 @@
             <button type="button" class="btn btn-success btn-create" onclick="openCreateModal()">
                 <i class="bi bi-calendar-plus"></i> Create Schedule
             </button>
+            <div class="export-buttons">
+                <a href="{{ $schoolRoute('admin.exports.schedules.pdf') }}" class="btn-export btn-export-pdf">
+                    📄 Export PDF
+                </a>
+            </div>
         </div>
     </div>
 

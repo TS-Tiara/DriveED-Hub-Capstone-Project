@@ -773,6 +773,202 @@
         font-weight: 700;
         color: {{ $settings->primary_color ?? '#667eea' }};
     }
+    
+    /* Export Buttons */
+    .export-buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    
+    .btn-export {
+        padding: 10px 16px;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+    }
+    
+    .btn-export-pdf {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+    }
+    
+    .btn-export-pdf:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        color: white;
+    }
+    
+    /* Mobile Responsive Styles */
+    @media (max-width: 768px) {
+        .courses-container {
+            padding: 15px;
+            margin: 10px auto;
+        }
+        
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+        }
+        
+        .page-title {
+            font-size: 1.4rem;
+            gap: 10px;
+        }
+        
+        .page-subtitle {
+            font-size: 0.85rem;
+        }
+        
+        .courses-grid {
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+        
+        .course-card {
+            margin-bottom: 0;
+        }
+        
+        .course-banner {
+            height: 160px;
+            font-size: 2rem;
+        }
+        
+        .course-content {
+            padding: 18px;
+        }
+        
+        .course-title {
+            font-size: 1.2rem;
+        }
+        
+        .course-stats {
+            flex-wrap: wrap;
+        }
+        
+        .view-toggle {
+            width: 100%;
+        }
+        
+        .view-toggle-btn {
+            flex: 1;
+            text-align: center;
+        }
+        
+        .btn-create {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            width: 95%;
+            max-width: 95%;
+            margin: 10px;
+        }
+        
+        .modal-header {
+            padding: 18px 20px;
+        }
+        
+        .modal-header h5 {
+            font-size: 1.2rem;
+        }
+        
+        .modal-body {
+            padding: 20px;
+        }
+        
+        .packages-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .info-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+        
+        .export-buttons {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .courses-container {
+            padding: 10px;
+            margin: 5px auto;
+        }
+        
+        .page-title {
+            font-size: 1.2rem;
+        }
+        
+        .course-banner {
+            height: 140px;
+            font-size: 1.5rem;
+        }
+        
+        .course-content {
+            padding: 15px;
+        }
+        
+        .course-title {
+            font-size: 1.1rem;
+        }
+        
+        .course-description {
+            font-size: 0.85rem;
+        }
+        
+        .course-stat span {
+            font-size: 0.75rem;
+        }
+        
+        .course-stat strong {
+            font-size: 0.9rem;
+        }
+        
+        .modal-header {
+            padding: 15px;
+        }
+        
+        .modal-header h5 {
+            font-size: 1.1rem;
+        }
+        
+        .modal-body {
+            padding: 15px;
+        }
+        
+        .form-group {
+            margin-bottom: 18px;
+        }
+        
+        .form-label {
+            font-size: 0.9rem;
+        }
+        
+        .form-control {
+            padding: 10px 12px;
+            font-size: 0.95rem;
+        }
+        
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .btn-export {
+            padding: 8px 12px;
+            font-size: 0.8rem;
+        }
+    }
 </style>
 
 <div class="courses-container">
@@ -785,7 +981,12 @@
             </h1>
             <p class="page-subtitle">Manage courses, packages, and pricing for {{ $schoolName }}</p>
         </div>
-        <div style="display: flex; gap: 15px; align-items: center;">
+        <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+            <div class="export-buttons">
+                <a href="{{ $schoolRoute('admin.exports.courses.pdf') }}" class="btn-export btn-export-pdf">
+                    📄 Export PDF
+                </a>
+            </div>
             <div class="view-toggle">
                 <button class="view-toggle-btn active" onclick="switchView('cards')">
                     <i class="bi bi-grid-3x3-gap-fill"></i> Cards
