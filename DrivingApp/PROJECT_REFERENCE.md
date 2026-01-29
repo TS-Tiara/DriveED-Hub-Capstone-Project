@@ -1,7 +1,132 @@
 # DriveED Hub - Project Reference Guide
 
-**Last Updated:** January 25, 2026  
-**Purpose:** Quick reference for database structure, accounts, and development preferences
+**Last Updated:** January 29, 2026  
+**Deadline:** February 20, 2026  
+**Purpose:** Quick reference for database structure, accounts, views, and development preferences
+
+---
+
+## 📋 COMPLETE DATABASE TABLES
+
+| Table Name | Primary Purpose | Key Fields |
+|------------|-----------------|------------|
+| `users` | Laravel default (not used) | id, name, email, password |
+| `schools` | Multi-tenant schools | id, name, slug, timezone, branding (json), settings (json) |
+| `school_settings` | School UI customization | school_id, primary_color, secondary_color, login_* fields |
+| `admins` | Admin users | school_id (null=system), name, email, password, role, failed_login_attempts, locked_until |
+| `instructors` | Instructor users | school_id, name, email, password, license_number, status, availability, failed_login_attempts, locked_until |
+| `students` | Students & Guests | school_id, name, email, password, role (guest/student), status, failed_login_attempts, locked_until |
+| `courses` | Available courses | school_id, title, type (theoretical/practical), price, duration_hours, status |
+| `course_packages` | Course bundles | course_id, name, price, features |
+| `course_modules` | LMS modules | course_id, title, order |
+| `module_lessons` | LMS lessons | module_id, title, content, order |
+| `enrollment_requests` | Course enrollments | school_id, learner_id, course_id, status, theoretical_passed |
+| `enrollments` | Legacy (deprecated) | Use enrollment_requests instead |
+| `session_completions` | Driving sessions | enrollment_id, instructor_id, session_type, hours_completed, start_time, end_time, status |
+| `bookings` | Schedule bookings | school_id, student_id, instructor_id, slot_id, status |
+| `time_slots` | Available time slots | school_id, date, start_time, end_time, capacity |
+| `schedule_instructors` | Instructor assignments | time_slot_id, instructor_id, assignment_type |
+| `payments` | Payment records | school_id, student_id, amount, status, payment_method |
+| `progresses` | Student progress | student_id, instructor_id, description, rating |
+| `reports` | Generated reports | school_id, type, data |
+| `logs` | Activity logs | school_id, action, description, user_type, user_id |
+| `system_logs` | System-wide logs | message, level, category, school_id, action |
+| `instructor_removal_requests` | Removal requests | instructor_id, reason, status |
+| `registration_requests` | Legacy registrations | Deprecated |
+| `password_reset_tokens` | Password resets | email, token, user_type, school_id |
+| `cache` | Laravel cache | key, value, expiration |
+| `jobs` | Laravel queue | payload, attempts |
+| `sessions` | Laravel sessions | user_id, payload, last_activity |
+
+---
+
+## 📁 VIEW STRUCTURE & PAGE NAMES
+
+### System Admin Views (`resources/views/system-admin/`)
+| File | Page Title | URL Pattern |
+|------|------------|-------------|
+| `login.blade.php` | System Admin Login | `/system-admin/login` |
+| `dashboard.blade.php` | System Dashboard | `/system-admin/` |
+| `schools.blade.php` | Manage Schools | `/system-admin/schools` |
+| `admins.blade.php` | Manage Admins | `/system-admin/admins` |
+| `users.blade.php` | All Users | `/system-admin/users` |
+| `students.blade.php` | All Students | `/system-admin/students` |
+| `instructors.blade.php` | All Instructors | `/system-admin/instructors` |
+| `courses.blade.php` | All Courses | `/system-admin/courses` |
+| `bookings.blade.php` | All Bookings | `/system-admin/bookings` |
+| `payments.blade.php` | All Payments | `/system-admin/payments` |
+| `logs.blade.php` | System Logs | `/system-admin/logs` |
+| `log-detail.blade.php` | Log Detail | `/system-admin/logs/{id}` |
+
+### School Admin Views (`resources/views/school/admin/`)
+| File | Page Title | URL Pattern |
+|------|------------|-------------|
+| `dashboard.blade.php` | Admin Dashboard | `/{school}/admin/` |
+| `user-management.blade.php` | User Management | `/{school}/admin/user-management` |
+| `courses.blade.php` | Courses | `/{school}/admin/courses` |
+| `schedules.blade.php` | Schedules | `/{school}/admin/schedules` |
+| `bookings.blade.php` | Bookings | `/{school}/admin/bookings` |
+| `payments.blade.php` | Payments | `/{school}/admin/payments` |
+| `settings.blade.php` | School Settings | `/{school}/admin/settings` |
+| `profile.blade.php` | Admin Profile | `/{school}/admin/profile` |
+| `progress.blade.php` | Student Progress | `/{school}/admin/progress` |
+| `removal-requests.blade.php` | Removal Requests | `/{school}/admin/removal-requests` |
+| `enrollment-requests/*.blade.php` | Enrollment Management | `/{school}/admin/enrollments` |
+| `theoretical/*.blade.php` | Theoretical Management | `/{school}/admin/theoretical` |
+| `reports/*.blade.php` | Reports | `/{school}/admin/reports` |
+
+### Instructor Views (`resources/views/school/instructor/`)
+| File | Page Title | URL Pattern |
+|------|------------|-------------|
+| `dashboard.blade.php` | Instructor Dashboard | `/{school}/instructor/` |
+| `schedule.blade.php` | My Schedule | `/{school}/instructor/my-schedule` |
+| `schedule-new.blade.php` | Schedule (New) | `/{school}/instructor/my-schedule` |
+| `students.blade.php` | My Students | `/{school}/instructor/students` |
+| `student-detail.blade.php` | Student Detail | `/{school}/instructor/students/{id}` |
+| `progress.blade.php` | Progress List | `/{school}/instructor/progress` |
+| `progress-create.blade.php` | Log Progress | `/{school}/instructor/progress/create` |
+| `progress-edit.blade.php` | Edit Progress | `/{school}/instructor/progress/{id}/edit` |
+| `progress-show.blade.php` | View Progress | `/{school}/instructor/progress/{id}` |
+| `grades.blade.php` | Grades | `/{school}/instructor/grades` |
+| `reports.blade.php` | My Reports | `/{school}/instructor/reports` |
+| `profile.blade.php` | Instructor Profile | `/{school}/instructor/profile` |
+| `sessions/*.blade.php` | Session Management | `/{school}/instructor/sessions` |
+| `theoretical/*.blade.php` | Theoretical Sessions | `/{school}/instructor/theoretical` |
+
+### Student Views (`resources/views/school/student/`)
+| File | Page Title | URL Pattern |
+|------|------------|-------------|
+| `dashboard.blade.php` | Student Dashboard | `/{school}/student/dashboard` |
+| `courses.blade.php` | My Courses | `/{school}/student/courses` |
+| `schedule.blade.php` | My Schedule | `/{school}/student/schedule` |
+| `payments.blade.php` | My Payments | `/{school}/student/payments` |
+| `progress.blade.php` | My Progress | `/{school}/student/progress` |
+| `profile.blade.php` | Student Profile | `/{school}/student/profile` |
+
+### Guest Views (`resources/views/school/guest/`)
+| File | Page Title | URL Pattern |
+|------|------------|-------------|
+| `dashboard.blade.php` | Guest Dashboard | `/{school}/guest/dashboard` |
+| `courses.blade.php` | Available Courses | `/{school}/guest/courses` |
+| `enrollment-requests.blade.php` | My Requests | `/{school}/guest/enrollment-requests` |
+
+### Auth Views (`resources/views/school/`)
+| File | Page Title | URL Pattern |
+|------|------------|-------------|
+| `login.blade.php` | School Login | `/{school}/login` |
+| `register.blade.php` | Register | `/{school}/register` |
+| `verify-email.blade.php` | Verify Email | `/{school}/verify-email` |
+| `password/forgot.blade.php` | Forgot Password | `/{school}/forgot-password` |
+| `password/reset.blade.php` | Reset Password | `/{school}/reset-password/{token}` |
+
+### Layout & Partial Views
+| File | Purpose |
+|------|---------|
+| `layouts/app.blade.php` | Main layout with sidebar |
+| `layouts/ajax.blade.php` | AJAX response layout |
+| `partials/*.blade.php` | Reusable components |
+| `exports/*.blade.php` | PDF export templates |
+| `emails/*.blade.php` | Email templates |
 
 ---
 
@@ -567,3 +692,281 @@ php artisan optimize
 ---
 
 **Remember:** This is a multi-tenant system. Every query should be school-specific!
+
+---
+
+## 🎨 CSS CLASS REFERENCE (Common UI Elements)
+
+### Buttons
+| Class | Purpose | Example |
+|-------|---------|---------|
+| `.btn-primary` | Primary action | Save, Submit |
+| `.btn-secondary` | Secondary action | Cancel, Back |
+| `.btn-danger` | Destructive action | Delete, Remove |
+| `.btn-action` | Icon/small button | Edit, View |
+| `.btn-export` | Export buttons | PDF, Excel |
+| `.quick-action-btn` | Dashboard quick actions | New Student |
+
+### Cards & Containers
+| Class | Purpose |
+|-------|---------|
+| `.admin-container` | Main page container |
+| `.card` | Generic card component |
+| `.stat-card` | Dashboard statistics card |
+| `.page-header` | Page title section |
+| `.page-title` | Main heading |
+| `.page-subtitle` | Subheading text |
+
+### Tables
+| Class | Purpose |
+|-------|---------|
+| `.data-table` | Main data table |
+| `.table-row` | Table row |
+| `.table-cell` | Table cell |
+| `.status-badge` | Status indicator |
+
+### Forms
+| Class | Purpose |
+|-------|---------|
+| `.form-group` | Form field wrapper |
+| `.form-label` | Input label |
+| `.form-input` | Text input |
+| `.form-select` | Select dropdown |
+| `.form-textarea` | Textarea |
+
+### Modals
+| Class | Purpose |
+|-------|---------|
+| `.modal-backdrop` | Background overlay |
+| `.modal` | Modal container |
+| `.modal-content` | Modal body |
+| `.modal-header` | Modal header |
+| `.modal-close` | Close button |
+
+### Status Badges
+| Class | Status |
+|-------|--------|
+| `.badge-success` | Active, Approved, Completed |
+| `.badge-warning` | Pending, In Progress |
+| `.badge-danger` | Inactive, Rejected, Cancelled |
+| `.badge-info` | Guest, Scheduled |
+
+### Flash Messages
+| Class | Type |
+|-------|------|
+| `.flash-message.success` | Success message |
+| `.flash-message.error` | Error message |
+| `.flash-message.warning` | Warning message |
+
+---
+
+## 🧪 COMPLETE SYSTEM TESTING GUIDE
+
+### Step 1: Environment Setup
+```powershell
+# Navigate to project
+cd "C:\Users\jcsdi\Documents\Driving School Management System\DrivingApp"
+
+# Install dependencies (if needed)
+composer install
+npm install
+
+# Clear all caches
+php artisan cache:clear
+php artisan config:clear
+php artisan view:clear
+php artisan route:clear
+
+# Run migrations
+php artisan migrate
+
+# Seed test data
+php artisan db:seed --class=QuickTestSeeder
+
+# Build frontend
+npm run build
+
+# Start server
+php artisan serve
+```
+
+### Step 2: Test Credentials
+
+**Test School (slug: test-school)**
+| Role | Email | Password | URL |
+|------|-------|----------|-----|
+| Admin | admin@test.com | password | /test-school/admin/ |
+| Instructor | instructor@test.com | password | /test-school/instructor/ |
+| Instructor 2 | instructor2@test.com | password | /test-school/instructor/ |
+| Student | student@test.com | password | /test-school/student/dashboard |
+| Student 2 | student2@test.com | password | /test-school/student/dashboard |
+| Guest | guest@test.com | password | /test-school/guest/dashboard |
+| Guest 2 | guest2@test.com | password | /test-school/guest/dashboard |
+
+**System Admin**
+| Email | Password | URL |
+|-------|----------|-----|
+| systemadmin@gmail.com | password | /system-admin/ |
+
+**Smart Driving School (slug: smart-driving)**
+| Role | Email | Password |
+|------|-------|----------|
+| Admin | schooladmin@gmail.com | password |
+| Instructor | instructor1@smart.com | password |
+| Student | student1@smart.com | password |
+
+### Step 3: Feature Testing Checklist
+
+#### Authentication ✅
+- [ ] Login with correct credentials
+- [ ] Login with wrong password (should show "X attempts remaining")
+- [ ] Attempt 5 failed logins (should lock account for 30 minutes)
+- [ ] Password reset request
+- [ ] Email verification for new guests
+
+#### Admin Dashboard ✅
+- [ ] View dashboard statistics
+- [ ] Navigate to User Management
+- [ ] Navigate to Courses
+- [ ] Navigate to Schedules
+- [ ] Navigate to Settings
+
+#### User Management ✅
+- [ ] View students list
+- [ ] View instructors list
+- [ ] Create new instructor
+- [ ] Toggle user status (active/inactive)
+- [ ] Edit user details
+
+#### Course Management ✅
+- [ ] View courses list
+- [ ] Create new course (theoretical/practical)
+- [ ] Edit course details
+- [ ] Delete course
+
+#### Enrollment Management ✅
+- [ ] View pending enrollment requests
+- [ ] Approve enrollment request (guest → student)
+- [ ] Reject enrollment request
+- [ ] Bulk approve multiple requests
+- [ ] Bulk reject multiple requests
+
+#### Theoretical Completion ✅
+- [ ] View students awaiting theoretical completion
+- [ ] Mark student as passed
+- [ ] View passed students list
+
+#### Session Management ✅
+- [ ] View logged sessions
+- [ ] Create new session (as instructor)
+- [ ] Check for scheduling conflicts
+
+#### Export Features ✅
+- [ ] Export students as PDF
+- [ ] Export students as Excel
+- [ ] Export enrollments as PDF
+- [ ] Export student progress as PDF
+
+#### Instructor Features ✅
+- [ ] View instructor dashboard
+- [ ] View my students
+- [ ] Log new session/progress
+- [ ] View schedule
+
+#### Student Features ✅
+- [ ] View student dashboard
+- [ ] View enrolled courses
+- [ ] View progress
+- [ ] Update profile
+
+#### Guest Features ✅
+- [ ] Register as new guest
+- [ ] View available courses
+- [ ] Submit enrollment request
+- [ ] View my enrollment requests
+
+### Step 4: Security Testing
+
+#### Password Strength ✅
+Test these passwords (should all FAIL):
+- `password` (no uppercase, number, or special char)
+- `Password` (no number or special char)
+- `Password1` (no special char)
+- `Pass1!` (too short)
+
+Test this password (should PASS):
+- `Password123!`
+
+#### Account Lockout ✅
+1. Go to login page
+2. Enter valid email with wrong password
+3. Repeat 5 times
+4. On 5th attempt: Account locked for 30 minutes
+5. Try again: See "locked for X minutes" message
+
+### Step 5: Error Scenarios
+
+- [ ] Access admin route without login → Redirect to login
+- [ ] Access student route as guest → Redirect to guest dashboard
+- [ ] Access other school's data → 404 error
+- [ ] Submit invalid form data → Validation errors shown
+
+---
+
+## 📦 SHARING THE PROJECT (Google Drive/USB)
+
+### Before Sharing - Delete These Files:
+```
+/bootstrap/cache/*.php     ← CRITICAL! Contains absolute paths
+/storage/framework/views/* 
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/logs/*.log
+/vendor/                   ← Optional (they can run composer install)
+/node_modules/             ← Optional (they can run npm install)
+.env                       ← Share .env.example instead
+```
+
+### After Receiving - Run These Commands:
+```powershell
+# Install PHP dependencies
+composer install
+
+# Install Node dependencies
+npm install
+
+# Copy environment file
+copy .env.example .env
+
+# Generate app key
+php artisan key:generate
+
+# Edit .env with correct database settings
+# DB_DATABASE=drivingapp
+# DB_USERNAME=root
+# DB_PASSWORD=
+
+# Run migrations
+php artisan migrate
+
+# Seed test data
+php artisan db:seed --class=QuickTestSeeder
+
+# Build frontend
+npm run build
+
+# Start server
+php artisan serve
+```
+
+---
+
+## 🎯 DEADLINE: FEBRUARY 20, 2026
+
+### Priority Tasks:
+1. ✅ Security features (password strength, account lockout)
+2. ✅ Scheduling conflict prevention
+3. ⚠️ UI testing on all pages
+4. ⚠️ Mobile responsiveness check
+5. ⚠️ Error handling review
+6. ⚠️ Final documentation
