@@ -11,6 +11,7 @@ class ModuleLesson extends Model
     use HasFactory;
 
     protected $fillable = [
+        'school_id',
         'module_id',
         'title',
         'content',
@@ -23,6 +24,14 @@ class ModuleLesson extends Model
         'attachments' => 'array',
         'sort_order' => 'integer',
     ];
+
+    /**
+     * Get the school
+     */
+    public function school(): BelongsTo
+    {
+        return $this->belongsTo(School::class);
+    }
 
     /**
      * Get the module that owns this lesson

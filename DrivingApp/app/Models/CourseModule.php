@@ -12,6 +12,7 @@ class CourseModule extends Model
     use HasFactory;
 
     protected $fillable = [
+        'school_id',
         'course_id',
         'title',
         'description',
@@ -22,6 +23,14 @@ class CourseModule extends Model
     protected $casts = [
         'sort_order' => 'integer',
     ];
+
+    /**
+     * Get the school
+     */
+    public function school(): BelongsTo
+    {
+        return $this->belongsTo(School::class);
+    }
 
     /**
      * Get the course that owns this module

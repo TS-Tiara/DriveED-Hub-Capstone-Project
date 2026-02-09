@@ -43,7 +43,7 @@
                                 <div>
                                     <strong>{{ $sessionCompletion->enrollment->student->name }}</strong>
                                     <br>
-                                    <small class="text-muted">{{ $sessionCompletion->enrollment->course->course_name }}</small>
+                                    <small class="text-muted">{{ $sessionCompletion->enrollment->course->title ?? $sessionCompletion->enrollment->course->course_name ?? 'N/A' }}</small>
                                 </div>
                             </div>
                         </div>

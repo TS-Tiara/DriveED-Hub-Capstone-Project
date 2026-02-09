@@ -193,20 +193,28 @@
     <!-- Statistics Cards -->
     <div class="stats-grid">
         <div class="stat-card info">
-            <div class="stat-label">Scheduled</div>
-            <div class="stat-value">{{ $bookings->where('status', 'scheduled')->count() }}</div>
+            <div class="stat-content">
+                <div class="stat-label">Scheduled</div>
+                <div class="stat-value">{{ $bookings->where('status', 'scheduled')->count() }}</div>
+            </div>
         </div>
         <div class="stat-card success">
-            <div class="stat-label">Completed</div>
-            <div class="stat-value">{{ $bookings->where('status', 'completed')->count() }}</div>
+            <div class="stat-content">
+                <div class="stat-label">Completed</div>
+                <div class="stat-value">{{ $bookings->where('status', 'completed')->count() }}</div>
+            </div>
         </div>
         <div class="stat-card danger">
-            <div class="stat-label">Cancelled</div>
-            <div class="stat-value">{{ $bookings->where('status', 'cancelled')->count() }}</div>
+            <div class="stat-content">
+                <div class="stat-label">Cancelled</div>
+                <div class="stat-value">{{ $bookings->where('status', 'cancelled')->count() }}</div>
+            </div>
         </div>
         <div class="stat-card warning">
-            <div class="stat-label">Pending</div>
-            <div class="stat-value">{{ $bookings->where('status', 'pending')->count() }}</div>
+            <div class="stat-content">
+                <div class="stat-label">Pending</div>
+                <div class="stat-value">{{ $bookings->where('status', 'pending')->count() }}</div>
+            </div>
         </div>
     </div>
 

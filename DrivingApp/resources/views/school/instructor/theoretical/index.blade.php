@@ -51,7 +51,7 @@
                                 <span class="user-name">{{ $enrollment->student->name }}</span>
                             </div>
                         </td>
-                        <td>{{ $enrollment->course->course_name }}</td>
+                        <td>{{ $enrollment->course->title ?? $enrollment->course->course_name ?? 'N/A' }}</td>
                         <td>
                             <span class="badge bg-primary">
                                 {{ $enrollment->total_hours ?? 0 }} hours

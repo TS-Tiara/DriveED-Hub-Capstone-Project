@@ -12,6 +12,9 @@
             <a href="{{ $schoolRoute('admin.userManagement') }}" class="nav-item {{ request()->routeIs('schools.admin.userManagement') || request()->routeIs('schools.admin.students*') || request()->routeIs('schools.admin.instructors*') ? 'active' : '' }}">
                 User Management
             </a>
+            <a href="{{ $schoolRoute('admin.enrollments.index') }}" class="nav-item {{ request()->routeIs('schools.admin.enrollments*') ? 'active' : '' }}">
+                📋 Enrollments
+            </a>
             <a href="{{ $schoolRoute('admin.schedules') }}" class="nav-item {{ request()->routeIs('schools.admin.schedules*') ? 'active' : '' }}">
                 Schedules
             </a>
@@ -43,8 +46,8 @@
             <a href="{{ $schoolRoute('instructor.students.index') }}" class="nav-item {{ request()->routeIs('schools.instructor.students*') ? 'active' : '' }}">
                 My Students
             </a>
-            <a href="{{ $schoolRoute('instructor.grades') }}" class="nav-item {{ request()->routeIs('schools.instructor.grades') ? 'active' : '' }}">
-                Grades
+            <a href="{{ $schoolRoute('instructor.sessions.index') }}" class="nav-item {{ request()->routeIs('schools.instructor.sessions*') ? 'active' : '' }}">
+                📝 Session Logger
             </a>
             <a href="{{ $schoolRoute('instructor.reports') }}" class="nav-item {{ request()->routeIs('schools.instructor.reports') ? 'active' : '' }}">
                 Reports
@@ -56,8 +59,8 @@
             <a href="{{ $schoolRoute('student.dashboard') }}" class="nav-item {{ request()->routeIs('schools.student.dashboard') ? 'active' : '' }}">
                 Dashboard
             </a>
-            <a href="{{ $schoolRoute('student.courses.index') }}" class="nav-item {{ request()->routeIs('schools.student.courses*') ? 'active' : '' }}">
-                Courses
+            <a href="{{ $schoolRoute('student.my-course') }}" class="nav-item {{ request()->routeIs('schools.student.my-course*') ? 'active' : '' }}">
+                📚 My Course
             </a>
             <a href="{{ $schoolRoute('student.schedule') }}" class="nav-item {{ request()->routeIs('schools.student.schedule') ? 'active' : '' }}">
                 My Schedule

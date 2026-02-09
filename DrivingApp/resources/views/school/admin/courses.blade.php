@@ -120,7 +120,6 @@
         overflow: hidden;
         box-shadow: 0 2px 12px rgba(0,0,0,0.08);
         transition: all 0.3s ease;
-        border-left: 4px solid {{ $settings->primary_color ?? '#667eea' }};
         position: relative;
     }
 
@@ -984,7 +983,7 @@
         <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
             <div class="export-buttons">
                 <a href="{{ $schoolRoute('admin.exports.courses.pdf') }}" class="btn-export btn-export-pdf">
-                    📄 Export PDF
+                    Export PDF
                 </a>
             </div>
             <div class="view-toggle">

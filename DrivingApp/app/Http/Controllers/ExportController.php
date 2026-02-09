@@ -13,7 +13,7 @@ use App\Models\TimeSlot;
 use App\Models\SessionCompletion;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
-use Excel;
+use Illuminate\Support\Facades\Response;
 
 class ExportController extends Controller
 {
@@ -111,7 +111,7 @@ class ExportController extends Controller
     }
 
     /**
-     * Export students list as Excel
+     * Export students list as Excel (CSV format)
      */
     public function studentsExcel(School $school)
     {
@@ -126,33 +126,36 @@ class ExportController extends Controller
             ->orderBy('name')
             ->get();
 
-        $data = [
-            ['Name', 'Email', 'Contact', 'Status', 'Active Enrollments', 'Registration Date']
-        ];
-
-        foreach ($students as $student) {
-            $activeEnrollments = $student->enrollments->where('status', 'approved')->count();
-            $data[] = [
-                $student->name,
-                $student->email,
-                $student->contact,
-                $student->status,
-                $activeEnrollments,
-                $student->created_at->format('Y-m-d'),
-            ];
-        }
-
-        Excel::create('students-' . date('Y-m-d'), function($excel) use ($data, $school) {
-            $excel->sheet('Students', function($sheet) use ($data, $school) {
-                $sheet->setTitle('Students List');
-                $sheet->fromArray($data, null, 'A1', false, false);
-                $sheet->row(1, function($row) {
-                    $row->setFontWeight('bold');
-                    $row->setBackground('#667eea');
-                    $row->setFontColor('#ffffff');
-                });
-            });
-        })->export('xlsx');
+        $headers = ['Name', 'Email', 'Phone', 'Status', 'Active Enrollments', 'Enrollment Date', 'Registration Date'];
+        
+        $callback = function() use ($students, $headers) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, $headers);
+            
+            foreach ($students as $student) {
+                $activeEnrollments = $student->enrollments->where('status', 'approved')->count();
+                $status = $student->status ?? ($activeEnrollments > 0 ? 'active' : 'inactive');
+                $enrollmentDate = $student->enrollment_date ? \Carbon\Carbon::parse($student->enrollment_date)->format('Y-m-d') : 'N/A';
+                $registrationDate = $student->created_at->format('Y-m-d');
+                
+                fputcsv($file, [
+                    $student->name,
+                    $student->email,
+                    $student->contact ?? 'N/A',
+                    ucfirst($status),
+                    $activeEnrollments,
+                    $enrollmentDate,
+                    $registrationDate,
+                ]);
+            }
+            
+            fclose($file);
+        };
+        
+        return Response::stream($callback, 200, [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="students-' . date('Y-m-d') . '.csv"',
+        ]);
     }
 
     /**
@@ -179,7 +182,7 @@ class ExportController extends Controller
     }
 
     /**
-     * Export instructors list as Excel
+     * Export instructors list as Excel (CSV format)
      */
     public function instructorsExcel(School $school)
     {
@@ -192,33 +195,32 @@ class ExportController extends Controller
             ->orderBy('name')
             ->get();
 
-        $data = [
-            ['Name', 'Email', 'Contact', 'License Number', 'Status', 'Availability', 'Registration Date']
-        ];
-
-        foreach ($instructors as $instructor) {
-            $data[] = [
-                $instructor->name,
-                $instructor->email,
-                $instructor->contact,
-                $instructor->license_number ?? 'N/A',
-                $instructor->status,
-                $instructor->availability ?? 'N/A',
-                $instructor->created_at->format('Y-m-d'),
-            ];
-        }
-
-        Excel::create('instructors-' . date('Y-m-d'), function($excel) use ($data, $school) {
-            $excel->sheet('Instructors', function($sheet) use ($data, $school) {
-                $sheet->setTitle('Instructors List');
-                $sheet->fromArray($data, null, 'A1', false, false);
-                $sheet->row(1, function($row) {
-                    $row->setFontWeight('bold');
-                    $row->setBackground('#667eea');
-                    $row->setFontColor('#ffffff');
-                });
-            });
-        })->export('xlsx');
+        $headers = ['Name', 'Email', 'Phone', 'License Number', 'Status', 'Availability', 'Registration Date'];
+        
+        $callback = function() use ($instructors, $headers) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, $headers);
+            
+            foreach ($instructors as $instructor) {
+                $status = $instructor->status ?? 'active';
+                fputcsv($file, [
+                    $instructor->name,
+                    $instructor->email,
+                    $instructor->contact ?? 'N/A',
+                    $instructor->license_number ?? 'N/A',
+                    ucfirst($status),
+                    $instructor->availability ?? 'N/A',
+                    $instructor->created_at->format('Y-m-d'),
+                ]);
+            }
+            
+            fclose($file);
+        };
+        
+        return Response::stream($callback, 200, [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="instructors-' . date('Y-m-d') . '.csv"',
+        ]);
     }
 
     /**
@@ -277,7 +279,7 @@ class ExportController extends Controller
     }
 
     /**
-     * Export payments as Excel
+     * Export payments as Excel (CSV format)
      */
     public function paymentsExcel(School $school)
     {
@@ -292,33 +294,31 @@ class ExportController extends Controller
           ->orderBy('created_at', 'desc')
           ->get();
 
-        $data = [
-            ['Date', 'Student', 'Course', 'Amount', 'Method', 'Reference', 'Status']
-        ];
-
-        foreach ($payments as $payment) {
-            $data[] = [
-                $payment->paid_on ? $payment->paid_on->format('Y-m-d') : 'N/A',
-                $payment->booking->student->name ?? 'N/A',
-                $payment->booking->course->title ?? 'N/A',
-                number_format($payment->amount, 2),
-                ucfirst($payment->method ?? 'N/A'),
-                $payment->reference ?? '-',
-                ucfirst($payment->status),
-            ];
-        }
-
-        Excel::create('payments-' . date('Y-m-d'), function($excel) use ($data, $school) {
-            $excel->sheet('Payments', function($sheet) use ($data, $school) {
-                $sheet->setTitle('Payments List');
-                $sheet->fromArray($data, null, 'A1', false, false);
-                $sheet->row(1, function($row) {
-                    $row->setFontWeight('bold');
-                    $row->setBackground('#667eea');
-                    $row->setFontColor('#ffffff');
-                });
-            });
-        })->export('xlsx');
+        $headers = ['Date', 'Student', 'Course', 'Amount', 'Method', 'Reference', 'Status'];
+        
+        $callback = function() use ($payments, $headers) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, $headers);
+            
+            foreach ($payments as $payment) {
+                fputcsv($file, [
+                    $payment->paid_on ? $payment->paid_on->format('Y-m-d') : 'N/A',
+                    $payment->booking->student->name ?? 'N/A',
+                    $payment->booking->course->title ?? 'N/A',
+                    number_format($payment->amount, 2),
+                    ucfirst($payment->method ?? 'N/A'),
+                    $payment->reference ?? '-',
+                    ucfirst($payment->status),
+                ]);
+            }
+            
+            fclose($file);
+        };
+        
+        return Response::stream($callback, 200, [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="payments-' . date('Y-m-d') . '.csv"',
+        ]);
     }
 
     /**

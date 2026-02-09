@@ -201,8 +201,9 @@ Route::prefix('{school:slug}')
                 Route::patch('/bookings/{booking}/status', [BookingController::class, 'updateStatus'])->name('bookings.updateStatus');
 
                 // Payments management (no separate create/edit views - handled via modals)
-                Route::resource('payments', PaymentController::class)->except(['create', 'edit']);
+                // Statistics route MUST be before the resource to avoid conflict with payments/{payment}
                 Route::get('/payments/statistics', [PaymentController::class, 'statistics'])->name('payments.statistics');
+                Route::resource('payments', PaymentController::class)->except(['create', 'edit']);
             });
 
             // New LMS routes WITHOUT ajax middleware (full page views)
@@ -371,6 +372,9 @@ Route::prefix('{school:slug}')
 
                 // Student schedule
                 Route::get('/schedule', [StudentController::class, 'schedule'])->name('schedule');
+                
+                // Student's current course (single enrollment view)
+                Route::get('/my-course', [StudentController::class, 'myCourse'])->name('my-course');
             });
 
             // New LMS routes WITHOUT ajax middleware

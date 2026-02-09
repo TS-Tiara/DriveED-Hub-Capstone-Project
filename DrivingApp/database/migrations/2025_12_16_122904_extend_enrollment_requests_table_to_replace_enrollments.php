@@ -30,25 +30,27 @@ return new class extends Migration
             $table->text('theoretical_pass_notes')->nullable()->after('theoretical_passed_by');
         });
         
-        // Migrate data from enrollments to enrollment_requests
-        DB::statement("
-            UPDATE enrollment_requests er
-            INNER JOIN enrollments e ON e.enrollment_request_id = er.id
-            SET 
-                er.enrolled_at = e.enrolled_at,
-                er.completed_at = e.completed_at,
-                er.theoretical_passed = e.theoretical_passed,
-                er.theoretical_passed_at = e.theoretical_passed_at,
-                er.theoretical_passed_by = e.theoretical_passed_by,
-                er.theoretical_pass_notes = e.theoretical_pass_notes,
-                er.status = CASE
-                    WHEN e.status = 'completed' THEN 'completed'
-                    WHEN e.status = 'cancelled' THEN 'cancelled'
-                    WHEN e.status = 'active' THEN 'approved'
-                    ELSE er.status
-                END
-            WHERE e.enrollment_request_id = er.id
-        ");
+        // Migrate data from enrollments to enrollment_requests (MySQL only)
+        if (DB::connection()->getDriverName() !== 'sqlite') {
+            DB::statement("
+                UPDATE enrollment_requests er
+                INNER JOIN enrollments e ON e.enrollment_request_id = er.id
+                SET 
+                    er.enrolled_at = e.enrolled_at,
+                    er.completed_at = e.completed_at,
+                    er.theoretical_passed = e.theoretical_passed,
+                    er.theoretical_passed_at = e.theoretical_passed_at,
+                    er.theoretical_passed_by = e.theoretical_passed_by,
+                    er.theoretical_pass_notes = e.theoretical_pass_notes,
+                    er.status = CASE
+                        WHEN e.status = 'completed' THEN 'completed'
+                        WHEN e.status = 'cancelled' THEN 'cancelled'
+                        WHEN e.status = 'active' THEN 'approved'
+                        ELSE er.status
+                    END
+                WHERE e.enrollment_request_id = er.id
+            ");
+        }
     }
 
     /**

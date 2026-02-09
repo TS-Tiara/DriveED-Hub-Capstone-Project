@@ -45,7 +45,29 @@ class TheoreticalCompletionController extends Controller
             return $enrollment;
         });
         
-        return view($viewPath, compact('school', 'enrollments'));
+        // Get passed students for the "Passed Students" tab
+        $passedStudents = Student::where('school_id', $school->id)
+            ->where('has_passed_theoretical', true)
+            ->with(['enrollments' => function($query) {
+                $query->whereHas('course', function($q) {
+                    $q->where('course_type', 'theoretical');
+                })->where('status', 'completed');
+            }])
+            ->latest('updated_at')
+            ->paginate(20, ['*'], 'passed_page');
+        
+        // Calculate stats for passed students
+        $totalPassed = Student::where('school_id', $school->id)
+            ->where('has_passed_theoretical', true)
+            ->count();
+        
+        $passedThisMonth = Student::where('school_id', $school->id)
+            ->where('has_passed_theoretical', true)
+            ->whereMonth('updated_at', now()->month)
+            ->whereYear('updated_at', now()->year)
+            ->count();
+        
+        return view($viewPath, compact('school', 'enrollments', 'passedStudents', 'totalPassed', 'passedThisMonth'));
     }
 
     /**
@@ -191,7 +213,7 @@ class TheoreticalCompletionController extends Controller
             abort(403, 'Unauthorized');
         }
         
-        $students = Student::where('school_id', $school->id)
+        $passedStudents = Student::where('school_id', $school->id)
             ->where('has_passed_theoretical', true)
             ->with(['enrollments' => function($query) {
                 $query->whereHas('course', function($q) {
@@ -201,7 +223,7 @@ class TheoreticalCompletionController extends Controller
             ->latest('updated_at')
             ->paginate(20);
         
-        return view($viewPath, compact('school', 'students'));
+        return view($viewPath, compact('school', 'passedStudents'));
     }
 
     /**

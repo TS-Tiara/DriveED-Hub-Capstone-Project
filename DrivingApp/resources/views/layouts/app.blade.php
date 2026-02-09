@@ -1275,8 +1275,7 @@
                     {{-- Student Navigation --}}
                     <a href="{{ $schoolRoute('student.dashboard') }}" class="nav-item" data-page="dashboard">Dashboard</a>
                     <a href="{{ $schoolRoute('student.schedule') }}" class="nav-item" data-page="schedule">My Schedule</a>
-                    <a href="{{ $schoolRoute('student.enrollments.index') }}" class="nav-item" data-page="enrollments">My Enrollments</a>
-                    </a>
+                    <a href="{{ $schoolRoute('student.my-course') }}" class="nav-item" data-page="my-course">My Enrollment</a>
                     <a href="{{ $schoolRoute('student.courses.index') }}" class="nav-item" data-page="courses">Browse Courses</a>
                     <a href="{{ $schoolRoute('student.payments.index') }}" class="nav-item" data-page="payments">My Payments</a>
                     <a href="{{ $schoolRoute('student.progress.index') }}" class="nav-item" data-page="progress">My Progress</a>
@@ -2129,34 +2128,38 @@
         
         // Initialize AJAX navigation
         document.addEventListener('DOMContentLoaded', function() {
-            // Handle sidebar navigation clicks
-            document.addEventListener('click', function(e) {
-                const navItem = e.target.closest('.nav-item');
-                if (navItem && navItem.getAttribute('href') && !navItem.getAttribute('href').startsWith('#')) {
-                    e.preventDefault();
-                    const url = navItem.getAttribute('href');
-                    loadContent(url);
-                    
-                    // Close sidebar on mobile after navigation
-                    if (window.innerWidth <= 768) {
-                        closeSidebar();
-                    }
-                }
-            });
-            
             // Set initial state
             const currentUrl = window.location.pathname;
             history.replaceState({url: currentUrl}, '', currentUrl);
             updateActiveNavItem(currentUrl);
         });
         
-        // Close sidebar when clicking outside on mobile
+        // Handle sidebar navigation clicks - Use capture phase to ensure it runs first
         document.addEventListener('click', function(e) {
-            // Close sidebar
-            if (sidebarOpen && !e.target.closest('.sidebar') && !e.target.closest('.burger-menu')) {
-                if (window.innerWidth <= 768) {
+            const navItem = e.target.closest('.nav-item');
+            if (navItem && navItem.getAttribute('href') && !navItem.getAttribute('href').startsWith('#')) {
+                e.preventDefault();
+                e.stopPropagation(); // Stop event from bubbling to prevent sidebar close
+                const url = navItem.getAttribute('href');
+                loadContent(url);
+                
+                // Close sidebar after navigation
+                setTimeout(() => {
                     closeSidebar();
-                }
+                }, 100);
+            }
+        }, true); // Use capture phase
+        
+        // Close sidebar when clicking outside
+        document.addEventListener('click', function(e) {
+            // Don't close if clicking on a nav-item (handled above)
+            if (e.target.closest('.nav-item')) {
+                return;
+            }
+            
+            // Close sidebar if clicking outside
+            if (sidebarOpen && !e.target.closest('.sidebar') && !e.target.closest('.burger-menu')) {
+                closeSidebar();
             }
             
             // Close profile dropdown

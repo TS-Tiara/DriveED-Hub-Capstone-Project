@@ -57,7 +57,7 @@
                                             data-hours-required="{{ $enrollment->course->hours_required }}"
                                             data-hours-completed="{{ $enrollment->total_hours }}"
                                             {{ old('enrollment_id') == $enrollment->id || (isset($selectedEnrollment) && $selectedEnrollment->id == $enrollment->id) ? 'selected' : '' }}>
-                                        {{ $enrollment->student->user->name ?? 'N/A' }} - {{ $enrollment->course->title }}
+                                        {{ $enrollment->learner->name ?? $enrollment->student->name ?? 'N/A' }} - {{ $enrollment->course->title }}
                                         ({{ number_format($enrollment->total_hours, 1) }}/{{ number_format($enrollment->course->hours_required, 1) }} hrs)
                                     </option>
                                 @endforeach

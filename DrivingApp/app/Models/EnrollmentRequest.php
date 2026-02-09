@@ -23,6 +23,7 @@ class EnrollmentRequest extends Model
         'requested_license_type',
         'experience_level',
         'credentials_file_path',
+        'verification_notes',
         // New enrollment fields
         'enrolled_at',
         'completed_at',
@@ -175,4 +176,58 @@ class EnrollmentRequest extends Model
             'theoretical_pass_notes' => $notes,
         ]);
     }
+
+    /**
+     * Check if this request requires student permit verification
+     * (Only practical courses require permit)
+     */
+    public function requiresPermitVerification(): bool
+    {
+        return $this->course && $this->course->course_type === 'practical';
+    }
+
+    /**
+     * Check if student permit has been uploaded
+     */
+    public function hasStudentPermit(): bool
+    {
+        return !empty($this->credentials_file_path);
+    }
+
+    /**
+     * Get the student permit file URL
+     */
+    public function getStudentPermitUrl(): ?string
+    {
+        if (!$this->hasStudentPermit()) {
+            return null;
+        }
+        return asset('storage/' . $this->credentials_file_path);
+    }
+
+    /**
+     * Check if learner has completed any theoretical course at this school
+     */
+    public function learnerHasCompletedTheoreticalHere(): bool
+    {
+        return $this->learner && $this->learner->has_passed_theoretical;
+    }
+
+    /**
+     * Get learner's completed courses at this school (for internal history)
+     */
+    public function getLearnerCourseHistory()
+    {
+        if (!$this->learner) {
+            return collect();
+        }
+
+        return Enrollment::where('student_id', $this->learner_id)
+            ->where('school_id', $this->school_id)
+            ->where('status', 'completed')
+            ->with('course')
+            ->orderBy('completed_at', 'desc')
+            ->get();
+    }
 }
+

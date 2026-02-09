@@ -72,6 +72,22 @@ class Course extends Model
     }
 
     /**
+     * Get the modules for the course.
+     */
+    public function modules(): HasMany
+    {
+        return $this->hasMany(CourseModule::class)->orderBy('sort_order');
+    }
+
+    /**
+     * Get the enrollments for the course.
+     */
+    public function enrollments(): HasMany
+    {
+        return $this->hasMany(Enrollment::class);
+    }
+
+    /**
      * Scope a query to only include courses for a specific school.
      */
     public function scopeForSchool($query, $schoolId)
@@ -115,22 +131,6 @@ class Course extends Model
             return null; // Unlimited
         }
         return max(0, $this->max_students - $this->enrolledStudentsCount());
-    }
-
-    /**
-     * Get all modules for this course
-     */
-    public function modules(): HasMany
-    {
-        return $this->hasMany(CourseModule::class)->orderBy('sort_order');
-    }
-
-    /**
-     * Get all enrollments for this course
-     */
-    public function enrollments(): HasMany
-    {
-        return $this->hasMany(EnrollmentRequest::class);
     }
 
     /**

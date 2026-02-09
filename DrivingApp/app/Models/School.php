@@ -73,6 +73,11 @@ class School extends Model
         return $this->hasMany(ScheduleInstructor::class);
     }
 
+    public function progress()
+    {
+        return $this->hasMany(Progress::class);
+    }
+
     public function schoolSetting()
     {
         return $this->hasOne(SchoolSetting::class);

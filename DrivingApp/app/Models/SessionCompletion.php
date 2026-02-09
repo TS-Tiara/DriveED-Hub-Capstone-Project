@@ -11,6 +11,7 @@ class SessionCompletion extends Model
     use HasFactory;
 
     protected $fillable = [
+        'school_id',
         'enrollment_id',
         'instructor_id',
         'session_type',
@@ -31,11 +32,19 @@ class SessionCompletion extends Model
     ];
 
     /**
+     * Get the school
+     */
+    public function school(): BelongsTo
+    {
+        return $this->belongsTo(School::class);
+    }
+
+    /**
      * Get the enrollment that owns this session
      */
     public function enrollment(): BelongsTo
     {
-        return $this->belongsTo(EnrollmentRequest::class);
+        return $this->belongsTo(Enrollment::class);
     }
 
     /**

@@ -12,6 +12,11 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Skip ENUM modification for SQLite (testing)
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            return;
+        }
+        
         // Alter the category column to include 'booking' and 'schedule' categories
         DB::statement("ALTER TABLE system_logs MODIFY COLUMN category ENUM(
             'database', 
@@ -36,6 +41,11 @@ return new class extends Migration
      */
     public function down(): void
     {
+        // Skip ENUM modification for SQLite (testing)
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            return;
+        }
+        
         // Revert to original enum values
         DB::statement("ALTER TABLE system_logs MODIFY COLUMN category ENUM(
             'database', 

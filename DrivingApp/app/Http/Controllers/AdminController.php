@@ -136,11 +136,11 @@ class AdminController extends Controller
         try {
             // Select only needed columns to reduce memory footprint
             $students = Student::where('school_id', $school->id)
-                ->select('id', 'school_id', 'name', 'email', 'contact_number', 'address', 'status', 'role', 'created_at')
+                ->select('id', 'school_id', 'name', 'email', 'contact', 'address', 'status', 'role', 'created_at')
                 ->orderBy('name')
                 ->get();
             $instructors = Instructor::where('school_id', $school->id)
-                ->select('id', 'school_id', 'name', 'email', 'contact_number', 'license_number', 'status', 'availability', 'created_at')
+                ->select('id', 'school_id', 'name', 'email', 'contact', 'license_number', 'status', 'availability', 'created_at')
                 ->orderBy('name')
                 ->get();
 
@@ -283,14 +283,7 @@ class AdminController extends Controller
                 'update_student'
             );
 
-            // Redirect back to the referring page or default to students
-            $referrer = request()->headers->get('referer');
-            if ($referrer && str_contains($referrer, 'user-management')) {
-                return redirect()->route('schools.admin.userManagement', $school)
-                    ->with('success', 'Student updated successfully!');
-            }
-            
-            return redirect()->route('schools.admin.students', $school)
+            return redirect()->route('schools.admin.userManagement', $school)
                 ->with('success', 'Student updated successfully!');
         } catch (\Illuminate\Validation\ValidationException $e) {
             DB::rollBack();
@@ -320,14 +313,7 @@ class AdminController extends Controller
         $student->status = $student->status === 'active' ? 'inactive' : 'active';
         $student->save();
 
-        // Redirect back to the referring page or default to students
-        $referrer = request()->headers->get('referer');
-        if ($referrer && str_contains($referrer, 'user-management')) {
-            return redirect()->route('schools.admin.userManagement', $school)
-                ->with('success', 'Student status updated successfully!');
-        }
-
-        return redirect()->route('schools.admin.students', $school)
+        return redirect()->route('schools.admin.userManagement', $school)
             ->with('success', 'Student status updated successfully!');
     }
 
@@ -363,14 +349,7 @@ class AdminController extends Controller
 
         $instructor->update($data);
 
-        // Redirect back to the referring page or default to instructors
-        $referrer = request()->headers->get('referer');
-        if ($referrer && str_contains($referrer, 'user-management')) {
-            return redirect()->route('schools.admin.userManagement', $school)
-                ->with('success', 'Instructor updated successfully!');
-        }
-
-        return redirect()->route('schools.admin.instructors', $school)
+        return redirect()->route('schools.admin.userManagement', $school)
             ->with('success', 'Instructor updated successfully!');
     }
 
@@ -383,14 +362,7 @@ class AdminController extends Controller
         $instructor->status = $instructor->status === 'active' ? 'inactive' : 'active';
         $instructor->save();
 
-        // Redirect back to the referring page or default to instructors
-        $referrer = request()->headers->get('referer');
-        if ($referrer && str_contains($referrer, 'user-management')) {
-            return redirect()->route('schools.admin.userManagement', $school)
-                ->with('success', 'Instructor status updated successfully!');
-        }
-
-        return redirect()->route('schools.admin.instructors', $school)
+        return redirect()->route('schools.admin.userManagement', $school)
             ->with('success', 'Instructor status updated successfully!');
     }
 
@@ -403,14 +375,7 @@ class AdminController extends Controller
         $instructor->availability = $instructor->availability === 'available' ? 'unavailable' : 'available';
         $instructor->save();
 
-        // Redirect back to the referring page or default to instructors
-        $referrer = request()->headers->get('referer');
-        if ($referrer && str_contains($referrer, 'user-management')) {
-            return redirect()->route('schools.admin.userManagement', $school)
-                ->with('success', 'Instructor availability updated successfully!');
-        }
-
-        return redirect()->route('schools.admin.instructors', $school)
+        return redirect()->route('schools.admin.userManagement', $school)
             ->with('success', 'Instructor availability updated successfully!');
     }
 

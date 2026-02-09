@@ -70,7 +70,7 @@
                                 </span>
                             </div>
                         </td>
-                        <td>{{ $session->enrollment->course->course_name }}</td>
+                        <td>{{ $session->enrollment->course->title ?? $session->enrollment->course->course_name ?? 'N/A' }}</td>
                         <td>
                             <span class="badge bg-{{ $session->session_type === 'theoretical' ? 'info' : 'primary' }}">
                                 {{ ucfirst($session->session_type) }}

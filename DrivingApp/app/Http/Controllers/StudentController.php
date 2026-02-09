@@ -7,6 +7,7 @@ use App\Models\School;
 use App\Models\Booking;
 use App\Models\Progress;
 use App\Models\Student;
+use App\Models\Enrollment;
 use App\Models\EnrollmentRequest;
 use App\Models\Course;
 use App\Rules\StrongPassword;
@@ -246,6 +247,83 @@ class StudentController extends Controller
             'groupedAvailableSchedules' => $groupedAvailableSchedules,
             'queueEnabled' => $queueEnabled,
             'queueDays' => $queueDays,
+        ]);
+    }
+
+    /**
+     * Display the student's current active course (My Course page)
+     */
+    public function myCourse(School $school)
+    {
+        $student = Auth::guard('student')->user();
+        
+        // Get active enrollment (student is locked to one course at a time)
+        $activeEnrollment = Enrollment::where('student_id', $student->id)
+            ->where('school_id', $school->id)
+            ->where('status', 'active')
+            ->with(['course.modules.lessons', 'sessionCompletions'])
+            ->first();
+        
+        // If no active enrollment in new system, check enrollment requests
+        if (!$activeEnrollment) {
+            $approvedRequest = EnrollmentRequest::where('learner_id', $student->id)
+                ->where('school_id', $school->id)
+                ->where('status', 'approved')
+                ->with(['course.modules.lessons', 'sessionCompletions'])
+                ->first();
+        } else {
+            $approvedRequest = null;
+        }
+        
+        // Get pending enrollment requests
+        $pendingRequests = EnrollmentRequest::where('learner_id', $student->id)
+            ->where('school_id', $school->id)
+            ->where('status', 'pending')
+            ->with('course')
+            ->get();
+        
+        // Get available courses for enrollment
+        $availableCourses = Course::where('school_id', $school->id)
+            ->where('status', 'active')
+            ->get();
+        
+        // Calculate progress
+        $hoursCompleted = 0;
+        $hoursRequired = 0;
+        $progressPercentage = 0;
+        $course = null;
+        $modules = collect();
+        $sessionCompletions = collect();
+        
+        if ($activeEnrollment) {
+            $course = $activeEnrollment->course;
+            $hoursCompleted = $activeEnrollment->hours_completed ?? 0;
+            $hoursRequired = $course->hours_required ?? $course->duration_hours ?? 0;
+            $progressPercentage = $hoursRequired > 0 ? min(100, round(($hoursCompleted / $hoursRequired) * 100)) : 0;
+            $modules = $course->modules ?? collect();
+            $sessionCompletions = $activeEnrollment->sessionCompletions ?? collect();
+        } elseif ($approvedRequest) {
+            $course = $approvedRequest->course;
+            $hoursCompleted = $approvedRequest->total_hours ?? 0;
+            $hoursRequired = $course->hours_required ?? $course->duration_hours ?? 0;
+            $progressPercentage = $hoursRequired > 0 ? min(100, round(($hoursCompleted / $hoursRequired) * 100)) : 0;
+            $modules = $course->modules ?? collect();
+            $sessionCompletions = $approvedRequest->sessionCompletions ?? collect();
+        }
+        
+        return view($school->resolveView('student.my-course'), [
+            'school' => $school,
+            'student' => $student,
+            'activeEnrollment' => $activeEnrollment,
+            'approvedRequest' => $approvedRequest,
+            'pendingRequests' => $pendingRequests,
+            'availableCourses' => $availableCourses,
+            'course' => $course,
+            'modules' => $modules,
+            'sessionCompletions' => $sessionCompletions,
+            'hoursCompleted' => $hoursCompleted,
+            'hoursRequired' => $hoursRequired,
+            'progressPercentage' => $progressPercentage,
         ]);
     }
 }

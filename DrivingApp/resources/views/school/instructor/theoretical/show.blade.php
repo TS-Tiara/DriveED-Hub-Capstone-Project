@@ -40,7 +40,7 @@
                         <p class="text-muted mb-0">{{ $enrollment->student->email }}</p>
                     </div>
                     <hr>
-                    <p><strong>Course:</strong> {{ $enrollment->course->course_name }}</p>
+                    <p><strong>Course:</strong> {{ $enrollment->course->title ?? $enrollment->course->course_name ?? 'N/A' }}</p>
                     <p><strong>Status:</strong> 
                         <span class="badge bg-{{ $enrollment->status === 'active' ? 'success' : 'secondary' }}">
                             {{ ucfirst($enrollment->status) }}

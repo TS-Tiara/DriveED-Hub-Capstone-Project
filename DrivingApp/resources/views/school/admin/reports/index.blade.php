@@ -45,38 +45,12 @@
         margin-bottom: 30px; 
     }
     
-    .metric-card { 
-        <?php if($useGradient): ?>
-            background: linear-gradient(135deg, <?php echo $primaryColor; ?> 0%, <?php echo $secondaryColor; ?> 100%);
-        <?php else: ?>
-            background: <?php echo $primaryColor; ?>;
-        <?php endif; ?>
-        padding: 20px; 
-        border-radius: 10px; 
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-        color: white;
-        transition: transform 0.2s ease;
+    /* Use shared admin-styles for stat cards */
+    .stat-card .subtitle { 
+        color: #6b7280; 
+        font-size: 0.8rem; 
+        margin-top: 5px; 
     }
-    
-    .metric-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    }
-    
-    .metric-card.success { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
-    .metric-card.warning { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
-    .metric-card.info { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
-    
-    .metric-card h3 { 
-        color: rgba(255, 255, 255, 0.9); 
-        font-size: 0.875rem; 
-        font-weight: 500; 
-        margin-bottom: 8px; 
-        text-transform: uppercase; 
-    }
-    
-    .metric-card .value { font-size: 2rem; font-weight: bold; color: white; }
-    .metric-card .subtitle { color: rgba(255, 255, 255, 0.8); font-size: 0.8rem; margin-top: 5px; }
     
     /* Collapsible Section Styles */
     .collapsible-section {
@@ -382,26 +356,36 @@
 
     <!-- Key Metrics Summary (Always Visible) -->
     <div class="metrics-grid">
-        <div class="metric-card info">
-            <h3>Total Students</h3>
-            <div class="value">{{ $analytics['total_students'] }}</div>
-            <div class="subtitle">{{ $analytics['active_students'] }} active</div>
+        <div class="stat-card info">
+            <div class="stat-content">
+                <div class="stat-label">Total Students</div>
+                <div class="stat-value">{{ $analytics['total_students'] }}</div>
+                <div class="subtitle">{{ $analytics['active_students'] }} active</div>
+            </div>
         </div>
-        <div class="metric-card success">
-            <h3>Total Instructors</h3>
-            <div class="value">{{ $analytics['total_instructors'] }}</div>
+        <div class="stat-card growth">
+            <div class="stat-content">
+                <div class="stat-label">Total Instructors</div>
+                <div class="stat-value">{{ $analytics['total_instructors'] }}</div>
+            </div>
         </div>
-        <div class="metric-card warning">
-            <h3>This Month Bookings</h3>
-            <div class="value">{{ $analytics['total_bookings_this_month'] }}</div>
+        <div class="stat-card pending">
+            <div class="stat-content">
+                <div class="stat-label">This Month Bookings</div>
+                <div class="stat-value">{{ $analytics['total_bookings_this_month'] }}</div>
+            </div>
         </div>
-        <div class="metric-card success">
-            <h3>Completed Lessons</h3>
-            <div class="value">{{ $analytics['completed_lessons_this_month'] }}</div>
+        <div class="stat-card active">
+            <div class="stat-content">
+                <div class="stat-label">Completed Lessons</div>
+                <div class="stat-value">{{ $analytics['completed_lessons_this_month'] }}</div>
+            </div>
         </div>
-        <div class="metric-card {{ $analytics['completion_rate'] >= 70 ? 'success' : 'warning' }}">
-            <h3>Completion Rate</h3>
-            <div class="value">{{ number_format($analytics['completion_rate'], 1) }}%</div>
+        <div class="stat-card {{ $analytics['completion_rate'] >= 70 ? 'active' : 'pending' }}">
+            <div class="stat-content">
+                <div class="stat-label">Completion Rate</div>
+                <div class="stat-value">{{ number_format($analytics['completion_rate'], 1) }}%</div>
+            </div>
         </div>
     </div>
 

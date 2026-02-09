@@ -26,7 +26,11 @@ return new class extends Migration
                 'email', 
                 'payment', 
                 'api', 
-                'system', 
+                'system',
+                'booking',
+                'schedule',
+                'user_management',
+                'course',
                 'other'
             ])->default('other');
             $table->string('action')->nullable(); // e.g., 'update_settings', 'create_booking', etc.

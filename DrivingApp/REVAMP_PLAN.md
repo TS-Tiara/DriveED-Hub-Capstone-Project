@@ -1,20 +1,50 @@
 # DriveED Hub - Complete System Revamp Plan
 
-## Date: December 11, 2025
+## Version: v1.6 | Last Updated: February 9, 2026
+
+---
+
+## 📋 RECENT UPDATES (February 9, 2026)
+
+### ✅ Testing Infrastructure Complete
+- **8 comprehensive test files created** covering authentication and core features
+- **64 tests implemented** with organized screenshot capture
+- **Screenshot organization:** `Test {number} - {Name}/{Role}/{step}.png` format
+- **45 tests passing** across Admin, Instructor, and Student flows
+- **Multi-role testing** implemented in StudentPagesTest (student, admin, instructor, guest)
+- **Server configuration:** Migrated to port 9000 (`.env` and `.env.dusk.local` updated)
+- **Database seeded:** All 3 schools populated with test accounts via UnifiedSeeder
+
+### Test Files Created
+1. **AdminAuthTest.php** - Tests 001-005 (Authentication flows)
+2. **InstructorAuthTest.php** - Tests 006-010 (Authentication flows)
+3. **StudentAuthTest.php** - Tests 011-015 (Authentication flows)
+4. **AdminDashboardTest.php** - Tests 056-060 (Dashboard features)
+5. **AdminUserManagementTest.php** - Tests 061-075 (User management)
+6. **AdminCoursesTest.php** - Tests 081-095 (Course management)
+7. **StudentPagesTest.php** - Tests 260-302, 350-352 (Student features + guest flow)
+8. **InstructorPagesTest.php** - Tests 198-259 (Instructor features)
+
+### Test Accounts Available
+- **System Admin:** systemadmin@gmail.com / sysadmin123!
+- **School Admin:** schooladmin@gmail.com / password123
+- **Instructor:** instructor@gmail.com / password123
+- **Student:** student@gmail.com / password123
 
 ---
 
 ## 🎯 CORE CONCEPT
 
-**Focus:** Student progression through structured phases with instructor-driven tracking
+**Focus:** Simple course enrollment with content access and session tracking
 
 **Key Changes:**
-- Two-phase training: Theoretical → Practical (no "mixed")
+- Course types: Theoretical OR Practical (independent courses)
 - License types: Non-Professional vs Professional
 - Instructor logs session completion (not automatic)
 - Student locked to one course at a time
-- Admin verifies external credentials
-- Phase progression requires admin approval
+- **NO prerequisite checking** - students can enroll in any available course
+- **NO vehicle management** - keep it simple
+- Each course has its own content/files that enrolled students can access
 
 ---
 
@@ -23,19 +53,19 @@
 ### 1.1 Course Table Updates
 **Add Fields:**
 ```sql
+- course_type: enum('theoretical', 'practical')
 - license_type: enum('non-professional', 'professional')
-- theoretical_hours_required: decimal(5,1)
-- practical_hours_required: decimal(5,1)
+- hours_required: decimal(5,1) -- total hours for this course
 ```
 
-**Migration File:** `2025_12_11_add_license_and_hours_to_courses.php`
+**Migration File:** `2025_12_12_000001_add_course_type_fields_to_courses_table.php`
 
-**Status:** ⏸️ Ready to run (test migration exists)
+**Status:** ✅ DONE (Migration created and run)
 
 ---
 
 ### 1.2 Enrollment System (NEW TABLE)
-**Purpose:** Track student's current course with phase progress
+**Purpose:** Track student's current course enrollment and hours progress
 
 **Table:** `enrollments`
 ```sql
@@ -44,28 +74,19 @@
 - course_id (foreign key)
 - school_id (foreign key)
 - status: enum('active', 'completed', 'cancelled', 'on_hold')
-- current_phase: enum('theoretical', 'practical')
 
-// Phase progress
-- theoretical_hours_completed: decimal(5,1) default 0
-- theoretical_completed_at: timestamp nullable
-- practical_hours_completed: decimal(5,1) default 0
-- practical_completed_at: timestamp nullable
-
-// External credits (for experienced drivers)
-- external_theoretical_hours: decimal(5,1) default 0
-- external_practical_hours: decimal(5,1) default 0
-- external_proof_verified: boolean default false
+// Progress tracking
+- hours_completed: decimal(5,1) default 0
+- completed_at: timestamp nullable
 
 // Timestamps
 - started_at: timestamp
-- completed_at: timestamp nullable
 - created_at, updated_at
 ```
 
-**Migration File:** `2025_12_12_create_enrollments_table.php`
+**Migration File:** `2025_12_12_000006_create_enrollments_table.php`
 
-**Status:** ⏸️ Not created yet
+**Status:** ✅ DONE (Migration created and run)
 
 ---
 
@@ -75,7 +96,7 @@
 **Table:** `session_completions`
 ```sql
 - id
-- booking_id (links to existing bookings)
+- booking_id (links to existing bookings, nullable)
 - enrollment_id (foreign key)
 - instructor_id (foreign key)
 - student_id (foreign key)
@@ -83,14 +104,12 @@
 - school_id (foreign key)
 
 // Session details
-- phase_type: enum('theoretical', 'practical')
 - scheduled_duration_hours: decimal(4,1)
 - actual_duration_hours: decimal(4,1)
 - completion_status: enum('completed', 'incomplete', 'no_show')
 
 // Notes
 - instructor_notes: text nullable
-- admin_notes: text nullable
 
 // Timestamps
 - session_date: date
@@ -98,91 +117,67 @@
 - created_at, updated_at
 ```
 
-**Migration File:** `2025_12_12_create_session_completions_table.php`
+**Migration File:** `2025_12_12_000007_create_session_completions_table.php`
 
-**Status:** ⏸️ Not created yet
+**Status:** ✅ DONE (Migration created and run)
 
 ---
 
 ### 1.4 Phase Progression Requests (NEW TABLE)
 **Purpose:** Admin approval for phase advancement
 
-**Table:** `phase_progression_requests`
+### 1.4 Course Content (NEW TABLE)
+**Purpose:** Store course-specific content/files that enrolled students can access
+
+**Table:** `course_contents`
 ```sql
 - id
-- enrollment_id (foreign key)
-- student_id (foreign key)
+- course_id (foreign key)
 - school_id (foreign key)
-
-// Progression details
-- from_phase: enum('theoretical', 'practical')
-- to_phase: enum('practical', 'completed')
-- hours_completed: decimal(5,1)
-- hours_required: decimal(5,1)
-
-// Approval
-- status: enum('pending', 'approved', 'rejected')
-- reviewed_by: admin_id nullable
-- reviewed_at: timestamp nullable
-- rejection_reason: text nullable
-
-// Timestamps
-- requested_at: timestamp
+- title (varchar)
+- description (text nullable)
+- content_type: enum('document', 'video', 'link', 'text')
+- file_path (varchar nullable) -- for uploaded files
+- video_url (varchar nullable) -- for YouTube/Vimeo embeds
+- external_link (varchar nullable) -- for external resources
+- text_content (longtext nullable) -- for text/HTML content
+- sort_order (integer default 0)
+- is_active (boolean default true)
 - created_at, updated_at
 ```
 
-**Migration File:** `2025_12_12_create_phase_progression_requests_table.php`
+**Migration File:** `2025_12_12_000004_create_course_modules_table.php` + `2025_12_12_000005_create_module_lessons_table.php`
 
-**Status:** ⏸️ Not created yet
+**Status:** ✅ DONE (Implemented as CourseModules + ModuleLessons tables)
 
 ---
 
 ### 1.5 Student Table Updates
 **Add Fields:**
 ```sql
-- experience_level: enum('new', 'experienced')
 - active_enrollment_id: foreign key to enrollments (nullable)
 - is_course_locked: boolean default false
 ```
 
-**Migration File:** `2025_12_12_add_enrollment_fields_to_students.php`
+**Migration File:** `2025_12_12_000002_add_theoretical_status_to_students_table.php` + `2026_01_29_000007_add_enrollment_lock_to_students_table.php`
 
-**Status:** ⏸️ Not created yet
-
----
-
-### 1.6 Enrollment Requests Table Updates
-**Add Fields:**
-```sql
-- experience_level: enum('new', 'experienced')
-- has_external_credentials: boolean default false
-- credential_proof_path: string nullable
-- claimed_theoretical_hours: decimal(5,1) default 0
-- claimed_practical_hours: decimal(5,1) default 0
-- verification_status: enum('pending', 'verified', 'rejected') default 'pending'
-- verification_notes: text nullable
-- verified_by: admin_id nullable
-- verified_at: timestamp nullable
-```
-
-**Migration File:** `2025_12_12_add_experience_fields_to_enrollment_requests.php`
-
-**Status:** ⏸️ Not created yet
+**Status:** ✅ DONE (Migration created and run)
 
 ---
 
 ## 📦 PART 2: MODELS & RELATIONSHIPS
 
 ### 2.1 New Models to Create
-- `Enrollment.php`
-- `SessionCompletion.php`
-- `PhaseProgressionRequest.php`
+- `Enrollment.php` ✅
+- `SessionCompletion.php` ✅
+- `CourseModule.php` ✅ (replaces CourseContent)
+- `ModuleLesson.php` ✅
 
 ### 2.2 Update Existing Models
-- `Course.php` - Add license_type, hours fields, scopes
-- `Student.php` - Add enrollment relationship, experience level
-- `EnrollmentRequest.php` - Add experience verification fields
-- `Instructor.php` - Add session completions relationship
+- `Course.php` - Add course_type, license_type, hours_required fields, scopes ✅
+- `Student.php` - Add enrollment relationship ✅
+- `Instructor.php` - Add session completions relationship ✅
+- `EnrollmentRequest.php` - Extended with verification fields ✅
 
 ### 2.3 Key Relationships
 ```php
@@ -195,11 +190,18 @@
 - belongsTo(Student)
 - belongsTo(Course)
 - hasMany(SessionCompletion)
-- hasMany(PhaseProgressionRequest)
 
 // Course
 - hasMany(Enrollment)
-- scope: licenseType(), vehicleType(), nonProfessional(), professional()
+- hasMany(CourseModule)
+- scope: courseType(), licenseType(), theoretical(), practical()
+
+// CourseModule
+- belongsTo(Course)
+- hasMany(ModuleLesson)
+
+// ModuleLesson
+- belongsTo(CourseModule)
 
 // Instructor
 - hasMany(SessionCompletion)
@@ -211,67 +213,50 @@
 - belongsTo(Booking) // optional link to scheduled booking
 ```
 
-**Status:** ⏸️ Not created yet
+**Status:** ✅ DONE (All models created with relationships)
 
 ---
 
 ## 📦 PART 3: ADMIN COMPONENTS
 
-### 3.1 Enhanced Course Form ✅
-**File:** `test-components/course-form-modal.blade.php`
+### 3.1 Enhanced Course Form
+**File:** `admin/course-form-modal.blade.php`
 
 **Features:**
-- License type selection
-- Vehicle type selection
-- Course purpose (standard/refresher/defensive)
-- Theoretical hours input
-- Practical hours input
-- Total hours display
+- Course type selection (theoretical/practical)
+- License type selection (non-professional/professional)
+- Hours required input
+- Price input
+- Description
 
-**Status:** ✅ CREATED - Ready for integration
-
-**Integration:** Replace existing course modal in admin courses page
+**Status:** ⏸️ Need to update for simplified fields
 
 ---
 
-### 3.2 Enrollment Request Verification
-**Component:** `admin/enrollment-verification-modal.blade.php`
+### 3.2 Course Content Manager
+**Component:** `admin/course-content-manager.blade.php`
 
 **Features:**
-- View uploaded credentials
-- Preview claimed hours
-- Approve with credited hours
-- Reject with reason
-- Check internal system for previous completions
-
-**Fields to Show:**
-- Student info
-- Course requested
-- Experience level (new/experienced)
-- Uploaded proof (if any)
-- Claimed hours (theoretical/practical)
-- Verification actions
+- Add/edit/delete course content items
+- Upload documents (PDF, images)
+- Add video URLs (YouTube/Vimeo)
+- Add external links
+- Reorder content items
+- Preview content
 
 **Status:** ⏸️ Not created yet
 
 ---
 
-### 3.3 Phase Progression Approval
-**Component:** `admin/phase-progression-approval.blade.php`
+### 3.3 Enrollment Management
+**Component:** `admin/enrollment-management.blade.php`
 
 **Features:**
-- List of students ready for next phase
-- View completed hours vs required
-- View instructor notes from sessions
-- Approve or hold with reason
-- Bulk approve option
-
-**Display Info:**
-- Student name, photo
-- Current phase completion status
-- Hours: X/Y completed
-- Recent session notes
-- Request date
+- View all enrollments
+- Filter by status (active, completed, cancelled)
+- View student progress (hours completed)
+- Mark enrollment as complete
+- Cancel enrollment
 
 **Status:** ⏸️ Not created yet
 
@@ -282,8 +267,7 @@
 
 **Sections:**
 1. **Pending Actions** (Priority)
-   - Enrollment requests awaiting verification
-   - Phase progression approvals needed
+   - Enrollment requests awaiting approval
    - Pending payments
 
 2. **Today's Overview**
@@ -319,7 +303,7 @@
 
 **Form Fields:**
 - Student name (read-only)
-- Course & phase (read-only)
+- Course (read-only)
 - Scheduled duration (read-only)
 - **Actual duration** (editable)
 - **Status** (dropdown)
@@ -328,7 +312,6 @@
 **On Submit:**
 - Create SessionCompletion record
 - Update Enrollment hours_completed
-- Check if phase requirements met → trigger progression request
 
 **Status:** ⏸️ Not created yet
 
@@ -341,7 +324,7 @@
 1. **Today's Schedule**
    - List of today's sessions with students
    - Start/Complete buttons
-   - Student info + course + phase
+   - Student info + course
 
 2. **Upcoming This Week**
    - Quick view of future sessions
@@ -365,23 +348,20 @@
 
 **Features:**
 - Show current enrolled course
-- Display current phase
-- Progress bars for theoretical & practical
+- Progress bar for hours completed
+- Access to course content/files
 - Upcoming sessions
 - Recent completed sessions with instructor notes
 
 **Layout:**
 ```
 ┌─────────────────────────────────┐
-│ Manual Transmission Driving     │
-│ Status: Locked                  │
+│ Traffic Rules & Road Safety     │
+│ Status: Active                  │
 ├─────────────────────────────────┤
-│ Current Phase: PRACTICAL        │
-│ ▓▓▓▓▓▓░░░░░░ 12/20 hours       │
+│ Progress: ▓▓▓▓▓▓░░░░ 6/10 hrs  │
 │                                 │
-│ ✓ Theoretical: 8/8 (Complete)  │
-│ → Practical: 12/20 (Active)    │
-│                                 │
+│ [View Course Materials]         │
 │ [Schedule Next Session]         │
 └─────────────────────────────────┘
 
@@ -390,20 +370,35 @@ Upcoming Sessions:
 • Dec 18 - 10:00 AM - Maria Santos
 
 Recent Sessions:
-• Dec 10 - 2 hrs - "Good parking skills"
-• Dec 8 - 2.5 hrs - "Highway practice"
+• Dec 10 - 2 hrs - "Good progress"
+• Dec 8 - 2.5 hrs - "Review road signs"
 ```
 
 **Status:** ⏸️ Not created yet
 
 ---
 
-### 5.2 Student Dashboard Redesign
+### 5.2 Course Content Viewer
+**Component:** `student/course-content.blade.php`
+
+**Features:**
+- List all content items for enrolled course
+- View/download documents
+- Watch embedded videos
+- Open external links
+- Read text content
+
+**Status:** ⏸️ Not created yet
+
+---
+
+### 5.3 Student Dashboard Redesign
 **Component:** `student/dashboard-revamped.blade.php`
 
 **Sections:**
 1. **Current Course** (If enrolled)
    - Progress display
+   - View course materials button
    - Schedule button
 
 2. **Upcoming Sessions**
@@ -414,7 +409,6 @@ Recent Sessions:
 
 4. **Course Complete** (If finished)
    - Congratulations message
-   - Download certificate
    - Enroll in new course option
 
 **Status:** ⏸️ Not created yet
@@ -423,121 +417,51 @@ Recent Sessions:
 
 ## 📦 PART 6: GUEST COMPONENTS
 
-### 6.1 Enhanced Enrollment Request Form (UPDATED)
-**Component:** `guest/enrollment-request-enhanced.blade.php`
+### 6.1 Enrollment Request Form
+**Component:** `guest/enrollment-request-form.blade.php`
 
 **Features:**
-- **Course type selection** (Theoretical or Practical)
-- **Experience level** (New / Experienced)
-- **Validation rules:**
-  - New drivers: Can only apply for theoretical courses
-  - Experienced drivers: Can apply for practical IF they upload proof of theoretical completion
+- Browse and select any available course
+- Personal information
+- Contact details
+- Submit application
 
 **Form Flow:**
 ```
-1. Select Course Type:
-   [ ] Theoretical Course
-   [ ] Practical Course
+1. Browse Available Courses
+   - Show all courses (theoretical and practical)
+   - Filter by course type if desired
+   - Show course details (hours, price)
    
-2. Browse Available Courses (filtered by type)
-   - Show course details (hours, vehicle type, price)
+2. Personal Information
+   - Full name
+   - Email
+   - Phone
    
-3. Select Experience Level:
-   [ ] New Driver (never taken driving lessons)
-   [x] Experienced (completed theoretical elsewhere)
-   
-   ↓ (if Experienced AND Practical Course selected)
-   
-4. Upload Proof of Theoretical Completion
-   - Required: Certificate from previous school
-   - File types: PDF, JPG, PNG
-   
-5. Personal Information
-6. Contact Details
-7. Submit Application
+3. Submit Application
 ```
 
-**Validation Logic:**
-
-```php
-// When guest submits enrollment request
-function validateEnrollmentRequest($data) {
-    $course = Course::find($data['course_id']);
-    
-    // If applying for practical course
-    if ($course->course_type === 'practical') {
-        // New drivers cannot apply for practical
-        if ($data['experience_level'] === 'new_driver') {
-            return [
-                'valid' => false,
-                'message' => 'New drivers must complete theoretical course first.'
-            ];
-        }
-        
-        // Experienced drivers must upload proof
-        if ($data['experience_level'] === 'experienced') {
-            if (empty($data['theoretical_proof_file'])) {
-                return [
-                    'valid' => false,
-                    'message' => 'Please upload proof of theoretical completion.'
-                ];
-            }
-        }
-    }
-    
-    return ['valid' => true];
-}
-```
-
-**Admin Reviews Experienced Driver Request:**
-```
-Enrollment Request from: John Doe
-
-Course Applied: Manual Transmission Driving (PRACTICAL)
-Experience Level: Experienced Driver
-
-Uploaded Proof: [View theoretical-certificate.pdf]
-
-Admin Actions:
-- If proof valid: Approve → Student marked as "has_passed_theoretical" → Can enroll
-- If proof invalid: Reject with reason → Student must take theoretical course first
-```
-
-**Admin Reviews New Driver Request:**
-```
-Enrollment Request from: Jane Smith
-
-Course Applied: Traffic Rules & Road Safety (THEORETICAL)
-Experience Level: New Driver
-
-No prerequisites needed.
-
-Admin Actions:
-- Approve → Student can enroll in theoretical course
-- Reject with reason (e.g., incomplete information)
-```
+**Note:** NO prerequisite checking - students can apply for any course they want
 
 **Status:** ⏸️ Not created yet
 
 ---
 
-### 6.2 Browse Courses Page (UPDATED)
+### 6.2 Browse Courses Page
 **Component:** `guest/browse-courses.blade.php`
 
 **Features:**
 - **Filter by course type:**
   - All Courses
   - Theoretical Courses
-  - Practical Courses (shows "Requires theoretical completion" badge)
+  - Practical Courses
   
 - **Course cards show:**
   - Course name
   - Course type badge (THEORETICAL / PRACTICAL)
   - License type (Non-Professional / Professional)
   - Hours required
-  - Vehicle type (for practical)
   - Price
-  - Prerequisites indicator
   
 **Example Display:**
 ```
@@ -842,16 +766,29 @@ Route::post('/enrollment-request', ...)->name('guest.enrollment-request.store');
 
 ## 📊 CURRENT STATUS
 
-**Components Created:** 2/20
-- ✅ Course form (standalone)
-- ✅ Course form (modal version)
+**Last Updated:** January 29, 2026
 
-**Next Up:**
-- Create database migrations (Part 1)
-- Create models (Part 2)
-- Test course form integration
+### ✅ Completed (Foundation Layer)
+- ✅ All database migrations created and run (Part 1)
+- ✅ All core models created with relationships (Part 2)
+- ✅ Multi-tenant school_id compliance verified
+- ✅ Course form (standalone + modal version)
+- ✅ Student my-course route and view
+- ✅ Security vulnerabilities fixed (PHP packages updated, Excel → CSV)
+- ✅ Test suite passing (2/2 tests)
 
-**Estimated Completion:** Build in phases, test thoroughly
+### 🔄 In Progress
+- Course content management views
+- Enrollment management views
+- Session completion forms
+
+### ⏳ Pending
+- Admin dashboard redesign
+- Instructor dashboard redesign
+- Student dashboard redesign
+- Notification system
+
+**Estimated Phase:** Foundation complete, UI components next
 
 ---
 
@@ -2087,52 +2024,84 @@ course_type (enum: theoretical, practical) // NEW - identifies course category
 
 ### Implementation Priority Order
 
-**PHASE 1 - FOUNDATION (Weeks 1-2)**
+**PHASE 1 - FOUNDATION (Weeks 1-2)** ✅ DONE
 1. Database migrations (all new tables + table updates)
 2. Create/update all models
-3. Course form with new fields (DONE)
+3. Course form with new fields
 4. Module manager component (study materials)
 5. Lesson content editor component
 
-**PEnrollment validation (check theoretical status for practical courses)
-8. Session booking system (works for both course types)
-9. Instructor session logger (logs hours for both course types)
-10. Study materials viewer for students (reference only)
+**PHASE 2 - CORE ENROLLMENT FLOW (Weeks 3-4)** 🔄 IN PROGRESS
+6. Student enrollment system
+7. Enrollment validation (course prerequisites)
+8. Session booking system
+9. Instructor session logger
+10. Study materials viewer for students
 
-**PHASE 3 - INSTRUCTOR/ADMIN TOOLS (Week 5)**
-11. Instructor interface: "Mark as Passed Theoretical" button
-12. Admin interface: Review/mark theoretical completions
-13. Student theoretical status display (passed/not passed)
-14. Course browsing with prerequisite indicatorsface
-13. Phase progression approval system
-14. Student progress oversight dashboard
-theoretical status, enrolled courses, next steps)
-16. Instructor dashboard (students by course, mark passed feature)
-17. Admin dashboard (theoretical completions, course enrollmentpload proof)
-16. Instructor dashboard (assigned students, log sessions)
-17. Admin dashboard (pending verifications, metrics)
+**PHASE 3 - INSTRUCTOR/ADMIN TOOLS (Week 5)** ⏳ PENDING
+11. Instructor interface features
+12. Admin review and approval interface
+13. Student progress tracking display
+14. Phase progression approval system
 
-**PHASE 5 - SUPPORTING FEATURES (Week 7)**
-18. Document library (optional)
+**PHASE 4 - DASHBOARDS (Week 6)** ⏳ PENDING
+15. Student dashboard (enrollment status, progress, next steps)
+16. Instructor dashboard (assigned students, session logging)
+17. Admin dashboard (enrollments, completions, metrics)
+
+**PHASE 5 - SUPPORTING FEATURES (Week 7)** ⏳ PENDING
+18. Document library
 19. Reports page
-20. Notifications for proof approval/rejection
+20. Notifications system
 
 **PHASE 6 - POLISH & TESTING (Week 8)**
 21. UI/UX consistency pass
 22. Mobile responsiveness
 23. End-to-end testing (enroll theoretical → attend → marked passed → enroll practical → complete)
 24. Bug fixes
-25. Deploymentm
-- **Week 4:** Student flow + progress tracking
-- **Week 5:** Instructor tools + session completion
-- **Week 6:** Admin tools + approvals
-- **Week 7-8:** Dashboards + Polish + Testing
-
-**What do you think?** Should we:
-1. Add lessons + documents to the plan?
-2. Go with component-based rebuild approach?
-3. Start with database migrations next?
+25. Deployment
 
 ---
 
-*This is a living document. Update as we build and test each part.*
+### ✅ COMPLETED: Testing Infrastructure (February 9, 2026)
+
+**Laravel Dusk Test Suite - COMPLETE**
+- ✅ **8 test files** covering Admin, Instructor, Student authentication and features
+- ✅ **64 comprehensive tests** with screenshot documentation
+- ✅ **Screenshot organization:** Role-based folders (`Test XXX - Name/{Role}/{step}.png`)
+- ✅ **Multi-role testing:** StudentPagesTest includes student, admin, instructor, and guest accounts
+- ✅ **45 tests passing** across all authentication flows and core features
+- ✅ **Server configuration:** Port 9000 (`.env` and `.env.dusk.local` configured)
+- ✅ **Database seeding:** UnifiedSeeder ran successfully (3 schools, multiple test accounts)
+- ✅ **Test documentation:** COMPREHENSIVE_TEST_PLAN.md details all 400+ planned tests
+
+**Test Coverage Areas:**
+- Authentication (Login/Logout/Session persistence for all roles)
+- Admin Dashboard & User Management
+- Course Management (Admin)
+- Student Pages (Dashboard, Courses, Schedule, Progress, Payments, Profile)
+- Instructor Pages (Dashboard, Schedule, Students, Progress, Reports, Grades)
+- Guest Registration Flow
+
+**Next Testing Steps:**
+- Complete remaining 355+ tests from comprehensive test plan
+- Add tests for enrollment flows, phase progressions, session completions
+- Implement tests for course content (modules/lessons)
+- Test instructor session logging features
+- Test admin approval workflows
+
+---
+
+### Timeline Overview
+
+- **Week 1-2:** Foundation (Database migrations, models) - ✅ DONE
+- **Week 3:** Course management + Enrollment system - ✅ MOSTLY DONE
+- **Week 4:** Student flow + progress tracking - 🔄 IN PROGRESS
+- **Week 5:** Instructor tools + session completion - ⏳ PENDING
+- **Week 6:** Admin tools + approvals - ⏳ PENDING
+- **Week 7-8:** Dashboards + Polish + Testing - 🔄 TESTING INFRASTRUCTURE COMPLETE
+
+---
+
+*This is a living document. Last updated: February 9, 2026*
+

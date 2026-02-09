@@ -90,7 +90,7 @@
     <div class="page-header">
         <div>
             <h1 class="page-title">Review Theoretical Completion</h1>
-            <p class="page-subtitle">{{ $enrollment->student->name }} - {{ $enrollment->course->course_name }}</p>
+            <p class="page-subtitle">{{ $enrollment->student->name }} - {{ $enrollment->course->title ?? 'N/A' }}</p>
         </div>
         <a href="{{ $schoolRoute('admin.theoretical.index') }}" class="btn btn-outline-secondary">
             <i class="fas fa-arrow-left me-2"></i>Back to List
@@ -148,7 +148,7 @@
                 <h5 class="card-title"><i class="fas fa-book me-2"></i>Course Details</h5>
                 <div class="info-row">
                     <span class="info-label">Course:</span>
-                    <span class="info-value fw-bold">{{ $enrollment->course->course_name }}</span>
+                    <span class="info-value fw-bold">{{ $enrollment->course->title ?? 'N/A' }}</span>
                 </div>
                 <div class="info-row">
                     <span class="info-label">Type:</span>

@@ -48,63 +48,16 @@
         margin-bottom: 30px;
     }
     
-    .stat-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    /* Active selection state for stat cards */
+    .stat-card.selected {
+        border-left-color: {{ $primaryColor }};
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+        transform: translateY(-3px);
+    }
+    
+    /* Override stat card cursor for clickable cards */
+    .stat-card[onclick] {
         cursor: pointer;
-        transition: all 0.3s ease;
-        border: 3px solid transparent;
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .stat-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-    }
-    
-    .stat-card.active {
-        border-color: #ffffff;
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
-        transform: scale(1.05);
-    }
-    
-    .stat-card.active::before {
-        content: '';
-        position: absolute;
-        top: 15px;
-        right: 15px;
-        width: 12px;
-        height: 12px;
-        background: #ffffff;
-        border-radius: 50%;
-        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
-    }
-    
-    .stat-card.pending {
-        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-    }
-    
-    .stat-card.approved {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    }
-    
-    .stat-card.rejected {
-        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-    }
-    
-    .stat-number {
-        font-size: 2.5rem;
-        font-weight: 700;
-        margin-bottom: 5px;
-    }
-    
-    .stat-label {
-        font-size: 0.95rem;
-        opacity: 0.9;
     }
     
     .requests-table {
@@ -350,12 +303,12 @@
     @endphp
     
     <div class="stats-grid">
-        <div class="stat-card active" onclick="filterRequests('all', this)" data-status="all">
+        <div class="stat-card" onclick="filterRequests('all', this)" data-status="all">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
                         <div class="stat-label">All Enrollments</div>
-                        <div class="stat-number">{{ $allRequests->count() }}</div>
+                        <div class="stat-value">{{ $allRequests->count() }}</div>
                     </div>
                     <div class="stat-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
@@ -370,7 +323,7 @@
                 <div class="stat-header">
                     <div>
                         <div class="stat-label">Pending Approval</div>
-                        <div class="stat-number">{{ $pendingRequests->count() }}</div>
+                        <div class="stat-value">{{ $pendingRequests->count() }}</div>
                     </div>
                     <div class="stat-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
@@ -380,12 +333,12 @@
                 </div>
             </div>
         </div>
-        <div class="stat-card approved" onclick="filterRequests('approved', this)" data-status="approved">
+        <div class="stat-card growth" onclick="filterRequests('approved', this)" data-status="approved">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
                         <div class="stat-label">Active</div>
-                        <div class="stat-number">{{ $approvedRequests->count() }}</div>
+                        <div class="stat-value">{{ $approvedRequests->count() }}</div>
                     </div>
                     <div class="stat-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
@@ -395,12 +348,12 @@
                 </div>
             </div>
         </div>
-        <div class="stat-card completed" onclick="filterRequests('completed', this)" data-status="completed">
+        <div class="stat-card active" onclick="filterRequests('completed', this)" data-status="completed">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
                         <div class="stat-label">Completed</div>
-                        <div class="stat-number">{{ $completedRequests->count() }}</div>
+                        <div class="stat-value">{{ $completedRequests->count() }}</div>
                     </div>
                     <div class="stat-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
@@ -410,12 +363,12 @@
                 </div>
             </div>
         </div>
-        <div class="stat-card cancelled" onclick="filterRequests('cancelled', this)" data-status="cancelled">
+        <div class="stat-card inactive" onclick="filterRequests('cancelled', this)" data-status="cancelled">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
                         <div class="stat-label">Cancelled</div>
-                        <div class="stat-number">{{ $cancelledRequests->count() }}</div>
+                        <div class="stat-value">{{ $cancelledRequests->count() }}</div>
                     </div>
                     <div class="stat-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
@@ -425,12 +378,12 @@
                 </div>
             </div>
         </div>
-        <div class="stat-card rejected" onclick="filterRequests('rejected', this)" data-status="rejected">
+        <div class="stat-card danger" onclick="filterRequests('rejected', this)" data-status="rejected">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
                         <div class="stat-label">Rejected</div>
-                        <div class="stat-number">{{ $rejectedRequests->count() }}</div>
+                        <div class="stat-value">{{ $rejectedRequests->count() }}</div>
                     </div>
                     <div class="stat-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
@@ -474,16 +427,16 @@
                     </svg>
                 </button>
                 <div id="exportMenu" style="display: none; position: absolute; top: 100%; right: 0; margin-top: 5px; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 180px; z-index: 10;">
-                    <a href="{{ route('exports.enrollments.pdf', ['school' => $school->slug]) }}" style="display: block; padding: 10px 15px; text-decoration: none; color: #374151; transition: background 0.2s;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='white'">
+                    <a href="{{ route('schools.admin.exports.enrollments.pdf', ['school' => $school->slug]) }}" style="display: block; padding: 10px 15px; text-decoration: none; color: #374151; transition: background 0.2s;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='white'">
                         All Enrollments
                     </a>
-                    <a href="{{ route('exports.enrollments.pdf', ['school' => $school->slug, 'status' => 'pending']) }}" style="display: block; padding: 10px 15px; text-decoration: none; color: #374151; transition: background 0.2s; border-top: 1px solid #e5e7eb;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='white'">
+                    <a href="{{ route('schools.admin.exports.enrollments.pdf', ['school' => $school->slug, 'status' => 'pending']) }}" style="display: block; padding: 10px 15px; text-decoration: none; color: #374151; transition: background 0.2s; border-top: 1px solid #e5e7eb;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='white'">
                         Pending Only
                     </a>
-                    <a href="{{ route('exports.enrollments.pdf', ['school' => $school->slug, 'status' => 'approved']) }}" style="display: block; padding: 10px 15px; text-decoration: none; color: #374151; transition: background 0.2s; border-top: 1px solid #e5e7eb;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='white'">
+                    <a href="{{ route('schools.admin.exports.enrollments.pdf', ['school' => $school->slug, 'status' => 'approved']) }}" style="display: block; padding: 10px 15px; text-decoration: none; color: #374151; transition: background 0.2s; border-top: 1px solid #e5e7eb;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='white'">
                         Active Only
                     </a>
-                    <a href="{{ route('exports.enrollments.pdf', ['school' => $school->slug, 'status' => 'completed']) }}" style="display: block; padding: 10px 15px; text-decoration: none; color: #374151; transition: background 0.2s; border-top: 1px solid #e5e7eb;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='white'">
+                    <a href="{{ route('schools.admin.exports.enrollments.pdf', ['school' => $school->slug, 'status' => 'completed']) }}" style="display: block; padding: 10px 15px; text-decoration: none; color: #374151; transition: background 0.2s; border-top: 1px solid #e5e7eb;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='white'">
                         Completed Only
                     </a>
                 </div>

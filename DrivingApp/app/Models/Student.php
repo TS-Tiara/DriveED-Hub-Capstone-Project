@@ -29,6 +29,8 @@ class Student extends Authenticatable
         'email_verified_at',
         'verification_code',
         'verification_code_expires_at',
+        'active_enrollment_id',
+        'is_course_locked',
     ];
 
     protected $hidden = [
@@ -45,6 +47,7 @@ class Student extends Authenticatable
             'theoretical_passed_at' => 'datetime',
             'email_verified_at' => 'datetime',
             'verification_code_expires_at' => 'datetime',
+            'is_course_locked' => 'boolean',
         ];
     }
 
@@ -56,6 +59,60 @@ class Student extends Authenticatable
     public function bookings()
     {
         return $this->hasMany(Booking::class);
+    }
+
+    /**
+     * Get the active enrollment for this student
+     */
+    public function activeEnrollment()
+    {
+        return $this->belongsTo(Enrollment::class, 'active_enrollment_id');
+    }
+
+    /**
+     * Get all enrollment records (from enrollments table)
+     */
+    public function enrollmentRecords()
+    {
+        return $this->hasMany(Enrollment::class);
+    }
+
+    /**
+     * Check if student is currently enrolled in a course
+     */
+    public function isEnrolledInCourse(): bool
+    {
+        return $this->is_course_locked && $this->active_enrollment_id !== null;
+    }
+
+    /**
+     * Check if student can enroll in a new course
+     */
+    public function canEnrollInNewCourse(): bool
+    {
+        return !$this->is_course_locked;
+    }
+
+    /**
+     * Lock student to a course
+     */
+    public function lockToCourse(Enrollment $enrollment): void
+    {
+        $this->update([
+            'active_enrollment_id' => $enrollment->id,
+            'is_course_locked' => true,
+        ]);
+    }
+
+    /**
+     * Unlock student from course (when course is completed)
+     */
+    public function unlockFromCourse(): void
+    {
+        $this->update([
+            'active_enrollment_id' => null,
+            'is_course_locked' => false,
+        ]);
     }
 
     public function progresses()

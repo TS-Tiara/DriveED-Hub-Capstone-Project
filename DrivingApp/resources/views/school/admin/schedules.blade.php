@@ -1084,7 +1084,7 @@
             </button>
             <div class="export-buttons">
                 <a href="{{ $schoolRoute('admin.exports.schedules.pdf') }}" class="btn-export btn-export-pdf">
-                    📄 Export PDF
+                    Export PDF
                 </a>
             </div>
         </div>

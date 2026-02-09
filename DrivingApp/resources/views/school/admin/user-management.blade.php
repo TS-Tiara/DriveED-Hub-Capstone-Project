@@ -158,7 +158,7 @@
     }
     
     .search-box::after {
-        content: "🔍";
+        content: "";
         position: absolute;
         right: 15px;
         top: 50%;
@@ -533,6 +533,11 @@
             padding: 12px;
         }
         
+        .action-bar > div:last-child {
+            flex-direction: column;
+            width: 100%;
+        }
+        
         .search-box {
             max-width: 100%;
             width: 100%;
@@ -541,6 +546,12 @@
         .export-buttons {
             width: 100%;
             justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn-export {
+            flex: 1;
+            min-width: 140px;
         }
         
         .btn-create {
@@ -669,20 +680,13 @@
     <div class="page-header">
         <div class="page-header-left">
             <h1 class="page-title">User Management</h1>
-        </div>
-        <div class="export-buttons">
-            <a href="{{ $schoolRoute('admin.exports.students.pdf') }}" class="btn-export btn-export-pdf">
-                📄 Students PDF
-            </a>
-            <a href="{{ $schoolRoute('admin.exports.students.excel') }}" class="btn-export btn-export-excel">
-                📊 Students Excel
-            </a>
+            <p style="color: #6b7280; font-size: 0.9rem; margin-top: 5px;">Manage students and instructors in your driving school</p>
         </div>
     </div>
     
     <!-- Statistics Cards -->
     <div class="stats-grid">
-        <div class="stat-card total active" onclick="filterUsers('all', this)">
+        <div class="stat-card total" onclick="filterUsers('all', this)">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -797,18 +801,14 @@
                 <input type="text" id="studentSearch" placeholder="Search students by name or email..." onkeyup="filterTable('studentSearch', 'studentsTable')">
             </div>
             <div style="display: flex; gap: 10px; align-items: center;">
-                <a href="{{ route('exports.students.pdf', $school->slug) }}" class="btn-create" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); text-decoration: none;">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 20px; height: 20px;">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>
-                    Export PDF
-                </a>
-                <a href="{{ route('exports.students.excel', $school->slug) }}" class="btn-create" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); text-decoration: none;">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 20px; height: 20px;">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
-                    Export Excel
-                </a>
+                <div class="export-buttons">
+                    <a href="{{ $schoolRoute('admin.exports.students.pdf') }}" class="btn-export btn-export-pdf" title="Export all students as PDF">
+                        Export Students (PDF)
+                    </a>
+                    <a href="{{ $schoolRoute('admin.exports.students.excel') }}" class="btn-export btn-export-excel" title="Export all students as Excel CSV">
+                        Export Students (Excel)
+                    </a>
+                </div>
                 <button class="btn-create" onclick="openCreateStudentModal()">
                     <i class="bi bi-person-plus"></i> Add New Student
                 </button>
@@ -833,7 +833,7 @@
                         <tr>
                             <td><strong>{{ $student->name }}</strong></td>
                             <td>{{ $student->email }}</td>
-                            <td>{{ $student->contact_number ?? 'N/A' }}</td>
+                            <td>{{ $student->contact ?? 'N/A' }}</td>
                             <td>{{ $student->address ?? 'N/A' }}</td>
                             <td>
                                 <span class="status-badge status-{{ $student->status }}">
@@ -841,7 +841,7 @@
                                 </span>
                             </td>
                             <td>
-                                <button class="btn-action btn-edit" onclick="editStudent({{ $student->id }}, '{{ $student->name }}', '{{ $student->email }}', '{{ $student->contact_number }}', '{{ $student->address }}')" >Edit</button>
+                                <button class="btn-action btn-edit" onclick="editStudent({{ $student->id }}, '{{ $student->name }}', '{{ $student->email }}', '{{ $student->contact }}', '{{ $student->address }}')" >Edit</button>
                                 <button class="btn-action btn-toggle" onclick="toggleStudentStatus({{ $student->id }}, '{{ $student->status }}')">
                                     {{ $student->status === 'active' ? 'Deactivate' : 'Activate' }}
                                 </button>
@@ -865,9 +865,19 @@
             <div class="search-box">
                 <input type="text" id="instructorSearch" placeholder="Search instructors by name or email..." onkeyup="filterTable('instructorSearch', 'instructorsTable')">
             </div>
-            <button class="btn-create" onclick="openCreateInstructorModal()">
-                <i class="bi bi-person-plus"></i> Add New Instructor
-            </button>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <div class="export-buttons">
+                    <a href="{{ $schoolRoute('admin.exports.instructors.pdf') }}" class="btn-export btn-export-pdf" title="Export all instructors as PDF">
+                        Export Instructors (PDF)
+                    </a>
+                    <a href="{{ $schoolRoute('admin.exports.instructors.excel') }}" class="btn-export btn-export-excel" title="Export all instructors as Excel CSV">
+                        Export Instructors (Excel)
+                    </a>
+                </div>
+                <button class="btn-create" onclick="openCreateInstructorModal()">
+                    <i class="bi bi-person-plus"></i> Add New Instructor
+                </button>
+            </div>
         </div>
         
         <div class="table-container">
@@ -888,7 +898,7 @@
                         <tr>
                             <td><strong>{{ $instructor->name }}</strong></td>
                             <td>{{ $instructor->email }}</td>
-                            <td>{{ $instructor->contact_number ?? 'N/A' }}</td>
+                            <td>{{ $instructor->contact ?? 'N/A' }}</td>
                             <td>{{ $instructor->license_number ?? 'N/A' }}</td>
                             <td>
                                 <span class="status-badge status-{{ $instructor->status }}">
@@ -896,7 +906,7 @@
                                 </span>
                             </td>
                             <td>
-                                <button class="btn-action btn-edit" onclick="editInstructor({{ $instructor->id }}, '{{ $instructor->name }}', '{{ $instructor->email }}', '{{ $instructor->contact_number }}', '{{ $instructor->license_number }}')">Edit</button>
+                                <button class="btn-action btn-edit" onclick="editInstructor({{ $instructor->id }}, '{{ $instructor->name }}', '{{ $instructor->email }}', '{{ $instructor->contact }}', '{{ $instructor->license_number }}')">Edit</button>
                                 <button class="btn-action btn-toggle" onclick="toggleInstructorStatus({{ $instructor->id }}, '{{ $instructor->status }}')">
                                     {{ $instructor->status === 'active' ? 'Deactivate' : 'Activate' }}
                                 </button>

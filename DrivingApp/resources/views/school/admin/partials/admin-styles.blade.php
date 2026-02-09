@@ -63,7 +63,7 @@
         background: white;
         padding: 24px;
         border-radius: 16px;
-        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
         transition: all 0.3s ease;
         border-left: 4px solid transparent;
         position: relative;
@@ -78,18 +78,37 @@
         width: 100px;
         height: 100px;
         border-radius: 50%;
-        opacity: 0.1;
+        opacity: 0;
         transition: all 0.3s ease;
     }
 
     .stat-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        transform: translateY(-2px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
     .stat-card:hover::before {
+        transform: scale(1.1);
+        opacity: 0.08;
+    }
+    
+    /* Glowing effect only for specifically highlighted stat cards */
+    .stat-card.glow {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    }
+    
+    .stat-card.glow::before {
+        opacity: 0.12;
+    }
+    
+    .stat-card.glow:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    }
+    
+    .stat-card.glow:hover::before {
         transform: scale(1.2);
-        opacity: 0.15;
+        opacity: 0.18;
     }
 
     /* Stat card color variants */
@@ -146,6 +165,72 @@
     .stat-card.danger .stat-icon {
         background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
         color: #b91c1c;
+    }
+
+    .stat-card.info {
+        border-left-color: #3b82f6;
+    }
+    .stat-card.info::before {
+        background: #3b82f6;
+    }
+    .stat-card.info .stat-icon {
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        color: #1e40af;
+    }
+
+    .stat-card.success {
+        border-left-color: #10b981;
+    }
+    .stat-card.success::before {
+        background: #10b981;
+    }
+    .stat-card.success .stat-icon {
+        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+        color: #047857;
+    }
+
+    .stat-card.warning {
+        border-left-color: #f59e0b;
+    }
+    .stat-card.warning::before {
+        background: #f59e0b;
+    }
+    .stat-card.warning .stat-icon {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        color: #92400e;
+    }
+
+    .stat-card.pending {
+        border-left-color: #f59e0b;
+    }
+    .stat-card.pending::before {
+        background: #f59e0b;
+    }
+    .stat-card.pending .stat-icon {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        color: #92400e;
+    }
+
+    .stat-card.inactive {
+        border-left-color: #6b7280;
+    }
+    .stat-card.inactive::before {
+        background: #6b7280;
+    }
+    .stat-card.inactive .stat-icon {
+        background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+        color: #374151;
+    }
+
+    .stat-card.total {
+        border-left-color: #667eea;
+    }
+    .stat-card.total::before {
+        background: #667eea;
+    }
+    .stat-card.total .stat-icon {
+        background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+        color: #4338ca;
     }
 
     .stat-content {

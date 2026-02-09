@@ -1,5 +1,58 @@
 # Changelog - Driving School Management System
 
+## [v1.5b] - January 29, 2026
+
+### 🔒 Security Fixes
+- **CRITICAL:** Removed vulnerable `phpoffice/phpexcel` (19 CVEs) and `maatwebsite/excel` v1.1.5
+- Updated `symfony/http-foundation` to v7.4.5 (CVE-2025-64500)
+- Updated `symfony/process` to v7.4.5 (CVE-2026-24739)
+- Updated `phpunit/phpunit` to 11.5.33 (CVE-2026-24765)
+- Fixed all npm vulnerabilities (tar, vite packages)
+
+### 🔄 Export System Refactor
+- Converted all Excel exports to native CSV format using `Response::stream()`
+- `studentsExcel()` → CSV export
+- `instructorsExcel()` → CSV export  
+- `paymentsExcel()` → CSV export
+- Eliminated dependency on external spreadsheet libraries
+
+### 🗄️ Multi-Tenant Compliance
+- Added `school_id` to `enrollments` table
+- Added `school_id` to `session_completions` table
+- Added `school_id` to `course_modules` table
+- Added `school_id` to `module_lessons` table
+- Added `hours_completed` to `enrollments` table
+- Added `verification_notes` to `enrollment_requests` table
+- Added enrollment lock fields to `students` table
+
+### 🧪 Test Fixes
+- Fixed SQLite compatibility in 5 migration files for test suite
+- Fixed view property references (`course_name` → `title`, `student->user->name` → `learner->name`)
+- All tests passing (2/2)
+
+### 📄 Models Updated
+- `Enrollment.php` - New model with school_id and relationships
+- `SessionCompletion.php` - Added school_id field
+- `CourseModule.php` - Added school_id field
+- `ModuleLesson.php` - Added school_id field
+- `Student.php` - Added enrollment lock fields
+- `EnrollmentRequest.php` - Extended with verification fields
+- `Course.php` - Added course_type, license_type, hours_required
+
+---
+
+## [v1.0b] - January 25, 2026
+
+### 🔒 Security Enhancements
+- Added security columns to auth tables (login tracking, lockout)
+- Added time columns to session_completions
+
+---
+
+## [v0.4b] - December 5, 2025 - Mobile UI fixes and improvements
+
+---
+
 ## [December 4, 2025] - Database Consolidation & Cleanup
 
 ### 🗄️ Migration Consolidation

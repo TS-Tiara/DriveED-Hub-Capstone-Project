@@ -200,10 +200,10 @@
         </div>
         <div class="export-buttons">
             <a href="{{ $schoolRoute('admin.exports.payments.pdf') }}" class="btn-export btn-export-pdf">
-                📄 Export PDF
+                Export PDF
             </a>
             <a href="{{ $schoolRoute('admin.exports.payments.excel') }}" class="btn-export btn-export-excel">
-                📊 Export Excel
+                Export Excel
             </a>
         </div>
     </div>

@@ -17,8 +17,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Helper function to check if index exists
+        // Helper function to check if index exists (database-agnostic)
         $indexExists = function(string $table, string $indexName): bool {
+            $driver = DB::connection()->getDriverName();
+            
+            if ($driver === 'sqlite') {
+                $indexes = DB::select("SELECT name FROM sqlite_master WHERE type='index' AND tbl_name=? AND name=?", [$table, $indexName]);
+                return count($indexes) > 0;
+            }
+            
+            // MySQL/MariaDB
             $indexes = DB::select("SHOW INDEX FROM `{$table}` WHERE Key_name = ?", [$indexName]);
             return count($indexes) > 0;
         };
