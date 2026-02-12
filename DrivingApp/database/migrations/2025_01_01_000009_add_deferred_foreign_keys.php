@@ -7,31 +7,23 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * Add foreign key constraints that reference tables created in later migrations.
      */
     public function up(): void
     {
+        // Add FK for students.active_enrollment_id -> enrollments.id
         Schema::table('students', function (Blueprint $table) {
-            $table->foreignId('active_enrollment_id')
-                  ->after('theoretical_passed_at')
-                  ->nullable()
-                  ->constrained('enrollments')
+            $table->foreign('active_enrollment_id')
+                  ->references('id')
+                  ->on('enrollments')
                   ->onDelete('set null');
-            
-            $table->boolean('is_course_locked')
-                  ->after('active_enrollment_id')
-                  ->default(false);
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::table('students', function (Blueprint $table) {
             $table->dropForeign(['active_enrollment_id']);
-            $table->dropColumn(['active_enrollment_id', 'is_course_locked']);
         });
     }
 };
