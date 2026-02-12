@@ -73,11 +73,16 @@ class CourseController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'price' => 'required|numeric|min:0',
-            'duration_hours' => 'required|numeric|min:0',
+            'banner_image' => 'nullable|image|max:2048',
+            'price' => 'nullable|numeric|min:0',
+            'duration_hours' => 'nullable|numeric|min:0',
             'max_students' => 'nullable|integer|min:1',
             'type' => 'nullable|string|max:50',
+            'vehicle_type' => 'nullable|string|max:100',
+            'features' => 'nullable|array',
+            'features.*' => 'nullable|string|max:255',
             'status' => 'nullable|in:active,inactive,archived',
+            'is_featured' => 'nullable',
             'schedules' => 'nullable|array',
             'schedules.*.date' => 'required_with:schedules|date',
             'schedules.*.start_time' => 'required_with:schedules',
@@ -86,6 +91,19 @@ class CourseController extends Controller
             'schedules.*.instructor_id' => 'nullable|exists:instructors,id',
             'schedules.*.notes' => 'nullable|string',
         ]);
+
+        // Handle banner image upload
+        if ($request->hasFile('banner_image')) {
+            $validated['banner_image'] = $request->file('banner_image')->store('courses/banners', 'public');
+        }
+
+        // Handle is_featured checkbox
+        $validated['is_featured'] = $request->has('is_featured');
+
+        // Filter out empty features
+        if (isset($validated['features'])) {
+            $validated['features'] = array_values(array_filter($validated['features'], fn($f) => !empty(trim($f))));
+        }
 
         $validated['school_id'] = $school->id;
         $course = Course::create($validated);
@@ -157,12 +175,32 @@ class CourseController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'price' => 'required|numeric|min:0',
-            'duration_hours' => 'required|numeric|min:0',
+            'banner_image' => 'nullable|image|max:2048',
+            'price' => 'nullable|numeric|min:0',
+            'duration_hours' => 'nullable|numeric|min:0',
             'max_students' => 'nullable|integer|min:1',
             'type' => 'nullable|string|max:50',
+            'vehicle_type' => 'nullable|string|max:100',
+            'features' => 'nullable|array',
+            'features.*' => 'nullable|string|max:255',
             'status' => 'nullable|in:active,inactive,archived',
+            'is_featured' => 'nullable',
         ]);
+
+        // Handle banner image upload
+        if ($request->hasFile('banner_image')) {
+            $validated['banner_image'] = $request->file('banner_image')->store('courses/banners', 'public');
+        } else {
+            unset($validated['banner_image']);
+        }
+
+        // Handle is_featured checkbox
+        $validated['is_featured'] = $request->has('is_featured');
+
+        // Filter out empty features
+        if (isset($validated['features'])) {
+            $validated['features'] = array_values(array_filter($validated['features'], fn($f) => !empty(trim($f))));
+        }
 
         $course->update($validated);
 

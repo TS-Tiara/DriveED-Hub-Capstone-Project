@@ -229,7 +229,7 @@ class TheoreticalCompletionController extends Controller
     /**
      * Revoke theoretical passed status (admin only)
      */
-    public function revoke(Enrollment $enrollment)
+    public function revoke(EnrollmentRequest $enrollment)
     {
         // Only admins can revoke
         if (!Auth::guard('admin')->check()) {

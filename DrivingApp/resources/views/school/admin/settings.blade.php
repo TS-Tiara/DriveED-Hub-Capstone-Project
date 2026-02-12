@@ -605,33 +605,33 @@
                 <!-- Booking Settings -->
                 <div class="form-section">
                     <div class="section-header" onclick="toggleSection(this)">
-                        <h3 class="section-title">Booking Settings</h3>
+                        <h3 class="section-title">Scheduling Settings</h3>
                     </div>
                     
                     <div class="section-inputs">
                     <div class="form-group">
-                        <label class="form-label">Advance Booking Days</label>
+                        <label class="form-label">Advance Scheduling Days</label>
                         <input type="number" class="number-input" name="advance_booking_days" value="{{ old('advance_booking_days', $settings->advance_booking_days ?? 0) }}" min="0" max="30">
                         <small class="text-muted" style="display: block; margin-top: 5px;">
-                            Minimum days in advance students must book (0 = same-day booking allowed)
+                            Minimum days in advance students must schedule (0 = same-day scheduling allowed)
                         </small>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label">
                             <input type="checkbox" name="enable_booking_queue" value="1" {{ old('enable_booking_queue', $settings->enable_booking_queue ?? true) ? 'checked' : '' }} style="margin-right: 8px;">
-                            Enable Booking Queue/Cart System
+                            Enable Schedule Queue/Cart System
                         </label>
                         <small class="text-muted" style="display: block; margin-top: 5px;">
-                            When enabled, bookings go to a queue for admin review before confirmation
+                            When enabled, schedules go to a queue for admin review before confirmation
                         </small>
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">Booking Queue Days</label>
+                        <label class="form-label">Schedule Queue Days</label>
                         <input type="number" class="number-input" name="booking_queue_days" value="{{ old('booking_queue_days', $settings->booking_queue_days ?? 3) }}" min="1" max="14">
                         <small class="text-muted" style="display: block; margin-top: 5px;">
-                            Days bookings stay in queue before auto-confirming (if queue enabled)
+                            Days schedules stay in queue before auto-confirming (if queue enabled)
                         </small>
                     </div>
 
@@ -645,11 +645,11 @@
                                 Student Chooses - Students pick their preferred instructor
                             </option>
                             <option value="admin_assigns" {{ old('instructor_selection_mode', $settings->instructor_selection_mode ?? 'auto_assign') == 'admin_assigns' ? 'selected' : '' }}>
-                                Admin Assigns - Admins manually assign instructors after booking
+                                Admin Assigns - Admins manually assign instructors after scheduling
                             </option>
                         </select>
                         <small class="text-muted" style="display: block; margin-top: 5px;">
-                            Controls how instructors are assigned to student bookings
+                            Controls how instructors are assigned to student schedules
                         </small>
                     </div>
                     </div>

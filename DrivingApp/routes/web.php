@@ -30,28 +30,27 @@ Route::get('/', function () {
 })->name('welcome');
 
 // ========================================
-// TEST ROUTES - Remove after testing
+// TEST ROUTES - Only available in local/dev
 // ========================================
-Route::prefix('test')->name('test.')->group(function () {
-    Route::get('/course-form', function() {
-        return view('test-components.course-form-enhanced');
-    })->name('course-form');
-    
-    // Test credentials page (dev only)
-    Route::get('/credentials/{school:slug}', function(School $school) {
-        if (!app()->environment('local', 'development')) {
-            abort(404);
-        }
-        return view('test-credentials', compact('school'));
-    })->name('credentials');
-});
+if (app()->environment('local', 'development')) {
+    Route::prefix('test')->name('test.')->group(function () {
+        Route::get('/course-form', function() {
+            return view('test-components.course-form-enhanced');
+        })->name('course-form');
+        
+        // Test credentials page (dev only)
+        Route::get('/credentials/{school:slug}', function(School $school) {
+            return view('test-credentials', compact('school'));
+        })->name('credentials');
+    });
+}
 // ========================================
 
 // System Admin Routes (Global - Not School Specific)
 Route::prefix('system-admin')->name('system-admin.')->group(function () {
     // Login routes (no auth required)
     Route::get('/login', [SystemAdminController::class, 'showLogin'])->name('login');
-    Route::post('/login', [SystemAdminController::class, 'login'])->name('login.submit');
+    Route::post('/login', [SystemAdminController::class, 'login'])->name('login.submit')->middleware('throttle:5,1');
     
     // Protected routes (system admin only)
     Route::middleware(['system.admin'])->group(function () {
@@ -93,13 +92,13 @@ Route::prefix('{school:slug}')
         Route::controller(AuthController::class)->group(function (): void {
             Route::get('/', 'showLogin')->name('login');
             Route::get('/login', 'showLogin');
-            Route::post('/login', 'login')->name('login.submit');
+            Route::post('/login', 'login')->name('login.submit')->middleware('throttle:5,1');
             Route::post('/logout', 'logout')->name('logout');
         });
 
         // Password reset routes
         Route::get('/forgot-password', [PasswordResetController::class, 'showForgotForm'])->name('password.request');
-        Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink'])->name('password.email');
+        Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink'])->name('password.email')->middleware('throttle:3,1');
         Route::get('/reset-password/{token}', [PasswordResetController::class, 'showResetForm'])->name('password.reset');
         Route::post('/reset-password', [PasswordResetController::class, 'reset'])->name('password.update');
 
@@ -118,6 +117,7 @@ Route::prefix('{school:slug}')
                 Route::get('/dashboard', [GuestController::class, 'dashboard'])->name('dashboard');
                 Route::get('/courses', [GuestController::class, 'courses'])->name('courses');
                 Route::post('/enroll/{course}', [GuestController::class, 'enroll'])->name('enroll');
+                Route::post('/upload-license', [GuestController::class, 'uploadLicense'])->name('uploadLicense');
                 Route::get('/enrollment-requests', [GuestController::class, 'enrollmentRequests'])->name('enrollmentRequests');
             });
         });
@@ -218,6 +218,10 @@ Route::prefix('{school:slug}')
                 Route::post('/{enrollmentRequest}/cancel', [EnrollmentRequestController::class, 'cancel'])->name('cancel');
                 Route::post('/{enrollmentRequest}/payment-status', [EnrollmentRequestController::class, 'updatePaymentStatus'])->name('paymentStatus');
                 Route::post('/{enrollmentRequest}/theoretical-passed', [EnrollmentRequestController::class, 'markTheoreticalPassed'])->name('theoreticalPassed');
+                
+                // Student license verification
+                Route::post('/student/{student}/verify-license', [EnrollmentRequestController::class, 'verifyLicense'])->name('verifyLicense');
+                Route::post('/student/{student}/reject-license', [EnrollmentRequestController::class, 'rejectLicense'])->name('rejectLicense');
             });
 
             // Theoretical completion management (Mark students as passed)
@@ -308,22 +312,32 @@ Route::prefix('{school:slug}')
                 
                 // Instructor grade management
                 Route::get('/grades', [InstructorController::class, 'grades'])->name('grades');
+
+                // Instructor session logging (inside ajax middleware for proper AJAX loading)
+                Route::prefix('sessions')->name('sessions.')->group(function () {
+                    Route::get('/', [SessionCompletionController::class, 'index'])->name('index');
+                    Route::get('/create', [SessionCompletionController::class, 'create'])->name('create');
+                    Route::post('/', [SessionCompletionController::class, 'store'])->name('store');
+                    Route::get('/{sessionCompletion}', [SessionCompletionController::class, 'show'])->name('show');
+                    Route::get('/{sessionCompletion}/edit', [SessionCompletionController::class, 'edit'])->name('edit');
+                    Route::put('/{sessionCompletion}', [SessionCompletionController::class, 'update'])->name('update');
+                    Route::delete('/{sessionCompletion}', [SessionCompletionController::class, 'destroy'])->name('destroy');
+                    Route::get('/enrollment/{enrollment}/stats', [SessionCompletionController::class, 'enrollmentStats'])->name('enrollmentStats');
+                });
+
+                // Instructor export routes (PDF & Excel)
+                Route::prefix('exports')->name('exports.')->group(function () {
+                    Route::get('/students/pdf', [ExportController::class, 'instructorStudentsPdf'])->name('students.pdf');
+                    Route::get('/students/excel', [ExportController::class, 'instructorStudentsExcel'])->name('students.excel');
+                    Route::get('/sessions/pdf', [ExportController::class, 'instructorSessionsPdf'])->name('sessions.pdf');
+                    Route::get('/sessions/excel', [ExportController::class, 'instructorSessionsExcel'])->name('sessions.excel');
+                    Route::get('/grades/pdf', [ExportController::class, 'instructorGradesPdf'])->name('grades.pdf');
+                    Route::get('/grades/excel', [ExportController::class, 'instructorGradesExcel'])->name('grades.excel');
+                    Route::get('/reports/pdf', [ExportController::class, 'instructorReportsPdf'])->name('reports.pdf');
+                });
             });
             
-            // New LMS routes WITHOUT ajax middleware
-            // Instructor session logging
-            Route::prefix('sessions')->name('sessions.')->group(function () {
-                Route::get('/', [SessionCompletionController::class, 'index'])->name('index');
-                Route::get('/create', [SessionCompletionController::class, 'create'])->name('create');
-                Route::post('/', [SessionCompletionController::class, 'store'])->name('store');
-                Route::get('/{sessionCompletion}', [SessionCompletionController::class, 'show'])->name('show');
-                Route::get('/{sessionCompletion}/edit', [SessionCompletionController::class, 'edit'])->name('edit');
-                Route::put('/{sessionCompletion}', [SessionCompletionController::class, 'update'])->name('update');
-                Route::delete('/{sessionCompletion}', [SessionCompletionController::class, 'destroy'])->name('destroy');
-                Route::get('/enrollment/{enrollment}/stats', [SessionCompletionController::class, 'enrollmentStats'])->name('enrollmentStats');
-            });
-
-            // Instructor theoretical completion (Mark students as passed)
+            // LMS routes without ajax middleware (full page views)
             Route::prefix('theoretical')->name('theoretical.')->group(function () {
                 Route::get('/', [TheoreticalCompletionController::class, 'index'])->name('index');
                 Route::get('/{enrollment}', [TheoreticalCompletionController::class, 'show'])->name('show');

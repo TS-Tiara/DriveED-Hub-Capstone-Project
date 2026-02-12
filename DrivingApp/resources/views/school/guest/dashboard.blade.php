@@ -5,13 +5,7 @@
 @section('content')
 @php
     $school = $school ?? $currentSchool ?? null;
-    $guest = auth()->guard('student')->user();
     $settings = $school->schoolSetting;
-    
-    // Check enrollment status
-    $hasEnrollment = $guest->enrollmentRequests()->whereIn('status', ['pending', 'approved'])->exists();
-    $pendingRequest = $guest->enrollmentRequests()->where('status', 'pending')->first();
-    $approvedEnrollment = $guest->enrollmentRequests()->where('status', 'approved')->first();
 @endphp
 
 @include('school.admin.partials.admin-styles')
@@ -200,6 +194,126 @@
         line-height: 1.6;
         margin: 0;
     }
+
+    /* Student License Section */
+    .license-section {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .license-section h3 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #111827;
+        margin: 0 0 8px 0;
+    }
+
+    .license-section p {
+        font-size: 0.9375rem;
+        color: #6b7280;
+        margin: 0 0 16px 0;
+    }
+
+    .license-status {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px;
+        border-radius: 10px;
+        margin-bottom: 16px;
+    }
+
+    .license-status.license-none {
+        background: #f3f4f6;
+        color: #374151;
+        border-left: 4px solid #9ca3af;
+    }
+
+    .license-status.license-pending {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        color: #92400e;
+        border-left: 4px solid #f59e0b;
+    }
+
+    .license-status.license-verified {
+        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+        color: #065f46;
+        border-left: 4px solid #10b981;
+    }
+
+    .license-status.license-rejected {
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+        color: #991b1b;
+        border-left: 4px solid #ef4444;
+    }
+
+    .license-upload-form {
+        margin-top: 12px;
+    }
+
+    .license-upload-form .file-input-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .license-upload-form input[type="file"] {
+        flex: 1;
+        min-width: 200px;
+        padding: 10px;
+        border: 2px dashed #d1d5db;
+        border-radius: 8px;
+        background: #f9fafb;
+        font-size: 0.875rem;
+        cursor: pointer;
+    }
+
+    .license-upload-form input[type="file"]:hover {
+        border-color: {{ $settings->primary_color }};
+        background: white;
+    }
+
+    .btn-upload {
+        padding: 10px 24px;
+        background: {{ $settings->primary_color }};
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: opacity 0.2s;
+        white-space: nowrap;
+    }
+
+    .btn-upload:hover {
+        opacity: 0.9;
+    }
+
+    .license-file-info {
+        font-size: 0.8rem;
+        color: #9ca3af;
+        margin-top: 8px;
+    }
+
+    .rejection-reason {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-radius: 8px;
+        padding: 12px;
+        margin-top: 8px;
+        font-size: 0.875rem;
+        color: #991b1b;
+    }
+
+    .rejection-reason strong {
+        display: block;
+        margin-bottom: 4px;
+    }
 </style>
 
 <div class="guest-dashboard">
@@ -247,6 +361,85 @@
         @endif
     </div>
     
+    <!-- Student Driver's License Section -->
+    <div class="license-section">
+        <h3>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px; vertical-align: middle; margin-right: 8px;">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0" />
+            </svg>
+            Student Driver's License
+        </h3>
+        <p>A verified student driver's license is required to enroll in practical (behind-the-wheel) courses.</p>
+
+        @if($guest->hasVerifiedLicense())
+            <div class="license-status license-verified">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 28px; height: 28px; flex-shrink: 0;">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                <div>
+                    <strong>License Verified</strong>
+                    <div style="font-size: 0.85rem; margin-top: 2px;">Your student driver's license has been verified. You are eligible for practical courses.</div>
+                </div>
+            </div>
+        @elseif($guest->isLicensePending())
+            <div class="license-status license-pending">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 28px; height: 28px; flex-shrink: 0;">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                    <strong>Pending Verification</strong>
+                    <div style="font-size: 0.85rem; margin-top: 2px;">Your license has been submitted and is awaiting admin verification.</div>
+                </div>
+            </div>
+        @elseif($guest->isLicenseRejected())
+            <div class="license-status license-rejected">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 28px; height: 28px; flex-shrink: 0;">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                <div>
+                    <strong>License Rejected</strong>
+                    <div style="font-size: 0.85rem; margin-top: 2px;">Your license submission was not approved. Please re-upload a valid license.</div>
+                </div>
+            </div>
+            @if($guest->student_license_rejection_reason)
+                <div class="rejection-reason">
+                    <strong>Reason for rejection:</strong>
+                    {{ $guest->student_license_rejection_reason }}
+                </div>
+            @endif
+            <div class="license-upload-form">
+                <form method="POST" action="{{ route('schools.guest.uploadLicense', $school) }}" enctype="multipart/form-data">
+                    @csrf
+                    <div class="file-input-wrapper">
+                        <input type="file" name="student_license" accept=".pdf,.jpg,.jpeg,.png" required>
+                        <button type="submit" class="btn-upload">Re-upload License</button>
+                    </div>
+                    <div class="license-file-info">Accepted formats: PDF, JPG, PNG (max 5MB)</div>
+                </form>
+            </div>
+        @else
+            <div class="license-status license-none">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 28px; height: 28px; flex-shrink: 0;">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                <div>
+                    <strong>No License Uploaded</strong>
+                    <div style="font-size: 0.85rem; margin-top: 2px;">Upload your student driver's license to become eligible for practical courses.</div>
+                </div>
+            </div>
+            <div class="license-upload-form">
+                <form method="POST" action="{{ route('schools.guest.uploadLicense', $school) }}" enctype="multipart/form-data">
+                    @csrf
+                    <div class="file-input-wrapper">
+                        <input type="file" name="student_license" accept=".pdf,.jpg,.jpeg,.png" required>
+                        <button type="submit" class="btn-upload">Upload License</button>
+                    </div>
+                    <div class="license-file-info">Accepted formats: PDF, JPG, PNG (max 5MB)</div>
+                </form>
+            </div>
+        @endif
+    </div>
+
     <!-- Browse Courses Section -->
     <div class="section">
         <h2 class="section-title">Available Courses</h2>
@@ -298,7 +491,7 @@
                 </div>
                 <div class="about-content">
                     <h3>Flexible Scheduling</h3>
-                    <p>Choose lesson times that fit your schedule with our convenient booking system.</p>
+                    <p>Choose lesson times that fit your schedule with our convenient scheduling system.</p>
                 </div>
             </div>
             

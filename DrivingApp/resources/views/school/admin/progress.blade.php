@@ -296,24 +296,6 @@
         </div>
     </div>
 
-    @forelse($progresses as $progress)
-        @php
-            // Get student's bookings for this course
-            $bookings = \App\Models\Booking::where('student_id', $progress->student_id)
-                ->where('course_id', $progress->course_id)
-                ->where('school_id', $school->id)
-                ->with(['instructor', 'course'])
-                ->orderBy('scheduled_at', 'desc')
-                ->get();
-            
-            $completedSessions = $bookings->where('status', 'confirmed')->count();
-            $totalSessions = $progress->course->packages()->first()->training_hours ?? $progress->course->duration_hours;
-            $currentBooking = $bookings->where('status', 'confirmed')->sortByDesc('scheduled_at')->first() ?? $bookings->first();
-            $nextBooking = $bookings->where('status', 'pending')->where('scheduled_at', '>', now())->sortBy('scheduled_at')->first();
-        @endphp
-    @empty
-    @endforelse
-
     @if($progresses->count() > 0)
     <div class="progress-table">
         <table>
@@ -328,41 +310,28 @@
             </thead>
             <tbody>
                 @foreach($progresses as $index => $progress)
-                    @php
-                        $bookings = \App\Models\Booking::where('student_id', $progress->student_id)
-                            ->where('course_id', $progress->course_id)
-                            ->where('school_id', $school->id)
-                            ->with(['instructor', 'course'])
-                            ->orderBy('scheduled_at', 'desc')
-                            ->get();
-                        
-                        $completedSessions = $bookings->where('status', 'confirmed')->count();
-                        $totalSessions = ceil($progress->course->duration_hours ?? 10);
-                        $currentBooking = $bookings->where('status', 'confirmed')->sortByDesc('scheduled_at')->first() ?? $bookings->first();
-                        $nextBooking = $bookings->where('status', 'pending')->where('scheduled_at', '>', now())->sortBy('scheduled_at')->first();
-                    @endphp
                     
                     <tr class="progress-row" onclick="toggleDetails({{ $index }})">
                         <td><span class="expand-icon" id="icon-{{ $index }}">▶</span></td>
                         <td><span class="student-name">{{ $progress->student->name }}</span></td>
                         <td>
                             <span class="session-info">
-                                {{ $completedSessions }} / {{ $totalSessions }} sessions
+                                {{ $progress->completedSessions }} / {{ $progress->totalSessions }} sessions
                             </span>
                         </td>
                         <td>
-                            @if($currentBooking && $currentBooking->instructor)
+                            @if($progress->currentBooking && $progress->currentBooking->instructor)
                                 <span class="instructor-badge">
-                                    {{ $currentBooking->instructor->name }}
+                                    {{ $progress->currentBooking->instructor->name }}
                                 </span>
                             @else
                                 <span style="color: #9ca3af; font-style: italic;">Not assigned</span>
                             @endif
                         </td>
                         <td>
-                            @if($nextBooking)
+                            @if($progress->nextBooking)
                                 <span class="schedule-badge">
-                                    {{ $nextBooking->scheduled_at->format('M d, Y h:i A') }}
+                                    {{ $progress->nextBooking->scheduled_at->format('M d, Y h:i A') }}
                                 </span>
                             @else
                                 <span style="color: #9ca3af; font-style: italic;">No upcoming schedule</span>
@@ -426,20 +395,20 @@
                                         <h4 class="detail-section-title">Session Progress</h4>
                                         <div class="detail-item">
                                             <span class="detail-label">Completed Sessions</span>
-                                            <span class="detail-value">{{ $completedSessions }} / {{ $totalSessions }}</span>
+                                            <span class="detail-value">{{ $progress->completedSessions }} / {{ $progress->totalSessions }}</span>
                                         </div>
                                         <div class="detail-item">
                                             <span class="detail-label">Remaining Sessions</span>
-                                            <span class="detail-value">{{ max(0, $totalSessions - $completedSessions) }}</span>
+                                            <span class="detail-value">{{ max(0, $progress->totalSessions - $progress->completedSessions) }}</span>
                                         </div>
                                         <div class="detail-item">
-                                            <span class="detail-label">Total Bookings</span>
-                                            <span class="detail-value">{{ $bookings->count() }}</span>
+                                            <span class="detail-label">Total Schedules</span>
+                                            <span class="detail-value">{{ $progress->bookingsList->count() }}</span>
                                         </div>
                                         <div class="detail-item">
                                             <span class="detail-label">Last Session</span>
                                             <span class="detail-value">
-                                                {{ $currentBooking ? $currentBooking->scheduled_at->format('M d, Y') : 'N/A' }}
+                                                {{ $progress->currentBooking ? $progress->currentBooking->scheduled_at->format('M d, Y') : 'N/A' }}
                                             </span>
                                         </div>
                                     </div>
@@ -447,18 +416,18 @@
                                     <!-- Instructor Details -->
                                     <div class="detail-section">
                                         <h4 class="detail-section-title">Instructor Details</h4>
-                                        @if($currentBooking && $currentBooking->instructor)
+                                        @if($progress->currentBooking && $progress->currentBooking->instructor)
                                             <div class="detail-item">
                                                 <span class="detail-label">Current Instructor</span>
-                                                <span class="detail-value">{{ $currentBooking->instructor->name }}</span>
+                                                <span class="detail-value">{{ $progress->currentBooking->instructor->name }}</span>
                                             </div>
                                             <div class="detail-item">
                                                 <span class="detail-label">Email</span>
-                                                <span class="detail-value">{{ $currentBooking->instructor->email }}</span>
+                                                <span class="detail-value">{{ $progress->currentBooking->instructor->email }}</span>
                                             </div>
                                             <div class="detail-item">
                                                 <span class="detail-label">Contact</span>
-                                                <span class="detail-value">{{ $currentBooking->instructor->contact ?? 'N/A' }}</span>
+                                                <span class="detail-value">{{ $progress->currentBooking->instructor->contact ?? 'N/A' }}</span>
                                             </div>
                                         @else
                                             <div style="text-align: center; padding: 20px; color: #9ca3af;">
@@ -504,9 +473,9 @@
                                 @endif
 
                                 <!-- Recent Bookings -->
-                                @if($bookings->count() > 0)
+                                @if($progress->bookingsList->count() > 0)
                                 <div class="detail-section" style="grid-column: 1 / -1; margin-top: 10px;">
-                                    <h4 class="detail-section-title">📅 Recent Bookings</h4>
+                                    <h4 class="detail-section-title">📅 Recent Schedules</h4>
                                     <table style="width: 100%; margin-top: 10px;">
                                         <thead style="background: #f3f4f6;">
                                             <tr>
@@ -517,7 +486,7 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            @foreach($bookings->take(5) as $booking)
+                                            @foreach($progress->bookingsList->take(5) as $booking)
                                             <tr style="border-bottom: 1px solid #e5e7eb;">
                                                 <td style="padding: 10px; font-size: 0.85rem;">{{ $booking->scheduled_at->format('M d, Y h:i A') }}</td>
                                                 <td style="padding: 10px; font-size: 0.85rem;">{{ $booking->instructor->name ?? 'N/A' }}</td>

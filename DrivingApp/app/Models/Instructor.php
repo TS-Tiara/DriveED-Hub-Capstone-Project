@@ -24,6 +24,9 @@ class Instructor extends Authenticatable
         'bio',
         'profile_picture',
         'course_specializations',
+        'failed_login_attempts',
+        'locked_until',
+        'last_login_at',
     ];
 
     protected $hidden = [
@@ -36,6 +39,8 @@ class Instructor extends Authenticatable
         return [
             'password' => 'hashed',
             'course_specializations' => 'array',
+            'locked_until' => 'datetime',
+            'last_login_at' => 'datetime',
         ];
     }
 

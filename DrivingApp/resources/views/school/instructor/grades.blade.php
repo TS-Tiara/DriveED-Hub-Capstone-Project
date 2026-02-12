@@ -581,9 +581,22 @@
         </div>
 
         <div class="action-buttons">
-            <button class="btn-export" onclick="exportGrades()">
-                Export CSV
-            </button>
+            <div class="export-dropdown" style="position: relative; display: inline-block;">
+                <button class="btn-export" onclick="this.nextElementSibling.classList.toggle('show')">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 16px; height: 16px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    Export
+                </button>
+                <div class="export-menu" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; background: white; border-radius: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.15); min-width: 180px; z-index: 100; overflow: hidden;">
+                    <a href="{{ route('schools.instructor.exports.grades.pdf', $school) }}" style="display: flex; align-items: center; gap: 10px; padding: 12px 16px; color: #374151; text-decoration: none; font-size: 0.875rem; font-weight: 500;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='white'">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#ef4444" style="width: 18px; height: 18px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                        Download PDF
+                    </a>
+                    <a href="{{ route('schools.instructor.exports.grades.excel', $school) }}" style="display: flex; align-items: center; gap: 10px; padding: 12px 16px; color: #374151; text-decoration: none; font-size: 0.875rem; font-weight: 500;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='white'">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#10b981" style="width: 18px; height: 18px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        Download Excel
+                    </a>
+                </div>
+            </div>
             <button class="btn-save-all" onclick="saveAllChanges()">
                 Save All Changes
             </button>
@@ -924,6 +937,22 @@
         a.click();
         window.URL.revokeObjectURL(url);
     }
+
+    // Export dropdown handler
+    document.querySelectorAll('.export-dropdown button').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            var menu = this.nextElementSibling;
+            var isVisible = menu.style.display === 'block';
+            document.querySelectorAll('.export-menu').forEach(function(m) { m.style.display = 'none'; });
+            menu.style.display = isVisible ? 'none' : 'block';
+        });
+    });
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.export-dropdown')) {
+            document.querySelectorAll('.export-menu').forEach(function(m) { m.style.display = 'none'; });
+        }
+    });
 </script>
 
 @endsection

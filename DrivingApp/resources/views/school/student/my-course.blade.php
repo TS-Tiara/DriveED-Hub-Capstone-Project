@@ -142,11 +142,22 @@
 .module-item {
     background: #f9fafb;
     border-radius: 10px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+}
+
+.module-header {
     padding: 15px 20px;
-    margin-bottom: 10px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.module-header:hover {
+    background: #f0f1f3;
 }
 
 .module-info h4 {
@@ -161,12 +172,74 @@
     color: #666;
 }
 
+.module-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
 .lesson-count {
     background: {{ $settings->primary_color ?? '#667eea' }};
     color: white;
     padding: 5px 12px;
     border-radius: 15px;
     font-size: 0.8rem;
+}
+
+.module-toggle {
+    font-size: 0.8rem;
+    color: #999;
+    transition: transform 0.3s;
+}
+
+.module-toggle.expanded {
+    transform: rotate(180deg);
+}
+
+.lesson-list {
+    display: none;
+    border-top: 1px solid #e5e7eb;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+.lesson-list.show {
+    display: block;
+}
+
+.lesson-item {
+    padding: 12px 20px 12px 35px;
+    border-bottom: 1px solid #f0f1f3;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 0.9rem;
+    color: #555;
+}
+
+.lesson-item:last-child {
+    border-bottom: none;
+}
+
+.lesson-number {
+    background: {{ $settings->primary_color ?? '#667eea' }}20;
+    color: {{ $settings->primary_color ?? '#667eea' }};
+    min-width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.lesson-title {
+    font-weight: 500;
+    color: #333;
 }
 
 /* Session History */
@@ -371,22 +444,37 @@
         {{-- Course Materials (Reference Only) --}}
         @if($modules->count() > 0)
             <div class="course-card">
-                <h3 class="section-title">📖 Course Materials (Reference)</h3>
+                <h3 class="section-title">Course Materials</h3>
                 <p style="color: #666; font-size: 0.9rem; margin-bottom: 15px;">
-                    These materials are provided as reference. Review them at your own pace.
+                    These materials are provided as reference. Click a module to view its lessons.
                 </p>
                 
                 <div class="modules-section">
-                    @foreach($modules->sortBy('order') as $module)
+                    @foreach($modules->sortBy('sort_order') as $module)
                         <div class="module-item">
-                            <div class="module-info">
-                                <h4>{{ $module->title }}</h4>
-                                @if($module->description)
-                                    <p>{{ Str::limit($module->description, 80) }}</p>
-                                @endif
+                            <div class="module-header" onclick="toggleModule(this)">
+                                <div class="module-info">
+                                    <h4>{{ $module->title }}</h4>
+                                    @if($module->description)
+                                        <p>{{ Str::limit($module->description, 80) }}</p>
+                                    @endif
+                                </div>
+                                <div class="module-meta">
+                                    @if($module->lessons && $module->lessons->count() > 0)
+                                        <span class="lesson-count">{{ $module->lessons->count() }} {{ Str::plural('lesson', $module->lessons->count()) }}</span>
+                                    @endif
+                                    <span class="module-toggle">&#9660;</span>
+                                </div>
                             </div>
-                            @if($module->lessons)
-                                <span class="lesson-count">{{ $module->lessons->count() }} lessons</span>
+                            @if($module->lessons && $module->lessons->count() > 0)
+                                <ul class="lesson-list">
+                                    @foreach($module->lessons->sortBy('sort_order') as $index => $lesson)
+                                        <li class="lesson-item">
+                                            <span class="lesson-number">{{ $index + 1 }}</span>
+                                            <span class="lesson-title">{{ $lesson->title }}</span>
+                                        </li>
+                                    @endforeach
+                                </ul>
                             @endif
                         </div>
                     @endforeach
@@ -472,7 +560,7 @@
                                     @endif
                                 </p>
                             </div>
-                            <a href="{{ $schoolRoute('student.courses.show', $availableCourse->id) }}" class="enroll-btn">
+                            <a href="{{ $schoolRoute('student.courses.show', ['course' => $availableCourse->id]) }}" class="enroll-btn">
                                 View Details
                             </a>
                         </div>
@@ -482,4 +570,17 @@
         @endif
     @endif
 </div>
+
+<script>
+function toggleModule(header) {
+    const moduleItem = header.closest('.module-item');
+    const lessonList = moduleItem.querySelector('.lesson-list');
+    const toggle = header.querySelector('.module-toggle');
+    
+    if (lessonList) {
+        lessonList.classList.toggle('show');
+        toggle.classList.toggle('expanded');
+    }
+}
+</script>
 @endsection

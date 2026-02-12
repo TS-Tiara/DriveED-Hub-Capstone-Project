@@ -66,8 +66,9 @@
     }
 
     .stat-box:hover {
-        transform: translateY(-5px);
+        transform: translateY(-3px);
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        cursor: default;
     }
 
     .stat-label {
@@ -350,8 +351,12 @@
 </style>
 
 <div class="reports-container">
-    <div class="page-header">
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
         <h1 class="page-title">Performance Reports</h1>
+        <a href="{{ route('schools.instructor.exports.reports.pdf', $school) }}" style="padding: 10px 18px; background: #10b981; color: white; border: none; border-radius: 10px; font-weight: 600; font-size: 0.9rem; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; transition: all 0.2s;">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 18px; height: 18px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+            Export PDF
+        </a>
     </div>
 
     <!-- Overall Statistics -->

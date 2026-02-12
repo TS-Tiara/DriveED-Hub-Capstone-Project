@@ -467,7 +467,7 @@
 <script>
 function bookCourse(courseId) {
     const schoolSlug = '<?php echo $school->slug; ?>';
-    window.location.href = '/' + schoolSlug + '/student/bookings/create?course_id=' + courseId;
+    window.location.href = '/' + schoolSlug + '/student/courses/' + courseId;
 }
 </script>
 @endsection

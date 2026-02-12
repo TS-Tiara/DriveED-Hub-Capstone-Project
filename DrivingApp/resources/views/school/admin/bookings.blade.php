@@ -1,6 +1,6 @@
 @extends($isAjax ?? false ? 'layouts.ajax' : 'layouts.app')
 
-@section('title', 'Manage Bookings')
+@section('title', 'Student Sessions')
 
 @section('content')
 @php
@@ -185,7 +185,7 @@
     <!-- Page Header -->
     <div class="page-header">
         <div class="page-header-left">
-            <h1 class="page-title">Bookings Management</h1>
+            <h1 class="page-title">Student Sessions</h1>
             <p class="page-subtitle">Manage and track all driving session bookings for {{ $schoolName }}</p>
         </div>
     </div>
@@ -194,26 +194,62 @@
     <div class="stats-grid">
         <div class="stat-card info">
             <div class="stat-content">
-                <div class="stat-label">Scheduled</div>
-                <div class="stat-value">{{ $bookings->where('status', 'scheduled')->count() }}</div>
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">Scheduled</div>
+                        <div class="stat-value">{{ $bookings->where('status', 'scheduled')->count() }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="stat-card success">
             <div class="stat-content">
-                <div class="stat-label">Completed</div>
-                <div class="stat-value">{{ $bookings->where('status', 'completed')->count() }}</div>
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">Completed</div>
+                        <div class="stat-value">{{ $bookings->where('status', 'completed')->count() }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="stat-card danger">
             <div class="stat-content">
-                <div class="stat-label">Cancelled</div>
-                <div class="stat-value">{{ $bookings->where('status', 'cancelled')->count() }}</div>
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">Cancelled</div>
+                        <div class="stat-value">{{ $bookings->where('status', 'cancelled')->count() }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="stat-card warning">
             <div class="stat-content">
-                <div class="stat-label">Pending</div>
-                <div class="stat-value">{{ $bookings->where('status', 'pending')->count() }}</div>
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">Pending</div>
+                        <div class="stat-value">{{ $bookings->where('status', 'pending')->count() }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -314,8 +350,8 @@
         <div class="content-card">
             <div class="content-card-body">
                 <div class="empty-state">
-                    <div class="empty-state-title">No bookings found</div>
-                    <div class="empty-state-text">Booking records will appear here once students make reservations.</div>
+                    <div class="empty-state-title">No schedules found</div>
+                    <div class="empty-state-text">Schedule records will appear here once students make reservations.</div>
                 </div>
             </div>
         </div>
@@ -348,8 +384,8 @@ function updateStatus(bookingId, status) {
     
     showConfirm({
         type: 'warning',
-        title: 'Change Booking Status',
-        message: `Are you sure you want to change this booking status to "${status}"?`,
+        title: 'Change Schedule Status',
+        message: `Are you sure you want to change this schedule status to "${status}"?`,
         confirmText: 'Yes, Update Status',
         onConfirm: () => {
             fetch(`/${schoolSlug}/admin/bookings/${bookingId}/status`, {
@@ -365,10 +401,10 @@ function updateStatus(bookingId, status) {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    Toast.success('Booking status has been updated successfully.', 'Status Updated!');
+                    Toast.success('Schedule status has been updated successfully.', 'Status Updated!');
                     setTimeout(() => location.reload(), 1500);
                 } else {
-                    Toast.error(data.message || 'Failed to update booking status.', 'Update Failed');
+                    Toast.error(data.message || 'Failed to update schedule status.', 'Update Failed');
                 }
             })
             .catch(error => {

@@ -8,6 +8,7 @@
     $settings = $school?->schoolSetting;
     $schoolName = $school->name ?? 'Driving School';
     $primaryColor = $settings->primary_color ?? '#667eea';
+    use Illuminate\Support\Facades\Storage;
 @endphp
 
 @include('school.admin.partials.admin-styles')
@@ -117,6 +118,73 @@
     .learner-email {
         font-size: 0.85rem;
         color: #9ca3af;
+    }
+
+    .license-badge {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        margin-top: 4px;
+    }
+
+    .license-none {
+        background: #f3f4f6;
+        color: #6b7280;
+    }
+
+    .license-pending {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .license-verified {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .license-rejected {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .license-actions {
+        display: flex;
+        gap: 6px;
+        margin-top: 4px;
+    }
+
+    .btn-license-verify {
+        padding: 2px 8px;
+        font-size: 0.7rem;
+        background: #10b981;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .btn-license-reject {
+        padding: 2px 8px;
+        font-size: 0.7rem;
+        background: #ef4444;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .btn-license-view {
+        padding: 2px 8px;
+        font-size: 0.7rem;
+        background: #3b82f6;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        text-decoration: none;
     }
     
     .course-info {
@@ -289,19 +357,6 @@
     </div>
     @endif
     
-    @php
-        $allRequests = \App\Models\EnrollmentRequest::with(['learner', 'course', 'approvedBy'])
-            ->where('school_id', $school->id)
-            ->latest()
-            ->get();
-        
-        $pendingRequests = $allRequests->where('status', 'pending');
-        $approvedRequests = $allRequests->where('status', 'approved');
-        $completedRequests = $allRequests->where('status', 'completed');
-        $cancelledRequests = $allRequests->where('status', 'cancelled');
-        $rejectedRequests = $allRequests->where('status', 'rejected');
-    @endphp
-    
     <div class="stats-grid">
         <div class="stat-card" onclick="filterRequests('all', this)" data-status="all">
             <div class="stat-content">
@@ -472,6 +527,28 @@
                             <div class="learner-info">
                                 <div class="learner-name">{{ $request->learner->name }}</div>
                                 <div class="learner-email">{{ $request->learner->email }}</div>
+                                @php $licenseStatus = $request->learner->student_license_status ?? 'none'; @endphp
+                                <div>
+                                    <span class="license-badge license-{{ $licenseStatus }}">
+                                        🪪 {{ $licenseStatus === 'none' ? 'No License' : ucfirst($licenseStatus) }}
+                                    </span>
+                                </div>
+                                @if($licenseStatus === 'pending')
+                                    <div class="license-actions">
+                                        <a href="{{ Storage::url($request->learner->student_license_path) }}" target="_blank" class="btn-license-view">View</a>
+                                        <form method="POST" action="{{ route('schools.admin.enrollments.verifyLicense', ['school' => $school, 'student' => $request->learner->id]) }}" style="display:inline;">
+                                            @csrf
+                                            <button type="submit" class="btn-license-verify" onclick="return confirm('Verify this student\'s license?')">✓ Verify</button>
+                                        </form>
+                                        <button type="button" class="btn-license-reject" onclick="showLicenseRejectModal({{ $request->learner->id }}, '{{ addslashes($request->learner->name) }}')">✗ Reject</button>
+                                    </div>
+                                @elseif($licenseStatus === 'verified')
+                                    @if($request->learner->student_license_path)
+                                        <div class="license-actions">
+                                            <a href="{{ Storage::url($request->learner->student_license_path) }}" target="_blank" class="btn-license-view">View License</a>
+                                        </div>
+                                    @endif
+                                @endif
                             </div>
                         </td>
                         <td>
@@ -607,6 +684,35 @@
     </div>
 </div>
 
+<!-- License Reject Modal -->
+<div id="licenseRejectModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+    <div style="background: white; border-radius: 15px; padding: 30px; max-width: 500px; width: 90%;">
+        <h3 style="margin: 0 0 8px 0; color: #333;">Reject Student License</h3>
+        <p id="licenseRejectStudentName" style="margin: 0 0 20px 0; color: #6b7280; font-size: 0.9rem;"></p>
+        <form id="licenseRejectForm" method="POST">
+            @csrf
+            <div style="margin-bottom: 20px;">
+                <label for="rejection_reason" style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
+                    Reason for Rejection *
+                </label>
+                <textarea id="rejection_reason" name="rejection_reason" rows="4" required 
+                    style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; font-family: inherit;"
+                    placeholder="Explain why this license is being rejected (e.g., expired, unreadable, wrong document)..."></textarea>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" onclick="closeLicenseRejectModal()" 
+                    style="padding: 10px 20px; background: #e5e7eb; color: #333; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                    Cancel
+                </button>
+                <button type="submit" 
+                    style="padding: 10px 20px; background: #ef4444; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                    Reject License
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
 function filterRequests(status, cardElement) {
     const cards = document.querySelectorAll('.stat-card');
@@ -686,6 +792,27 @@ document.getElementById('rejectModal').addEventListener('click', function(e) {
 document.getElementById('cancelModal').addEventListener('click', function(e) {
     if (e.target === this) {
         closeCancelModal();
+    }
+});
+
+// License Reject Modal
+function showLicenseRejectModal(studentId, studentName) {
+    const modal = document.getElementById('licenseRejectModal');
+    const form = document.getElementById('licenseRejectForm');
+    document.getElementById('licenseRejectStudentName').textContent = 'Student: ' + studentName;
+    form.action = '{{ route('schools.admin.enrollments.rejectLicense', ['school' => $school, 'student' => '__STUDENT_ID__']) }}'.replace('__STUDENT_ID__', studentId);
+    modal.style.display = 'flex';
+}
+
+function closeLicenseRejectModal() {
+    const modal = document.getElementById('licenseRejectModal');
+    modal.style.display = 'none';
+    document.getElementById('rejection_reason').value = '';
+}
+
+document.getElementById('licenseRejectModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeLicenseRejectModal();
     }
 });
 

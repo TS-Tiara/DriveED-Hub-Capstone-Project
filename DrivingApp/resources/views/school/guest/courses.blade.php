@@ -13,18 +13,6 @@
     
     // Calculate RGB values for transparency effects
     $primaryRgb = sscanf($primaryColor, "#%02x%02x%02x");
-    
-    // Get enrolled course IDs for this guest
-    $enrolledCourseIds = [];
-    $enrollmentStatuses = [];
-    if (auth()->guard('student')->check()) {
-        $enrollments = auth()->guard('student')->user()
-            ->enrollmentRequests()
-            ->whereIn('status', ['pending', 'approved'])
-            ->get();
-        $enrolledCourseIds = $enrollments->pluck('course_id')->toArray();
-        $enrollmentStatuses = $enrollments->pluck('status', 'course_id')->toArray();
-    }
 ?>
 
 <style>
@@ -706,12 +694,11 @@
     @endif
 
     <div class="courses-grid">
-        <?php $activeCourses = $courses->where('status', 'active'); ?>
         
-        @forelse($activeCourses as $course)
+        @forelse($courses as $course)
         <div class="course-card">
             <div class="course-banner">
-                @if($course->banner_image && file_exists(public_path($course->banner_image)))
+                @if($course->hasBannerImage)
                     <img src="{{ asset($course->banner_image) }}" alt="{{ $course->title }}">
                 @else
                     <svg class="course-banner-icon" xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" viewBox="0 0 16 16">
@@ -806,9 +793,18 @@
                         {{ $status === 'approved' ? 'Already Enrolled' : 'Request Pending' }}
                     </button>
                 @else
-                    <button type="button" class="btn-enroll" onclick="openEnrollModal({{ $course->id }})">
-                        Enroll
-                    </button>
+                    @if($course->course_type === 'practical' && $guest && !$guest->hasVerifiedLicense())
+                        <div style="text-align: center; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; background: #fef3c7; color: #92400e; margin-bottom: 8px;">
+                            🪪 Verified student license required
+                        </div>
+                        <button class="btn-enroll" disabled title="You need a verified student driver's license to enroll in practical courses">
+                            License Required
+                        </button>
+                    @else
+                        <button type="button" class="btn-enroll" onclick="openEnrollModal({{ $course->id }})">
+                            Enroll
+                        </button>
+                    @endif
                 @endif
             </div>
         </div>

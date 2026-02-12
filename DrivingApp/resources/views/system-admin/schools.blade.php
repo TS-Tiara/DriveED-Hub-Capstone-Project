@@ -396,7 +396,7 @@
                                     <i class="fas {{ ($school->status ?? 'active') === 'active' ? 'fa-ban' : 'fa-check' }}"></i>
                                 </button>
                             </form>
-                            <button type="button" class="btn-action btn-delete" onclick="confirmDelete('{{ $school->id }}', '{{ $school->name }}')" title="Delete School">
+                            <button type="button" class="btn-action btn-delete" data-action="delete-school" data-id="{{ $school->id }}" data-name="{{ $school->name }}" title="Delete School">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
@@ -498,12 +498,14 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
     });
 });
 
-// Delete confirmation
-function confirmDelete(schoolId, schoolName) {
-    document.getElementById('deleteSchoolName').textContent = schoolName;
-    document.getElementById('deleteSchoolForm').action = '/system-admin/schools/' + schoolId;
+// Delete confirmation via event delegation (XSS-safe)
+document.addEventListener('click', function(e) {
+    const btn = e.target.closest('[data-action="delete-school"]');
+    if (!btn) return;
+    document.getElementById('deleteSchoolName').textContent = btn.dataset.name;
+    document.getElementById('deleteSchoolForm').action = '/system-admin/schools/' + btn.dataset.id;
     openModal('deleteSchoolModal');
-}
+});
 </script>
 
 <!-- Delete Confirmation Modal -->
@@ -515,7 +517,7 @@ function confirmDelete(schoolId, schoolName) {
             </div>
             <h4>Delete School?</h4>
             <p>Are you sure you want to delete <strong id="deleteSchoolName"></strong>?</p>
-            <p style="margin-top: 10px; color: #dc2626; font-size: 0.85rem;">This will permanently delete all students, instructors, admins, courses, and bookings.</p>
+            <p style="margin-top: 10px; color: #dc2626; font-size: 0.85rem;">This will permanently delete all students, instructors, admins, courses, and schedules.</p>
         </div>
         <div class="modal-footer" style="justify-content: center;">
             <button type="button" class="btn-cancel" onclick="closeModal('deleteSchoolModal')">Cancel</button>

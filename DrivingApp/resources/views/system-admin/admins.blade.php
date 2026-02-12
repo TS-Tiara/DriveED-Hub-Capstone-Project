@@ -418,7 +418,7 @@
                                 </button>
                             </form>
                             <button type="button" class="btn-sm btn-danger" 
-                                    onclick="confirmDeleteAdmin('{{ $admin->id }}', '{{ $admin->name }}')"
+                                    data-action="delete-admin" data-id="{{ $admin->id }}" data-name="{{ $admin->name }}"
                                     title="Delete Admin">
                                 <i class="fas fa-trash"></i>
                             </button>
@@ -516,11 +516,14 @@ function closeModal(id) {
     document.getElementById(id).classList.remove('active');
 }
 
-function confirmDeleteAdmin(id, name) {
-    document.getElementById('deleteAdminName').textContent = name;
-    document.getElementById('deleteAdminForm').action = '{{ url("system-admin/admins") }}/' + id;
+// Delete confirmation via event delegation (XSS-safe)
+document.addEventListener('click', function(e) {
+    const btn = e.target.closest('[data-action="delete-admin"]');
+    if (!btn) return;
+    document.getElementById('deleteAdminName').textContent = btn.dataset.name;
+    document.getElementById('deleteAdminForm').action = '{{ url("system-admin/admins") }}/' + btn.dataset.id;
     openModal('deleteAdminModal');
-}
+});
 
 // Close modal when clicking outside
 document.querySelectorAll('.modal-overlay').forEach(modal => {

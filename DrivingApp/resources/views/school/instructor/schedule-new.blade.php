@@ -527,7 +527,7 @@
                                         <div class="slot-info">
                                             {{ $slot->course->title ?? 'General' }} • {{ $slot->instructors->count() }}/{{ $slot->max_instructors ?? 1 }} instructors
                                             @if($slotBookings->count() > 0)
-                                                • {{ $slotBookings->count() }} student(s) booked
+                                                • {{ $slotBookings->count() }} student(s) scheduled
                                             @endif
                                         </div>
                                         @if($slot->notes)
@@ -581,7 +581,7 @@
                                         </div>
                                     @endforeach
                                 @else
-                                    <p style="color: #6c757d; font-size: 13px; margin: 0;">No students booked</p>
+                                    <p style="color: #6c757d; font-size: 13px; margin: 0;">No students scheduled</p>
                                 @endif
                             </div>
                         @endforeach
@@ -702,7 +702,7 @@
                                         </div>
                                     @endforeach
                                 @else
-                                    <p style="color: #6c757d; font-size: 13px; margin: 0;">No students booked</p>
+                                    <p style="color: #6c757d; font-size: 13px; margin: 0;">No students scheduled</p>
                                 @endif
                             </div>
                         @endforeach
@@ -780,7 +780,7 @@
                                 </div>
                             @endforeach
                         @else
-                            <p style="color: #6c757d; font-size: 13px; margin: 0;">No students booked</p>
+                            <p style="color: #6c757d; font-size: 13px; margin: 0;">No students scheduled</p>
                         @endif
                     </div>
                 @endforeach

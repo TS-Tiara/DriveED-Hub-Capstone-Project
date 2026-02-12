@@ -11,15 +11,22 @@ use Illuminate\Support\Facades\DB;
 class CourseModuleController extends Controller
 {
     /**
+     * Resolve authenticated user role from multi-guard system
+     */
+    private function resolveAuthRole(): string
+    {
+        if (Auth::guard('admin')->check()) return 'admin';
+        if (Auth::guard('instructor')->check()) return 'instructor';
+        if (Auth::guard('student')->check()) return 'student';
+        abort(403);
+    }
+
+    /**
      * Display a listing of modules for a specific course
      */
     public function index(Course $course)
     {
-        $user = Auth::user();
-        
-        if (!in_array($user->role, ['admin', 'superadmin', 'instructor', 'student'])) {
-            abort(403);
-        }
+        $role = $this->resolveAuthRole();
         
         $modules = $course->modules()
             ->with(['lessons' => function($query) {
@@ -29,10 +36,10 @@ class CourseModuleController extends Controller
             ->get();
         
         // Different views based on role
-        $viewPath = match($user->role) {
+        $viewPath = match($role) {
             'student' => 'student.modules.index',
             'instructor' => 'instructor.modules.index',
-            'admin', 'superadmin' => 'admin.modules.index',
+            'admin' => 'admin.modules.index',
             default => abort(403)
         };
         
@@ -44,10 +51,9 @@ class CourseModuleController extends Controller
      */
     public function create(Course $course)
     {
-        $user = Auth::user();
+        $role = $this->resolveAuthRole();
         
-        // Only admins can create modules
-        if (!in_array($user->role, ['admin', 'superadmin'])) {
+        if ($role !== 'admin') {
             abort(403);
         }
         
@@ -59,10 +65,9 @@ class CourseModuleController extends Controller
      */
     public function store(Request $request, Course $course)
     {
-        $user = Auth::user();
+        $role = $this->resolveAuthRole();
         
-        // Only admins can create modules
-        if (!in_array($user->role, ['admin', 'superadmin'])) {
+        if ($role !== 'admin') {
             abort(403);
         }
         
@@ -121,7 +126,7 @@ class CourseModuleController extends Controller
      */
     public function show(Course $course, CourseModule $module)
     {
-        $user = Auth::user();
+        $role = $this->resolveAuthRole();
         
         // Verify module belongs to course
         if ($module->course_id !== $course->id) {
@@ -132,10 +137,10 @@ class CourseModuleController extends Controller
             $query->ordered();
         }]);
         
-        $viewPath = match($user->role) {
+        $viewPath = match($role) {
             'student' => 'student.modules.show',
             'instructor' => 'instructor.modules.show',
-            'admin', 'superadmin' => 'admin.modules.show',
+            'admin' => 'admin.modules.show',
             default => abort(403)
         };
         
@@ -147,10 +152,9 @@ class CourseModuleController extends Controller
      */
     public function edit(Course $course, CourseModule $module)
     {
-        $user = Auth::user();
+        $role = $this->resolveAuthRole();
         
-        // Only admins can edit modules
-        if (!in_array($user->role, ['admin', 'superadmin'])) {
+        if ($role !== 'admin') {
             abort(403);
         }
         
@@ -167,10 +171,9 @@ class CourseModuleController extends Controller
      */
     public function update(Request $request, Course $course, CourseModule $module)
     {
-        $user = Auth::user();
+        $role = $this->resolveAuthRole();
         
-        // Only admins can update modules
-        if (!in_array($user->role, ['admin', 'superadmin'])) {
+        if ($role !== 'admin') {
             abort(403);
         }
         
@@ -211,10 +214,9 @@ class CourseModuleController extends Controller
      */
     public function destroy(Course $course, CourseModule $module)
     {
-        $user = Auth::user();
+        $role = $this->resolveAuthRole();
         
-        // Only admins can delete modules
-        if (!in_array($user->role, ['admin', 'superadmin'])) {
+        if ($role !== 'admin') {
             abort(403);
         }
         
@@ -248,10 +250,9 @@ class CourseModuleController extends Controller
      */
     public function reorder(Request $request, Course $course)
     {
-        $user = Auth::user();
+        $role = $this->resolveAuthRole();
         
-        // Only admins can reorder modules
-        if (!in_array($user->role, ['admin', 'superadmin'])) {
+        if ($role !== 'admin') {
             abort(403);
         }
         
@@ -289,10 +290,9 @@ class CourseModuleController extends Controller
      */
     public function duplicate(Course $course, CourseModule $module)
     {
-        $user = Auth::user();
+        $role = $this->resolveAuthRole();
         
-        // Only admins can duplicate modules
-        if (!in_array($user->role, ['admin', 'superadmin'])) {
+        if ($role !== 'admin') {
             abort(403);
         }
         

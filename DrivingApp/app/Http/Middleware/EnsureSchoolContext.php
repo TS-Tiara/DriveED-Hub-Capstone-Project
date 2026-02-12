@@ -18,6 +18,11 @@ class EnsureSchoolContext
             return $next($request);
         }
 
+        // Block access to deactivated schools
+        if (array_key_exists('status', $school->getAttributes()) && $school->status !== 'active') {
+            abort(403, 'This school portal is currently unavailable.');
+        }
+
         // Skip school validation for logout route to prevent conflicts
         if ($request->route()->getName() === 'schools.logout') {
             return $next($request);

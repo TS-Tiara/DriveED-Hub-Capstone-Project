@@ -1034,13 +1034,13 @@ class AdminController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'banner_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'type' => 'required|string',
+            'type' => 'nullable|string',
             'vehicle_type' => 'nullable|string',
-            'course_type' => 'required|in:theoretical,practical',
-            'license_type' => 'required|in:non_professional,professional',
-            'hours_required' => 'required|numeric|min:1|max:500',
-            'status' => 'required|in:active,inactive',
-            'is_featured' => 'boolean',
+            'course_type' => 'nullable|in:theoretical,practical',
+            'license_type' => 'nullable|in:non_professional,professional',
+            'hours_required' => 'nullable|numeric|min:1|max:500',
+            'status' => 'nullable|in:active,inactive',
+            'is_featured' => 'nullable',
             'features' => 'nullable|array',
             'features.*' => 'nullable|string',
         ]);
@@ -1063,6 +1063,14 @@ class AdminController extends Controller
 
         $course = \App\Models\Course::create($validated);
 
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Course created successfully!',
+                'course' => $course
+            ], 201);
+        }
+
         return redirect()->back()->with('success', 'Course created successfully!');
     }
 
@@ -1077,13 +1085,13 @@ class AdminController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'banner_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'type' => 'required|string',
+            'type' => 'nullable|string',
             'vehicle_type' => 'nullable|string',
-            'course_type' => 'required|in:theoretical,practical',
-            'license_type' => 'required|in:non_professional,professional',
-            'hours_required' => 'required|numeric|min:1|max:500',
-            'status' => 'required|in:active,inactive',
-            'is_featured' => 'boolean',
+            'course_type' => 'nullable|in:theoretical,practical',
+            'license_type' => 'nullable|in:non_professional,professional',
+            'hours_required' => 'nullable|numeric|min:1|max:500',
+            'status' => 'nullable|in:active,inactive',
+            'is_featured' => 'nullable',
             'features' => 'nullable|array',
             'features.*' => 'nullable|string',
         ]);
@@ -1109,6 +1117,14 @@ class AdminController extends Controller
         }
 
         $course->update($validated);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Course updated successfully!',
+                'course' => $course
+            ]);
+        }
 
         return redirect()->back()->with('success', 'Course updated successfully!');
     }

@@ -11,8 +11,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
-use Monolog\Handler\ElasticaHandler;
-use PhpParser\Node\Stmt\Else_;
 
 class InstructorTimeSlotController extends Controller
 {

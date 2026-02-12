@@ -97,7 +97,14 @@ class GuestController extends Controller
             ->where('status', 'active')
             ->get();
 
-        return view('school.guest.dashboard', compact('school', 'guest', 'courses'));
+        // Pre-compute enrollment status for the view
+        $hasEnrollment = $guest->enrollmentRequests()->whereIn('status', ['pending', 'approved'])->exists();
+        $pendingRequest = $guest->enrollmentRequests()->where('status', 'pending')->first();
+        $approvedEnrollment = $guest->enrollmentRequests()->where('status', 'approved')->first();
+
+        return view('school.guest.dashboard', compact(
+            'school', 'guest', 'courses', 'hasEnrollment', 'pendingRequest', 'approvedEnrollment'
+        ));
     }
 
     /**
@@ -118,7 +125,25 @@ class GuestController extends Controller
             })
             ->get();
 
-        return view('school.guest.courses', compact('school', 'guest', 'courses'));
+        // Pre-compute enrollment data for the view
+        $enrolledCourseIds = [];
+        $enrollmentStatuses = [];
+        if ($guest) {
+            $enrollments = $guest->enrollmentRequests()
+                ->whereIn('status', ['pending', 'approved'])
+                ->get();
+            $enrolledCourseIds = $enrollments->pluck('course_id')->toArray();
+            $enrollmentStatuses = $enrollments->pluck('status', 'course_id')->toArray();
+        }
+
+        // Pre-check banner images to avoid file_exists() in the view
+        foreach ($courses as $course) {
+            $course->hasBannerImage = $course->banner_image && file_exists(public_path($course->banner_image));
+        }
+
+        return view('school.guest.courses', compact(
+            'school', 'guest', 'courses', 'enrolledCourseIds', 'enrollmentStatuses'
+        ));
     }
 
     /**
@@ -141,7 +166,7 @@ class GuestController extends Controller
         }
 
         // Check if already enrolled for this course
-        $existingRequest = EnrollmentRequest::where('student_id', $guest->id)
+        $existingRequest = EnrollmentRequest::where('learner_id', $guest->id)
             ->where('course_id', $course->id)
             ->whereIn('status', ['pending', 'approved'])
             ->first();
@@ -153,7 +178,7 @@ class GuestController extends Controller
         try {
             $data = [
                 'school_id' => $school->id,
-                'student_id' => $guest->id,
+                'learner_id' => $guest->id,
                 'course_id' => $course->id,
                 'status' => 'pending',
                 'payment_status' => 'pending',
@@ -208,6 +233,57 @@ class GuestController extends Controller
             ->get();
 
         return view('school.guest.enrollment-requests', compact('school', 'guest', 'requests'));
+    }
+
+    /**
+     * Handle student driver's license upload
+     */
+    public function uploadLicense(Request $request, School $school)
+    {
+        $guest = Auth::guard('student')->user();
+
+        if (!$guest || !$guest->isGuest()) {
+            return redirect()->back()->with('error', 'Only guests can upload a license.');
+        }
+
+        $request->validate([
+            'student_license' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
+        ], [
+            'student_license.required' => 'Please select a file to upload.',
+            'student_license.mimes' => 'File must be PDF, JPG, or PNG format.',
+            'student_license.max' => 'File size must not exceed 5MB.',
+        ]);
+
+        try {
+            // Delete old file if re-uploading
+            if ($guest->student_license_path) {
+                Storage::disk('public')->delete($guest->student_license_path);
+            }
+
+            $path = $request->file('student_license')->store('student-licenses', 'public');
+
+            $guest->update([
+                'student_license_path' => $path,
+                'student_license_status' => 'pending',
+                'student_license_verified_at' => null,
+                'student_license_verified_by' => null,
+                'student_license_rejection_reason' => null,
+            ]);
+
+            Log::info('Student license uploaded', [
+                'student_id' => $guest->id,
+                'school_id' => $school->id,
+                'path' => $path,
+            ]);
+
+            return redirect()->back()->with('success', 'License uploaded successfully! It will be reviewed by an admin.');
+        } catch (\Exception $e) {
+            Log::error('Failed to upload student license', [
+                'error' => $e->getMessage(),
+                'student_id' => $guest->id,
+            ]);
+            return redirect()->back()->with('error', 'Failed to upload license. Please try again.');
+        }
     }
 
     /**
@@ -333,6 +409,7 @@ class GuestController extends Controller
             return back()->withErrors(['error' => 'Failed to send email. Please try again.']);
         }
 
-        return back()->with('success', 'Verification code sent! Check your email.');
+        return back()->with('success', 'Verification code sent! Check your email.')
+            ->with(app()->environment('local', 'development', 'testing') ? ['dev_verification_code' => $otp] : []);
     }
 }

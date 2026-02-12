@@ -330,6 +330,20 @@
 
         <div class="email-display">{{ $email ?? 'your email' }}</div>
 
+        @if(app()->environment('local', 'development', 'testing') && (session('dev_verification_code') || session('_flash.dev_verification_code')))
+            <div style="background: #fef3c7; border: 2px dashed #f59e0b; border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; text-align: center;">
+                <div style="font-size: 0.8rem; color: #92400e; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">
+                    ⚠️ DEV MODE — Verification Code
+                </div>
+                <div style="font-size: 2rem; font-weight: 700; color: #78350f; letter-spacing: 8px; font-family: monospace;">
+                    {{ session('dev_verification_code') }}
+                </div>
+                <div style="font-size: 0.75rem; color: #a16207; margin-top: 6px;">
+                    This is only visible in local/dev environment
+                </div>
+            </div>
+        @endif
+
         @if(session('success'))
             <div class="success" style="text-align: center; margin-bottom: 20px;">
                 ✓ {{ session('success') }}

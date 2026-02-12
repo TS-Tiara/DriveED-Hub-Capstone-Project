@@ -841,8 +841,8 @@
                                 </span>
                             </td>
                             <td>
-                                <button class="btn-action btn-edit" onclick="editStudent({{ $student->id }}, '{{ $student->name }}', '{{ $student->email }}', '{{ $student->contact }}', '{{ $student->address }}')" >Edit</button>
-                                <button class="btn-action btn-toggle" onclick="toggleStudentStatus({{ $student->id }}, '{{ $student->status }}')">
+                                <button class="btn-action btn-edit" data-action="edit-student" data-id="{{ $student->id }}" data-name="{{ $student->name }}" data-email="{{ $student->email }}" data-contact="{{ $student->contact }}" data-address="{{ $student->address }}">Edit</button>
+                                <button class="btn-action btn-toggle" data-action="toggle-student-status" data-id="{{ $student->id }}" data-status="{{ $student->status }}">
                                     {{ $student->status === 'active' ? 'Deactivate' : 'Activate' }}
                                 </button>
                             </td>
@@ -906,11 +906,11 @@
                                 </span>
                             </td>
                             <td>
-                                <button class="btn-action btn-edit" onclick="editInstructor({{ $instructor->id }}, '{{ $instructor->name }}', '{{ $instructor->email }}', '{{ $instructor->contact }}', '{{ $instructor->license_number }}')">Edit</button>
-                                <button class="btn-action btn-toggle" onclick="toggleInstructorStatus({{ $instructor->id }}, '{{ $instructor->status }}')">
+                                <button class="btn-action btn-edit" data-action="edit-instructor" data-id="{{ $instructor->id }}" data-name="{{ $instructor->name }}" data-email="{{ $instructor->email }}" data-contact="{{ $instructor->contact }}" data-license="{{ $instructor->license_number }}">Edit</button>
+                                <button class="btn-action btn-toggle" data-action="toggle-instructor-status" data-id="{{ $instructor->id }}" data-status="{{ $instructor->status }}">
                                     {{ $instructor->status === 'active' ? 'Deactivate' : 'Activate' }}
                                 </button>
-                                <button class="btn-action btn-toggle" onclick="toggleInstructorAvailability({{ $instructor->id }}, '{{ $instructor->availability }}')">
+                                <button class="btn-action btn-toggle" data-action="toggle-instructor-availability" data-id="{{ $instructor->id }}" data-availability="{{ $instructor->availability }}">
                                     {{ $instructor->availability === 'available' ? 'Mark Unavailable' : 'Mark Available' }}
                                 </button>
                             </td>
@@ -1216,8 +1216,8 @@
     function editStudent(id, name, email, contact, address) {
         const form = document.getElementById('editStudentForm');
         form.action = `${studentBaseUrl}/${id}`;
-        document.getElementById('edit_student_name').value = name;
-        document.getElementById('edit_student_email').value = email;
+        document.getElementById('edit_student_name').value = name || '';
+        document.getElementById('edit_student_email').value = email || '';
         document.getElementById('edit_student_contact').value = contact || '';
         document.getElementById('edit_student_address').value = address || '';
         document.getElementById('editStudentModal').style.display = 'flex';
@@ -1226,6 +1226,24 @@
     function closeEditStudentModal() {
         document.getElementById('editStudentModal').style.display = 'none';
     }
+    
+    // Event delegation for data-action buttons (XSS-safe)
+    document.addEventListener('click', function(e) {
+        const btn = e.target.closest('[data-action]');
+        if (!btn) return;
+        const action = btn.dataset.action;
+        if (action === 'edit-student') {
+            editStudent(btn.dataset.id, btn.dataset.name, btn.dataset.email, btn.dataset.contact, btn.dataset.address);
+        } else if (action === 'toggle-student-status') {
+            toggleStudentStatus(btn.dataset.id, btn.dataset.status);
+        } else if (action === 'edit-instructor') {
+            editInstructor(btn.dataset.id, btn.dataset.name, btn.dataset.email, btn.dataset.contact, btn.dataset.license);
+        } else if (action === 'toggle-instructor-status') {
+            toggleInstructorStatus(btn.dataset.id, btn.dataset.status);
+        } else if (action === 'toggle-instructor-availability') {
+            toggleInstructorAvailability(btn.dataset.id, btn.dataset.availability);
+        }
+    });
     
     function viewStudent(id) {
         Toast.info('Student details view coming soon!', 'Feature Info');

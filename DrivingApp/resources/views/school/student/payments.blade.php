@@ -214,46 +214,50 @@ td {
                 @forelse($payments as $payment)
                 <tr>
                     <td>{{ $payment->paid_on ? $payment->paid_on->format('M d, Y') : 'N/A' }}</td>
-                    <td><strong>{{ $payment->booking->course->title }}</strong></td>
+                    <td><strong>{{ $payment->booking?->course?->title ?? 'N/A' }}</strong></td>
                     <td><strong style="color: #10b981;">₱{{ number_format($payment->amount, 2) }}</strong></td>
                     <td>{{ ucfirst($payment->method ?? 'N/A') }}</td>
                     <td><span class="badge badge-{{ $payment->status }}">{{ ucfirst($payment->status) }}</span></td>
                 </tr>
-                <!-- Mobile card view -->
-                <div class="payment-card">
-                    <div class="payment-card-row">
-                        <span class="payment-card-label">Date</span>
-                        <span class="payment-card-value">{{ $payment->paid_on ? $payment->paid_on->format('M d, Y') : 'N/A' }}</span>
-                    </div>
-                    <div class="payment-card-row">
-                        <span class="payment-card-label">Course</span>
-                        <span class="payment-card-value">{{ $payment->booking->course->title }}</span>
-                    </div>
-                    <div class="payment-card-row">
-                        <span class="payment-card-label">Amount</span>
-                        <span class="payment-card-amount">₱{{ number_format($payment->amount, 2) }}</span>
-                    </div>
-                    <div class="payment-card-row">
-                        <span class="payment-card-label">Method</span>
-                        <span class="payment-card-value">{{ ucfirst($payment->method ?? 'N/A') }}</span>
-                    </div>
-                    <div class="payment-card-row">
-                        <span class="payment-card-label">Status</span>
-                        <span class="badge badge-{{ $payment->status }}">{{ ucfirst($payment->status) }}</span>
-                    </div>
-                </div>
                 @empty
                 <tr>
                     <td colspan="5" style="text-align: center; padding: 60px 20px; color: #9ca3af;">
                         <p style="font-size: 1.2rem;">No payment records found</p>
                     </td>
                 </tr>
-                <div class="payment-card" style="text-align: center; color: #9ca3af;">
-                    <p style="font-size: 1rem;">No payment records found</p>
-                </div>
                 @endforelse
             </tbody>
         </table>
+
+        {{-- Mobile card view --}}
+        @forelse($payments as $payment)
+        <div class="payment-card">
+            <div class="payment-card-row">
+                <span class="payment-card-label">Date</span>
+                <span class="payment-card-value">{{ $payment->paid_on ? $payment->paid_on->format('M d, Y') : 'N/A' }}</span>
+            </div>
+            <div class="payment-card-row">
+                <span class="payment-card-label">Course</span>
+                <span class="payment-card-value">{{ $payment->booking?->course?->title ?? 'N/A' }}</span>
+            </div>
+            <div class="payment-card-row">
+                <span class="payment-card-label">Amount</span>
+                <span class="payment-card-amount">₱{{ number_format($payment->amount, 2) }}</span>
+            </div>
+            <div class="payment-card-row">
+                <span class="payment-card-label">Method</span>
+                <span class="payment-card-value">{{ ucfirst($payment->method ?? 'N/A') }}</span>
+            </div>
+            <div class="payment-card-row">
+                <span class="payment-card-label">Status</span>
+                <span class="badge badge-{{ $payment->status }}">{{ ucfirst($payment->status) }}</span>
+            </div>
+        </div>
+        @empty
+        <div class="payment-card" style="text-align: center; color: #9ca3af;">
+            <p style="font-size: 1rem;">No payment records found</p>
+        </div>
+        @endforelse
     </div>
 </div>
 @endsection

@@ -53,23 +53,8 @@ class InstructorController extends Controller
             ->distinct()
             ->count('student_id');
         
-        $totalCompleted = Booking::where('instructor_id', $instructor->id)
-            ->where('status', 'completed')
-            ->count();
-        
-        $monthlyBookings = Booking::where('instructor_id', $instructor->id)
-            ->whereMonth('scheduled_at', Carbon::now()->month)
-            ->whereYear('scheduled_at', Carbon::now()->year)
-            ->count();
-        
         $pendingBookings = Booking::where('instructor_id', $instructor->id)
             ->where('status', 'scheduled')
-            ->count();
-        
-        $completedThisMonth = Booking::where('instructor_id', $instructor->id)
-            ->where('status', 'completed')
-            ->whereMonth('scheduled_at', Carbon::now()->month)
-            ->whereYear('scheduled_at', Carbon::now()->year)
             ->count();
         
         // 3. Upcoming Bookings - optimized with selective eager loading
@@ -85,76 +70,19 @@ class InstructorController extends Controller
             ->limit(5)
             ->get();
         
-        // 4. Recent Progress Updates
-        // First get all student IDs who have bookings with this instructor
-        $studentIds = Booking::where('instructor_id', $instructor->id)
-            ->distinct()
-            ->pluck('student_id');
-        
-        $recentProgress = Progress::whereIn('student_id', $studentIds)
-            ->with(['student', 'course'])
-            ->orderBy('updated_at', 'desc')
-            ->take(5)
-            ->get();
-        
         return view($school->resolveView('instructor.dashboard'), [
             'school' => $school,
             'todaysLessons' => $todaysSchedules,
             'weeklyLessons' => $weeklySchedules,
             'nextLesson' => $nextLesson,
             'activeStudents' => $activeStudents,
-            'totalCompleted' => $totalCompleted,
-            'monthlyBookings' => $monthlyBookings,
             'pendingBookings' => $pendingBookings,
-            'completedThisMonth' => $completedThisMonth,
             'upcomingBookings' => $upcomingBookings,
-            'recentProgress' => $recentProgress,
-        ]);
-    }
-    
-    /**
-     * Display instructor's bookings
-     */
-    public function bookings(School $school)
-    {
-        $instructor = Auth::guard('instructor')->user();
-        
-        $bookings = Booking::where('instructor_id', $instructor->id)
-            ->where('school_id', $school->id)
-            ->with(['student', 'course', 'timeSlot'])
-            ->orderBy('scheduled_at', 'desc')
-            ->paginate(20);
-        
-        return view($school->resolveView('instructor.bookings'), [
-            'school' => $school,
-            'instructor' => $instructor,
-            'bookings' => $bookings,
-        ]);
-    }
-    
-    /**
-     * Show a specific booking
-     */
-    public function showBooking(School $school, Booking $booking)
-    {
-        $instructor = Auth::guard('instructor')->user();
-        
-        // Verify this booking belongs to this instructor
-        if ($booking->instructor_id !== $instructor->id) {
-            abort(403, 'You do not have access to this booking.');
-        }
-        
-        $booking->load(['student', 'course', 'timeSlot', 'payment']);
-        
-        return view($school->resolveView('instructor.booking-detail'), [
-            'school' => $school,
-            'instructor' => $instructor,
-            'booking' => $booking,
         ]);
     }
     
     // ==========================
-    // FLASK FEATURES FOR INSTRUCTORS
+    // INSTRUCTOR FEATURES
     // ==========================
 
     public function myStudents(School $school)

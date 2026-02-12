@@ -1247,7 +1247,7 @@
                     Theoretical Completions
                     <span class="badge badge-new">NEW</span>
                 </a>
-                <a href="{{ $schoolRoute('admin.bookings.index') }}" class="nav-item" data-page="bookings">Bookings</a>
+                <a href="{{ $schoolRoute('admin.bookings.index') }}" class="nav-item" data-page="bookings">Student Sessions</a>
                 <a href="{{ $schoolRoute('admin.payments.index') }}" class="nav-item" data-page="payments">Payments</a>
                 <a href="{{ $schoolRoute('admin.reports.index') }}" class="nav-item" data-page="reports">Reports & Analytics</a>
                 <a href="{{ $schoolRoute('admin.settings') }}" class="nav-item" data-page="settings">Settings</a>
@@ -1255,12 +1255,10 @@
                 <a href="{{ $schoolRoute('instructor.dashboard') }}" class="nav-item" data-page="dashboard">Dashboard</a>
                 <a href="{{ $schoolRoute('instructor.schedule') }}" class="nav-item" data-page="my-schedule">My Schedule</a>
                 <a href="{{ $schoolRoute('instructor.students.index') }}" class="nav-item" data-page="students">My Students</a>
-                <a href="{{ $schoolRoute('instructor.sessions.create') }}" class="nav-item" data-page="sessions">
-                    Log Session
-                    <span class="badge badge-new">NEW</span>
+                <a href="{{ $schoolRoute('instructor.sessions.index') }}" class="nav-item" data-page="sessions">
+                    Session Logging
                 </a>
                 <a href="{{ $schoolRoute('instructor.grades') }}" class="nav-item" data-page="grades">Grades</a>
-                <a href="{{ $schoolRoute('instructor.reports') }}" class="nav-item" data-page="reports">Reports</a>
             @elseif(Auth::guard('student')->check())
                 @php
                     $currentStudent = Auth::guard('student')->user();

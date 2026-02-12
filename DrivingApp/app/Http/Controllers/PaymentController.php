@@ -111,6 +111,8 @@ class PaymentController extends Controller
      */
     public function show(School $school, Payment $payment)
     {
+        abort_if($payment->school_id !== $school->id, 404);
+
         $payment->load(['booking.student', 'booking.course', 'booking.instructor']);
 
         // Always return JSON - payment details shown in modals/lists
@@ -125,6 +127,8 @@ class PaymentController extends Controller
      */
     public function edit(School $school, Payment $payment)
     {
+        abort_if($payment->school_id !== $school->id, 404);
+
         return view($school->resolveView('admin.payment-edit'), compact('school', 'payment'));
     }
 
@@ -133,6 +137,8 @@ class PaymentController extends Controller
      */
     public function update(Request $request, School $school, Payment $payment)
     {
+        abort_if($payment->school_id !== $school->id, 404);
+
         $validated = $request->validate([
             'amount' => 'required|numeric|min:0',
             'method' => 'nullable|in:cash,card,bank_transfer,online',
@@ -161,6 +167,8 @@ class PaymentController extends Controller
      */
     public function destroy(Request $request, School $school, Payment $payment)
     {
+        abort_if($payment->school_id !== $school->id, 404);
+
         $payment->delete();
 
         if ($request->ajax() || $request->wantsJson()) {

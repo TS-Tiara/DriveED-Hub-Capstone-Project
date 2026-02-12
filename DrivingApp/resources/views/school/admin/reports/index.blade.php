@@ -148,6 +148,116 @@
         color: #95a5a6; 
     }
     
+    /* Progress Bars in Tables */
+    .progress-bar {
+        background: #e5e7eb;
+        border-radius: 10px;
+        height: 8px;
+        overflow: hidden;
+        margin-bottom: 4px;
+        min-width: 80px;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        border-radius: 10px;
+        background: <?php echo $primaryColor; ?>;
+        transition: width 0.5s ease;
+    }
+    
+    /* Time Period Filter */
+    .period-filter {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 25px;
+        flex-wrap: wrap;
+    }
+    
+    .period-btn {
+        padding: 8px 18px;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        background: white;
+        color: #555;
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .period-btn:hover {
+        border-color: <?php echo $primaryColor; ?>;
+        color: <?php echo $primaryColor; ?>;
+    }
+    
+    .period-btn.active {
+        background: <?php echo $primaryColor; ?>;
+        border-color: <?php echo $primaryColor; ?>;
+        color: white;
+    }
+    
+    /* Visual Bar Chart */
+    .bar-chart {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 15px;
+    }
+    
+    .bar-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .bar-label {
+        min-width: 140px;
+        font-size: 0.85rem;
+        color: #555;
+        font-weight: 500;
+        text-align: right;
+        flex-shrink: 0;
+    }
+    
+    .bar-track {
+        flex: 1;
+        background: #f0f1f3;
+        border-radius: 6px;
+        height: 24px;
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .bar-fill {
+        height: 100%;
+        border-radius: 6px;
+        <?php if($useGradient): ?>
+            background: linear-gradient(90deg, <?php echo $primaryColor; ?> 0%, <?php echo $secondaryColor; ?> 100%);
+        <?php else: ?>
+            background: <?php echo $primaryColor; ?>;
+        <?php endif; ?>
+        transition: width 0.6s ease;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding-right: 8px;
+        min-width: fit-content;
+    }
+    
+    .bar-value {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: white;
+    }
+    
+    .bar-count {
+        min-width: 50px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #333;
+        text-align: left;
+    }
+    
     .stats-summary {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -160,18 +270,32 @@
         padding: 15px;
         border-radius: 8px;
         text-align: center;
+        border-left: 3px solid <?php echo $primaryColor; ?>;
     }
     
     .stat-box .label {
         color: #7f8c8d;
         font-size: 12px;
         margin-bottom: 5px;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
     }
     
     .stat-box .value {
         color: #2c3e50;
         font-size: 1.5rem;
         font-weight: bold;
+    }
+    
+    /* Improved Table Styling */
+    .reports-table th { 
+        background: #f1f3f5; 
+        color: #333; 
+        font-weight: 600; 
+    }
+    
+    .reports-table tbody tr:nth-child(even) {
+        background: #fafbfc;
     }
 
     .detailed-reports-section {
@@ -319,6 +443,48 @@
         min-width: 24px;
         text-align: center;
     }
+    
+    @media (max-width: 768px) {
+        .reports-container {
+            padding: 15px;
+        }
+        
+        .page-header {
+            flex-direction: column;
+            gap: 15px;
+            align-items: flex-start;
+        }
+        
+        .period-filter {
+            gap: 6px;
+        }
+        
+        .period-btn {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+        }
+        
+        .metrics-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .stats-summary {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .bar-label {
+            min-width: 80px;
+            font-size: 0.75rem;
+        }
+        
+        .reports-table {
+            font-size: 0.8rem;
+        }
+        
+        .reports-table th, .reports-table td {
+            padding: 8px 6px;
+        }
+    }
 </style>
 
 <div class="reports-container">
@@ -331,7 +497,7 @@
                     <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
                     <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
                 </svg>
-                Export Data ▼
+                Export Data
             </button>
             <div class="export-menu" id="exportMenu">
                 <div class="export-menu-title">Download as Excel</div>
@@ -342,7 +508,7 @@
                     Instructors
                 </a>
                 <a href="{{ route('schools.admin.reports.export.bookings', $school) }}">
-                    Bookings
+                    Schedules
                 </a>
                 <a href="{{ route('schools.admin.reports.export.payments', $school) }}">
                     Payments
@@ -354,37 +520,92 @@
         </div>
     </div>
 
+    <!-- Time Period Filter -->
+    @php $currentPeriod = request('period', 'all'); @endphp
+    <div class="period-filter">
+        <button class="period-btn {{ $currentPeriod === 'today' ? 'active' : '' }}" onclick="filterPeriod('today')">Today</button>
+        <button class="period-btn {{ $currentPeriod === 'week' ? 'active' : '' }}" onclick="filterPeriod('week')">This Week</button>
+        <button class="period-btn {{ $currentPeriod === 'month' ? 'active' : '' }}" onclick="filterPeriod('month')">This Month</button>
+        <button class="period-btn {{ $currentPeriod === 'year' ? 'active' : '' }}" onclick="filterPeriod('year')">This Year</button>
+        <button class="period-btn {{ $currentPeriod === 'all' ? 'active' : '' }}" onclick="filterPeriod('all')">All Time</button>
+    </div>
+
     <!-- Key Metrics Summary (Always Visible) -->
     <div class="metrics-grid">
         <div class="stat-card info">
             <div class="stat-content">
-                <div class="stat-label">Total Students</div>
-                <div class="stat-value">{{ $analytics['total_students'] }}</div>
-                <div class="subtitle">{{ $analytics['active_students'] }} active</div>
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">Total Students</div>
+                        <div class="stat-value">{{ $analytics['total_students'] }}</div>
+                        <div class="subtitle">{{ $analytics['active_students'] }} active</div>
+                    </div>
+                    <div class="stat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="stat-card growth">
             <div class="stat-content">
-                <div class="stat-label">Total Instructors</div>
-                <div class="stat-value">{{ $analytics['total_instructors'] }}</div>
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">Total Instructors</div>
+                        <div class="stat-value">{{ $analytics['total_instructors'] }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="stat-card pending">
             <div class="stat-content">
-                <div class="stat-label">This Month Bookings</div>
-                <div class="stat-value">{{ $analytics['total_bookings_this_month'] }}</div>
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">This Month Schedules</div>
+                        <div class="stat-value">{{ $analytics['total_bookings_this_month'] }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="stat-card active">
             <div class="stat-content">
-                <div class="stat-label">Completed Lessons</div>
-                <div class="stat-value">{{ $analytics['completed_lessons_this_month'] }}</div>
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">Completed Lessons</div>
+                        <div class="stat-value">{{ $analytics['completed_lessons_this_month'] }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="stat-card {{ $analytics['completion_rate'] >= 70 ? 'active' : 'pending' }}">
             <div class="stat-content">
-                <div class="stat-label">Completion Rate</div>
-                <div class="stat-value">{{ number_format($analytics['completion_rate'], 1) }}%</div>
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">Completion Rate</div>
+                        <div class="stat-value">{{ number_format($analytics['completion_rate'], 1) }}%</div>
+                    </div>
+                    <div class="stat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                        </svg>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -459,16 +680,16 @@
         </div>
     </div>
 
-    <!-- Booking Analytics Section (Collapsible) -->
+    <!-- Schedule Analytics Section (Collapsible) -->
     <div class="collapsible-section">
         <div class="section-header" onclick="toggleSection(this)">
-            <h2>Booking Analytics</h2>
+            <h2>Schedule Analytics</h2>
             <span class="collapse-icon">▼</span>
         </div>
         <div class="section-content">
             <div class="stats-summary">
                 <div class="stat-box">
-                    <div class="label">Total Bookings</div>
+                    <div class="label">Total Schedules</div>
                     <div class="value">{{ $analytics['total_all_bookings'] }}</div>
                 </div>
                 <div class="stat-box">
@@ -520,7 +741,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="3" class="empty-state">No booking data available</td>
+                            <td colspan="3" class="empty-state">No schedule data available</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -537,15 +758,40 @@
             <span class="collapse-icon">▼</span>
         </div>
         <div class="section-content collapsed">
+            @php
+                $maxEnrolled = collect($analytics['course_stats'] ?? [])->max('total_enrolled') ?: 1;
+            @endphp
+            
+            <!-- Visual Enrollment Chart -->
+            @if(count($analytics['course_stats'] ?? []) > 0)
+                <h3 style="margin-bottom: 15px; font-size: 1rem; color: #555;">Enrollment by Course</h3>
+                <div class="bar-chart">
+                    @foreach($analytics['course_stats'] ?? [] as $course)
+                        <div class="bar-row">
+                            <span class="bar-label">{{ Str::limit($course->title, 20) }}</span>
+                            <div class="bar-track">
+                                <div class="bar-fill" style="width: {{ ($course->total_enrolled / $maxEnrolled) * 100 }}%">
+                                    @if($course->total_enrolled > 0)
+                                        <span class="bar-value">{{ $course->total_enrolled }}</span>
+                                    @endif
+                                </div>
+                            </div>
+                            <span class="bar-count">{{ $course->total_enrolled }}</span>
+                        </div>
+                    @endforeach
+                </div>
+                <hr style="margin: 25px 0; border: none; border-top: 1px solid #e5e7eb;">
+            @endif
+
             <table class="reports-table">
                 <thead>
                     <tr>
                         <th>Course</th>
-                        <th>Total Enrolled</th>
+                        <th>Enrolled</th>
                         <th>Price</th>
                         <th>Completion Rate</th>
-                        <th>Average Rating</th>
-                        <th>Total Revenue</th>
+                        <th>Rating</th>
+                        <th>Revenue</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -555,7 +801,10 @@
                             <td><span class="badge badge-info">{{ $course->total_enrolled }}</span></td>
                             <td>₱{{ number_format($course->price ?? 0, 2) }}</td>
                             <td>
-                                <span style="color: {{ $course->completion_rate >= 70 ? '#10b981' : '#f59e0b' }};">
+                                <div class="progress-bar" style="margin-bottom: 2px;">
+                                    <div class="progress-fill" style="width: {{ $course->completion_rate }}%; background: {{ $course->completion_rate >= 70 ? '#10b981' : '#f59e0b' }};"></div>
+                                </div>
+                                <span style="font-size: 0.8rem; color: {{ $course->completion_rate >= 70 ? '#10b981' : '#f59e0b' }}; font-weight: 600;">
                                     {{ number_format($course->completion_rate, 1) }}%
                                 </span>
                             </td>
@@ -563,10 +812,10 @@
                                 @if($course->average_rating)
                                     <span style="color: #f59e0b;">★</span> {{ number_format($course->average_rating, 1) }}
                                 @else
-                                    <span style="color: #9ca3af;">No ratings</span>
+                                    <span style="color: #9ca3af;">--</span>
                                 @endif
                             </td>
-                            <td>₱{{ number_format($course->total_revenue, 2) }}</td>
+                            <td style="font-weight: 600; color: #059669;">₱{{ number_format($course->total_revenue, 2) }}</td>
                         </tr>
                     @empty
                         <tr>
@@ -609,14 +858,13 @@
                                 @endif
                             </td>
                             <td>
-                                <span style="color: {{ $instructor->completion_rate >= 80 ? '#10b981' : '#f59e0b' }};">
+                                <div class="progress-bar" style="margin-bottom: 2px;">
+                                    <div class="progress-fill" style="width: {{ $instructor->completion_rate }}%; background: {{ $instructor->completion_rate >= 80 ? '#10b981' : '#f59e0b' }};"></div>
+                                </div>
+                                <span style="font-size: 0.8rem; color: {{ $instructor->completion_rate >= 80 ? '#10b981' : '#f59e0b' }}; font-weight: 600;">
                                     {{ number_format($instructor->completion_rate, 1) }}%
                                 </span>
                             </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="5" class="empty-state">No instructor data available</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -742,12 +990,12 @@
         </div>
     </div>
 
-    <!-- Bookings & Cancellations Report (Merged) -->
+    <!-- Schedules & Cancellations Report (Merged) -->
     <div class="collapsible-section">
         <div class="section-header" 
              style="<?php echo $useGradient ? "background: linear-gradient(135deg, {$primaryColor} 0%, {$secondaryColor} 100%);" : "background: {$primaryColor};"; ?>"
              onclick="toggleSection(this)">
-            <h2>Bookings & Cancellations</h2>
+            <h2>Schedules & Cancellations</h2>
             <span class="collapse-icon">▼</span>
         </div>
         <div class="section-content collapsed">
@@ -886,14 +1134,13 @@
                             <td>{{ $student->total_lessons }}</td>
                             <td>{{ $student->completed_lessons }}</td>
                             <td>
-                                <span style="color: {{ $student->progress_rate >= 70 ? '#10b981' : '#f59e0b' }};">
+                                <div class="progress-bar" style="margin-bottom: 2px;">
+                                    <div class="progress-fill" style="width: {{ $student->progress_rate }}%; background: {{ $student->progress_rate >= 70 ? '#10b981' : '#f59e0b' }};"></div>
+                                </div>
+                                <span style="font-size: 0.8rem; color: {{ $student->progress_rate >= 70 ? '#10b981' : '#f59e0b' }}; font-weight: 600;">
                                     {{ number_format($student->progress_rate, 1) }}%
                                 </span>
                             </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="6" class="empty-state">No student progress data available</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -915,6 +1162,18 @@ function toggleExportMenu(event) {
     event.stopPropagation();
     const menu = document.getElementById('exportMenu');
     menu.classList.toggle('show');
+}
+
+function filterPeriod(period) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('period', period);
+    
+    // Use AJAX navigation if available, otherwise full page load
+    if (typeof loadPage === 'function') {
+        loadPage(url.pathname + url.search);
+    } else {
+        window.location.href = url.toString();
+    }
 }
 
 // Close menu when clicking outside

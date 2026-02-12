@@ -23,6 +23,11 @@ class Student extends Authenticatable
         'location',
         'enrollment_date',
         'profile_picture',
+        'student_license_path',
+        'student_license_status',
+        'student_license_verified_at',
+        'student_license_verified_by',
+        'student_license_rejection_reason',
         'experience_level',
         'has_passed_theoretical',
         'theoretical_passed_at',
@@ -31,6 +36,9 @@ class Student extends Authenticatable
         'verification_code_expires_at',
         'active_enrollment_id',
         'is_course_locked',
+        'failed_login_attempts',
+        'locked_until',
+        'last_login_at',
     ];
 
     protected $hidden = [
@@ -45,9 +53,12 @@ class Student extends Authenticatable
             'password' => 'hashed',
             'has_passed_theoretical' => 'boolean',
             'theoretical_passed_at' => 'datetime',
+            'student_license_verified_at' => 'datetime',
             'email_verified_at' => 'datetime',
             'verification_code_expires_at' => 'datetime',
             'is_course_locked' => 'boolean',
+            'locked_until' => 'datetime',
+            'last_login_at' => 'datetime',
         ];
     }
 
@@ -203,7 +214,47 @@ class Student extends Authenticatable
      */
     public function canEnrollPractical(): bool
     {
-        return $this->hasPassedTheoretical();
+        return $this->hasPassedTheoretical() && $this->hasVerifiedLicense();
+    }
+
+    /**
+     * Check if student has a verified student driver's license
+     */
+    public function hasVerifiedLicense(): bool
+    {
+        return $this->student_license_status === 'verified';
+    }
+
+    /**
+     * Check if student's license is pending verification
+     */
+    public function isLicensePending(): bool
+    {
+        return $this->student_license_status === 'pending';
+    }
+
+    /**
+     * Check if student's license was rejected
+     */
+    public function isLicenseRejected(): bool
+    {
+        return $this->student_license_status === 'rejected';
+    }
+
+    /**
+     * Check if student has not uploaded a license yet
+     */
+    public function hasNoLicense(): bool
+    {
+        return $this->student_license_status === 'none' || $this->student_license_status === null;
+    }
+
+    /**
+     * Get the admin who verified the license
+     */
+    public function licenseVerifiedBy()
+    {
+        return $this->belongsTo(Admin::class, 'student_license_verified_by');
     }
 
     /**

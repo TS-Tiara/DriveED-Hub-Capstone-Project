@@ -88,8 +88,7 @@ class EnrollmentRequest extends Model
 
     public function sessionCompletions()
     {
-        return $this->hasMany(Progress::class, 'enrollment_request_id')
-                    ->where('completed', true);
+        return $this->hasMany(SessionCompletion::class, 'enrollment_id');
     }
 
     public function payments()

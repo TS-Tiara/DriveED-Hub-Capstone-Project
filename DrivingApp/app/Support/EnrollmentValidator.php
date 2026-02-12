@@ -33,6 +33,13 @@ class EnrollmentValidator
                     'message' => 'You must complete and pass a theoretical course before enrolling in practical courses.'
                 ];
             }
+
+            if (!$student->hasVerifiedLicense()) {
+                return [
+                    'allowed' => false,
+                    'message' => 'You must have a verified student driver\'s license to enroll in practical courses. Please upload your license from your dashboard.'
+                ];
+            }
             
             return [
                 'allowed' => true,

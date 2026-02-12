@@ -73,6 +73,27 @@
         color: white;
     }
     
+    /* Mark as Paid Button */
+    .btn-mark-paid {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 12px;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+    }
+    
+    .btn-mark-paid:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+    }
+    
     /* Mobile Responsive Styles */
     @media (max-width: 768px) {
         .admin-container {
@@ -278,11 +299,12 @@
                         <th>Method</th>
                         <th>Reference</th>
                         <th>Status</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($payments as $payment)
-                    <tr data-status="{{ $payment->status }}">
+                    <tr data-status="{{ $payment->status }}" id="payment-row-{{ $payment->id }}">
                         <td>{{ $payment->paid_on ? $payment->paid_on->format('M d, Y') : 'N/A' }}</td>
                         <td><strong>{{ $payment->booking->student->name ?? 'N/A' }}</strong></td>
                         <td>{{ $payment->booking->course->title ?? 'N/A' }}</td>
@@ -290,14 +312,28 @@
                         <td><span class="method-badge">{{ ucfirst($payment->method ?? 'N/A') }}</span></td>
                         <td class="reference-cell">{{ $payment->reference ?? '-' }}</td>
                         <td>
-                            <span class="badge badge-{{ $payment->status === 'completed' ? 'success' : ($payment->status === 'pending' ? 'warning' : 'danger') }}">
+                            <span class="badge badge-{{ $payment->status === 'completed' ? 'success' : ($payment->status === 'pending' ? 'warning' : 'danger') }}" id="payment-badge-{{ $payment->id }}">
                                 {{ ucfirst($payment->status) }}
                             </span>
+                        </td>
+                        <td>
+                            @if($payment->status === 'pending')
+                                <button type="button" class="btn-action btn-mark-paid" onclick="markAsPaid({{ $payment->id }})" title="Mark as Paid">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 16px; height: 16px; margin-right: 4px;">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    Mark Paid
+                                </button>
+                            @elseif($payment->status === 'completed')
+                                <span style="color: #059669; font-size: 0.85rem;">✓ Paid</span>
+                            @else
+                                <span style="color: #6b7280; font-size: 0.85rem;">—</span>
+                            @endif
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7">
+                        <td colspan="8">
                             <div class="empty-state">
                                 <div class="empty-state-title">No payments found</div>
                                 <div class="empty-state-text">Payment records will appear here once transactions are made.</div>
@@ -312,6 +348,55 @@
 </div>
 
 <script>
+function markAsPaid(paymentId) {
+    if (!confirm('Mark this payment as completed?')) return;
+    
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') 
+        || '{{ csrf_token() }}';
+    
+    fetch(`{{ url($school->slug . '/admin/payments') }}/${paymentId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrfToken,
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({
+            amount: document.querySelector(`#payment-row-${paymentId} .amount-cell`)?.textContent?.replace(/[₱,]/g, '').trim() || '0',
+            status: 'completed'
+        })
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Failed to update payment');
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // Update the badge
+            const badge = document.getElementById(`payment-badge-${paymentId}`);
+            if (badge) {
+                badge.className = 'badge badge-success';
+                badge.textContent = 'Completed';
+            }
+            // Update the row status for filtering
+            const row = document.getElementById(`payment-row-${paymentId}`);
+            if (row) {
+                row.setAttribute('data-status', 'completed');
+            }
+            // Replace button with checkmark
+            const actionCell = row?.querySelector('td:last-child');
+            if (actionCell) {
+                actionCell.innerHTML = '<span style="color: #059669; font-size: 0.85rem;">✓ Paid</span>';
+            }
+        }
+    })
+    .catch(error => {
+        alert('Error updating payment. Please try again.');
+        console.error(error);
+    });
+}
+
 function filterPayments(status, btn) {
     const rows = document.querySelectorAll('#paymentsTable tbody tr[data-status]');
     const buttons = document.querySelectorAll('.filter-btn');

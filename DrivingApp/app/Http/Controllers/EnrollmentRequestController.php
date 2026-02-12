@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\EnrollmentRequest;
 use App\Models\School;
+use App\Models\Student;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -17,12 +18,21 @@ class EnrollmentRequestController extends Controller
      */
     public function index(School $school)
     {
-        $requests = EnrollmentRequest::where('school_id', $school->id)
-            ->with(['student', 'course'])
+        $allRequests = EnrollmentRequest::where('school_id', $school->id)
+            ->with(['learner', 'course', 'approvedBy'])
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return view('school.admin.enrollment-requests.index', compact('school', 'requests'));
+        $pendingRequests = $allRequests->where('status', 'pending');
+        $approvedRequests = $allRequests->where('status', 'approved');
+        $completedRequests = $allRequests->where('status', 'completed');
+        $cancelledRequests = $allRequests->where('status', 'cancelled');
+        $rejectedRequests = $allRequests->where('status', 'rejected');
+
+        return view('school.admin.enrollment-requests.index', compact(
+            'school', 'allRequests', 'pendingRequests', 'approvedRequests',
+            'completedRequests', 'cancelledRequests', 'rejectedRequests'
+        ));
     }
 
     /**
@@ -395,5 +405,66 @@ class EnrollmentRequestController extends Controller
                 ->back()
                 ->with('error', 'Bulk rejection failed: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Verify a student's driver license
+     */
+    public function verifyLicense(Request $request, School $school, Student $student)
+    {
+        $admin = Auth::guard('admin')->user();
+        if (!$admin || $admin->school_id !== $school->id) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        // Ensure the student belongs to this school
+        if ($student->school_id !== $school->id) {
+            abort(403, 'Student does not belong to this school.');
+        }
+
+        if ($student->student_license_status !== 'pending') {
+            return redirect()->back()->with('warning', 'This license is not pending verification.');
+        }
+
+        $student->update([
+            'student_license_status' => 'verified',
+            'student_license_verified_at' => now(),
+            'student_license_verified_by' => $admin->id,
+            'student_license_rejection_reason' => null,
+        ]);
+
+        return redirect()->back()->with('success', "Student driver's license for {$student->name} has been verified.");
+    }
+
+    /**
+     * Reject a student's driver license
+     */
+    public function rejectLicense(Request $request, School $school, Student $student)
+    {
+        $admin = Auth::guard('admin')->user();
+        if (!$admin || $admin->school_id !== $school->id) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        if ($student->school_id !== $school->id) {
+            abort(403, 'Student does not belong to this school.');
+        }
+
+        $request->validate([
+            'rejection_reason' => 'required|string|max:1000',
+        ]);
+
+        if ($student->student_license_status !== 'pending') {
+            return redirect()->back()->with('warning', 'This license is not pending verification.');
+        }
+
+        $student->update([
+            'student_license_status' => 'rejected',
+            'student_license_rejection_reason' => $request->rejection_reason,
+            'student_license_verified_at' => null,
+            'student_license_verified_by' => null,
+        ]);
+
+        return redirect()->back()->with('success', "Student driver's license for {$student->name} has been rejected.");
     }
 }

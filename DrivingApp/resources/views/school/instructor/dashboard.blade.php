@@ -141,40 +141,7 @@
         color: #d32f2f;
     }
 
-    .metrics-list {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-    }
-
-    .metric-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 12px 15px;
-        background: #f8f9fa;
-        border-radius: 8px;
-        transition: background 0.2s;
-    }
-
-    .metric-item:hover {
-        background: #e9ecef;
-    }
-
-    .metric-label {
-        font-size: 14px;
-        color: #666;
-        font-weight: 500;
-    }
-
-    .metric-value {
-        font-size: 20px;
-        font-weight: 700;
-        color: {{ $primaryColor }};
-    }
-
-    .bookings-list,
-    .progress-list {
+    .bookings-list {
         display: flex;
         flex-direction: column;
         gap: 15px;
@@ -214,61 +181,6 @@
         font-weight: 600;
     }
 
-    .progress-item {
-        padding: 15px;
-        background: #f8f9fa;
-        border-radius: 8px;
-    }
-
-    .progress-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 5px;
-    }
-
-    .progress-student {
-        font-size: 15px;
-        font-weight: 600;
-        color: #333;
-    }
-
-    .progress-percent {
-        font-size: 16px;
-        font-weight: 700;
-        color: {{ $primaryColor }};
-    }
-
-    .progress-course {
-        font-size: 13px;
-        color: #666;
-        margin-bottom: 10px;
-    }
-
-    .progress-bar {
-        background: #e0e0e0;
-        border-radius: 10px;
-        height: 8px;
-        overflow: hidden;
-        margin-bottom: 8px;
-    }
-
-    .progress-fill {
-        @if($useGradient)
-            background: linear-gradient(90deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
-        @else
-            background: {{ $primaryColor }};
-        @endif
-        height: 100%;
-        transition: width 0.3s ease;
-    }
-
-    .progress-notes {
-        font-size: 12px;
-        color: #777;
-        font-style: italic;
-    }
-
     .no-data {
         text-align: center;
         color: #999;
@@ -288,6 +200,8 @@
         font-size: 18px;
         font-weight: 600;
         color: #333;
+        border-bottom: 2px solid {{ $primaryColor }};
+        padding-bottom: 10px;
     }
 
     .actions-grid {
@@ -312,28 +226,13 @@
         border-radius: 8px;
         font-weight: 600;
         transition: transform 0.2s, box-shadow 0.2s;
-        position: relative;
     }
 
     .action-btn:hover {
         transform: translateY(-3px);
         box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-    }
-
-    .action-btn .badge {
-        position: absolute;
-        top: -8px;
-        right: -8px;
-        background: #f44336;
         color: white;
-        border-radius: 50%;
-        width: 24px;
-        height: 24px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 12px;
-        font-weight: 700;
+        text-decoration: none;
     }
 
     @media (max-width: 768px) {
@@ -341,18 +240,6 @@
             padding: 15px;
             margin: 0 auto;
             width: 100%;
-        }
-
-        .dashboard-header {
-            padding: 20px;
-        }
-
-        .dashboard-header h1 {
-            font-size: 18px;
-        }
-
-        .dashboard-header p {
-            font-size: 13px;
         }
 
         .stats-grid {
@@ -408,25 +295,11 @@
             padding: 3px 10px;
         }
 
-        .metric-item {
-            padding: 10px 12px;
-        }
-
-        .metric-label {
-            font-size: 12px;
-        }
-
-        .metric-value {
-            font-size: 16px;
-        }
-
-        .booking-student,
-        .progress-student {
+        .booking-student {
             font-size: 13px;
         }
 
-        .booking-course,
-        .progress-course {
+        .booking-course {
             font-size: 11px;
         }
 
@@ -439,14 +312,6 @@
             padding: 2px 8px;
         }
 
-        .progress-percent {
-            font-size: 13px;
-        }
-
-        .progress-notes {
-            font-size: 10px;
-        }
-
         .actions-grid {
             grid-template-columns: repeat(2, 1fr);
             gap: 10px;
@@ -456,12 +321,6 @@
             padding: 10px 14px;
             font-size: 12px;
         }
-
-        .action-btn .badge {
-            width: 18px;
-            height: 18px;
-            font-size: 10px;
-        }
     }
 
     @media (max-width: 480px) {
@@ -469,18 +328,6 @@
             padding: 10px;
             margin: 0 auto;
             width: 100%;
-        }
-
-        .dashboard-header {
-            padding: 15px;
-        }
-
-        .dashboard-header h1 {
-            font-size: 16px;
-        }
-
-        .dashboard-header p {
-            font-size: 12px;
         }
 
         .stats-grid {
@@ -530,48 +377,24 @@
             font-size: 12px;
         }
 
-        .metrics-list {
+        .bookings-list {
             gap: 10px;
         }
 
-        .metric-item {
-            padding: 8px 10px;
-        }
-
-        .metric-label {
-            font-size: 11px;
-        }
-
-        .metric-value {
-            font-size: 14px;
-        }
-
-        .bookings-list,
-        .progress-list {
-            gap: 10px;
-        }
-
-        .booking-item,
-        .progress-item {
+        .booking-item {
             padding: 10px;
         }
 
-        .booking-student,
-        .progress-student {
+        .booking-student {
             font-size: 12px;
         }
 
-        .booking-course,
-        .progress-course {
+        .booking-course {
             font-size: 10px;
         }
 
         .booking-datetime {
             font-size: 10px;
-        }
-
-        .progress-notes {
-            font-size: 9px;
         }
 
         .quick-actions {
@@ -592,14 +415,6 @@
             padding: 9px 12px;
             font-size: 11px;
         }
-
-        .action-btn .badge {
-            width: 16px;
-            height: 16px;
-            font-size: 9px;
-            top: -5px;
-            right: -5px;
-        }
     }
 </style>
 
@@ -608,6 +423,7 @@
         <h1 class="page-title">Dashboard</h1>
     </div>
     
+    <!-- Key Stats -->
     <div class="stats-grid">
         <div class="stat-card">
             <h3>Today's Lessons</h3>
@@ -627,8 +443,8 @@
         </div>
     </div>
 
+    <!-- Schedule Overview + Upcoming -->
     <div class="dashboard-grid">
-        <!-- Schedule Overview -->
         <div class="dashboard-card">
             <h2>Schedule Overview</h2>
             @if($nextLesson)
@@ -643,36 +459,8 @@
             @endif
         </div>
 
-        <!-- Student & Bookings Stats -->
         <div class="dashboard-card">
-            <h2>Student & Bookings</h2>
-            <div class="metrics-list">
-                <div class="metric-item">
-                    <span class="metric-label">Total Completed</span>
-                    <span class="metric-value">{{ $totalCompleted }}</span>
-                </div>
-                <div class="metric-item">
-                    <span class="metric-label">This Month</span>
-                    <span class="metric-value">{{ $monthlyBookings }}</span>
-                </div>
-                <div class="metric-item">
-                    <span class="metric-label">Completed This Month</span>
-                    <span class="metric-value">{{ $completedThisMonth }}</span>
-                </div>
-                <div class="metric-item">
-                    <span class="metric-label">Pending</span>
-                    <span class="metric-value">{{ $pendingBookings }}</span>
-                </div>
-                <div class="metric-item">
-                    <span class="metric-label">Active Students</span>
-                    <span class="metric-value">{{ $activeStudents }}</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Upcoming Bookings -->
-        <div class="dashboard-card">
-            <h2>Upcoming Bookings</h2>
+            <h2>Upcoming Schedules</h2>
             @if($upcomingBookings->count() > 0)
                 <div class="bookings-list">
                     @foreach($upcomingBookings as $booking)
@@ -688,31 +476,16 @@
                 <p class="no-data">No upcoming schedules</p>
             @endif
         </div>
+    </div>
 
-        <!-- Recent Progress -->
-        <div class="dashboard-card">
-            <h2>Recent Progress Updates</h2>
-            @if($recentProgress->count() > 0)
-                <div class="progress-list">
-                    @foreach($recentProgress as $progress)
-                        <div class="progress-item">
-                            <div class="progress-header">
-                                <span class="progress-student">{{ $progress->student->name }}</span>
-                                <span class="progress-percent">{{ $progress->completion_percent }}%</span>
-                            </div>
-                            <div class="progress-course">{{ $progress->course->title }}</div>
-                            <div class="progress-bar">
-                                <div class="progress-fill" style="width: {{ $progress->completion_percent }}%"></div>
-                            </div>
-                            @if($progress->notes)
-                                <div class="progress-notes">{{ $progress->notes }}</div>
-                            @endif
-                        </div>
-                    @endforeach
-                </div>
-            @else
-                <p class="no-data">No recent progress updates</p>
-            @endif
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+        <h2>Quick Actions</h2>
+        <div class="actions-grid">
+            <a href="{{ $schoolRoute('instructor.schedule') }}" class="action-btn">My Schedule</a>
+            <a href="{{ $schoolRoute('instructor.sessions.create') }}" class="action-btn">Log Session</a>
+            <a href="{{ $schoolRoute('instructor.grades') }}" class="action-btn">Grade Students</a>
+            <a href="{{ $schoolRoute('instructor.students.index') }}" class="action-btn">My Students</a>
         </div>
     </div>
 </div>

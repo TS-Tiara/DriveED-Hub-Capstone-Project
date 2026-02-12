@@ -10,6 +10,7 @@ use App\Models\Student;
 use App\Models\SystemLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class BookingController extends Controller
 {
@@ -138,8 +139,8 @@ class BookingController extends Controller
         
         if ($scheduledDate->lt($minBookingDate)) {
             $message = $advanceBookingDays > 0 
-                ? "Bookings must be made at least {$advanceBookingDays} day(s) in advance."
-                : "Cannot book schedules in the past.";
+                ? "Schedules must be made at least {$advanceBookingDays} day(s) in advance."
+                : "Cannot schedule in the past.";
                 
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
@@ -166,8 +167,8 @@ class BookingController extends Controller
                 $timeSlotDate = \Carbon\Carbon::parse($timeSlot->date)->startOfDay();
                 if ($timeSlotDate->lt($minBookingDate)) {
                     $message = $advanceBookingDays > 0 
-                        ? "Bookings must be made at least {$advanceBookingDays} day(s) in advance."
-                        : "Cannot book schedules in the past.";
+                        ? "Schedules must be made at least {$advanceBookingDays} day(s) in advance."
+                        : "Cannot schedule in the past.";
                         
                     if ($request->ajax() || $request->wantsJson()) {
                         return response()->json([
@@ -204,10 +205,10 @@ class BookingController extends Controller
                     if ($request->ajax() || $request->wantsJson()) {
                         return response()->json([
                             'success' => false,
-                            'message' => 'You already have a booking for this time slot.'
+                            'message' => 'You already have a schedule for this time slot.'
                         ], 422);
                     }
-                    return back()->withErrors(['time_slot' => 'You already have a booking for this time slot.']);
+                    return back()->withErrors(['time_slot' => 'You already have a schedule for this time slot.']);
                 }
                 
                 // Auto-assign instructor if not provided
@@ -237,37 +238,41 @@ class BookingController extends Controller
             }
         }
 
-        $booking = Booking::create($validated);
-        $booking->load(['student', 'instructor', 'course', 'timeSlot']);
+        $booking = DB::transaction(function () use ($validated, $school, $queueEnabled) {
+            $booking = Booking::create($validated);
+            $booking->load(['student', 'instructor', 'course', 'timeSlot']);
 
-        // Log booking creation
-        SystemLog::logInfo(
-            "New booking created for student: {$booking->student->name}",
-            'booking',
-            [
-                'booking_id' => $booking->id,
-                'student_id' => $booking->student_id,
-                'student_name' => $booking->student->name,
-                'course' => $booking->course->title ?? 'N/A',
-                'instructor' => $booking->instructor->name ?? 'Not assigned',
-                'scheduled_at' => $validated['scheduled_at'],
-                'status' => $booking->status
-            ],
-            $school->id,
-            'create_booking'
-        );
+            // Log booking creation
+            SystemLog::logInfo(
+                "New booking created for student: {$booking->student->name}",
+                'booking',
+                [
+                    'booking_id' => $booking->id,
+                    'student_id' => $booking->student_id,
+                    'student_name' => $booking->student->name,
+                    'course' => $booking->course->title ?? 'N/A',
+                    'instructor' => $booking->instructor->name ?? 'Not assigned',
+                    'scheduled_at' => $validated['scheduled_at'],
+                    'status' => $booking->status
+                ],
+                $school->id,
+                'create_booking'
+            );
+
+            return $booking;
+        });
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => $queueEnabled ? 'Booking added to queue successfully' : 'Booking created successfully',
+                'message' => $queueEnabled ? 'Schedule added to queue successfully' : 'Schedule created successfully',
                 'booking' => $booking
             ], 201);
         }
 
         $message = $queueEnabled 
-            ? 'Booking added to your queue! It will be confirmed automatically in ' . ($settings->booking_queue_days ?? 3) . ' days.'
-            : 'Booking created successfully';
+            ? 'Schedule added to your queue! It will be confirmed automatically in ' . ($settings->booking_queue_days ?? 3) . ' days.'
+            : 'Schedule created successfully';
 
         return redirect()->route('schools.student.schedule', $school->slug)
             ->with('success', $message);
@@ -278,6 +283,8 @@ class BookingController extends Controller
      */
     public function show(School $school, Booking $booking)
     {
+        abort_if($booking->school_id !== $school->id, 404);
+
         $booking->load(['student', 'instructor', 'course', 'payment']);
 
         // Always return JSON - booking details shown in modals
@@ -292,6 +299,8 @@ class BookingController extends Controller
      */
     public function update(Request $request, School $school, Booking $booking)
     {
+        abort_if($booking->school_id !== $school->id, 404);
+
         $validated = $request->validate([
             'student_id' => 'required|exists:students,id',
             'course_id' => 'required|exists:courses,id',
@@ -331,13 +340,13 @@ class BookingController extends Controller
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Booking updated successfully',
+                'message' => 'Schedule updated successfully',
                 'booking' => $booking
             ]);
         }
 
         return redirect()->route('bookings.show', [$school->slug, $booking->id])
-            ->with('success', 'Booking updated successfully');
+            ->with('success', 'Schedule updated successfully');
     }
 
     /**
@@ -345,6 +354,8 @@ class BookingController extends Controller
      */
     public function destroy(Request $request, School $school, Booking $booking)
     {
+        abort_if($booking->school_id !== $school->id, 404);
+
         // Log booking deletion
         SystemLog::logWarning(
             "Booking permanently deleted",
@@ -364,12 +375,12 @@ class BookingController extends Controller
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Booking deleted successfully'
+                'message' => 'Schedule deleted successfully'
             ]);
         }
 
         return redirect()->route('bookings.index', $school->slug)
-            ->with('success', 'Booking deleted successfully');
+            ->with('success', 'Schedule deleted successfully');
     }
 
     /**
@@ -377,6 +388,8 @@ class BookingController extends Controller
      */
     public function updateStatus(Request $request, School $school, Booking $booking)
     {
+        abort_if($booking->school_id !== $school->id, 404);
+
         $validated = $request->validate([
             'status' => 'required|in:scheduled,completed,cancelled,no-show',
             'cancellation_reason' => 'nullable|string|max:500',
@@ -396,12 +409,12 @@ class BookingController extends Controller
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Booking status updated successfully',
+                'message' => 'Schedule status updated successfully',
                 'booking' => $booking
             ]);
         }
 
-        return back()->with('success', 'Booking status updated successfully');
+        return back()->with('success', 'Schedule status updated successfully');
     }
 
     /**
@@ -409,9 +422,11 @@ class BookingController extends Controller
      */
     public function confirmBooking(Request $request, School $school, Booking $booking)
     {
+        abort_if($booking->school_id !== $school->id, 404);
+
         // Only allow pending bookings to be confirmed
         if ($booking->status !== 'pending') {
-            return back()->withErrors(['booking' => 'Only pending bookings can be confirmed.']);
+            return back()->withErrors(['booking' => 'Only pending schedules can be confirmed.']);
         }
 
         $booking->update(['status' => 'scheduled']);
@@ -432,12 +447,12 @@ class BookingController extends Controller
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Booking confirmed successfully',
+                'message' => 'Schedule confirmed successfully',
                 'booking' => $booking
             ]);
         }
 
-        return back()->with('success', 'Booking confirmed and moved to your schedule!');
+        return back()->with('success', 'Schedule confirmed and moved to your schedule!');
     }
 
     /**
@@ -445,9 +460,11 @@ class BookingController extends Controller
      */
     public function removeFromQueue(Request $request, School $school, Booking $booking)
     {
+        abort_if($booking->school_id !== $school->id, 404);
+
         // Only allow pending bookings to be removed from queue
         if ($booking->status !== 'pending') {
-            return back()->withErrors(['booking' => 'Only queued bookings can be removed.']);
+            return back()->withErrors(['booking' => 'Only queued schedules can be removed.']);
         }
 
         $booking->update([
@@ -460,10 +477,10 @@ class BookingController extends Controller
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Booking removed from queue'
+                'message' => 'Schedule removed from queue'
             ]);
         }
 
-        return back()->with('success', 'Booking removed from queue.');
+        return back()->with('success', 'Schedule removed from queue.');
     }
 }

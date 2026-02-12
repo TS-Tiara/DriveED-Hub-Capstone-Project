@@ -938,7 +938,7 @@
 
 @push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+(function() {
     // Get all tab buttons
     const tabButtons = document.querySelectorAll('.tab[data-tab]');
     const tabContents = document.querySelectorAll('.tab-content[data-content]');
@@ -962,7 +962,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
-});
+})();
 </script>
 @endpush
 

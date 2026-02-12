@@ -19,6 +19,9 @@ class Admin extends Authenticatable
         'is_active',
         'contact',
         'profile_picture',
+        'failed_login_attempts',
+        'locked_until',
+        'last_login_at',
     ];
 
     protected $hidden = [
@@ -30,6 +33,8 @@ class Admin extends Authenticatable
     {
         return [
             'password' => 'hashed',
+            'locked_until' => 'datetime',
+            'last_login_at' => 'datetime',
         ];
     }
 

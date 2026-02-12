@@ -1317,6 +1317,31 @@
                     <button type="button" class="btn-add-feature" onclick="addFeature()">+ Add Feature</button>
                 </div>
 
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label class="form-label">Course Category</label>
+                        <select name="course_type" id="courseCourseType" class="form-control">
+                            <option value="">Select category</option>
+                            <option value="theoretical">Theoretical</option>
+                            <option value="practical">Practical</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">License Type</label>
+                        <select name="license_type" id="courseLicenseType" class="form-control">
+                            <option value="">Select license type</option>
+                            <option value="non_professional">Non-Professional</option>
+                            <option value="professional">Professional</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Hours Required</label>
+                    <input type="number" name="hours_required" id="courseHoursRequired" class="form-control" placeholder="e.g., 15" min="1" max="500" step="0.5">
+                </div>
+
                 <div class="form-group">
                     <label class="form-label">Status *</label>
                     <select name="status" id="courseStatus" class="form-control" required>
@@ -1456,6 +1481,9 @@
         document.getElementById('courseDescription').value = course.description || '';
         document.getElementById('courseType').value = course.type || 'standard';
         document.getElementById('courseVehicleType').value = course.vehicle_type || '';
+        document.getElementById('courseCourseType').value = course.course_type || '';
+        document.getElementById('courseLicenseType').value = course.license_type || '';
+        document.getElementById('courseHoursRequired').value = course.hours_required || '';
         document.getElementById('courseStatus').value = course.status || 'active';
         document.getElementById('courseFeatured').checked = course.is_featured || false;
 

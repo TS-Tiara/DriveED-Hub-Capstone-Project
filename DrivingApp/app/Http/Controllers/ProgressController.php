@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Booking;
 use App\Models\Course;
 use App\Models\Progress;
 use App\Models\School;
@@ -41,6 +42,29 @@ class ProgressController extends Controller
         }
 
         $progresses = $query->latest('last_updated')->get();
+
+        // Pre-load booking data for each progress record (avoids N+1 in views)
+        $allStudentIds = $progresses->pluck('student_id')->unique()->toArray();
+        $allCourseIds = $progresses->pluck('course_id')->unique()->toArray();
+
+        $allBookings = Booking::where('school_id', $school->id)
+            ->whereIn('student_id', $allStudentIds)
+            ->whereIn('course_id', $allCourseIds)
+            ->with(['instructor', 'course'])
+            ->orderBy('scheduled_at', 'desc')
+            ->get();
+
+        // Attach computed booking data to each progress record
+        foreach ($progresses as $progress) {
+            $bookings = $allBookings->where('student_id', $progress->student_id)
+                ->where('course_id', $progress->course_id);
+
+            $progress->completedSessions = $bookings->where('status', 'confirmed')->count();
+            $progress->totalSessions = ceil($progress->course->duration_hours ?? 10);
+            $progress->currentBooking = $bookings->where('status', 'confirmed')->sortByDesc('scheduled_at')->first() ?? $bookings->first();
+            $progress->nextBooking = $bookings->where('status', 'pending')->filter(fn($b) => $b->scheduled_at > now())->sortBy('scheduled_at')->first();
+            $progress->bookingsList = $bookings;
+        }
 
         // Only return JSON if explicitly requested via Accept header
         if (request()->expectsJson()) {
@@ -115,6 +139,8 @@ class ProgressController extends Controller
      */
     public function show(School $school, Progress $progress)
     {
+        abort_if($progress->school_id !== $school->id, 404);
+
         $progress->load(['student', 'course']);
 
         if (request()->ajax() || request()->wantsJson()) {
@@ -134,6 +160,8 @@ class ProgressController extends Controller
      */
     public function edit(School $school, Progress $progress)
     {
+        abort_if($progress->school_id !== $school->id, 404);
+
         $students = Student::where('school_id', $school->id)->where('status', 'active')->get();
         $courses = Course::where('school_id', $school->id)->where('status', 'active')->get();
 
@@ -147,6 +175,8 @@ class ProgressController extends Controller
      */
     public function update(Request $request, School $school, Progress $progress)
     {
+        abort_if($progress->school_id !== $school->id, 404);
+
         $validated = $request->validate([
             'completion_percent' => 'required|numeric|min:0|max:100',
             'notes' => 'nullable|string',
@@ -173,6 +203,8 @@ class ProgressController extends Controller
      */
     public function destroy(Request $request, School $school, Progress $progress)
     {
+        abort_if($progress->school_id !== $school->id, 404);
+
         $progress->delete();
 
         if ($request->ajax() || $request->wantsJson()) {

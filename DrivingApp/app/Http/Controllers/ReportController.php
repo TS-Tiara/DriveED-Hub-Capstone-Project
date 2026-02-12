@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Models\Report;
 use App\Models\Student;
 use App\Models\Instructor;
 use App\Models\Booking;
@@ -231,7 +230,7 @@ class ReportController extends Controller
                         'name' => $booking->instructor->name ?? 'N/A',
                         'total_sessions' => $booking->total_lessons,
                         'completed_sessions' => $booking->completed_lessons,
-                        'average_rating' => rand(40, 50) / 10, // 4.0-5.0 rating
+                        'average_rating' => null, // TODO: Implement actual rating system
                         'completion_rate' => $completionRate,
                     ];
                 }),
@@ -274,7 +273,7 @@ class ReportController extends Controller
                         'price' => $course->price,
                         'total_enrolled' => $totalEnrolled,
                         'completion_rate' => $completionRate,
-                        'average_rating' => rand(40, 50) / 10, // 4.0-5.0 rating
+                        'average_rating' => null, // TODO: Implement actual rating system
                         'total_revenue' => $totalRevenue ?? 0,
                     ];
                 })

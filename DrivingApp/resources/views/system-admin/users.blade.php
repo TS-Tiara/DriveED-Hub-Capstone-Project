@@ -534,7 +534,7 @@
                                     </button>
                                 </form>
                                 <button type="button" class="btn-sm btn-danger" 
-                                        onclick="confirmDeleteUser('student', '{{ $student->id }}', '{{ $student->name }}')"
+                                        data-action="delete-user" data-type="student" data-id="{{ $student->id }}" data-name="{{ $student->name }}"
                                         title="Delete Student">
                                     <i class="fas fa-trash"></i>
                                 </button>
@@ -606,7 +606,7 @@
                                     </button>
                                 </form>
                                 <button type="button" class="btn-sm btn-danger" 
-                                        onclick="confirmDeleteUser('instructor', '{{ $instructor->id }}', '{{ $instructor->name }}')"
+                                        data-action="delete-user" data-type="instructor" data-id="{{ $instructor->id }}" data-name="{{ $instructor->name }}"
                                         title="Delete Instructor">
                                     <i class="fas fa-trash"></i>
                                 </button>
@@ -678,11 +678,14 @@ function closeModal(id) {
     document.getElementById(id).classList.remove('active');
 }
 
-function confirmDeleteUser(type, id, name) {
-    document.getElementById('deleteUserName').textContent = name;
-    document.getElementById('deleteUserForm').action = '{{ url("system-admin/users") }}/' + type + '/' + id;
+// Delete confirmation via event delegation (XSS-safe)
+document.addEventListener('click', function(e) {
+    const btn = e.target.closest('[data-action="delete-user"]');
+    if (!btn) return;
+    document.getElementById('deleteUserName').textContent = btn.dataset.name;
+    document.getElementById('deleteUserForm').action = '{{ url("system-admin/users") }}/' + btn.dataset.type + '/' + btn.dataset.id;
     openModal('deleteUserModal');
-}
+});
 
 // Close modal when clicking outside
 document.querySelectorAll('.modal-overlay').forEach(modal => {

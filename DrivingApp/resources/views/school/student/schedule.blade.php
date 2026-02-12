@@ -6,57 +6,10 @@
 <?php
     $school = $school ?? $currentSchool ?? null;
     $settings = $school?->schoolSetting;
-    $studentId = Auth::guard('student')->id();
     
     $primaryColor = $settings?->primary_color ?? '#0d6efd';
     $secondaryColor = $settings?->secondary_color ?? '#6c757d';
     $borderRadius = $settings?->border_radius ?? 8;
-    
-    // Get student's enrolled course IDs (approved enrollment requests)
-    $student = Auth::guard('student')->user();
-    $enrolledCourseIds = App\Models\EnrollmentRequest::where('learner_id', $studentId)
-        ->where('status', 'approved')
-        ->pluck('course_id')
-        ->toArray();
-    
-    // Get all bookings (both past and future - JS will filter)
-    $allBookings = App\Models\Booking::where('student_id', $studentId)
-        ->with(['course', 'instructor', 'timeSlot'])
-        ->orderBy('booking_date')
-        ->get();
-    
-    // Separate confirmed/scheduled bookings from cancelled ones
-    $confirmedBookings = $allBookings->whereIn('status', ['confirmed', 'scheduled', 'completed']);
-    $cancelledBookings = $allBookings->where('status', 'cancelled');
-        
-    $groupedBookings = $confirmedBookings->groupBy(function($booking) {
-        return \Carbon\Carbon::parse($booking->booking_date)->format('Y-m-d');
-    });
-    
-    $groupedCancelledBookings = $cancelledBookings->groupBy(function($booking) {
-        return \Carbon\Carbon::parse($booking->booking_date)->format('Y-m-d');
-    });
-    
-    // Get enrollment requests
-    $enrollmentRequests = App\Models\EnrollmentRequest::where('learner_id', $studentId)
-        ->with(['course'])
-        ->orderBy('created_at', 'desc')
-        ->get();
-    
-    // Get all available time slots (both past and future - JS will filter)
-    $availableTimeSlots = App\Models\TimeSlot::where('school_id', $school->id)
-        ->where('status', 'open')
-        ->with(['instructors', 'course'])
-        ->orderBy('date')
-        ->orderBy('start_time')
-        ->get();
-    
-    // Today's date for comparison
-    $todayDate = now()->toDateString();
-        
-    $groupedAvailableSchedules = $availableTimeSlots->groupBy(function($timeSlot) {
-        return \Carbon\Carbon::parse($timeSlot->date)->format('Y-m-d');
-    });
 ?>
 
 <style>
@@ -1081,7 +1034,7 @@
                         <input type="checkbox" id="show-past-my" onchange="toggleShowPastMySchedule(this)">
                         <span>Show Past</span>
                     </label>
-                    <button class="collapse-btn mobile-queue-btn" onclick="toggleQueuePopup()" style="display: none; padding: 6px 12px; font-size: 14px;">Booked Schedule</button>
+                    <button class="collapse-btn mobile-queue-btn" onclick="toggleQueuePopup()" style="display: none; padding: 6px 12px; font-size: 14px;">My Schedule</button>
                 </div>
             </div>
             
@@ -1311,7 +1264,7 @@
                         <input type="checkbox" id="show-all-courses" onchange="toggleShowAllCourses()">
                         <span>All Courses</span>
                     </label>
-                    <button class="collapse-btn mobile-queue-btn" onclick="toggleQueuePopup()" style="display: none; padding: 6px 12px; font-size: 14px;">Booked Schedule</button>
+                    <button class="collapse-btn mobile-queue-btn" onclick="toggleQueuePopup()" style="display: none; padding: 6px 12px; font-size: 14px;">My Schedule</button>
                 </div>
             </div>
             
@@ -1389,7 +1342,7 @@
                                                 {{ $timeSlot->getAvailableSpots() }} spot(s) available
                                             </div>
                                             <button class="book-now-btn" onclick="bookTimeSlotAuto({{ $timeSlot->id }})" style="margin: 0;">
-                                                Book Now
+                                                Schedule Now
                                             </button>
                                         </div>
                                     @else
@@ -1841,13 +1794,13 @@
     <div class="booking-modal-overlay" onclick="closeBookingModal()"></div>
     <div class="booking-modal-content">
         <div class="booking-modal-header">
-            <h3>Book a Lesson</h3>
+            <h3>Schedule a Lesson</h3>
             <button type="button" class="modal-close-btn" onclick="closeBookingModal()">&times;</button>
         </div>
         <div class="booking-modal-body">
             <form id="bookingForm" method="POST" action="{{ route('schools.student.bookings.store', $school->slug) }}">
                 @csrf
-                <input type="hidden" name="student_id" value="{{ $studentId }}">
+                <input type="hidden" name="student_id" value="{{ Auth::guard('student')->id() }}">
                 <input type="hidden" name="time_slot_id" id="modal_time_slot_id">
                 <input type="hidden" name="course_id" id="modal_course_id">
                 <input type="hidden" name="instructor_id" id="modal_instructor_id">

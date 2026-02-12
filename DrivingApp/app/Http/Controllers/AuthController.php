@@ -27,7 +27,7 @@ class AuthController extends Controller
     {
         $request->validate([
             'email' => 'required|email',
-            'password' => 'required|string|min:6',
+            'password' => 'required|string|min:8',
         ]);
 
         $email = $request->email;
@@ -95,10 +95,9 @@ class AuthController extends Controller
                 'failed_login'
             );
             
-            $attemptsRemaining = max(0, 5 - $failedAttempts);
             $errorMessage = $lockAccount
                 ? 'Your account has been locked for 30 minutes due to multiple failed login attempts.'
-                : "The provided credentials do not match our records. {$attemptsRemaining} attempts remaining.";
+                : 'The provided credentials do not match our records.';
             
             return back()->withErrors(['email' => $errorMessage])->withInput($request->only('email', 'remember'));
         }
@@ -139,10 +138,9 @@ class AuthController extends Controller
                     'failed_login'
                 );
                 
-                $attemptsRemaining = max(0, 5 - $failedAttempts);
                 $errorMessage = $lockAccount
                     ? 'Your account has been locked for 30 minutes due to multiple failed login attempts.'
-                    : "The provided credentials do not match our records. {$attemptsRemaining} attempts remaining.";
+                    : 'The provided credentials do not match our records.';
                 
                 return back()->withErrors(['email' => $errorMessage])->withInput($request->only('email', 'remember'));
             }
@@ -218,10 +216,9 @@ class AuthController extends Controller
                     'failed_login'
                 );
                 
-                $attemptsRemaining = max(0, 5 - $failedAttempts);
                 $errorMessage = $lockAccount
                     ? 'Your account has been locked for 30 minutes due to multiple failed login attempts.'
-                    : "The provided credentials do not match our records. {$attemptsRemaining} attempts remaining.";
+                    : 'The provided credentials do not match our records.';
                 
                 return back()->withErrors(['email' => $errorMessage])->withInput($request->only('email', 'remember'));
             }
@@ -258,6 +255,11 @@ class AuthController extends Controller
                 
                 // Store in session and redirect to verification
                 session(['verification_email' => $student->email, 'school_slug' => $school->slug]);
+                
+                // In local/dev environment, store OTP in session for testing (since emails don't send to fake addresses)
+                if (app()->environment('local', 'development', 'testing')) {
+                    session(['dev_verification_code' => $otp]);
+                }
                 
                 return redirect()->route('schools.verification.show', $school)
                     ->with('info', 'Please verify your email address. We sent a new verification code to your email.');

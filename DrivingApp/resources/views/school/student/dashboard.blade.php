@@ -423,12 +423,16 @@
 <div class="student-dashboard">
     <div class="page-header">
         <div style="display: flex; align-items: center; gap: 16px;">
-            <div style="width: 60px; height: 60px; background: {{ $primaryColor }}; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; font-weight: bold;">
-                {{ strtoupper(substr(Auth::guard('student')->user()->name, 0, 1)) }}
-            </div>
+            @if($student->profile_picture)
+                <img src="{{ asset('storage/' . $student->profile_picture) }}" alt="Profile" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 3px solid {{ $primaryColor }};">
+            @else
+                <div style="width: 60px; height: 60px; background: {{ $primaryColor }}; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; font-weight: bold;">
+                    {{ strtoupper(substr($student->name, 0, 1)) }}
+                </div>
+            @endif
             <div>
-                <h1 class="page-title" style="margin-bottom: 4px;">Welcome, {{ Auth::guard('student')->user()->name }}</h1>
-                <p style="margin: 0; color: #6b7280; font-size: 0.9rem;">{{ Auth::guard('student')->user()->email }}</p>
+                <h1 class="page-title" style="margin-bottom: 4px;">Welcome, {{ $student->name }}</h1>
+                <p style="margin: 0; color: #6b7280; font-size: 0.9rem;">{{ $student->email }}</p>
             </div>
         </div>
     </div>
@@ -439,20 +443,21 @@
             <div class="card-header">Learning Progress</div>
             <div class="card-body">
                 <div class="info-row">
-                    <span class="info-label">Lessons Completed</span>
-                    <span class="info-value">{{ $totalLessons }} of {{ $requiredHours }}</span>
+                    <span class="info-label">Sessions Completed</span>
+                    <span class="info-value">{{ $sessionsCompleted }} of {{ $totalScheduledSessions > 0 ? $totalScheduledSessions : '—' }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Session Hours</span>
-                    <span class="info-value">{{ $hoursDriven }} hrs</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Current Level</span>
-                    <span class="info-value">Intermediate</span>
+                    <span class="info-label">Hours Completed</span>
+                    <span class="info-value">{{ $hoursCompleted }} / {{ $requiredHours }} hrs</span>
                 </div>
                 <div class="info-row">
                     <span class="info-label">Progress</span>
-                    <span class="info-value">{{ $progressPercentage }}% Complete</span>
+                    <span class="info-value">{{ $progressPercentage }}%</span>
+                </div>
+                <div class="progress-bar-wrapper">
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" style="width: {{ $progressPercentage }}%"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -500,28 +505,25 @@
         </div>
 
         <div class="info-card">
-            <div class="card-header">Goals & Achievements</div>
+            <div class="card-header">Enrollment Status</div>
             <div class="card-body">
                 <div class="info-row">
-                    <span class="info-label">Test Readiness</span>
-                    <span class="info-value">{{ $testReadiness }}%</span>
-                </div>
-                <div class="progress-bar-wrapper">
-                    <div class="progress-bar-container">
-                        <div class="progress-bar-fill" style="width: {{ $testReadiness }}%"></div>
-                    </div>
+                    <span class="info-label">Enrolled Course</span>
+                    <span class="info-value">{{ $enrolledCourseName }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Skills Mastered</span>
-                    <span class="info-value">{{ min(10, floor($totalLessons / 2)) }}/10</span>
+                    <span class="info-label">Course Type</span>
+                    <span class="info-value">{{ $enrolledCourseType }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Hours Completed</span>
-                    <span class="info-value">{{ $hoursDriven }} / {{ $requiredHours }} hrs</span>
+                    <span class="info-label">Theoretical Status</span>
+                    <span class="info-value" style="color: {{ $hasPassedTheoretical ? '#10b981' : '#f59e0b' }}">
+                        {{ $hasPassedTheoretical ? 'Passed' : 'In Progress' }}
+                    </span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Est. Test Date</span>
-                    <span class="info-value">{{ $progressPercentage >= 80 ? \Carbon\Carbon::now()->addWeeks(2)->format('M d, Y') : 'TBD' }}</span>
+                    <span class="info-label">Active Enrollments</span>
+                    <span class="info-value">{{ $activeEnrollments->count() }}</span>
                 </div>
             </div>
         </div>
@@ -572,48 +574,51 @@
         </div>
     </div>
 
-    <!-- Mobile: Learning Progress & Goals side by side -->
+    <!-- Mobile: Learning Progress & Enrollment Status side by side -->
     <div class="mobile-two-col">
         <div class="info-card">
             <div class="card-header">Learning Progress</div>
             <div class="card-body">
                 <div class="info-row">
-                    <span class="info-label">Lessons Completed</span>
-                    <span class="info-value">{{ $totalLessons }} of {{ $requiredHours }}</span>
+                    <span class="info-label">Sessions Completed</span>
+                    <span class="info-value">{{ $sessionsCompleted }} of {{ $totalScheduledSessions > 0 ? $totalScheduledSessions : '—' }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Session Hours</span>
-                    <span class="info-value">{{ $hoursDriven }} hrs</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Current Level</span>
-                    <span class="info-value">Intermediate</span>
+                    <span class="info-label">Hours Completed</span>
+                    <span class="info-value">{{ $hoursCompleted }} / {{ $requiredHours }} hrs</span>
                 </div>
                 <div class="info-row">
                     <span class="info-label">Progress</span>
-                    <span class="info-value">{{ $progressPercentage }}% Complete</span>
+                    <span class="info-value">{{ $progressPercentage }}%</span>
+                </div>
+                <div class="progress-bar-wrapper">
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" style="width: {{ $progressPercentage }}%"></div>
+                    </div>
                 </div>
             </div>
         </div>
 
         <div class="info-card">
-            <div class="card-header">Goals & Achievements</div>
+            <div class="card-header">Enrollment Status</div>
             <div class="card-body">
                 <div class="info-row">
-                    <span class="info-label">Test Readiness</span>
-                    <span class="info-value">{{ $testReadiness }}%</span>
+                    <span class="info-label">Enrolled Course</span>
+                    <span class="info-value">{{ $enrolledCourseName }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Skills Mastered</span>
-                    <span class="info-value">{{ min(10, floor($totalLessons / 2)) }}/10</span>
+                    <span class="info-label">Course Type</span>
+                    <span class="info-value">{{ $enrolledCourseType }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Hours Completed</span>
-                    <span class="info-value">{{ $hoursDriven }} / {{ $requiredHours }} hrs</span>
+                    <span class="info-label">Theoretical</span>
+                    <span class="info-value" style="color: {{ $hasPassedTheoretical ? '#10b981' : '#f59e0b' }}">
+                        {{ $hasPassedTheoretical ? 'Passed' : 'In Progress' }}
+                    </span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Est. Test Date</span>
-                    <span class="info-value">{{ $progressPercentage >= 80 ? \Carbon\Carbon::now()->addWeeks(2)->format('M d, Y') : 'TBD' }}</span>
+                    <span class="info-label">Active Enrollments</span>
+                    <span class="info-value">{{ $activeEnrollments->count() }}</span>
                 </div>
             </div>
         </div>
