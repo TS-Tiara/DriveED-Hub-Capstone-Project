@@ -1,16 +1,14 @@
 @extends($isAjax ?? false ? 'layouts.ajax' : 'layouts.app')
 
-@section('title', 'Theoretical Completion Management')
+@section('title', 'Theoretical Training')
 
 @section('content')
 @php
     $school = $school ?? $currentSchool ?? null;
     $settings = $school?->schoolSetting;
-    $schoolName = $school->name ?? 'Driving School';
     $primaryColor = $settings->primary_color ?? '#667eea';
     $secondaryColor = $settings->secondary_color ?? '#764ba2';
-    
-    // Helper function for school-scoped routes
+
     $schoolRoute = function($routeName, $params = []) use ($school) {
         return route('schools.' . $routeName, array_merge(['school' => $school->slug], $params));
     };
@@ -19,756 +17,356 @@
 @include('school.admin.partials.admin-styles')
 
 <style>
-    /* === CONTAINER & LAYOUT === */
     .theoretical-container {
-        padding: 25px;
-        margin: 15px auto;
+        padding: 20px;
+        margin: 20px auto;
         max-width: 1600px;
     }
-    
-    /* === PAGE HEADER === */
+
     .page-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 20px;
-        padding-bottom: 12px;
-        border-bottom: 2px solid #e5e7eb;
+        margin-bottom: 24px;
+        padding-bottom: 15px;
+        border-bottom: 3px solid {{ $primaryColor }};
     }
-    
-    .page-header-left h1 {
-        font-size: 1.5rem;
-        font-weight: 700;
+
+    .page-title {
+        font-size: 1.75rem;
+        font-weight: 600;
         color: #1f2937;
-        margin: 0 0 4px 0;
-        letter-spacing: -0.01em;
-    }
-    
-    .page-header-left p {
-        color: #6b7280;
-        font-size: 0.875rem;
         margin: 0;
     }
-    
-    .page-header-right {
-        display: flex;
-        align-items: center;
-        gap: 20px;
-    }
-    
-    /* === COMPACT STATS BADGE === */
-    .stats-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 12px;
-        padding: 10px 20px;
-        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-        border-radius: 30px;
-        border: 2px solid #3b82f6;
-    }
-    
-    .stats-badge-icon {
-        width: 32px;
-        height: 32px;
-        background: white;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #1e40af;
-        flex-shrink: 0;
-    }
-    
-    .stats-badge-content {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-    }
-    
-    .stats-badge-label {
-        font-size: 0.7rem;
-        color: #1e40af;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        line-height: 1;
-    }
-    
-    .stats-badge-value {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #1e40af;
-        line-height: 1;
-    }
-    
-    /* === TABS NAVIGATION === */
-    .tabs-container {
-        margin-bottom: 20px;
-    }
-    
-    .tabs {
-        display: flex;
-        gap: 4px;
-        border-bottom: 2px solid #e5e7eb;
-    }
-    
-    .tab {
-        padding: 10px 20px;
+
+    .page-subtitle {
         color: #6b7280;
-        text-decoration: none;
-        font-weight: 500;
         font-size: 0.9rem;
-        border: none;
-        border-bottom: 3px solid transparent;
-        transition: all 0.2s ease;
-        position: relative;
-        margin-bottom: -2px;
-        background: transparent;
+        margin-top: 5px;
+    }
+
+    /* ── Clickable stat cards ── */
+    .stats-grid .stat-card.clickable {
         cursor: pointer;
     }
-    
-    .tab:hover {
-        color: #3b82f6;
-        background: rgba(59, 130, 246, 0.05);
-    }
-    
-    .tab.active {
-        color: #3b82f6;
-        border-bottom-color: #3b82f6;
-        font-weight: 600;
-    }
-    
-    /* === TAB CONTENT === */
-    .tab-content-wrapper {
-        position: relative;
-    }
-    
-    .tab-content {
+
+    /* ── Tab content ── */
+    .tab-panel {
         display: none;
-        animation: fadeInContent 0.3s ease-out;
-    }
-    
-    .tab-content.active {
-        display: block;
-    }
-    
-    @keyframes fadeInContent {
-        from {
-            opacity: 0;
-            transform: translateY(10px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    
-    /* === MINI STATS GRID === */
-    .stats-mini-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 16px;
-        margin-bottom: 20px;
-    }
-    
-    .stat-mini {
         background: white;
-        border-radius: 10px;
-        padding: 16px;
-        display: flex;
-        align-items: center;
-        gap: 14px;
         border: 1px solid #e5e7eb;
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-    }
-    
-    .stat-mini-icon {
-        width: 44px;
-        height: 44px;
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.2rem;
-        flex-shrink: 0;
-    }
-    
-    .stat-mini-icon.success {
-        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-        color: #065f46;
-    }
-    
-    .stat-mini-icon.primary {
-        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-        color: #1e40af;
-    }
-    
-    .stat-mini-content {
-        flex: 1;
-    }
-    
-    .stat-mini-value {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #1f2937;
-        line-height: 1;
-        margin-bottom: 4px;
-    }
-    
-    .stat-mini-label {
-        font-size: 0.75rem;
-        color: #6b7280;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-    }
-    
-    /* === ALERT MESSAGES === */
-    .alert {
-        padding: 12px 18px;
-        margin-bottom: 20px;
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-size: 0.9rem;
-        border-left: 4px solid;
-    }
-    
-    .alert-success {
-        background: #d1fae5;
-        color: #065f46;
-        border-left-color: #10b981;
-    }
-    
-    .alert-danger {
-        background: #fee2e2;
-        color: #991b1b;
-        border-left-color: #ef4444;
-    }
-    
-    .alert i {
-        font-size: 1.1rem;
-    }
-    
-    .btn-close {
-        margin-left: auto;
-        background: transparent;
-        border: none;
-        font-size: 1.3rem;
-        color: inherit;
-        opacity: 0.6;
-        cursor: pointer;
-        padding: 0 4px;
-        line-height: 1;
-    }
-    
-    .btn-close:hover {
-        opacity: 1;
-    }
-    
-    .btn-close::before {
-        content: "×";
-    }
-    
-    /* === CONTENT WRAPPER === */
-    .content-section {
-        background: white;
         border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
         overflow: hidden;
-        border: 1px solid #e5e7eb;
     }
-    
-    .section-header {
-        padding: 14px 20px;
-        background: #f9fafb;
-        border-bottom: 1px solid #e5e7eb;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    
-    .section-title {
-        font-size: 1rem;
-        font-weight: 600;
-        color: #1f2937;
-        margin: 0;
-    }
-    
-    .section-subtitle {
-        font-size: 0.8rem;
-        color: #6b7280;
-        margin: 0;
-    }
-    
-    /* === TABLE STYLES === */
-    .table-wrapper {
-        overflow-x: auto;
-    }
-    
-    table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-    
+
+    .tab-panel.active { display: block; }
+
+    /* ── Table ── */
+    .table-wrapper { overflow-x: auto; }
+
+    table { width: 100%; border-collapse: collapse; }
+
     thead {
         background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
         color: white;
     }
-    
+
     th {
-        padding: 14px 16px;
+        padding: 13px 16px;
         text-align: left;
         font-weight: 600;
-        font-size: 0.8rem;
+        font-size: 0.78rem;
         text-transform: uppercase;
         letter-spacing: 0.05em;
         white-space: nowrap;
     }
-    
+
     td {
-        padding: 14px 16px;
+        padding: 13px 16px;
         border-bottom: 1px solid #f1f5f9;
         vertical-align: middle;
-        font-size: 0.9rem;
+        font-size: 0.88rem;
     }
-    
-    tbody tr {
-        transition: background-color 0.2s ease;
-    }
-    
-    tbody tr:hover {
-        background-color: #f8fafc;
-    }
-    
-    tbody tr:last-child td {
-        border-bottom: none;
-    }
-    
-    /* === TABLE CELL CONTENT === */
-    .user-cell {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-    
+
+    tbody tr { transition: background-color 0.15s; }
+    tbody tr:hover { background-color: #f8fafc; }
+    tbody tr:last-child td { border-bottom: none; }
+
+    /* User cell */
+    .user-cell { display: flex; align-items: center; gap: 10px; }
+
     .user-avatar {
-        width: 38px;
-        height: 38px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 700;
-        font-size: 1rem;
-        flex-shrink: 0;
+        width: 36px; height: 36px; border-radius: 50%;
+        background: linear-gradient(135deg, {{ $primaryColor }}, {{ $secondaryColor }});
+        color: white; display: flex; align-items: center; justify-content: center;
+        font-weight: 700; font-size: 0.95rem; flex-shrink: 0;
     }
-    
-    .user-info {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-    }
-    
-    .user-name {
-        font-weight: 600;
-        color: #1f2937;
-        font-size: 0.9rem;
-    }
-    
-    .user-email {
-        font-size: 0.75rem;
-        color: #6b7280;
-    }
-    
-    .course-info {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-    }
-    
-    .course-title {
-        color: #1f2937;
-        font-weight: 600;
-        font-size: 0.9rem;
-    }
-    
-    .course-badges {
-        display: flex;
-        gap: 5px;
-        flex-wrap: wrap;
-    }
-    
-    .hours-info {
-        display: flex;
-        flex-direction: column;
-        gap: 3px;
-    }
-    
-    .hours-value {
-        font-weight: 600;
-        color: #1f2937;
-        font-size: 0.9rem;
-    }
-    
-    .hours-label {
-        color: #6b7280;
-        font-size: 0.75rem;
-    }
-    
-    /* === BADGES === */
-    .badge {
-        display: inline-block;
-        padding: 4px 10px;
-        border-radius: 12px;
-        font-size: 0.7rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.02em;
-    }
-    
-    .badge-info {
-        background: #dbeafe;
-        color: #1e40af;
-    }
-    
-    .badge-secondary {
-        background: #e5e7eb;
-        color: #4b5563;
-    }
-    
-    .badge-success {
-        background: #d1fae5;
-        color: #065f46;
-    }
-    
-    /* === PROGRESS BAR === */
-    .progress-wrapper {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    
+
+    .user-info { display: flex; flex-direction: column; gap: 1px; }
+    .user-name { font-weight: 600; color: #1f2937; font-size: 0.88rem; }
+    .user-email { font-size: 0.73rem; color: #6b7280; }
+
+    .course-title { color: #1f2937; font-weight: 600; font-size: 0.88rem; }
+    .course-license { font-size: 0.73rem; color: #6b7280; margin-top: 1px; }
+
+    .hours-display { display: flex; flex-direction: column; gap: 1px; }
+    .hours-value { font-weight: 600; color: #1f2937; }
+    .hours-required { font-size: 0.73rem; color: #6b7280; }
+
+    /* Progress bar */
+    .progress-wrapper { display: flex; align-items: center; gap: 8px; }
+
     .progress-bar-container {
-        width: 100px;
-        height: 8px;
-        background: #e5e7eb;
-        border-radius: 10px;
-        overflow: hidden;
-        flex-shrink: 0;
+        width: 80px; height: 7px; background: #e5e7eb;
+        border-radius: 10px; overflow: hidden; flex-shrink: 0;
     }
-    
-    .progress-bar-fill {
-        height: 100%;
-        background: linear-gradient(90deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
-        border-radius: 10px;
-        transition: width 0.4s ease;
+
+    .progress-bar-fill { height: 100%; border-radius: 10px; }
+    .progress-bar-fill.high { background: linear-gradient(90deg,#10b981,#059669); }
+    .progress-bar-fill.mid  { background: linear-gradient(90deg,#f59e0b,#eab308); }
+    .progress-bar-fill.low  { background: linear-gradient(90deg,#ef4444,#f97316); }
+
+    .progress-text { font-size:0.78rem; font-weight:600; white-space:nowrap; }
+    .progress-text.high { color:#10b981; }
+    .progress-text.mid  { color:#f59e0b; }
+    .progress-text.low  { color:#ef4444; }
+
+    /* Badges */
+    .badge-custom {
+        display: inline-flex; align-items: center; gap: 4px;
+        padding: 3px 10px; border-radius: 6px;
+        font-size: 0.75rem; font-weight: 600;
     }
-    
-    .progress-text {
-        font-size: 0.8rem;
-        color: #374151;
-        font-weight: 600;
-        white-space: nowrap;
+
+    .badge-success { background:#d1fae5; color:#065f46; }
+    .badge-info    { background:#dbeafe; color:#1e40af; }
+    .badge-ready   { background:#d1fae5; color:#065f46; animation: pulseReady 2s infinite; }
+    .badge-progress{ background:#fef3c7; color:#92400e; }
+    .badge-started { background:#e5e7eb; color:#6b7280; }
+
+    @keyframes pulseReady {
+        0%,100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.3); }
+        50% { box-shadow: 0 0 0 4px rgba(16,185,129,0); }
     }
-    
-    /* === ACTION BUTTONS === */
+
+    /* Action buttons */
     .btn-action {
-        padding: 7px 14px;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        font-size: 0.8rem;
-        font-weight: 600;
-        transition: all 0.2s ease;
-        text-decoration: none;
-        display: inline-block;
+        padding: 6px 13px; border: none; border-radius: 8px; cursor: pointer;
+        font-size: 0.78rem; font-weight: 600; transition: all 0.2s;
+        text-decoration: none; display: inline-flex; align-items: center; gap: 5px;
     }
-    
-    .btn-view {
-        background: #0ea5e9;
-        color: white;
+
+    .btn-mark-passed {
+        background: linear-gradient(135deg,#10b981,#059669); color: white;
     }
-    
-    .btn-view:hover {
-        background: #0284c7;
+    .btn-mark-passed:hover {
         transform: translateY(-1px);
-        box-shadow: 0 3px 10px rgba(14, 165, 233, 0.3);
+        box-shadow: 0 4px 12px rgba(16,185,129,0.35);
         color: white;
     }
-    
-    /* === EMPTY STATE === */
-    .empty-state {
-        padding: 60px 30px;
-        text-align: center;
+
+    .btn-view { background:#0ea5e9; color:white; }
+    .btn-view:hover { background:#0284c7; transform:translateY(-1px); box-shadow:0 3px 10px rgba(14,165,233,0.3); color:white; }
+
+    /* Section header inside tab */
+    .section-header {
+        padding: 14px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #e5e7eb;
     }
-    
+
+    .section-header.ready-bg {
+        background: linear-gradient(135deg,#f0fdf4,#dcfce7);
+        border-bottom-color:#a7f3d0;
+    }
+
+    .section-header.pending-bg { background:#f9fafb; }
+
+    .section-header h3 {
+        font-size: 0.95rem; font-weight: 600; color: #1f2937; margin: 0;
+        display: flex; align-items: center; gap: 8px;
+    }
+
+    .count-badge {
+        display: inline-flex; align-items: center; justify-content: center;
+        min-width: 22px; height: 22px; padding: 0 7px;
+        border-radius: 11px; font-size: 0.72rem; font-weight: 700;
+    }
+
+    .count-badge.green { background:#d1fae5; color:#065f46; }
+    .count-badge.gray  { background:#e5e7eb; color:#6b7280; }
+
+    /* Empty state */
+    .empty-state { padding: 48px 30px; text-align: center; }
+
     .empty-state-icon {
-        width: 80px;
-        height: 80px;
-        margin: 0 auto 20px;
-        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 2.5rem;
+        width: 60px; height: 60px; margin: 0 auto 14px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
     }
-    
-    .empty-state-icon::before {
-        content: "✓";
-        color: #10b981;
-        font-weight: bold;
+
+    .empty-state-icon.green  { background: linear-gradient(135deg,#d1fae5,#a7f3d0); color:#065f46; }
+    .empty-state-icon.muted  { background:#f3f4f6; color:#9ca3af; }
+
+    .empty-state-text { font-size:0.95rem; color:#6b7280; line-height:1.5; }
+    .empty-state-sub  { font-size:0.82rem; color:#9ca3af; margin-top:4px; }
+
+    /* Search box inside passed tab */
+    .search-box {
+        display: flex; align-items: center; gap: 8px;
+        background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 6px 12px;
     }
-    
-    .empty-state-text {
-        font-size: 1rem;
-        color: #6b7280;
-        line-height: 1.5;
+
+    .search-box svg { color:#9ca3af; flex-shrink:0; }
+
+    .search-box input {
+        border:none; outline:none; font-size:0.82rem; color:#1f2937;
+        min-width:160px; background:transparent;
     }
-    
-    /* === PAGINATION === */
-    .pagination-wrapper {
-        padding: 16px 20px;
-        background: #f9fafb;
-        border-top: 1px solid #e5e7eb;
+
+    .search-box input::placeholder { color:#9ca3af; }
+
+    .date-text { color:#374151; font-weight:500; }
+
+    /* Confirm Modal */
+    .modal-overlay {
+        display:none; position:fixed; top:0; left:0; right:0; bottom:0;
+        background:rgba(0,0,0,0.5); z-index:10000; align-items:center; justify-content:center;
     }
-    
-    .pagination {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 6px;
-        flex-wrap: wrap;
+
+    .modal-overlay.active { display:flex; }
+
+    .modal-box {
+        background:white; border-radius:16px; padding:30px;
+        max-width:450px; width:90%; box-shadow:0 20px 60px rgba(0,0,0,0.3); text-align:center;
     }
-    
-    .pagination a,
-    .pagination span {
-        padding: 8px 12px;
-        border: 1px solid #e5e7eb;
-        border-radius: 6px;
-        color: #6b7280;
-        text-decoration: none;
-        font-weight: 500;
-        font-size: 0.85rem;
-        transition: all 0.2s ease;
-        background: white;
-        min-width: 36px;
-        text-align: center;
+
+    .modal-icon {
+        width:56px; height:56px; margin:0 auto 16px;
+        background:linear-gradient(135deg,#d1fae5,#a7f3d0); border-radius:50%;
+        display:flex; align-items:center; justify-content:center; color:#065f46;
     }
-    
-    .pagination a:hover {
-        background: {{ $primaryColor }};
-        color: white;
-        border-color: {{ $primaryColor }};
+
+    .modal-title { font-size:1.1rem; font-weight:600; color:#1f2937; margin-bottom:8px; }
+    .modal-text  { font-size:0.9rem; color:#6b7280; margin-bottom:24px; line-height:1.5; }
+    .modal-student { font-weight:600; color:#1f2937; }
+
+    .modal-actions { display:flex; gap:12px; justify-content:center; }
+
+    .modal-btn {
+        padding:10px 24px; border-radius:8px; font-size:0.9rem; font-weight:600;
+        border:none; cursor:pointer; transition:all 0.2s;
     }
-    
-    .pagination .active span {
-        background: {{ $primaryColor }};
-        color: white;
-        border-color: {{ $primaryColor }};
-    }
-    
-    .pagination .disabled span {
-        opacity: 0.4;
-        cursor: not-allowed;
-    }
-    
-    /* === RESPONSIVE DESIGN === */
-    @media (max-width: 1024px) {
-        .theoretical-container {
-            padding: 20px;
-        }
-        
-        .page-header {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 12px;
-        }
-        
-        .page-header-right {
-            width: 100%;
-            justify-content: flex-start;
-        }
-    }
-    
+
+    .modal-btn-cancel { background:#f3f4f6; color:#6b7280; }
+    .modal-btn-cancel:hover { background:#e5e7eb; }
+
+    .modal-btn-confirm { background:linear-gradient(135deg,#10b981,#059669); color:white; }
+    .modal-btn-confirm:hover { transform:translateY(-1px); box-shadow:0 4px 12px rgba(16,185,129,0.35); }
+
     @media (max-width: 768px) {
-        .theoretical-container {
-            padding: 15px;
-            margin: 10px auto;
-        }
-        
-        .page-header-left h1 {
-            font-size: 1.3rem;
-        }
-        
-        .page-header-left p {
-            font-size: 0.8rem;
-        }
-        
-        .tabs {
-            width: 100%;
-        }
-        
-        .tab {
-            flex: 1;
-            text-align: center;
-            padding: 10px 12px;
-            font-size: 0.85rem;
-        }
-        
-        .stats-badge {
-            padding: 8px 16px;
-        }
-        
-        .stats-badge-value {
-            font-size: 1.3rem;
-        }
-        
-        .table-wrapper {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-        
-        table {
-            min-width: 800px;
-        }
-        
-        th, td {
-            padding: 10px 12px;
-            font-size: 0.8rem;
-        }
-        
-        .user-avatar {
-            width: 34px;
-            height: 34px;
-            font-size: 0.9rem;
-        }
-        
-        .btn-action {
-            padding: 6px 10px;
-            font-size: 0.75rem;
-        }
-    }
-    
-    @media (max-width: 480px) {
-        .page-header-left h1 {
-            font-size: 1.2rem;
-        }
-        
-        .stats-badge {
-            font-size: 0.85rem;
-        }
-        
-        .stats-badge-value {
-            font-size: 1.2rem;
-        }
-        
-        .section-header {
-            padding: 12px 16px;
-        }
-        
-        .empty-state {
-            padding: 40px 20px;
-        }
-        
-        .empty-state-icon {
-            width: 60px;
-            height: 60px;
-            font-size: 2rem;
-        }
-    }
-    
-    /* === UTILITY === */
-    .fade {
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-    
-    .fade.show {
-        opacity: 1;
+        .theoretical-container { padding: 15px; }
+        .page-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+        .stats-grid { grid-template-columns: 1fr; }
+        table { min-width: 700px; }
     }
 </style>
 
 <div class="theoretical-container">
     <!-- Page Header -->
     <div class="page-header">
-        <div class="page-header-left">
-            <h1>Theoretical Completion</h1>
-            <p>Mark students as passed theoretical to unlock practical courses</p>
-        </div>
-        <div class="page-header-right">
-            <div class="stats-badge">
-                <div class="stats-badge-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 18px; height: 18px;">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                    </svg>
-                </div>
-                <div class="stats-badge-content">
-                    <div class="stats-badge-label">Pending</div>
-                    <div class="stats-badge-value">{{ $enrollments->total() }}</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Tab Navigation -->
-    <div class="tabs-container">
-        <div class="tabs">
-            <button type="button" class="tab active" data-tab="pending">
-                Pending Completion
-            </button>
-            <button type="button" class="tab" data-tab="passed">
-                Passed Students
-            </button>
+        <div>
+            <h1 class="page-title">Theoretical Training</h1>
+            <p class="page-subtitle">Track student progress, mark completions, and view passed students</p>
         </div>
     </div>
 
     @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <div class="flash-message success">
+            <span class="flash-icon">&#10003;</span>
+            <span>{{ session('success') }}</span>
         </div>
     @endif
 
     @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <div class="flash-message error">
+            <span class="flash-icon">&#10007;</span>
+            <span>{{ session('error') }}</span>
         </div>
     @endif
 
-    <!-- Tab Content Sections -->
-    <div class="tab-content-wrapper">
-        <!-- Pending Completion Tab Content -->
-        <div class="tab-content active" data-content="pending">
-            <div class="content-section">
-        <div class="section-header">
-            <div>
-                <h2 class="section-title">Students Awaiting Theoretical Completion</h2>
-                <p class="section-subtitle">Review and mark students who have completed their theoretical requirements</p>
+    <!-- Stats Cards (clickable - serve as tab navigation) -->
+    <div class="stats-grid">
+        <div class="stat-card students clickable" onclick="switchTab('training', this)">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">In Training</div>
+                        <div class="stat-value">{{ $totalInTraining }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:24px;height:24px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                    </div>
+                </div>
+                <div class="stat-detail">Students currently in theoretical training</div>
             </div>
         </div>
+        <div class="stat-card growth clickable" onclick="switchTab('completion', this)">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">Ready to Pass</div>
+                        <div class="stat-value">{{ $readyToPass }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:24px;height:24px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                </div>
+                <div class="stat-detail">Completed hours, ready to mark as passed</div>
+            </div>
+        </div>
+        <div class="stat-card instructors clickable" onclick="switchTab('passed', this)">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">Total Passed</div>
+                        <div class="stat-value">{{ $totalPassed }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:24px;height:24px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+                    </div>
+                </div>
+                <div class="stat-detail">Students who passed theoretical training</div>
+            </div>
+        </div>
+    </div>
 
+    {{-- ════════════════════════════════════════════════════
+         TAB 1 — In Training
+         ════════════════════════════════════════════════════ --}}
+    <div class="tab-panel active" id="tab-training">
         <div class="table-wrapper">
-            @if($enrollments->count() > 0)
+            @if($activeEnrollments->count() > 0)
                 <table>
                     <thead>
                         <tr>
                             <th>Student</th>
                             <th>Course</th>
                             <th>Enrolled</th>
-                            <th>Hours Completed</th>
+                            <th>Hours</th>
                             <th>Progress</th>
                             <th>Sessions</th>
+                            <th>Status</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($enrollments as $enrollment)
+                        @foreach($activeEnrollments as $enrollment)
+                            @php
+                                $pClass = $enrollment->progress >= 100 ? 'high' : ($enrollment->progress >= 50 ? 'mid' : 'low');
+                            @endphp
                             <tr>
                                 <td>
                                     <div class="user-cell">
@@ -780,42 +378,251 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <div class="course-info">
-                                        <div class="course-title">{{ $enrollment->course->title }}</div>
-                                        <div class="course-badges">
-                                            <span class="badge badge-info">{{ ucfirst($enrollment->course->course_type) }}</span>
-                                            <span class="badge badge-secondary">{{ ucfirst(str_replace('_', ' ', $enrollment->course->license_type)) }}</span>
-                                        </div>
-                                    </div>
+                                    <div class="course-title">{{ $enrollment->course->title }}</div>
+                                    <div class="course-license">{{ ucfirst(str_replace('_', ' ', $enrollment->course->license_type)) }}</div>
                                 </td>
-                                <td>{{ $enrollment->enrolled_at ? $enrollment->enrolled_at->format('M d, Y') : 'N/A' }}</td>
+                                <td><span class="date-text">{{ $enrollment->enrolled_at?->format('M d, Y') ?? 'N/A' }}</span></td>
                                 <td>
-                                    <div class="hours-info">
-                                        <div class="hours-value">{{ number_format($enrollment->total_hours, 1) }} hrs</div>
-                                        <div class="hours-label">of {{ number_format($enrollment->course->hours_required, 1) }} required</div>
+                                    <div class="hours-display">
+                                        <span class="hours-value">{{ number_format($enrollment->total_hours, 1) }} hrs</span>
+                                        <span class="hours-required">of {{ number_format($enrollment->required_hours, 1) }} req</span>
                                     </div>
                                 </td>
                                 <td>
-                                    @php
-                                        $percentage = $enrollment->course->hours_required > 0 
-                                            ? ($enrollment->total_hours / $enrollment->course->hours_required) * 100 
-                                            : 0;
-                                        $percentage = min(100, $percentage);
-                                    @endphp
                                     <div class="progress-wrapper">
                                         <div class="progress-bar-container">
-                                            <div class="progress-bar-fill" style="width: {{ $percentage }}%;"></div>
+                                            <div class="progress-bar-fill {{ $pClass }}" style="width: {{ $enrollment->progress }}%;"></div>
                                         </div>
-                                        <span class="progress-text">{{ number_format($percentage, 0) }}%</span>
+                                        <span class="progress-text {{ $pClass }}">{{ $enrollment->progress }}%</span>
                                     </div>
                                 </td>
                                 <td>
-                                    <span class="badge badge-success">{{ $enrollment->sessionCompletions->count() }} sessions</span>
+                                    <div class="hours-display">
+                                        <span class="hours-value">{{ $enrollment->session_count }}</span>
+                                        <span class="hours-required">{{ $enrollment->last_session ? $enrollment->last_session->session_date->format('M d') : '—' }}</span>
+                                    </div>
                                 </td>
                                 <td>
-                                    <a href="{{ route('schools.admin.theoretical.show', ['school' => $school->slug, 'enrollment' => $enrollment->id]) }}" 
-                                       class="btn-action btn-view">
-                                        Review
+                                    @if($enrollment->progress >= 100)
+                                        <span class="badge-custom badge-ready">Ready to Pass</span>
+                                    @elseif($enrollment->progress > 0)
+                                        <span class="badge-custom badge-progress">In Progress</span>
+                                    @else
+                                        <span class="badge-custom badge-started">Just Started</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    <a href="{{ route('schools.admin.theoretical.show', ['school' => $school->slug, 'enrollment' => $enrollment->id]) }}" class="btn-action btn-view">Review</a>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            @else
+                <div class="empty-state">
+                    <div class="empty-state-icon muted">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:28px;height:28px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                    </div>
+                    <div class="empty-state-text">No students currently in theoretical training</div>
+                    <div class="empty-state-sub">Students enrolled in theoretical courses will appear here</div>
+                </div>
+            @endif
+        </div>
+    </div>
+
+    {{-- ════════════════════════════════════════════════════
+         TAB 2 — Mark Completion
+         ════════════════════════════════════════════════════ --}}
+    <div class="tab-panel" id="tab-completion">
+        {{-- Ready to Pass section --}}
+        <div class="section-header ready-bg">
+            <h3>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#10b981" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Ready to Pass
+                <span class="count-badge green">{{ $readyEnrollments->count() }}</span>
+            </h3>
+        </div>
+        <div class="table-wrapper">
+            @if($readyEnrollments->count() > 0)
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Course</th>
+                            <th>Hours Completed</th>
+                            <th>Progress</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($readyEnrollments as $enrollment)
+                            <tr>
+                                <td>
+                                    <div class="user-cell">
+                                        <div class="user-avatar">{{ substr($enrollment->student->name ?? 'N', 0, 1) }}</div>
+                                        <div class="user-info">
+                                            <div class="user-name">{{ $enrollment->student->name ?? 'N/A' }}</div>
+                                            <div class="user-email">{{ $enrollment->student->email ?? 'N/A' }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="course-title">{{ $enrollment->course->title }}</div>
+                                    <div class="course-license">{{ ucfirst(str_replace('_', ' ', $enrollment->course->license_type)) }}</div>
+                                </td>
+                                <td>
+                                    <div class="hours-display">
+                                        <span class="hours-value">{{ number_format($enrollment->total_hours, 1) }} hrs</span>
+                                        <span class="hours-required">of {{ number_format($enrollment->required_hours, 1) }} required</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="progress-wrapper">
+                                        <div class="progress-bar-container">
+                                            <div class="progress-bar-fill high" style="width: 100%;"></div>
+                                        </div>
+                                        <span class="progress-text high">{{ $enrollment->progress }}%</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <button type="button" class="btn-action btn-mark-passed"
+                                            onclick="confirmMarkPassed('{{ $enrollment->student->name }}', {{ $enrollment->id }})">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:14px;height:14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                        Mark Passed
+                                    </button>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            @else
+                <div class="empty-state">
+                    <div class="empty-state-icon green">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:28px;height:28px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                    <div class="empty-state-text">No students ready to be marked as passed yet</div>
+                    <div class="empty-state-sub">Students will appear here once they complete all required hours</div>
+                </div>
+            @endif
+        </div>
+
+        {{-- Not Ready Yet section --}}
+        @if($notReadyEnrollments->count() > 0)
+            <div class="section-header pending-bg" style="border-top: 1px solid #e5e7eb;">
+                <h3>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#9ca3af" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    Not Ready Yet
+                    <span class="count-badge gray">{{ $notReadyEnrollments->count() }}</span>
+                </h3>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Course</th>
+                            <th>Hours Completed</th>
+                            <th>Progress</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($notReadyEnrollments as $enrollment)
+                            @php $pClass = $enrollment->progress >= 50 ? 'mid' : 'low'; @endphp
+                            <tr>
+                                <td>
+                                    <div class="user-cell">
+                                        <div class="user-avatar">{{ substr($enrollment->student->name ?? 'N', 0, 1) }}</div>
+                                        <div class="user-info">
+                                            <div class="user-name">{{ $enrollment->student->name ?? 'N/A' }}</div>
+                                            <div class="user-email">{{ $enrollment->student->email ?? 'N/A' }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="course-title">{{ $enrollment->course->title }}</div>
+                                    <div class="course-license">{{ ucfirst(str_replace('_', ' ', $enrollment->course->license_type)) }}</div>
+                                </td>
+                                <td>
+                                    <div class="hours-display">
+                                        <span class="hours-value">{{ number_format($enrollment->total_hours, 1) }} hrs</span>
+                                        <span class="hours-required">of {{ number_format($enrollment->required_hours, 1) }} required</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="progress-wrapper">
+                                        <div class="progress-bar-container">
+                                            <div class="progress-bar-fill {{ $pClass }}" style="width: {{ $enrollment->progress }}%;"></div>
+                                        </div>
+                                        <span class="progress-text {{ $pClass }}">{{ $enrollment->progress }}%</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <a href="{{ route('schools.admin.theoretical.show', ['school' => $school->slug, 'enrollment' => $enrollment->id]) }}" class="btn-action btn-view">Review</a>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
+    </div>
+
+    {{-- ════════════════════════════════════════════════════
+         TAB 3 — Passed Students
+         ════════════════════════════════════════════════════ --}}
+    <div class="tab-panel" id="tab-passed">
+        <div class="section-header">
+            <h3>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#10b981" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+                Passed Students
+            </h3>
+            <div class="search-box">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:15px;height:15px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <input type="text" id="searchPassed" placeholder="Search students...">
+            </div>
+        </div>
+        <div class="table-wrapper">
+            @if($passedStudents->count() > 0)
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Total Hours</th>
+                            <th>Date Passed</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="passedTableBody">
+                        @foreach($passedStudents as $student)
+                            <tr>
+                                <td>
+                                    <div class="user-cell">
+                                        <div class="user-avatar">{{ strtoupper(substr($student->name ?? 'N', 0, 1)) }}</div>
+                                        <div class="user-info">
+                                            <div class="user-name">{{ $student->name ?? 'N/A' }}</div>
+                                            <div class="user-email">{{ $student->email ?? 'N/A' }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge-custom badge-info">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:13px;height:13px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                        {{ $student->total_theoretical_hours ?? 0 }} hrs
+                                    </span>
+                                </td>
+                                <td><span class="date-text">{{ optional($student->theoretical_passed_at)->format('M d, Y') ?? 'N/A' }}</span></td>
+                                <td>
+                                    <span class="badge-custom badge-success">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:13px;height:13px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                        Passed
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="{{ $schoolRoute('admin.students.show', ['student' => $student->id]) }}" class="btn-action btn-view" title="View Student Profile">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:13px;height:13px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                        View
                                     </a>
                                 </td>
                             </tr>
@@ -824,145 +631,72 @@
                 </table>
             @else
                 <div class="empty-state">
-                    <div class="empty-state-icon"></div>
-                    <div class="empty-state-text">All students have been marked as passed! No pending theoretical completions.</div>
+                    <div class="empty-state-icon muted">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:28px;height:28px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/></svg>
+                    </div>
+                    <div class="empty-state-text">No students have passed theoretical training yet</div>
+                    <div class="empty-state-sub">Students will appear here after being marked as passed</div>
                 </div>
             @endif
         </div>
-        
-        @if($enrollments->count() > 0)
-            <div class="pagination-wrapper">
-                {{ $enrollments->links() }}
-            </div>
-        @endif
     </div>
+</div>
+
+<!-- Confirm Modal -->
+<div class="modal-overlay" id="confirmModal">
+    <div class="modal-box">
+        <div class="modal-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:28px;height:28px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
         </div>
-        <!-- End Pending Completion Tab Content -->
-        
-        <!-- Passed Students Tab Content -->
-        <div class="tab-content" data-content="passed">
-            <div class="content-section">
-                <div class="section-header">
-                    <div>
-                        <h2 class="section-title">Passed Students</h2>
-                        <p class="section-subtitle">Students who have successfully completed theoretical training</p>
-                    </div>
-                </div>
-
-                <!-- Stats Grid for Passed Students -->
-                <div class="stats-mini-grid">
-                    <div class="stat-mini">
-                        <div class="stat-mini-icon success">
-                            <i class="fas fa-check-circle"></i>
-                        </div>
-                        <div class="stat-mini-content">
-                            <div class="stat-mini-value">{{ $totalPassed ?? 0 }}</div>
-                            <div class="stat-mini-label">Total Passed</div>
-                        </div>
-                    </div>
-                    
-                    <div class="stat-mini">
-                        <div class="stat-mini-icon primary">
-                            <i class="fas fa-calendar"></i>
-                        </div>
-                        <div class="stat-mini-content">
-                            <div class="stat-mini-value">{{ $passedThisMonth ?? 0 }}</div>
-                            <div class="stat-mini-label">This Month</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="table-wrapper">
-                    @if($passedStudents->count() > 0)
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Student</th>
-                                    <th>Email</th>
-                                    <th>Course</th>
-                                    <th>Completion Date</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($passedStudents as $student)
-                                    <tr>
-                                        <td>
-                                            <div class="user-cell">
-                                                <div class="user-avatar">{{ substr($student->name ?? 'N', 0, 1) }}</div>
-                                                <div class="user-info">
-                                                    <div class="user-name">{{ $student->name ?? 'N/A' }}</div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>{{ $student->email ?? 'N/A' }}</td>
-                                        <td>
-                                            @if($student->enrollments->count() > 0)
-                                                @foreach($student->enrollments->take(2) as $enrollment)
-                                                    <span class="badge badge-info">{{ $enrollment->course->title ?? 'N/A' }}</span>
-                                                @endforeach
-                                            @else
-                                                <span class="badge badge-secondary">N/A</span>
-                                            @endif
-                                        </td>
-                                        <td>{{ $student->updated_at ? $student->updated_at->format('M d, Y') : 'N/A' }}</td>
-                                        <td>
-                                            <a href="{{ route('schools.admin.students.show', ['school' => $school->slug, 'student' => $student->id]) }}" 
-                                               class="btn-action btn-view">
-                                                View Details
-                                            </a>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    @else
-                        <div class="empty-state">
-                            <div class="empty-state-icon"></div>
-                            <div class="empty-state-text">No students have passed theoretical training yet.</div>
-                        </div>
-                    @endif
-                </div>
-                
-                @if($passedStudents->count() > 0)
-                    <div class="pagination-wrapper">
-                        {{ $passedStudents->links() }}
-                    </div>
-                @endif
+        <div class="modal-title">Mark as Passed?</div>
+        <div class="modal-text">
+            Are you sure you want to mark <span class="modal-student" id="modalStudentName"></span> as passed theoretical training?
+            This will unlock practical course enrollment.
+        </div>
+        <form id="markPassedForm" method="POST" action="{{ $schoolRoute('admin.theoretical.markAsPassed') }}">
+            @csrf
+            <input type="hidden" name="enrollment_id" id="modalEnrollmentId">
+            <div class="modal-actions">
+                <button type="button" class="modal-btn modal-btn-cancel" onclick="closeModal()">Cancel</button>
+                <button type="submit" class="modal-btn modal-btn-confirm">Yes, Mark as Passed</button>
             </div>
-        </div>
-        <!-- End Passed Students Tab Content -->
+        </form>
     </div>
-    <!-- End Tab Content Wrapper -->
 </div>
 
 @push('scripts')
 <script>
-(function() {
-    // Get all tab buttons
-    const tabButtons = document.querySelectorAll('.tab[data-tab]');
-    const tabContents = document.querySelectorAll('.tab-content[data-content]');
-    
-    // Add click event listeners to all tabs
-    tabButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const targetTab = this.getAttribute('data-tab');
-            
-            // Remove active class from all tabs
-            tabButtons.forEach(btn => btn.classList.remove('active'));
-            tabContents.forEach(content => content.classList.remove('active'));
-            
-            // Add active class to clicked tab
-            this.classList.add('active');
-            
-            // Show corresponding content
-            const targetContent = document.querySelector(`.tab-content[data-content="${targetTab}"]`);
-            if (targetContent) {
-                targetContent.classList.add('active');
-            }
-        });
+function switchTab(tabId, card) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('tab-' + tabId).classList.add('active');
+}
+
+function confirmMarkPassed(studentName, enrollmentId) {
+    document.getElementById('modalStudentName').textContent = studentName;
+    document.getElementById('modalEnrollmentId').value = enrollmentId;
+    document.getElementById('confirmModal').classList.add('active');
+}
+
+function closeModal() {
+    document.getElementById('confirmModal').classList.remove('active');
+}
+
+document.getElementById('confirmModal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+});
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeModal();
+});
+
+// Search for passed students tab
+document.getElementById('searchPassed')?.addEventListener('keyup', function() {
+    let filter = this.value.toLowerCase();
+    let rows = document.querySelectorAll('#passedTableBody tr');
+    rows.forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(filter) ? '' : 'none';
     });
-})();
+});
 </script>
 @endpush
 

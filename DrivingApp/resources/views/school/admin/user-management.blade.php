@@ -78,54 +78,6 @@
         color: #b45309;
     }
     
-    /* Tabs */
-    .tabs-container {
-        margin-bottom: 25px;
-        border-bottom: 2px solid #e1e5e9;
-    }
-    
-    .tabs {
-        display: flex;
-        gap: 10px;
-    }
-    
-    .tab {
-        padding: 12px 24px;
-        background: transparent;
-        border: none;
-        border-bottom: 3px solid transparent;
-        color: #666;
-        font-size: 1rem;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-    
-    .tab:hover {
-        color: #667eea;
-        background: rgba(102, 126, 234, 0.05);
-    }
-    
-    .tab.active {
-        color: #667eea;
-        border-bottom-color: #667eea;
-        font-weight: 600;
-    }
-    
-    .tab-content {
-        display: none;
-    }
-    
-    .tab-content.active {
-        display: block;
-        animation: fadeIn 0.3s ease;
-    }
-    
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    
     /* Action Buttons */
     .action-bar {
         display: flex;
@@ -246,7 +198,27 @@
         background: #f8d7da;
         color: #721c24;
     }
-    
+
+    .role-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+
+    .role-student {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .role-instructor {
+        background: #ede9fe;
+        color: #5b21b6;
+    }
+
     .btn-action {
         padding: 6px 12px;
         margin: 0 3px;
@@ -442,15 +414,14 @@
         color: #666;
     }
     
-    /* Export Buttons */
-    .export-buttons {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
+    /* Export Dropdown */
+    .export-dropdown {
+        position: relative;
+        display: inline-block;
     }
-    
-    .btn-export {
-        padding: 10px 16px;
+
+    .btn-export-trigger {
+        padding: 10px 18px;
         border: none;
         border-radius: 8px;
         font-size: 0.9rem;
@@ -460,30 +431,87 @@
         display: flex;
         align-items: center;
         gap: 8px;
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        color: white;
+        box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
+    }
+
+    .btn-export-trigger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+    }
+
+    .btn-export-trigger svg {
+        transition: transform 0.2s;
+    }
+
+    .export-dropdown.open .btn-export-trigger svg.chevron {
+        transform: rotate(180deg);
+    }
+
+    .export-dropdown-menu {
+        display: none;
+        position: absolute;
+        top: calc(100% + 6px);
+        right: 0;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        border: 1px solid #e5e7eb;
+        min-width: 220px;
+        z-index: 100;
+        overflow: hidden;
+        animation: dropdownFadeIn 0.15s ease;
+    }
+
+    @keyframes dropdownFadeIn {
+        from { opacity: 0; transform: translateY(-6px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .export-dropdown.open .export-dropdown-menu {
+        display: block;
+    }
+
+    .export-dropdown-menu .dropdown-header {
+        padding: 10px 16px 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #9ca3af;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .export-dropdown-menu .dropdown-divider {
+        height: 1px;
+        background: #f3f4f6;
+        margin: 4px 0;
+    }
+
+    .export-dropdown-menu a {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 16px;
+        font-size: 0.88rem;
+        color: #374151;
         text-decoration: none;
+        transition: background 0.15s;
     }
-    
-    .btn-export-pdf {
-        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-        color: white;
+
+    .export-dropdown-menu a:hover {
+        background: #f9fafb;
     }
-    
-    .btn-export-pdf:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
-        color: white;
+
+    .export-dropdown-menu a .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
     }
-    
-    .btn-export-excel {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        color: white;
-    }
-    
-    .btn-export-excel:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-        color: white;
-    }
+
+    .export-dropdown-menu a .dot.pdf  { background: #ef4444; }
+    .export-dropdown-menu a .dot.excel { background: #10b981; }
     
     /* Mobile Responsive Styles */
     @media (max-width: 768px) {
@@ -541,17 +569,6 @@
         .search-box {
             max-width: 100%;
             width: 100%;
-        }
-        
-        .export-buttons {
-            width: 100%;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-        
-        .btn-export {
-            flex: 1;
-            min-width: 140px;
         }
         
         .btn-create {
@@ -654,16 +671,7 @@
         }
         
         .btn-action {
-            padding: 4px 6px;
-            font-size: 0.75rem;
-        }
-        
-        .btn-export {
-            padding: 8px 12px;
-            font-size: 0.8rem;
-        }
-        
-        .form-group label {
+            padding: 4px 6px;\n            font-size: 0.75rem;\n        }\n        \n        .form-group label {
             font-size: 0.9rem;
         }
         
@@ -795,124 +803,122 @@
     @endif
     
     <!-- Students Section -->
-    <div id="students" class="user-section">
+    <div id="usersSection" class="user-section">
         <div class="action-bar">
             <div class="search-box">
-                <input type="text" id="studentSearch" placeholder="Search students by name or email..." onkeyup="filterTable('studentSearch', 'studentsTable')">
+                <input type="text" id="userSearch" placeholder="Search users by name, email, or role..." onkeyup="filterTable('userSearch', 'usersTable')">
             </div>
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <div class="export-buttons">
-                    <a href="{{ $schoolRoute('admin.exports.students.pdf') }}" class="btn-export btn-export-pdf" title="Export all students as PDF">
-                        Export Students (PDF)
-                    </a>
-                    <a href="{{ $schoolRoute('admin.exports.students.excel') }}" class="btn-export btn-export-excel" title="Export all students as Excel CSV">
-                        Export Students (Excel)
-                    </a>
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <div class="export-dropdown" id="exportDropdown">
+                    <button class="btn-export-trigger" onclick="toggleExportDropdown()">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        Export
+                        <svg class="chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:14px;height:14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div class="export-dropdown-menu">
+                        <div class="dropdown-header">Students</div>
+                        <a href="{{ $schoolRoute('admin.exports.students.pdf') }}">
+                            <span class="dot pdf"></span> Students (PDF)
+                        </a>
+                        <a href="{{ $schoolRoute('admin.exports.students.excel') }}">
+                            <span class="dot excel"></span> Students (Excel)
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <div class="dropdown-header">Instructors</div>
+                        <a href="{{ $schoolRoute('admin.exports.instructors.pdf') }}">
+                            <span class="dot pdf"></span> Instructors (PDF)
+                        </a>
+                        <a href="{{ $schoolRoute('admin.exports.instructors.excel') }}">
+                            <span class="dot excel"></span> Instructors (Excel)
+                        </a>
+                    </div>
                 </div>
                 <button class="btn-create" onclick="openCreateStudentModal()">
-                    <i class="bi bi-person-plus"></i> Add New Student
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+                    Add Student
                 </button>
-            </div>
-        </div>
-        
-        <div class="table-container">
-            @if($students->count() > 0)
-                <table id="studentsTable">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Contact</th>
-                            <th>Address</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($students as $student)
-                        <tr>
-                            <td><strong>{{ $student->name }}</strong></td>
-                            <td>{{ $student->email }}</td>
-                            <td>{{ $student->contact ?? 'N/A' }}</td>
-                            <td>{{ $student->address ?? 'N/A' }}</td>
-                            <td>
-                                <span class="status-badge status-{{ $student->status }}">
-                                    {{ ucfirst($student->status) }}
-                                </span>
-                            </td>
-                            <td>
-                                <button class="btn-action btn-edit" data-action="edit-student" data-id="{{ $student->id }}" data-name="{{ $student->name }}" data-email="{{ $student->email }}" data-contact="{{ $student->contact }}" data-address="{{ $student->address }}">Edit</button>
-                                <button class="btn-action btn-toggle" data-action="toggle-student-status" data-id="{{ $student->id }}" data-status="{{ $student->status }}">
-                                    {{ $student->status === 'active' ? 'Deactivate' : 'Activate' }}
-                                </button>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            @else
-                <div class="empty-state">
-                    <div class="empty-state-icon"></div>
-                    <div class="empty-state-text">No students found. Add your first student to get started!</div>
-                </div>
-            @endif
-        </div>
-    </div>
-    
-    <!-- Instructors Section -->
-    <div id="instructors" class="user-section">
-        <div class="action-bar">
-            <div class="search-box">
-                <input type="text" id="instructorSearch" placeholder="Search instructors by name or email..." onkeyup="filterTable('instructorSearch', 'instructorsTable')">
-            </div>
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <div class="export-buttons">
-                    <a href="{{ $schoolRoute('admin.exports.instructors.pdf') }}" class="btn-export btn-export-pdf" title="Export all instructors as PDF">
-                        Export Instructors (PDF)
-                    </a>
-                    <a href="{{ $schoolRoute('admin.exports.instructors.excel') }}" class="btn-export btn-export-excel" title="Export all instructors as Excel CSV">
-                        Export Instructors (Excel)
-                    </a>
-                </div>
                 <button class="btn-create" onclick="openCreateInstructorModal()">
-                    <i class="bi bi-person-plus"></i> Add New Instructor
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+                    Add Instructor
                 </button>
             </div>
         </div>
         
         <div class="table-container">
-            @if($instructors->count() > 0)
-                <table id="instructorsTable">
+            @php
+                $allUsers = collect();
+                foreach($students as $s) {
+                    $allUsers->push((object)[
+                        'id' => $s->id,
+                        'name' => $s->name,
+                        'email' => $s->email,
+                        'contact' => $s->contact,
+                        'status' => $s->status,
+                        'role' => 'student',
+                        'address' => $s->address ?? null,
+                        'license_number' => null,
+                        'availability' => null,
+                    ]);
+                }
+                foreach($instructors as $i) {
+                    $allUsers->push((object)[
+                        'id' => $i->id,
+                        'name' => $i->name,
+                        'email' => $i->email,
+                        'contact' => $i->contact,
+                        'status' => $i->status,
+                        'role' => 'instructor',
+                        'address' => null,
+                        'license_number' => $i->license_number ?? null,
+                        'availability' => $i->availability ?? null,
+                    ]);
+                }
+                $allUsers = $allUsers->sortBy('name');
+            @endphp
+
+            @if($allUsers->count() > 0)
+                <table id="usersTable">
                     <thead>
                         <tr>
                             <th>Name</th>
                             <th>Email</th>
                             <th>Contact</th>
-                            <th>License Number</th>
+                            <th>Role</th>
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($instructors as $instructor)
-                        <tr>
-                            <td><strong>{{ $instructor->name }}</strong></td>
-                            <td>{{ $instructor->email }}</td>
-                            <td>{{ $instructor->contact ?? 'N/A' }}</td>
-                            <td>{{ $instructor->license_number ?? 'N/A' }}</td>
+                        @foreach($allUsers as $user)
+                        <tr data-role="{{ $user->role }}" data-status="{{ $user->status }}">
+                            <td><strong>{{ $user->name }}</strong></td>
+                            <td>{{ $user->email }}</td>
+                            <td>{{ $user->contact ?? 'N/A' }}</td>
                             <td>
-                                <span class="status-badge status-{{ $instructor->status }}">
-                                    {{ ucfirst($instructor->status) }}
+                                <span class="role-badge role-{{ $user->role }}">
+                                    {{ ucfirst($user->role) }}
                                 </span>
                             </td>
                             <td>
-                                <button class="btn-action btn-edit" data-action="edit-instructor" data-id="{{ $instructor->id }}" data-name="{{ $instructor->name }}" data-email="{{ $instructor->email }}" data-contact="{{ $instructor->contact }}" data-license="{{ $instructor->license_number }}">Edit</button>
-                                <button class="btn-action btn-toggle" data-action="toggle-instructor-status" data-id="{{ $instructor->id }}" data-status="{{ $instructor->status }}">
-                                    {{ $instructor->status === 'active' ? 'Deactivate' : 'Activate' }}
-                                </button>
-                                <button class="btn-action btn-toggle" data-action="toggle-instructor-availability" data-id="{{ $instructor->id }}" data-availability="{{ $instructor->availability }}">
-                                    {{ $instructor->availability === 'available' ? 'Mark Unavailable' : 'Mark Available' }}
-                                </button>
+                                <span class="status-badge status-{{ $user->status }}">
+                                    {{ ucfirst($user->status) }}
+                                </span>
+                            </td>
+                            <td>
+                                @if($user->role === 'student')
+                                    <button class="btn-action btn-edit" data-action="edit-student" data-id="{{ $user->id }}" data-name="{{ $user->name }}" data-email="{{ $user->email }}" data-contact="{{ $user->contact }}" data-address="{{ $user->address }}">Edit</button>
+                                    <button class="btn-action btn-toggle" data-action="toggle-student-status" data-id="{{ $user->id }}" data-status="{{ $user->status }}">
+                                        {{ $user->status === 'active' ? 'Deactivate' : 'Activate' }}
+                                    </button>
+                                @else
+                                    <button class="btn-action btn-edit" data-action="edit-instructor" data-id="{{ $user->id }}" data-name="{{ $user->name }}" data-email="{{ $user->email }}" data-contact="{{ $user->contact }}" data-license="{{ $user->license_number }}">Edit</button>
+                                    <button class="btn-action btn-toggle" data-action="toggle-instructor-status" data-id="{{ $user->id }}" data-status="{{ $user->status }}">
+                                        {{ $user->status === 'active' ? 'Deactivate' : 'Activate' }}
+                                    </button>
+                                    <button class="btn-action btn-toggle" data-action="toggle-instructor-availability" data-id="{{ $user->id }}" data-availability="{{ $user->availability }}">
+                                        {{ $user->availability === 'available' ? 'Mark Unavailable' : 'Mark Available' }}
+                                    </button>
+                                @endif
                             </td>
                         </tr>
                         @endforeach
@@ -921,7 +927,7 @@
             @else
                 <div class="empty-state">
                     <div class="empty-state-icon"></div>
-                    <div class="empty-state-text">No instructors found. Add your first instructor to get started!</div>
+                    <div class="empty-state-text">No users found. Add your first student or instructor to get started!</div>
                 </div>
             @endif
         </div>
@@ -1066,114 +1072,31 @@
 
     // Initialize user management page
     function initializeUserManagementPage() {
-        // Any initialization code that needs to run on page load
         console.log('User Management page initialized');
     }
 
-    // Call initialization on DOMContentLoaded (initial page load)
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initializeUserManagementPage);
     } else {
-        // DOM already loaded (AJAX navigation), initialize immediately
         initializeUserManagementPage();
     }
 
-    // Filter Users by Type
+    // Filter Users by Type (via stat card clicks)
     function filterUsers(type, card) {
-        // Remove active class from all stat cards
-        document.querySelectorAll('.stat-card').forEach(c => {
-            c.classList.remove('active');
-        });
-        
-        // Add active class to clicked card
-        card.classList.add('active');
-        
-        // Show/hide sections based on filter
-        const studentsSection = document.getElementById('students');
-        const instructorsSection = document.getElementById('instructors');
-        
-        // Reset all rows to visible first
-        document.querySelectorAll('.table-container table tbody tr').forEach(row => {
-            row.style.display = '';
-        });
-        
-        if (type === 'all') {
-            studentsSection.style.display = 'block';
-            instructorsSection.style.display = 'block';
-        } else if (type === 'students') {
-            studentsSection.style.display = 'block';
-            instructorsSection.style.display = 'none';
-        } else if (type === 'instructors') {
-            studentsSection.style.display = 'none';
-            instructorsSection.style.display = 'block';
-        } else if (type === 'active') {
-            studentsSection.style.display = 'block';
-            instructorsSection.style.display = 'block';
-            filterByStatus('active');
-        } else if (type === 'inactive') {
-            studentsSection.style.display = 'block';
-            instructorsSection.style.display = 'block';
-            filterByStatus('inactive');
-        }
-    }
-    
-    // Filter by Status (Active/Inactive)
-    function filterByStatus(status) {
-        const tables = document.querySelectorAll('.table-container table tbody tr');
-        
-        tables.forEach(row => {
-            const statusSpan = row.querySelector('.status-badge');
-            if (statusSpan) {
-                const rowStatus = statusSpan.textContent.trim().toLowerCase();
-                row.style.display = (rowStatus === status) ? '' : 'none';
-            }
-        });
-    }
+        const rows = document.querySelectorAll('#usersTable tbody tr');
 
-    // Filter Users by Type
-    function filterUsers(type, card) {
-        // Remove active class from all stat cards
-        document.querySelectorAll('.stat-card').forEach(c => {
-            c.classList.remove('active');
-        });
-        
-        // Add active class to clicked card
-        card.classList.add('active');
-        
-        // Show/hide sections based on filter
-        const studentsSection = document.getElementById('students');
-        const instructorsSection = document.getElementById('instructors');
-        
-        if (type === 'all') {
-            studentsSection.style.display = 'block';
-            instructorsSection.style.display = 'block';
-        } else if (type === 'students') {
-            studentsSection.style.display = 'block';
-            instructorsSection.style.display = 'none';
-        } else if (type === 'instructors') {
-            studentsSection.style.display = 'none';
-            instructorsSection.style.display = 'block';
-        } else if (type === 'active') {
-            studentsSection.style.display = 'block';
-            instructorsSection.style.display = 'block';
-            filterByStatus('active');
-        } else if (type === 'inactive') {
-            studentsSection.style.display = 'block';
-            instructorsSection.style.display = 'block';
-            filterByStatus('inactive');
-        }
-    }
-    
-    // Filter by Status (Active/Inactive)
-    function filterByStatus(status) {
-        const tables = document.querySelectorAll('.table-container table tbody tr');
-        
-        tables.forEach(row => {
-            const statusBadge = row.querySelector('.badge');
-            if (statusBadge) {
-                const rowStatus = statusBadge.classList.contains('badge-active') ? 'active' : 'inactive';
-                row.style.display = (rowStatus === status) ? '' : 'none';
-            }
+        rows.forEach(row => {
+            const role = row.getAttribute('data-role');
+            const status = row.getAttribute('data-status');
+            let show = true;
+
+            if (type === 'students') show = (role === 'student');
+            else if (type === 'instructors') show = (role === 'instructor');
+            else if (type === 'active') show = (status === 'active');
+            else if (type === 'inactive') show = (status === 'inactive');
+            // 'all' → show everything
+
+            row.style.display = show ? '' : 'none';
         });
     }
     
@@ -1182,6 +1105,7 @@
         const input = document.getElementById(searchId);
         const filter = input.value.toUpperCase();
         const table = document.getElementById(tableId);
+        if (!table) return;
         const tr = table.getElementsByTagName('tr');
         
         for (let i = 1; i < tr.length; i++) {
@@ -1227,8 +1151,18 @@
         document.getElementById('editStudentModal').style.display = 'none';
     }
     
-    // Event delegation for data-action buttons (XSS-safe)
+    // Export Dropdown
+    function toggleExportDropdown() {
+        document.getElementById('exportDropdown').classList.toggle('open');
+    }
+
+    // Close dropdown when clicking outside
     document.addEventListener('click', function(e) {
+        const dropdown = document.getElementById('exportDropdown');
+        if (dropdown && !dropdown.contains(e.target)) {
+            dropdown.classList.remove('open');
+        }
+
         const btn = e.target.closest('[data-action]');
         if (!btn) return;
         const action = btn.dataset.action;

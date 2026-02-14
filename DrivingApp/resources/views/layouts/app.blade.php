@@ -383,9 +383,99 @@
         }
         
         .sidebar-nav {
-            padding: 0;
+            padding: 10px 0;
+        }
+
+        /* Sidebar Category Styles */
+        .nav-category {
+            margin-bottom: 4px;
+        }
+
+        .nav-category-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 20px;
+            margin: 2px 10px;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--primary-color);
+            opacity: 1;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+            user-select: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-category-header::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 4px;
+            background: {{ $useGradient ? "linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%)" : "var(--primary-color)" }};
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
+        }
+
+        .nav-category-header:hover::before {
+            transform: scaleY(1);
+        }
+
+        .nav-category-header:hover {
+            background: var(--sidebar-hover);
+            color: var(--primary-color);
+            transform: translateX(5px);
+            opacity: 1;
+            box-shadow: 0 2px 8px rgba(var(--primary-rgb), 0.15);
+        }
+
+        .nav-category-arrow {
+            font-size: 10px;
+            transition: transform 0.25s ease;
+            color: var(--primary-color);
+            opacity: 0.7;
+        }
+
+        .nav-category.collapsed .nav-category-arrow {
+            transform: rotate(-90deg);
+        }
+
+        .nav-category-items {
+            overflow: hidden;
+            max-height: 500px;
+            transition: max-height 0.3s ease, opacity 0.25s ease;
+            opacity: 1;
+        }
+
+        .nav-category.collapsed .nav-category-items {
+            max-height: 0;
+            opacity: 0;
+        }
+
+        .nav-divider {
+            height: 1px;
+            background: rgba(0,0,0,0.08);
+            margin: 8px 20px;
         }
         
+        /* Sub-items inside categories: indented and slightly subdued */
+        .nav-category-items .nav-item {
+            padding: 10px 20px 10px 30px;
+            font-size: 13px;
+            opacity: 0.8;
+        }
+
+        .nav-category-items .nav-item:hover,
+        .nav-category-items .nav-item.active {
+            opacity: 1;
+        }
+
         .nav-item {
             display: block;
             padding: 12px 20px;
@@ -1237,19 +1327,63 @@
         
         <nav class="sidebar-nav">
             @if(Auth::guard('admin')->check())
+                {{-- Dashboard (standalone) --}}
                 <a href="{{ $schoolRoute('admin.dashboard') }}" class="nav-item" data-page="dashboard">Dashboard</a>
-                <a href="{{ $schoolRoute('admin.userManagement') }}" class="nav-item" data-page="user-management">User Management</a>
-                <a href="{{ $schoolRoute('admin.schedules') }}" class="nav-item" data-page="schedules">Schedules</a>
-                <a href="{{ $schoolRoute('admin.removalRequests') }}" class="nav-item" data-page="removal-requests">Removal Requests</a>
-                <a href="{{ $schoolRoute('admin.enrollments.index') }}" class="nav-item" data-page="enrollments">Enrollments</a>
-                <a href="{{ $schoolRoute('admin.courses') }}" class="nav-item" data-page="courses">Courses</a>
-                <a href="{{ $schoolRoute('admin.theoretical.index') }}" class="nav-item" data-page="theoretical">
-                    Theoretical Completions
-                    <span class="badge badge-new">NEW</span>
-                </a>
-                <a href="{{ $schoolRoute('admin.bookings.index') }}" class="nav-item" data-page="bookings">Student Sessions</a>
-                <a href="{{ $schoolRoute('admin.payments.index') }}" class="nav-item" data-page="payments">Payments</a>
-                <a href="{{ $schoolRoute('admin.reports.index') }}" class="nav-item" data-page="reports">Reports & Analytics</a>
+
+                <div class="nav-divider"></div>
+
+                {{-- Users --}}
+                <div class="nav-category" data-category="admin-users">
+                    <div class="nav-category-header" onclick="toggleCategory(this)">
+                        <span>Users</span>
+                        <span class="nav-category-arrow">&#9660;</span>
+                    </div>
+                    <div class="nav-category-items">
+                        <a href="{{ $schoolRoute('admin.userManagement') }}" class="nav-item" data-page="user-management">User Management</a>
+                        <a href="{{ $schoolRoute('admin.removalRequests') }}" class="nav-item" data-page="removal-requests">Removal Requests</a>
+                    </div>
+                </div>
+
+                {{-- Theoretical Training --}}
+                <div class="nav-category" data-category="admin-courses">
+                    <div class="nav-category-header" onclick="toggleCategory(this)">
+                        <span>Courses & Training</span>
+                        <span class="nav-category-arrow">&#9660;</span>
+                    </div>
+                    <div class="nav-category-items">
+                        <a href="{{ $schoolRoute('admin.courses') }}" class="nav-item" data-page="courses">Courses</a>
+                        <a href="{{ $schoolRoute('admin.enrollments.index') }}" class="nav-item" data-page="enrollments">Enrollments</a>
+                        <a href="{{ $schoolRoute('admin.theoretical.index') }}" class="nav-item" data-page="theoretical">Theoretical Training</a>
+                    </div>
+                </div>
+
+                {{-- Sessions --}}
+                <div class="nav-category" data-category="admin-sessions">
+                    <div class="nav-category-header" onclick="toggleCategory(this)">
+                        <span>Sessions</span>
+                        <span class="nav-category-arrow">&#9660;</span>
+                    </div>
+                    <div class="nav-category-items">
+                        <a href="{{ $schoolRoute('admin.schedules') }}" class="nav-item" data-page="schedules">Schedules</a>
+                        <a href="{{ $schoolRoute('admin.bookings.index') }}" class="nav-item" data-page="bookings">Student Sessions</a>
+                    </div>
+                </div>
+
+                {{-- Payments & Reports --}}
+                <div class="nav-category" data-category="admin-finance">
+                    <div class="nav-category-header" onclick="toggleCategory(this)">
+                        <span>Payments & Reports</span>
+                        <span class="nav-category-arrow">&#9660;</span>
+                    </div>
+                    <div class="nav-category-items">
+                        <a href="{{ $schoolRoute('admin.payments.index') }}" class="nav-item" data-page="payments">Payments</a>
+                        <a href="{{ $schoolRoute('admin.reports.index') }}" class="nav-item" data-page="reports">Reports & Analytics</a>
+                    </div>
+                </div>
+
+                <div class="nav-divider"></div>
+
+                {{-- Settings (standalone bottom) --}}
                 <a href="{{ $schoolRoute('admin.settings') }}" class="nav-item" data-page="settings">Settings</a>
             @elseif(Auth::guard('instructor')->check())
                 <a href="{{ $schoolRoute('instructor.dashboard') }}" class="nav-item" data-page="dashboard">Dashboard</a>
@@ -1259,6 +1393,11 @@
                     Session Logging
                 </a>
                 <a href="{{ $schoolRoute('instructor.grades') }}" class="nav-item" data-page="grades">Grades</a>
+
+                <div class="nav-divider"></div>
+
+                {{-- Theoretical Training --}}
+                <a href="{{ $schoolRoute('instructor.theoretical.index') }}" class="nav-item" data-page="theoretical">Theoretical Training</a>
             @elseif(Auth::guard('student')->check())
                 @php
                     $currentStudent = Auth::guard('student')->user();
@@ -1272,11 +1411,33 @@
                 @else
                     {{-- Student Navigation --}}
                     <a href="{{ $schoolRoute('student.dashboard') }}" class="nav-item" data-page="dashboard">Dashboard</a>
-                    <a href="{{ $schoolRoute('student.schedule') }}" class="nav-item" data-page="schedule">My Schedule</a>
-                    <a href="{{ $schoolRoute('student.my-course') }}" class="nav-item" data-page="my-course">My Enrollment</a>
-                    <a href="{{ $schoolRoute('student.courses.index') }}" class="nav-item" data-page="courses">Browse Courses</a>
-                    <a href="{{ $schoolRoute('student.payments.index') }}" class="nav-item" data-page="payments">My Payments</a>
-                    <a href="{{ $schoolRoute('student.progress.index') }}" class="nav-item" data-page="progress">My Progress</a>
+
+                    <div class="nav-divider"></div>
+
+                    {{-- My Courses --}}
+                    <div class="nav-category" data-category="student-courses">
+                        <div class="nav-category-header" onclick="toggleCategory(this)">
+                            <span>My Courses</span>
+                            <span class="nav-category-arrow">&#9660;</span>
+                        </div>
+                        <div class="nav-category-items">
+                            <a href="{{ $schoolRoute('student.my-course') }}" class="nav-item" data-page="my-course">My Enrollment</a>
+                            <a href="{{ $schoolRoute('student.courses.index') }}" class="nav-item" data-page="courses">Browse Courses</a>
+                            <a href="{{ $schoolRoute('student.progress.index') }}" class="nav-item" data-page="progress">My Progress</a>
+                        </div>
+                    </div>
+
+                    {{-- My Sessions & Payments --}}
+                    <div class="nav-category" data-category="student-sessions">
+                        <div class="nav-category-header" onclick="toggleCategory(this)">
+                            <span>Sessions & Payments</span>
+                            <span class="nav-category-arrow">&#9660;</span>
+                        </div>
+                        <div class="nav-category-items">
+                            <a href="{{ $schoolRoute('student.schedule') }}" class="nav-item" data-page="schedule">My Schedule</a>
+                            <a href="{{ $schoolRoute('student.payments.index') }}" class="nav-item" data-page="payments">My Payments</a>
+                        </div>
+                    </div>
                 @endif
             @endif
         </nav>
@@ -1298,6 +1459,40 @@
     <script>
         let sidebarOpen = false;
         let profileDropdownOpen = false;
+
+        // Sidebar category toggle with localStorage persistence
+        function toggleCategory(header) {
+            const category = header.closest('.nav-category');
+            if (!category) return;
+            category.classList.toggle('collapsed');
+            // Save state
+            const key = category.getAttribute('data-category');
+            if (key) {
+                const collapsed = JSON.parse(localStorage.getItem('sidebarCollapsed') || '{}');
+                collapsed[key] = category.classList.contains('collapsed');
+                localStorage.setItem('sidebarCollapsed', JSON.stringify(collapsed));
+            }
+        }
+
+        // Restore collapsed state & auto-expand category of active page
+        (function initSidebarCategories() {
+            const collapsed = JSON.parse(localStorage.getItem('sidebarCollapsed') || '{}');
+            document.querySelectorAll('.nav-category').forEach(function(cat) {
+                const key = cat.getAttribute('data-category');
+                // If this category contains the active nav-item, always expand it
+                const hasActive = cat.querySelector('.nav-item.active');
+                if (hasActive) {
+                    cat.classList.remove('collapsed');
+                    // Clear saved collapsed state for this category
+                    if (key && collapsed[key]) {
+                        collapsed[key] = false;
+                        localStorage.setItem('sidebarCollapsed', JSON.stringify(collapsed));
+                    }
+                } else if (key && collapsed[key]) {
+                    cat.classList.add('collapsed');
+                }
+            });
+        })();
         
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');

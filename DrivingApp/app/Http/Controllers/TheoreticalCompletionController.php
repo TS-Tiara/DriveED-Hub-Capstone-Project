@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\EnrollmentRequest;
 use App\Models\School;
 use App\Models\Student;
+use App\Models\SessionCompletion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -12,23 +13,38 @@ use Illuminate\Support\Facades\DB;
 class TheoreticalCompletionController extends Controller
 {
     /**
-     * Display students pending theoretical completion
+     * Get the authenticated school and guard info
+     */
+    private function getSchoolAndGuard(): array
+    {
+        if (Auth::guard('admin')->check()) {
+            return [
+                'school' => Auth::guard('admin')->user()->school,
+                'guard' => 'admin',
+                'viewPrefix' => 'school.admin.theoretical',
+                'routePrefix' => 'schools.admin.theoretical',
+            ];
+        } elseif (Auth::guard('instructor')->check()) {
+            return [
+                'school' => Auth::guard('instructor')->user()->school,
+                'guard' => 'instructor',
+                'viewPrefix' => 'school.instructor.theoretical',
+                'routePrefix' => 'schools.instructor.theoretical',
+            ];
+        }
+        abort(403, 'Unauthorized');
+    }
+
+    /**
+     * Unified theoretical training page with tabs: In Training, Mark Completion, Passed
      */
     public function index()
     {
-        // Check authentication guards
-        if (Auth::guard('admin')->check()) {
-            $school = Auth::guard('admin')->user()->school;
-            $viewPath = 'school.admin.theoretical.index';
-        } elseif (Auth::guard('instructor')->check()) {
-            $school = Auth::guard('instructor')->user()->school;
-            $viewPath = 'school.instructor.theoretical.index';
-        } else {
-            abort(403, 'Unauthorized');
-        }
-        
-        // Get active theoretical enrollments where student hasn't passed yet
-        $enrollments = EnrollmentRequest::with(['learner', 'course', 'sessionCompletions'])
+        $ctx = $this->getSchoolAndGuard();
+        $school = $ctx['school'];
+
+        // ── Active theoretical enrollments (In Training + Mark Completion tabs) ──
+        $activeEnrollments = EnrollmentRequest::with(['learner', 'course', 'sessionCompletions'])
             ->whereHas('course', function($query) use ($school) {
                 $query->where('school_id', $school->id)
                       ->where('course_type', 'theoretical');
@@ -37,37 +53,41 @@ class TheoreticalCompletionController extends Controller
                 $query->where('has_passed_theoretical', false);
             })
             ->where('status', 'approved')
-            ->paginate(20);
-        
-        // Calculate total hours for each enrollment
-        $enrollments->getCollection()->transform(function($enrollment) {
+            ->get();
+
+        // Calculate hours & progress for each enrollment
+        $activeEnrollments->transform(function($enrollment) {
             $enrollment->total_hours = $enrollment->sessionCompletions->sum('hours_completed');
+            $enrollment->required_hours = $enrollment->course->theoretical_hours ?? $enrollment->course->hours_required ?? 15;
+            $enrollment->progress = $enrollment->required_hours > 0 
+                ? min(100, round(($enrollment->total_hours / $enrollment->required_hours) * 100)) 
+                : 0;
+            $enrollment->session_count = $enrollment->sessionCompletions->count();
+            $enrollment->last_session = $enrollment->sessionCompletions->sortByDesc('session_date')->first();
             return $enrollment;
         });
-        
-        // Get passed students for the "Passed Students" tab
+
+        // Stats
+        $totalInTraining = $activeEnrollments->count();
+        $readyToPass = $activeEnrollments->where('progress', '>=', 100)->count();
+
+        // Split for Mark Completion tab
+        $readyEnrollments = $activeEnrollments->where('progress', '>=', 100)->values();
+        $notReadyEnrollments = $activeEnrollments->where('progress', '<', 100)->values();
+
+        // ── Passed Students tab ──
         $passedStudents = Student::where('school_id', $school->id)
             ->where('has_passed_theoretical', true)
-            ->with(['enrollments' => function($query) {
-                $query->whereHas('course', function($q) {
-                    $q->where('course_type', 'theoretical');
-                })->where('status', 'completed');
-            }])
             ->latest('updated_at')
-            ->paginate(20, ['*'], 'passed_page');
-        
-        // Calculate stats for passed students
-        $totalPassed = Student::where('school_id', $school->id)
-            ->where('has_passed_theoretical', true)
-            ->count();
-        
-        $passedThisMonth = Student::where('school_id', $school->id)
-            ->where('has_passed_theoretical', true)
-            ->whereMonth('updated_at', now()->month)
-            ->whereYear('updated_at', now()->year)
-            ->count();
-        
-        return view($viewPath, compact('school', 'enrollments', 'passedStudents', 'totalPassed', 'passedThisMonth'));
+            ->get();
+
+        $totalPassed = $passedStudents->count();
+
+        return view($ctx['viewPrefix'] . '.index', compact(
+            'school', 'activeEnrollments', 'totalInTraining', 'readyToPass',
+            'readyEnrollments', 'notReadyEnrollments',
+            'passedStudents', 'totalPassed'
+        ));
     }
 
     /**
@@ -143,16 +163,9 @@ class TheoreticalCompletionController extends Controller
      */
     public function markAsPassed(Request $request)
     {
-        // Get authenticated user
-        if (Auth::guard('admin')->check()) {
-            $user = Auth::guard('admin')->user();
-            $redirectRoute = 'schools.admin.theoretical.index';
-        } elseif (Auth::guard('instructor')->check()) {
-            $user = Auth::guard('instructor')->user();
-            $redirectRoute = 'schools.instructor.theoretical.index';
-        } else {
-            abort(403, 'Unauthorized');
-        }
+        $ctx = $this->getSchoolAndGuard();
+        $user = Auth::guard($ctx['guard'])->user();
+        $redirectRoute = $ctx['routePrefix'] . '.index';
         
         $request->validate([
             'enrollment_id' => 'required|exists:enrollment_requests,id',
@@ -195,35 +208,6 @@ class TheoreticalCompletionController extends Controller
             return back()
                 ->with('error', 'Failed to mark as passed: ' . $e->getMessage());
         }
-    }
-
-    /**
-     * View all students who have passed theoretical
-     */
-    public function passed()
-    {
-        // Check authentication guards
-        if (Auth::guard('admin')->check()) {
-            $school = Auth::guard('admin')->user()->school;
-            $viewPath = 'school.admin.theoretical.passed';
-        } elseif (Auth::guard('instructor')->check()) {
-            $school = Auth::guard('instructor')->user()->school;
-            $viewPath = 'school.instructor.theoretical.passed';
-        } else {
-            abort(403, 'Unauthorized');
-        }
-        
-        $passedStudents = Student::where('school_id', $school->id)
-            ->where('has_passed_theoretical', true)
-            ->with(['enrollments' => function($query) {
-                $query->whereHas('course', function($q) {
-                    $q->where('course_type', 'theoretical');
-                })->where('status', 'completed');
-            }])
-            ->latest('updated_at')
-            ->paginate(20);
-        
-        return view($viewPath, compact('school', 'passedStudents'));
     }
 
     /**

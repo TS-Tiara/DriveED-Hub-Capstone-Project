@@ -224,10 +224,9 @@ Route::prefix('{school:slug}')
                 Route::post('/student/{student}/reject-license', [EnrollmentRequestController::class, 'rejectLicense'])->name('rejectLicense');
             });
 
-            // Theoretical completion management (Mark students as passed)
+            // Theoretical training management
             Route::prefix('theoretical')->name('theoretical.')->group(function () {
                 Route::get('/', [TheoreticalCompletionController::class, 'index'])->name('index');
-                Route::get('/passed/list', [TheoreticalCompletionController::class, 'passed'])->name('passed');
                 Route::get('/stats/overview', [TheoreticalCompletionController::class, 'stats'])->name('stats');
                 Route::get('/{enrollment}', [TheoreticalCompletionController::class, 'show'])->name('show');
                 Route::post('/mark-passed', [TheoreticalCompletionController::class, 'markAsPassed'])->name('markAsPassed');
@@ -342,7 +341,6 @@ Route::prefix('{school:slug}')
                 Route::get('/', [TheoreticalCompletionController::class, 'index'])->name('index');
                 Route::get('/{enrollment}', [TheoreticalCompletionController::class, 'show'])->name('show');
                 Route::post('/mark-passed', [TheoreticalCompletionController::class, 'markAsPassed'])->name('markAsPassed');
-                Route::get('/passed/list', [TheoreticalCompletionController::class, 'passed'])->name('passed');
             });
             
             // Instructor course modules (View course content)

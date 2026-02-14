@@ -866,6 +866,10 @@
                                 </span>
                             </td>
                         </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5" class="empty-state">No instructor data available</td>
+                        </tr>
                     @endforelse
                 </tbody>
             </table>
@@ -1141,6 +1145,10 @@
                                     {{ number_format($student->progress_rate, 1) }}%
                                 </span>
                             </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="6" class="empty-state">No student progress data available</td>
                         </tr>
                     @endforelse
                 </tbody>

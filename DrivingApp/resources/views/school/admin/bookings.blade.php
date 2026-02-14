@@ -190,9 +190,25 @@
         </div>
     </div>
 
-    <!-- Statistics Cards -->
+    <!-- Statistics Cards (clickable - serve as filters) -->
     <div class="stats-grid">
-        <div class="stat-card info">
+        <div class="stat-card total" onclick="filterBookings('all')" style="cursor:pointer;">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">All Sessions</div>
+                        <div class="stat-value">{{ $bookings->count() }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="stat-detail">Total booking records</div>
+            </div>
+        </div>
+        <div class="stat-card active" onclick="filterBookings('scheduled')" style="cursor:pointer;">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -205,9 +221,10 @@
                         </svg>
                     </div>
                 </div>
+                <div class="stat-detail">Upcoming sessions</div>
             </div>
         </div>
-        <div class="stat-card success">
+        <div class="stat-card growth" onclick="filterBookings('completed')" style="cursor:pointer;">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -220,9 +237,10 @@
                         </svg>
                     </div>
                 </div>
+                <div class="stat-detail">Finished sessions</div>
             </div>
         </div>
-        <div class="stat-card danger">
+        <div class="stat-card danger" onclick="filterBookings('cancelled')" style="cursor:pointer;">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -235,9 +253,10 @@
                         </svg>
                     </div>
                 </div>
+                <div class="stat-detail">Cancelled bookings</div>
             </div>
         </div>
-        <div class="stat-card warning">
+        <div class="stat-card inactive" onclick="filterBookings('pending')" style="cursor:pointer;">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -250,17 +269,9 @@
                         </svg>
                     </div>
                 </div>
+                <div class="stat-detail">Awaiting confirmation</div>
             </div>
         </div>
-    </div>
-
-    <!-- Filter Buttons -->
-    <div class="filter-group">
-        <button class="filter-btn active" data-filter="all" onclick="filterBookings('all', this)">All ({{ $bookings->count() }})</button>
-        <button class="filter-btn" data-filter="scheduled" onclick="filterBookings('scheduled', this)">Scheduled ({{ $bookings->where('status', 'scheduled')->count() }})</button>
-        <button class="filter-btn" data-filter="completed" onclick="filterBookings('completed', this)">Completed ({{ $bookings->where('status', 'completed')->count() }})</button>
-        <button class="filter-btn" data-filter="cancelled" onclick="filterBookings('cancelled', this)">Cancelled ({{ $bookings->where('status', 'cancelled')->count() }})</button>
-        <button class="filter-btn" data-filter="pending" onclick="filterBookings('pending', this)">Pending ({{ $bookings->where('status', 'pending')->count() }})</button>
     </div>
 
     <!-- Bookings List -->
@@ -362,12 +373,8 @@
 <script>
 const schoolSlug = '{{ $school->slug }}';
 
-function filterBookings(status, btn) {
+function filterBookings(status) {
     const cards = document.querySelectorAll('.booking-card');
-    const buttons = document.querySelectorAll('.filter-btn');
-    
-    buttons.forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
     
     cards.forEach(card => {
         const cardStatus = card.dataset.status;
