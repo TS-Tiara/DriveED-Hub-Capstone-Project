@@ -55,7 +55,7 @@
 .progress-percentage {
     font-size: 3rem;
     font-weight: 700;
-    @if($settings->use_gradient_header ?? false)
+    @if($settings->use_gradient_header ?? true)
         background: linear-gradient(135deg, {{ $settings->primary_color ?? '#667eea' }}, {{ $settings->secondary_color ?? '#764ba2' }});
     @else
         background: {{ $settings->primary_color ?? '#667eea' }};
@@ -75,7 +75,7 @@
 
 .progress-bar-fill {
     height: 100%;
-    @if($settings->use_gradient_header ?? false)
+    @if($settings->use_gradient_header ?? true)
         background: linear-gradient(135deg, {{ $settings->primary_color ?? '#667eea' }} 0%, {{ $settings->secondary_color ?? '#764ba2' }} 100%);
     @else
         background: {{ $settings->primary_color ?? '#667eea' }};
@@ -319,5 +319,3 @@
     </div>
 </div>
 @endsection
-
-

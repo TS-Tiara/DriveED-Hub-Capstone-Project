@@ -1421,9 +1421,9 @@
                             <span class="nav-category-arrow">&#9660;</span>
                         </div>
                         <div class="nav-category-items">
-                            <a href="{{ $schoolRoute('student.my-course') }}" class="nav-item" data-page="my-course">My Enrollment</a>
-                            <a href="{{ $schoolRoute('student.courses.index') }}" class="nav-item" data-page="courses">Browse Courses</a>
+                            <a href="{{ $schoolRoute('student.my-course') }}" class="nav-item" data-page="my-course">Enrolled Course</a>
                             <a href="{{ $schoolRoute('student.progress.index') }}" class="nav-item" data-page="progress">My Progress</a>
+                            <a href="{{ $schoolRoute('student.courses.index') }}" class="nav-item" data-page="courses">Browse Courses</a>
                         </div>
                     </div>
 

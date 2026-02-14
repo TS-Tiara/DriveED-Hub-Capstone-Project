@@ -6,149 +6,130 @@
 @php
     $school = $school ?? $currentSchool ?? null;
     $settings = $school?->schoolSetting;
+    $primaryColor = $settings?->primary_color ?? '#667eea';
+    $secondaryColor = $settings?->secondary_color ?? '#764ba2';
 @endphp
 
+@include('school.admin.partials.admin-styles')
+
 <style>
-    .grades-container {
-        padding: 20px;
-        max-width: 1600px;
-        margin: 0 auto;
-    }
-
-    .page-header {
-        margin-bottom: 30px;
-        padding-bottom: 15px;
-        border-bottom: 4px solid {{ $settings->primary_color ?? '#667eea' }};
-    }
-
-    .page-title {
-        font-size: 2rem;
-        color: #111827;
-        margin: 0;
-        font-weight: 400;
-    }
-
-    .back-button {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 10px 20px;
-        background: white;
-        color: {{ $settings->primary_color ?? '#667eea' }};
-        border: 2px solid {{ $settings->primary_color ?? '#667eea' }};
-        border-radius: 8px;
-        text-decoration: none;
-        font-weight: 500;
-        transition: all 0.2s;
-        margin-bottom: 20px;
-    }
-
-    .back-button:hover {
-        background: {{ $settings->primary_color ?? '#667eea' }};
-        color: white;
-        transform: translateX(-5px);
-    }
-
+    /* ── Controls Bar ── */
     .controls-bar {
         background: white;
-        padding: 20px;
+        padding: 16px 20px;
         border-radius: 12px;
         margin-bottom: 20px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
         display: flex;
-        gap: 15px;
+        gap: 14px;
         flex-wrap: wrap;
         align-items: center;
     }
 
     .search-input {
         flex: 1;
-        min-width: 250px;
-        padding: 12px 20px;
-        border: 2px solid #e5e7eb;
+        min-width: 220px;
+        padding: 10px 14px;
+        border: 1px solid #e5e7eb;
         border-radius: 8px;
-        font-size: 14px;
+        font-size: 0.9rem;
+        outline: none;
         transition: border-color 0.2s;
     }
 
-    .search-input:focus {
-        outline: none;
-        border-color: {{ $settings->primary_color ?? '#667eea' }};
-    }
-
-    .filter-group {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-
-    .filter-label {
-        font-size: 14px;
-        font-weight: 600;
-        color: #374151;
-    }
+    .search-input:focus { border-color: {{ $primaryColor }}; }
 
     .filter-select {
-        padding: 10px 15px;
-        border: 2px solid #e5e7eb;
+        padding: 10px 32px 10px 12px;
+        border: 1px solid #e5e7eb;
         border-radius: 8px;
-        font-size: 14px;
+        background: white;
+        font-size: 0.875rem;
         cursor: pointer;
+        outline: none;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
         transition: border-color 0.2s;
     }
 
-    .filter-select:focus {
-        outline: none;
-        border-color: {{ $settings->primary_color ?? '#667eea' }};
-    }
+    .filter-select:focus { border-color: {{ $primaryColor }}; }
 
-    .action-buttons {
-        display: flex;
-        gap: 10px;
-    }
+    .action-buttons { display: flex; gap: 8px; }
+
+    /* ── Export Dropdown ── */
+    .export-dropdown { position: relative; display: inline-block; }
 
     .btn-export {
-        padding: 10px 20px;
+        padding: 10px 16px;
         background: #10b981;
         color: white;
         border: none;
-        border-radius: 8px;
+        border-radius: 10px;
         font-weight: 600;
+        font-size: 0.875rem;
         cursor: pointer;
-        transition: all 0.2s;
         display: flex;
         align-items: center;
         gap: 8px;
+        transition: all 0.2s;
     }
 
-    .btn-export:hover {
-        background: #059669;
-        transform: translateY(-2px);
+    .btn-export:hover { background: #059669; }
+
+    .export-menu {
+        display: none;
+        position: absolute;
+        right: 0;
+        top: 100%;
+        margin-top: 4px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        min-width: 180px;
+        z-index: 100;
+        overflow: hidden;
     }
+
+    .export-menu.show { display: block; }
+
+    .export-menu a {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 16px;
+        color: #374151;
+        text-decoration: none;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: background 0.15s;
+    }
+
+    .export-menu a:hover { background: #f3f4f6; }
 
     .btn-save-all {
-        padding: 10px 20px;
-        background: {{ $settings->primary_color ?? '#667eea' }};
+        padding: 10px 16px;
+        background: {{ $primaryColor }};
         color: white;
         border: none;
-        border-radius: 8px;
+        border-radius: 10px;
         font-weight: 600;
+        font-size: 0.875rem;
         cursor: pointer;
-        transition: all 0.2s;
         display: flex;
         align-items: center;
         gap: 8px;
+        transition: all 0.2s;
     }
 
-    .btn-save-all:hover {
-        background: {{ $settings->secondary_color ?? '#764ba2' }};
-        transform: translateY(-2px);
-    }
+    .btn-save-all:hover { background: {{ $secondaryColor }}; transform: translateY(-1px); }
 
+    /* ── Grades Table ── */
     .grades-table-container {
         background: white;
         border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
         overflow: hidden;
     }
 
@@ -158,16 +139,18 @@
     }
 
     .grades-table thead {
-        background: #f3f4f6;
-        border-bottom: 2px solid {{ $settings->primary_color ?? '#667eea' }};
+        background: #f9fafb;
+        border-bottom: 1px solid #e5e7eb;
     }
 
     .grades-table th {
-        padding: 15px;
+        padding: 12px 16px;
         text-align: left;
         font-weight: 600;
-        font-size: 14px;
-        color: #374151;
+        font-size: 0.78rem;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
         white-space: nowrap;
     }
 
@@ -176,388 +159,172 @@
         user-select: none;
     }
 
-    .grades-table th.sortable:hover {
-        background: #e5e7eb;
-    }
+    .grades-table th.sortable:hover { background: #f3f4f6; }
 
     .grades-table td {
-        padding: 15px;
-        border-bottom: 1px solid #e5e7eb;
-        font-size: 14px;
+        padding: 12px 16px;
+        border-bottom: 1px solid #f3f4f6;
+        font-size: 0.88rem;
     }
 
-    .grades-table tbody tr:hover {
-        background: #f9fafb;
-    }
+    .grades-table tbody tr:hover { background: #fafbfc; }
 
     .student-cell {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 10px;
     }
 
     .student-avatar {
-        width: 40px;
-        height: 40px;
+        width: 36px;
+        height: 36px;
         border-radius: 50%;
-        background: {{ $settings->primary_color ?? '#667eea' }};
+        background: {{ $primaryColor }};
         color: white;
         display: flex;
         align-items: center;
         justify-content: center;
         font-weight: 600;
-        font-size: 16px;
+        font-size: 0.88rem;
         flex-shrink: 0;
     }
 
-    .student-info {
-        flex: 1;
-    }
-
-    .student-name {
-        font-weight: 600;
-        color: #111827;
-        display: block;
-        margin-bottom: 2px;
-    }
-
-    .student-email {
-        font-size: 12px;
-        color: #6b7280;
-    }
+    .student-info { flex: 1; }
+    .student-name { font-weight: 600; color: #1f2937; display: block; margin-bottom: 1px; }
+    .student-email { font-size: 0.75rem; color: #6b7280; }
 
     .grade-input {
-        width: 80px;
-        padding: 8px 12px;
-        border: 2px solid #e5e7eb;
+        width: 76px;
+        padding: 7px 10px;
+        border: 1px solid #e5e7eb;
         border-radius: 6px;
-        font-size: 14px;
+        font-size: 0.88rem;
         font-weight: 600;
         text-align: center;
+        outline: none;
         transition: all 0.2s;
     }
 
-    .grade-input:focus {
-        outline: none;
-        border-color: {{ $settings->primary_color ?? '#667eea' }};
-    }
-
-    .grade-input.changed {
-        border-color: #f59e0b;
-        background: #fffbeb;
-    }
+    .grade-input:focus { border-color: {{ $primaryColor }}; }
+    .grade-input.changed { border-color: #f59e0b; background: #fffbeb; }
 
     .grade-badge {
-        padding: 6px 12px;
-        border-radius: 12px;
+        padding: 4px 10px;
+        border-radius: 10px;
         font-weight: 600;
-        font-size: 13px;
+        font-size: 0.78rem;
         display: inline-block;
     }
 
-    .grade-excellent {
-        background: #d1fae5;
-        color: #065f46;
-    }
-
-    .grade-good {
-        background: #dbeafe;
-        color: #1e40af;
-    }
-
-    .grade-average {
-        background: #fef3c7;
-        color: #92400e;
-    }
-
-    .grade-poor {
-        background: #fee2e2;
-        color: #991b1b;
-    }
-
-    .grade-none {
-        background: #f3f4f6;
-        color: #6b7280;
-    }
+    .grade-excellent { background: #d1fae5; color: #065f46; }
+    .grade-good { background: #dbeafe; color: #1e40af; }
+    .grade-average { background: #fef3c7; color: #92400e; }
+    .grade-poor { background: #fee2e2; color: #991b1b; }
+    .grade-none { background: #f3f4f6; color: #6b7280; }
 
     .sessions-badge {
         background: #e5e7eb;
         color: #374151;
-        padding: 4px 10px;
-        border-radius: 12px;
-        font-size: 13px;
+        padding: 3px 8px;
+        border-radius: 10px;
+        font-size: 0.78rem;
         font-weight: 600;
     }
 
-    .action-cell {
-        display: flex;
-        gap: 8px;
-    }
+    .action-cell { display: flex; gap: 6px; }
 
     .btn-icon {
-        padding: 8px;
+        padding: 6px 10px;
         border: none;
         background: transparent;
         cursor: pointer;
         border-radius: 6px;
         transition: all 0.2s;
-        font-size: 18px;
+        font-size: 0.82rem;
+        font-weight: 500;
     }
 
-    .btn-view {
-        color: {{ $settings->primary_color ?? '#667eea' }};
-    }
-
-    .btn-view:hover {
-        background: {{ $settings->primary_color ?? '#667eea' }}20;
-    }
-
-    .btn-save {
-        color: #10b981;
-    }
-
-    .btn-save:hover {
-        background: #d1fae5;
-    }
+    .btn-view { color: {{ $primaryColor }}; }
+    .btn-view:hover { background: {{ $primaryColor }}15; }
+    .btn-save { color: #10b981; }
+    .btn-save:hover { background: #d1fae5; }
 
     .empty-state {
         text-align: center;
-        padding: 60px 20px;
+        padding: 48px 20px;
         color: #9ca3af;
     }
 
-    .empty-state-icon {
-        font-size: 64px;
-        margin-bottom: 20px;
-    }
-
-    .stats-summary {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 15px;
-        margin-bottom: 20px;
-    }
-
-    .stat-box {
-        background: white;
-        padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        text-align: center;
-    }
-
-    .stat-label {
-        font-size: 13px;
-        color: #6b7280;
-        margin-bottom: 8px;
-    }
-
-    .stat-value {
-        font-size: 28px;
-        font-weight: 700;
-        color: {{ $settings->primary_color ?? '#667eea' }};
-    }
-
-    @media (max-width: 1024px) {
-        .stats-summary {
-            grid-template-columns: repeat(2, 1fr);
-        }
-
-        .controls-bar {
-            flex-direction: row;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .search-input {
-            flex: 1;
-            min-width: 200px;
-        }
-    }
-
     @media (max-width: 768px) {
-        .grades-container {
-            padding: 15px;
-        }
-
-        .stats-summary {
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-        }
-
-        .stat-box {
-            padding: 10px;
-            text-align: center;
-        }
-
-        .stat-label {
-            font-size: 0.65rem;
-        }
-
-        .stat-value {
-            font-size: 1.25rem;
-        }
-
-        .controls-bar {
-            padding: 12px;
-            flex-direction: row;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-
-        .search-input {
-            flex: 1;
-            min-width: 150px;
-            padding: 8px 10px;
-            font-size: 13px;
-        }
-
-        .filter-group {
-            flex: 0 0 auto;
-        }
-
-        .filter-label {
-            display: none;
-        }
-
-        .filter-select {
-            padding: 8px 10px;
-            font-size: 12px;
-        }
-
-        .action-buttons {
-            width: 100%;
-            display: flex;
-            gap: 8px;
-        }
-
-        .btn-export,
-        .btn-save-all {
-            flex: 1;
-            padding: 8px 12px;
-            font-size: 12px;
-        }
-
-        .grades-table {
-            font-size: 12px;
-        }
-
-        .grades-table th,
-        .grades-table td {
-            padding: 10px 8px;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .grades-container {
-            padding: 10px;
-        }
-
-        .page-title {
-            font-size: 1.3rem;
-        }
-
-        .stats-summary {
-            grid-template-columns: repeat(4, 1fr);
-            gap: 6px;
-        }
-
-        .stat-box {
-            padding: 8px 4px;
-        }
-
-        .stat-label {
-            font-size: 0.55rem;
-        }
-
-        .stat-value {
-            font-size: 1rem;
-        }
-
-        .controls-bar {
-            padding: 10px;
-            gap: 6px;
-        }
-
-        .search-input {
-            font-size: 12px;
-            padding: 6px 8px;
-        }
-
-        .filter-select {
-            font-size: 11px;
-            padding: 6px 8px;
-        }
-
-        .action-buttons {
-            gap: 6px;
-        }
-
-        .btn-export,
-        .btn-save-all {
-            padding: 6px 10px;
-            font-size: 11px;
-        }
-
-        .grades-table-container {
-            overflow-x: auto;
-            margin: 0 -10px;
-            padding: 0 10px;
-        }
-
-        .grades-table {
-            font-size: 11px;
-            min-width: 600px;
-        }
-
-        .grades-table th,
-        .grades-table td {
-            padding: 8px 6px;
-            white-space: nowrap;
-        }
-    }
-
-    @media (max-width: 360px) {
-        .stats-summary {
-            grid-template-columns: repeat(2, 1fr);
-        }
-
-        .stat-box {
-            padding: 8px;
-        }
-
-        .stat-label {
-            font-size: 0.6rem;
-        }
-
-        .stat-value {
-            font-size: 1.1rem;
-        }
+        .controls-bar { padding: 12px; gap: 8px; }
+        .search-input { min-width: 150px; padding: 8px 10px; font-size: 0.82rem; }
+        .filter-select { padding: 8px 10px; font-size: 0.78rem; }
+        .grades-table-container { overflow-x: auto; }
+        .grades-table { min-width: 700px; }
     }
 </style>
 
-<div class="grades-container">
+<div class="admin-container">
     <div class="page-header">
-        <h1 class="page-title">Grade Management</h1>
+        <div class="page-header-left">
+            <h1 class="page-title">Grade Management</h1>
+            <p class="page-subtitle">Review and manage student grades</p>
+        </div>
     </div>
 
     <!-- Summary Statistics -->
-    <div class="stats-summary">
-        <div class="stat-box">
-            <div class="stat-label">Total Students</div>
-            <div class="stat-value">{{ $students->count() }}</div>
+    <div class="stats-grid">
+        <div class="stat-card students">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <div>
+                        <span class="stat-label">Total Students</span>
+                        <span class="stat-value">{{ $students->count() }}</span>
+                    </div>
+                    <div class="stat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:28px;height:28px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="stat-box">
-            <div class="stat-label">Graded Sessions</div>
-            <div class="stat-value">{{ $gradedSessions }}</div>
+        <div class="stat-card active">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <div>
+                        <span class="stat-label">Graded Sessions</span>
+                        <span class="stat-value">{{ $gradedSessions }}</span>
+                    </div>
+                    <div class="stat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:28px;height:28px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="stat-box">
-            <div class="stat-label">Average Grade</div>
-            <div class="stat-value">{{ number_format($averageGrade, 1) }}</div>
+        <div class="stat-card growth">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <div>
+                        <span class="stat-label">Average Grade</span>
+                        <span class="stat-value">{{ number_format($averageGrade, 1) }}</span>
+                    </div>
+                    <div class="stat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:28px;height:28px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="stat-box">
-            <div class="stat-label">Pending Grades</div>
-            <div class="stat-value">{{ $pendingGrades }}</div>
+        <div class="stat-card inactive">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <div>
+                        <span class="stat-label">Pending Grades</span>
+                        <span class="stat-value">{{ $pendingGrades }}</span>
+                    </div>
+                    <div class="stat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:28px;height:28px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -566,39 +333,37 @@
         <input type="text" class="search-input" id="searchInput" 
                placeholder="Search students by name or email..." onkeyup="filterTable()">
         
-        <div class="filter-group">
-            <span class="filter-label">Sort By:</span>
-            <select class="filter-select" id="sortFilter" onchange="applySortFilter()">
-                <option value="name-asc">Name (A-Z)</option>
-                <option value="name-desc">Name (Z-A)</option>
-                <option value="enrollment-newest">Enrollment (Newest First)</option>
-                <option value="enrollment-oldest">Enrollment (Oldest First)</option>
-                <option value="sessions-most">Most Sessions</option>
-                <option value="sessions-least">Least Sessions</option>
-                <option value="grade-highest">Highest Grade</option>
-                <option value="grade-lowest">Lowest Grade</option>
-            </select>
-        </div>
+        <select class="filter-select" id="sortFilter" onchange="applySortFilter()">
+            <option value="name-asc">Name (A-Z)</option>
+            <option value="name-desc">Name (Z-A)</option>
+            <option value="enrollment-newest">Enrollment (Newest)</option>
+            <option value="enrollment-oldest">Enrollment (Oldest)</option>
+            <option value="sessions-most">Most Sessions</option>
+            <option value="sessions-least">Least Sessions</option>
+            <option value="grade-highest">Highest Grade</option>
+            <option value="grade-lowest">Lowest Grade</option>
+        </select>
 
         <div class="action-buttons">
-            <div class="export-dropdown" style="position: relative; display: inline-block;">
-                <button class="btn-export" onclick="this.nextElementSibling.classList.toggle('show')">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 16px; height: 16px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+            <div class="export-dropdown">
+                <button class="btn-export" onclick="toggleExportMenu()">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:16px;height:16px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                     Export
                 </button>
-                <div class="export-menu" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; background: white; border-radius: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.15); min-width: 180px; z-index: 100; overflow: hidden;">
-                    <a href="{{ route('schools.instructor.exports.grades.pdf', $school) }}" style="display: flex; align-items: center; gap: 10px; padding: 12px 16px; color: #374151; text-decoration: none; font-size: 0.875rem; font-weight: 500;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='white'">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#ef4444" style="width: 18px; height: 18px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                <div class="export-menu" id="exportMenu">
+                    <a href="{{ route('schools.instructor.exports.grades.pdf', $school) }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#ef4444" style="width:18px;height:18px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                         Download PDF
                     </a>
-                    <a href="{{ route('schools.instructor.exports.grades.excel', $school) }}" style="display: flex; align-items: center; gap: 10px; padding: 12px 16px; color: #374151; text-decoration: none; font-size: 0.875rem; font-weight: 500;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='white'">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#10b981" style="width: 18px; height: 18px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    <a href="{{ route('schools.instructor.exports.grades.excel', $school) }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#10b981" style="width:18px;height:18px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                         Download Excel
                     </a>
                 </div>
             </div>
             <button class="btn-save-all" onclick="saveAllChanges()">
-                Save All Changes
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:16px;height:16px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                Save All
             </button>
         </div>
     </div>
@@ -701,8 +466,7 @@
             </table>
         @else
             <div class="empty-state">
-                <div class="empty-state-icon">-</div>
-                <p style="font-size: 18px; font-weight: 600; margin-bottom: 10px;">No Students Found</p>
+                <p style="font-size: 1rem; font-weight: 600; margin-bottom: 8px;">No Students Found</p>
                 <p>You don't have any students assigned yet.</p>
             </div>
         @endif
@@ -710,247 +474,124 @@
 </div>
 
 <script>
-    // Filter table by search only
     function filterTable() {
         const searchInput = document.getElementById('searchInput').value.toLowerCase();
         const rows = document.querySelectorAll('.grade-row');
-        
         rows.forEach(row => {
             const name = row.dataset.name;
             const email = row.dataset.email;
-            
-            const matchesSearch = name.includes(searchInput) || email.includes(searchInput);
-            
-            row.style.display = matchesSearch ? '' : 'none';
+            row.style.display = (name.includes(searchInput) || email.includes(searchInput)) ? '' : 'none';
         });
     }
 
-    // Apply sort filter
     function applySortFilter() {
         const sortOption = document.getElementById('sortFilter').value;
         const table = document.getElementById('gradesTableBody');
         const rows = Array.from(table.querySelectorAll('.grade-row'));
-        
         rows.sort((a, b) => {
             let aVal, bVal;
-            
             switch(sortOption) {
-                case 'name-asc':
-                    aVal = a.dataset.name;
-                    bVal = b.dataset.name;
-                    return aVal.localeCompare(bVal);
-                    
-                case 'name-desc':
-                    aVal = a.dataset.name;
-                    bVal = b.dataset.name;
-                    return bVal.localeCompare(aVal);
-                    
-                case 'enrollment-newest':
-                    aVal = parseInt(a.dataset.enrollment) || 0;
-                    bVal = parseInt(b.dataset.enrollment) || 0;
-                    return bVal - aVal;
-                    
-                case 'enrollment-oldest':
-                    aVal = parseInt(a.dataset.enrollment) || 0;
-                    bVal = parseInt(b.dataset.enrollment) || 0;
-                    return aVal - bVal;
-                    
-                case 'sessions-most':
-                    aVal = parseInt(a.dataset.sessions) || 0;
-                    bVal = parseInt(b.dataset.sessions) || 0;
-                    return bVal - aVal;
-                    
-                case 'sessions-least':
-                    aVal = parseInt(a.dataset.sessions) || 0;
-                    bVal = parseInt(b.dataset.sessions) || 0;
-                    return aVal - bVal;
-                    
-                case 'grade-highest':
-                    aVal = parseFloat(a.dataset.avgGrade) || 0;
-                    bVal = parseFloat(b.dataset.avgGrade) || 0;
-                    return bVal - aVal;
-                    
-                case 'grade-lowest':
-                    aVal = parseFloat(a.dataset.avgGrade) || 0;
-                    bVal = parseFloat(b.dataset.avgGrade) || 0;
-                    return aVal - bVal;
-                    
-                default:
-                    return 0;
+                case 'name-asc': return a.dataset.name.localeCompare(b.dataset.name);
+                case 'name-desc': return b.dataset.name.localeCompare(a.dataset.name);
+                case 'enrollment-newest': return (parseInt(b.dataset.enrollment)||0) - (parseInt(a.dataset.enrollment)||0);
+                case 'enrollment-oldest': return (parseInt(a.dataset.enrollment)||0) - (parseInt(b.dataset.enrollment)||0);
+                case 'sessions-most': return (parseInt(b.dataset.sessions)||0) - (parseInt(a.dataset.sessions)||0);
+                case 'sessions-least': return (parseInt(a.dataset.sessions)||0) - (parseInt(b.dataset.sessions)||0);
+                case 'grade-highest': return (parseFloat(b.dataset.avgGrade)||0) - (parseFloat(a.dataset.avgGrade)||0);
+                case 'grade-lowest': return (parseFloat(a.dataset.avgGrade)||0) - (parseFloat(b.dataset.avgGrade)||0);
+                default: return 0;
             }
         });
-        
         rows.forEach(row => table.appendChild(row));
     }
 
-    // Mark input as changed
-    function markChanged(input) {
-        input.classList.add('changed');
-    }
+    function markChanged(input) { input.classList.add('changed'); }
 
-    // Sort table
     let sortDirection = {};
     function sortTable(column) {
         const table = document.getElementById('gradesTableBody');
         const rows = Array.from(table.querySelectorAll('.grade-row'));
-        
         sortDirection[column] = sortDirection[column] === 'asc' ? 'desc' : 'asc';
-        
         rows.sort((a, b) => {
             let aVal, bVal;
-            
-            if (column === 'name') {
-                aVal = a.dataset.name;
-                bVal = b.dataset.name;
-            } else if (column === 'sessions') {
-                aVal = parseInt(a.querySelectorAll('.sessions-badge')[0].textContent) || 0;
-                bVal = parseInt(b.querySelectorAll('.sessions-badge')[0].textContent) || 0;
-            } else if (column === 'avg') {
-                aVal = parseFloat(a.querySelectorAll('.grade-badge')[0].textContent) || 0;
-                bVal = parseFloat(b.querySelectorAll('.grade-badge')[0].textContent) || 0;
-            }
-            
-            if (sortDirection[column] === 'asc') {
-                return aVal > bVal ? 1 : -1;
-            } else {
-                return aVal < bVal ? 1 : -1;
-            }
+            if (column === 'name') { aVal = a.dataset.name; bVal = b.dataset.name; }
+            else if (column === 'sessions') { aVal = parseInt(a.querySelectorAll('.sessions-badge')[0].textContent)||0; bVal = parseInt(b.querySelectorAll('.sessions-badge')[0].textContent)||0; }
+            else if (column === 'avg') { aVal = parseFloat(a.querySelectorAll('.grade-badge')[0].textContent)||0; bVal = parseFloat(b.querySelectorAll('.grade-badge')[0].textContent)||0; }
+            return sortDirection[column] === 'asc' ? (aVal > bVal ? 1 : -1) : (aVal < bVal ? 1 : -1);
         });
-        
         rows.forEach(row => table.appendChild(row));
     }
 
-    // View student details
     function viewStudentDetails(studentId) {
         loadContent('/{{ $school->slug }}/instructor/students/' + studentId);
     }
 
-    // Save individual grade
     function saveGrade(studentId) {
         const input = document.querySelector(`input[data-student-id="${studentId}"]`);
         const grade = parseFloat(input.value);
         const bookingId = input.dataset.lastBookingId;
-        
-        if (!grade || grade < 0 || grade > 100) {
-            alert('Please enter a valid grade between 0 and 100');
-            return;
-        }
-        
-        if (!bookingId) {
-            alert('This student has no sessions to grade');
-            return;
-        }
-        
-        // Send AJAX request
+        if (!grade || grade < 0 || grade > 100) { alert('Please enter a valid grade between 0 and 100'); return; }
+        if (!bookingId) { alert('This student has no sessions to grade'); return; }
         fetch(`/{{ $school->slug }}/instructor/lessons/${bookingId}/update`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-            },
-            body: JSON.stringify({
-                session_grade: grade
-            })
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+            body: JSON.stringify({ session_grade: grade })
         })
         .then(response => response.json())
         .then(data => {
-            if (data.success) {
-                input.classList.remove('changed');
-                alert('Grade saved successfully!');
-                location.reload();
-            } else {
-                alert('Failed to save grade');
-            }
+            if (data.success) { input.classList.remove('changed'); alert('Grade saved successfully!'); location.reload(); }
+            else { alert('Failed to save grade'); }
         })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred while saving the grade');
-        });
+        .catch(error => { console.error('Error:', error); alert('An error occurred while saving the grade'); });
     }
 
-    // Save all changed grades
     function saveAllChanges() {
         const changedInputs = document.querySelectorAll('.grade-input.changed');
-        
-        if (changedInputs.length === 0) {
-            alert('No changes to save');
-            return;
-        }
-        
+        if (changedInputs.length === 0) { alert('No changes to save'); return; }
         let savedCount = 0;
         const totalChanges = changedInputs.length;
-        
         changedInputs.forEach(input => {
-            const studentId = input.dataset.studentId;
             const grade = parseFloat(input.value);
             const bookingId = input.dataset.lastBookingId;
-            
             if (grade && grade >= 0 && grade <= 100 && bookingId) {
                 fetch(`/{{ $school->slug }}/instructor/lessons/${bookingId}/update`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                    },
-                    body: JSON.stringify({
-                        session_grade: grade
-                    })
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+                    body: JSON.stringify({ session_grade: grade })
                 })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
                         savedCount++;
                         input.classList.remove('changed');
-                        
-                        if (savedCount === totalChanges) {
-                            alert(`Successfully saved ${savedCount} grade(s)!`);
-                            location.reload();
-                        }
+                        if (savedCount === totalChanges) { alert(`Successfully saved ${savedCount} grade(s)!`); location.reload(); }
                     }
                 });
             }
         });
     }
 
-    // Export grades to CSV
     function exportGrades() {
         const rows = document.querySelectorAll('.grade-row:not([style*="display: none"])');
         let csv = 'Student Name,Email,Sessions,Average Grade,Last Session,Last Grade\n';
-        
         rows.forEach(row => {
             const cells = row.querySelectorAll('td');
-            const name = cells[0].querySelector('.student-name').textContent;
-            const email = cells[0].querySelector('.student-email').textContent;
-            const sessions = cells[1].textContent.trim();
-            const avgGrade = cells[2].textContent.trim();
-            const lastSession = cells[3].textContent.trim();
-            const lastGrade = cells[4].textContent.trim();
-            
-            csv += `"${name}","${email}","${sessions}","${avgGrade}","${lastSession}","${lastGrade}"\n`;
+            csv += `"${cells[0].querySelector('.student-name').textContent}","${cells[0].querySelector('.student-email').textContent}","${cells[1].textContent.trim()}","${cells[2].textContent.trim()}","${cells[3].textContent.trim()}","${cells[4].textContent.trim()}"\n`;
         });
-        
         const blob = new Blob([csv], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
+        const a = document.createElement('a'); a.href = url;
         a.download = `grades_${new Date().toISOString().split('T')[0]}.csv`;
-        a.click();
-        window.URL.revokeObjectURL(url);
+        a.click(); window.URL.revokeObjectURL(url);
     }
 
-    // Export dropdown handler
-    document.querySelectorAll('.export-dropdown button').forEach(function(btn) {
-        btn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            var menu = this.nextElementSibling;
-            var isVisible = menu.style.display === 'block';
-            document.querySelectorAll('.export-menu').forEach(function(m) { m.style.display = 'none'; });
-            menu.style.display = isVisible ? 'none' : 'block';
-        });
-    });
+    function toggleExportMenu() {
+        event.stopPropagation();
+        document.getElementById('exportMenu').classList.toggle('show');
+    }
     document.addEventListener('click', function(e) {
         if (!e.target.closest('.export-dropdown')) {
-            document.querySelectorAll('.export-menu').forEach(function(m) { m.style.display = 'none'; });
+            document.querySelectorAll('.export-menu').forEach(m => m.classList.remove('show'));
         }
     });
 </script>

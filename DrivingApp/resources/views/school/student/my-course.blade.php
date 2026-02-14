@@ -1,6 +1,6 @@
 @extends($isAjax ?? false ? 'layouts.ajax' : 'layouts.app')
 
-@section('title', 'My Course')
+@section('title', 'Enrolled Course')
 
 @section('content')
 @php
@@ -388,7 +388,7 @@
 
 <div class="my-course-container">
     <div class="page-header">
-        <h1 class="page-title">📚 My Course</h1>
+        <h1 class="page-title">📚 Enrolled Course</h1>
     </div>
 
     @if($course)

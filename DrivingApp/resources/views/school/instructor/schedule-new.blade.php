@@ -1,24 +1,20 @@
-@extends('layouts.app')
+@extends($isAjax ?? false ? 'layouts.ajax' : 'layouts.app')
 
 @section('title', 'My Schedule')
 
 @section('content')
-<?php
+@php
     $settings = $school?->schoolSetting;
-    $primaryColor = $settings?->primary_color ?? '#0d6efd';
-    $secondaryColor = $settings?->secondary_color ?? '#6c757d';
-?>
+    $primaryColor = $settings?->primary_color ?? '#667eea';
+    $secondaryColor = $settings?->secondary_color ?? '#764ba2';
+@endphp
+
+@include('school.admin.partials.admin-styles')
 
 <style>
-    .schedule-container {
-        padding: 20px;
-        max-width: 1400px;
-        margin: 0 auto;
-    }
-    
     .schedule-header {
         margin-bottom: 20px;
-        border-bottom: 4px solid {{ $primaryColor }};
+        border-bottom: 3px solid {{ $primaryColor }};
         padding-bottom: 15px;
         display: flex;
         justify-content: space-between;
@@ -28,10 +24,10 @@
     }
     
     .schedule-header h1 {
-        font-size: 1.8rem;
+        font-size: 1.5rem;
         font-weight: 600;
         margin: 0;
-        color: #1a202c;
+        color: #1f2937;
     }
     
     .main-toggle {
@@ -445,7 +441,7 @@
     
     /* Mobile Responsiveness */
     @media (max-width: 768px) {
-        .schedule-container { padding: 10px; }
+        .admin-container { padding: 10px; }
         .schedule-header h1 { font-size: 1.3rem; }
         .main-toggle-btn { padding: 10px 16px; font-size: 13px; }
         .slot-item { padding: 12px; }
@@ -456,7 +452,7 @@
     .mobile-sidebar-btn { display: none; }
 </style>
 
-<div class="schedule-container">
+<div class="admin-container">
     <!-- Header -->
     <div class="schedule-header">
         <h1>My Schedule</h1>

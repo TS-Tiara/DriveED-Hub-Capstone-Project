@@ -6,357 +6,210 @@
 @php
     $school = $school ?? $currentSchool ?? null;
     $settings = $school?->schoolSetting;
-    $schoolName = $school->name ?? 'Driving School';
+    $primaryColor = $settings?->primary_color ?? '#667eea';
+    $secondaryColor = $settings?->secondary_color ?? '#764ba2';
 @endphp
 
-<style>
-    .student-detail-container {
-        padding: 30px;
-        max-width: 1400px;
-        margin: 0 auto;
-    }
+@include('school.admin.partials.admin-styles')
 
+<style>
     .back-btn {
         background: white;
-        border: 2px solid #e5e7eb;
-        padding: 12px 20px;
-        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+        padding: 9px 16px;
+        border-radius: 10px;
         cursor: pointer;
         font-weight: 600;
-        color: #1a202c;
+        font-size: 0.85rem;
+        color: #374151;
         margin-bottom: 20px;
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        transition: all 0.3s ease;
+        transition: all 0.2s;
     }
 
     .back-btn:hover {
-        background: {{ $settings->primary_color ?? '#1e40af' }};
+        background: {{ $primaryColor }};
         color: white;
-        border-color: {{ $settings->primary_color ?? '#1e40af' }};
+        border-color: {{ $primaryColor }};
     }
 
     .student-header-card {
         background: white;
-        padding: 40px;
+        padding: 28px;
         border-radius: 12px;
-        margin-bottom: 30px;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-        border-left: 6px solid {{ $settings->primary_color ?? '#f59e0b' }};
+        margin-bottom: 24px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        border-left: 4px solid {{ $primaryColor }};
     }
 
     .student-header-content {
         display: flex;
         justify-content: space-between;
         align-items: start;
-        gap: 30px;
+        gap: 24px;
     }
 
-    .student-main-info {
-        flex: 1;
-    }
+    .student-main-info { flex: 1; }
 
     .student-main-info h1 {
-        font-size: 2.5rem;
+        font-size: 1.6rem;
         font-weight: 700;
-        color: #1a202c;
-        margin: 0 0 16px 0;
+        color: #1f2937;
+        margin: 0 0 12px 0;
     }
 
     .student-main-info p {
         color: #6b7280;
-        margin: 10px 0;
+        margin: 8px 0;
         display: flex;
         align-items: center;
-        gap: 10px;
-        font-size: 1rem;
+        gap: 8px;
+        font-size: 0.9rem;
     }
 
     .student-main-info p strong {
         color: #374151;
-        min-width: 90px;
+        min-width: 80px;
     }
 
     .progress-summary {
         display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 20px;
-        min-width: 300px;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        min-width: 280px;
     }
 
     .progress-item {
         text-align: center;
         background: #f9fafb;
-        padding: 20px;
-        border-radius: 8px;
+        padding: 14px 10px;
+        border-radius: 10px;
     }
 
     .progress-value {
-        font-size: 2rem;
+        font-size: 1.5rem;
         font-weight: 700;
-        color: {{ $settings->primary_color ?? '#1e40af' }};
+        color: {{ $primaryColor }};
         display: block;
     }
 
     .progress-label {
-        font-size: 0.9rem;
+        font-size: 0.75rem;
         color: #6b7280;
         display: block;
-        margin-top: 6px;
+        margin-top: 4px;
         font-weight: 600;
     }
 
     .section-header {
-        margin-bottom: 20px;
+        margin-bottom: 16px;
     }
 
     .section-header h2 {
-        font-size: 1.25rem;
+        font-size: 1.1rem;
         font-weight: 600;
         color: #374151;
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 8px;
         margin: 0;
     }
 
-    .section-header h2 i {
-        color: {{ $settings->primary_color ?? '#1e40af' }};
-    }
-
     .section-subtitle {
-        font-size: 0.9rem;
-        color: #6b7280;
-        margin: 8px 0 0 0;
+        font-size: 0.82rem;
+        color: #9ca3af;
+        margin: 6px 0 0 0;
     }
 
-    /* Sessions List */
     .sessions-container {
         background: white;
         border-radius: 12px;
         padding: 20px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     }
 
-    .sessions-list {
-        display: grid;
-        gap: 16px;
-    }
+    .sessions-list { display: grid; gap: 12px; }
 
     .session-card {
-        background: #fafafa;
-        padding: 24px;
-        border-radius: 12px;
-        box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-        border-left: 4px solid #9ca3af;
+        background: #fafbfc;
+        padding: 18px;
+        border-radius: 10px;
+        border-left: 3px solid #d1d5db;
     }
 
     .session-card.my-session {
         background: white;
-        border-left: 4px solid {{ $settings->primary_color ?? '#1e40af' }};
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border-left: 3px solid {{ $primaryColor }};
+        box-shadow: 0 1px 4px rgba(0,0,0,0.06);
     }
 
     .session-header {
         display: flex;
         justify-content: space-between;
         align-items: start;
-        margin-bottom: 15px;
+        margin-bottom: 12px;
     }
 
-    .session-date {
-        font-size: 1.15rem;
-        font-weight: 700;
-        color: #1a202c;
-    }
+    .session-date { font-size: 0.95rem; font-weight: 600; color: #1f2937; }
+    .session-course { font-size: 0.82rem; color: {{ $primaryColor }}; margin-top: 3px; font-weight: 600; }
+    .session-instructor { font-size: 0.78rem; color: #6b7280; margin-top: 4px; display: flex; align-items: center; gap: 5px; }
 
-    .session-course {
-        font-size: 0.9rem;
-        color: {{ $settings->primary_color ?? '#1e40af' }};
-        margin-top: 4px;
-        font-weight: 600;
-    }
-
-    .session-instructor {
-        font-size: 0.85rem;
-        color: #6b7280;
-        margin-top: 6px;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-
-    .session-badges {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-        gap: 6px;
-    }
+    .session-badges { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
 
     .my-session-badge {
-        padding: 4px 10px;
-        border-radius: 12px;
-        font-size: 0.7rem;
+        padding: 3px 8px;
+        border-radius: 10px;
+        font-size: 0.65rem;
         font-weight: 600;
-        background: {{ $settings->primary_color ?? '#1e40af' }}20;
-        color: {{ $settings->primary_color ?? '#1e40af' }};
+        background: {{ $primaryColor }}18;
+        color: {{ $primaryColor }};
         text-transform: uppercase;
     }
 
     .session-status {
-        padding: 6px 14px;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        font-weight: 700;
+        padding: 4px 12px;
+        border-radius: 16px;
+        font-size: 0.72rem;
+        font-weight: 600;
         text-transform: uppercase;
     }
 
-    .status-completed {
-        background: #d1fae5;
-        color: #065f46;
-    }
-
-    .status-scheduled {
-        background: #dbeafe;
-        color: #1e40af;
-    }
-
-    .status-cancelled {
-        background: #fee2e2;
-        color: #991b1b;
-    }
-
-    .status-no-show {
-        background: #fef3c7;
-        color: #92400e;
-    }
+    .status-completed { background: #d1fae5; color: #065f46; }
+    .status-scheduled { background: #dbeafe; color: #1e40af; }
+    .status-cancelled { background: #fee2e2; color: #991b1b; }
+    .status-no-show { background: #fef3c7; color: #92400e; }
 
     .session-notes {
-        padding: 14px;
+        padding: 12px;
         background: #fffbeb;
         border-left: 3px solid #f59e0b;
         border-radius: 6px;
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         color: #92400e;
     }
 
-    .no-notes {
-        color: #9ca3af;
-        font-style: italic;
-    }
+    .no-notes { color: #9ca3af; font-style: italic; }
 
     .empty-state {
         text-align: center;
-        padding: 60px 20px;
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        padding: 40px 20px;
+        color: #9ca3af;
     }
 
-    .empty-state i {
-        font-size: 3.5rem;
-        color: #d1d5db;
-        margin-bottom: 15px;
-    }
-
-    .empty-state p {
-        color: #6b7280;
-        font-size: 1rem;
-    }
-
-    /* Mobile Responsiveness */
     @media (max-width: 768px) {
-        .student-detail-container {
-            padding: 15px;
-        }
-
-        .student-header-card {
-            padding: 25px;
-        }
-
-        .student-header-content {
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .student-main-info h1 {
-            font-size: 1.8rem;
-        }
-
-        .progress-summary {
-            grid-template-columns: repeat(2, 1fr);
-            min-width: auto;
-        }
-
-        .progress-item {
-            padding: 15px;
-        }
-
-        .progress-value {
-            font-size: 1.6rem;
-        }
-
-        .content-tabs {
-            padding: 6px;
-        }
-
-        .tab-btn {
-            padding: 12px 16px;
-            font-size: 0.9rem;
-        }
-
-        .course-progress-card,
-        .session-card {
-            padding: 20px;
-        }
-
-        .course-name {
-            font-size: 1.15rem;
-        }
-
-        .course-percent {
-            font-size: 1.5rem;
-        }
-
-        .session-card {
-            padding: 15px;
-        }
-
-        .session-header {
-            flex-direction: column;
-            gap: 10px;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .student-header-card {
-            padding: 16px;
-        }
-
-        .student-main-info h1 {
-            font-size: 1.3rem;
-        }
-
-        .progress-value {
-            font-size: 1.3rem;
-        }
-
-        .progress-label {
-            font-size: 0.75rem;
-        }
-
-        .tab-btn {
-            padding: 10px;
-            font-size: 0.9rem;
-        }
+        .student-header-content { flex-direction: column; gap: 16px; }
+        .student-main-info h1 { font-size: 1.3rem; }
+        .progress-summary { min-width: auto; }
+        .session-header { flex-direction: column; gap: 8px; }
     }
 </style>
 
-<div class="student-detail-container">
+<div class="admin-container">
     <!-- Back Button -->
     <button class="back-btn" onclick="goBack()">
-        <i class="fas fa-arrow-left"></i>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:16px;height:16px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
         Back to Students
     </button>
 
@@ -366,9 +219,15 @@
             <div class="student-main-info">
                 <h1>{{ $student->name }}</h1>
                 @if($student->contact)
-                    <p><i class="fas fa-phone"></i> {{ $student->contact }}</p>
+                    <p>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:14px;height:14px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                        {{ $student->contact }}
+                    </p>
                 @endif
-                <p><i class="fas fa-circle" style="color: {{ $student->status === 'active' ? '#10b981' : '#ef4444' }}; font-size: 0.6rem;"></i> {{ ucfirst($student->status) }} Student</p>
+                <p>
+                    <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:{{ $student->status === 'active' ? '#10b981' : '#ef4444' }}"></span>
+                    {{ ucfirst($student->status) }} Student
+                </p>
             </div>
 
             <div class="progress-summary">
@@ -390,7 +249,10 @@
 
     <!-- Session History Header -->
     <div class="section-header">
-        <h2><i class="fas fa-history"></i> Session History for {{ $student->name }}</h2>
+        <h2>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:18px;height:18px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Session History for {{ $student->name }}
+        </h2>
         <p class="section-subtitle">View notes from all instructors to maintain teaching continuity</p>
     </div>
 
@@ -405,7 +267,7 @@
                                 <div class="session-date">{{ \Carbon\Carbon::parse($session['date'])->format('l, M d, Y - g:i A') }}</div>
                                 <div class="session-course">{{ $session['course'] }}</div>
                                 <div class="session-instructor">
-                                    <i class="fas fa-user-tie"></i> 
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:13px;height:13px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                                     {{ $session['is_mine'] ? 'You' : $session['instructor_name'] }}
                                 </div>
                             </div>
@@ -418,7 +280,7 @@
                         </div>
                         @if($session['notes'])
                             <div class="session-notes">
-                                <strong><i class="fas fa-sticky-note"></i> Notes:</strong><br>
+                                <strong>Notes:</strong><br>
                                 {{ $session['notes'] }}
                             </div>
                         @else
@@ -431,11 +293,11 @@
             </div>
         @else
             <div class="empty-state">
-                <i class="fas fa-calendar-times"></i>
                 <p>No session history with this student yet</p>
             </div>
         @endif
     </div>
+</div>
 </div>
 
 <script>
