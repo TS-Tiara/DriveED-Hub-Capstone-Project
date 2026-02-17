@@ -9,10 +9,14 @@ use App\Models\Course;
 use App\Models\EnrollmentRequest;
 use App\Http\Requests\StoreEnrollmentRequestRequest;
 use App\Support\EnrollmentValidator;
+use App\Models\Notification;
+use App\Models\Admin;
+use App\Mail\EnrollmentRequestReceived;
 use App\Rules\StrongPassword;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules;
 
@@ -212,7 +216,38 @@ class GuestController extends Controller
                 $data['credentials_file_path'] = $path;
             }
 
-            EnrollmentRequest::create($data);
+            $enrollmentRequest = EnrollmentRequest::create($data);
+
+            // Send confirmation email
+            try {
+                Mail::to($guest->email)
+                    ->send(new EnrollmentRequestReceived($enrollmentRequest, $school));
+            } catch (\Exception $e) {
+                Log::warning('Failed to send enrollment received email: ' . $e->getMessage());
+            }
+
+            // Create in-app notification for the guest
+            Notification::send(
+                $guest,
+                'enrollment_received',
+                'Enrollment Request Submitted',
+                "Your enrollment request for {$course->title} has been submitted and is under review.",
+                'enrollment',
+                "/{$school->slug}/guest/enrollment-requests"
+            );
+
+            // Notify all admins of this school
+            $admins = Admin::where('school_id', $school->id)->where('status', 'active')->get();
+            foreach ($admins as $admin) {
+                Notification::send(
+                    $admin,
+                    'new_enrollment_request',
+                    'New Enrollment Request',
+                    "{$guest->name} has requested enrollment in {$course->title}.",
+                    'enrollment',
+                    "/{$school->slug}/admin/enrollments"
+                );
+            }
 
             Log::info('Enrollment request created successfully', [
                 'student_id' => $guest->id,
@@ -291,6 +326,19 @@ class GuestController extends Controller
                 'school_id' => $school->id,
                 'path' => $path,
             ]);
+
+            // Notify admins about pending license verification
+            $admins = Admin::where('school_id', $school->id)->where('status', 'active')->get();
+            foreach ($admins as $admin) {
+                Notification::send(
+                    $admin,
+                    'license_uploaded',
+                    'License Pending Review',
+                    "{$guest->name} has uploaded a student driver's license for verification.",
+                    'license',
+                    "/{$school->slug}/admin/enrollments"
+                );
+            }
 
             return redirect()->back()->with('success', 'License uploaded successfully! It will be reviewed by an admin.');
         } catch (\Exception $e) {

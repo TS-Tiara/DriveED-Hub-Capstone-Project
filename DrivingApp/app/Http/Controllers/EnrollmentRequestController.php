@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\EnrollmentApproved;
+use App\Mail\EnrollmentRejected;
+use App\Models\Notification;
 
 class EnrollmentRequestController extends Controller
 {
@@ -92,6 +94,16 @@ class EnrollmentRequestController extends Controller
                 \Log::warning('Failed to send enrollment approval email: ' . $e->getMessage());
             }
 
+            // Create in-app notification for the student
+            Notification::send(
+                $enrollmentRequest->student,
+                'enrollment_approved',
+                'Enrollment Approved!',
+                "Your enrollment for {$enrollmentRequest->course->title} has been approved. Welcome aboard!",
+                'success',
+                "/{$school->slug}/student"
+            );
+
             DB::commit();
 
             return redirect()
@@ -145,6 +157,24 @@ class EnrollmentRequestController extends Controller
             'status' => 'rejected',
             'remarks' => $validated['remarks'],
         ]);
+
+        // Send rejection email
+        try {
+            Mail::to($enrollmentRequest->learner->email)
+                ->send(new EnrollmentRejected($enrollmentRequest, $school));
+        } catch (\Exception $e) {
+            \Log::warning('Failed to send enrollment rejection email: ' . $e->getMessage());
+        }
+
+        // Create in-app notification for the guest
+        Notification::send(
+            $enrollmentRequest->student,
+            'enrollment_rejected',
+            'Enrollment Request Update',
+            "Your enrollment request for {$enrollmentRequest->course->title} was not approved. Check your email for details.",
+            'warning',
+            "/{$school->slug}/guest/enrollment-requests"
+        );
 
         return redirect()
             ->back()
@@ -334,6 +364,16 @@ class EnrollmentRequestController extends Controller
                     \Log::warning('Failed to send bulk approval email: ' . $e->getMessage());
                 }
 
+                // Create in-app notification
+                Notification::send(
+                    $enrollment->student,
+                    'enrollment_approved',
+                    'Enrollment Approved!',
+                    "Your enrollment for {$enrollment->course->title} has been approved. Welcome aboard!",
+                    'success',
+                    "/{$school->slug}/student"
+                );
+
                 $approved++;
             }
 
@@ -390,6 +430,24 @@ class EnrollmentRequestController extends Controller
                     'remarks' => $request->remarks,
                 ]);
 
+                // Send rejection email
+                try {
+                    Mail::to($enrollment->learner->email)
+                        ->send(new EnrollmentRejected($enrollment, $school));
+                } catch (\Exception $e) {
+                    \Log::warning('Failed to send bulk rejection email: ' . $e->getMessage());
+                }
+
+                // Create in-app notification
+                Notification::send(
+                    $enrollment->student,
+                    'enrollment_rejected',
+                    'Enrollment Request Update',
+                    "Your enrollment request for {$enrollment->course->title} was not approved.",
+                    'warning',
+                    "/{$school->slug}/guest/enrollment-requests"
+                );
+
                 $rejected++;
             }
 
@@ -433,6 +491,16 @@ class EnrollmentRequestController extends Controller
             'student_license_rejection_reason' => null,
         ]);
 
+        // Notify the student
+        Notification::send(
+            $student,
+            'license_verified',
+            'License Verified!',
+            "Your student driver's license has been verified. You can now enroll in Practical Driving Courses (PDC).",
+            'success',
+            "/{$school->slug}/guest/courses"
+        );
+
         return redirect()->back()->with('success', "Student driver's license for {$student->name} has been verified.");
     }
 
@@ -464,6 +532,16 @@ class EnrollmentRequestController extends Controller
             'student_license_verified_at' => null,
             'student_license_verified_by' => null,
         ]);
+
+        // Notify the student
+        Notification::send(
+            $student,
+            'license_rejected',
+            'License Not Approved',
+            "Your student driver's license was not approved: {$request->rejection_reason}",
+            'warning',
+            "/{$school->slug}/guest/dashboard"
+        );
 
         return redirect()->back()->with('success', "Student driver's license for {$student->name} has been rejected.");
     }

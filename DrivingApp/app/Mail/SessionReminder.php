@@ -3,22 +3,27 @@
 namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use App\Models\Booking;
+use App\Models\School;
 
 class SessionReminder extends Mailable
 {
     use Queueable, SerializesModels;
 
+    public $booking;
+    public $school;
+
     /**
      * Create a new message instance.
      */
-    public function __construct()
+    public function __construct(Booking $booking, School $school)
     {
-        //
+        $this->booking = $booking;
+        $this->school = $school;
     }
 
     /**
@@ -27,7 +32,7 @@ class SessionReminder extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Session Reminder',
+            subject: $this->school->name . ' - Session Reminder',
         );
     }
 
@@ -37,7 +42,7 @@ class SessionReminder extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'view.name',
+            view: 'emails.session-reminder',
         );
     }
 

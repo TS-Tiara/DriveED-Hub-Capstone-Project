@@ -17,6 +17,7 @@ use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\Progress;
 use App\Models\EnrollmentRequest;
+use App\Models\Notification;
 
 /**
  * Unified Seeder - Comprehensive Test Data
@@ -258,6 +259,15 @@ class UnifiedSeeder extends Seeder
         $this->createBookingsAndPayments($school, $students, $instructors, $courses);
 
         $this->command->info('   ✓ Time slots, bookings, and payments created');
+
+        // Create guest students with enrollment requests
+        $admins = Admin::where('school_id', $school->id)->where('role', 'school_admin')->get()->all();
+        $guests = $this->createGuestsAndEnrollmentRequests($school, $courses, $admins);
+        $this->command->info('   ✓ Guest students and enrollment requests created');
+
+        // Create sample notifications
+        $this->createSampleNotifications($school, $students, $instructors, $admins, $guests);
+        $this->command->info('   ✓ Sample notifications created');
     }
 
     /**
@@ -416,6 +426,15 @@ class UnifiedSeeder extends Seeder
         $this->createBookingsAndPayments($school, $students, $instructors, $courses);
 
         $this->command->info('   ✓ Time slots, bookings, and payments created');
+
+        // Create guest students with enrollment requests
+        $admins = Admin::where('school_id', $school->id)->where('role', 'school_admin')->get()->all();
+        $guests = $this->createGuestsAndEnrollmentRequests($school, $courses, $admins);
+        $this->command->info('   ✓ Guest students and enrollment requests created');
+
+        // Create sample notifications
+        $this->createSampleNotifications($school, $students, $instructors, $admins, $guests);
+        $this->command->info('   ✓ Sample notifications created');
     }
 
     /**
@@ -581,6 +600,15 @@ class UnifiedSeeder extends Seeder
         $this->createBookingsAndPayments($school, $students, $instructors, $courses);
 
         $this->command->info('   ✓ Time slots, bookings, and payments created');
+
+        // Create guest students with enrollment requests
+        $admins = Admin::where('school_id', $school->id)->where('role', 'school_admin')->get()->all();
+        $guests = $this->createGuestsAndEnrollmentRequests($school, $courses, $admins);
+        $this->command->info('   ✓ Guest students and enrollment requests created');
+
+        // Create sample notifications
+        $this->createSampleNotifications($school, $students, $instructors, $admins, $guests);
+        $this->command->info('   ✓ Sample notifications created');
     }
 
     /**
@@ -1161,6 +1189,202 @@ class UnifiedSeeder extends Seeder
                         'notes' => 'Good progress, student is learning well.',
                     ]);
                 }
+            }
+        }
+    }
+
+    /**
+     * Create guest students with enrollment requests for a school
+     */
+    private function createGuestsAndEnrollmentRequests(School $school, array $courses, array $admins): array
+    {
+        $slug = $school->slug;
+        $guestData = [
+            [
+                'name' => 'Elena Joy Reyes',
+                'email' => "guest1@{$slug}.test",
+                'license_status' => 'none',
+                'enrollment_status' => 'pending',
+            ],
+            [
+                'name' => 'Mark Anthony Dizon',
+                'email' => "guest2@{$slug}.test",
+                'license_status' => 'pending',
+                'enrollment_status' => 'pending',
+            ],
+            [
+                'name' => 'Jamie Lyn Pascual',
+                'email' => "guest3@{$slug}.test",
+                'license_status' => 'verified',
+                'enrollment_status' => 'rejected',
+            ],
+            [
+                'name' => 'Carlo Miguel Bautista',
+                'email' => "guest4@{$slug}.test",
+                'license_status' => 'none',
+                'enrollment_status' => null, // no enrollment request yet
+            ],
+        ];
+
+        $guests = [];
+        foreach ($guestData as $g) {
+            $guest = Student::updateOrCreate(
+                ['school_id' => $school->id, 'email' => $g['email']],
+                [
+                    'name' => $g['name'],
+                    'contact' => '+63-9' . rand(10, 99) . '-' . rand(100, 999) . '-' . rand(1000, 9999),
+                    'password' => Hash::make('password123'),
+                    'status' => 'active',
+                    'role' => 'guest',
+                    'student_license_status' => $g['license_status'],
+                    'student_license_verified_at' => $g['license_status'] === 'verified' ? now()->subDays(5) : null,
+                ]
+            );
+            $guests[] = $guest;
+
+            // Create enrollment request if needed
+            if ($g['enrollment_status'] && !empty($courses)) {
+                $course = $courses[array_rand($courses)];
+                $enrollmentData = [
+                    'school_id' => $school->id,
+                    'learner_id' => $guest->id,
+                    'course_id' => $course->id,
+                    'status' => $g['enrollment_status'],
+                    'payment_status' => 'pending',
+                    'experience_level' => 'new_driver',
+                    'requested_license_type' => $course->license_type ?? 'non_professional',
+                ];
+
+                if ($g['enrollment_status'] === 'rejected') {
+                    $enrollmentData['remarks'] = 'Incomplete documentation. Please re-submit with valid credentials.';
+                }
+
+                if ($g['enrollment_status'] === 'approved' && !empty($admins)) {
+                    $admin = $admins[array_rand($admins)];
+                    $enrollmentData['approved_by'] = $admin->id;
+                    $enrollmentData['approved_at'] = now()->subDays(2);
+                    $enrollmentData['enrolled_at'] = now()->subDays(2);
+                }
+
+                EnrollmentRequest::updateOrCreate(
+                    ['school_id' => $school->id, 'learner_id' => $guest->id, 'course_id' => $course->id],
+                    $enrollmentData
+                );
+            }
+        }
+
+        return $guests;
+    }
+
+    /**
+     * Create sample notifications for various users
+     */
+    private function createSampleNotifications(School $school, array $students, array $instructors, array $admins, array $guests): void
+    {
+        $slug = $school->slug;
+
+        // Notifications for admins
+        if (!empty($admins)) {
+            $admin = $admins[0];
+            Notification::send(
+                $admin,
+                'new_enrollment_request',
+                'New Enrollment Request',
+                'Elena Joy Reyes has requested enrollment in a driving course.',
+                'enrollment',
+                "/{$slug}/admin/enrollments"
+            );
+            Notification::send(
+                $admin,
+                'license_uploaded',
+                'License Pending Review',
+                'Mark Anthony Dizon has uploaded a student driver\'s license for verification.',
+                'license',
+                "/{$slug}/admin/enrollments"
+            );
+            Notification::send(
+                $admin,
+                'new_enrollment_request',
+                'New Enrollment Request',
+                'Jamie Lyn Pascual has requested enrollment in a PDC course.',
+                'enrollment',
+                "/{$slug}/admin/enrollments"
+            );
+        }
+
+        // Notifications for students
+        if (!empty($students)) {
+            $student = $students[0];
+            Notification::send(
+                $student,
+                'enrollment_approved',
+                'Enrollment Approved!',
+                'Your enrollment has been approved. Welcome aboard!',
+                'success',
+                "/{$slug}/student"
+            );
+            Notification::send(
+                $student,
+                'session_reminder',
+                'Upcoming Session',
+                'You have a driving session tomorrow. Don\'t forget to bring your license!',
+                'session',
+                "/{$slug}/student/schedule"
+            );
+
+            if (count($students) > 1) {
+                Notification::send(
+                    $students[1],
+                    'session_reminder',
+                    'Session Tomorrow',
+                    'Reminder: You have a practical driving session scheduled for tomorrow morning.',
+                    'session',
+                    "/{$slug}/student/schedule"
+                );
+            }
+        }
+
+        // Notifications for instructors
+        if (!empty($instructors)) {
+            $instructor = $instructors[0];
+            Notification::send(
+                $instructor,
+                'session_reminder',
+                'Upcoming Session',
+                'You have a driving session with a student tomorrow at 9:00 AM.',
+                'session',
+                "/{$slug}/instructor/my-schedule"
+            );
+        }
+
+        // Notifications for guests
+        if (!empty($guests)) {
+            Notification::send(
+                $guests[0],
+                'enrollment_received',
+                'Enrollment Request Submitted',
+                'Your enrollment request has been submitted and is under review.',
+                'enrollment',
+                "/{$slug}/guest/enrollment-requests"
+            );
+
+            if (count($guests) > 2) {
+                Notification::send(
+                    $guests[2],
+                    'enrollment_rejected',
+                    'Enrollment Request Update',
+                    'Your enrollment request was not approved. Check your email for details.',
+                    'warning',
+                    "/{$slug}/guest/enrollment-requests"
+                );
+                Notification::send(
+                    $guests[2],
+                    'license_verified',
+                    'License Verified!',
+                    'Your student driver\'s license has been verified. You can now enroll in PDC courses.',
+                    'success',
+                    "/{$slug}/guest/courses"
+                );
             }
         }
     }

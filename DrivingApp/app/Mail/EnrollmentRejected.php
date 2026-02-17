@@ -3,7 +3,6 @@
 namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
@@ -11,7 +10,7 @@ use Illuminate\Queue\SerializesModels;
 use App\Models\EnrollmentRequest;
 use App\Models\School;
 
-class EnrollmentRequestReceived extends Mailable
+class EnrollmentRejected extends Mailable
 {
     use Queueable, SerializesModels;
 
@@ -33,7 +32,7 @@ class EnrollmentRequestReceived extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: $this->school->name . ' - Enrollment Request Received',
+            subject: $this->school->name . ' - Enrollment Request Update',
         );
     }
 
@@ -43,7 +42,7 @@ class EnrollmentRequestReceived extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.enrollment-request-received',
+            view: 'emails.enrollment-rejected',
         );
     }
 

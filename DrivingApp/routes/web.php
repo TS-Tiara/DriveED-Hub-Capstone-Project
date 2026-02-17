@@ -21,6 +21,7 @@ use App\Http\Controllers\CourseModuleController;
 use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\ModuleLessonController;
+use App\Http\Controllers\NotificationController;
 use App\Models\School;
 
 Route::get('/', function () {
@@ -110,6 +111,13 @@ Route::prefix('{school:slug}')
         Route::get('/verify-email', [GuestController::class, 'showVerificationForm'])->name('verification.show');
         Route::post('/verify-email', [GuestController::class, 'verifyEmail'])->name('verification.verify');
         Route::post('/resend-verification', [GuestController::class, 'resendVerificationCode'])->name('verification.resend');
+
+        // Notification routes (accessible to all authenticated users)
+        Route::prefix('notifications')->name('notifications.')->group(function (): void {
+            Route::get('/', [NotificationController::class, 'index'])->name('index');
+            Route::post('/{notification}/read', [NotificationController::class, 'markAsRead'])->name('markAsRead');
+            Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('markAllAsRead');
+        });
 
         // Guest-authenticated routes (must have guest role)
         Route::prefix('guest')->name('guest.')->group(function (): void {

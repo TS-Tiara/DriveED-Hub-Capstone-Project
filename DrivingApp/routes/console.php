@@ -10,3 +10,6 @@ Artisan::command('inspire', function () {
 
 // Schedule the booking queue confirmation to run daily
 Schedule::command('bookings:confirm-queued')->daily();
+
+// Send session reminders for sessions happening in the next 24 hours (runs daily at 7 AM)
+Schedule::command('reminders:sessions --hours=24')->dailyAt('07:00');
