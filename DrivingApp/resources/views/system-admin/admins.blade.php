@@ -322,6 +322,23 @@
         margin-top: 15px;
         font-size: 0.9rem;
     }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .modal-content { max-width: 95%; margin: 10px; }
+        .modal-body { padding: 15px; }
+        .modal-footer { flex-direction: column; }
+        .modal-footer .btn, .modal-footer button { width: 100%; min-height: 44px; }
+        .action-bar { flex-direction: column; gap: 10px; }
+        .search-box { max-width: 100%; }
+        .status-badge { padding: 6px 12px; }
+        th, td { padding: 10px 8px; font-size: 0.82rem; }
+    }
+    
+    @media (max-width: 480px) {
+        .card-header { flex-direction: column; gap: 8px; }
+        .action-buttons { flex-wrap: wrap; }
+    }
 </style>
 @endsection
 
@@ -366,6 +383,7 @@
     </div>
     <div class="card-body">
         @if($admins->count() > 0)
+        <div class="table-container">
         <table>
             <thead>
                 <tr>
@@ -428,6 +446,7 @@
                 @endforeach
             </tbody>
         </table>
+        </div>
         {{ $admins->appends(request()->query())->links() }}
         @else
         <div style="text-align: center; padding: 3rem; color: #6b7280;">

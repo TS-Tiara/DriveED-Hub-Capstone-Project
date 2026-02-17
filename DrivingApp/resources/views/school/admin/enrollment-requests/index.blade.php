@@ -323,6 +323,143 @@
         margin-bottom: 25px;
         font-weight: 500;
     }
+    
+    /* Mobile card layout */
+    .mobile-card {
+        display: none;
+        background: white;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border-left: 4px solid {{ $primaryColor }};
+    }
+    
+    .mobile-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 12px;
+    }
+    
+    .mobile-card-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 6px 0;
+        border-bottom: 1px solid #f3f4f6;
+    }
+    
+    .mobile-card-row:last-child {
+        border-bottom: none;
+    }
+    
+    .mobile-card-label {
+        color: #6b7280;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .mobile-card-value {
+        font-weight: 600;
+        color: #1f2937;
+        font-size: 0.85rem;
+        text-align: right;
+    }
+    
+    .mobile-card-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+        flex-wrap: wrap;
+    }
+    
+    .mobile-card-actions .btn {
+        flex: 1;
+        min-width: 100px;
+        padding: 10px 12px;
+        font-size: 0.85rem;
+        text-align: center;
+        min-height: 44px;
+    }
+    
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+        .enrollment-requests-container {
+            padding: 12px;
+            margin: 10px auto;
+        }
+        
+        .page-header {
+            flex-direction: column;
+            gap: 10px;
+            align-items: flex-start;
+        }
+        
+        .page-title {
+            font-size: 1.3rem;
+        }
+        
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        
+        .stat-value {
+            font-size: 1.3rem;
+        }
+        
+        .stat-label {
+            font-size: 0.7rem;
+        }
+        
+        /* Hide table, show cards */
+        .table-container {
+            display: none;
+        }
+        
+        .mobile-card {
+            display: block;
+        }
+        
+        /* Action bar responsive */
+        .action-bar-wrapper {
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .btn {
+            min-height: 44px;
+            padding: 10px 14px;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .enrollment-requests-container {
+            padding: 8px;
+        }
+        
+        .page-title {
+            font-size: 1.1rem;
+        }
+        
+        .stats-grid {
+            grid-template-columns: 1fr;
+            gap: 8px;
+        }
+        
+        .mobile-card {
+            padding: 12px;
+        }
+        
+        .mobile-card-actions {
+            flex-direction: column;
+        }
+        
+        .mobile-card-actions .btn {
+            width: 100%;
+        }
+    }
 </style>
 
 <div class="enrollment-requests-container">
@@ -451,7 +588,7 @@
     </div>
     
     <!-- Action Bar with Export and Bulk Operations -->
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 15px; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 15px; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); gap: 10px;">
         <!-- Bulk Operations (Left Side) -->
         <div id="bulkActionsBar" style="display: none; gap: 10px; align-items: center;">
             <span id="selectedCount" style="font-weight: 600; color: #374151;">0 selected</span>
@@ -500,6 +637,7 @@
     </div>
     
     @if($allRequests->count() > 0)
+        <div class="table-container">
         <table class="requests-table">
             <thead>
                 <tr>
@@ -620,6 +758,58 @@
                 @endforeach
             </tbody>
         </table>
+        </div>
+        
+        {{-- Mobile card view --}}
+        @foreach($allRequests as $request)
+        <div class="mobile-card" data-status="{{ $request->status }}" data-request-id="{{ $request->id }}">
+            <div class="mobile-card-header">
+                <div>
+                    <strong style="font-size: 1rem;">{{ $request->learner->name }}</strong>
+                    <div style="color: #6b7280; font-size: 0.8rem;">{{ $request->learner->email }}</div>
+                    @php $licenseStatus = $request->learner->student_license_status ?? 'none'; @endphp
+                    <span class="license-badge license-{{ $licenseStatus }}" style="margin-top: 4px; display: inline-block;">
+                        🪪 {{ $licenseStatus === 'none' ? 'No License' : ucfirst($licenseStatus) }}
+                    </span>
+                </div>
+                <span class="status-badge status-{{ $request->status }}">{{ ucfirst($request->status) }}</span>
+            </div>
+            <div class="mobile-card-row">
+                <span class="mobile-card-label">Course</span>
+                <span class="mobile-card-value">{{ $request->course->title ?? 'N/A' }}</span>
+            </div>
+            <div class="mobile-card-row">
+                <span class="mobile-card-label">Fee</span>
+                <span class="mobile-card-value">₱{{ number_format($request->course->price ?? 0, 2) }}</span>
+            </div>
+            <div class="mobile-card-row">
+                <span class="mobile-card-label">Payment</span>
+                <span class="payment-badge payment-{{ $request->payment_status }}">{{ ucfirst(str_replace('_', ' ', $request->payment_status)) }}</span>
+            </div>
+            <div class="mobile-card-row">
+                <span class="mobile-card-label">Date</span>
+                <span class="mobile-card-value">{{ $request->created_at->format('M d, Y h:i A') }}</span>
+            </div>
+            @if($request->status === 'pending')
+                <div class="mobile-card-actions">
+                    <form method="POST" action="{{ route('schools.admin.enrollments.approve', ['school' => $school, 'enrollmentRequest' => $request->id]) }}" style="display: contents;" id="mobileApproveForm{{ $request->id }}">
+                        @csrf
+                        <button type="button" class="btn btn-approve" onclick="document.getElementById('approveForm{{ $request->id }}').submit()">✓ Approve</button>
+                    </form>
+                    <button class="btn btn-reject" onclick="showRejectModal({{ $request->id }})">✗ Reject</button>
+                </div>
+            @elseif($request->status === 'approved')
+                <div class="mobile-card-actions">
+                    <form method="POST" action="{{ route('schools.admin.enrollments.complete', ['school' => $school, 'enrollmentRequest' => $request->id]) }}" style="display: contents;" id="mobileCompleteForm{{ $request->id }}">
+                        @csrf
+                        <button type="button" class="btn btn-approve" onclick="completeEnrollment({{ $request->id }})">✓ Complete</button>
+                    </form>
+                    <button class="btn btn-reject" onclick="showCancelModal({{ $request->id }})">✗ Cancel</button>
+                </div>
+            @endif
+        </div>
+        @endforeach
+        
     @else
         <div class="no-requests">
             <div class="no-requests-icon">

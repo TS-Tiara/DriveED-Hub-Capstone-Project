@@ -325,6 +325,24 @@
     .btn-danger:hover {
         background: #b91c1c;
     }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .modal { max-width: 95%; margin: 10px; }
+        .modal-body { padding: 15px; }
+        .form-row { grid-template-columns: 1fr; gap: 10px; }
+        .modal-footer { flex-direction: column; }
+        .modal-footer .btn { width: 100%; min-height: 44px; }
+        .action-bar { flex-direction: column; gap: 10px; }
+        .search-box { max-width: 100%; }
+        .btn-action { width: 40px; height: 40px; min-height: 44px; min-width: 44px; }
+        .status-badge { padding: 6px 12px; }
+    }
+    
+    @media (max-width: 480px) {
+        .card-header { flex-direction: column; gap: 8px; }
+        .action-buttons { flex-wrap: wrap; }
+    }
 </style>
 @endsection
 
@@ -349,6 +367,7 @@
     </div>
     <div class="card-body">
         @if($schools->count() > 0)
+        <div class="table-container">
         <table>
             <thead>
                 <tr>
@@ -405,6 +424,7 @@
                 @endforeach
             </tbody>
         </table>
+        </div>
         {{ $schools->appends(request()->query())->links() }}
         @else
         <div style="text-align: center; padding: 3rem; color: #6b7280;">

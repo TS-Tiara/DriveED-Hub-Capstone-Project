@@ -259,8 +259,16 @@
         .controls-bar { padding: 12px; gap: 8px; }
         .search-input { min-width: 150px; padding: 8px 10px; font-size: 0.82rem; }
         .filter-select { padding: 8px 10px; font-size: 0.78rem; }
-        .grades-table-container { overflow-x: auto; }
+        .grades-table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .grades-table { min-width: 700px; }
+        .btn-icon { min-height: 44px; min-width: 44px; padding: 8px 12px; }
+        .grade-input { min-height: 44px; padding: 8px; }
+    }
+    
+    @media (max-width: 480px) {
+        .controls-bar { flex-direction: column; }
+        .search-input { min-width: 100%; }
+        .filter-select { width: 100%; }
     }
 </style>
 

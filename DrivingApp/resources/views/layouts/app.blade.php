@@ -958,6 +958,41 @@
         
         /* Responsive Design */
         
+        /* ====== Mobile Touch Target & Table Improvements ====== */
+        @media (max-width: 768px) {
+            /* Ensure min 44px touch targets for interactive elements */
+            .btn, button.btn, .btn-action, .btn-sm,
+            input[type="submit"], input[type="button"] {
+                min-height: 44px;
+                min-width: 44px;
+            }
+            
+            /* Table container always scrollable */
+            .table-container {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            /* Better badge touch targets */
+            .badge, .status-badge, .payment-badge, .license-badge {
+                padding: 6px 12px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            /* Stack page headers vertically */
+            .page-header {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start !important;
+            }
+            
+            /* Full-width buttons on small screens */
+            .btn-action {
+                padding: 10px 14px;
+            }
+        }
+        
         /* Large tablets and small laptops (768px - 1024px) */
         @media (min-width: 769px) and (max-width: 1024px) {
             .topbar {
@@ -1336,12 +1371,16 @@
             
             .burger-menu {
                 font-size: 0.9rem;
-                padding: 2px;
+                padding: 6px;
+                min-height: 36px;
+                min-width: 36px;
             }
             
             .notification-icon, .profile-dropdown {
-                padding: 2px;
+                padding: 4px;
                 font-size: 0.75rem;
+                min-height: 36px;
+                min-width: 36px;
             }
             
             .topbar-left, .topbar-right {

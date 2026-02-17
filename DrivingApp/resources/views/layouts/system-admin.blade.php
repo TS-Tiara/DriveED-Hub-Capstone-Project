@@ -42,9 +42,30 @@
             background: var(--sidebar-bg);
             color: var(--sidebar-text);
             position: fixed;
+            left: -250px;
             height: 100vh;
             overflow-y: auto;
             z-index: 1000;
+            transition: left 0.3s ease;
+        }
+        
+        .sidebar.active {
+            left: 0;
+        }
+        
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+        
+        .sidebar-overlay.active {
+            display: block;
         }
         
         .sidebar-header {
@@ -98,7 +119,7 @@
         
         /* Main Content */
         .main-content {
-            margin-left: 250px;
+            margin-left: 0;
             flex: 1;
             min-height: 100vh;
         }
@@ -113,9 +134,33 @@
             align-items: center;
         }
         
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .burger-menu {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #374151;
+            transition: background 0.2s;
+        }
+        
+        .burger-menu:hover {
+            background: #f3f4f6;
+        }
+        
         .header h2 {
             font-size: 1.5rem;
             color: #1f2937;
+            margin: 0;
         }
         
         .user-menu {
@@ -383,13 +428,143 @@
             color: white;
             border-color: var(--primary-color);
         }
+        
+        /* Table responsive wrapper */
+        .table-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* ====== Responsive Breakpoints ====== */
+        
+        /* Tablets & smaller desktops */
+        @media (max-width: 1024px) {
+            .content {
+                padding: 16px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+                gap: 12px;
+            }
+            
+            .filter-grid {
+                grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+                gap: 12px;
+            }
+        }
+        
+        /* Tablets portrait */
+        @media (max-width: 768px) {
+            .header {
+                padding: 12px 16px;
+            }
+            
+            .header h2 {
+                font-size: 1.2rem;
+            }
+            
+            .user-name {
+                display: none;
+            }
+            
+            .content {
+                padding: 12px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+            
+            .stat-card {
+                padding: 14px;
+            }
+            
+            .stat-card .value {
+                font-size: 1.5rem;
+            }
+            
+            th, td {
+                padding: 8px 10px;
+                font-size: 0.8rem;
+            }
+            
+            .filter-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .card-header {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+            }
+            
+            /* Enlarge touch targets */
+            .btn, .btn-logout {
+                padding: 10px 16px;
+                font-size: 0.9rem;
+                min-height: 44px;
+            }
+            
+            .badge {
+                padding: 6px 12px;
+                font-size: 0.75rem;
+            }
+        }
+        
+        /* Phones */
+        @media (max-width: 480px) {
+            .header {
+                padding: 10px 12px;
+            }
+            
+            .header h2 {
+                font-size: 1rem;
+            }
+            
+            .content {
+                padding: 10px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            
+            .stat-card {
+                padding: 12px;
+            }
+            
+            .stat-card .value {
+                font-size: 1.25rem;
+            }
+            
+            .card-body {
+                padding: 12px;
+            }
+            
+            .pagination {
+                flex-wrap: wrap;
+                gap: 4px;
+            }
+            
+            .pagination a,
+            .pagination span {
+                padding: 6px 10px;
+                font-size: 0.8rem;
+            }
+        }
     </style>
     @yield('styles')
 </head>
 <body>
     <div class="app-container">
+        <!-- Sidebar Overlay -->
+        <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+        
         <!-- Sidebar -->
-        <aside class="sidebar">
+        <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <h1>System Admin</h1>
                 <p>Global Management Portal</p>
@@ -431,7 +606,14 @@
         <!-- Main Content -->
         <main class="main-content">
             <header class="header">
-                <h2>@yield('page-title', 'Dashboard')</h2>
+                <div class="header-left">
+                    <button class="burger-menu" onclick="toggleSidebar()">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+                    <h2>@yield('page-title', 'Dashboard')</h2>
+                </div>
                 <div class="user-menu">
                     <span class="user-name">{{ Auth::guard('admin')->user()->name }}</span>
                     <form action="{{ route('system-admin.logout') }}" method="POST" style="display: inline;">
@@ -458,5 +640,17 @@
             </div>
         </main>
     </div>
+    
+    <script>
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
+            document.getElementById('sidebarOverlay').classList.toggle('active');
+        }
+        
+        function closeSidebar() {
+            document.getElementById('sidebar').classList.remove('active');
+            document.getElementById('sidebarOverlay').classList.remove('active');
+        }
+    </script>
 </body>
 </html>

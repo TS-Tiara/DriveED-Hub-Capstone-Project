@@ -415,6 +415,7 @@
             @if($log->context && count($log->context) > 0)
                 <div class="section">
                     <h3>Additional Context</h3>
+                    <div class="table-container">
                     <table class="context-table">
                         <thead>
                             <tr>
@@ -431,6 +432,7 @@
                             @endforeach
                         </tbody>
                     </table>
+                    </div>
                 </div>
             @endif
 

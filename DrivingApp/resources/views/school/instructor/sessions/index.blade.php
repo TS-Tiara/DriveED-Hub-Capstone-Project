@@ -297,7 +297,56 @@
 
     @media (max-width: 768px) {
         .filter-bar { flex-direction: column; align-items: stretch; }
+        
+        .admin-container { padding: 12px; }
+        .page-header { flex-direction: column; gap: 12px; align-items: flex-start; }
+        .page-title { font-size: 1.3rem; }
+        .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .stat-value { font-size: 1.3rem; }
+        
+        /* Hide table, show cards */
+        .table-container { display: none; }
+        .session-mobile-card { display: block; }
+        
+        .btn-action { min-height: 44px; min-width: 44px; padding: 10px; }
     }
+    
+    @media (max-width: 480px) {
+        .admin-container { padding: 8px; }
+        .page-title { font-size: 1.1rem; }
+        .stats-grid { grid-template-columns: 1fr; }
+    }
+    
+    /* Session mobile cards */
+    .session-mobile-card {
+        display: none;
+        background: white;
+        border-radius: 10px;
+        padding: 14px;
+        margin-bottom: 10px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        border-left: 4px solid var(--primary-color, #667eea);
+    }
+    .session-mobile-card .card-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 5px 0;
+        border-bottom: 1px solid #f3f4f6;
+    }
+    .session-mobile-card .card-row:last-child { border-bottom: none; }
+    .session-mobile-card .card-label { color: #6b7280; font-size: 0.8rem; }
+    .session-mobile-card .card-val { font-weight: 600; color: #1f2937; font-size: 0.85rem; }
+    .session-mobile-card .card-actions {
+        display: flex; gap: 8px; margin-top: 10px;
+    }
+    .session-mobile-card .card-actions a {
+        flex: 1; text-align: center; padding: 10px; border-radius: 8px;
+        text-decoration: none; font-size: 0.85rem; font-weight: 600; min-height: 44px;
+        display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .session-mobile-card .card-actions .btn-view-card { background: #eff6ff; color: #2563eb; }
+    .session-mobile-card .card-actions .btn-edit-card { background: #fef3c7; color: #d97706; }
 </style>
 
 <div class="admin-container">
@@ -417,6 +466,7 @@
         </div>
 
         @if($sessions->count() > 0)
+            <div class="table-container">
             <table class="sessions-table">
                 <thead>
                     <tr>
@@ -475,6 +525,37 @@
                     @endforeach
                 </tbody>
             </table>
+            </div>
+            
+            {{-- Mobile card view --}}
+            @foreach($sessions as $session)
+            <div class="session-mobile-card" data-type="{{ $session->session_type }}">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <strong>{{ $session->enrollment->student->name ?? 'N/A' }}</strong>
+                    <span class="type-badge type-{{ $session->session_type }}">{{ ucfirst($session->session_type) }}</span>
+                </div>
+                <div class="card-row">
+                    <span class="card-label">Date</span>
+                    <span class="card-val">{{ $session->session_date->format('M d, Y') }}</span>
+                </div>
+                <div class="card-row">
+                    <span class="card-label">Time</span>
+                    <span class="card-val">{{ \Carbon\Carbon::parse($session->session_time)->format('g:i A') }}</span>
+                </div>
+                <div class="card-row">
+                    <span class="card-label">Course</span>
+                    <span class="card-val">{{ $session->enrollment->course->title ?? 'N/A' }}</span>
+                </div>
+                <div class="card-row">
+                    <span class="card-label">Hours</span>
+                    <span class="card-val">{{ number_format($session->hours_completed, 1) }}h</span>
+                </div>
+                <div class="card-actions">
+                    <a href="{{ $schoolRoute('instructor.sessions.show', ['sessionCompletion' => $session->id]) }}" class="btn-view-card">View</a>
+                    <a href="{{ $schoolRoute('instructor.sessions.edit', ['sessionCompletion' => $session->id]) }}" class="btn-edit-card">Edit</a>
+                </div>
+            </div>
+            @endforeach
 
             @if($sessions->hasPages())
             <div class="table-footer">

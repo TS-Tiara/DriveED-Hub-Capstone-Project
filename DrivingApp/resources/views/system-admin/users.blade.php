@@ -410,6 +410,17 @@
         margin-top: 15px;
         font-size: 0.9rem;
     }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .modal-content { max-width: 95%; margin: 10px; }
+        .modal-body { padding: 15px; }
+        .modal-footer { flex-direction: column; }
+        .modal-footer .btn, .modal-footer button { width: 100%; min-height: 44px; }
+        .btn-sm { padding: 8px 12px; min-height: 44px; font-size: 0.82rem; }
+        th, td { padding: 10px 8px; font-size: 0.82rem; }
+        .actions-cell { flex-direction: column; gap: 6px; }
+    }
 </style>
 @endsection
 
@@ -487,6 +498,7 @@
     <div class="card">
         <div class="card-body">
             @if(isset($students) && $students->count() > 0)
+            <div class="table-container">
             <table>
                 <thead>
                     <tr>
@@ -544,6 +556,7 @@
                     @endforeach
                 </tbody>
             </table>
+            </div>
             @else
             <div class="empty-state">
                 <i class="fas fa-user-graduate"></i>
@@ -559,6 +572,7 @@
     <div class="card">
         <div class="card-body">
             @if(isset($instructors) && $instructors->count() > 0)
+            <div class="table-container">
             <table>
                 <thead>
                     <tr>
@@ -616,6 +630,7 @@
                     @endforeach
                 </tbody>
             </table>
+            </div>
             @else
             <div class="empty-state">
                 <i class="fas fa-chalkboard-teacher"></i>

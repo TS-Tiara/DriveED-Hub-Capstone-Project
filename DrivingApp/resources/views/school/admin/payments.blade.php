@@ -210,6 +210,34 @@
             font-size: 0.8rem;
         }
     }
+    
+    /* Mobile card layout */
+    .payment-mobile-card {
+        display: none;
+        background: white;
+        border-radius: 10px;
+        padding: 14px;
+        margin-bottom: 10px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        border-left: 4px solid {{ $primaryColor }};
+    }
+    
+    .payment-mobile-card .card-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 5px 0;
+        border-bottom: 1px solid #f3f4f6;
+    }
+    
+    .payment-mobile-card .card-row:last-child { border-bottom: none; }
+    .payment-mobile-card .card-label { color: #6b7280; font-size: 0.8rem; font-weight: 500; }
+    .payment-mobile-card .card-val { font-weight: 600; color: #1f2937; font-size: 0.85rem; }
+    
+    @media (max-width: 768px) {
+        .content-card > div[style*="overflow-x"] { display: none; }
+        .payment-mobile-card { display: block; }
+    }
 </style>
 
 <div class="admin-container">
@@ -344,6 +372,43 @@
                 </tbody>
             </table>
         </div>
+        
+        {{-- Mobile card view --}}
+        @forelse($payments as $payment)
+        <div class="payment-mobile-card" data-status="{{ $payment->status }}">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <strong>{{ $payment->booking->student->name ?? 'N/A' }}</strong>
+                <span class="badge badge-{{ $payment->status === 'completed' ? 'success' : ($payment->status === 'pending' ? 'warning' : 'danger') }}">{{ ucfirst($payment->status) }}</span>
+            </div>
+            <div class="card-row">
+                <span class="card-label">Course</span>
+                <span class="card-val">{{ $payment->booking->course->title ?? 'N/A' }}</span>
+            </div>
+            <div class="card-row">
+                <span class="card-label">Amount</span>
+                <span class="card-val" style="color: #10b981;">₱{{ number_format($payment->amount, 2) }}</span>
+            </div>
+            <div class="card-row">
+                <span class="card-label">Method</span>
+                <span class="card-val">{{ ucfirst($payment->method ?? 'N/A') }}</span>
+            </div>
+            <div class="card-row">
+                <span class="card-label">Date</span>
+                <span class="card-val">{{ $payment->paid_on ? $payment->paid_on->format('M d, Y') : 'N/A' }}</span>
+            </div>
+            @if($payment->status === 'pending')
+            <div style="margin-top: 10px;">
+                <button type="button" class="btn-action btn-mark-paid" onclick="markAsPaid({{ $payment->id }})" style="width: 100%; padding: 10px; min-height: 44px; text-align: center;">
+                    ✓ Mark Paid
+                </button>
+            </div>
+            @endif
+        </div>
+        @empty
+        <div class="payment-mobile-card">
+            <p style="text-align: center; color: #9ca3af;">No payments found</p>
+        </div>
+        @endforelse
     </div>
 </div>
 

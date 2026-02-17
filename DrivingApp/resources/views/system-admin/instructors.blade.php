@@ -33,6 +33,7 @@
 <div class="card">
     <div class="card-header"><h3>Instructors ({{ $instructors->total() }})</h3></div>
     <div class="card-body">
+        <div class="table-container">
         <table>
             <thead>
                 <tr>
@@ -57,6 +58,7 @@
                 @endforeach
             </tbody>
         </table>
+        </div>
         {{ $instructors->appends(request()->query())->links() }}
     </div>
 </div>
