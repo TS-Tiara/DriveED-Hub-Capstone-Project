@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use App\Models\Admin;
 use App\Models\Instructor;
 use App\Models\School;
@@ -242,7 +244,7 @@ class AuthController extends Controller
                 $otp = $student->generateVerificationCode();
                 
                 try {
-                    \Mail::raw(
+                    Mail::raw(
                         "Please verify your email.\n\nYour verification code is: {$otp}\n\nThis code will expire in 15 minutes.",
                         function ($message) use ($student, $school) {
                             $message->to($student->email)
@@ -250,7 +252,7 @@ class AuthController extends Controller
                         }
                     );
                 } catch (\Exception $e) {
-                    \Log::error('Failed to send verification email: ' . $e->getMessage());
+                    Log::error('Failed to send verification email: ' . $e->getMessage());
                 }
                 
                 // Store in session and redirect to verification

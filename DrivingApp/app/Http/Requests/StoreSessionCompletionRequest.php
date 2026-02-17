@@ -25,7 +25,7 @@ class StoreSessionCompletionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'enrollment_id' => ['required', 'exists:enrollments,id'],
+            'enrollment_id' => ['required', 'exists:enrollment_requests,id'],
             'session_type' => ['required', 'in:theoretical,practical'],
             'hours_completed' => ['required', 'numeric', 'min:0.5', 'max:8'],
             'session_date' => ['required', 'date', 'before_or_equal:today'],

@@ -522,13 +522,13 @@ class SystemAdminController extends Controller
             // Get students
             $studentsQuery = Student::with('school')->select([
                 'id', 'name', 'email', 'school_id', 'status', 'created_at',
-                \DB::raw("'student' as user_type")
+                DB::raw("'student' as user_type")
             ]);
 
             // Get instructors  
             $instructorsQuery = Instructor::with('school')->select([
                 'id', 'name', 'email', 'school_id', 'status', 'created_at',
-                \DB::raw("'instructor' as user_type")
+                DB::raw("'instructor' as user_type")
             ]);
 
             // Apply school filter if provided

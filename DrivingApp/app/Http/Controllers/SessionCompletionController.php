@@ -14,6 +14,7 @@ use App\Services\SchedulingConflictService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class SessionCompletionController extends Controller
@@ -180,7 +181,7 @@ class SessionCompletionController extends Controller
                         "/{$school->slug}/student/my-course"
                     );
                 } catch (\Exception $e) {
-                    \Log::warning('Failed to send session completion notification: ' . $e->getMessage());
+                    Log::warning('Failed to send session completion notification: ' . $e->getMessage());
                 }
             }
             
@@ -438,10 +439,10 @@ class SessionCompletionController extends Controller
                     "/{$school->slug}/admin/phase-progressions"
                 );
             } catch (\Exception $e) {
-                \Log::warning('Failed to send progression notification to admin: ' . $e->getMessage());
+                Log::warning('Failed to send progression notification to admin: ' . $e->getMessage());
             }
         }
 
-        \Log::info("Phase progression triggered: Enrollment #{$enrollmentRequest->id} ({$fromPhase} → {$toPhase}), Total hours: {$totalHours}/{$course->hours_required}");
+        Log::info("Phase progression triggered: Enrollment #{$enrollmentRequest->id} ({$fromPhase} → {$toPhase}), Total hours: {$totalHours}/{$course->hours_required}");
     }
 }

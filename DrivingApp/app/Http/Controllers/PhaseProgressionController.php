@@ -8,6 +8,7 @@ use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class PhaseProgressionController extends Controller
 {
@@ -92,7 +93,7 @@ class PhaseProgressionController extends Controller
                         "/{$school->slug}/student"
                     );
                 } catch (\Exception $e) {
-                    \Log::warning('Failed to send phase progression notification: ' . $e->getMessage());
+                    Log::warning('Failed to send phase progression notification: ' . $e->getMessage());
                 }
             }
 
@@ -104,7 +105,7 @@ class PhaseProgressionController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Phase progression approval failed: ' . $e->getMessage());
+            Log::error('Phase progression approval failed: ' . $e->getMessage());
 
             return redirect()
                 ->back()
@@ -153,7 +154,7 @@ class PhaseProgressionController extends Controller
                         "/{$school->slug}/student"
                     );
                 } catch (\Exception $e) {
-                    \Log::warning('Failed to send phase progression rejection notification: ' . $e->getMessage());
+                    Log::warning('Failed to send phase progression rejection notification: ' . $e->getMessage());
                 }
             }
 
@@ -165,7 +166,7 @@ class PhaseProgressionController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Phase progression rejection failed: ' . $e->getMessage());
+            Log::error('Phase progression rejection failed: ' . $e->getMessage());
 
             return redirect()
                 ->back()

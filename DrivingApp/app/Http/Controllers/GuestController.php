@@ -459,7 +459,7 @@ class GuestController extends Controller
 
         // Send email
         try {
-            \Mail::raw(
+            Mail::raw(
                 "Your new verification code is: {$otp}\n\nThis code will expire in 15 minutes.",
                 function ($message) use ($student, $school) {
                     $message->to($student->email)

@@ -171,7 +171,7 @@ class StudentController extends Controller
 
         // Delete old profile picture if exists
         if ($student->profile_picture) {
-            \Storage::disk('public')->delete($student->profile_picture);
+            Storage::disk('public')->delete($student->profile_picture);
         }
 
         // Store new profile picture
