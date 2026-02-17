@@ -473,19 +473,19 @@
         .sidebar {
             position: fixed;
             top: 60px;
-            right: -300px;
+            left: -300px;
             width: 300px;
             height: calc(100vh - 60px);
             background: var(--sidebar-bg);
-            transition: right 0.3s ease;
+            transition: left 0.3s ease;
             z-index: 999;
-            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
             overflow-y: auto;
             box-sizing: border-box;
         }
         
         .sidebar.active {
-            right: 0;
+            left: 0;
         }
         
         /* Prevent content shifting - removed duplicate style */
@@ -682,10 +682,10 @@
         
         /* Main Content Styles */
         .main-content {
-            margin-top: 60px;
+            margin-top: 100px;
             padding: 0;
-            transition: none;
-            min-height: calc(100vh - 60px);
+            transition: margin-left 0.3s ease;
+            min-height: calc(100vh - 100px);
             box-sizing: border-box;
             width: 100%;
             max-width: 100%;
@@ -850,11 +850,60 @@
             border: 2px solid var(--modal-border-color);
         }
         
-        /* Only apply sidebar-open margin on desktop */
-        @media (min-width: 1025px) {
+        /* Sidebar-open class only needed on mobile (desktop sidebar is always visible) */
+        @media (max-width: 1024px) {
             .main-content.sidebar-open {
-                margin-right: 300px;
-                transition: margin-right 0.3s ease;
+                /* No content push on mobile - sidebar overlays */
+            }
+        }
+        
+        /* Breadcrumb Navigation */
+        .breadcrumb-bar {
+            position: fixed;
+            top: 60px;
+            left: 0;
+            right: 0;
+            background: #ffffff;
+            padding: 10px 24px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            font-size: 13px;
+            color: #6b7280;
+            min-height: 20px;
+            z-index: 998;
+            transition: left 0.3s ease;
+        }
+        
+        .breadcrumb-bar a {
+            color: #667eea;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        
+        .breadcrumb-bar a:hover {
+            color: #5a3e9a;
+            text-decoration: underline;
+        }
+        
+        .breadcrumb-separator {
+            margin: 0 8px;
+            color: #d1d5db;
+            font-size: 11px;
+        }
+        
+        .breadcrumb-current {
+            color: #1f2937;
+            font-weight: 600;
+        }
+        
+        @media (max-width: 600px) {
+            .breadcrumb-bar {
+                padding: 8px 14px;
+                font-size: 12px;
+            }
+            .breadcrumb-separator {
+                margin: 0 5px;
             }
         }
         
@@ -921,7 +970,7 @@
             
             .sidebar {
                 width: 280px;
-                right: -280px;
+                left: -280px;
             }
             
             .main-content {
@@ -961,7 +1010,7 @@
             
             .sidebar {
                 width: 280px;
-                right: -280px;
+                left: -280px;
                 top: 55px;
                 height: calc(100vh - 55px);
             }
@@ -1037,7 +1086,7 @@
             
             .sidebar {
                 width: 270px;
-                right: -270px;
+                left: -270px;
                 top: 50px;
                 height: calc(100vh - 50px);
             }
@@ -1057,14 +1106,18 @@
             }
             
             .main-content {
-                margin-top: 50px;
-                min-height: calc(100vh - 50px);
+                margin-top: 90px;
+                min-height: calc(100vh - 90px);
                 padding: 14px;
                 width: 100%;
                 max-width: 100%;
                 box-sizing: border-box;
                 margin-left: 0;
                 margin-right: 0;
+            }
+            
+            .breadcrumb-bar {
+                top: 50px;
             }
             
             .dropdown-menu {
@@ -1115,7 +1168,7 @@
                 top: 48px;
                 height: calc(100vh - 48px);
                 width: 260px;
-                right: -260px;
+                left: -260px;
             }
             
             .sidebar-header {
@@ -1133,14 +1186,19 @@
             }
             
             .main-content {
-                margin-top: 48px;
-                min-height: calc(100vh - 48px);
+                margin-top: 88px;
+                min-height: calc(100vh - 88px);
                 padding: 12px;
                 width: 100%;
                 max-width: 100%;
                 box-sizing: border-box;
                 margin-left: 0;
                 margin-right: 0;
+            }
+            
+            .breadcrumb-bar {
+                top: 48px;
+            }
             }
             
             .dropdown-menu {
@@ -1195,7 +1253,7 @@
                 top: 45px;
                 height: calc(100vh - 45px);
                 width: 240px;
-                right: -240px;
+                left: -240px;
             }
             
             .sidebar-header {
@@ -1213,14 +1271,18 @@
             }
             
             .main-content {
-                margin-top: 45px;
-                min-height: calc(100vh - 45px);
+                margin-top: 85px;
+                min-height: calc(100vh - 85px);
                 padding: 10px;
                 width: 100%;
                 max-width: 100%;
                 box-sizing: border-box;
                 margin-left: 0;
                 margin-right: 0;
+            }
+            
+            .breadcrumb-bar {
+                top: 45px;
             }
             
             .dropdown-menu {
@@ -1290,7 +1352,7 @@
                 top: 42px;
                 height: calc(100vh - 42px);
                 width: 220px;
-                right: -220px;
+                left: -220px;
             }
             
             .sidebar-header {
@@ -1308,9 +1370,13 @@
             }
             
             .main-content {
-                margin-top: 42px;
-                min-height: calc(100vh - 42px);
+                margin-top: 82px;
+                min-height: calc(100vh - 82px);
                 padding: 8px;
+            }
+            
+            .breadcrumb-bar {
+                top: 42px;
             }
             
             .dropdown-menu {
@@ -1607,6 +1673,13 @@
         <div class="loading-spinner"></div>
     </div>
     
+    <!-- Breadcrumb Navigation -->
+    <div class="breadcrumb-bar" id="breadcrumbBar">
+        <span id="breadcrumbContent">
+            <a href="#" onclick="loadContent(getDashboardUrl()); return false;">Dashboard</a>
+        </span>
+    </div>
+    
     <!-- Main Content -->
     <main class="main-content" id="mainContent">
         @yield('content')
@@ -1660,23 +1733,19 @@
             if (sidebarOpen) {
                 sidebar.classList.add('active');
                 overlay.classList.add('active');
-                mainContent.classList.add('sidebar-open');
             } else {
                 sidebar.classList.remove('active');
                 overlay.classList.remove('active');
-                mainContent.classList.remove('sidebar-open');
             }
         }
         
         function closeSidebar() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('sidebarOverlay');
-            const mainContent = document.getElementById('mainContent');
             
             sidebarOpen = false;
             sidebar.classList.remove('active');
             overlay.classList.remove('active');
-            mainContent.classList.remove('sidebar-open');
         }
         
         function toggleProfileDropdown() {
@@ -1863,7 +1932,144 @@
         // Load initial badge count on page load
         document.addEventListener('DOMContentLoaded', function() {
             setTimeout(fetchNotifications, 1000);
+            updateBreadcrumbs(window.location.pathname);
         });
+        
+        // ========================================
+        // Breadcrumb Navigation System
+        // ========================================
+        const breadcrumbMap = {
+            // Admin pages
+            'admin': 'Dashboard',
+            'admin/dashboard': 'Dashboard',
+            'admin/user-management': 'User Management',
+            'admin/removal-requests': 'Removal Requests',
+            'admin/courses': 'Courses',
+            'admin/enrollments': 'Enrollments',
+            'admin/theoretical': 'Theoretical Training',
+            'admin/schedules': 'Schedules',
+            'admin/bookings': 'Student Sessions',
+            'admin/payments': 'Payments',
+            'admin/reports': 'Reports & Analytics',
+            'admin/settings': 'Settings',
+            // Instructor pages
+            'instructor': 'Dashboard',
+            'instructor/dashboard': 'Dashboard',
+            'instructor/my-schedule': 'My Schedule',
+            'instructor/students': 'My Students',
+            'instructor/sessions': 'Session Logging',
+            'instructor/grades': 'Grades',
+            'instructor/theoretical': 'Theoretical Training',
+            // Student pages
+            'student': 'Dashboard',
+            'student/dashboard': 'Dashboard',
+            'student/my-course': 'Enrolled Course',
+            'student/progress': 'My Progress',
+            'student/courses': 'Browse Courses',
+            'student/schedule': 'My Schedule',
+            'student/payments': 'My Payments',
+            // Guest pages
+            'guest': 'Dashboard',
+            'guest/dashboard': 'Dashboard',
+            'guest/courses': 'Browse Courses',
+            'guest/enrollment-requests': 'My Enrollments',
+        };
+        
+        function getDashboardUrl() {
+            @if(Auth::guard('admin')->check())
+                return @json($schoolRoute('admin.dashboard'));
+            @elseif(Auth::guard('instructor')->check())
+                return @json($schoolRoute('instructor.dashboard'));
+            @elseif(Auth::guard('student')->check())
+                @php $currentStudent = Auth::guard('student')->user(); @endphp
+                @if($currentStudent && $currentStudent->role === 'guest')
+                    return @json($schoolRoute('guest.dashboard'));
+                @else
+                    return @json($schoolRoute('student.dashboard'));
+                @endif
+            @else
+                return '/';
+            @endif
+        }
+        
+        function getRoleLabel() {
+            @if(Auth::guard('admin')->check())
+                return 'Admin';
+            @elseif(Auth::guard('instructor')->check())
+                return 'Instructor';
+            @elseif(Auth::guard('student')->check())
+                @php $currentStudent = Auth::guard('student')->user(); @endphp
+                @if($currentStudent && $currentStudent->role === 'guest')
+                    return 'Guest';
+                @else
+                    return 'Student';
+                @endif
+            @else
+                return '';
+            @endif
+        }
+        
+        function updateBreadcrumbs(url) {
+            const container = document.getElementById('breadcrumbContent');
+            if (!container) return;
+            
+            // Extract path segments after school slug
+            const parts = url.replace(/^\//, '').split('/');
+            // Pattern: school-slug/role/page or school-slug/role/page/subpage
+            if (parts.length < 2) {
+                container.innerHTML = '<span class="breadcrumb-current">Dashboard</span>';
+                return;
+            }
+            
+            const schoolSlug = parts[0];
+            const rolePath = parts.slice(1).join('/');
+            const dashUrl = getDashboardUrl();
+            const roleLabel = getRoleLabel();
+            
+            // Check if this is a dashboard page
+            const isDashboard = rolePath.match(/^(admin|instructor|student|guest)(\/dashboard)?$/);
+            if (isDashboard) {
+                container.innerHTML = '<span class="breadcrumb-current">' + roleLabel + ' Dashboard</span>';
+                return;
+            }
+            
+            // Build breadcrumb trail
+            let html = '<a href="#" onclick="loadContent(\'' + dashUrl + '\'); return false;">Dashboard</a>';
+            
+            // Find the best matching breadcrumb
+            let matched = false;
+            const keys = Object.keys(breadcrumbMap).sort((a, b) => b.length - a.length);
+            for (const key of keys) {
+                if (rolePath === key || rolePath.startsWith(key + '/')) {
+                    html += '<span class="breadcrumb-separator">›</span>';
+                    
+                    // If there's a deeper path, make the parent clickable
+                    if (rolePath !== key && rolePath.startsWith(key + '/')) {
+                        html += '<a href="#" onclick="loadContent(\'/' + schoolSlug + '/' + key + '\'); return false;">' + breadcrumbMap[key] + '</a>';
+                        // Add the subpage
+                        const subPath = rolePath.slice(key.length + 1);
+                        const subLabel = subPath.split('/').map(s => s.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())).join(' > ');
+                        html += '<span class="breadcrumb-separator">›</span>';
+                        html += '<span class="breadcrumb-current">' + subLabel + '</span>';
+                    } else {
+                        html += '<span class="breadcrumb-current">' + breadcrumbMap[key] + '</span>';
+                    }
+                    matched = true;
+                    break;
+                }
+            }
+            
+            if (!matched) {
+                // Fallback: use the last segment
+                const lastSegment = parts[parts.length - 1]
+                    .replace(/-/g, ' ')
+                    .replace(/\b\w/g, l => l.toUpperCase());
+                html += '<span class="breadcrumb-separator">›</span>';
+                html += '<span class="breadcrumb-current">' + lastSegment + '</span>';
+            }
+            
+            container.innerHTML = html;
+        }
         
         // Function to reinitialize JavaScript for dynamically loaded content
         function reinitializeJavaScript() {
@@ -2608,6 +2814,9 @@
                 
                 // Update active sidebar item
                 updateActiveNavItem(url);
+                
+                // Update breadcrumbs
+                updateBreadcrumbs(url);
                 
                 // Hide loading overlay
                 setTimeout(() => {
