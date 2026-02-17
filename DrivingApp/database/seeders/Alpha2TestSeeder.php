@@ -114,7 +114,7 @@ class Alpha2TestSeeder extends Seeder
                 'primary_color' => '#667eea',
                 'secondary_color' => '#764ba2',
                 'accent_color' => '#f59e0b',
-                'use_gradient_header' => true,
+                'use_gradient_header' => false,
             ]);
         }
 

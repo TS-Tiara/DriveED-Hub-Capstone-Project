@@ -106,6 +106,107 @@
         transition: width 0.5s ease;
     }
 
+    /* Radial Progress Ring */
+    .progress-visual {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 12px;
+    }
+
+    .progress-ring-wrapper {
+        position: relative;
+        flex-shrink: 0;
+    }
+
+    .progress-ring {
+        transform: rotate(-90deg);
+    }
+
+    .progress-ring-bg {
+        fill: none;
+        stroke: #e5e7eb;
+        stroke-width: 8;
+    }
+
+    .progress-ring-fill {
+        fill: none;
+        stroke-width: 8;
+        stroke-linecap: round;
+        transition: stroke-dashoffset 1s ease;
+    }
+
+    .progress-ring-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+    }
+
+    .progress-ring-percent {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #111827;
+        line-height: 1;
+    }
+
+    .progress-ring-label {
+        font-size: 0.6rem;
+        color: #9ca3af;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .progress-stats {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .progress-stat {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 6px 0;
+        border-bottom: 1px solid #f3f4f6;
+        font-size: 0.8rem;
+    }
+
+    .progress-stat:last-child {
+        border-bottom: none;
+    }
+
+    .progress-stat-label {
+        color: #6b7280;
+    }
+
+    .progress-stat-value {
+        font-weight: 600;
+        color: #111827;
+    }
+
+    .stat-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+
+    .stat-badge.passed {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .stat-badge.in-progress {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
     /* Quick Actions Section */
     .quick-actions-section {
         background: {{ $primaryColor }};
@@ -439,24 +540,49 @@
 
     <!-- Desktop: 3 column layout -->
     <div class="dashboard-cards">
+        @php
+            $ringRadius = 40;
+            $ringCircumference = 2 * 3.14159 * $ringRadius;
+            $ringOffset = $ringCircumference - ($progressPercentage / 100) * $ringCircumference;
+            $ringColor = $progressPercentage >= 100 ? '#10b981' : ($progressPercentage >= 50 ? $primaryColor : '#f59e0b');
+        @endphp
         <div class="info-card">
             <div class="card-header">Learning Progress</div>
             <div class="card-body">
-                <div class="info-row">
-                    <span class="info-label">Sessions Completed</span>
-                    <span class="info-value">{{ $sessionsCompleted }} of {{ $totalScheduledSessions > 0 ? $totalScheduledSessions : '—' }}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Hours Completed</span>
-                    <span class="info-value">{{ $hoursCompleted }} / {{ $requiredHours }} hrs</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Progress</span>
-                    <span class="info-value">{{ $progressPercentage }}%</span>
+                <div class="progress-visual">
+                    <div class="progress-ring-wrapper">
+                        <svg class="progress-ring" width="96" height="96" viewBox="0 0 96 96">
+                            <circle class="progress-ring-bg" cx="48" cy="48" r="{{ $ringRadius }}"></circle>
+                            <circle class="progress-ring-fill" cx="48" cy="48" r="{{ $ringRadius }}"
+                                stroke="{{ $ringColor }}"
+                                stroke-dasharray="{{ $ringCircumference }}"
+                                stroke-dashoffset="{{ $ringOffset }}"></circle>
+                        </svg>
+                        <div class="progress-ring-text">
+                            <div class="progress-ring-percent">{{ $progressPercentage }}%</div>
+                            <div class="progress-ring-label">Complete</div>
+                        </div>
+                    </div>
+                    <div class="progress-stats">
+                        <div class="progress-stat">
+                            <span class="progress-stat-label">Sessions</span>
+                            <span class="progress-stat-value">{{ $sessionsCompleted }}/{{ $totalScheduledSessions > 0 ? $totalScheduledSessions : '—' }}</span>
+                        </div>
+                        <div class="progress-stat">
+                            <span class="progress-stat-label">Hours</span>
+                            <span class="progress-stat-value">{{ $hoursCompleted }}/{{ $requiredHours }} hrs</span>
+                        </div>
+                        <div class="progress-stat">
+                            <span class="progress-stat-label">TDC Status</span>
+                            <span class="stat-badge {{ $hasPassedTheoretical ? 'passed' : 'in-progress' }}">
+                                {{ $hasPassedTheoretical ? 'Passed' : 'In Progress' }}
+                            </span>
+                        </div>
+                    </div>
                 </div>
                 <div class="progress-bar-wrapper">
                     <div class="progress-bar-container">
-                        <div class="progress-bar-fill" style="width: {{ $progressPercentage }}%"></div>
+                        <div class="progress-bar-fill" style="width: {{ $progressPercentage }}%; background: {{ $ringColor }}"></div>
                     </div>
                 </div>
             </div>
@@ -579,21 +705,32 @@
         <div class="info-card">
             <div class="card-header">Learning Progress</div>
             <div class="card-body">
-                <div class="info-row">
-                    <span class="info-label">Sessions Completed</span>
-                    <span class="info-value">{{ $sessionsCompleted }} of {{ $totalScheduledSessions > 0 ? $totalScheduledSessions : '—' }}</span>
+                <div style="text-align: center; margin-bottom: 8px;">
+                    <div class="progress-ring-wrapper" style="display: inline-block;">
+                        <svg class="progress-ring" width="80" height="80" viewBox="0 0 96 96">
+                            <circle class="progress-ring-bg" cx="48" cy="48" r="{{ $ringRadius }}"></circle>
+                            <circle class="progress-ring-fill" cx="48" cy="48" r="{{ $ringRadius }}"
+                                stroke="{{ $ringColor }}"
+                                stroke-dasharray="{{ $ringCircumference }}"
+                                stroke-dashoffset="{{ $ringOffset }}"></circle>
+                        </svg>
+                        <div class="progress-ring-text">
+                            <div class="progress-ring-percent" style="font-size: 1rem;">{{ $progressPercentage }}%</div>
+                            <div class="progress-ring-label">Done</div>
+                        </div>
+                    </div>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Hours Completed</span>
-                    <span class="info-value">{{ $hoursCompleted }} / {{ $requiredHours }} hrs</span>
+                    <span class="info-label">Sessions</span>
+                    <span class="info-value">{{ $sessionsCompleted }}/{{ $totalScheduledSessions > 0 ? $totalScheduledSessions : '—' }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Progress</span>
-                    <span class="info-value">{{ $progressPercentage }}%</span>
+                    <span class="info-label">Hours</span>
+                    <span class="info-value">{{ $hoursCompleted }}/{{ $requiredHours }} hrs</span>
                 </div>
                 <div class="progress-bar-wrapper">
                     <div class="progress-bar-container">
-                        <div class="progress-bar-fill" style="width: {{ $progressPercentage }}%"></div>
+                        <div class="progress-bar-fill" style="width: {{ $progressPercentage }}%; background: {{ $ringColor }}"></div>
                     </div>
                 </div>
             </div>

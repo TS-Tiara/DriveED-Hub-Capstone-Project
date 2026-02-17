@@ -101,9 +101,15 @@ class GuestController extends Controller
         $hasEnrollment = $guest->enrollmentRequests()->whereIn('status', ['pending', 'approved'])->exists();
         $pendingRequest = $guest->enrollmentRequests()->where('status', 'pending')->first();
         $approvedEnrollment = $guest->enrollmentRequests()->where('status', 'approved')->first();
+        $rejectedRequest = $guest->enrollmentRequests()->where('status', 'rejected')->latest()->first();
+
+        // Onboarding step tracking
+        $hasSubmittedRequest = $guest->enrollmentRequests()->exists();
+        $hasUploadedLicense = !$guest->hasNoLicense();
 
         return view('school.guest.dashboard', compact(
-            'school', 'guest', 'courses', 'hasEnrollment', 'pendingRequest', 'approvedEnrollment'
+            'school', 'guest', 'courses', 'hasEnrollment', 'pendingRequest', 'approvedEnrollment',
+            'rejectedRequest', 'hasSubmittedRequest', 'hasUploadedLicense'
         ));
     }
 

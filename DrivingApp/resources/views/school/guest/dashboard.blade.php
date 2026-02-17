@@ -316,6 +316,255 @@
         display: block;
         margin-bottom: 4px;
     }
+
+    /* Getting Started Checklist */
+    .onboarding-section {
+        background: white;
+        border-radius: 12px;
+        padding: 32px;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .onboarding-header {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 8px;
+    }
+
+    .onboarding-header h2 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #111827;
+        margin: 0;
+    }
+
+    .onboarding-subtitle {
+        color: #6b7280;
+        font-size: 0.95rem;
+        margin-bottom: 28px;
+        padding-left: 42px;
+    }
+
+    .onboarding-progress {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 28px;
+        padding: 12px 16px;
+        background: linear-gradient(135deg, {{ $primaryColor }}08 0%, {{ $primaryColor }}15 100%);
+        border-radius: 10px;
+    }
+
+    .onboarding-progress-bar {
+        flex: 1;
+        height: 8px;
+        background: #e5e7eb;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .onboarding-progress-fill {
+        height: 100%;
+        background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
+        border-radius: 4px;
+        transition: width 0.6s ease;
+    }
+
+    .onboarding-progress-text {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: {{ $primaryColor }};
+        white-space: nowrap;
+    }
+
+    .onboarding-steps {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .onboarding-step {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        padding: 18px 0;
+        border-bottom: 1px solid #f3f4f6;
+        position: relative;
+    }
+
+    .onboarding-step:last-child {
+        border-bottom: none;
+    }
+
+    .step-indicator {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-weight: 700;
+        font-size: 0.85rem;
+        transition: all 0.3s ease;
+    }
+
+    .step-indicator.completed {
+        background: #10b981;
+        color: white;
+    }
+
+    .step-indicator.current {
+        background: {{ $primaryColor }};
+        color: white;
+        box-shadow: 0 0 0 4px {{ $primaryColor }}30;
+    }
+
+    .step-indicator.upcoming {
+        background: #e5e7eb;
+        color: #9ca3af;
+    }
+
+    .step-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .step-title {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+
+    .step-title.completed {
+        color: #065f46;
+    }
+
+    .step-title.current {
+        color: #111827;
+    }
+
+    .step-title.upcoming {
+        color: #9ca3af;
+    }
+
+    .step-description {
+        font-size: 0.875rem;
+        color: #6b7280;
+        line-height: 1.5;
+    }
+
+    .step-action {
+        flex-shrink: 0;
+        align-self: center;
+    }
+
+    .step-action .btn-step {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 18px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        border-radius: 8px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-step.primary {
+        background: {{ $primaryColor }};
+        color: white;
+    }
+
+    .btn-step.primary:hover {
+        filter: brightness(1.1);
+        transform: translateY(-1px);
+        color: white;
+    }
+
+    .btn-step.outline {
+        background: white;
+        color: {{ $primaryColor }};
+        border: 2px solid {{ $primaryColor }};
+    }
+
+    .btn-step.outline:hover {
+        background: {{ $primaryColor }};
+        color: white;
+    }
+
+    .step-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .step-badge.done {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .step-badge.waiting {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .step-badge.rejected-badge {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    /* Connector line between steps */
+    .onboarding-step::before {
+        content: '';
+        position: absolute;
+        left: 17px;
+        top: 54px;
+        bottom: -18px;
+        width: 2px;
+        background: #e5e7eb;
+    }
+
+    .onboarding-step:last-child::before {
+        display: none;
+    }
+
+    .onboarding-step.step-completed::before {
+        background: #10b981;
+    }
+
+    @media (max-width: 640px) {
+        .onboarding-section {
+            padding: 20px;
+        }
+
+        .onboarding-subtitle {
+            padding-left: 0;
+        }
+
+        .onboarding-step {
+            flex-wrap: wrap;
+        }
+
+        .step-action {
+            width: 100%;
+            padding-left: 52px;
+            margin-top: 8px;
+        }
+
+        .step-action .btn-step {
+            width: 100%;
+            justify-content: center;
+        }
+    }
 </style>
 
 <div class="guest-dashboard">
@@ -325,46 +574,201 @@
         <p>Discover driving courses and start your journey with {{ $school->name }}</p>
     </div>
     
-    <!-- Enrollment Status -->
-    <div class="enrollment-status">
-        @if($approvedEnrollment)
-            <div class="status-message enrolled">
-                <div class="status-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 32px; height: 32px;">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+    <!-- Getting Started Checklist -->
+    @php
+        $step1Done = true; // Registration is done (they're on this page)
+        $step2Done = $hasSubmittedRequest ?? false;
+        $step3Done = $hasUploadedLicense ?? false;
+        $step4Done = ($approvedEnrollment ?? false) ? true : false;
+        $completedSteps = ($step1Done ? 1 : 0) + ($step2Done ? 1 : 0) + ($step3Done ? 1 : 0) + ($step4Done ? 1 : 0);
+        $progressPercent = round(($completedSteps / 4) * 100);
+        
+        // Determine current step
+        if (!$step2Done && !$step3Done) {
+            $currentStep = 2; // Browse & enroll
+        } elseif ($step2Done && !$step3Done) {
+            $currentStep = 3; // Upload license
+        } elseif (!$step4Done) {
+            $currentStep = 4; // Waiting for approval
+        } else {
+            $currentStep = 5; // All done
+        }
+    @endphp
+
+    @if(!$step4Done)
+    <div class="onboarding-section">
+        <div class="onboarding-header">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="{{ $primaryColor }}" style="width: 28px; height: 28px;">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+            </svg>
+            <h2>Getting Started</h2>
+        </div>
+        <p class="onboarding-subtitle">Follow these steps to begin your driving journey with {{ $school->name }}</p>
+
+        <div class="onboarding-progress">
+            <div class="onboarding-progress-bar">
+                <div class="onboarding-progress-fill" style="width: {{ $progressPercent }}%"></div>
+            </div>
+            <span class="onboarding-progress-text">{{ $completedSteps }} of 4 complete</span>
+        </div>
+
+        <div class="onboarding-steps">
+            <!-- Step 1: Create Account -->
+            <div class="onboarding-step step-completed">
+                <div class="step-indicator completed">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 18px; height: 18px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                 </div>
-                <div>
-                    <strong>You're enrolled!</strong> You are enrolled in <strong>{{ $approvedEnrollment->course->title }}</strong>.
+                <div class="step-content">
+                    <div class="step-title completed">Create Your Account</div>
+                    <div class="step-description">You've successfully registered. Welcome aboard!</div>
+                </div>
+                <div class="step-action">
+                    <span class="step-badge done">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 12px; height: 12px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                        Done
+                    </span>
                 </div>
             </div>
-        @elseif($pendingRequest)
-            <div class="status-message pending">
-                <div class="status-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 32px; height: 32px;">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+
+            <!-- Step 2: Browse & Enroll -->
+            <div class="onboarding-step {{ $step2Done ? 'step-completed' : '' }}">
+                @if($step2Done)
+                    <div class="step-indicator completed">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 18px; height: 18px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                    </div>
+                @elseif($currentStep == 2)
+                    <div class="step-indicator current">2</div>
+                @else
+                    <div class="step-indicator upcoming">2</div>
+                @endif
+                <div class="step-content">
+                    <div class="step-title {{ $step2Done ? 'completed' : ($currentStep == 2 ? 'current' : 'upcoming') }}">Browse Courses & Enroll</div>
+                    <div class="step-description">
+                        @if($step2Done && $pendingRequest)
+                            You submitted an enrollment request for <strong>{{ $pendingRequest->course->title }}</strong>.
+                        @elseif($step2Done && $rejectedRequest && !$pendingRequest)
+                            Your previous request was not approved. Try enrolling in another course.
+                        @else
+                            Explore our TDC & PDC courses and submit an enrollment request.
+                        @endif
+                    </div>
                 </div>
-                <div>
-                    <strong>Request pending.</strong> Your enrollment request for <strong>{{ $pendingRequest->course->title }}</strong> is under review.
+                <div class="step-action">
+                    @if($step2Done && $pendingRequest)
+                        <span class="step-badge waiting">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 12px; height: 12px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            Under Review
+                        </span>
+                    @elseif($step2Done && $rejectedRequest && !$pendingRequest)
+                        <a href="{{ route('schools.guest.courses', $school) }}" class="btn-step primary">Try Again</a>
+                    @elseif($currentStep == 2)
+                        <a href="{{ route('schools.guest.courses', $school) }}" class="btn-step primary">
+                            Browse Courses
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 14px; height: 14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                        </a>
+                    @else
+                        <span class="step-badge done">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 12px; height: 12px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                            Done
+                        </span>
+                    @endif
                 </div>
             </div>
-        @else
-            <div class="status-message not-enrolled">
-                <div class="status-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 32px; height: 32px;">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
+
+            <!-- Step 3: Upload License (Optional for TDC, Required for PDC) -->
+            <div class="onboarding-step {{ $step3Done ? 'step-completed' : '' }}">
+                @if($step3Done)
+                    <div class="step-indicator completed">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 18px; height: 18px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                    </div>
+                @elseif($currentStep == 3)
+                    <div class="step-indicator current">3</div>
+                @else
+                    <div class="step-indicator upcoming">3</div>
+                @endif
+                <div class="step-content">
+                    <div class="step-title {{ $step3Done ? 'completed' : ($currentStep == 3 ? 'current' : 'upcoming') }}">Upload Student Driver's License</div>
+                    <div class="step-description">
+                        @if($guest->hasVerifiedLicense())
+                            Your license has been verified. You're eligible for PDC courses!
+                        @elseif($guest->isLicensePending())
+                            Your license is being reviewed by an administrator.
+                        @elseif($guest->isLicenseRejected())
+                            Your license was rejected. Please re-upload a valid license.
+                        @else
+                            Required for Practical Driving Courses (PDC). Optional if you're only taking TDC.
+                        @endif
+                    </div>
                 </div>
-                <div>
-                    <strong>Not enrolled yet.</strong> Browse our courses and submit an enrollment request to get started!
+                <div class="step-action">
+                    @if($guest->hasVerifiedLicense())
+                        <span class="step-badge done">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 12px; height: 12px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                            Verified
+                        </span>
+                    @elseif($guest->isLicensePending())
+                        <span class="step-badge waiting">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 12px; height: 12px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            Pending
+                        </span>
+                    @elseif($guest->isLicenseRejected())
+                        <span class="step-badge rejected-badge">Rejected</span>
+                    @elseif($currentStep == 3)
+                        <a href="#license-section" class="btn-step outline">Upload License</a>
+                    @endif
                 </div>
             </div>
-        @endif
+
+            <!-- Step 4: Get Approved -->
+            <div class="onboarding-step">
+                @if($step4Done)
+                    <div class="step-indicator completed">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 18px; height: 18px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                    </div>
+                @elseif($currentStep == 4)
+                    <div class="step-indicator current">4</div>
+                @else
+                    <div class="step-indicator upcoming">4</div>
+                @endif
+                <div class="step-content">
+                    <div class="step-title {{ $step4Done ? 'completed' : ($currentStep == 4 ? 'current' : 'upcoming') }}">Get Approved & Start Learning</div>
+                    <div class="step-description">
+                        @if($currentStep == 4 && $pendingRequest)
+                            An admin is reviewing your request. You'll become a full student once approved!
+                        @else
+                            Once your enrollment is approved, you'll get full access to schedules, progress tracking, and lessons.
+                        @endif
+                    </div>
+                </div>
+                <div class="step-action">
+                    @if($pendingRequest && $currentStep == 4)
+                        <span class="step-badge waiting">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 12px; height: 12px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            Awaiting Approval
+                        </span>
+                    @endif
+                </div>
+            </div>
+        </div>
     </div>
+    @else
+    <!-- Enrollment Approved — show success banner -->
+    <div class="enrollment-status">
+        <div class="status-message enrolled">
+            <div class="status-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 32px; height: 32px;">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <div>
+                <strong>You're enrolled!</strong> You are enrolled in <strong>{{ $approvedEnrollment->course->title }}</strong>.
+            </div>
+        </div>
+    </div>
+    @endif
     
     <!-- Student Driver's License Section -->
-    <div class="license-section">
+    <div class="license-section" id="license-section">
         <h3>
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px; vertical-align: middle; margin-right: 8px;">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0" />
