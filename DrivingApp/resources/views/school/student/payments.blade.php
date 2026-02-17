@@ -6,6 +6,8 @@
 @php
     $schoolName = $school->name ?? 'Driving School';
     $settings = $school->schoolSetting;
+    $primaryColor = $settings->primary_color ?? '#667eea';
+    $secondaryColor = $settings->secondary_color ?? '#764ba2';
 @endphp
 
 <style>
@@ -18,7 +20,7 @@
 .page-header {
     margin-bottom: 30px;
     padding-bottom: 15px;
-    border-bottom: 4px solid {{ $settings->primary_color ?? '#667eea' }};
+    border-bottom: 4px solid {{ $primaryColor }};
 }
 
 .page-title {
@@ -29,10 +31,10 @@
 }
 
 .total-spent {
-    @if($settings->use_gradient_header ?? false)
-        background: linear-gradient(135deg, {{ $settings->primary_color ?? '#667eea' }} 0%, {{ $settings->secondary_color ?? '#764ba2' }} 100%);
+    @if($settings->use_gradient_header ?? true)
+        background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
     @else
-        background: {{ $settings->primary_color ?? '#667eea' }};
+        background: {{ $primaryColor }};
     @endif
     color: white;
     border-radius: 12px;
@@ -92,7 +94,7 @@ td {
     padding: 15px;
     margin-bottom: 12px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-    border-left: 4px solid {{ $settings->primary_color ?? '#667eea' }};
+    border-left: 4px solid {{ $primaryColor }};
 }
 
 .payment-card-row {

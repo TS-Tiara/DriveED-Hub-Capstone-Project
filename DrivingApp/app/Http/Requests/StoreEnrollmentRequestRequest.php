@@ -23,21 +23,15 @@ class StoreEnrollmentRequestRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'first_name' => ['required', 'string', 'max:255'],
-            'last_name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255'],
-            'phone' => ['required', 'string', 'max:20'],
-            'address' => ['nullable', 'string', 'max:500'],
-            'date_of_birth' => ['required', 'date', 'before:today'],
-            'course_id' => ['required', 'exists:courses,id'],
-            'requested_license_type' => ['required', 'in:non_professional,professional'],
-            'experience_level' => ['required', 'in:new_driver,experienced'],
-            'credentials_file' => [
+            'experience_level' => ['required', 'in:new_driver,experienced_driver'],
+            'package_id' => ['nullable', 'exists:course_packages,id'],
+            'credential_file' => [
                 'nullable',
                 'file',
                 'mimes:pdf,jpg,jpeg,png',
                 'max:5120' // 5MB in kilobytes
             ],
+            'notes' => ['nullable', 'string', 'max:1000'],
         ];
     }
 
@@ -49,21 +43,12 @@ class StoreEnrollmentRequestRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'first_name.required' => 'Please enter your first name.',
-            'last_name.required' => 'Please enter your last name.',
-            'email.required' => 'Please enter your email address.',
-            'email.email' => 'Please enter a valid email address.',
-            'phone.required' => 'Please enter your phone number.',
-            'date_of_birth.required' => 'Please enter your date of birth.',
-            'date_of_birth.before' => 'Date of birth must be in the past.',
-            'course_id.required' => 'Please select a course.',
-            'course_id.exists' => 'The selected course does not exist.',
-            'requested_license_type.required' => 'Please select a license type.',
-            'requested_license_type.in' => 'Invalid license type selected.',
             'experience_level.required' => 'Please indicate your experience level.',
             'experience_level.in' => 'Invalid experience level selected.',
-            'credentials_file.mimes' => 'Credentials must be a PDF, JPG, or PNG file.',
-            'credentials_file.max' => 'Credentials file must not exceed 5MB.',
+            'package_id.exists' => 'The selected package does not exist.',
+            'credential_file.mimes' => 'Credentials must be a PDF, JPG, or PNG file.',
+            'credential_file.max' => 'Credentials file must not exceed 5MB.',
+            'notes.max' => 'Notes must not exceed 1000 characters.',
         ];
     }
 
@@ -76,11 +61,15 @@ class StoreEnrollmentRequestRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
+            // Get course from route parameter (not from form field)
+            $course = $this->route('course');
+            $courseId = $course instanceof \App\Models\Course ? $course->id : $course;
+
             // Validate enrollment request using our custom validator
             $validation = EnrollmentValidator::validateEnrollmentRequest([
-                'course_id' => $this->course_id,
+                'course_id' => $courseId,
                 'experience_level' => $this->experience_level,
-                'credentials_file_path' => $this->hasFile('credentials_file') ? 'present' : null,
+                'credentials_file_path' => $this->hasFile('credential_file') ? 'present' : null,
             ]);
 
             if (!$validation['valid']) {
@@ -88,19 +77,19 @@ class StoreEnrollmentRequestRequest extends FormRequest
             }
 
             // If file is present, validate it
-            if ($this->hasFile('credentials_file')) {
-                $fileValidation = EnrollmentValidator::validateCredentialFile($this->file('credentials_file'));
+            if ($this->hasFile('credential_file')) {
+                $fileValidation = EnrollmentValidator::validateCredentialFile($this->file('credential_file'));
                 
                 if (!$fileValidation['valid']) {
-                    $validator->errors()->add('credentials_file', $fileValidation['message']);
+                    $validator->errors()->add('credential_file', $fileValidation['message']);
                 }
             }
 
             // Require credentials for experienced drivers applying to practical courses
-            if ($this->experience_level === 'experienced' && !$this->hasFile('credentials_file')) {
-                $course = \App\Models\Course::find($this->course_id);
-                if ($course && $course->isPractical()) {
-                    $validator->errors()->add('credentials_file', 'Experienced drivers must upload proof of theoretical completion when applying for practical courses.');
+            if ($this->experience_level === 'experienced_driver' && !$this->hasFile('credential_file')) {
+                $courseModel = $course instanceof \App\Models\Course ? $course : \App\Models\Course::find($courseId);
+                if ($courseModel && $courseModel->isPractical()) {
+                    $validator->errors()->add('credential_file', 'Experienced drivers must upload proof of theoretical completion when applying for practical courses.');
                 }
             }
         });

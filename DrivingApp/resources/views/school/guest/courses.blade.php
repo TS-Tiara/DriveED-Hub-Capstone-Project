@@ -1,30 +1,30 @@
-@extends($isAjax ?? false ? 'layouts.ajax' : 'layouts.app')
+﻿@extends($isAjax ?? false ? 'layouts.ajax' : 'layouts.app')
 
 @section('title', 'Browse Courses')
 
 @section('content')
-<?php
+@php
     $school = $school ?? $currentSchool ?? null;
     $settings = $school?->schoolSetting;
-    
-    $primaryColor = $settings?->primary_color ?? '#0d6efd';
-    $secondaryColor = $settings?->secondary_color ?? '#6c757d';
+
+    $primaryColor = $settings?->primary_color ?? '#667eea';
+    $secondaryColor = $settings?->secondary_color ?? '#764ba2';
     $accentColor = $settings?->accent_color ?? '#8b5cf6';
-    
+
     // Calculate RGB values for transparency effects
     $primaryRgb = sscanf($primaryColor, "#%02x%02x%02x");
-?>
+@endphp
 
 <style>
     .courses-container {
         padding: 20px;
-        max-width: 1200px;
+        max-width: 1400px;
         margin: 0 auto;
     }
     
     .courses-header {
         margin-bottom: 20px;
-        border-bottom: 4px solid <?php echo $primaryColor; ?>;
+        border-bottom: 4px solid {{ $primaryColor }};
         padding-bottom: 15px;
     }
     
@@ -110,7 +110,7 @@
     
     .course-banner {
         height: 160px;
-        background: linear-gradient(135deg, <?php echo $primaryColor; ?> 0%, <?php echo $secondaryColor; ?> 100%);
+        background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -207,7 +207,7 @@
         transform: translateY(-50%);
         width: 14px;
         height: 14px;
-        background: <?php echo $primaryColor; ?>;
+        background: {{ $primaryColor }};
         border-radius: 50%;
     }
     
@@ -310,13 +310,13 @@
     
     .package-price {
         font-weight: 700;
-        color: <?php echo $primaryColor; ?>;
+        color: {{ $primaryColor }};
         font-size: 1rem;
     }
     
     .more-packages {
         text-align: center;
-        color: <?php echo $primaryColor; ?>;
+        color: {{ $primaryColor }};
         font-weight: 600;
         font-size: 0.8rem;
         padding-top: 6px;
@@ -325,7 +325,7 @@
     .btn-enroll {
         width: 100%;
         padding: 12px;
-        background: <?php echo $primaryColor; ?>;
+        background: {{ $primaryColor }};
         color: white;
         border: none;
         border-radius: 8px;
@@ -452,7 +452,7 @@
     .modal-header {
         padding: 20px 25px;
         border-bottom: 2px solid #e5e7eb;
-        background: <?php echo $primaryColor; ?>;
+        background: {{ $primaryColor }};
         color: white;
         border-radius: 12px 12px 0 0;
         display: flex;
@@ -489,7 +489,7 @@
     }
     
     .btn-close::before {
-        content: '×';
+        content: 'Ã—';
     }
     
     .modal-body {
@@ -552,8 +552,8 @@
     .form-select:focus,
     .form-control:focus {
         outline: none;
-        border-color: <?php echo $primaryColor; ?>;
-        box-shadow: 0 0 0 3px rgba(<?php echo implode(',', $primaryRgb); ?>, 0.1);
+        border-color: {{ $primaryColor }};
+        box-shadow: 0 0 0 3px rgba({{ implode(',', $primaryRgb) }}, 0.1);
     }
     
     .form-control[type="file"] {
@@ -602,7 +602,7 @@
     }
     
     .bg-primary {
-        background: <?php echo $primaryColor; ?>;
+        background: {{ $primaryColor }};
         color: white;
     }
     
@@ -639,14 +639,14 @@
     }
     
     .btn-primary {
-        background: <?php echo $primaryColor; ?>;
+        background: {{ $primaryColor }};
         color: white;
     }
     
     .btn-primary:hover {
         opacity: 0.9;
         transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(<?php echo implode(',', $primaryRgb); ?>, 0.3);
+        box-shadow: 0 4px 12px rgba({{ implode(',', $primaryRgb) }}, 0.3);
     }
     
     .btn-secondary {
@@ -667,28 +667,28 @@
 
     @if(session('success'))
         <div class="alert alert-success">
-            <span>✓ {{ session('success') }}</span>
+            <span>âœ“ {{ session('success') }}</span>
             <button class="alert-close" onclick="this.parentElement.remove()">&times;</button>
         </div>
     @endif
     
     @if(session('error'))
         <div class="alert alert-error">
-            <span>✕ {{ session('error') }}</span>
+            <span>âœ• {{ session('error') }}</span>
             <button class="alert-close" onclick="this.parentElement.remove()">&times;</button>
         </div>
     @endif
     
     @if(session('warning'))
         <div class="alert alert-warning">
-            <span>⚠ {{ session('warning') }}</span>
+            <span>âš  {{ session('warning') }}</span>
             <button class="alert-close" onclick="this.parentElement.remove()">&times;</button>
         </div>
     @endif
     
     @if(session('info'))
         <div class="alert alert-info">
-            <span>ℹ {{ session('info') }}</span>
+            <span>â„¹ {{ session('info') }}</span>
             <button class="alert-close" onclick="this.parentElement.remove()">&times;</button>
         </div>
     @endif
@@ -707,7 +707,7 @@
                 @endif
                 
                 @if($course->is_featured)
-                    <span class="featured-badge">⭐ Featured</span>
+                    <span class="featured-badge">â­ Featured</span>
                 @endif
             </div>
             
@@ -725,14 +725,14 @@
                     <p class="course-description">{{ Str::limit($course->description, 120) }}</p>
                 @endif
                 
-                <?php $features = $course->features; ?>
+                @php $features = $course->features; @endphp
                 @if($features && is_array($features) && count($features) > 0)
                     <ul class="course-features">
                         @foreach(array_slice($features, 0, 3) as $feature)
                             <li>{{ $feature }}</li>
                         @endforeach
                         @if(count($features) > 3)
-                            <li style="color: <?php echo $primaryColor; ?>; font-weight: 600;">+{{ count($features) - 3 }} more</li>
+                            <li style="color: {{ $primaryColor }}; font-weight: 600;">+{{ count($features) - 3 }} more</li>
                         @endif
                     </ul>
                 @endif
@@ -756,7 +756,7 @@
                                         @if($package->training_hours){{ $package->training_hours }} hours @endif
                                     </div>
                                 </div>
-                                <span class="package-price">₱{{ number_format($package->price, 2) }}</span>
+                                <span class="package-price">P{{ number_format($package->price, 2) }}</span>
                             </div>
                         @endforeach
                         @if($course->packages->count() > 2)
@@ -774,30 +774,31 @@
                         @if($course->price > 0)
                         <div class="info-row">
                             <span class="info-label">Price</span>
-                            <span class="info-value">₱{{ number_format($course->price, 2) }}</span>
+                            <span class="info-value">P{{ number_format($course->price, 2) }}</span>
                         </div>
                         @endif
                     </div>
                 @endif
 
                 @if(in_array($course->id, $enrolledCourseIds))
-                    <?php $status = $enrollmentStatuses[$course->id] ?? 'pending'; ?>
+                    @php $status = $enrollmentStatuses[$course->id] ?? 'pending'; @endphp
                     <div class="enrollment-status status-{{ $status }}">
                         @if($status === 'approved')
-                            ✓ Enrollment Approved
+                            Enrollment Approved
                         @else
-                            ⏳ Enrollment Request Pending
+                            Enrollment Request Pending
                         @endif
                     </div>
                     <button class="btn-enroll btn-{{ $status === 'approved' ? 'enrolled' : 'pending' }}" disabled>
                         {{ $status === 'approved' ? 'Already Enrolled' : 'Request Pending' }}
                     </button>
                 @else
-                    @if($course->course_type === 'practical' && $guest && !$guest->hasVerifiedLicense())
+                    @if($course->course_type === 'practical' && (!$guest || !$guest->hasVerifiedLicense()))
                         <div style="text-align: center; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; background: #fef3c7; color: #92400e; margin-bottom: 8px;">
-                            🪪 Verified student license required
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            Student Driver's License required for PDC
                         </div>
-                        <button class="btn-enroll" disabled title="You need a verified student driver's license to enroll in practical courses">
+                        <button class="btn-enroll" disabled title="You need a verified student driver's license to enroll in practical driving courses (PDC)">
                             License Required
                         </button>
                     @else
@@ -822,7 +823,7 @@
 </div>
 
 <!-- Enrollment Modals -->
-@foreach($activeCourses as $course)
+@foreach($courses as $course)
 <div class="modal fade" id="enrollModal{{ $course->id }}" tabindex="-1" aria-labelledby="enrollModalLabel{{ $course->id }}" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -836,43 +837,71 @@
                     <!-- Course Type Badge -->
                     <div class="mb-3">
                         <span class="badge {{ $course->course_type == 'theoretical' ? 'bg-info' : 'bg-primary' }} me-2">
-                            {{ ucfirst($course->course_type) }} Course
+                            {{ ucfirst($course->course_type) }} Course ({{ $course->course_type == 'theoretical' ? 'TDC' : 'PDC' }})
                         </span>
                         <span class="badge bg-secondary">
                             {{ ucfirst(str_replace('_', ' ', $course->license_type)) }}
                         </span>
                     </div>
 
+                    @if($course->course_type === 'practical')
+                    <!-- PDC License Requirement Notice -->
+                    <div class="alert alert-warning mb-3" style="font-size: 0.9rem;">
+                        <i class="fas fa-id-card me-1"></i>
+                        <strong>PDC Requirement:</strong> Practical Driving Courses require a verified Student Driver's License. Only experienced drivers with valid credentials can enroll.
+                    </div>
+                    @endif
+
                     <!-- Experience Level Selection -->
                     <div class="mb-3">
                         <label for="experience_level{{ $course->id }}" class="form-label">
                             <strong>Driver Experience Level</strong> <span class="text-danger">*</span>
                         </label>
-                        <select name="experience_level" id="experience_level{{ $course->id }}" class="form-select @error('experience_level') is-invalid @enderror" required onchange="toggleCredentialUpload{{ $course->id }}()">
+                        <select name="experience_level" id="experience_level{{ $course->id }}" class="form-select @error('experience_level') is-invalid @enderror" required onchange="handleExperienceChange{{ $course->id }}()">
                             <option value="">Select your experience...</option>
-                            <option value="new_driver" {{ old('experience_level') == 'new_driver' ? 'selected' : '' }}>
-                                New Driver (No license, learning from scratch)
-                            </option>
-                            <option value="experienced_driver" {{ old('experience_level') == 'experienced_driver' ? 'selected' : '' }}>
-                                Experienced Driver (Have license or experience)
-                            </option>
+                            @if($course->course_type === 'theoretical')
+                                <option value="new_driver" {{ old('experience_level') == 'new_driver' ? 'selected' : '' }}>
+                                    New Driver (No license, learning from scratch)
+                                </option>
+                                <option value="experienced_driver" {{ old('experience_level') == 'experienced_driver' ? 'selected' : '' }}>
+                                    Experienced Driver (Have license or experience)
+                                </option>
+                            @else
+                                {{-- PDC: Only experienced drivers allowed --}}
+                                <option value="experienced_driver" {{ old('experience_level') == 'experienced_driver' ? 'selected' : '' }}>
+                                    Experienced Driver (Have Student Driver's License)
+                                </option>
+                            @endif
                         </select>
                         @error('experience_level')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
-                        <small class="text-muted">This helps us customize your learning path</small>
+                        @if($course->course_type === 'theoretical')
+                            <small class="text-muted">TDC is open to all drivers — this helps us customize your learning path</small>
+                        @else
+                            <small class="text-muted">PDC requires a Student Driver's License and prior theoretical completion</small>
+                        @endif
                     </div>
 
-                    <!-- Credential Upload (shown only for experienced drivers) -->
+                    <!-- Credential Upload (shown for experienced drivers on practical courses) -->
                     <div class="mb-3" id="credentialSection{{ $course->id }}" style="display: none;">
                         <label for="credential_file{{ $course->id }}" class="form-label">
-                            <strong>Driving License/Credential</strong>
+                            <strong>Student Driver's License / Credential</strong>
+                            @if($course->course_type === 'practical')
+                                <span class="text-danger">*</span>
+                            @endif
                         </label>
-                        <input type="file" name="credential_file" id="credential_file{{ $course->id }}" class="form-control @error('credential_file') is-invalid @enderror" accept=".pdf,.jpg,.jpeg,.png">
+                        <input type="file" name="credential_file" id="credential_file{{ $course->id }}" class="form-control @error('credential_file') is-invalid @enderror" accept=".pdf,.jpg,.jpeg,.png" {{ $course->course_type === 'practical' ? 'required' : '' }}>
                         @error('credential_file')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
-                        <small class="text-muted">Upload a copy of your existing driver's license or credential (optional, PDF/Image, max 2MB)</small>
+                        <small class="text-muted">
+                            @if($course->course_type === 'practical')
+                                Upload your Student Driver's License or TDC completion certificate (required for PDC, PDF/Image, max 5MB)
+                            @else
+                                Upload a copy of your existing driver's license or credential (optional, PDF/Image, max 5MB)
+                            @endif
+                        </small>
                     </div>
 
                     <!-- Package Selection (if available) -->
@@ -889,7 +918,7 @@
                                         @if($package->transmission_type)
                                             ({{ ucfirst($package->transmission_type) }})
                                         @endif
-                                        - ₱{{ number_format($package->price, 2) }}
+                                        - P{{ number_format($package->price, 2) }}
                                         @if($package->training_hours)
                                             ({{ $package->training_hours }} hrs)
                                         @endif
@@ -929,9 +958,10 @@
 </div>
 
 <script>
-function toggleCredentialUpload{{ $course->id }}() {
+function handleExperienceChange{{ $course->id }}() {
     const select = document.getElementById('experience_level{{ $course->id }}');
     const credentialSection = document.getElementById('credentialSection{{ $course->id }}');
+    const courseType = '{{ $course->course_type }}';
     
     if (select.value === 'experienced_driver') {
         credentialSection.style.display = 'block';
@@ -944,7 +974,7 @@ function toggleCredentialUpload{{ $course->id }}() {
 
 // Initialize on page load if there's an old value
 document.addEventListener('DOMContentLoaded', function() {
-    toggleCredentialUpload{{ $course->id }}();
+    handleExperienceChange{{ $course->id }}();
 });
 </script>
 @endforeach

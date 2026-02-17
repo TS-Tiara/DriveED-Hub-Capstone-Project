@@ -6,8 +6,8 @@
 @php
     $school = $school ?? $currentSchool ?? null;
     $settings = $school->schoolSetting;
-    $primaryColor = $settings->primary_color ?? '#1e3a5f';
-    $secondaryColor = $settings->secondary_color ?? '#c5a028';
+    $primaryColor = $settings->primary_color ?? '#667eea';
+    $secondaryColor = $settings->secondary_color ?? '#764ba2';
     $borderRadius = $settings->border_radius ?? 8;
 @endphp
 
@@ -15,7 +15,7 @@
     .student-dashboard {
         padding: 20px;
         margin: 0 auto;
-        max-width: 1600px;
+        max-width: 1400px;
     }
 
     .page-header {

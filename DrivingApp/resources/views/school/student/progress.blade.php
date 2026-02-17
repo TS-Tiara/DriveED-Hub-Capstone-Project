@@ -6,6 +6,8 @@
 @php
     $schoolName = $school->name ?? 'Driving School';
     $settings = $school->schoolSetting;
+    $primaryColor = $settings->primary_color ?? '#667eea';
+    $secondaryColor = $settings->secondary_color ?? '#764ba2';
 @endphp
 
 <style>
@@ -18,7 +20,7 @@
 .page-header {
     margin-bottom: 30px;
     padding-bottom: 15px;
-    border-bottom: 4px solid {{ $settings->primary_color ?? '#667eea' }};
+    border-bottom: 4px solid {{ $primaryColor }};
 }
 
 .page-title {
@@ -56,9 +58,9 @@
     font-size: 3rem;
     font-weight: 700;
     @if($settings->use_gradient_header ?? true)
-        background: linear-gradient(135deg, {{ $settings->primary_color ?? '#667eea' }}, {{ $settings->secondary_color ?? '#764ba2' }});
+        background: linear-gradient(135deg, {{ $primaryColor }}, {{ $secondaryColor }});
     @else
-        background: {{ $settings->primary_color ?? '#667eea' }};
+        background: {{ $primaryColor }};
     @endif
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -76,9 +78,9 @@
 .progress-bar-fill {
     height: 100%;
     @if($settings->use_gradient_header ?? true)
-        background: linear-gradient(135deg, {{ $settings->primary_color ?? '#667eea' }} 0%, {{ $settings->secondary_color ?? '#764ba2' }} 100%);
+        background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
     @else
-        background: {{ $settings->primary_color ?? '#667eea' }};
+        background: {{ $primaryColor }};
     @endif
     display: flex;
     align-items: center;
@@ -138,12 +140,12 @@
 
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
-    .container {
+    .progress-container {
         padding: 20px 15px;
     }
     
-    .page-header h1 {
-        font-size: 24px;
+    .page-title {
+        font-size: 1.5rem;
     }
     
     .progress-grid {
@@ -163,7 +165,7 @@
         font-size: 2rem;
     }
     
-    .progress-bar {
+    .progress-bar-container {
         height: 30px;
     }
     
@@ -171,19 +173,19 @@
         font-size: 13px;
     }
     
-    .progress-details {
+    .progress-info {
         padding: 15px;
     }
     
-    .stat-item {
+    .info-item {
         padding: 10px;
     }
     
-    .stat-item .label {
+    .info-item .label {
         font-size: 13px;
     }
     
-    .stat-item .value {
+    .info-item .value {
         font-size: 20px;
     }
     
@@ -193,12 +195,12 @@
 }
 
 @media (max-width: 480px) {
-    .container {
+    .progress-container {
         padding: 15px 10px;
     }
     
-    .page-header h1 {
-        font-size: 20px;
+    .page-title {
+        font-size: 1.25rem;
     }
     
     .progress-card {
@@ -219,7 +221,7 @@
         font-size: 1.75rem;
     }
     
-    .progress-bar {
+    .progress-bar-container {
         height: 25px;
     }
     
@@ -227,21 +229,21 @@
         font-size: 12px;
     }
     
-    .progress-details {
+    .progress-info {
         grid-template-columns: 1fr;
         padding: 12px;
         gap: 8px;
     }
     
-    .stat-item {
+    .info-item {
         padding: 8px;
     }
     
-    .stat-item .label {
+    .info-item .label {
         font-size: 12px;
     }
     
-    .stat-item .value {
+    .info-item .value {
         font-size: 18px;
     }
     

@@ -6,8 +6,10 @@
 @php
     $school = $school ?? $currentSchool ?? null;
     $schoolName = $school->name ?? 'Driving School';
-    $student = Auth::guard('student')->user();
+    $student = $student ?? Auth::guard('student')->user();
     $settings = $school?->schoolSetting;
+    $primaryColor = $settings?->primary_color ?? '#667eea';
+    $secondaryColor = $settings?->secondary_color ?? '#764ba2';
 @endphp
 
 <style>
@@ -20,7 +22,7 @@
     .page-header {
         margin-bottom: 30px;
         padding-bottom: 15px;
-        border-bottom: 3px solid {{ $settings->primary_color ?? '#667eea' }};
+        border-bottom: 4px solid {{ $primaryColor }};
     }
 
     .page-title {
@@ -41,21 +43,11 @@
     }
 
     .status-badge-top {
-        position: absolute;
-        top: 20px;
-        left: 20px;
-        background: #10b981;
-        color: white;
-        padding: 6px 14px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 600;
-        text-transform: uppercase;
+        display: none;
     }
 
     .profile-card-header {
-        text-align: center;
-        padding: 40px 30px 30px;
+        display: none;
     }
 
     .profile-avatar-circle {
@@ -72,7 +64,8 @@
         cursor: pointer;
     }
 
-    .profile-avatar-circle:hover .avatar-upload-overlay {
+    .profile-avatar-circle:hover .avatar-upload-overlay,
+    .profile-avatar:hover .avatar-upload-overlay {
         opacity: 1;
     }
 
@@ -149,7 +142,7 @@
     }
 
     .btn-edit-profile {
-        background: #007bff;
+        background: {{ $primaryColor }};
         color: white;
         border: none;
         padding: 12px 40px;
@@ -161,7 +154,7 @@
     }
 
     .btn-edit-profile:hover {
-        background: #0056b3;
+        opacity: 0.9;
     }
 
     .edit-form {
@@ -191,18 +184,18 @@
 
     .form-field input:focus {
         outline: none;
-        border-color: {{ $settings->primary_color ?? '#667eea' }};
+        border-color: {{ $primaryColor }};
     }
 
     .form-actions {
         display: flex;
         gap: 10px;
-        justify-center;
+        justify-content: center;
         margin-top: 30px;
     }
 
     .btn-save {
-        background: {{ $settings->primary_color ?? '#667eea' }};
+        background: {{ $primaryColor }};
         color: white;
         border: none;
         padding: 12px 30px;
@@ -344,32 +337,32 @@
     }
     
     .btn-edit {
-        background: {{ $settings->primary_color ?? '#3b82f6' }};
+        background: {{ $primaryColor }};
         color: white;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
     
     .btn-edit:hover {
-        background: {{ $settings->secondary_color ?? '#2563eb' }};
+        background: {{ $secondaryColor }};
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
         transform: translateY(-1px);
     }
     
     .back-button {
         background: white;
-        color: {{ $settings->primary_color ?? '#3b82f6' }};
+        color: {{ $primaryColor }};
         padding: 10px 20px;
         border-radius: 8px;
         text-decoration: none;
         margin-bottom: 20px;
         display: inline-block;
-        border: 2px solid {{ $settings->primary_color ?? '#3b82f6' }};
+        border: 2px solid {{ $primaryColor }};
         transition: all 0.3s ease;
         font-weight: 500;
     }
     
     .back-button:hover {
-        background: {{ $settings->primary_color ?? '#3b82f6' }};
+        background: {{ $primaryColor }};
         color: white;
     }
 
@@ -402,8 +395,8 @@
 
     .form-group input:focus {
         outline: none;
-        border-color: {{ $settings->primary_color ?? '#3b82f6' }};
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        border-color: {{ $primaryColor }};
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
     }
     
     .form-buttons {
@@ -415,12 +408,12 @@
     }
     
     .btn-save {
-        background: {{ $settings->primary_color ?? '#3b82f6' }};
+        background: {{ $primaryColor }};
         color: white;
     }
     
     .btn-save:hover {
-        background: {{ $settings->secondary_color ?? '#2563eb' }};
+        background: {{ $secondaryColor }};
         transform: translateY(-1px);
     }
     
@@ -773,5 +766,4 @@
         });
     }
 </script>
-</div>
 @endsection

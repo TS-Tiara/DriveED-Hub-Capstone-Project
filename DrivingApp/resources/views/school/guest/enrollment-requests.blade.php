@@ -6,14 +6,16 @@
 @php
     $school = $school ?? $currentSchool ?? null;
     $settings = $school->schoolSetting;
+    $primaryColor = $settings->primary_color ?? '#667eea';
+    $secondaryColor = $settings->secondary_color ?? '#764ba2';
 @endphp
 
 @include('school.admin.partials.admin-styles')
 
 <style>
-    .container {
+    .enrollment-requests-container {
         padding: 20px;
-        max-width: 1200px;
+        max-width: 1400px;
         margin: 0 auto;
     }
     
@@ -43,7 +45,7 @@
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
         margin-bottom: 20px;
         overflow: hidden;
-        border-left: 5px solid {{ $settings->primary_color ?? '#667eea' }};
+        border-left: 5px solid {{ $primaryColor }};
         transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
     
@@ -111,7 +113,7 @@
     .detail-icon {
         width: 20px;
         height: 20px;
-        color: {{ $settings->primary_color ?? '#667eea' }};
+        color: {{ $primaryColor }};
     }
     
     .detail-label {
@@ -150,7 +152,7 @@
         align-items: center;
         gap: 8px;
         padding: 12px 24px;
-        background: {{ $settings->primary_color }};
+        background: {{ $primaryColor }};
         color: white;
         text-decoration: none;
         border-radius: 8px;
@@ -165,7 +167,7 @@
     }
 </style>
 
-<div class="container">
+<div class="enrollment-requests-container">
     <div class="page-header">
         <h1>My Enrollment Requests</h1>
         <p class="subtitle">Track the status of your course enrollment applications</p>

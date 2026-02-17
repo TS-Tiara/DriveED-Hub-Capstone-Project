@@ -81,7 +81,7 @@ class EnrollmentValidator
             }
 
             // Experienced drivers must upload credentials
-            if ($data['experience_level'] === 'experienced') {
+            if ($data['experience_level'] === 'experienced_driver') {
                 if (empty($data['credentials_file_path'])) {
                     return [
                         'valid' => false,

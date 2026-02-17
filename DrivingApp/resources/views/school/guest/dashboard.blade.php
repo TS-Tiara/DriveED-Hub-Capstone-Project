@@ -1,4 +1,4 @@
-@extends($isAjax ?? false ? 'layouts.ajax' : 'layouts.app')
+﻿@extends($isAjax ?? false ? 'layouts.ajax' : 'layouts.app')
 
 @section('title', 'Welcome')
 
@@ -6,6 +6,8 @@
 @php
     $school = $school ?? $currentSchool ?? null;
     $settings = $school->schoolSetting;
+    $primaryColor = $settings->primary_color ?? '#667eea';
+    $secondaryColor = $settings->secondary_color ?? '#764ba2';
 @endphp
 
 @include('school.admin.partials.admin-styles')
@@ -13,16 +15,16 @@
 <style>
     .guest-dashboard {
         padding: 20px;
-        max-width: 1200px;
+        max-width: 1400px;
         margin: 0 auto;
     }
     
     /* Welcome Banner */
     .welcome-banner {
-        @if($settings->use_gradient_header)
-            background: linear-gradient(135deg, {{ $settings->primary_color }} 0%, {{ $settings->secondary_color }} 100%);
+        @if($settings->use_gradient_header ?? true)
+            background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
         @else
-            background: {{ $settings->primary_color }};
+            background: {{ $primaryColor }};
         @endif
         color: white;
         border-radius: 16px;
@@ -129,9 +131,9 @@
     
     .btn-primary {
         @if(($settings->button_style ?? 'solid') === 'gradient')
-        background: linear-gradient(135deg, {{ $settings->primary_color }} 0%, {{ $settings->secondary_color }} 100%);
+        background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
         @else
-        background: {{ $settings->primary_color }};
+        background: {{ $primaryColor }};
         @endif
         color: white;
     }
@@ -145,12 +147,12 @@
     
     .btn-outline {
         background: white;
-        color: {{ $settings->primary_color }};
-        border-color: {{ $settings->primary_color }};
+        color: {{ $primaryColor }};
+        border-color: {{ $primaryColor }};
     }
     
     .btn-outline:hover {
-        background: {{ $settings->primary_color }};
+        background: {{ $primaryColor }};
         color: white;
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -173,8 +175,8 @@
         width: 48px;
         height: 48px;
         border-radius: 10px;
-        background: linear-gradient(135deg, {{ $settings->primary_color }}20 0%, {{ $settings->primary_color }}10 100%);
-        color: {{ $settings->primary_color }};
+        background: linear-gradient(135deg, {{ $primaryColor }}20 0%, {{ $primaryColor }}10 100%);
+        color: {{ $primaryColor }};
         display: flex;
         align-items: center;
         justify-content: center;
@@ -273,13 +275,13 @@
     }
 
     .license-upload-form input[type="file"]:hover {
-        border-color: {{ $settings->primary_color }};
+        border-color: {{ $primaryColor }};
         background: white;
     }
 
     .btn-upload {
         padding: 10px 24px;
-        background: {{ $settings->primary_color }};
+        background: {{ $primaryColor }};
         color: white;
         border: none;
         border-radius: 8px;
@@ -528,14 +530,14 @@
     <div style="background: white; border-radius: 20px; max-width: 500px; width: 90%; box-shadow: 0 25px 50px rgba(0,0,0,0.5); overflow: hidden; animation: slideIn 0.3s ease;">
         <!-- Header -->
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 25px; text-align: center; color: white;">
-            <div style="font-size: 48px; margin-bottom: 10px;">🎉</div>
+            <div style="font-size: 48px; margin-bottom: 10px;">ðŸŽ‰</div>
             <h2 style="margin: 0; font-size: 1.8rem;">Welcome to {{ $school->name }}!</h2>
             <p style="margin: 10px 0 0 0; opacity: 0.95; font-size: 0.95rem;">Registration Successful - Save Your Credentials</p>
         </div>
         
         <!-- Warning Banner -->
         <div style="background: #fbbf24; color: #78350f; padding: 12px 20px; display: flex; align-items: center; gap: 10px; font-size: 0.85rem; font-weight: 600;">
-            <span style="font-size: 1.2rem;">⚠️</span>
+            <span style="font-size: 1.2rem;">âš ï¸</span>
             <span>DEVELOPMENT MODE ONLY - This popup won't appear in production</span>
         </div>
         
@@ -578,7 +580,7 @@
             <!-- Info Box -->
             <div style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #3b82f6;">
                 <div style="display: flex; gap: 10px; align-items: start;">
-                    <span style="font-size: 1.2rem; flex-shrink: 0;">💡</span>
+                    <span style="font-size: 1.2rem; flex-shrink: 0;">ðŸ’¡</span>
                     <div style="font-size: 0.85rem; color: #1e40af; line-height: 1.5;">
                         <p style="margin: 0 0 8px 0;"><strong>You're now logged in as a Guest!</strong></p>
                         <p style="margin: 0;">You can now browse courses and submit enrollment requests. Once approved by an admin, you'll become a full student with access to all features.</p>
@@ -611,7 +613,7 @@
     function copyText(text, button) {
         navigator.clipboard.writeText(text).then(() => {
             const originalText = button.textContent;
-            button.textContent = '✓ Copied!';
+            button.textContent = 'âœ“ Copied!';
             button.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
             
             setTimeout(() => {

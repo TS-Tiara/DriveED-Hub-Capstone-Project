@@ -1,16 +1,16 @@
-@extends('layouts.app')
+@extends($isAjax ?? false ? 'layouts.ajax' : 'layouts.app')
 
 @section('title', 'My Schedule')
 
 @section('content')
-<?php
+@php
     $school = $school ?? $currentSchool ?? null;
     $settings = $school?->schoolSetting;
-    
-    $primaryColor = $settings?->primary_color ?? '#0d6efd';
-    $secondaryColor = $settings?->secondary_color ?? '#6c757d';
+
+    $primaryColor = $settings?->primary_color ?? '#667eea';
+    $secondaryColor = $settings?->secondary_color ?? '#764ba2';
     $borderRadius = $settings?->border_radius ?? 8;
-?>
+@endphp
 
 <style>
     .schedule-container {
@@ -375,7 +375,7 @@
     }
     
     .book-now-btn:hover {
-        background: #0b5ed7;
+        opacity: 0.9;
         transform: translateY(-1px);
     }
     
@@ -2359,17 +2359,6 @@ function closeConfirmModal(confirmed = false) {
     }
 }
 </script>
-
-<style>
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
-}
-</style>
 
 @endsection
 

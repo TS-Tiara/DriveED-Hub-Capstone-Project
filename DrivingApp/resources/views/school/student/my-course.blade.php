@@ -6,19 +6,21 @@
 @php
     $schoolName = $school->name ?? 'Driving School';
     $settings = $school->schoolSetting;
+    $primaryColor = $settings->primary_color ?? '#667eea';
+    $secondaryColor = $settings->secondary_color ?? '#764ba2';
 @endphp
 
 <style>
 .my-course-container {
     padding: 20px;
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
 }
 
 .page-header {
     margin-bottom: 30px;
     padding-bottom: 15px;
-    border-bottom: 4px solid {{ $settings->primary_color ?? '#667eea' }};
+    border-bottom: 4px solid {{ $primaryColor }};
 }
 
 .page-title {
@@ -90,7 +92,7 @@
 
 .progress-bar-fill {
     height: 100%;
-    background: {{ $settings->primary_color ?? '#667eea' }};
+    background: {{ $primaryColor }};
     display: flex;
     align-items: center;
     justify-content: center;
@@ -117,7 +119,7 @@
 .stat-value {
     font-size: 1.8rem;
     font-weight: 700;
-    color: {{ $settings->primary_color ?? '#667eea' }};
+    color: {{ $primaryColor }};
 }
 
 .stat-label {
@@ -180,7 +182,7 @@
 }
 
 .lesson-count {
-    background: {{ $settings->primary_color ?? '#667eea' }};
+    background: {{ $primaryColor }};
     color: white;
     padding: 5px 12px;
     border-radius: 15px;
@@ -224,8 +226,8 @@
 }
 
 .lesson-number {
-    background: {{ $settings->primary_color ?? '#667eea' }}20;
-    color: {{ $settings->primary_color ?? '#667eea' }};
+    background: {{ $primaryColor }}20;
+    color: {{ $primaryColor }};
     min-width: 24px;
     height: 24px;
     border-radius: 50%;
@@ -346,7 +348,7 @@
 }
 
 .available-course-item:hover {
-    border-color: {{ $settings->primary_color ?? '#667eea' }};
+    border-color: {{ $primaryColor }};
 }
 
 .course-info h4 {
@@ -361,7 +363,7 @@
 }
 
 .enroll-btn {
-    background: {{ $settings->primary_color ?? '#667eea' }};
+    background: {{ $primaryColor }};
     color: white;
     padding: 10px 25px;
     border: none;

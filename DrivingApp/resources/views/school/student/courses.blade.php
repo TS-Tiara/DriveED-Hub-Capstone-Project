@@ -1,16 +1,16 @@
-@extends('layouts.app')
+@extends($isAjax ?? false ? 'layouts.ajax' : 'layouts.app')
 
 @section('title', 'Browse Courses')
 
 @section('content')
-<?php
+@php
     $school = $school ?? $currentSchool ?? null;
     $settings = $school?->schoolSetting;
-    
-    $primaryColor = $settings?->primary_color ?? '#0d6efd';
-    $secondaryColor = $settings?->secondary_color ?? '#6c757d';
+
+    $primaryColor = $settings?->primary_color ?? '#667eea';
+    $secondaryColor = $settings?->secondary_color ?? '#764ba2';
     $accentColor = $settings?->accent_color ?? '#8b5cf6';
-?>
+@endphp
 
 <style>
     .courses-container {
@@ -21,7 +21,7 @@
     
     .courses-header {
         margin-bottom: 20px;
-        border-bottom: 4px solid <?php echo $primaryColor; ?>;
+        border-bottom: 4px solid {{ $primaryColor }};
         padding-bottom: 15px;
     }
     
@@ -56,7 +56,7 @@
     
     .course-banner {
         height: 160px;
-        background: linear-gradient(135deg, <?php echo $primaryColor; ?> 0%, <?php echo $secondaryColor; ?> 100%);
+        background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -153,7 +153,7 @@
         transform: translateY(-50%);
         width: 14px;
         height: 14px;
-        background: <?php echo $primaryColor; ?>;
+        background: {{ $primaryColor }};
         border-radius: 50%;
     }
     
@@ -256,13 +256,13 @@
     
     .package-price {
         font-weight: 700;
-        color: <?php echo $primaryColor; ?>;
+        color: {{ $primaryColor }};
         font-size: 1rem;
     }
     
     .more-packages {
         text-align: center;
-        color: <?php echo $primaryColor; ?>;
+        color: {{ $primaryColor }};
         font-weight: 600;
         font-size: 0.8rem;
         padding-top: 6px;
@@ -282,7 +282,7 @@
     .btn-enroll {
         width: 100%;
         padding: 12px;
-        background: <?php echo $primaryColor; ?>;
+        background: {{ $primaryColor }};
         color: white;
         border: none;
         border-radius: 8px;
@@ -357,7 +357,7 @@
     </div>
 
     <div class="courses-grid">
-        <?php $activeCourses = $courses->where('status', 'active'); ?>
+        @php $activeCourses = $courses->where('status', 'active'); @endphp
         
         @forelse($activeCourses as $course)
         <div class="course-card">
@@ -389,14 +389,14 @@
                     <p class="course-description">{{ Str::limit($course->description, 120) }}</p>
                 @endif
                 
-                <?php $features = $course->features; ?>
+                @php $features = $course->features; @endphp
                 @if($features && is_array($features) && count($features) > 0)
                     <ul class="course-features">
                         @foreach(array_slice($features, 0, 3) as $feature)
                             <li>{{ $feature }}</li>
                         @endforeach
                         @if(count($features) > 3)
-                            <li style="color: <?php echo $primaryColor; ?>; font-weight: 600;">+{{ count($features) - 3 }} more</li>
+                            <li style="color: {{ $primaryColor }}; font-weight: 600;">+{{ count($features) - 3 }} more</li>
                         @endif
                     </ul>
                 @endif
@@ -466,7 +466,7 @@
 
 <script>
 function bookCourse(courseId) {
-    const schoolSlug = '<?php echo $school->slug; ?>';
+    const schoolSlug = '{{ $school->slug }}';
     window.location.href = '/' + schoolSlug + '/student/courses/' + courseId;
 }
 </script>

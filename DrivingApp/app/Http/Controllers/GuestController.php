@@ -165,6 +165,16 @@ class GuestController extends Controller
             return redirect()->back()->with('error', 'Only guests can submit enrollment requests.');
         }
 
+        // PDC (Practical Driving Course) requires a verified Student Driver's License
+        if ($course->isPractical() && !$guest->hasVerifiedLicense()) {
+            Log::warning('Guest attempted PDC enrollment without verified license', [
+                'user' => $guest->id,
+                'course' => $course->id,
+                'license_status' => $guest->student_license_status
+            ]);
+            return redirect()->back()->with('error', 'Practical Driving Courses (PDC) require a verified Student Driver\'s License. Please complete a TDC first and upload your license.');
+        }
+
         // Check if already enrolled for this course
         $existingRequest = EnrollmentRequest::where('learner_id', $guest->id)
             ->where('course_id', $course->id)
@@ -182,16 +192,16 @@ class GuestController extends Controller
                 'course_id' => $course->id,
                 'status' => 'pending',
                 'payment_status' => 'pending',
-                'requested_license_type' => $request->requested_license_type,
+                'requested_license_type' => $course->license_type ?? 'non_professional',
                 'experience_level' => $request->experience_level,
-                'remarks' => $request->remarks,
+                'remarks' => $request->notes,
                 'branch' => $request->branch ?? $guest->branch,
                 'location' => $request->location ?? $guest->location,
             ];
 
             // Handle credential file upload for experienced drivers
-            if ($request->hasFile('credentials_file')) {
-                $file = $request->file('credentials_file');
+            if ($request->hasFile('credential_file')) {
+                $file = $request->file('credential_file');
                 $path = $file->store('credentials', 'public');
                 $data['credentials_file_path'] = $path;
             }
