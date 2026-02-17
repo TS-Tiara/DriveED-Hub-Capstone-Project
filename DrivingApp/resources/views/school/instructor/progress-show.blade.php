@@ -177,10 +177,10 @@
                 <a href="{{ $schoolRoute('instructor.progress.edit', ['progress' => $progress->id]) }}" class="btn btn-primary-action" onclick="loadContent(this.href); return false;">
                     Edit Progress
                 </a>
-                <form action="{{ $schoolRoute('instructor.progress.destroy', ['progress' => $progress->id]) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this progress record?');">
+                <form action="{{ $schoolRoute('instructor.progress.destroy', ['progress' => $progress->id]) }}" method="POST" style="display: inline;">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" class="btn btn-danger">Delete</button>
+                    <button type="button" class="btn btn-danger" onclick="showConfirm({title:'Delete Progress',message:'Are you sure you want to delete this progress record?',type:'danger',onConfirm:()=>this.closest('form').submit()})">Delete</button>
                 </form>
             </div>
         </div>

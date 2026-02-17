@@ -886,13 +886,20 @@
     
     // Leave slot
     function leaveSlot(slotId, btn) {
-        if (!confirm('Are you sure you want to leave this slot?')) {
-            return;
-        }
-        
-        btn.textContent = 'Leaving...';
-        btn.disabled = true;
-        
+        showConfirm({
+            title: 'Leave Slot',
+            message: 'Are you sure you want to leave this slot?',
+            type: 'warning',
+            onConfirm: () => {
+                btn.textContent = 'Leaving...';
+                btn.disabled = true;
+                
+                leaveSlotExecute(slotId, btn);
+            }
+        });
+    }
+
+    function leaveSlotExecute(slotId, btn) {
         fetch('{{ url($school->slug) }}/instructor/timeslots/' + slotId + '/toggle', {
             method: 'POST',
             headers: {

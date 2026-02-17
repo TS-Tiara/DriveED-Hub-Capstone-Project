@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\EnrollmentRequest;
+use App\Models\PhaseProgression;
 use App\Models\School;
 use App\Models\Student;
 use Illuminate\Support\Facades\Auth;
@@ -34,6 +35,45 @@ class EnrollmentRequestController extends Controller
         return view('school.admin.enrollment-requests.index', compact(
             'school', 'allRequests', 'pendingRequests', 'approvedRequests',
             'completedRequests', 'cancelledRequests', 'rejectedRequests'
+        ));
+    }
+
+    /**
+     * Display detailed enrollment information (Admin)
+     */
+    public function show(School $school, EnrollmentRequest $enrollmentRequest)
+    {
+        // Security: verify belongs to this school
+        abort_if($enrollmentRequest->school_id !== $school->id, 404);
+
+        $admin = Auth::guard('admin')->user();
+        if (!$admin || $admin->school_id !== $school->id) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $enrollmentRequest->load(['learner', 'course', 'approvedBy', 'sessionCompletions.instructor', 'payments', 'bookings']);
+
+        // Calculate session hours summary
+        $sessionSummary = [
+            'total_sessions' => $enrollmentRequest->sessionCompletions->count(),
+            'total_hours' => $enrollmentRequest->sessionCompletions->where('status', 'completed')->sum('hours_completed'),
+            'theoretical_sessions' => $enrollmentRequest->sessionCompletions->where('session_type', 'theoretical')->count(),
+            'practical_sessions' => $enrollmentRequest->sessionCompletions->where('session_type', 'practical')->count(),
+            'hours_required' => $enrollmentRequest->course->hours_required ?? 0,
+        ];
+
+        $sessionSummary['progress_percentage'] = $sessionSummary['hours_required'] > 0
+            ? min(100, round(($sessionSummary['total_hours'] / $sessionSummary['hours_required']) * 100, 1))
+            : 0;
+
+        // Get phase progressions for this enrollment
+        $phaseProgressions = PhaseProgression::where('enrollment_id', $enrollmentRequest->id)
+            ->with('reviewedBy')
+            ->latest('requested_at')
+            ->get();
+
+        return view('school.admin.enrollment-requests.show', compact(
+            'school', 'enrollmentRequest', 'sessionSummary', 'phaseProgressions'
         ));
     }
 
@@ -73,6 +113,13 @@ class EnrollmentRequestController extends Controller
                 ->with('error', 'This user is already a student.');
         }
 
+        // Security Check 5: Verify student is not locked to another active course
+        if ($enrollmentRequest->student->is_course_locked) {
+            return redirect()
+                ->back()
+                ->with('error', 'This student is already enrolled in an active course. They must complete or cancel their current enrollment first.');
+        }
+
         DB::beginTransaction();
         try {
             // Update enrollment status and set enrolled_at
@@ -85,6 +132,9 @@ class EnrollmentRequestController extends Controller
 
             // Update student role from guest to student
             $enrollmentRequest->student->update(['role' => 'student']);
+
+            // Lock student to this course (prevents concurrent enrollments)
+            $enrollmentRequest->student->update(['is_course_locked' => true]);
 
             // Send approval email notification
             try {
@@ -212,6 +262,22 @@ class EnrollmentRequestController extends Controller
             'payment_status' => $validated['payment_status'],
         ]);
 
+        // Notify student about payment status change
+        if ($enrollmentRequest->student) {
+            try {
+                Notification::send(
+                    $enrollmentRequest->student,
+                    'payment_status_updated',
+                    'Payment Status Updated',
+                    "Your payment status for {$enrollmentRequest->course->title} has been updated to: {$validated['payment_status']}.",
+                    'payment',
+                    "/{$school->slug}/student"
+                );
+            } catch (\Exception $e) {
+                \Log::warning('Failed to send payment status notification: ' . $e->getMessage());
+            }
+        }
+
         return redirect()
             ->back()
             ->with('success', 'Payment status updated successfully.');
@@ -239,6 +305,25 @@ class EnrollmentRequestController extends Controller
         }
 
         $enrollmentRequest->complete($admin->id);
+
+        // Unlock student from course so they can enroll in a new one
+        if ($enrollmentRequest->student) {
+            $enrollmentRequest->student->update(['is_course_locked' => false]);
+
+            // Notify student about enrollment completion
+            try {
+                Notification::send(
+                    $enrollmentRequest->student,
+                    'enrollment_completed',
+                    'Course Completed!',
+                    "Congratulations! You have successfully completed {$enrollmentRequest->course->title}.",
+                    'success',
+                    "/{$school->slug}/student/my-progress"
+                );
+            } catch (\Exception $e) {
+                \Log::warning('Failed to send enrollment completion notification: ' . $e->getMessage());
+            }
+        }
 
         return redirect()
             ->back()
@@ -270,7 +355,30 @@ class EnrollmentRequestController extends Controller
                 ->with('error', 'Only pending or active enrollments can be cancelled.');
         }
 
+        $wasApproved = $enrollmentRequest->status === 'approved';
         $enrollmentRequest->cancel($validated['remarks'] ?? null);
+
+        // Unlock student from course if they had an active enrollment
+        if ($wasApproved && $enrollmentRequest->student) {
+            $enrollmentRequest->student->update(['is_course_locked' => false]);
+        }
+
+        // Notify student about cancellation
+        if ($enrollmentRequest->student) {
+            try {
+                $reason = $validated['remarks'] ? " Reason: {$validated['remarks']}" : '';
+                Notification::send(
+                    $enrollmentRequest->student,
+                    'enrollment_cancelled',
+                    'Enrollment Cancelled',
+                    "Your enrollment for {$enrollmentRequest->course->title} has been cancelled.{$reason}",
+                    'warning',
+                    "/{$school->slug}/student"
+                );
+            } catch (\Exception $e) {
+                \Log::warning('Failed to send cancellation notification: ' . $e->getMessage());
+            }
+        }
 
         return redirect()
             ->back()
@@ -303,6 +411,22 @@ class EnrollmentRequestController extends Controller
         }
 
         $enrollmentRequest->markTheoreticalPassed($admin->id, $validated['notes'] ?? null);
+
+        // Notify student about theoretical completion
+        if ($enrollmentRequest->student) {
+            try {
+                Notification::send(
+                    $enrollmentRequest->student,
+                    'theoretical_passed',
+                    'Theoretical Exam Passed!',
+                    "You have passed the theoretical portion for {$enrollmentRequest->course->title}. You may now proceed to practical training.",
+                    'success',
+                    "/{$school->slug}/student/my-course"
+                );
+            } catch (\Exception $e) {
+                \Log::warning('Failed to send theoretical passed notification: ' . $e->getMessage());
+            }
+        }
 
         return redirect()
             ->back()
@@ -347,6 +471,11 @@ class EnrollmentRequestController extends Controller
                     continue;
                 }
 
+                // Skip if student is locked to another course
+                if ($enrollment->student->is_course_locked) {
+                    continue;
+                }
+
                 $enrollment->update([
                     'status' => 'approved',
                     'approved_by' => $admin->id,
@@ -355,6 +484,9 @@ class EnrollmentRequestController extends Controller
                 ]);
 
                 $enrollment->student->update(['role' => 'student']);
+
+                // Lock student to this course
+                $enrollment->student->update(['is_course_locked' => true]);
 
                 // Send email notification
                 try {

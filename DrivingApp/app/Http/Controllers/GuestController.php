@@ -8,7 +8,6 @@ use App\Models\School;
 use App\Models\Course;
 use App\Models\EnrollmentRequest;
 use App\Http\Requests\StoreEnrollmentRequestRequest;
-use App\Support\EnrollmentValidator;
 use App\Models\Notification;
 use App\Models\Admin;
 use App\Mail\EnrollmentRequestReceived;
@@ -18,7 +17,6 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\Rules;
 
 class GuestController extends Controller
 {

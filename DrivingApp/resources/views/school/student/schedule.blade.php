@@ -1188,14 +1188,14 @@
                         <div style="display: flex; gap: 4px; margin-top: 8px;">
                             <form method="POST" action="{{ route('schools.student.bookings.confirm', [$school->slug, $booking->id]) }}" style="flex: 1;">
                                 @csrf
-                                <button type="submit" style="width: 100%; background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer;" onclick="return confirm('Confirm this booking now?')">
+                                <button type="button" style="width: 100%; background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer;" onclick="showConfirm({title:'Confirm Booking',message:'Confirm this booking now?',type:'success',onConfirm:()=>this.closest('form').submit()})">
                                     Confirm
                                 </button>
                             </form>
                             <form method="POST" action="{{ route('schools.student.bookings.removeQueue', [$school->slug, $booking->id]) }}" style="flex: 1;">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" style="width: 100%; background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer;" onclick="return confirm('Cancel this booking?')">
+                                <button type="button" style="width: 100%; background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer;" onclick="showConfirm({title:'Cancel Booking',message:'Cancel this booking?',type:'danger',onConfirm:()=>this.closest('form').submit()})">
                                     Cancel
                                 </button>
                             </form>
@@ -1406,14 +1406,14 @@
                         <div style="display: flex; gap: 4px; margin-top: 8px;">
                             <form method="POST" action="{{ route('schools.student.bookings.confirm', [$school->slug, $booking->id]) }}" style="flex: 1;">
                                 @csrf
-                                <button type="submit" style="width: 100%; background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer;" onclick="return confirm('Confirm this booking now?')">
+                                <button type="button" style="width: 100%; background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer;" onclick="showConfirm({title:'Confirm Booking',message:'Confirm this booking now?',type:'success',onConfirm:()=>this.closest('form').submit()})">
                                     Confirm
                                 </button>
                             </form>
                             <form method="POST" action="{{ route('schools.student.bookings.removeQueue', [$school->slug, $booking->id]) }}" style="flex: 1;">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" style="width: 100%; background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer;" onclick="return confirm('Cancel this booking?')">
+                                <button type="button" style="width: 100%; background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer;" onclick="showConfirm({title:'Cancel Booking',message:'Cancel this booking?',type:'danger',onConfirm:()=>this.closest('form').submit()})">
                                     Cancel
                                 </button>
                             </form>
@@ -1500,14 +1500,14 @@
                         <div style="display: flex; gap: 4px; margin-top: 6px;">
                             <form method="POST" action="{{ route('schools.student.bookings.confirm', [$school->slug, $booking->id]) }}" style="flex: 1;">
                                 @csrf
-                                <button type="submit" style="width: 100%; background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer;" onclick="return confirm('Confirm this booking now?')">
+                                <button type="button" style="width: 100%; background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer;" onclick="showConfirm({title:'Confirm Booking',message:'Confirm this booking now?',type:'success',onConfirm:()=>this.closest('form').submit()})">
                                     Confirm
                                 </button>
                             </form>
                             <form method="POST" action="{{ route('schools.student.bookings.removeQueue', [$school->slug, $booking->id]) }}" style="flex: 1;">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" style="width: 100%; background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer;" onclick="return confirm('Cancel this booking?')">
+                                <button type="button" style="width: 100%; background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer;" onclick="showConfirm({title:'Cancel Booking',message:'Cancel this booking?',type:'danger',onConfirm:()=>this.closest('form').submit()})">
                                     Cancel
                                 </button>
                             </form>

@@ -956,6 +956,30 @@
             display: block;
         }
         
+        /* ====== Empty State Styling ====== */
+        .empty-state {
+            text-align: center;
+            padding: 48px 24px;
+            color: #9ca3af;
+        }
+        .empty-state svg {
+            width: 56px;
+            height: 56px;
+            margin: 0 auto 16px;
+            color: #d1d5db;
+            display: block;
+        }
+        .empty-state .empty-state-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #6b7280;
+            margin-bottom: 6px;
+        }
+        .empty-state .empty-state-text {
+            font-size: 0.9rem;
+            color: #9ca3af;
+        }
+
         /* Responsive Design */
         
         /* ====== Mobile Touch Target & Table Improvements ====== */
@@ -1451,24 +1475,39 @@
             }
         }
         
+        /* ====== Print Styles ====== */
+        @media print {
+            .topbar, .sidebar, .sidebar-overlay, .burger-menu,
+            .breadcrumb-bar, .btn, button, .dropdown,
+            .notification-badge, .profile-dropdown { display: none !important; }
+            .main-content { margin-left: 0 !important; padding: 0 !important; }
+            body { background: white !important; }
+            .table-container { overflow: visible !important; }
+            table { width: 100% !important; border-collapse: collapse; }
+            th, td { border: 1px solid #ddd !important; padding: 6px 8px !important; font-size: 11pt; }
+            .badge, .status-badge { border: 1px solid #999 !important; background: white !important; color: #333 !important; }
+            a { text-decoration: none !important; color: #333 !important; }
+            .card, .dashboard-card { box-shadow: none !important; border: 1px solid #ddd !important; page-break-inside: avoid; }
+        }
+
         @stack('styles')
     </style>
 </head>
 <body>
     <!-- Topbar -->
-    <nav class="topbar">
+    <nav class="topbar" role="banner">
         <div class="topbar-left">
-            <div class="topbar-logo">
+            <div class="topbar-logo" role="heading" aria-level="1">
                 {{ $schoolName ?? 'Driving School' }}
             </div>
         </div>
         
         <div class="topbar-right">
-            <button class="burger-menu" onclick="toggleSidebar()">
+            <button class="burger-menu" onclick="toggleSidebar()" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="sidebar">
                 ☰
             </button>
             
-            <div class="notification-icon" onclick="toggleNotificationDropdown(event)">
+            <div class="notification-icon" onclick="toggleNotificationDropdown(event)" role="button" aria-label="Notifications" aria-expanded="false" aria-haspopup="true" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleNotificationDropdown(event)}">
                 🔔
                 <span class="notification-badge" id="notificationBadge"></span>
                 
@@ -1486,7 +1525,7 @@
                 </div>
             </div>
             
-            <div class="profile-dropdown" onclick="toggleProfileDropdown()">
+            <div class="profile-dropdown" onclick="toggleProfileDropdown()" role="button" aria-label="User menu" aria-expanded="false" aria-haspopup="true" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleProfileDropdown()}">
                 @if(Auth::guard('admin')->check())
                     @php $user = Auth::guard('admin')->user(); @endphp
                     @if($user->profile_picture)
@@ -1571,7 +1610,7 @@
     </nav>
     
     <!-- Sidebar -->
-    <div class="sidebar" id="sidebar">
+    <div class="sidebar" id="sidebar" role="navigation" aria-label="Main navigation">
         <div class="sidebar-header">
             <h3>
                 @if(Auth::guard('admin')->check())
@@ -1586,7 +1625,7 @@
             </h3>
         </div>
         
-        <nav class="sidebar-nav">
+        <nav class="sidebar-nav" role="menubar">
             @if(Auth::guard('admin')->check())
                 {{-- Dashboard (standalone) --}}
                 <a href="{{ $schoolRoute('admin.dashboard') }}" class="nav-item" data-page="dashboard">Dashboard</a>
@@ -1595,7 +1634,7 @@
 
                 {{-- Users --}}
                 <div class="nav-category" data-category="admin-users">
-                    <div class="nav-category-header" onclick="toggleCategory(this)">
+                    <div class="nav-category-header" onclick="toggleCategory(this)" role="button" aria-expanded="false" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleCategory(this)}">
                         <span>Users</span>
                         <span class="nav-category-arrow">&#9660;</span>
                     </div>
@@ -1607,7 +1646,7 @@
 
                 {{-- Theoretical Training --}}
                 <div class="nav-category" data-category="admin-courses">
-                    <div class="nav-category-header" onclick="toggleCategory(this)">
+                    <div class="nav-category-header" onclick="toggleCategory(this)" role="button" aria-expanded="false" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleCategory(this)}">
                         <span>Courses & Training</span>
                         <span class="nav-category-arrow">&#9660;</span>
                     </div>
@@ -1620,7 +1659,7 @@
 
                 {{-- Sessions --}}
                 <div class="nav-category" data-category="admin-sessions">
-                    <div class="nav-category-header" onclick="toggleCategory(this)">
+                    <div class="nav-category-header" onclick="toggleCategory(this)" role="button" aria-expanded="false" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleCategory(this)}">
                         <span>Sessions</span>
                         <span class="nav-category-arrow">&#9660;</span>
                     </div>
@@ -1632,7 +1671,7 @@
 
                 {{-- Payments & Reports --}}
                 <div class="nav-category" data-category="admin-finance">
-                    <div class="nav-category-header" onclick="toggleCategory(this)">
+                    <div class="nav-category-header" onclick="toggleCategory(this)" role="button" aria-expanded="false" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleCategory(this)}">
                         <span>Payments & Reports</span>
                         <span class="nav-category-arrow">&#9660;</span>
                     </div>
@@ -1677,7 +1716,7 @@
 
                     {{-- My Courses --}}
                     <div class="nav-category" data-category="student-courses">
-                        <div class="nav-category-header" onclick="toggleCategory(this)">
+                        <div class="nav-category-header" onclick="toggleCategory(this)" role="button" aria-expanded="false" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleCategory(this)}">
                             <span>My Courses</span>
                             <span class="nav-category-arrow">&#9660;</span>
                         </div>
@@ -1690,7 +1729,7 @@
 
                     {{-- My Sessions & Payments --}}
                     <div class="nav-category" data-category="student-sessions">
-                        <div class="nav-category-header" onclick="toggleCategory(this)">
+                        <div class="nav-category-header" onclick="toggleCategory(this)" role="button" aria-expanded="false" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleCategory(this)}">
                             <span>Sessions & Payments</span>
                             <span class="nav-category-arrow">&#9660;</span>
                         </div>
@@ -1705,22 +1744,22 @@
     </div>
     
     <!-- Sidebar Overlay for mobile -->
-    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()" role="presentation" aria-hidden="true"></div>
     
     <!-- Loading Overlay -->
-    <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-overlay" id="loadingOverlay" role="status\" aria-label=\"Loading\">
         <div class="loading-spinner"></div>
     </div>
     
     <!-- Breadcrumb Navigation -->
-    <div class="breadcrumb-bar" id="breadcrumbBar">
+    <div class="breadcrumb-bar" id="breadcrumbBar" role="navigation" aria-label="Breadcrumb">
         <span id="breadcrumbContent">
             <a href="#" onclick="loadContent(getDashboardUrl()); return false;">Dashboard</a>
         </span>
     </div>
     
     <!-- Main Content -->
-    <main class="main-content" id="mainContent">
+    <main class="main-content" id="mainContent" role="main">
         @yield('content')
     </main>
     
@@ -1766,6 +1805,7 @@
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('sidebarOverlay');
             const mainContent = document.getElementById('mainContent');
+            const burger = document.querySelector('.burger-menu');
             
             sidebarOpen = !sidebarOpen;
             
@@ -1776,15 +1816,18 @@
                 sidebar.classList.remove('active');
                 overlay.classList.remove('active');
             }
+            if (burger) burger.setAttribute('aria-expanded', sidebarOpen);
         }
         
         function closeSidebar() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('sidebarOverlay');
+            const burger = document.querySelector('.burger-menu');
             
             sidebarOpen = false;
             sidebar.classList.remove('active');
             overlay.classList.remove('active');
+            if (burger) burger.setAttribute('aria-expanded', 'false');
         }
         
         function toggleProfileDropdown() {

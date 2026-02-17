@@ -2,11 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Models\Student;
 use App\Models\Instructor;
 use App\Models\Booking;
-use App\Models\Progress;
 use App\Models\Payment;
 use App\Models\Course;
 use Illuminate\Http\Request;

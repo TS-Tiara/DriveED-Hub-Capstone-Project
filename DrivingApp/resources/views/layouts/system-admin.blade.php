@@ -435,6 +435,30 @@
             -webkit-overflow-scrolling: touch;
         }
         
+        /* ====== Empty State Styling ====== */
+        .empty-state {
+            text-align: center;
+            padding: 48px 24px;
+            color: #9ca3af;
+        }
+        .empty-state svg {
+            width: 56px;
+            height: 56px;
+            margin: 0 auto 16px;
+            color: #d1d5db;
+            display: block;
+        }
+        .empty-state .empty-state-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #6b7280;
+            margin-bottom: 6px;
+        }
+        .empty-state .empty-state-text {
+            font-size: 0.9rem;
+            color: #9ca3af;
+        }
+
         /* ====== Responsive Breakpoints ====== */
         
         /* Tablets & smaller desktops */
@@ -555,21 +579,35 @@
                 font-size: 0.8rem;
             }
         }
+        
+        /* ====== Print Styles ====== */
+        @media print {
+            .sidebar, .sidebar-overlay, .burger-menu,
+            .topbar, .btn, button, .dropdown { display: none !important; }
+            .main-content { margin-left: 0 !important; padding: 0 !important; }
+            body { background: white !important; }
+            .table-container { overflow: visible !important; }
+            table { width: 100% !important; border-collapse: collapse; }
+            th, td { border: 1px solid #ddd !important; padding: 6px 8px !important; font-size: 11pt; }
+            .badge { border: 1px solid #999 !important; background: white !important; color: #333 !important; }
+            a { text-decoration: none !important; color: #333 !important; }
+            .card { box-shadow: none !important; border: 1px solid #ddd !important; page-break-inside: avoid; }
+        }
     </style>
     @yield('styles')
 </head>
 <body>
     <div class="app-container">
         <!-- Sidebar Overlay -->
-        <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+        <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()" role="presentation" aria-hidden="true"></div>
         
         <!-- Sidebar -->
-        <aside class="sidebar" id="sidebar">
+        <aside class="sidebar" id="sidebar" role="navigation" aria-label="System admin navigation">
             <div class="sidebar-header">
                 <h1>System Admin</h1>
                 <p>Global Management Portal</p>
             </div>
-            <nav class="sidebar-menu">
+            <nav class="sidebar-menu" role="menubar">
                 <a href="{{ route('system-admin.dashboard') }}" class="menu-item {{ request()->routeIs('system-admin.dashboard') ? 'active' : '' }}">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
@@ -607,7 +645,7 @@
         <main class="main-content">
             <header class="header">
                 <div class="header-left">
-                    <button class="burger-menu" onclick="toggleSidebar()">
+                    <button class="burger-menu" onclick="toggleSidebar()" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="sidebar">
                         <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
                         </svg>
@@ -643,13 +681,18 @@
     
     <script>
         function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('active');
+            const sidebar = document.getElementById('sidebar');
+            const burger = document.querySelector('.burger-menu');
+            sidebar.classList.toggle('active');
             document.getElementById('sidebarOverlay').classList.toggle('active');
+            if (burger) burger.setAttribute('aria-expanded', sidebar.classList.contains('active'));
         }
         
         function closeSidebar() {
+            const burger = document.querySelector('.burger-menu');
             document.getElementById('sidebar').classList.remove('active');
             document.getElementById('sidebarOverlay').classList.remove('active');
+            if (burger) burger.setAttribute('aria-expanded', 'false');
         }
     </script>
 </body>

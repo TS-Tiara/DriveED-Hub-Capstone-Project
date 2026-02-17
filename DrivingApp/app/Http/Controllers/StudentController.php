@@ -5,11 +5,11 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\School;
 use App\Models\Booking;
-use App\Models\Progress;
 use App\Models\Student;
 use App\Models\Enrollment;
 use App\Models\EnrollmentRequest;
 use App\Models\Course;
+use App\Models\PhaseProgression;
 use App\Rules\StrongPassword;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -342,6 +342,68 @@ class StudentController extends Controller
             'hoursCompleted' => $hoursCompleted,
             'hoursRequired' => $hoursRequired,
             'progressPercentage' => $progressPercentage,
+        ]);
+    }
+
+    /**
+     * Display the student's enrollment progress overview (My Progress page)
+     */
+    public function myProgress(School $school)
+    {
+        $student = Auth::guard('student')->user();
+
+        // Get all enrollment requests for this student at this school
+        $enrollmentHistory = EnrollmentRequest::where('learner_id', $student->id)
+            ->where('school_id', $school->id)
+            ->with(['course', 'sessionCompletions.instructor', 'approvedBy'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Current active enrollment
+        $activeEnrollment = $enrollmentHistory->where('status', 'approved')->first();
+
+        // Build progress data for active enrollment
+        $progressData = null;
+        if ($activeEnrollment) {
+            $completions = $activeEnrollment->sessionCompletions ?? collect();
+            $completedSessions = $completions->where('status', 'completed');
+
+            $hoursCompleted = $completedSessions->sum('hours_completed');
+            $hoursRequired = $activeEnrollment->course->hours_required ?? 0;
+
+            $progressData = [
+                'course' => $activeEnrollment->course,
+                'hours_completed' => $hoursCompleted,
+                'hours_required' => $hoursRequired,
+                'progress_percentage' => $hoursRequired > 0
+                    ? min(100, round(($hoursCompleted / $hoursRequired) * 100, 1))
+                    : 0,
+                'theoretical_passed' => $activeEnrollment->theoretical_passed,
+                'theoretical_sessions' => $completedSessions->where('session_type', 'theoretical')->count(),
+                'practical_sessions' => $completedSessions->where('session_type', 'practical')->count(),
+                'recent_sessions' => $completedSessions->sortByDesc('session_date')->take(5),
+            ];
+        }
+
+        // Get phase progressions for active enrollment
+        $phaseProgressions = collect();
+        if ($activeEnrollment) {
+            $phaseProgressions = PhaseProgression::where('enrollment_id', $activeEnrollment->id)
+                ->latest('requested_at')
+                ->get();
+        }
+
+        // Completed enrollments history
+        $completedEnrollments = $enrollmentHistory->where('status', 'completed');
+
+        return view($school->resolveView('student.my-progress'), [
+            'school' => $school,
+            'student' => $student,
+            'activeEnrollment' => $activeEnrollment,
+            'progressData' => $progressData,
+            'phaseProgressions' => $phaseProgressions,
+            'completedEnrollments' => $completedEnrollments,
+            'enrollmentHistory' => $enrollmentHistory,
         ]);
     }
 }

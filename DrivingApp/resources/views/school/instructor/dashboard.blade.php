@@ -264,7 +264,11 @@
                     <div class="lesson-status status-{{ $nextLesson->status }}">{{ ucfirst($nextLesson->status) }}</div>
                 </div>
             @else
-                <p class="no-data">No upcoming lessons scheduled</p>
+                <div class="empty-state" style="padding: 24px 16px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:40px;height:40px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    <p class="empty-state-title">No upcoming lessons</p>
+                    <p class="empty-state-text">Scheduled lessons will appear here</p>
+                </div>
             @endif
         </div>
 
@@ -285,7 +289,11 @@
                     @endforeach
                 </div>
             @else
-                <p class="no-data">No upcoming schedules</p>
+                <div class="empty-state" style="padding: 24px 16px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:40px;height:40px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <p class="empty-state-title">No upcoming schedules</p>
+                    <p class="empty-state-text">Your schedule will appear here</p>
+                </div>
             @endif
         </div>
     </div>

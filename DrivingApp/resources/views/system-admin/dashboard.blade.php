@@ -66,7 +66,13 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="6" style="text-align: center; color: #9ca3af;">No schools registered yet</td>
+                        <td colspan="6">
+                            <div class="empty-state">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                <p class="empty-state-title">No schools registered yet</p>
+                                <p class="empty-state-text">Schools will appear here once they're added to the system</p>
+                            </div>
+                        </td>
                     </tr>
                     @endforelse
                 </tbody>
@@ -103,7 +109,11 @@
             </div>
         </div>
         @empty
-        <p style="text-align: center; color: #9ca3af; padding: 20px;">No recent activity logs</p>
+        <div class="empty-state">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <p class="empty-state-title">No recent activity</p>
+            <p class="empty-state-text">Activity logs will appear here as actions are performed</p>
+        </div>
         @endforelse
     </div>
 </div>

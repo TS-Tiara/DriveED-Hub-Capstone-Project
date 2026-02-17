@@ -22,6 +22,7 @@ use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\ModuleLessonController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PhaseProgressionController;
 use App\Models\School;
 
 Route::get('/', function () {
@@ -218,6 +219,7 @@ Route::prefix('{school:slug}')
             // Enrollment management (combining enrollment requests and enrollments)
             Route::prefix('enrollments')->name('enrollments.')->group(function () {
                 Route::get('/', [EnrollmentRequestController::class, 'index'])->name('index');
+                Route::get('/{enrollmentRequest}', [EnrollmentRequestController::class, 'show'])->name('show');
                 Route::post('/bulk-approve', [EnrollmentRequestController::class, 'bulkApprove'])->name('bulkApprove');
                 Route::post('/bulk-reject', [EnrollmentRequestController::class, 'bulkReject'])->name('bulkReject');
                 Route::post('/{enrollmentRequest}/approve', [EnrollmentRequestController::class, 'approve'])->name('approve');
@@ -247,6 +249,13 @@ Route::prefix('{school:slug}')
                 Route::get('/{sessionCompletion}', [SessionCompletionController::class, 'show'])->name('show');
                 Route::delete('/{sessionCompletion}', [SessionCompletionController::class, 'destroy'])->name('destroy');
                 Route::get('/enrollment/{enrollment}/stats', [SessionCompletionController::class, 'enrollmentStats'])->name('enrollmentStats');
+            });
+
+            // Phase progression management (Admin reviews student phase transitions)
+            Route::prefix('phase-progressions')->name('phase-progressions.')->group(function () {
+                Route::get('/', [PhaseProgressionController::class, 'index'])->name('index');
+                Route::post('/{phaseProgression}/approve', [PhaseProgressionController::class, 'approve'])->name('approve');
+                Route::post('/{phaseProgression}/reject', [PhaseProgressionController::class, 'reject'])->name('reject');
             });
 
             // Course modules and lessons management (LMS content)
@@ -395,6 +404,9 @@ Route::prefix('{school:slug}')
                 
                 // Student's current course (single enrollment view)
                 Route::get('/my-course', [StudentController::class, 'myCourse'])->name('my-course');
+
+                // Student's progress overview
+                Route::get('/my-progress', [StudentController::class, 'myProgress'])->name('my-progress');
             });
 
             // New LMS routes WITHOUT ajax middleware

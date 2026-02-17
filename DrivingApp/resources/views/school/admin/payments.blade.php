@@ -405,8 +405,10 @@
             @endif
         </div>
         @empty
-        <div class="payment-mobile-card">
-            <p style="text-align: center; color: #9ca3af;">No payments found</p>
+        <div class="empty-state">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+            <p class="empty-state-title">No payments found</p>
+            <p class="empty-state-text">Payment records will appear here</p>
         </div>
         @endforelse
     </div>
@@ -414,51 +416,53 @@
 
 <script>
 function markAsPaid(paymentId) {
-    if (!confirm('Mark this payment as completed?')) return;
-    
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') 
-        || '{{ csrf_token() }}';
-    
-    fetch(`{{ url($school->slug . '/admin/payments') }}/${paymentId}`, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': csrfToken,
-            'Accept': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest'
-        },
-        body: JSON.stringify({
-            amount: document.querySelector(`#payment-row-${paymentId} .amount-cell`)?.textContent?.replace(/[₱,]/g, '').trim() || '0',
-            status: 'completed'
-        })
-    })
-    .then(response => {
-        if (!response.ok) throw new Error('Failed to update payment');
-        return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            // Update the badge
-            const badge = document.getElementById(`payment-badge-${paymentId}`);
-            if (badge) {
-                badge.className = 'badge badge-success';
-                badge.textContent = 'Completed';
-            }
-            // Update the row status for filtering
-            const row = document.getElementById(`payment-row-${paymentId}`);
-            if (row) {
-                row.setAttribute('data-status', 'completed');
-            }
-            // Replace button with checkmark
-            const actionCell = row?.querySelector('td:last-child');
-            if (actionCell) {
-                actionCell.innerHTML = '<span style="color: #059669; font-size: 0.85rem;">✓ Paid</span>';
-            }
+    showConfirm({
+        title: 'Confirm Payment',
+        message: 'Mark this payment as completed?',
+        type: 'warning',
+        onConfirm: () => {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') 
+                || '{{ csrf_token() }}';
+            
+            fetch(`{{ url($school->slug . '/admin/payments') }}/${paymentId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    amount: document.querySelector(`#payment-row-${paymentId} .amount-cell`)?.textContent?.replace(/[₱,]/g, '').trim() || '0',
+                    status: 'completed'
+                })
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to update payment');
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    const badge = document.getElementById(`payment-badge-${paymentId}`);
+                    if (badge) {
+                        badge.className = 'badge badge-success';
+                        badge.textContent = 'Completed';
+                    }
+                    const row = document.getElementById(`payment-row-${paymentId}`);
+                    if (row) {
+                        row.setAttribute('data-status', 'completed');
+                    }
+                    const actionCell = row?.querySelector('td:last-child');
+                    if (actionCell) {
+                        actionCell.innerHTML = '<span style="color: #059669; font-size: 0.85rem;">✓ Paid</span>';
+                    }
+                }
+            })
+            .catch(error => {
+                alert('Error updating payment. Please try again.');
+                console.error(error);
+            });
         }
-    })
-    .catch(error => {
-        alert('Error updating payment. Please try again.');
-        console.error(error);
     });
 }
 

@@ -559,8 +559,7 @@
                         <span>{{ $validation['message'] }}</span>
                     </div>
                     <form action="{{ $schoolRoute('instructor.theoretical.markAsPassed') }}"
-                          method="POST"
-                          onsubmit="return confirm('Are you sure you want to mark this student as passed theoretical training?');">
+                          method="POST">
                         @csrf
                         <input type="hidden" name="enrollment_id" value="{{ $enrollment->id }}">
 
@@ -570,7 +569,7 @@
                                       placeholder="Add any additional notes..."></textarea>
                         </div>
 
-                        <button type="submit" class="btn-submit success">
+                        <button type="button" class="btn-submit success" onclick="showConfirm({title:'Confirm Action',message:'Are you sure you want to mark this student as passed theoretical training?',type:'success',onConfirm:()=>this.closest('form').submit()})">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 18px; height: 18px;">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>

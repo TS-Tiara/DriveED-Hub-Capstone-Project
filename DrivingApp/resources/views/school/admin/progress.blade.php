@@ -512,9 +512,10 @@
         </table>
     </div>
     @else
-        <div style="text-align: center; padding: 60px 20px; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-            <p style="font-size: 1.2rem; color: #9ca3af;">No progress records found</p>
-            <p style="color: #6b7280; margin-top: 10px;">Student progress will appear here once training begins</p>
+        <div class="empty-state" style="background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            <p class="empty-state-title">No progress records found</p>
+            <p class="empty-state-text">Student progress will appear here once training begins</p>
         </div>
     @endif
 </div>

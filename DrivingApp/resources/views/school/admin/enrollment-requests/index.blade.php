@@ -676,7 +676,7 @@
                                         <a href="{{ Storage::url($request->learner->student_license_path) }}" target="_blank" class="btn-license-view">View</a>
                                         <form method="POST" action="{{ route('schools.admin.enrollments.verifyLicense', ['school' => $school, 'student' => $request->learner->id]) }}" style="display:inline;">
                                             @csrf
-                                            <button type="submit" class="btn-license-verify" onclick="return confirm('Verify this student\'s license?')">✓ Verify</button>
+                                            <button type="button" class="btn-license-verify" onclick="showConfirm({title:'Verify License',message:'Verify this student\'s license?',type:'success',onConfirm:()=>this.closest('form').submit()})">✓ Verify</button>
                                         </form>
                                         <button type="button" class="btn-license-reject" onclick="showLicenseRejectModal({{ $request->learner->id }}, '{{ addslashes($request->learner->name) }}')">✗ Reject</button>
                                     </div>
