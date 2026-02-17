@@ -1,5 +1,85 @@
 # Changelog - Driving School Management System
 
+## [v2.0-Phase5] - Polish & Accessibility (Polish-Accessibility branch)
+
+### ✨ Custom Confirmation Dialogs
+- Replaced 12 raw browser `confirm()` calls with styled `showConfirm()` modal dialogs
+- Files updated: student/schedule (6), instructor/theoretical, instructor/schedule-new, instructor/progress-show, admin/theoretical, admin/payments, admin/enrollment-requests
+- Buttons changed from `type="submit"` to `type="button"` with proper modal callback flow
+- JS functions `markAsPaid()` and `leaveSlot()` restructured to use modal callbacks
+
+### 🎨 Empty State Improvements
+- Added reusable `.empty-state` CSS class to both `app.blade.php` and `system-admin.blade.php` layouts
+- Improved 10 unstyled empty states across 7 views with SVG icons and consistent messaging
+- Views updated: system-admin/dashboard (2), student/progress, student/payments (2), instructor/dashboard (2), admin/progress, admin/payments
+
+### 🖨️ Print-Friendly Styles
+- Added `@media print` rules to `app.blade.php` — hides sidebar, topbar, overlays, buttons; formats tables with borders; removes box-shadows
+- Added `@media print` rules to `system-admin.blade.php` — same approach for system admin panel
+
+### ♿ ARIA Labels & Accessibility
+- Added `role="banner"`, `role="navigation"`, `role="main"`, `role="menubar"` landmarks to both layouts
+- Added `aria-label`, `aria-expanded`, `aria-haspopup`, `aria-controls` to burger menu, notification dropdown, profile dropdown
+- Added `tabindex="0"` and keyboard event handlers (`Enter`/`Space`) to non-focusable interactive `<div>` elements
+- Updated `toggleSidebar()`/`closeSidebar()` JS in both layouts to manage `aria-expanded` state
+- Added `role="presentation"` and `aria-hidden="true"` to sidebar overlays
+- Added `aria-label="Breadcrumb"` to breadcrumb navigation bar
+
+### 🔧 Other Agent's Changes (included)
+- Controller import cleanups (GuestController, ReportController, SessionCompletionController, StudentController)
+- New PhaseProgressionController and PhaseProgression model
+- New Phase1And2VerificationTest browser test
+- EnrollmentRequestController and routes/web.php updates
+
+---
+
+## [v2.0-Phase4] - Mobile & Responsiveness (Mobile-Responsiveness branch)
+
+### 📱 System Admin Layout Overhaul
+- Complete responsive redesign of `system-admin.blade.php` (was completely non-responsive)
+- Added collapsible sidebar with burger menu and overlay
+- Added 3 responsive breakpoints: 1024px, 768px, 480px
+- Mobile-friendly tables, filters, pagination, and navigation
+
+### 📊 Table Overflow Wrappers
+- Added `table-container` overflow wrappers to 12 tables across 11 system-admin and school views
+- Enables horizontal scrolling on narrow screens
+
+### 📋 Mobile Card Layouts
+- Added mobile card view for enrollment requests (hidden desktop, shown ≤768px)
+- Added mobile card view for admin payments
+- Added mobile card view for instructor sessions
+
+### 👆 Touch Target Improvements
+- Global 44px minimum touch targets for buttons/inputs at ≤768px
+- Better badge touch targets with increased padding
+- Full-width buttons on ≤480px screens
+
+### 🖥️ Modal & Form Responsive Fixes
+- Responsive modals for schools, admins, users views (95% width on mobile)
+- Form rows stack vertically on mobile
+- Larger touch targets in modal contexts
+
+---
+
+## [v2.0-Phase3] - Navigation & Layout (Navigation-Layout branch)
+
+### 🧭 Sidebar Navigation
+- Moved sidebar from right side to left side (standard UX pattern)
+- Made sidebar collapsible on all screen sizes
+- Added breadcrumb navigation bar below topbar
+
+---
+
+## [v2.0-Phase2] - Notifications & Communication (Notification-fix branch)
+
+### 🔔 Notification System
+- Implemented in-app notification system with polymorphic notifiable relationship
+- Added notification dropdown in topbar with real-time badge count
+- Mark-as-read and mark-all-read functionality
+
+---
+
 ## [v1.5b] - January 29, 2026
 
 ### 🔒 Security Fixes
