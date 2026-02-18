@@ -249,6 +249,10 @@
                     <div class="profile-field-label">License Number:</div>
                     <div class="profile-field-value">{{ $instructor->license_number ?? 'N/A' }}</div>
                 </div>
+                <div class="profile-field">
+                    <div class="profile-field-label">Branch:</div>
+                    <div class="profile-field-value">{{ $instructor->branch->name ?? 'Not Assigned' }}</div>
+                </div>
             </div>
 
             <div class="profile-actions">

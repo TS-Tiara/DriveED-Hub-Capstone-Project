@@ -185,7 +185,11 @@
     <div class="page-header">
         <div class="page-header-left">
             <h1 class="page-title">Dashboard</h1>
-            <p class="page-subtitle">Welcome back — here's your overview for today</p>
+            <p class="page-subtitle">Welcome back — here's your overview for today
+                @if($instructor->branch)
+                    <span style="margin-left: 8px; padding: 3px 10px; background: rgba(102, 126, 234, 0.1); border-radius: 12px; font-size: 0.85rem; color: #374151;"><i class="bi bi-building" style="margin-right: 3px;"></i>{{ $instructor->branch->name }}</span>
+                @endif
+            </p>
         </div>
     </div>
 

@@ -525,6 +525,9 @@
                                             @if($slotBookings->count() > 0)
                                                 • {{ $slotBookings->count() }} student(s) scheduled
                                             @endif
+                                            @if($slot->branch_id && $slot->branch)
+                                                • <span style="color: #3730a3;">{{ $slot->branch->name }}</span>
+                                            @endif
                                         </div>
                                         @if($slot->notes)
                                             <div class="slot-info">{{ $slot->notes }}</div>

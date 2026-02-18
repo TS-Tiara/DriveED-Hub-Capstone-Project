@@ -1260,6 +1260,17 @@
                         <input type="checkbox" id="show-all-courses" onchange="toggleShowAllCourses()">
                         <span>All Courses</span>
                     </label>
+                    @php
+                        $branchesForFilter = \App\Models\Branch::where('school_id', $school->id)->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
+                    @endphp
+                    @if($branchesForFilter->count() > 0)
+                    <select id="branch-filter-available" onchange="filterByBranchSchedule()" style="padding: 5px 10px; border: 1.5px solid #d1d5db; border-radius: 6px; font-size: 0.85rem; background: white; cursor: pointer;">
+                        <option value="">All Branches</option>
+                        @foreach($branchesForFilter as $b)
+                            <option value="{{ $b->id }}">{{ $b->name }}</option>
+                        @endforeach
+                    </select>
+                    @endif
                     <button class="collapse-btn mobile-queue-btn" onclick="toggleQueuePopup()" style="display: none; padding: 6px 12px; font-size: 14px;">My Schedule</button>
                 </div>
             </div>
@@ -1286,6 +1297,7 @@
                             <div class="available-schedule-card" 
                                  data-course-id="{{ $timeSlot->course_id ?? '' }}" 
                                  data-course-name="{{ $courseName }}"
+                                 data-branch-id="{{ $timeSlot->branch_id ?? '' }}"
                                  data-date="{{ $date }}"
                                  data-start-time="{{ \Carbon\Carbon::parse($timeSlot->start_time)->format('H:i') }}"
                                  data-end-time="{{ \Carbon\Carbon::parse($timeSlot->end_time)->format('H:i') }}"
@@ -1297,8 +1309,11 @@
                                         @if($timeSlot->course)
                                             <span class="course-badge" style="background: {{ $primaryColor }}; color: white;">{{ $timeSlot->course->title ?? 'Course' }}</span>
                                             @if($isEnrolledInCourse)
-                                                <span class="course-badge" style="background: #d4edda; color: #155724;">✓ Enrolled</span>
+                                                <span class="course-badge" style="background: #d4edda; color: #155724;">&#10003; Enrolled</span>
                                             @endif
+                                        @endif
+                                        @if($timeSlot->branch_id && $timeSlot->branch)
+                                            <span class="course-badge" style="background: #e0e7ff; color: #3730a3; font-size: 0.78rem;">{{ $timeSlot->branch->name }}</span>
                                         @endif
                                     </div>
                                     
@@ -1696,6 +1711,26 @@
         });
     }
     
+    function filterByBranchSchedule() {
+        const branchVal = document.getElementById('branch-filter-available')?.value || '';
+        const cards = document.querySelectorAll('.available-schedule-card');
+        cards.forEach(card => {
+            if (!branchVal) {
+                // Reset to enrolled filter
+                const enrolled = card.getAttribute('data-enrolled');
+                const showAll = document.getElementById('show-all-courses')?.checked || false;
+                card.style.display = (showAll || enrolled === 'true') ? '' : 'none';
+            } else {
+                const cardBranch = card.getAttribute('data-branch-id') || '';
+                const enrolled = card.getAttribute('data-enrolled');
+                const showAll = document.getElementById('show-all-courses')?.checked || false;
+                const matchesBranch = cardBranch === branchVal;
+                const matchesCourse = showAll || enrolled === 'true';
+                card.style.display = (matchesBranch && matchesCourse) ? '' : 'none';
+            }
+        });
+    }
+
     function toggleQueuePopup() {
         const popup = document.getElementById('queuePopup');
         popup.classList.toggle('active');

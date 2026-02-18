@@ -72,6 +72,7 @@ class InstructorController extends Controller
         
         return view($school->resolveView('instructor.dashboard'), [
             'school' => $school,
+            'instructor' => $instructor,
             'todaysLessons' => $todaysSchedules,
             'weeklyLessons' => $weeklySchedules,
             'nextLesson' => $nextLesson,

@@ -617,6 +617,9 @@
             <div>
                 <h1 class="page-title" style="margin-bottom: 4px;">Welcome, {{ $student->name }}</h1>
                 <p style="margin: 0; color: #6b7280; font-size: 0.9rem;">{{ $student->email }}</p>
+                @if($student->branchRelation)
+                    <p style="margin: 2px 0 0; color: #6b7280; font-size: 0.85rem;"><i class="bi bi-building" style="margin-right: 4px;"></i>{{ $student->branchRelation->name }}</p>
+                @endif
             </div>
         </div>
     </div>

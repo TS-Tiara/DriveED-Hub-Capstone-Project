@@ -68,9 +68,9 @@ class Student extends Authenticatable
         return $this->belongsTo(School::class);
     }
 
-    public function branch()
+    public function branchRelation()
     {
-        return $this->belongsTo(Branch::class);
+        return $this->belongsTo(Branch::class, 'branch_id');
     }
 
     public function bookings()

@@ -26,7 +26,7 @@ class InstructorTimeSlotController extends Controller
         // Get instructor's course specializations
         $instructorCourses = $instructor->course_specializations ?? [];
 
-        $availableSlots = TimeSlot::with(['instructors', 'course'])
+        $availableSlots = TimeSlot::with(['instructors', 'course', 'branch'])
             ->where('school_id', $school->id)
             ->where('status', 'open')
             ->where('date', '>=', now()->toDateString())
@@ -34,7 +34,7 @@ class InstructorTimeSlotController extends Controller
             ->orderBy('start_time')
             ->get();
 
-        $mySlots = TimeSlot::with(['instructors', 'course'])
+        $mySlots = TimeSlot::with(['instructors', 'course', 'branch'])
             ->where('school_id', $school->id)
             ->whereHas('instructors', function ($query) use ($instructor): void {
                 $query->where('instructor_id', $instructor->id);
@@ -180,7 +180,7 @@ class InstructorTimeSlotController extends Controller
             ->toArray();
         
         // My slots (instructor's selected and admin-assigned slots)
-        $mySlots = TimeSlot::with(['instructors', 'course', 'bookings.student', 'bookings.course'])
+        $mySlots = TimeSlot::with(['instructors', 'course', 'branch', 'bookings.student', 'bookings.course'])
             ->where('school_id', $school->id)
             ->whereHas('instructors', function ($query) use ($instructorId) {
                 $query->where('instructor_id', $instructorId);
@@ -206,7 +206,7 @@ class InstructorTimeSlotController extends Controller
         })->take(5);
         
         // Available slots (not taken by this instructor)
-        $availableSlots = TimeSlot::with(['instructors', 'course'])
+        $availableSlots = TimeSlot::with(['instructors', 'course', 'branch'])
             ->where('school_id', $school->id)
             ->where('status', 'open')
             ->whereDoesntHave('instructors', function ($query) use ($instructorId) {

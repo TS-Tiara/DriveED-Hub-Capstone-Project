@@ -631,6 +631,10 @@
                     <span class="info-label">Date of Birth:</span>
                     <span class="info-value">{{ $student->date_of_birth ? \Carbon\Carbon::parse($student->date_of_birth)->format('F d, Y') : 'N/A' }}</span>
                 </div>
+                <div class="info-row">
+                    <span class="info-label">Branch:</span>
+                    <span class="info-value">{{ $student->branchRelation->name ?? 'Not Assigned' }}</span>
+                </div>
             </div>
             
             <div class="profile-buttons" id="profileButtons">
