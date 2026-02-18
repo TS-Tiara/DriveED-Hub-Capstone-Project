@@ -9,6 +9,7 @@ use App\Models\School;
 use App\Models\Student;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\EnrollmentApproved;
 use App\Mail\EnrollmentRejected;
@@ -141,7 +142,7 @@ class EnrollmentRequestController extends Controller
                 Mail::to($enrollmentRequest->learner->email)
                     ->send(new EnrollmentApproved($enrollmentRequest, $school));
             } catch (\Exception $e) {
-                \Log::warning('Failed to send enrollment approval email: ' . $e->getMessage());
+                Log::warning('Failed to send enrollment approval email: ' . $e->getMessage());
             }
 
             // Create in-app notification for the student
@@ -213,7 +214,7 @@ class EnrollmentRequestController extends Controller
             Mail::to($enrollmentRequest->learner->email)
                 ->send(new EnrollmentRejected($enrollmentRequest, $school));
         } catch (\Exception $e) {
-            \Log::warning('Failed to send enrollment rejection email: ' . $e->getMessage());
+            Log::warning('Failed to send enrollment rejection email: ' . $e->getMessage());
         }
 
         // Create in-app notification for the guest
@@ -274,7 +275,7 @@ class EnrollmentRequestController extends Controller
                     "/{$school->slug}/student"
                 );
             } catch (\Exception $e) {
-                \Log::warning('Failed to send payment status notification: ' . $e->getMessage());
+                Log::warning('Failed to send payment status notification: ' . $e->getMessage());
             }
         }
 
@@ -321,7 +322,7 @@ class EnrollmentRequestController extends Controller
                     "/{$school->slug}/student/my-progress"
                 );
             } catch (\Exception $e) {
-                \Log::warning('Failed to send enrollment completion notification: ' . $e->getMessage());
+                Log::warning('Failed to send enrollment completion notification: ' . $e->getMessage());
             }
         }
 
@@ -376,7 +377,7 @@ class EnrollmentRequestController extends Controller
                     "/{$school->slug}/student"
                 );
             } catch (\Exception $e) {
-                \Log::warning('Failed to send cancellation notification: ' . $e->getMessage());
+                Log::warning('Failed to send cancellation notification: ' . $e->getMessage());
             }
         }
 
@@ -424,7 +425,7 @@ class EnrollmentRequestController extends Controller
                     "/{$school->slug}/student/my-course"
                 );
             } catch (\Exception $e) {
-                \Log::warning('Failed to send theoretical passed notification: ' . $e->getMessage());
+                Log::warning('Failed to send theoretical passed notification: ' . $e->getMessage());
             }
         }
 
@@ -493,7 +494,7 @@ class EnrollmentRequestController extends Controller
                     Mail::to($enrollment->learner->email)
                         ->send(new EnrollmentApproved($enrollment, $school));
                 } catch (\Exception $e) {
-                    \Log::warning('Failed to send bulk approval email: ' . $e->getMessage());
+                    Log::warning('Failed to send bulk approval email: ' . $e->getMessage());
                 }
 
                 // Create in-app notification
@@ -567,7 +568,7 @@ class EnrollmentRequestController extends Controller
                     Mail::to($enrollment->learner->email)
                         ->send(new EnrollmentRejected($enrollment, $school));
                 } catch (\Exception $e) {
-                    \Log::warning('Failed to send bulk rejection email: ' . $e->getMessage());
+                    Log::warning('Failed to send bulk rejection email: ' . $e->getMessage());
                 }
 
                 // Create in-app notification

@@ -262,7 +262,7 @@ describe('Theoretical Completion Management', function () {
         [$school, $admin, $course] = createFullSchoolSetup();
         
         $response = $this->actingAs($admin, 'admin')
-            ->get(route('schools.admin.theoretical.passed', $school));
+            ->get(route('schools.admin.theoretical.index', $school));
         
         $response->assertStatus(200);
     });

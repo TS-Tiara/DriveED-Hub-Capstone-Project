@@ -16,6 +16,8 @@ use App\Models\Instructor;
 use App\Models\Course;
 use App\Models\EnrollmentRequest;
 use App\Models\SchoolSetting;
+use App\Models\Booking;
+use App\Models\TimeSlot;
 use App\Mail\EnrollmentApproved;
 use App\Mail\EnrollmentRequestReceived;
 use App\Mail\SessionReminder;
@@ -98,14 +100,13 @@ describe('Email Queuing', function () {
             'school_id' => $school->id,
             'email' => 'test@gmail.com',
         ]);
+        $booking = Booking::factory()->create([
+            'school_id' => $school->id,
+            'student_id' => $student->id,
+        ]);
         
         // Queue the email
-        Mail::to($student->email)->queue(new SessionReminder([
-            'student_name' => $student->name,
-            'date' => now()->addDay()->format('F j, Y'),
-            'time' => '10:00 AM',
-            'instructor' => 'Test Instructor',
-        ]));
+        Mail::to($student->email)->queue(new SessionReminder($booking, $school));
         
         Mail::assertQueued(SessionReminder::class);
     });
@@ -144,12 +145,12 @@ describe('Email Content Verification', function () {
     });
 
     test('session reminder email has proper envelope', function () {
-        $mailable = new SessionReminder([
-            'student_name' => 'John Doe',
-            'date' => 'January 15, 2026',
-            'time' => '10:00 AM',
-            'instructor' => 'Jane Smith',
+        $school = School::factory()->create(['name' => 'Test Driving School']);
+        $booking = Booking::factory()->create([
+            'school_id' => $school->id,
         ]);
+
+        $mailable = new SessionReminder($booking, $school);
         
         $envelope = $mailable->envelope();
         

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Mail;
 use App\Models\School;
@@ -80,7 +81,7 @@ class PasswordResetController extends Controller
                 }
             );
         } catch (\Exception $e) {
-            \Log::error('Failed to send password reset email: ' . $e->getMessage());
+            Log::error('Failed to send password reset email: ' . $e->getMessage());
         }
 
         $message = 'Password reset link has been sent to your email!';

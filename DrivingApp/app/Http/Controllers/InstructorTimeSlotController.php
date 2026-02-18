@@ -10,6 +10,7 @@ use App\Models\InstructorRemovalRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class InstructorTimeSlotController extends Controller
@@ -305,7 +306,7 @@ class InstructorTimeSlotController extends Controller
 
         // Delete old profile picture if exists
         if ($instructor->profile_picture) {
-            \Storage::disk('public')->delete($instructor->profile_picture);
+            Storage::disk('public')->delete($instructor->profile_picture);
         }
 
         // Store new profile picture

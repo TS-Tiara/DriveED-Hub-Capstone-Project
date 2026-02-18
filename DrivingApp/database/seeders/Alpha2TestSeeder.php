@@ -615,7 +615,7 @@ class Alpha2TestSeeder extends Seeder
         $this->createSession($practicalEnrollment8, $instructors[1], now()->subDays(11), 2.0, 'practical', 'Final test preparation');
     }
 
-    private function createSession(Enrollment $enrollment, Instructor $instructor, $date, float $hours, string $type, ?string $notes = null): SessionCompletion
+    private function createSession(EnrollmentRequest $enrollment, Instructor $instructor, $date, float $hours, string $type, ?string $notes = null): SessionCompletion
     {
         return SessionCompletion::create([
             'enrollment_id' => $enrollment->id,

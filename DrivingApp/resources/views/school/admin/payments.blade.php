@@ -6,6 +6,8 @@
 @php
     $school = $school ?? $currentSchool ?? null;
     $schoolName = $school->name ?? 'Driving School';
+    $settings = $school?->schoolSetting;
+    $primaryColor = $settings?->primary_color ?? '#667eea';
 @endphp
 
 @include('school.admin.partials.admin-styles')
