@@ -287,7 +287,7 @@
         document.getElementById('courseModalLabel').textContent = 'Add New Course';
         document.getElementById('courseForm').reset();
         document.getElementById('courseMethod').value = 'POST';
-        document.getElementById('courseForm').action = "{{ route('admin.courses.store', $school->slug) }}";
+        document.getElementById('courseForm').action = "{{ route('schools.admin.courses.store', $school) }}";
         updateTotalHours();
         new bootstrap.Modal(document.getElementById('courseModal')).show();
     }
@@ -296,7 +296,7 @@
     function openEditCourseModal(course) {
         document.getElementById('courseModalLabel').textContent = 'Edit Course';
         document.getElementById('courseMethod').value = 'PUT';
-        document.getElementById('courseForm').action = `/admin/courses/${course.id}`;
+        document.getElementById('courseForm').action = `/{{ $school->slug }}/admin/courses/${course.id}`;
         
         // Populate form fields
         document.getElementById('courseTitle').value = course.title;

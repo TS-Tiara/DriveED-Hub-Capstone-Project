@@ -77,15 +77,15 @@ class Student extends Authenticatable
      */
     public function activeEnrollment()
     {
-        return $this->belongsTo(Enrollment::class, 'active_enrollment_id');
+        return $this->belongsTo(EnrollmentRequest::class, 'active_enrollment_id');
     }
 
     /**
-     * Get all enrollment records (from enrollments table)
+     * Get all enrollment records (from enrollment_requests table)
      */
     public function enrollmentRecords()
     {
-        return $this->hasMany(Enrollment::class);
+        return $this->hasMany(EnrollmentRequest::class, 'learner_id');
     }
 
     /**
@@ -107,7 +107,7 @@ class Student extends Authenticatable
     /**
      * Lock student to a course
      */
-    public function lockToCourse(Enrollment $enrollment): void
+    public function lockToCourse(EnrollmentRequest $enrollment): void
     {
         $this->update([
             'active_enrollment_id' => $enrollment->id,

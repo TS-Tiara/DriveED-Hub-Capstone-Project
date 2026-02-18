@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\SessionCompletion;
-use App\Models\Enrollment;
 use App\Models\EnrollmentRequest;
 use App\Models\Instructor;
 use App\Models\PhaseProgression;
@@ -368,7 +367,7 @@ class SessionCompletionController extends Controller
     /**
      * Get session statistics for an enrollment
      */
-    public function enrollmentStats(Enrollment $enrollment)
+    public function enrollmentStats(EnrollmentRequest $enrollment)
     {
         $stats = [
             'total_sessions' => $enrollment->sessionCompletions()->count(),

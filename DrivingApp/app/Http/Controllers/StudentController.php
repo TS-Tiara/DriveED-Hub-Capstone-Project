@@ -6,7 +6,6 @@ use Illuminate\Http\Request;
 use App\Models\School;
 use App\Models\Booking;
 use App\Models\Student;
-use App\Models\Enrollment;
 use App\Models\EnrollmentRequest;
 use App\Models\Course;
 use App\Models\PhaseProgression;
@@ -284,22 +283,13 @@ class StudentController extends Controller
         $student = Auth::guard('student')->user();
         
         // Get active enrollment (student is locked to one course at a time)
-        $activeEnrollment = Enrollment::where('student_id', $student->id)
+        $activeEnrollment = EnrollmentRequest::where('learner_id', $student->id)
             ->where('school_id', $school->id)
-            ->where('status', 'active')
+            ->where('status', 'approved')
             ->with(['course.modules.lessons', 'sessionCompletions'])
             ->first();
         
-        // If no active enrollment in new system, check enrollment requests
-        if (!$activeEnrollment) {
-            $approvedRequest = EnrollmentRequest::where('learner_id', $student->id)
-                ->where('school_id', $school->id)
-                ->where('status', 'approved')
-                ->with(['course.modules.lessons', 'sessionCompletions'])
-                ->first();
-        } else {
-            $approvedRequest = null;
-        }
+        $approvedRequest = $activeEnrollment;
         
         // Get pending enrollment requests
         $pendingRequests = EnrollmentRequest::where('learner_id', $student->id)

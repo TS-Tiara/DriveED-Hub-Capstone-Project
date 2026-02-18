@@ -36,7 +36,7 @@ class ModuleLessonController extends Controller
             $student = Auth::guard('student')->user();
             $isEnrolled = $student->enrollments()
                 ->where('course_id', $course->id)
-                ->where('status', 'active')
+                ->where('status', 'approved')
                 ->exists();
             
             if (!$isEnrolled) {
@@ -188,7 +188,7 @@ class ModuleLessonController extends Controller
             $student = Auth::guard('student')->user();
             $isEnrolled = $student->enrollments()
                 ->where('course_id', $course->id)
-                ->where('status', 'active')
+                ->where('status', 'approved')
                 ->exists();
             
             if (!$isEnrolled) {

@@ -240,7 +240,7 @@ class EnrollmentRequest extends Model
             return collect();
         }
 
-        return Enrollment::where('student_id', $this->learner_id)
+        return self::where('learner_id', $this->learner_id)
             ->where('school_id', $this->school_id)
             ->where('status', 'completed')
             ->with('course')

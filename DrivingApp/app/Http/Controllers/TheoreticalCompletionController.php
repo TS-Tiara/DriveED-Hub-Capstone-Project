@@ -231,7 +231,7 @@ class TheoreticalCompletionController extends Controller
             ->whereHas('course', function($query) {
                 $query->where('course_type', 'practical');
             })
-            ->where('status', 'active')
+            ->where('status', 'approved')
             ->exists();
         
         if ($hasPracticalEnrollments) {

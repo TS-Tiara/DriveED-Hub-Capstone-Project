@@ -5,12 +5,11 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Fix foreign key constraints on session_completions and phase_progression_requests tables.
+ * Fix foreign key constraints that reference the legacy 'enrollments' table.
  * 
- * Both tables have enrollment_id columns that were originally constrained to the
- * legacy 'enrollments' table, but the system has fully transitioned to using
- * 'enrollment_requests' as the primary enrollment entity. This migration updates
- * the foreign keys to point to the correct table.
+ * The system has fully transitioned to using 'enrollment_requests' as the
+ * primary enrollment entity. This migration updates all FK constraints
+ * to point to the correct table.
  */
 return new class extends Migration
 {
@@ -33,6 +32,15 @@ return new class extends Migration
                 ->on('enrollment_requests')
                 ->onDelete('cascade');
         });
+
+        // Fix students.active_enrollment_id FK
+        Schema::table('students', function (Blueprint $table) {
+            $table->dropForeign(['active_enrollment_id']);
+            $table->foreign('active_enrollment_id')
+                ->references('id')
+                ->on('enrollment_requests')
+                ->onDelete('set null');
+        });
     }
 
     public function down(): void
@@ -53,6 +61,15 @@ return new class extends Migration
                 ->references('id')
                 ->on('enrollments')
                 ->onDelete('cascade');
+        });
+
+        // Revert students.active_enrollment_id FK back to enrollments
+        Schema::table('students', function (Blueprint $table) {
+            $table->dropForeign(['active_enrollment_id']);
+            $table->foreign('active_enrollment_id')
+                ->references('id')
+                ->on('enrollments')
+                ->onDelete('set null');
         });
     }
 };

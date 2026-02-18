@@ -354,7 +354,7 @@
                         </button>
                     </div>
                 </div>
-                <a href="{{ route('schools.admin.login', $school->slug) }}" class="login-btn">Login as Admin</a>
+                <a href="{{ route('schools.login', $school->slug) }}" class="login-btn">Login as Admin</a>
             </div>
 
             <!-- Instructor 1 -->
@@ -384,7 +384,7 @@
                         </button>
                     </div>
                 </div>
-                <a href="{{ route('schools.instructor.login', $school->slug) }}" class="login-btn">Login as Instructor</a>
+                <a href="{{ route('schools.login', $school->slug) }}" class="login-btn">Login as Instructor</a>
             </div>
 
             <!-- Instructor 2 -->
@@ -414,7 +414,7 @@
                         </button>
                     </div>
                 </div>
-                <a href="{{ route('schools.instructor.login', $school->slug) }}" class="login-btn">Login as Instructor</a>
+                <a href="{{ route('schools.login', $school->slug) }}" class="login-btn">Login as Instructor</a>
             </div>
 
             <!-- Student 1 -->
@@ -444,7 +444,7 @@
                         </button>
                     </div>
                 </div>
-                <a href="{{ route('schools.student.login', $school->slug) }}" class="login-btn">Login as Student</a>
+                <a href="{{ route('schools.login', $school->slug) }}" class="login-btn">Login as Student</a>
             </div>
 
             <!-- Student 2 -->
@@ -474,7 +474,7 @@
                         </button>
                     </div>
                 </div>
-                <a href="{{ route('schools.student.login', $school->slug) }}" class="login-btn">Login as Student</a>
+                <a href="{{ route('schools.login', $school->slug) }}" class="login-btn">Login as Student</a>
             </div>
 
             <!-- Guest 1 -->
@@ -504,7 +504,7 @@
                         </button>
                     </div>
                 </div>
-                <a href="{{ route('schools.student.login', $school->slug) }}" class="login-btn">Login as Guest</a>
+                <a href="{{ route('schools.login', $school->slug) }}" class="login-btn">Login as Guest</a>
             </div>
 
             <!-- Guest 2 -->
@@ -534,7 +534,7 @@
                         </button>
                     </div>
                 </div>
-                <a href="{{ route('schools.student.login', $school->slug) }}" class="login-btn">Login as Guest</a>
+                <a href="{{ route('schools.login', $school->slug) }}" class="login-btn">Login as Guest</a>
             </div>
         </div>
 

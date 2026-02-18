@@ -423,7 +423,7 @@ function updateStatus(bookingId, status) {
 }
 
 function createPayment(bookingId) {
-    window.location.href = `/${schoolSlug}/admin/payments/create?booking_id=${bookingId}`;
+    window.location.href = `/${schoolSlug}/admin/payments?booking_id=${bookingId}`;
 }
 </script>
 @endsection
