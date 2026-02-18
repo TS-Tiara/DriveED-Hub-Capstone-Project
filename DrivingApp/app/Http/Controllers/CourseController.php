@@ -134,7 +134,7 @@ class CourseController extends Controller
         $enrollmentValidation = null;
         
         if (Auth::guard('student')->check()) {
-            $student = Student::where('user_id', Auth::id())->first();
+            $student = Auth::guard('student')->user();
             if ($student) {
                 $enrollmentValidation = EnrollmentValidator::canEnrollInCourse($student, $course);
                 $canEnroll = $enrollmentValidation['allowed'];

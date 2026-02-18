@@ -97,7 +97,7 @@ class ExportController extends Controller
 
         $totalHours = SessionCompletion::whereHas('enrollmentRequest', function ($query) use ($student) {
             $query->where('learner_id', $student->id);
-        })->sum('duration_hours');
+        })->sum('hours_completed');
 
         $pdf = Pdf::loadView('exports.student-progress-pdf', [
             'school' => $school,

@@ -38,7 +38,7 @@ class PhaseProgression extends Model
      */
     public function enrollment(): BelongsTo
     {
-        return $this->belongsTo(Enrollment::class);
+        return $this->belongsTo(EnrollmentRequest::class, 'enrollment_id');
     }
 
     /**

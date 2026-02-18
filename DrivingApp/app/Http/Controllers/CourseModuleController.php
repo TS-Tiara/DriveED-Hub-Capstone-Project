@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CourseModule;
 use App\Models\Course;
+use App\Models\School;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -24,7 +25,7 @@ class CourseModuleController extends Controller
     /**
      * Display a listing of modules for a specific course
      */
-    public function index(Course $course)
+    public function index(School $school, Course $course)
     {
         $role = $this->resolveAuthRole();
         
@@ -43,13 +44,13 @@ class CourseModuleController extends Controller
             default => abort(403)
         };
         
-        return view($viewPath, compact('course', 'modules'));
+        return view($school->resolveView($viewPath), compact('school', 'course', 'modules'));
     }
 
     /**
      * Show the form for creating a new module
      */
-    public function create(Course $course)
+    public function create(School $school, Course $course)
     {
         $role = $this->resolveAuthRole();
         
@@ -57,13 +58,13 @@ class CourseModuleController extends Controller
             abort(403);
         }
         
-        return view('admin.modules.create', compact('course'));
+        return view($school->resolveView('admin.modules.create'), compact('school', 'course'));
     }
 
     /**
      * Store a newly created module
      */
-    public function store(Request $request, Course $course)
+    public function store(Request $request, School $school, Course $course)
     {
         $role = $this->resolveAuthRole();
         
@@ -102,7 +103,7 @@ class CourseModuleController extends Controller
             }
             
             return redirect()
-                ->route('admin.courses.modules.index', $course)
+                ->route('schools.admin.courses.modules.index', ['school' => $school->slug, 'course' => $course->id])
                 ->with('success', 'Module created successfully.');
             
         } catch (\Exception $e) {
@@ -124,7 +125,7 @@ class CourseModuleController extends Controller
     /**
      * Display the specified module with its lessons
      */
-    public function show(Course $course, CourseModule $module)
+    public function show(School $school, Course $course, CourseModule $module)
     {
         $role = $this->resolveAuthRole();
         
@@ -144,13 +145,13 @@ class CourseModuleController extends Controller
             default => abort(403)
         };
         
-        return view($viewPath, compact('course', 'module'));
+        return view($school->resolveView($viewPath), compact('school', 'course', 'module'));
     }
 
     /**
      * Show the form for editing the specified module
      */
-    public function edit(Course $course, CourseModule $module)
+    public function edit(School $school, Course $course, CourseModule $module)
     {
         $role = $this->resolveAuthRole();
         
@@ -163,13 +164,13 @@ class CourseModuleController extends Controller
             abort(404);
         }
         
-        return view('admin.modules.edit', compact('course', 'module'));
+        return view($school->resolveView('admin.modules.edit'), compact('school', 'course', 'module'));
     }
 
     /**
      * Update the specified module
      */
-    public function update(Request $request, Course $course, CourseModule $module)
+    public function update(Request $request, School $school, Course $course, CourseModule $module)
     {
         $role = $this->resolveAuthRole();
         
@@ -205,14 +206,14 @@ class CourseModuleController extends Controller
         }
         
         return redirect()
-            ->route('admin.courses.modules.show', [$course, $module])
+            ->route('schools.admin.courses.modules.show', ['school' => $school->slug, 'course' => $course->id, 'module' => $module->id])
             ->with('success', 'Module updated successfully.');
     }
 
     /**
      * Remove the specified module
      */
-    public function destroy(Course $course, CourseModule $module)
+    public function destroy(School $school, Course $course, CourseModule $module)
     {
         $role = $this->resolveAuthRole();
         
@@ -236,7 +237,7 @@ class CourseModuleController extends Controller
             DB::commit();
             
             return redirect()
-                ->route('admin.courses.modules.index', $course)
+                ->route('schools.admin.courses.modules.index', ['school' => $school->slug, 'course' => $course->id])
                 ->with('success', 'Module and all its lessons deleted successfully.');
             
         } catch (\Exception $e) {
@@ -248,7 +249,7 @@ class CourseModuleController extends Controller
     /**
      * Reorder modules
      */
-    public function reorder(Request $request, Course $course)
+    public function reorder(Request $request, School $school, Course $course)
     {
         $role = $this->resolveAuthRole();
         
@@ -288,7 +289,7 @@ class CourseModuleController extends Controller
     /**
      * Duplicate a module with all its lessons
      */
-    public function duplicate(Course $course, CourseModule $module)
+    public function duplicate(School $school, Course $course, CourseModule $module)
     {
         $role = $this->resolveAuthRole();
         
@@ -319,7 +320,7 @@ class CourseModuleController extends Controller
             DB::commit();
             
             return redirect()
-                ->route('admin.courses.modules.show', [$course, $newModule])
+                ->route('schools.admin.courses.modules.show', ['school' => $school->slug, 'course' => $course->id, 'module' => $newModule->id])
                 ->with('success', 'Module duplicated successfully.');
             
         } catch (\Exception $e) {

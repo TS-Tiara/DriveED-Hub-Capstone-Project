@@ -153,6 +153,7 @@ class SessionCompletionController extends Controller
         DB::beginTransaction();
         try {
             $sessionCompletion = SessionCompletion::create([
+                'school_id' => $school->id,
                 'enrollment_id' => $request->enrollment_id,
                 'instructor_id' => $instructor->id,
                 'session_type' => $request->session_type,

@@ -157,6 +157,25 @@ class EnrollmentRequest extends Model
         ]);
     }
 
+    /**
+     * Mark enrollment as completed with full lifecycle handling
+     * (Unlock student from course and mark theoretical passed if applicable)
+     */
+    public function markAsCompleted(): void
+    {
+        $this->complete();
+
+        // Unlock the student
+        if ($this->learner) {
+            $this->learner->unlockFromCourse();
+
+            // If this was a theoretical course, mark student as passed theoretical
+            if ($this->course && $this->course->course_type === 'theoretical') {
+                $this->learner->markTheoreticalPassed();
+            }
+        }
+    }
+
     public function cancel($remarks = null)
     {
         $this->update([

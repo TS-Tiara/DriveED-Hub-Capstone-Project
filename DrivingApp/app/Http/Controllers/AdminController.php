@@ -242,7 +242,7 @@ class AdminController extends Controller
         }
 
         return redirect()
-            ->route('schools.admin.createAccount', $school)
+            ->route('schools.admin.userManagement', $school)
             ->with('success', $successMessage);
     }
 

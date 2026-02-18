@@ -83,16 +83,14 @@ class StoreSessionCompletionRequest extends FormRequest
                     $validator->errors()->add('session_type', "Session type must match the course type ({$courseType}).");
                 }
 
-                // Check if enrollment is active
-                if (!$enrollment->isActive()) {
+                // Check if enrollment is active (approved status)
+                if ($enrollment->status !== 'approved') {
                     $validator->errors()->add('enrollment_id', 'Cannot log sessions for inactive enrollments.');
                 }
 
                 // Verify instructor is authorized for this enrollment
                 $user = $this->user();
-                if ($user->role === 'instructor') {
-                    $instructor = \App\Models\Instructor::where('user_id', $user->id)->first();
-                    
+                if ($user instanceof \App\Models\Instructor) {
                     // Optional: Add logic to verify instructor is assigned to this student/course
                     // This would require checking instructor assignments
                 }

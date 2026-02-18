@@ -130,7 +130,7 @@ class ProgressController extends Controller
             ], 201);
         }
 
-        return redirect()->route('progress.show', [$school->slug, $progress->id])
+        return redirect()->route('schools.instructor.progress.show', ['school' => $school->slug, 'progress' => $progress->id])
             ->with('success', 'Progress updated successfully');
     }
 
@@ -194,7 +194,7 @@ class ProgressController extends Controller
             ]);
         }
 
-        return redirect()->route('progress.show', [$school->slug, $progress->id])
+        return redirect()->route('schools.instructor.progress.show', ['school' => $school->slug, 'progress' => $progress->id])
             ->with('success', 'Progress updated successfully');
     }
 
@@ -214,7 +214,7 @@ class ProgressController extends Controller
             ]);
         }
 
-        return redirect()->route('progress.index', $school->slug)
+        return redirect()->route('schools.instructor.progress.index', ['school' => $school->slug])
             ->with('success', 'Progress deleted successfully');
     }
 

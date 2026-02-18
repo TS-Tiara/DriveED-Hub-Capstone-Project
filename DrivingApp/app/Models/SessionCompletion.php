@@ -40,11 +40,22 @@ class SessionCompletion extends Model
     }
 
     /**
-     * Get the enrollment that owns this session
+     * Get the enrollment request that owns this session.
+     * Note: enrollment_id column references enrollment_requests table
+     * (system transitioned from enrollments to enrollment_requests).
      */
     public function enrollment(): BelongsTo
     {
-        return $this->belongsTo(Enrollment::class);
+        return $this->belongsTo(EnrollmentRequest::class, 'enrollment_id');
+    }
+
+    /**
+     * Alias for enrollment() — used by ExportController and other code
+     * that references the enrollmentRequest relationship name.
+     */
+    public function enrollmentRequest(): BelongsTo
+    {
+        return $this->belongsTo(EnrollmentRequest::class, 'enrollment_id');
     }
 
     /**
@@ -64,19 +75,19 @@ class SessionCompletion extends Model
     }
 
     /**
-     * Get the student through enrollment
+     * Get the student (learner) through enrollment request
      */
     public function student()
     {
-        return $this->enrollment->student();
+        return $this->enrollment ? $this->enrollment->learner : null;
     }
 
     /**
-     * Get the course through enrollment
+     * Get the course through enrollment request
      */
     public function course()
     {
-        return $this->enrollment->course();
+        return $this->enrollment ? $this->enrollment->course : null;
     }
 
     /**
