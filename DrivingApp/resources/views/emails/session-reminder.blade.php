@@ -57,7 +57,7 @@
                     </div>
                 </div>
                 <div class="session-detail">
-                    <span class="session-icon">📚</span>
+                    <span class="session-icon">&#9733;</span>
                     <div>
                         <div class="session-label">Course</div>
                         <div class="session-value">{{ $booking->course->title ?? 'Driving Session' }}</div>

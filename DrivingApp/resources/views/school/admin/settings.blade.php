@@ -1142,7 +1142,7 @@
                     </div>
                     <div class="preview-content">
                         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                            <span class="preview-badge" id="badge-pending-preview" style="padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; color: white;">⏳ Pending</span>
+                            <span class="preview-badge" id="badge-pending-preview" style="padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; color: white;">Pending</span>
                             <span class="preview-badge" id="badge-approved-preview" style="padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; color: white;">✓ Approved</span>
                             <span class="preview-badge" id="badge-cancelled-preview" style="padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; color: white;">✗ Cancelled</span>
                         </div>

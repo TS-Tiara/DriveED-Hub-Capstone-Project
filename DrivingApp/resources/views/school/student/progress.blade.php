@@ -289,9 +289,9 @@
                         @if($progress->completion_percent == 100)
                             <span style="color: #10b981;">✓ Completed</span>
                         @elseif($progress->completion_percent > 0)
-                            <span style="color: #3b82f6;">⏳ In Progress</span>
+                            <span style="color: #3b82f6;">● In Progress</span>
                         @else
-                            <span style="color: #6b7280;">⚪ Not Started</span>
+                            <span style="color: #6b7280;">○ Not Started</span>
                         @endif
                     </div>
                 </div>

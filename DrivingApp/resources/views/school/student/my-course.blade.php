@@ -528,7 +528,7 @@
         {{-- Pending Enrollment Requests --}}
         @if($pendingRequests->count() > 0)
             <div class="course-card">
-                <h3 class="section-title">⏳ Pending Enrollment Requests</h3>
+                <h3 class="section-title">Pending Enrollment Requests</h3>
                 <div class="pending-section">
                     @foreach($pendingRequests as $request)
                         <div class="pending-item">
