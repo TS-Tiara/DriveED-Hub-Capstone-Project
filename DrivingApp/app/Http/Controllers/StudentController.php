@@ -21,7 +21,7 @@ class StudentController extends Controller
     public function dashboard(School $school)
     {
         $student = Auth::guard('student')->user();
-        $studentModel = Student::find($student->id);
+        $studentModel = Student::with('branchRelation')->find($student->id);
         
         // Get active enrollments with course and session data
         $activeEnrollments = EnrollmentRequest::where('learner_id', $student->id)
@@ -126,8 +126,12 @@ class StudentController extends Controller
 
     public function profile(School $school)
     {
+        $student = Auth::guard('student')->user();
+        $student->load('branchRelation');
+
         return view($school->resolveView('student.profile'), [
             'school' => $school,
+            'student' => $student,
         ]);
     }
 
@@ -239,7 +243,7 @@ class StudentController extends Controller
         // Get available time slots
         $availableTimeSlots = \App\Models\TimeSlot::where('school_id', $school->id)
             ->where('status', 'open')
-            ->with(['instructors', 'course'])
+            ->with(['instructors', 'course', 'branch'])
             ->orderBy('date')
             ->orderBy('start_time')
             ->get();

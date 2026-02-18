@@ -22,6 +22,7 @@ class InstructorController extends Controller
     public function dashboard(School $school)
     {
         $instructor = Auth::guard('instructor')->user();
+        $instructor->load('branch');
         
         // 1. Schedule Statistics
         $todaysSchedules = TimeSlot::whereHas('instructors', function($query) use ($instructor) {

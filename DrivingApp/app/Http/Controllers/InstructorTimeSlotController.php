@@ -255,8 +255,12 @@ class InstructorTimeSlotController extends Controller
 
     public function profile(School $school)
     {
+        $instructor = Auth::guard('instructor')->user();
+        $instructor->load('branch');
+
         return view($school->resolveView('instructor.profile'), [
             'school' => $school,
+            'instructor' => $instructor,
         ]);
     }
 
