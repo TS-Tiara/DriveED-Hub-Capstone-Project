@@ -90,12 +90,17 @@ class SessionCompletionController extends Controller
         $instructor = Auth::guard('instructor')->user();
         
         // Get active enrollments for this school
-        $enrollments = EnrollmentRequest::with(['learner', 'course'])
+        $enrollments = EnrollmentRequest::with(['learner', 'course', 'sessionCompletions'])
             ->whereHas('course', function($query) use ($school) {
                 $query->where('school_id', $school->id);
             })
             ->where('status', 'approved')
             ->get();
+
+        // Compute total hours for each enrollment (used in the view)
+        $enrollments->each(function ($enrollment) {
+            $enrollment->total_hours = $enrollment->sessionCompletions->sum('hours_completed');
+        });
         
         // Pre-select enrollment if provided
         $selectedEnrollment = $request->enrollment_id 
@@ -367,8 +372,16 @@ class SessionCompletionController extends Controller
     /**
      * Get session statistics for an enrollment
      */
-    public function enrollmentStats(EnrollmentRequest $enrollment)
+    public function enrollmentStats(School $school, $enrollment)
     {
+        // Manually resolve enrollment to avoid scopeBindings() conflict
+        $enrollment = EnrollmentRequest::findOrFail($enrollment);
+
+        // Verify enrollment belongs to this school
+        if ($enrollment->school_id !== $school->id) {
+            abort(404);
+        }
+
         $stats = [
             'total_sessions' => $enrollment->sessionCompletions()->count(),
             'total_hours' => $enrollment->sessionCompletions()->sum('hours_completed'),

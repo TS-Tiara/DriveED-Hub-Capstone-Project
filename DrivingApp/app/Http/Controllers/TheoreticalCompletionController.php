@@ -213,11 +213,19 @@ class TheoreticalCompletionController extends Controller
     /**
      * Revoke theoretical passed status (admin only)
      */
-    public function revoke(EnrollmentRequest $enrollment)
+    public function revoke(School $school, $enrollment)
     {
+        // Manually resolve enrollment to avoid scopeBindings() conflict
+        $enrollment = EnrollmentRequest::findOrFail($enrollment);
+
         // Only admins can revoke
         if (!Auth::guard('admin')->check()) {
             abort(403, 'Only administrators can revoke theoretical status.');
+        }
+
+        // Verify enrollment belongs to this school
+        if ($enrollment->school_id !== $school->id) {
+            abort(404);
         }
         
         $user = Auth::guard('admin')->user();
@@ -245,7 +253,7 @@ class TheoreticalCompletionController extends Controller
             ]);
             
             $enrollment->update([
-                'status' => 'active',
+                'status' => 'approved',
                 'completed_at' => null,
             ]);
             

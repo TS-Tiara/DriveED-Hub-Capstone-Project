@@ -313,11 +313,12 @@ class StudentController extends Controller
         
         if ($activeEnrollment) {
             $course = $activeEnrollment->course;
-            $hoursCompleted = $activeEnrollment->hours_completed ?? 0;
+            $completions = $activeEnrollment->sessionCompletions ?? collect();
+            $hoursCompleted = $completions->where('status', 'completed')->sum('hours_completed');
             $hoursRequired = $course->hours_required ?? $course->duration_hours ?? 0;
             $progressPercentage = $hoursRequired > 0 ? min(100, round(($hoursCompleted / $hoursRequired) * 100)) : 0;
             $modules = $course->modules ?? collect();
-            $sessionCompletions = $activeEnrollment->sessionCompletions ?? collect();
+            $sessionCompletions = $completions;
         } elseif ($approvedRequest) {
             $course = $approvedRequest->course;
             $completions = $approvedRequest->sessionCompletions ?? collect();
