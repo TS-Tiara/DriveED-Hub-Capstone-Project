@@ -200,7 +200,15 @@ class InstructorController extends Controller
         $totalHoursTaught = Booking::where('instructor_id', $instructor->id)
             ->where('school_id', $school->id)
             ->where('status', 'completed')
-            ->count() * 2; // Assuming 2-hour sessions
+            ->count() * 2; // Default estimate from bookings
+
+        // Use actual session completion data if available (more accurate)
+        $actualHours = \App\Models\SessionCompletion::where('instructor_id', $instructor->id)
+            ->where('school_id', $school->id)
+            ->sum('hours_completed');
+        if ($actualHours > 0) {
+            $totalHoursTaught = round($actualHours, 1);
+        }
             
         $activeStudents = Booking::where('instructor_id', $instructor->id)
             ->where('school_id', $school->id)

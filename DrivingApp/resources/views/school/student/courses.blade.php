@@ -85,6 +85,30 @@
         font-size: 0.75rem;
         font-weight: 600;
     }
+
+    .enrollment-status-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        color: white;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+
+    .enrollment-status-badge.status-pending {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    }
+
+    .enrollment-status-badge.status-approved {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+
+    .enrollment-status-badge.status-completed {
+        background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+    }
     
     .course-body {
         padding: 20px;
@@ -373,6 +397,12 @@
                 @if($course->is_featured)
                     <span class="featured-badge">Featured</span>
                 @endif
+                @if(isset($enrollmentStatuses[$course->id]))
+                    @php $enrollStatus = $enrollmentStatuses[$course->id]; @endphp
+                    <span class="enrollment-status-badge status-{{ $enrollStatus }}">
+                        {{ $enrollStatus === 'pending' ? 'Pending Request' : ($enrollStatus === 'approved' ? 'Currently Enrolled' : 'Completed') }}
+                    </span>
+                @endif
             </div>
             
             <div class="course-body">
@@ -440,7 +470,13 @@
                     </div>
                 @endif
 
-                @if($course->isFull())
+                @if(isset($enrollmentStatuses[$course->id]) && $enrollmentStatuses[$course->id] === 'approved')
+                    <button class="btn-enroll" disabled style="background: #10b981; cursor: default;">Currently Enrolled</button>
+                @elseif(isset($enrollmentStatuses[$course->id]) && $enrollmentStatuses[$course->id] === 'pending')
+                    <button class="btn-enroll" disabled style="background: #f59e0b; cursor: default;">Enrollment Pending</button>
+                @elseif(isset($enrollmentStatuses[$course->id]) && $enrollmentStatuses[$course->id] === 'completed')
+                    <button class="btn-enroll" onclick="bookCourse({{ $course->id }})">View Course</button>
+                @elseif($course->isFull())
                     <div class="course-warning">Course is currently full</div>
                     <button class="btn-enroll" disabled>Course Full</button>
                 @elseif($course->max_students && $course->availableSlots() <= 3 && $course->availableSlots() > 0)

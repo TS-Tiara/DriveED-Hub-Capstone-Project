@@ -127,7 +127,7 @@
             </div>
 
             <div class="form-actions">
-                <a href="{{ $schoolRoute('instructor.students.index') }}" class="btn-form-secondary" onclick="loadContent(this.href); return false;">Cancel</a>
+                <a href="{{ $schoolRoute('instructor.progress.index') }}" class="btn-form-secondary" onclick="loadContent(this.href); return false;">Cancel</a>
                 <button type="submit" class="btn-form-primary">Save Progress</button>
             </div>
         </form>

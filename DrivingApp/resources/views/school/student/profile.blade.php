@@ -591,7 +591,7 @@
     @endif
 
     <div class="profile-card">
-        <div class="status-badge">Active</div>
+        <div class="status-badge">{{ ucfirst($student->status ?? 'Active') }}</div>
         
         <div class="profile-header">
             <div class="profile-avatar" id="avatarContainer" style="position: relative;">

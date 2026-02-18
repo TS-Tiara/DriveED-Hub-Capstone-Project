@@ -390,7 +390,7 @@
 
 <div class="my-course-container">
     <div class="page-header">
-        <h1 class="page-title">📚 Enrolled Course</h1>
+        <h1 class="page-title">Enrolled Course</h1>
     </div>
 
     @if($course)
@@ -437,7 +437,7 @@
                     <div class="stat-label">Sessions Logged</div>
                 </div>
                 <div class="stat-box">
-                    <div class="stat-value">{{ $hoursRequired - $hoursCompleted }}</div>
+                    <div class="stat-value">{{ max(0, $hoursRequired - $hoursCompleted) }}</div>
                     <div class="stat-label">Hours Remaining</div>
                 </div>
             </div>
@@ -515,7 +515,9 @@
     @else
         {{-- No Active Course --}}
         <div class="course-card no-course-card">
-            <div class="no-course-icon">📚</div>
+            <div class="no-course-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 48px; height: 48px; color: #9ca3af;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+            </div>
             <h2 class="no-course-title">No Active Course</h2>
             <p class="no-course-text">
                 You are not currently enrolled in any course. 

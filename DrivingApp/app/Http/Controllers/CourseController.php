@@ -54,7 +54,22 @@ class CourseController extends Controller
         // Check if this is an AJAX request
         $isAjax = request()->ajax();
 
-        return view($school->resolveView($view), compact('school', 'courses', 'instructors', 'isAjax'));
+        // For student view, pass enrollment status per course so cards can show badges
+        $enrollmentStatuses = [];
+        if ($guard === 'student') {
+            $student = Auth::guard('student')->user();
+            if ($student) {
+                $requests = \App\Models\EnrollmentRequest::where('learner_id', $student->id)
+                    ->where('school_id', $school->id)
+                    ->whereIn('status', ['pending', 'approved', 'completed'])
+                    ->get(['course_id', 'status']);
+                foreach ($requests as $req) {
+                    $enrollmentStatuses[$req->course_id] = $req->status;
+                }
+            }
+        }
+
+        return view($school->resolveView($view), compact('school', 'courses', 'instructors', 'isAjax', 'enrollmentStatuses'));
     }
 
     /**

@@ -206,7 +206,7 @@
     @endif
 
     <div class="profile-card">
-        <div class="status-badge-top">Active</div>
+        <div class="status-badge-top">{{ ucfirst($instructor->status ?? 'Active') }}</div>
         
         <div id="profileView">
             <div class="profile-card-header">

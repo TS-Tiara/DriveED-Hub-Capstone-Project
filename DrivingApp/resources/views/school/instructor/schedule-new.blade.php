@@ -788,6 +788,32 @@
 </div>
 
 <script>
+    // Toast notification system
+    function showToast(message, type) {
+        type = type || 'success';
+        var toast = document.createElement('div');
+        toast.className = 'schedule-toast schedule-toast-' + type;
+        toast.textContent = message;
+        toast.style.cssText = 'position:fixed;top:20px;right:20px;z-index:10000;padding:14px 24px;border-radius:8px;color:white;font-weight:500;font-size:0.9rem;box-shadow:0 4px 12px rgba(0,0,0,0.15);transform:translateX(120%);transition:transform 0.3s ease;max-width:400px;';
+        toast.style.background = type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#f59e0b';
+        document.body.appendChild(toast);
+        requestAnimationFrame(function() { toast.style.transform = 'translateX(0)'; });
+        setTimeout(function() {
+            toast.style.transform = 'translateX(120%)';
+            setTimeout(function() { toast.remove(); }, 300);
+        }, 3000);
+    }
+
+    // Show pending toast from previous page action
+    (function() {
+        var msg = sessionStorage.getItem('scheduleToast');
+        if (msg) {
+            var data = JSON.parse(msg);
+            sessionStorage.removeItem('scheduleToast');
+            showToast(data.message, data.type);
+        }
+    })();
+
     // Tab switching
     function switchMainView(viewName) {
         document.querySelectorAll('.main-toggle-btn').forEach(function(btn) {
@@ -914,17 +940,17 @@
         })
         .then(function(data) {
             if (data.success) {
-                alert(data.message || 'Successfully left the slot!');
+                sessionStorage.setItem('scheduleToast', JSON.stringify({message: data.message || 'Successfully left the slot!', type: 'success'}));
                 window.location.reload();
             } else {
-                alert(data.message || 'Failed to leave slot');
+                showToast(data.message || 'Failed to leave slot', 'error');
                 btn.textContent = 'Leave Slot';
                 btn.disabled = false;
             }
         })
         .catch(function(error) {
             console.error('Error:', error);
-            alert('An error occurred. Please try again.');
+            showToast('An error occurred. Please try again.', 'error');
             btn.textContent = 'Leave Slot';
             btn.disabled = false;
         });
@@ -949,17 +975,17 @@
         })
         .then(function(data) {
             if (data.success) {
-                alert(data.message || 'Successfully selected the slot!');
+                sessionStorage.setItem('scheduleToast', JSON.stringify({message: data.message || 'Successfully selected the slot!', type: 'success'}));
                 window.location.reload();
             } else {
-                alert(data.message || 'Failed to select slot');
+                showToast(data.message || 'Failed to select slot', 'error');
                 btn.textContent = 'Select Slot';
                 btn.disabled = false;
             }
         })
         .catch(function(error) {
             console.error('Error:', error);
-            alert('An error occurred. Please try again.');
+            showToast('An error occurred. Please try again.', 'error');
             btn.textContent = 'Select Slot';
             btn.disabled = false;
         });
@@ -1007,17 +1033,17 @@
         })
         .then(function(data) {
             if (data.success) {
-                alert(data.message || 'Removal request submitted!');
+                sessionStorage.setItem('scheduleToast', JSON.stringify({message: data.message || 'Removal request submitted!', type: 'success'}));
                 window.location.reload();
             } else {
-                alert(data.message || 'Failed to submit request');
+                showToast(data.message || 'Failed to submit request', 'error');
                 submitBtn.textContent = 'Submit Request';
                 submitBtn.disabled = false;
             }
         })
         .catch(function(error) {
             console.error('Error:', error);
-            alert('An error occurred. Please try again.');
+            showToast('An error occurred. Please try again.', 'error');
             submitBtn.textContent = 'Submit Request';
             submitBtn.disabled = false;
         });
