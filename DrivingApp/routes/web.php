@@ -215,8 +215,9 @@ Route::prefix('{school:slug}')
                 Route::resource('payments', PaymentController::class)->except(['create', 'edit']);
             });
 
-            // New LMS routes WITHOUT ajax middleware (full page views)
+            // New LMS routes WITH ajax middleware for layout consistency
             // Enrollment management (combining enrollment requests and enrollments)
+            Route::middleware(['ajax'])->group(function () {
             Route::prefix('enrollments')->name('enrollments.')->group(function () {
                 Route::get('/', [EnrollmentRequestController::class, 'index'])->name('index');
                 Route::get('/{enrollmentRequest}', [EnrollmentRequestController::class, 'show'])->name('show');
@@ -285,6 +286,7 @@ Route::prefix('{school:slug}')
                     });
                 });
             });
+            }); // end ajax middleware for LMS routes
             
             Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
         });
@@ -353,7 +355,8 @@ Route::prefix('{school:slug}')
                 });
             });
             
-            // LMS routes without ajax middleware (full page views)
+            // LMS routes with ajax middleware for layout consistency
+            Route::middleware(['ajax'])->group(function () {
             Route::prefix('theoretical')->name('theoretical.')->group(function () {
                 Route::get('/', [TheoreticalCompletionController::class, 'index'])->name('index');
                 Route::get('/{enrollment}', [TheoreticalCompletionController::class, 'show'])->name('show');
@@ -370,6 +373,7 @@ Route::prefix('{school:slug}')
                     Route::get('/{lesson}', [ModuleLessonController::class, 'show'])->name('show');
                 });
             });
+            }); // end ajax middleware for instructor LMS routes
             
             Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
         });
@@ -409,7 +413,8 @@ Route::prefix('{school:slug}')
                 Route::get('/my-progress', [StudentController::class, 'myProgress'])->name('my-progress');
             });
 
-            // New LMS routes WITHOUT ajax middleware
+            // LMS routes with ajax middleware for layout consistency
+            Route::middleware(['ajax'])->group(function () {
             // Student course modules (View enrolled course content)
             Route::prefix('courses/{course}/modules')->name('courses.modules.')->group(function () {
                 Route::get('/', [CourseModuleController::class, 'index'])->name('index');
@@ -420,6 +425,7 @@ Route::prefix('{school:slug}')
                     Route::get('/{lesson}', [ModuleLessonController::class, 'show'])->name('show');
                 });
             });
+            }); // end ajax middleware for student LMS routes
             
             Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
         });

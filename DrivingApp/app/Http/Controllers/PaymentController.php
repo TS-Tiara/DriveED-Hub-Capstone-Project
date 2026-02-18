@@ -34,7 +34,10 @@ class PaymentController extends Controller
             $query->where('method', request('method'));
         }
 
-        $payments = $query->latest('paid_on')->get();
+        // Pre-compute total for display (before pagination)
+        $totalPaid = (clone $query)->where('status', 'completed')->sum('amount');
+
+        $payments = $query->latest('paid_on')->paginate(15);
 
         // Only return JSON if explicitly requested via Accept header
         if (request()->expectsJson()) {
@@ -47,7 +50,7 @@ class PaymentController extends Controller
         // Only admin and student have payment views
         $guard = Auth::guard('admin')->check() ? 'admin' : 'student';
         $view = "{$guard}.payments";
-        return view($school->resolveView($view), compact('school', 'payments'));
+        return view($school->resolveView($view), compact('school', 'payments', 'totalPaid'));
     }
 
     /**

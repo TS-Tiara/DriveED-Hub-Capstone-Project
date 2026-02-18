@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends($isAjax ?? false ? 'layouts.ajax' : 'layouts.app')
 
 @section('title', 'Reports & Analytics')
 

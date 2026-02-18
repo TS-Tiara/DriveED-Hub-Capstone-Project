@@ -255,6 +255,13 @@ class StudentController extends Controller
         $settings = $school->schoolSetting;
         $queueEnabled = $settings?->enable_booking_queue ?? true;
         $queueDays = $settings?->booking_queue_days ?? 3;
+
+        // Pre-compute upcoming bookings for sidebar (avoids repeating logic in blade)
+        $upcomingBookings = $confirmedBookings
+            ->whereIn('status', ['scheduled', 'confirmed'])
+            ->where('booking_date', '>=', now()->toDateString())
+            ->where('booking_date', '<=', now()->addDays(7)->toDateString())
+            ->sortBy('booking_date');
         
         return view($school->resolveView('student.schedule'), [
             'school' => $school,
@@ -272,6 +279,7 @@ class StudentController extends Controller
             'todayDate' => $todayDate,
             'queueEnabled' => $queueEnabled,
             'queueDays' => $queueDays,
+            'upcomingBookings' => $upcomingBookings,
         ]);
     }
 

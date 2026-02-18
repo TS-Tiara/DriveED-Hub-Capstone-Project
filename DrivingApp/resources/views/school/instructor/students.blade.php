@@ -395,6 +395,12 @@
                 <div class="no-students-text">No students found</div>
             </div>
         @endforelse
+
+        @if($students->hasPages())
+        <div style="padding: 15px 20px; display: flex; justify-content: center;">
+            {{ $students->links() }}
+        </div>
+        @endif
     </div>
 </div>
 

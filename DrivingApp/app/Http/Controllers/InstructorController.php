@@ -96,16 +96,16 @@ class InstructorController extends Controller
                                         ->pluck('student_id')
                                         ->toArray();
         
-        // Get ALL students from the school
+        // Get ALL students from the school with pagination
         $students = Student::where('school_id', $school->id)
             ->with(['progresses.course', 'bookings' => function($query) use ($instructor) {
                 $query->where('instructor_id', $instructor->id)
                       ->orderBy('scheduled_at', 'desc');
             }])
-            ->get();
+            ->paginate(15);
         
         // Add computed data for each student
-        $students->each(function($student) use ($instructor, $assignedStudentIds) {
+        $students->getCollection()->each(function($student) use ($instructor, $assignedStudentIds) {
             // Mark if student is assigned to this instructor
             $student->is_assigned = in_array($student->id, $assignedStudentIds);
             

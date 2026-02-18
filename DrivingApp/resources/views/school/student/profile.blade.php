@@ -668,6 +668,32 @@
                     <label for="date_of_birth">Date of Birth:</label>
                     <input type="date" id="date_of_birth" name="date_of_birth" value="{{ old('date_of_birth', $student->date_of_birth) }}">
                 </div>
+
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+                    <h4 style="margin: 0 0 15px 0; font-size: 0.95rem; color: #374151; font-weight: 600;">Change Password <span style="font-weight: 400; color: #9ca3af; font-size: 0.8rem;">(optional)</span></h4>
+                    
+                    @error('current_password')
+                        <div style="background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; margin-bottom: 12px;">{{ $message }}</div>
+                    @enderror
+
+                    <div class="form-group">
+                        <label for="current_password">Current Password:</label>
+                        <input type="password" id="current_password" name="current_password" placeholder="Enter current password">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="new_password">New Password:</label>
+                        <input type="password" id="new_password" name="new_password" placeholder="Min 8 chars, uppercase, lowercase, number">
+                        @error('new_password')
+                            <span style="color: #dc2626; font-size: 0.8rem; margin-top: 4px; display: block;">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label for="new_password_confirmation">Confirm New Password:</label>
+                        <input type="password" id="new_password_confirmation" name="new_password_confirmation" placeholder="Re-enter new password">
+                    </div>
+                </div>
                 
                 <div class="form-buttons">
                     <button type="submit" class="btn btn-save">Save Changes</button>

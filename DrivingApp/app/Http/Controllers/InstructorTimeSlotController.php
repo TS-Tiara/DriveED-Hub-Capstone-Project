@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use App\Rules\StrongPassword;
 
 class InstructorTimeSlotController extends Controller
 {
@@ -276,7 +277,7 @@ class InstructorTimeSlotController extends Controller
             'contact' => ['nullable', 'string', 'max:20', 'regex:/^(09\d{9}|\+639\d{9})$/'],
             'license_number' => 'nullable|string|max:50',
             'current_password' => 'nullable|string|min:6',
-            'new_password' => 'nullable|string|min:6|confirmed',
+            'new_password' => ['nullable', 'confirmed', new StrongPassword()],
         ]);
 
         $data = $request->only(['name', 'email', 'contact', 'license_number']);

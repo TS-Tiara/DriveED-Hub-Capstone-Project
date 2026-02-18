@@ -198,7 +198,7 @@ td {
 
     <div class="total-spent">
         <p style="font-size: 1.2rem; opacity: 0.9;">Total Amount Paid</p>
-        <h2>₱{{ number_format($payments->where('status', 'completed')->sum('amount'), 2) }}</h2>
+        <h2>₱{{ number_format($totalPaid ?? $payments->where('status', 'completed')->sum('amount'), 2) }}</h2>
     </div>
 
     <div class="payments-table">
@@ -266,6 +266,12 @@ td {
             <p class="empty-state-text">Payment history will appear here once payments are made</p>
         </div>
         @endforelse
+
+        @if($payments->hasPages())
+        <div style="padding: 15px 20px; display: flex; justify-content: center;">
+            {{ $payments->links() }}
+        </div>
+        @endif
     </div>
 </div>
 @endsection

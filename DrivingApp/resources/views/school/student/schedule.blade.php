@@ -1208,11 +1208,7 @@
             <div class="sidebar-section">
                 <h3 class="sidebar-section-title-simple">Upcoming This Week</h3>
                 
-                @php
-                    $upcomingBookings = $confirmedBookings->whereIn('status', ['scheduled', 'confirmed'])->where('booking_date', '>=', now()->toDateString())->where('booking_date', '<=', now()->addDays(7)->toDateString())->sortBy('booking_date')->take(5);
-                @endphp
-                
-                @forelse($upcomingBookings as $booking)
+                @forelse($upcomingBookings->take(5) as $booking)
                     <div class="mini-booking-card">
                         <div class="mini-booking-date">
                             {{ \Carbon\Carbon::parse($booking->booking_date)->format('M d, Y') }}
@@ -1426,11 +1422,7 @@
             <div class="sidebar-section">
                 <h3 class="sidebar-section-title-simple">Upcoming This Week</h3>
                 
-                @php
-                    $upcomingBookings = $confirmedBookings->whereIn('status', ['scheduled', 'confirmed'])->where('booking_date', '>=', now()->toDateString())->where('booking_date', '<=', now()->addDays(7)->toDateString())->sortBy('booking_date')->take(5);
-                @endphp
-                
-                @forelse($upcomingBookings as $booking)
+                @forelse($upcomingBookings->take(5) as $booking)
                     <div class="mini-booking-card">
                         <div class="mini-booking-date">
                             {{ \Carbon\Carbon::parse($booking->booking_date)->format('M d, Y') }}
@@ -1518,16 +1510,8 @@
             @endif
             
             <h4 style="margin: 0 0 10px 0; color: #000; font-size: 0.9rem;">Upcoming This Week</h4>
-            @php
-                $upcomingBookings = $confirmedBookings
-                    ->whereIn('status', ['scheduled', 'confirmed'])
-                    ->where('booking_date', '>=', now()->toDateString())
-                    ->where('booking_date', '<=', now()->addDays(7)->toDateString())
-                    ->sortBy('booking_date')
-                    ->take(10);
-            @endphp
             
-            @forelse($upcomingBookings as $booking)
+            @forelse($upcomingBookings->take(10) as $booking)
                 <div class="mini-booking-card">
                     <div class="mini-booking-date">
                         {{ \Carbon\Carbon::parse($booking->booking_date)->format('M d, Y') }}
