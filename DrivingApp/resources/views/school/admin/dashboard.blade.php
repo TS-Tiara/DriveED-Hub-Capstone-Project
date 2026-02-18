@@ -201,7 +201,7 @@
             </div>
         </a>
         
-        <a href="{{ $schoolRoute('admin.userManagement') }}" class="stat-card growth" onclick="loadContent(this.href); return false;" style="text-decoration: none; cursor: pointer;">
+        <a href="{{ $schoolRoute('admin.enrollments.index') }}" class="stat-card growth" onclick="loadContent(this.href); return false;" style="text-decoration: none; cursor: pointer;">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -218,7 +218,7 @@
             </div>
         </a>
         
-        <a href="{{ $schoolRoute('admin.userManagement') }}" class="stat-card active" onclick="loadContent(this.href); return false;" style="text-decoration: none; cursor: pointer;">
+        <a href="{{ $schoolRoute('admin.schedules') }}" class="stat-card active" onclick="loadContent(this.href); return false;" style="text-decoration: none; cursor: pointer;">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -234,6 +234,33 @@
                 <div class="stat-detail">Currently active accounts</div>
             </div>
         </a>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="content-card" style="margin-bottom: 20px;">
+        <div class="content-card-header">Quick Actions</div>
+        <div class="content-card-body">
+            <div class="quick-actions">
+                <a href="{{ $schoolRoute('admin.enrollments.index') }}" class="quick-action-btn" onclick="loadContent(this.href); return false;">
+                    📋 Enrollments
+                    @if(($pendingEnrollments ?? 0) > 0)
+                        <span style="display: inline-block; background: #ef4444; color: white; border-radius: 50%; width: 22px; height: 22px; line-height: 22px; font-size: 12px; margin-left: 6px;">{{ $pendingEnrollments }}</span>
+                    @endif
+                </a>
+                <a href="{{ $schoolRoute('admin.schedules') }}" class="quick-action-btn" onclick="loadContent(this.href); return false;">
+                    📅 Schedules
+                </a>
+                <a href="{{ $schoolRoute('admin.payments.index') }}" class="quick-action-btn" onclick="loadContent(this.href); return false;">
+                    💰 Payments
+                </a>
+                <a href="{{ $schoolRoute('admin.phase-progressions.index') }}" class="quick-action-btn" onclick="loadContent(this.href); return false;">
+                    🎓 Phase Progressions
+                    @if(($pendingProgressions ?? 0) > 0)
+                        <span style="display: inline-block; background: #ef4444; color: white; border-radius: 50%; width: 22px; height: 22px; line-height: 22px; font-size: 12px; margin-left: 6px;">{{ $pendingProgressions }}</span>
+                    @endif
+                </a>
+            </div>
+        </div>
     </div>
 
     <!-- Two Column Layout for Recent Activity -->

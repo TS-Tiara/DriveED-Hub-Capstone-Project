@@ -98,6 +98,14 @@ class StudentController extends Controller
         $enrolledCourseName = $primaryEnrollment ? ($primaryEnrollment->course->title ?? 'N/A') : 'No Active Course';
         $enrolledCourseType = $primaryEnrollment && $primaryEnrollment->course ? ucfirst($primaryEnrollment->course->course_type ?? 'N/A') : 'N/A';
         
+        // Recent graded sessions for feedback visibility
+        $recentGrades = Booking::where('student_id', $student->id)
+            ->whereNotNull('session_grade')
+            ->with(['instructor:id,name', 'course:id,title'])
+            ->orderBy('updated_at', 'desc')
+            ->limit(5)
+            ->get();
+        
         return view($school->resolveView('student.dashboard'), [
             'school' => $school,
             'student' => $studentModel,
@@ -113,6 +121,7 @@ class StudentController extends Controller
             'enrolledCourseType' => $enrolledCourseType,
             'hasPassedTheoretical' => $hasPassedTheoretical,
             'canEnrollPractical' => $canEnrollPractical,
+            'recentGrades' => $recentGrades,
         ]);
     }
 

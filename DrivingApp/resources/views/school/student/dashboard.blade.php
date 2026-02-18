@@ -519,6 +519,89 @@
             font-size: 0.7rem;
         }
     }
+
+    /* Recent Feedback Section */
+    .recent-feedback-section {
+        margin-bottom: 20px;
+    }
+
+    .feedback-card {
+        background: white;
+        border-radius: {{ $borderRadius }}px;
+        border: 2px solid {{ $primaryColor }};
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+
+    .feedback-item {
+        padding: 14px 16px;
+        border-bottom: 1px solid #f3f4f6;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .feedback-item:last-child {
+        border-bottom: none;
+    }
+
+    .feedback-details {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .feedback-course {
+        font-weight: 600;
+        color: #1f2937;
+        font-size: 0.9rem;
+        margin-bottom: 2px;
+    }
+
+    .feedback-meta {
+        font-size: 0.8rem;
+        color: #6b7280;
+        margin-bottom: 6px;
+    }
+
+    .feedback-text {
+        font-size: 0.85rem;
+        color: #374151;
+        font-style: italic;
+        line-height: 1.4;
+    }
+
+    .grade-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 36px;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        flex-shrink: 0;
+    }
+
+    .grade-excellent { background: #d1fae5; color: #065f46; }
+    .grade-good { background: #dbeafe; color: #1e40af; }
+    .grade-average { background: #fef3c7; color: #92400e; }
+    .grade-poor { background: #fee2e2; color: #991b1b; }
+
+    @media screen and (max-width: 768px) {
+        .feedback-item {
+            padding: 12px;
+        }
+        .feedback-course {
+            font-size: 0.8rem;
+        }
+        .feedback-meta {
+            font-size: 0.75rem;
+        }
+        .feedback-text {
+            font-size: 0.8rem;
+        }
+    }
 </style>
 
 <div class="student-dashboard">
@@ -757,6 +840,47 @@
                     <span class="info-label">Active Enrollments</span>
                     <span class="info-value">{{ $activeEnrollments->count() }}</span>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Feedback Section -->
+    <div class="recent-feedback-section">
+        <div class="feedback-card">
+            <div class="card-header">Recent Grades & Feedback</div>
+            <div class="card-body" style="padding: 0;">
+                @if(($recentGrades ?? collect())->count() > 0)
+                    @foreach($recentGrades as $grade)
+                        <div class="feedback-item">
+                            <div class="feedback-details">
+                                <div class="feedback-course">{{ $grade->course->title ?? 'Driving Session' }}</div>
+                                <div class="feedback-meta">
+                                    {{ $grade->instructor->name ?? 'Instructor' }} &middot; {{ \Carbon\Carbon::parse($grade->updated_at)->format('M d, Y') }}
+                                </div>
+                                @if($grade->instructor_feedback)
+                                    <div class="feedback-text">"{{ $grade->instructor_feedback }}"</div>
+                                @endif
+                            </div>
+                            @php
+                                $gradeVal = strtolower($grade->session_grade ?? '');
+                                $gradeClass = match(true) {
+                                    in_array($gradeVal, ['a', 'excellent', 'passed']) => 'grade-excellent',
+                                    in_array($gradeVal, ['b', 'good', 'satisfactory']) => 'grade-good',
+                                    in_array($gradeVal, ['c', 'average', 'needs improvement']) => 'grade-average',
+                                    default => 'grade-poor',
+                                };
+                            @endphp
+                            <span class="grade-badge {{ $gradeClass }}">{{ ucfirst($grade->session_grade) }}</span>
+                        </div>
+                    @endforeach
+                @else
+                    <div style="padding: 30px; text-align: center; color: #9ca3af;">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width: 40px; height: 40px; fill: #d1d5db; margin: 0 auto 10px;">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                        </svg>
+                        <p style="margin: 0; font-size: 0.9rem;">No graded sessions yet. Your grades and instructor feedback will appear here.</p>
+                    </div>
+                @endif
             </div>
         </div>
     </div>

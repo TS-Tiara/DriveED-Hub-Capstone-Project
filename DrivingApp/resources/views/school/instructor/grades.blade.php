@@ -538,8 +538,8 @@
         const input = document.querySelector(`input[data-student-id="${studentId}"]`);
         const grade = parseFloat(input.value);
         const bookingId = input.dataset.lastBookingId;
-        if (!grade || grade < 0 || grade > 100) { alert('Please enter a valid grade between 0 and 100'); return; }
-        if (!bookingId) { alert('This student has no sessions to grade'); return; }
+        if (!grade || grade < 0 || grade > 100) { showToast('Please enter a valid grade between 0 and 100', 'error'); return; }
+        if (!bookingId) { showToast('This student has no sessions to grade', 'warning'); return; }
         fetch(`/{{ $school->slug }}/instructor/lessons/${bookingId}/update`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
@@ -547,15 +547,15 @@
         })
         .then(response => response.json())
         .then(data => {
-            if (data.success) { input.classList.remove('changed'); alert('Grade saved successfully!'); location.reload(); }
-            else { alert('Failed to save grade'); }
+            if (data.success) { input.classList.remove('changed'); showToast('Grade saved successfully!', 'success'); setTimeout(() => location.reload(), 1000); }
+            else { showToast('Failed to save grade', 'error'); }
         })
-        .catch(error => { console.error('Error:', error); alert('An error occurred while saving the grade'); });
+        .catch(error => { console.error('Error:', error); showToast('An error occurred while saving the grade', 'error'); });
     }
 
     function saveAllChanges() {
         const changedInputs = document.querySelectorAll('.grade-input.changed');
-        if (changedInputs.length === 0) { alert('No changes to save'); return; }
+        if (changedInputs.length === 0) { showToast('No changes to save', 'warning'); return; }
         let savedCount = 0;
         const totalChanges = changedInputs.length;
         changedInputs.forEach(input => {
@@ -572,7 +572,7 @@
                     if (data.success) {
                         savedCount++;
                         input.classList.remove('changed');
-                        if (savedCount === totalChanges) { alert(`Successfully saved ${savedCount} grade(s)!`); location.reload(); }
+                        if (savedCount === totalChanges) { showToast(`Successfully saved ${savedCount} grade(s)!`, 'success'); setTimeout(() => location.reload(), 1000); }
                     }
                 });
             }

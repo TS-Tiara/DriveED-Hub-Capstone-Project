@@ -1666,6 +1666,8 @@
                     <div class="nav-category-items">
                         <a href="{{ $schoolRoute('admin.schedules') }}" class="nav-item" data-page="schedules">Schedules</a>
                         <a href="{{ $schoolRoute('admin.bookings.index') }}" class="nav-item" data-page="bookings">Student Sessions</a>
+                        <a href="{{ $schoolRoute('admin.sessions.index') }}" class="nav-item" data-page="session-completions">Session Completions</a>
+                        <a href="{{ $schoolRoute('admin.phase-progressions.index') }}" class="nav-item" data-page="phase-progressions">Phase Progressions</a>
                     </div>
                 </div>
 

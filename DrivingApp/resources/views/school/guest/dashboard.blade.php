@@ -764,6 +764,20 @@
                 <strong>You're enrolled!</strong> You are enrolled in <strong>{{ $approvedEnrollment->course->title }}</strong>.
             </div>
         </div>
+        <!-- Transition guidance -->
+        <div style="background: #eff6ff; border: 2px solid #3b82f6; border-radius: 10px; padding: 20px; margin-top: 16px; text-align: center;">
+            <div style="font-size: 1.5rem; margin-bottom: 8px;">🎉</div>
+            <h4 style="margin: 0 0 8px 0; color: #1e40af; font-size: 1rem;">Your Account Has Been Upgraded to Student!</h4>
+            <p style="margin: 0 0 16px 0; color: #374151; font-size: 0.9rem; line-height: 1.5;">
+                Please log out and log back in to access your full student dashboard with schedules, progress tracking, and more.
+            </p>
+            <form method="POST" action="{{ $schoolRoute('logout') }}" style="display: inline;">
+                @csrf
+                <button type="submit" style="background: #3b82f6; color: white; border: none; padding: 10px 24px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: background 0.2s;">
+                    Log Out & Re-login as Student
+                </button>
+            </form>
+        </div>
     </div>
     @endif
     

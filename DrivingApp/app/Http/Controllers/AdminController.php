@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Admin;
+use App\Models\EnrollmentRequest;
 use App\Models\Instructor;
 use App\Models\InstructorRemovalRequest;
 use App\Models\Log;
@@ -13,6 +14,7 @@ use App\Models\SchoolSetting;
 use App\Models\Student;
 use App\Models\SystemLog;
 use App\Models\TimeSlot;
+use App\Models\PhaseProgression;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
@@ -98,6 +100,10 @@ class AdminController extends Controller
                 ? round((($instructorsThisMonth - $instructorsLastMonth) / $instructorsLastMonth) * 100, 1)
                 : ($instructorsThisMonth > 0 ? 100 : 0);
             
+            // Pending action counts for dashboard
+            $pendingEnrollments = EnrollmentRequest::where('school_id', $school->id)->where('status', 'pending')->count();
+            $pendingProgressions = PhaseProgression::where('school_id', $school->id)->where('status', 'pending')->count();
+
             return view($school->resolveView('admin.dashboard'), [
                 'school' => $school,
                 'totalStudents' => $totalStudents,
@@ -113,6 +119,8 @@ class AdminController extends Controller
                 'instructorGrowth' => $instructorGrowth,
                 'studentsThisMonth' => $studentsThisMonth,
                 'instructorsThisMonth' => $instructorsThisMonth,
+                'pendingEnrollments' => $pendingEnrollments,
+                'pendingProgressions' => $pendingProgressions,
             ]);
         } catch (\Exception $e) {
             SystemLog::logError(
