@@ -18,6 +18,7 @@ use App\Models\Payment;
 use App\Models\Progress;
 use App\Models\EnrollmentRequest;
 use App\Models\Notification;
+use App\Models\Branch;
 
 /**
  * Unified Seeder - Comprehensive Test Data
@@ -136,8 +137,17 @@ class UnifiedSeeder extends Seeder
                 'instructor_selection_mode' => 'student_choice',
                 'enable_booking_queue' => true,
                 'booking_queue_days' => 3,
+                'enable_branches' => true,
             ]
         );
+
+        // Create Branches
+        $branches = $this->createBranches($school, [
+            ['name' => 'Main Branch - Angeles City', 'address' => '123 MacArthur Highway, Angeles City, Pampanga', 'contact_number' => '+63-917-123-4567', 'email' => 'angeles@smartdriving.com'],
+            ['name' => 'Clark Branch', 'address' => '45 M.A. Roxas Highway, Clark Freeport Zone, Pampanga', 'contact_number' => '+63-917-123-4568', 'email' => 'clark@smartdriving.com'],
+            ['name' => 'Dau Branch', 'address' => '789 Jose Abad Santos Ave, Dau, Mabalacat, Pampanga', 'contact_number' => '+63-917-123-4569', 'email' => 'dau@smartdriving.com'],
+        ]);
+        $this->command->info('   ✓ 3 Branches created');
 
         // Create Admins
         $adminData = [
@@ -213,11 +223,12 @@ class UnifiedSeeder extends Seeder
         ];
 
         $instructors = [];
-        foreach ($instructorData as $inst) {
+        foreach ($instructorData as $index => $inst) {
             $instructors[] = Instructor::updateOrCreate(
                 ['email' => $inst['email']],
                 [
                     'school_id' => $school->id,
+                    'branch_id' => $branches[$index % count($branches)]->id,
                     'name' => $inst['name'],
                     'contact' => $inst['contact'],
                     'password' => Hash::make('password123'),
@@ -234,6 +245,7 @@ class UnifiedSeeder extends Seeder
             ['email' => 'instructor@gmail.com'],
             [
                 'school_id' => $school->id,
+                'branch_id' => $branches[0]->id,
                 'name' => 'Demo Instructor',
                 'contact' => '+63-917-555-0000',
                 'password' => Hash::make('password123'),
@@ -251,12 +263,12 @@ class UnifiedSeeder extends Seeder
         $this->command->info('   ✓ 3 Courses with packages created');
 
         // Create Students
-        $students = $this->createSmartDrivingStudents($school);
+        $students = $this->createSmartDrivingStudents($school, $branches);
         $this->command->info('   ✓ 15 Students created');
 
         // Create Time Slots, Bookings, and Payments
-        $this->createTimeSlotsAndAssignments($school, $instructors, $courses);
-        $this->createBookingsAndPayments($school, $students, $instructors, $courses);
+        $this->createTimeSlotsAndAssignments($school, $instructors, $courses, $branches);
+        $this->createBookingsAndPayments($school, $students, $instructors, $courses, $branches);
 
         $this->command->info('   ✓ Time slots, bookings, and payments created');
 
@@ -318,8 +330,16 @@ class UnifiedSeeder extends Seeder
                 'instructor_selection_mode' => 'student_choice',
                 'enable_booking_queue' => true,
                 'booking_queue_days' => 2,
+                'enable_branches' => true,
             ]
         );
+
+        // Create Branches
+        $branches = $this->createBranches($school, [
+            ['name' => 'Main Branch - San Fernando', 'address' => '456 Jose Abad Santos Ave, San Fernando, Pampanga', 'contact_number' => '+63-918-234-5678', 'email' => 'sanfernando@lyspeed.com'],
+            ['name' => 'Guagua Branch', 'address' => '321 San Nicolas, Guagua, Pampanga', 'contact_number' => '+63-918-234-5679', 'email' => 'guagua@lyspeed.com'],
+        ]);
+        $this->command->info('   ✓ 2 Branches created');
 
         // Create Admins
         $adminData = [
@@ -380,11 +400,12 @@ class UnifiedSeeder extends Seeder
         ];
 
         $instructors = [];
-        foreach ($instructorData as $inst) {
+        foreach ($instructorData as $index => $inst) {
             $instructors[] = Instructor::updateOrCreate(
                 ['email' => $inst['email']],
                 [
                     'school_id' => $school->id,
+                    'branch_id' => $branches[$index % count($branches)]->id,
                     'name' => $inst['name'],
                     'contact' => $inst['contact'],
                     'password' => Hash::make('password123'),
@@ -401,6 +422,7 @@ class UnifiedSeeder extends Seeder
             ['email' => 'lyspeed.instructor@gmail.com'],
             [
                 'school_id' => $school->id,
+                'branch_id' => $branches[0]->id,
                 'name' => 'LySpeed Demo Instructor',
                 'contact' => '+63-918-666-0000',
                 'password' => Hash::make('password123'),
@@ -418,12 +440,12 @@ class UnifiedSeeder extends Seeder
         $this->command->info('   ✓ 3 Courses with packages created');
 
         // Create Students
-        $students = $this->createLySpeedStudents($school);
+        $students = $this->createLySpeedStudents($school, $branches);
         $this->command->info('   ✓ 10 Students created');
 
         // Create Time Slots, Bookings, and Payments
-        $this->createTimeSlotsAndAssignments($school, $instructors, $courses);
-        $this->createBookingsAndPayments($school, $students, $instructors, $courses);
+        $this->createTimeSlotsAndAssignments($school, $instructors, $courses, $branches);
+        $this->createBookingsAndPayments($school, $students, $instructors, $courses, $branches);
 
         $this->command->info('   ✓ Time slots, bookings, and payments created');
 
@@ -485,8 +507,16 @@ class UnifiedSeeder extends Seeder
                 'instructor_selection_mode' => 'admin_assigned',
                 'enable_booking_queue' => true,
                 'booking_queue_days' => 3,
+                'enable_branches' => true,
             ]
         );
+
+        // Create Branches
+        $branches = $this->createBranches($school, [
+            ['name' => 'Main Campus - Clark', 'address' => '789 Del Pilar Street, Clark Freeport Zone, Pampanga', 'contact_number' => '+63-919-345-6789', 'email' => 'clark@drivedhub.com'],
+            ['name' => 'Balibago Branch', 'address' => '456 Fields Avenue, Balibago, Angeles City, Pampanga', 'contact_number' => '+63-919-345-6790', 'email' => 'balibago@drivedhub.com'],
+        ]);
+        $this->command->info('   ✓ 2 Branches created');
 
         // Create Admins
         $adminData = [
@@ -540,11 +570,12 @@ class UnifiedSeeder extends Seeder
         ];
 
         $instructors = [];
-        foreach ($instructorData as $inst) {
+        foreach ($instructorData as $index => $inst) {
             $instructors[] = Instructor::updateOrCreate(
                 ['email' => $inst['email']],
                 [
                     'school_id' => $school->id,
+                    'branch_id' => $branches[$index % count($branches)]->id,
                     'name' => $inst['name'],
                     'contact' => $inst['contact'],
                     'password' => Hash::make('password123'),
@@ -561,6 +592,7 @@ class UnifiedSeeder extends Seeder
             ['email' => 'instructor1@gmail.com'],
             [
                 'school_id' => $school->id,
+                'branch_id' => $branches[0]->id,
                 'name' => 'DriveED Instructor 1',
                 'contact' => '+63-919-777-0001',
                 'password' => Hash::make('password123'),
@@ -575,6 +607,7 @@ class UnifiedSeeder extends Seeder
             ['email' => 'instructor2@gmail.com'],
             [
                 'school_id' => $school->id,
+                'branch_id' => $branches[1 % count($branches)]->id,
                 'name' => 'DriveED Instructor 2',
                 'contact' => '+63-919-777-0002',
                 'password' => Hash::make('password123'),
@@ -592,12 +625,12 @@ class UnifiedSeeder extends Seeder
         $this->command->info('   ✓ 4 Courses with packages created');
 
         // Create Students
-        $students = $this->createDriveEdHubStudents($school);
+        $students = $this->createDriveEdHubStudents($school, $branches);
         $this->command->info('   ✓ 10 Students created');
 
         // Create Time Slots, Bookings, and Payments
-        $this->createTimeSlotsAndAssignments($school, $instructors, $courses);
-        $this->createBookingsAndPayments($school, $students, $instructors, $courses);
+        $this->createTimeSlotsAndAssignments($school, $instructors, $courses, $branches);
+        $this->createBookingsAndPayments($school, $students, $instructors, $courses, $branches);
 
         $this->command->info('   ✓ Time slots, bookings, and payments created');
 
@@ -609,6 +642,27 @@ class UnifiedSeeder extends Seeder
         // Create sample notifications
         $this->createSampleNotifications($school, $students, $instructors, $admins, $guests);
         $this->command->info('   ✓ Sample notifications created');
+    }
+
+    /**
+     * Create branches for a school
+     */
+    private function createBranches(School $school, array $branchData): array
+    {
+        $branches = [];
+        foreach ($branchData as $index => $data) {
+            $branches[] = Branch::updateOrCreate(
+                ['school_id' => $school->id, 'name' => $data['name']],
+                [
+                    'address' => $data['address'] ?? null,
+                    'contact_number' => $data['contact_number'] ?? null,
+                    'email' => $data['email'] ?? null,
+                    'is_active' => true,
+                    'sort_order' => $index + 1,
+                ]
+            );
+        }
+        return $branches;
     }
 
     /**
@@ -915,7 +969,7 @@ class UnifiedSeeder extends Seeder
     /**
      * Create students for Smart Driving School
      */
-    private function createSmartDrivingStudents(School $school): array
+    private function createSmartDrivingStudents(School $school, array $branches): array
     {
         $studentData = [
             ['name' => 'Sofia Angelica Reyes', 'email' => 'sofia.reyes@gmail.com'],
@@ -935,12 +989,13 @@ class UnifiedSeeder extends Seeder
         ];
 
         $students = [];
-        foreach ($studentData as $s) {
+        foreach ($studentData as $index => $s) {
             $enrollmentDate = now()->subDays(rand(7, 90));
             $students[] = Student::updateOrCreate(
                 ['school_id' => $school->id, 'email' => $s['email']],
                 [
                     'name' => $s['name'],
+                    'branch_id' => $branches[$index % count($branches)]->id,
                     'contact' => '+63-9' . rand(10, 99) . '-' . rand(100, 999) . '-' . rand(1000, 9999),
                     'password' => Hash::make('password123'),
                     'status' => 'active',
@@ -955,6 +1010,7 @@ class UnifiedSeeder extends Seeder
             ['school_id' => $school->id, 'email' => 'student@gmail.com'],
             [
                 'name' => 'Demo Student',
+                'branch_id' => $branches[0]->id,
                 'contact' => '+63-900-000-0001',
                 'password' => Hash::make('password123'),
                 'status' => 'active',
@@ -969,7 +1025,7 @@ class UnifiedSeeder extends Seeder
     /**
      * Create students for LySpeed Driving School
      */
-    private function createLySpeedStudents(School $school): array
+    private function createLySpeedStudents(School $school, array $branches): array
     {
         $studentData = [
             ['name' => 'Maria Josephine Rodriguez', 'email' => 'maria.rodriguez@gmail.com'],
@@ -984,12 +1040,13 @@ class UnifiedSeeder extends Seeder
         ];
 
         $students = [];
-        foreach ($studentData as $s) {
+        foreach ($studentData as $index => $s) {
             $enrollmentDate = now()->subDays(rand(7, 60));
             $students[] = Student::updateOrCreate(
                 ['school_id' => $school->id, 'email' => $s['email']],
                 [
                     'name' => $s['name'],
+                    'branch_id' => $branches[$index % count($branches)]->id,
                     'contact' => '+63-9' . rand(10, 99) . '-' . rand(100, 999) . '-' . rand(1000, 9999),
                     'password' => Hash::make('password123'),
                     'status' => 'active',
@@ -1004,6 +1061,7 @@ class UnifiedSeeder extends Seeder
             ['school_id' => $school->id, 'email' => 'lyspeed.student@gmail.com'],
             [
                 'name' => 'LySpeed Demo Student',
+                'branch_id' => $branches[0]->id,
                 'contact' => '+63-918-999-0001',
                 'password' => Hash::make('password123'),
                 'status' => 'active',
@@ -1018,7 +1076,7 @@ class UnifiedSeeder extends Seeder
     /**
      * Create students for DriveED Hub School
      */
-    private function createDriveEdHubStudents(School $school): array
+    private function createDriveEdHubStudents(School $school, array $branches): array
     {
         $studentData = [
             ['name' => 'Juan Miguel Dela Cruz', 'email' => 'student1@gmail.com', 'level' => 'new_driver'],
@@ -1034,12 +1092,13 @@ class UnifiedSeeder extends Seeder
         ];
 
         $students = [];
-        foreach ($studentData as $s) {
+        foreach ($studentData as $index => $s) {
             $enrollmentDate = now()->subDays(rand(7, 60));
             $students[] = Student::updateOrCreate(
                 ['school_id' => $school->id, 'email' => $s['email']],
                 [
                     'name' => $s['name'],
+                    'branch_id' => $branches[$index % count($branches)]->id,
                     'contact' => '+63-9' . rand(10, 99) . '-' . rand(100, 999) . '-' . rand(1000, 9999),
                     'password' => Hash::make('password123'),
                     'status' => 'active',
@@ -1056,7 +1115,7 @@ class UnifiedSeeder extends Seeder
     /**
      * Create time slots and assign instructors
      */
-    private function createTimeSlotsAndAssignments(School $school, array $instructors, array $courses): void
+    private function createTimeSlotsAndAssignments(School $school, array $instructors, array $courses, array $branches): void
     {
         $times = [
             ['08:00:00', '09:00:00'],
@@ -1068,6 +1127,8 @@ class UnifiedSeeder extends Seeder
             ['15:00:00', '16:00:00'],
             ['16:00:00', '17:00:00'],
         ];
+
+        $branchIndex = 0;
 
         // Create slots for next 14 days
         for ($day = 0; $day < 14; $day++) {
@@ -1085,8 +1146,12 @@ class UnifiedSeeder extends Seeder
                 if (!is_array($daySlots)) $daySlots = [$daySlots];
                 
                 foreach ($daySlots as $slotIndex) {
+                    $branch = $branches[$branchIndex % count($branches)];
+                    $branchIndex++;
+
                     $timeSlot = TimeSlot::create([
                         'school_id' => $school->id,
+                        'branch_id' => $branch->id,
                         'course_id' => $course->id,
                         'date' => $date,
                         'start_time' => $times[$slotIndex][0],
@@ -1113,7 +1178,7 @@ class UnifiedSeeder extends Seeder
     /**
      * Create bookings and payments
      */
-    private function createBookingsAndPayments(School $school, array $students, array $instructors, array $courses): void
+    private function createBookingsAndPayments(School $school, array $students, array $instructors, array $courses, array $branches): void
     {
         if (empty($students) || empty($instructors) || empty($courses)) {
             return;
@@ -1136,8 +1201,11 @@ class UnifiedSeeder extends Seeder
                 ? now()->subDays(rand(1, 30)) 
                 : now()->addDays(rand(1, 14));
 
+            $branch = $branches[array_rand($branches)];
+
             $booking = Booking::create([
                 'school_id' => $school->id,
+                'branch_id' => $branch->id,
                 'student_id' => $student->id,
                 'instructor_id' => $instructor->id,
                 'course_id' => $course->id,
