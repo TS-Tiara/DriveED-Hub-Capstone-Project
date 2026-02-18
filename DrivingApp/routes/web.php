@@ -6,6 +6,7 @@ use App\Http\Controllers\AdminTimeSlotController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\BranchController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\InstructorController;
 use App\Http\Controllers\InstructorTimeSlotController;
@@ -172,6 +173,13 @@ Route::prefix('{school:slug}')
                 // School settings
                 Route::get('/settings', [AdminController::class, 'settings'])->name('settings');
                 Route::post('/settings', [AdminController::class, 'updateSettings'])->name('settings.update');
+
+                // Branch management
+                Route::get('/branches', [BranchController::class, 'index'])->name('branches.index');
+                Route::post('/branches', [BranchController::class, 'store'])->name('branches.store');
+                Route::put('/branches/{id}', [BranchController::class, 'update'])->name('branches.update');
+                Route::patch('/branches/{id}/toggle', [BranchController::class, 'toggleActive'])->name('branches.toggle');
+                Route::delete('/branches/{id}', [BranchController::class, 'destroy'])->name('branches.destroy');
 
                 Route::get('/reports/students', [AdminController::class, 'studentReports'])->name('reports.students');
                 Route::get('/reports/instructors', [AdminController::class, 'instructorReports'])->name('reports.instructors');

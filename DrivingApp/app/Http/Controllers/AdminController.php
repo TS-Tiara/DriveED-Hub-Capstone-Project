@@ -144,11 +144,17 @@ class AdminController extends Controller
         try {
             // Select only needed columns to reduce memory footprint
             $students = Student::where('school_id', $school->id)
-                ->select('id', 'school_id', 'name', 'email', 'contact', 'address', 'status', 'role', 'created_at')
+                ->select('id', 'school_id', 'branch_id', 'name', 'email', 'contact', 'address', 'status', 'role', 'created_at')
                 ->orderBy('name')
                 ->get();
             $instructors = Instructor::where('school_id', $school->id)
-                ->select('id', 'school_id', 'name', 'email', 'contact', 'license_number', 'status', 'availability', 'created_at')
+                ->select('id', 'school_id', 'branch_id', 'name', 'email', 'contact', 'license_number', 'status', 'availability', 'created_at')
+                ->orderBy('name')
+                ->get();
+
+            $branches = \App\Models\Branch::where('school_id', $school->id)
+                ->where('is_active', true)
+                ->orderBy('sort_order')
                 ->orderBy('name')
                 ->get();
 
@@ -158,6 +164,7 @@ class AdminController extends Controller
                 'school' => $school,
                 'students' => $students,
                 'instructors' => $instructors,
+                'branches' => $branches,
                 'isAjax' => $isAjax,
             ]);
         } catch (\Exception $e) {
@@ -191,6 +198,7 @@ class AdminController extends Controller
             'password' => 'required|string|min:6',
             'contact' => ['nullable', 'string', 'max:13', 'regex:/^(09\d{9}|\+639\d{9})$/'],
             'role' => 'required|in:student,instructor',
+            'branch_id' => 'nullable|exists:branches,id',
         ]);
 
         $data = [
@@ -205,6 +213,7 @@ class AdminController extends Controller
             $user = Student::create(array_merge($data, [
                 'address' => $request->address ?? null,
                 'status' => 'active',
+                'branch_id' => $request->branch_id,
             ]));
             $successMessage = 'Student created successfully!';
             
@@ -221,6 +230,7 @@ class AdminController extends Controller
                 'license_number' => $request->license_number ?? null,
                 'status' => 'active',
                 'availability' => 'available',
+                'branch_id' => $request->branch_id,
             ]));
             $successMessage = 'Instructor created successfully!';
             
@@ -269,11 +279,12 @@ class AdminController extends Controller
                 'contact' => ['nullable', 'string', 'max:13', 'regex:/^(09\d{9}|\+639\d{9})$/'],
                 'address' => 'nullable|string|max:255',
                 'password' => 'nullable|string|min:6',
+                'branch_id' => 'nullable|exists:branches,id',
             ]);
 
             DB::beginTransaction();
 
-            $data = $request->only('name', 'email', 'contact', 'address');
+            $data = $request->only('name', 'email', 'contact', 'address', 'branch_id');
 
             if ($request->filled('password')) {
                 $data['password'] = Hash::make($request->password);
@@ -347,9 +358,10 @@ class AdminController extends Controller
             'contact' => ['nullable', 'string', 'max:13', 'regex:/^(09\d{9}|\+639\d{9})$/'],
             'license_number' => 'nullable|string|max:50',
             'password' => 'nullable|string|min:6',
+            'branch_id' => 'nullable|exists:branches,id',
         ]);
 
-        $data = $request->only('name', 'email', 'contact', 'license_number');
+        $data = $request->only('name', 'email', 'contact', 'license_number', 'branch_id');
 
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);

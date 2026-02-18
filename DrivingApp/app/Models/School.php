@@ -83,6 +83,11 @@ class School extends Model
         return $this->hasOne(SchoolSetting::class);
     }
 
+    public function branches()
+    {
+        return $this->hasMany(\App\Models\Branch::class);
+    }
+
     public function resolveView(string $view): string
     {
         $sluggedView = $this->slug . '.' . $view;

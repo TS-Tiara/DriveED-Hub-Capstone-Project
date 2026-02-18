@@ -11,6 +11,7 @@ class EnrollmentRequest extends Model
 
     protected $fillable = [
         'school_id',
+        'branch_id',
         'learner_id',
         'course_id',
         'status',
@@ -47,6 +48,11 @@ class EnrollmentRequest extends Model
     public function school()
     {
         return $this->belongsTo(School::class);
+    }
+
+    public function branchRelation()
+    {
+        return $this->belongsTo(\App\Models\Branch::class, 'branch_id');
     }
 
     public function learner()

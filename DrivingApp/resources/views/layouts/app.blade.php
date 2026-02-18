@@ -1685,7 +1685,8 @@
 
                 <div class="nav-divider"></div>
 
-                {{-- Settings (standalone bottom) --}}
+                {{-- Settings & Branch Management (standalone bottom) --}}
+                <a href="{{ $schoolRoute('admin.branches.index') }}" class="nav-item" data-page="branches">Branches</a>
                 <a href="{{ $schoolRoute('admin.settings') }}" class="nav-item" data-page="settings">Settings</a>
             @elseif(Auth::guard('instructor')->check())
                 <a href="{{ $schoolRoute('instructor.dashboard') }}" class="nav-item" data-page="dashboard">Dashboard</a>

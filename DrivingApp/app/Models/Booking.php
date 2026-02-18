@@ -13,6 +13,7 @@ class Booking extends Model
 
     protected $fillable = [
         'school_id',
+        'branch_id',
         'student_id',
         'instructor_id',
         'course_id',
@@ -50,6 +51,14 @@ class Booking extends Model
     public function school(): BelongsTo
     {
         return $this->belongsTo(School::class);
+    }
+
+    /**
+     * Get the branch for the booking.
+     */
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Branch::class);
     }
 
     /**

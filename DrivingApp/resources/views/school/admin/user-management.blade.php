@@ -809,6 +809,15 @@
                 <input type="text" id="userSearch" placeholder="Search users by name, email, or role..." onkeyup="filterTable('userSearch', 'usersTable')">
             </div>
             <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                @if(isset($branches) && $branches->count() > 0)
+                <select id="branchFilter" onchange="filterByBranch()" style="padding: 10px 14px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 0.9rem; background: white; cursor: pointer;">
+                    <option value="">All Branches</option>
+                    <option value="unassigned">Unassigned</option>
+                    @foreach($branches as $branch)
+                        <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                    @endforeach
+                </select>
+                @endif
                 <div class="export-dropdown" id="exportDropdown">
                     <button class="btn-export-trigger" onclick="toggleExportDropdown()">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
@@ -858,6 +867,8 @@
                         'address' => $s->address ?? null,
                         'license_number' => null,
                         'availability' => null,
+                        'branch_id' => $s->branch_id,
+                        'branch_name' => $s->branch_id ? ($branches->firstWhere('id', $s->branch_id)?->name ?? 'Unknown') : null,
                     ]);
                 }
                 foreach($instructors as $i) {
@@ -871,6 +882,8 @@
                         'address' => null,
                         'license_number' => $i->license_number ?? null,
                         'availability' => $i->availability ?? null,
+                        'branch_id' => $i->branch_id,
+                        'branch_name' => $i->branch_id ? ($branches->firstWhere('id', $i->branch_id)?->name ?? 'Unknown') : null,
                     ]);
                 }
                 $allUsers = $allUsers->sortBy('name');
@@ -884,13 +897,14 @@
                             <th>Email</th>
                             <th>Contact</th>
                             <th>Role</th>
+                            <th>Branch</th>
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach($allUsers as $user)
-                        <tr data-role="{{ $user->role }}" data-status="{{ $user->status }}">
+                        <tr data-role="{{ $user->role }}" data-status="{{ $user->status }}" data-branch="{{ $user->branch_id ?? 'unassigned' }}">
                             <td><strong>{{ $user->name }}</strong></td>
                             <td>{{ $user->email }}</td>
                             <td>{{ $user->contact ?? 'N/A' }}</td>
@@ -900,18 +914,21 @@
                                 </span>
                             </td>
                             <td>
+                                <span style="font-size: 0.85rem; color: {{ $user->branch_name ? '#374151' : '#9ca3af' }};">{{ $user->branch_name ?? 'Unassigned' }}</span>
+                            </td>
+                            <td>
                                 <span class="status-badge status-{{ $user->status }}">
                                     {{ ucfirst($user->status) }}
                                 </span>
                             </td>
                             <td>
                                 @if($user->role === 'student')
-                                    <button class="btn-action btn-edit" data-action="edit-student" data-id="{{ $user->id }}" data-name="{{ $user->name }}" data-email="{{ $user->email }}" data-contact="{{ $user->contact }}" data-address="{{ $user->address }}">Edit</button>
+                                    <button class="btn-action btn-edit" data-action="edit-student" data-id="{{ $user->id }}" data-name="{{ $user->name }}" data-email="{{ $user->email }}" data-contact="{{ $user->contact }}" data-address="{{ $user->address }}" data-branch="{{ $user->branch_id }}">Edit</button>
                                     <button class="btn-action btn-toggle" data-action="toggle-student-status" data-id="{{ $user->id }}" data-status="{{ $user->status }}">
                                         {{ $user->status === 'active' ? 'Deactivate' : 'Activate' }}
                                     </button>
                                 @else
-                                    <button class="btn-action btn-edit" data-action="edit-instructor" data-id="{{ $user->id }}" data-name="{{ $user->name }}" data-email="{{ $user->email }}" data-contact="{{ $user->contact }}" data-license="{{ $user->license_number }}">Edit</button>
+                                    <button class="btn-action btn-edit" data-action="edit-instructor" data-id="{{ $user->id }}" data-name="{{ $user->name }}" data-email="{{ $user->email }}" data-contact="{{ $user->contact }}" data-license="{{ $user->license_number }}" data-branch="{{ $user->branch_id }}">Edit</button>
                                     <button class="btn-action btn-toggle" data-action="toggle-instructor-status" data-id="{{ $user->id }}" data-status="{{ $user->status }}">
                                         {{ $user->status === 'active' ? 'Deactivate' : 'Activate' }}
                                     </button>
@@ -960,6 +977,17 @@
                 <label>Address:</label>
                 <input type="text" name="address">
             </div>
+            @if(isset($branches) && $branches->count() > 0)
+            <div class="form-group">
+                <label>Branch:</label>
+                <select name="branch_id" style="width: 100%; padding: 10px 14px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 0.95rem;">
+                    <option value="">No Branch</option>
+                    @foreach($branches as $branch)
+                        <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            @endif
             <input type="hidden" name="role" value="student">
             <div class="modal-buttons">
                 <button type="submit" class="btn-create">Save</button>
@@ -992,6 +1020,17 @@
                 <label>Address:</label>
                 <input type="text" id="edit_student_address" name="address">
             </div>
+            @if(isset($branches) && $branches->count() > 0)
+            <div class="form-group">
+                <label>Branch:</label>
+                <select id="edit_student_branch" name="branch_id" style="width: 100%; padding: 10px 14px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 0.95rem;">
+                    <option value="">No Branch</option>
+                    @foreach($branches as $branch)
+                        <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            @endif
             <div class="modal-buttons">
                 <button type="submit" class="btn-create">Update</button>
                 <button type="button" class="btn-cancel" onclick="closeEditStudentModal()">Cancel</button>
@@ -1026,6 +1065,17 @@
                 <label>License Number:</label>
                 <input type="text" name="license_number">
             </div>
+            @if(isset($branches) && $branches->count() > 0)
+            <div class="form-group">
+                <label>Branch:</label>
+                <select name="branch_id" style="width: 100%; padding: 10px 14px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 0.95rem;">
+                    <option value="">No Branch</option>
+                    @foreach($branches as $branch)
+                        <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            @endif
             <input type="hidden" name="role" value="instructor">
             <div class="modal-buttons">
                 <button type="submit" class="btn-create">Save</button>
@@ -1058,6 +1108,17 @@
                 <label>License Number:</label>
                 <input type="text" id="edit_instructor_license" name="license_number">
             </div>
+            @if(isset($branches) && $branches->count() > 0)
+            <div class="form-group">
+                <label>Branch:</label>
+                <select id="edit_instructor_branch" name="branch_id" style="width: 100%; padding: 10px 14px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 0.95rem;">
+                    <option value="">No Branch</option>
+                    @foreach($branches as $branch)
+                        <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            @endif
             <div class="modal-buttons">
                 <button type="submit" class="btn-create">Update</button>
                 <button type="button" class="btn-cancel" onclick="closeEditInstructorModal()">Cancel</button>
@@ -1099,6 +1160,21 @@
             row.style.display = show ? '' : 'none';
         });
     }
+
+    function filterByBranch() {
+        const val = document.getElementById('branchFilter').value;
+        const rows = document.querySelectorAll('#usersTable tbody tr');
+        rows.forEach(row => {
+            const branch = row.getAttribute('data-branch');
+            if (!val) {
+                row.style.display = '';
+            } else if (val === 'unassigned') {
+                row.style.display = (branch === 'unassigned' || !branch) ? '' : 'none';
+            } else {
+                row.style.display = (branch === val) ? '' : 'none';
+            }
+        });
+    }
     
     // Table Search/Filter
     function filterTable(searchId, tableId) {
@@ -1137,13 +1213,15 @@
         document.getElementById('createStudentModal').style.display = 'none';
     }
     
-    function editStudent(id, name, email, contact, address) {
+    function editStudent(id, name, email, contact, address, branchId) {
         const form = document.getElementById('editStudentForm');
         form.action = `${studentBaseUrl}/${id}`;
         document.getElementById('edit_student_name').value = name || '';
         document.getElementById('edit_student_email').value = email || '';
         document.getElementById('edit_student_contact').value = contact || '';
         document.getElementById('edit_student_address').value = address || '';
+        const branchSelect = document.getElementById('edit_student_branch');
+        if (branchSelect) branchSelect.value = branchId || '';
         document.getElementById('editStudentModal').style.display = 'flex';
     }
     
@@ -1167,11 +1245,11 @@
         if (!btn) return;
         const action = btn.dataset.action;
         if (action === 'edit-student') {
-            editStudent(btn.dataset.id, btn.dataset.name, btn.dataset.email, btn.dataset.contact, btn.dataset.address);
+            editStudent(btn.dataset.id, btn.dataset.name, btn.dataset.email, btn.dataset.contact, btn.dataset.address, btn.dataset.branch);
         } else if (action === 'toggle-student-status') {
             toggleStudentStatus(btn.dataset.id, btn.dataset.status);
         } else if (action === 'edit-instructor') {
-            editInstructor(btn.dataset.id, btn.dataset.name, btn.dataset.email, btn.dataset.contact, btn.dataset.license);
+            editInstructor(btn.dataset.id, btn.dataset.name, btn.dataset.email, btn.dataset.contact, btn.dataset.license, btn.dataset.branch);
         } else if (action === 'toggle-instructor-status') {
             toggleInstructorStatus(btn.dataset.id, btn.dataset.status);
         } else if (action === 'toggle-instructor-availability') {
@@ -1222,13 +1300,15 @@
         document.getElementById('createInstructorModal').style.display = 'none';
     }
     
-    function editInstructor(id, name, email, contact, license) {
+    function editInstructor(id, name, email, contact, license, branchId) {
         const form = document.getElementById('editInstructorForm');
         form.action = `${instructorBaseUrl}/${id}`;
         document.getElementById('edit_instructor_name').value = name;
         document.getElementById('edit_instructor_email').value = email;
         document.getElementById('edit_instructor_contact').value = contact || '';
         document.getElementById('edit_instructor_license').value = license || '';
+        const branchSelect = document.getElementById('edit_instructor_branch');
+        if (branchSelect) branchSelect.value = branchId || '';
         document.getElementById('editInstructorModal').style.display = 'flex';
     }
     

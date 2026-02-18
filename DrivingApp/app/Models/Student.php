@@ -12,6 +12,7 @@ class Student extends Authenticatable
 
     protected $fillable = [
         'school_id',
+        'branch_id',
         'name',
         'email',
         'password',
@@ -65,6 +66,11 @@ class Student extends Authenticatable
     public function school()
     {
         return $this->belongsTo(School::class);
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
     }
 
     public function bookings()

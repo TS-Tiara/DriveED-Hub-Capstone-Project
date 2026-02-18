@@ -11,6 +11,7 @@ class TimeSlot extends Model
 
     protected $fillable = [
         'school_id',
+        'branch_id',
         'course_id',
         'date',
         'start_time',
@@ -29,6 +30,11 @@ class TimeSlot extends Model
     public function school()
     {
         return $this->belongsTo(School::class);
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
     }
 
     public function course()
