@@ -20,7 +20,7 @@ nixPkgs = [
 
 [phases.build]
 cmds = [
-    "cd DrivingApp && mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs storage/app/public",
+    "cd DrivingApp && mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs storage/app/public bootstrap/cache",
     "cd DrivingApp && chmod -R 775 storage bootstrap/cache",
     "cd DrivingApp && composer install --no-dev --optimize-autoloader",
     "cd DrivingApp && npm ci",
