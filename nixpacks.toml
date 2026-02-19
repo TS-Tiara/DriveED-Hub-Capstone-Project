@@ -15,6 +15,7 @@ nixPkgs = [
     "php83Extensions.tokenizer",
     "php83Extensions.dom",
     "php83Extensions.fileinfo",
+    "php83Packages.composer",
     "nodejs_20"
 ]
 
