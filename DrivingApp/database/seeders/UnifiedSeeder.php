@@ -23,45 +23,108 @@ use App\Models\Branch;
 /**
  * Unified Seeder - Comprehensive Test Data
  * 
- * This seeder creates a complete test environment with:
+ * Creates a complete test environment with:
  * - 2 System Administrators (platform level)
- * - Smart Driving School (25 branches)
- * - LySpeed Driving School (10 branches)
- * - DriveED Hub Driving School (2 branches, demo school)
+ * - Smart Driving School — 25 branches, 25 branch managers (1 per branch), ~75 instructors (3/branch), ~200 students (8/branch)
+ * - LySpeed Driving School — 10 branches, 10 branch managers (1 per branch), ~30 instructors (3/branch), ~80 students (8/branch)
+ * - DriveED Hub Driving School — 2 branches, 2 branch managers (1 per branch), 4 instructors (2/branch), 10 students (5/branch), 5 guests
  * 
- * Run with: php artisan db:seed --class=UnifiedSeeder
- * 
- * All passwords: "P@ssw0rd123" (except system admins: "P@ssw0rd123" as well)
+ * Run: php artisan db:seed --class=UnifiedSeeder
+ * All passwords: "P@ssw0rd123"
  */
 class UnifiedSeeder extends Seeder
 {
-    private string $password;
+    private string $password = 'P@ssw0rd123';
+    private string $hashedPassword;
 
-    public function __construct()
-    {
-        $this->password = 'P@ssw0rd123';
-    }
+    // ── Name pools for programmatic generation ──
+    private array $maleFirst = [
+        'Juan Carlos', 'Pedro Miguel', 'Roberto Luis', 'Fernando Jose', 'Ricardo Antonio',
+        'Angelo', 'Domingo', 'Francisco', 'Guillermo', 'Isidro',
+        'Kenneth', 'Manuel', 'Oscar', 'Salvador', 'Ulysses',
+        'Wilfredo', 'Abelardo', 'Benigno', 'Diosdado', 'Felix',
+        'Hernando', 'Juanito', 'Leonardo', 'Nemesio', 'Primitivo',
+        'Remigio', 'Teodoro', 'Enrique', 'Arturo', 'Cesar',
+        'Danilo', 'Edgar', 'Florante', 'Gerardo', 'Hector',
+        'Jaime', 'Lorenzo', 'Noel', 'Pablo', 'Renzo',
+        'Tito', 'Victor', 'Xavier', 'Marco', 'Diego',
+        'Rafael', 'Gabriel', 'Daniel', 'Luis', 'Carlos',
+    ];
 
-    /**
-     * Run the database seeds.
-     */
+    private array $femaleFirst = [
+        'Maria', 'Ana', 'Sofia', 'Isabella', 'Carmen',
+        'Rosa', 'Elena', 'Patricia', 'Cristina', 'Angela',
+        'Valentina', 'Lucia', 'Gabriela', 'Natalia', 'Teresa',
+        'Gloria', 'Paulina', 'Cecilia', 'Bianca', 'Diana',
+        'Mila', 'Olive', 'Hazel', 'Jasmine', 'Karla',
+        'Nora', 'Lourdes', 'Rosalinda', 'Thelma', 'Victoria',
+        'Yolanda', 'Zenaida', 'Imelda', 'Corazon', 'Esperanza',
+        'Felicidad', 'Leonora', 'Milagros', 'Erlinda', 'Myrna',
+        'Teresita', 'Gemma', 'Iris', 'Queenie', 'Samantha',
+        'Ursula', 'Yvette', 'Florence', 'Josephine', 'Beatriz',
+    ];
+
+    private array $lastNames = [
+        'Santos', 'Reyes', 'Cruz', 'Garcia', 'Torres',
+        'Ramos', 'Flores', 'Lopez', 'Rivera', 'Hernandez',
+        'Mendoza', 'Dizon', 'Navarro', 'Medina', 'Jimenez',
+        'Alvarez', 'Ruiz', 'Sanchez', 'Ramirez', 'Castillo',
+        'Villanueva', 'Bautista', 'Gonzales', 'Fernandez', 'Martinez',
+        'Rodriguez', 'Espiritu', 'Manansala', 'Cunanan', 'David',
+        'Pineda', 'Ocampo', 'Pangilinan', 'Aquino', 'Galang',
+        'Ilagan', 'Lara', 'Manalo', 'Oliva', 'Salazar',
+        'Tolentino', 'Umali', 'Valencia', 'Yap', 'Cordero',
+        'Enriquez', 'Guevara', 'Hidalgo', 'Ignacio', 'Javier',
+        'Laurel', 'Mercado', 'Nicolas', 'Panganiban', 'Quinto',
+        'Roxas', 'Soriano', 'Tan', 'Velasco', 'Zamora',
+    ];
+
     public function run(): void
     {
+        $this->hashedPassword = Hash::make($this->password);
+
         $this->command->info('');
         $this->command->info('╔══════════════════════════════════════════════════════════════╗');
         $this->command->info('║           UNIFIED SEEDER - COMPREHENSIVE TEST DATA           ║');
         $this->command->info('╚══════════════════════════════════════════════════════════════╝');
         $this->command->info('');
 
-        // Create System Administrators
         $this->createSystemAdmins();
-
-        // Create Schools with all related data
         $this->createSmartDrivingSchool();
         $this->createLySpeedDrivingSchool();
         $this->createDriveEdHubSchool();
-
         $this->printCredentialsSummary();
+    }
+
+    // ─── Name generation helpers ────────────────────
+
+    /**
+     * Generate a unique full name from the pool.
+     * Uses a deterministic index to avoid collisions.
+     */
+    private function nameAt(int $index): string
+    {
+        $allFirst = array_merge($this->maleFirst, $this->femaleFirst); // 100 first names
+        $fnCount = count($allFirst);
+        $lnCount = count($this->lastNames); // 60 last names
+
+        $fnIdx = $index % $fnCount;
+        $lnIdx = (int) floor($index / $fnCount) + $index % $lnCount;
+        $lnIdx = $lnIdx % $lnCount;
+
+        // Shift last name index when first name repeats to keep uniqueness
+        if ($index >= $fnCount) {
+            $lnIdx = ($lnIdx + (int) floor($index / $fnCount)) % $lnCount;
+        }
+
+        return $allFirst[$fnIdx] . ' ' . $this->lastNames[$lnIdx];
+    }
+
+    private function makeEmail(string $name, string $domain): string
+    {
+        $slug = strtolower(trim($name));
+        $slug = str_replace(['ñ', ' '], ['n', '.'], $slug);
+        return "{$slug}@{$domain}";
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -75,22 +138,15 @@ class UnifiedSeeder extends Seeder
         Admin::updateOrCreate(
             ['email' => 'systemadmin@gmail.com'],
             [
-                'school_id' => null,
-                'name' => 'Tiara Angelica Santos',
-                'password' => Hash::make($this->password),
-                'role' => 'system_admin',
-                'is_active' => true,
+                'school_id' => null, 'name' => 'Tiara Angelica Santos',
+                'password' => $this->hashedPassword, 'role' => 'system_admin', 'is_active' => true,
             ]
         );
-
         Admin::updateOrCreate(
             ['email' => 'systemadmin2@gmail.com'],
             [
-                'school_id' => null,
-                'name' => 'Ricardo Jose Dela Cruz',
-                'password' => Hash::make($this->password),
-                'role' => 'system_admin',
-                'is_active' => true,
+                'school_id' => null, 'name' => 'Ricardo Jose Dela Cruz',
+                'password' => $this->hashedPassword, 'role' => 'system_admin', 'is_active' => true,
             ]
         );
 
@@ -128,19 +184,12 @@ class UnifiedSeeder extends Seeder
         SchoolSetting::updateOrCreate(
             ['school_id' => $school->id],
             [
-                'primary_color' => '#3b82f6',
-                'secondary_color' => '#fbbf24',
-                'accent_color' => '#1e40af',
-                'use_gradient_header' => false,
-                'header_text_color' => '#ffffff',
-                'background_type' => 'color',
-                'background_color' => '#f8fafc',
-                'sidebar_bg_color' => '#ffffff',
-                'sidebar_text_color' => '#3b82f6',
+                'primary_color' => '#3b82f6', 'secondary_color' => '#fbbf24', 'accent_color' => '#1e40af',
+                'use_gradient_header' => false, 'header_text_color' => '#ffffff',
+                'background_type' => 'color', 'background_color' => '#f8fafc',
+                'sidebar_bg_color' => '#ffffff', 'sidebar_text_color' => '#3b82f6',
                 'instructor_selection_mode' => 'student_choice',
-                'enable_booking_queue' => true,
-                'booking_queue_days' => 3,
-                'enable_branches' => true,
+                'enable_booking_queue' => true, 'booking_queue_days' => 3, 'enable_branches' => true,
             ]
         );
 
@@ -172,120 +221,122 @@ class UnifiedSeeder extends Seeder
             ['name' => 'Meycauayan Branch', 'address' => '55 MacArthur Highway, Meycauayan, Bulacan', 'contact_number' => '+63-917-123-4524', 'email' => 'meycauayan@smartdriving.com'],
             ['name' => 'Balanga Branch', 'address' => '33 Capitol Drive, Balanga City, Bataan', 'contact_number' => '+63-917-123-4525', 'email' => 'balanga@smartdriving.com'],
         ];
-
         $branches = $this->createBranches($school, $branchList);
         $this->command->info('   ✓ 25 Branches created');
 
-        // ── School Admins ──
-        $sdAdmins = [
+        // ── School Admins (4) ──
+        foreach ([
             ['name' => 'Maria Cristina Santos', 'email' => 'maria.santos@smartdriving.com'],
             ['name' => 'Jose Antonio Reyes', 'email' => 'jose.reyes@smartdriving.com'],
             ['name' => 'Carmen Rosa Villanueva', 'email' => 'carmen.villanueva@smartdriving.com'],
-        ];
-        foreach ($sdAdmins as $a) {
+        ] as $a) {
             Admin::updateOrCreate(['email' => $a['email']], [
                 'school_id' => $school->id, 'name' => $a['name'],
-                'password' => Hash::make($this->password), 'role' => 'school_admin', 'is_active' => true,
+                'password' => $this->hashedPassword, 'role' => 'school_admin', 'is_active' => true,
             ]);
         }
         Admin::updateOrCreate(['email' => 'schooladmin@gmail.com'], [
             'school_id' => $school->id, 'name' => 'Demo School Admin',
-            'password' => Hash::make($this->password), 'role' => 'school_admin', 'is_active' => true,
+            'password' => $this->hashedPassword, 'role' => 'school_admin', 'is_active' => true,
         ]);
         $this->command->info('   ✓ 4 School Admins created');
 
-        // ── Branch Secretaries (one per branch) ──
-        $secNames = [
+        // ── 25 Branch Managers (1 per branch) ──
+        // Branch 0 uses the demo account; branches 1-24 get named managers
+        Admin::updateOrCreate(['email' => 'secretary@gmail.com'], [
+            'school_id' => $school->id, 'branch_id' => $branches[0]->id,
+            'name' => 'Demo Branch Manager', 'password' => $this->hashedPassword,
+            'role' => 'branch_secretary', 'is_active' => true,
+        ]);
+        $managerNames = [
             'Rosa Marie Lim', 'Fernando Bautista', 'Lorna Aguilar', 'Cecilia Tan',
             'Eduardo Gomez', 'Myrna Torres', 'Reynaldo Santos', 'Gloria Pascual',
             'Nestor Cruz', 'Erlinda Ramos', 'Virgilio Lopez', 'Teresita Mendoza',
             'Danilo Garcia', 'Rosario Flores', 'Arturo Rivera', 'Corazon Hernandez',
             'Benjamin Dizon', 'Felicidad Navarro', 'Rodolfo Medina', 'Leonora Jimenez',
             'Gregorio Alvarez', 'Milagros Ruiz', 'Alfredo Sanchez', 'Esperanza Ramirez',
-            'Ricardo Castillo',
         ];
-        foreach ($secNames as $i => $name) {
-            $slug = strtolower(str_replace(' ', '.', $name));
-            Admin::updateOrCreate(['email' => "{$slug}@smartdriving.com"], [
-                'school_id' => $school->id,
-                'branch_id' => $branches[$i]->id,
-                'name' => $name,
-                'password' => Hash::make($this->password),
+        foreach ($managerNames as $i => $name) {
+            $branchIdx = $i + 1; // branches 1-24
+            Admin::updateOrCreate(['email' => $this->makeEmail($name, 'smartdriving.com')], [
+                'school_id' => $school->id, 'branch_id' => $branches[$branchIdx]->id,
+                'name' => $name, 'password' => $this->hashedPassword,
                 'role' => 'branch_secretary', 'is_active' => true,
             ]);
         }
-        Admin::updateOrCreate(['email' => 'secretary@gmail.com'], [
-            'school_id' => $school->id, 'branch_id' => $branches[0]->id,
-            'name' => 'Demo Branch Secretary', 'password' => Hash::make($this->password),
-            'role' => 'branch_secretary', 'is_active' => true,
-        ]);
-        $this->command->info('   ✓ 26 Branch Secretaries created');
+        $this->command->info('   ✓ 25 Branch Managers created (1 per branch)');
 
-        // ── Instructors (2 per branch = 50, + 1 demo) ──
-        $instFirstNames = ['Juan Carlos', 'Ana Maria', 'Pedro Miguel', 'Rosa Elena', 'Roberto Luis',
-            'Angelo', 'Catalina', 'Domingo', 'Elena', 'Francisco',
-            'Guillermo', 'Hazel', 'Isidro', 'Jasmine', 'Kenneth',
-            'Lourdes', 'Manuel', 'Nora', 'Oscar', 'Patricia',
-            'Quirino', 'Rosalinda', 'Salvador', 'Thelma', 'Ulysses',
-            'Victoria', 'Wilfredo', 'Ximena', 'Yolanda', 'Zenaida',
-            'Abelardo', 'Benigno', 'Carmela', 'Diosdado', 'Emilia',
-            'Felix', 'Geraldine', 'Hernando', 'Imelda', 'Juanito',
-            'Kristine', 'Leonardo', 'Marcelina', 'Nemesio', 'Olivia',
-            'Primitivo', 'Querubin', 'Remigio', 'Soledad', 'Teodoro'];
-        $instLastNames = ['Dela Cruz', 'Garcia', 'Martinez', 'Villanueva', 'Fernandez',
-            'Bautista', 'Santos', 'Reyes', 'Torres', 'Ramos',
-            'Cruz', 'Lopez', 'Gonzales', 'Flores', 'Rivera',
-            'Hernandez', 'Dizon', 'Navarro', 'Medina', 'Jimenez',
-            'Alvarez', 'Ruiz', 'Sanchez', 'Ramirez', 'Castillo',
-            'Domingo', 'Espino', 'Ferrer', 'Galang', 'Ilagan',
-            'Julian', 'Lara', 'Manalo', 'Oliva', 'Pineda',
-            'Salazar', 'Tolentino', 'Umali', 'Valencia', 'Yap',
-            'Abad', 'Buenaventura', 'Cordero', 'Dela Rosa', 'Enriquez',
-            'Francisco', 'Guevara', 'Hidalgo', 'Ignacio', 'Javier'];
-
+        // ── 75 Instructors (3 per branch) + 1 demo = 76 ──
         $instructors = [];
-        for ($i = 0; $i < 50; $i++) {
-            $name = $instFirstNames[$i] . ' ' . $instLastNames[$i];
-            $emailSlug = strtolower(str_replace([' ', '.'], ['', ''], $instFirstNames[$i])) . '.' . strtolower(str_replace(' ', '', $instLastNames[$i]));
-            $instructors[] = Instructor::updateOrCreate(
-                ['email' => "{$emailSlug}@smartdriving.com"],
-                [
-                    'school_id' => $school->id,
-                    'branch_id' => $branches[$i % count($branches)]->id,
-                    'name' => $name,
-                    'contact' => '+63-917-555-' . str_pad($i + 1, 4, '0', STR_PAD_LEFT),
-                    'password' => Hash::make($this->password),
-                    'license_number' => 'LIC-SD-2024-' . str_pad($i + 1, 3, '0', STR_PAD_LEFT),
-                    'bio' => 'Experienced driving instructor at Smart Driving School.',
-                    'status' => 'active',
-                    'availability' => 'available',
-                ]
-            );
+        $instOffset = 0; // name pool offset
+        for ($b = 0; $b < count($branches); $b++) {
+            for ($j = 0; $j < 3; $j++) {
+                $name = $this->nameAt($instOffset);
+                $instructors[] = Instructor::updateOrCreate(
+                    ['email' => $this->makeEmail("sd.inst.{$instOffset}", 'smartdriving.com')],
+                    [
+                        'school_id' => $school->id,
+                        'branch_id' => $branches[$b]->id,
+                        'name' => $name,
+                        'contact' => '+63-917-555-' . str_pad($instOffset + 1, 4, '0', STR_PAD_LEFT),
+                        'password' => $this->hashedPassword,
+                        'license_number' => 'LIC-SD-2024-' . str_pad($instOffset + 1, 3, '0', STR_PAD_LEFT),
+                        'bio' => 'Experienced driving instructor at Smart Driving School.',
+                        'status' => 'active', 'availability' => 'available',
+                    ]
+                );
+                $instOffset++;
+            }
         }
         $instructors[] = Instructor::updateOrCreate(
             ['email' => 'instructor@gmail.com'],
             [
                 'school_id' => $school->id, 'branch_id' => $branches[0]->id,
                 'name' => 'Demo Instructor', 'contact' => '+63-917-555-0000',
-                'password' => Hash::make($this->password),
-                'license_number' => 'LIC-SD-TEST-001',
+                'password' => $this->hashedPassword, 'license_number' => 'LIC-SD-TEST-001',
                 'bio' => 'Test instructor account for demo purposes.',
                 'status' => 'active', 'availability' => 'available',
             ]
         );
-        $this->command->info('   ✓ 51 Instructors created');
+        $this->command->info('   ✓ ' . count($instructors) . ' Instructors created (3 per branch + 1 demo)');
+
+        // ── 200 Students (8 per branch) + 1 demo = 201 ──
+        $students = [];
+        $stuOffset = 500; // offset so names don't collide with instructor names
+        for ($b = 0; $b < count($branches); $b++) {
+            for ($j = 0; $j < 8; $j++) {
+                $name = $this->nameAt($stuOffset);
+                $students[] = Student::updateOrCreate(
+                    ['school_id' => $school->id, 'email' => $this->makeEmail("sd.stu.{$stuOffset}", 'smartdriving.test')],
+                    [
+                        'name' => $name,
+                        'branch_id' => $branches[$b]->id,
+                        'contact' => '+63-9' . rand(10, 99) . '-' . rand(100, 999) . '-' . rand(1000, 9999),
+                        'password' => $this->hashedPassword,
+                        'status' => 'active', 'role' => 'student',
+                        'enrollment_date' => now()->subDays(rand(7, 90)),
+                    ]
+                );
+                $stuOffset++;
+            }
+        }
+        $students[] = Student::updateOrCreate(
+            ['school_id' => $school->id, 'email' => 'student@gmail.com'],
+            [
+                'name' => 'Demo Student', 'branch_id' => $branches[0]->id,
+                'contact' => '+63-900-000-0001', 'password' => $this->hashedPassword,
+                'status' => 'active', 'role' => 'student', 'enrollment_date' => now()->subDays(30),
+            ]
+        );
+        $this->command->info('   ✓ ' . count($students) . ' Students created (8 per branch + 1 demo)');
 
         // ── Courses ──
         $courses = $this->createSmartDrivingCourses($school);
         $this->command->info('   ✓ 3 Courses with packages created');
 
-        // ── Students (60 students across 25 branches) ──
-        $students = $this->createSmartDrivingStudents($school, $branches);
-        $this->command->info('   ✓ ' . count($students) . ' Students created');
-
         // ── Time Slots, Bookings, Payments ──
         $this->createTimeSlotsAndAssignments($school, $instructors, $courses, $branches);
-        $this->createBookingsAndPayments($school, $students, $instructors, $courses, $branches);
+        $this->createBookingsAndPayments($school, $students, $instructors, $courses, $branches, 30);
         $this->command->info('   ✓ Time slots, bookings, and payments created');
 
         // ── Guests & Enrollment Requests ──
@@ -329,19 +380,12 @@ class UnifiedSeeder extends Seeder
         SchoolSetting::updateOrCreate(
             ['school_id' => $school->id],
             [
-                'primary_color' => '#8B0000',
-                'secondary_color' => '#ffffff',
-                'accent_color' => '#B22222',
-                'use_gradient_header' => false,
-                'header_text_color' => '#ffffff',
-                'background_type' => 'color',
-                'background_color' => '#f8fafc',
-                'sidebar_bg_color' => '#ffffff',
-                'sidebar_text_color' => '#8B0000',
+                'primary_color' => '#8B0000', 'secondary_color' => '#ffffff', 'accent_color' => '#B22222',
+                'use_gradient_header' => false, 'header_text_color' => '#ffffff',
+                'background_type' => 'color', 'background_color' => '#f8fafc',
+                'sidebar_bg_color' => '#ffffff', 'sidebar_text_color' => '#8B0000',
                 'instructor_selection_mode' => 'student_choice',
-                'enable_booking_queue' => true,
-                'booking_queue_days' => 2,
-                'enable_branches' => true,
+                'enable_booking_queue' => true, 'booking_queue_days' => 2, 'enable_branches' => true,
             ]
         );
 
@@ -358,97 +402,111 @@ class UnifiedSeeder extends Seeder
             ['name' => 'Lubao Branch', 'address' => '66 Lubao Bypass Rd, Lubao, Pampanga', 'contact_number' => '+63-918-234-5609', 'email' => 'lubao@lyspeed.com'],
             ['name' => 'Magalang Branch', 'address' => '38 Magalang-Concepcion Rd, Magalang, Pampanga', 'contact_number' => '+63-918-234-5610', 'email' => 'magalang@lyspeed.com'],
         ];
-
         $branches = $this->createBranches($school, $branchList);
         $this->command->info('   ✓ 10 Branches created');
 
-        // ── School Admins ──
-        $lsAdmins = [
+        // ── School Admins (3) ──
+        foreach ([
             ['name' => 'Carlos Miguel Villanueva', 'email' => 'carlos.villanueva@lyspeed.com'],
             ['name' => 'Elena Rose Gonzales', 'email' => 'elena.gonzales@lyspeed.com'],
-        ];
-        foreach ($lsAdmins as $a) {
+        ] as $a) {
             Admin::updateOrCreate(['email' => $a['email']], [
                 'school_id' => $school->id, 'name' => $a['name'],
-                'password' => Hash::make($this->password), 'role' => 'school_admin', 'is_active' => true,
+                'password' => $this->hashedPassword, 'role' => 'school_admin', 'is_active' => true,
             ]);
         }
         Admin::updateOrCreate(['email' => 'lyspeed.admin@gmail.com'], [
             'school_id' => $school->id, 'name' => 'LySpeed Demo Admin',
-            'password' => Hash::make($this->password), 'role' => 'school_admin', 'is_active' => true,
+            'password' => $this->hashedPassword, 'role' => 'school_admin', 'is_active' => true,
         ]);
         $this->command->info('   ✓ 3 School Admins created');
 
-        // ── Branch Secretaries (one per branch) ──
-        $lsSecNames = [
-            'Angelina Reyes', 'Benito Aquino', 'Cristina Dela Peña', 'Dominador Ocampo',
+        // ── 10 Branch Managers (1 per branch) ──
+        $lsManagerNames = [
+            'Angelina Reyes', 'Benito Aquino', 'Cristina Dela Cruz', 'Dominador Ocampo',
             'Evelyn Pangilinan', 'Florante Manansala', 'Gilda Cunanan', 'Honesto David',
             'Imelda Lugtu', 'Josefino Pineda',
         ];
-        foreach ($lsSecNames as $i => $name) {
-            $slug = strtolower(str_replace(' ', '.', $name));
-            $slug = str_replace('ñ', 'n', $slug);
-            Admin::updateOrCreate(['email' => "{$slug}@lyspeed.com"], [
-                'school_id' => $school->id,
-                'branch_id' => $branches[$i]->id,
-                'name' => $name,
-                'password' => Hash::make($this->password),
+        foreach ($lsManagerNames as $i => $name) {
+            Admin::updateOrCreate(['email' => $this->makeEmail($name, 'lyspeed.com')], [
+                'school_id' => $school->id, 'branch_id' => $branches[$i]->id,
+                'name' => $name, 'password' => $this->hashedPassword,
                 'role' => 'branch_secretary', 'is_active' => true,
             ]);
         }
-        $this->command->info('   ✓ 10 Branch Secretaries created');
+        $this->command->info('   ✓ 10 Branch Managers created (1 per branch)');
 
-        // ── Instructors (20 across 10 branches + 1 demo) ──
-        $lsInstNames = [
-            'Miguel Angel Santos', 'Elena Patricia Ramos', 'Fernando Jose Cruz',
-            'Maribel Torres', 'Ernesto Galang', 'Lorena Espino',
-            'Rodolfo Manalo', 'Ana Liza Salazar', 'Delfin Tolentino',
-            'Barbara Valencia', 'Crisanto Yap', 'Divina Abad',
-            'Emilio Buenaventura', 'Fatima Cordero', 'Gerardo Dela Rosa',
-            'Helen Enriquez', 'Ignacio Francisco', 'Julieta Guevara',
-            'Kevin Hidalgo', 'Ligaya Javier',
-        ];
+        // ── 30 Instructors (3 per branch) + 1 demo = 31 ──
         $instructors = [];
-        foreach ($lsInstNames as $i => $name) {
-            $emailSlug = strtolower(str_replace(' ', '.', $name));
-            $instructors[] = Instructor::updateOrCreate(
-                ['email' => "{$emailSlug}@lyspeed.com"],
-                [
-                    'school_id' => $school->id,
-                    'branch_id' => $branches[$i % count($branches)]->id,
-                    'name' => $name,
-                    'contact' => '+63-918-666-' . str_pad($i + 1, 4, '0', STR_PAD_LEFT),
-                    'password' => Hash::make($this->password),
-                    'license_number' => 'LIC-LS-2024-' . str_pad($i + 1, 3, '0', STR_PAD_LEFT),
-                    'bio' => 'Professional driving instructor at LySpeed Driving School.',
-                    'status' => 'active', 'availability' => 'available',
-                ]
-            );
+        $instOffset = 200; // different pool range from Smart Driving
+        for ($b = 0; $b < count($branches); $b++) {
+            for ($j = 0; $j < 3; $j++) {
+                $name = $this->nameAt($instOffset);
+                $instructors[] = Instructor::updateOrCreate(
+                    ['email' => $this->makeEmail("ls.inst.{$instOffset}", 'lyspeed.com')],
+                    [
+                        'school_id' => $school->id,
+                        'branch_id' => $branches[$b]->id,
+                        'name' => $name,
+                        'contact' => '+63-918-666-' . str_pad($instOffset - 199, 4, '0', STR_PAD_LEFT),
+                        'password' => $this->hashedPassword,
+                        'license_number' => 'LIC-LS-2024-' . str_pad($instOffset - 199, 3, '0', STR_PAD_LEFT),
+                        'bio' => 'Professional driving instructor at LySpeed Driving School.',
+                        'status' => 'active', 'availability' => 'available',
+                    ]
+                );
+                $instOffset++;
+            }
         }
         $instructors[] = Instructor::updateOrCreate(
             ['email' => 'lyspeed.instructor@gmail.com'],
             [
                 'school_id' => $school->id, 'branch_id' => $branches[0]->id,
                 'name' => 'LySpeed Demo Instructor', 'contact' => '+63-918-666-0000',
-                'password' => Hash::make($this->password),
-                'license_number' => 'LIC-LS-TEST-001',
+                'password' => $this->hashedPassword, 'license_number' => 'LIC-LS-TEST-001',
                 'bio' => 'Test instructor account for demo purposes.',
                 'status' => 'active', 'availability' => 'available',
             ]
         );
-        $this->command->info('   ✓ 21 Instructors created');
+        $this->command->info('   ✓ ' . count($instructors) . ' Instructors created (3 per branch + 1 demo)');
+
+        // ── 80 Students (8 per branch) + 1 demo = 81 ──
+        $students = [];
+        $stuOffset = 1000; // different pool range
+        for ($b = 0; $b < count($branches); $b++) {
+            for ($j = 0; $j < 8; $j++) {
+                $name = $this->nameAt($stuOffset);
+                $students[] = Student::updateOrCreate(
+                    ['school_id' => $school->id, 'email' => $this->makeEmail("ls.stu.{$stuOffset}", 'lyspeed.test')],
+                    [
+                        'name' => $name,
+                        'branch_id' => $branches[$b]->id,
+                        'contact' => '+63-9' . rand(10, 99) . '-' . rand(100, 999) . '-' . rand(1000, 9999),
+                        'password' => $this->hashedPassword,
+                        'status' => 'active', 'role' => 'student',
+                        'enrollment_date' => now()->subDays(rand(7, 60)),
+                    ]
+                );
+                $stuOffset++;
+            }
+        }
+        $students[] = Student::updateOrCreate(
+            ['school_id' => $school->id, 'email' => 'lyspeed.student@gmail.com'],
+            [
+                'name' => 'LySpeed Demo Student', 'branch_id' => $branches[0]->id,
+                'contact' => '+63-918-999-0001', 'password' => $this->hashedPassword,
+                'status' => 'active', 'role' => 'student', 'enrollment_date' => now()->subDays(30),
+            ]
+        );
+        $this->command->info('   ✓ ' . count($students) . ' Students created (8 per branch + 1 demo)');
 
         // ── Courses ──
         $courses = $this->createLySpeedCourses($school);
         $this->command->info('   ✓ 3 Courses with packages created');
 
-        // ── Students (30 across 10 branches) ──
-        $students = $this->createLySpeedStudents($school, $branches);
-        $this->command->info('   ✓ ' . count($students) . ' Students created');
-
         // ── Time Slots, Bookings, Payments ──
         $this->createTimeSlotsAndAssignments($school, $instructors, $courses, $branches);
-        $this->createBookingsAndPayments($school, $students, $instructors, $courses, $branches);
+        $this->createBookingsAndPayments($school, $students, $instructors, $courses, $branches, 18);
         $this->command->info('   ✓ Time slots, bookings, and payments created');
 
         // ── Guests & Enrollment Requests ──
@@ -492,19 +550,12 @@ class UnifiedSeeder extends Seeder
         SchoolSetting::updateOrCreate(
             ['school_id' => $school->id],
             [
-                'primary_color' => '#667eea',
-                'secondary_color' => '#764ba2',
-                'accent_color' => '#1e40af',
-                'use_gradient_header' => true,
-                'header_text_color' => '#ffffff',
-                'background_type' => 'gradient',
-                'background_color' => '#f8fafc',
-                'sidebar_bg_color' => '#ffffff',
-                'sidebar_text_color' => '#667eea',
+                'primary_color' => '#667eea', 'secondary_color' => '#764ba2', 'accent_color' => '#1e40af',
+                'use_gradient_header' => true, 'header_text_color' => '#ffffff',
+                'background_type' => 'gradient', 'background_color' => '#f8fafc',
+                'sidebar_bg_color' => '#ffffff', 'sidebar_text_color' => '#667eea',
                 'instructor_selection_mode' => 'admin_assigned',
-                'enable_booking_queue' => true,
-                'booking_queue_days' => 3,
-                'enable_branches' => true,
+                'enable_booking_queue' => true, 'booking_queue_days' => 3, 'enable_branches' => true,
             ]
         );
 
@@ -518,28 +569,28 @@ class UnifiedSeeder extends Seeder
         // ── 1 School Admin ──
         $admin = Admin::updateOrCreate(['email' => 'admin@gmail.com'], [
             'school_id' => $school->id, 'name' => 'Antonio Francisco Reyes',
-            'password' => Hash::make($this->password), 'role' => 'school_admin', 'is_active' => true,
+            'password' => $this->hashedPassword, 'role' => 'school_admin', 'is_active' => true,
         ]);
         $this->command->info('   ✓ 1 School Admin created');
 
-        // ── 2 Branch Managers (secretaries) ──
-        $bm1 = Admin::updateOrCreate(['email' => 'manager.clark@drivedhub.com'], [
+        // ── 2 Branch Managers (1 per branch) ──
+        Admin::updateOrCreate(['email' => 'manager.clark@drivedhub.com'], [
             'school_id' => $school->id, 'branch_id' => $branches[0]->id,
-            'name' => 'Patricia Lyn Mendoza', 'password' => Hash::make($this->password),
+            'name' => 'Patricia Lyn Mendoza', 'password' => $this->hashedPassword,
             'role' => 'branch_secretary', 'is_active' => true,
         ]);
-        $bm2 = Admin::updateOrCreate(['email' => 'manager.balibago@drivedhub.com'], [
+        Admin::updateOrCreate(['email' => 'manager.balibago@drivedhub.com'], [
             'school_id' => $school->id, 'branch_id' => $branches[1]->id,
-            'name' => 'Gabriel Marco Santos', 'password' => Hash::make($this->password),
+            'name' => 'Gabriel Marco Santos', 'password' => $this->hashedPassword,
             'role' => 'branch_secretary', 'is_active' => true,
         ]);
-        $this->command->info('   ✓ 2 Branch Managers created');
+        $this->command->info('   ✓ 2 Branch Managers created (1 per branch)');
 
         // ── 4 Instructors (2 per branch) ──
         $dhInstructors = [
-            ['name' => 'Ricardo Antonio Cruz', 'email' => 'ricardo.cruz@drivedhub.com', 'contact' => '+63-919-777-3001', 'license' => 'LIC-DH-2024-001', 'bio' => 'Senior Instructor specializing in Manual Transmission and Motorcycle training. 8 years of experience.', 'branch' => 0],
+            ['name' => 'Ricardo Antonio Cruz', 'email' => 'ricardo.cruz@drivedhub.com', 'contact' => '+63-919-777-3001', 'license' => 'LIC-DH-2024-001', 'bio' => 'Senior Instructor specializing in Manual Transmission and Motorcycle training. 8 years experience.', 'branch' => 0],
             ['name' => 'Maria Victoria Santos', 'email' => 'maria.santos@drivedhub.com', 'contact' => '+63-919-777-3002', 'license' => 'LIC-DH-2024-002', 'bio' => 'Expert in Automatic Transmission and Practical Driving. Certified defensive driving instructor.', 'branch' => 0],
-            ['name' => 'Angelo Miguel Ramos', 'email' => 'angelo.ramos@drivedhub.com', 'contact' => '+63-919-777-3003', 'license' => 'LIC-DH-2024-003', 'bio' => 'Theoretical Driving Course specialist. LTO-certified TDC instructor with 6 years experience.', 'branch' => 1],
+            ['name' => 'Angelo Miguel Ramos', 'email' => 'angelo.ramos@drivedhub.com', 'contact' => '+63-919-777-3003', 'license' => 'LIC-DH-2024-003', 'bio' => 'TDC specialist. LTO-certified TDC instructor with 6 years experience.', 'branch' => 1],
             ['name' => 'Sofia Elena Torres', 'email' => 'sofia.torres@drivedhub.com', 'contact' => '+63-919-777-3004', 'license' => 'LIC-DH-2024-004', 'bio' => 'Motorcycle and Manual Transmission specialist. Former professional rider turned instructor.', 'branch' => 1],
         ];
         $instructors = [];
@@ -547,33 +598,29 @@ class UnifiedSeeder extends Seeder
             $instructors[] = Instructor::updateOrCreate(
                 ['email' => $inst['email']],
                 [
-                    'school_id' => $school->id,
-                    'branch_id' => $branches[$inst['branch']]->id,
-                    'name' => $inst['name'],
-                    'contact' => $inst['contact'],
-                    'password' => Hash::make($this->password),
-                    'license_number' => $inst['license'],
-                    'bio' => $inst['bio'],
-                    'status' => 'active', 'availability' => 'available',
+                    'school_id' => $school->id, 'branch_id' => $branches[$inst['branch']]->id,
+                    'name' => $inst['name'], 'contact' => $inst['contact'],
+                    'password' => $this->hashedPassword, 'license_number' => $inst['license'],
+                    'bio' => $inst['bio'], 'status' => 'active', 'availability' => 'available',
                 ]
             );
         }
-        $this->command->info('   ✓ 4 Instructors created');
+        $this->command->info('   ✓ 4 Instructors created (2 per branch)');
 
         // ── 5 Courses (3 PDC + 2 TDC) ──
         $courses = $this->createDriveEdHubCourses($school);
         $this->command->info('   ✓ 5 Courses with packages created');
 
-        // ── 10 Students (enrolled) ──
+        // ── 10 Students (5 per branch) ──
         $students = $this->createDriveEdHubStudents($school, $branches);
-        $this->command->info('   ✓ ' . count($students) . ' Students created');
+        $this->command->info('   ✓ ' . count($students) . ' Students created (5 per branch)');
 
         // ── Time Slots ──
         $this->createTimeSlotsAndAssignments($school, $instructors, $courses, $branches);
         $this->command->info('   ✓ Time slots created');
 
         // ── Bookings & Payments ──
-        $this->createBookingsAndPayments($school, $students, $instructors, $courses, $branches);
+        $this->createBookingsAndPayments($school, $students, $instructors, $courses, $branches, 10);
         $this->command->info('   ✓ Bookings and payments created');
 
         // ── 5 Guests (2 enrolled, 3 not enrolled) ──
@@ -600,8 +647,7 @@ class UnifiedSeeder extends Seeder
                     'address' => $data['address'] ?? null,
                     'contact_number' => $data['contact_number'] ?? null,
                     'email' => $data['email'] ?? null,
-                    'is_active' => true,
-                    'sort_order' => $index + 1,
+                    'is_active' => true, 'sort_order' => $index + 1,
                 ]
             );
         }
@@ -616,51 +662,27 @@ class UnifiedSeeder extends Seeder
     {
         $courses = [];
 
-        $course1 = Course::updateOrCreate(
+        $c1 = Course::updateOrCreate(
             ['school_id' => $school->id, 'title' => 'Practical Driving Course (Manual)'],
-            [
-                'description' => 'Master manual transmission driving with comprehensive hands-on training.',
-                'type' => 'Practical', 'vehicle_type' => 'Car', 'status' => 'active', 'is_featured' => true,
-                'features' => ['Manual Transmission', 'Clutch Control', 'Hill Start', 'Parking Techniques', 'Defensive Driving'],
-            ]
+            ['description' => 'Master manual transmission driving with comprehensive hands-on training.', 'type' => 'Practical', 'vehicle_type' => 'Car', 'status' => 'active', 'is_featured' => true, 'features' => ['Manual Transmission', 'Clutch Control', 'Hill Start', 'Parking Techniques', 'Defensive Driving']]
         );
-        $courses[] = $course1;
-        CoursePackage::updateOrCreate(['course_id' => $course1->id, 'name' => '10-Hour Package'], [
-            'transmission_type' => 'manual', 'vehicle_type' => 'Car', 'training_hours' => 10, 'price' => 5500.00,
-            'description' => 'Basic manual driving course for beginners.',
-        ]);
-        CoursePackage::updateOrCreate(['course_id' => $course1->id, 'name' => '15-Hour Package'], [
-            'transmission_type' => 'manual', 'vehicle_type' => 'Car', 'training_hours' => 15, 'price' => 7500.00,
-            'description' => 'Complete manual driving course with advanced techniques.', 'is_popular' => true,
-        ]);
+        $courses[] = $c1;
+        CoursePackage::updateOrCreate(['course_id' => $c1->id, 'name' => '10-Hour Package'], ['transmission_type' => 'manual', 'vehicle_type' => 'Car', 'training_hours' => 10, 'price' => 5500.00, 'description' => 'Basic manual driving course for beginners.']);
+        CoursePackage::updateOrCreate(['course_id' => $c1->id, 'name' => '15-Hour Package'], ['transmission_type' => 'manual', 'vehicle_type' => 'Car', 'training_hours' => 15, 'price' => 7500.00, 'description' => 'Complete manual driving course with advanced techniques.', 'is_popular' => true]);
 
-        $course2 = Course::updateOrCreate(
+        $c2 = Course::updateOrCreate(
             ['school_id' => $school->id, 'title' => 'Practical Driving Course (Automatic)'],
-            [
-                'description' => 'Learn to drive automatic transmission vehicles with confidence.',
-                'type' => 'Practical', 'vehicle_type' => 'Car', 'status' => 'active', 'is_featured' => true,
-                'features' => ['Automatic Transmission', 'City Driving', 'Parking Techniques', 'Defensive Driving'],
-            ]
+            ['description' => 'Learn to drive automatic transmission vehicles with confidence.', 'type' => 'Practical', 'vehicle_type' => 'Car', 'status' => 'active', 'is_featured' => true, 'features' => ['Automatic Transmission', 'City Driving', 'Parking Techniques', 'Defensive Driving']]
         );
-        $courses[] = $course2;
-        CoursePackage::updateOrCreate(['course_id' => $course2->id, 'name' => '8-Hour Package'], [
-            'transmission_type' => 'automatic', 'vehicle_type' => 'Car', 'training_hours' => 8, 'price' => 4800.00,
-            'description' => 'Automatic driving course for beginners.', 'is_popular' => true,
-        ]);
+        $courses[] = $c2;
+        CoursePackage::updateOrCreate(['course_id' => $c2->id, 'name' => '8-Hour Package'], ['transmission_type' => 'automatic', 'vehicle_type' => 'Car', 'training_hours' => 8, 'price' => 4800.00, 'description' => 'Automatic driving course for beginners.', 'is_popular' => true]);
 
-        $course3 = Course::updateOrCreate(
+        $c3 = Course::updateOrCreate(
             ['school_id' => $school->id, 'title' => 'Theoretical Driving Course (TDC)'],
-            [
-                'description' => 'Comprehensive road rules and traffic signs education. Required for LTO written exam.',
-                'type' => 'Theoretical', 'vehicle_type' => 'Car', 'status' => 'active',
-                'features' => ['Traffic Rules', 'Road Signs', 'LTO Written Exam Prep', 'Certificate Included'],
-            ]
+            ['description' => 'Comprehensive road rules and traffic signs education. Required for LTO written exam.', 'type' => 'Theoretical', 'vehicle_type' => 'Car', 'status' => 'active', 'features' => ['Traffic Rules', 'Road Signs', 'LTO Written Exam Prep', 'Certificate Included']]
         );
-        $courses[] = $course3;
-        CoursePackage::updateOrCreate(['course_id' => $course3->id, 'name' => 'TDC 15-Hour Course'], [
-            'transmission_type' => 'automatic', 'vehicle_type' => 'Car', 'training_hours' => 15, 'price' => 1500.00,
-            'description' => 'Complete TDC for LTO exam preparation.',
-        ]);
+        $courses[] = $c3;
+        CoursePackage::updateOrCreate(['course_id' => $c3->id, 'name' => 'TDC 15-Hour Course'], ['transmission_type' => 'automatic', 'vehicle_type' => 'Car', 'training_hours' => 15, 'price' => 1500.00, 'description' => 'Complete TDC for LTO exam preparation.']);
 
         return $courses;
     }
@@ -669,256 +691,92 @@ class UnifiedSeeder extends Seeder
     {
         $courses = [];
 
-        $course1 = Course::updateOrCreate(
+        $c1 = Course::updateOrCreate(
             ['school_id' => $school->id, 'title' => 'Basic Driving Course'],
-            [
-                'description' => 'Affordable driving lessons for beginners. Learn the fundamentals of safe driving.',
-                'type' => 'Practical', 'vehicle_type' => 'Car', 'status' => 'active', 'is_featured' => true,
-                'features' => ['Basic Vehicle Control', 'Traffic Navigation', 'Parking Skills', 'Road Safety'],
-            ]
+            ['description' => 'Affordable driving lessons for beginners.', 'type' => 'Practical', 'vehicle_type' => 'Car', 'status' => 'active', 'is_featured' => true, 'features' => ['Basic Vehicle Control', 'Traffic Navigation', 'Parking Skills', 'Road Safety']]
         );
-        $courses[] = $course1;
-        CoursePackage::updateOrCreate(['course_id' => $course1->id, 'name' => '8-Hour Starter'], [
-            'transmission_type' => 'automatic', 'vehicle_type' => 'Car', 'training_hours' => 8, 'price' => 4000.00,
-            'description' => 'Beginner automatic driving course.',
-        ]);
-        CoursePackage::updateOrCreate(['course_id' => $course1->id, 'name' => '12-Hour Complete'], [
-            'transmission_type' => 'automatic', 'vehicle_type' => 'Car', 'training_hours' => 12, 'price' => 5500.00,
-            'description' => 'Complete automatic driving course.', 'is_popular' => true,
-        ]);
+        $courses[] = $c1;
+        CoursePackage::updateOrCreate(['course_id' => $c1->id, 'name' => '8-Hour Starter'], ['transmission_type' => 'automatic', 'vehicle_type' => 'Car', 'training_hours' => 8, 'price' => 4000.00, 'description' => 'Beginner automatic driving course.']);
+        CoursePackage::updateOrCreate(['course_id' => $c1->id, 'name' => '12-Hour Complete'], ['transmission_type' => 'automatic', 'vehicle_type' => 'Car', 'training_hours' => 12, 'price' => 5500.00, 'description' => 'Complete automatic driving course.', 'is_popular' => true]);
 
-        $course2 = Course::updateOrCreate(
+        $c2 = Course::updateOrCreate(
             ['school_id' => $school->id, 'title' => 'Motorcycle Riding Course'],
-            [
-                'description' => 'Learn to ride motorcycles safely. Includes scooter and manual motorcycle training.',
-                'type' => 'Practical', 'vehicle_type' => 'Motorcycle', 'status' => 'active',
-                'features' => ['Balance Training', 'Gear Shifting', 'Defensive Riding', 'License Preparation'],
-            ]
+            ['description' => 'Learn to ride motorcycles safely.', 'type' => 'Practical', 'vehicle_type' => 'Motorcycle', 'status' => 'active', 'features' => ['Balance Training', 'Gear Shifting', 'Defensive Riding', 'License Preparation']]
         );
-        $courses[] = $course2;
-        CoursePackage::updateOrCreate(['course_id' => $course2->id, 'name' => '6-Hour Package'], [
-            'transmission_type' => 'manual', 'vehicle_type' => 'Motorcycle', 'training_hours' => 6, 'price' => 3000.00,
-            'description' => 'Motorcycle riding fundamentals.',
-        ]);
+        $courses[] = $c2;
+        CoursePackage::updateOrCreate(['course_id' => $c2->id, 'name' => '6-Hour Package'], ['transmission_type' => 'manual', 'vehicle_type' => 'Motorcycle', 'training_hours' => 6, 'price' => 3000.00, 'description' => 'Motorcycle riding fundamentals.']);
 
-        $course3 = Course::updateOrCreate(
+        $c3 = Course::updateOrCreate(
             ['school_id' => $school->id, 'title' => 'Theoretical Driving Course (TDC)'],
-            [
-                'description' => 'LTO-accredited theoretical driving course covering traffic rules and regulations.',
-                'type' => 'Theoretical', 'vehicle_type' => 'Car', 'status' => 'active',
-                'features' => ['Traffic Rules', 'Road Signs', 'LTO Accredited', 'Certificate'],
-            ]
+            ['description' => 'LTO-accredited theoretical driving course.', 'type' => 'Theoretical', 'vehicle_type' => 'Car', 'status' => 'active', 'features' => ['Traffic Rules', 'Road Signs', 'LTO Accredited', 'Certificate']]
         );
-        $courses[] = $course3;
-        CoursePackage::updateOrCreate(['course_id' => $course3->id, 'name' => 'TDC 15-Hour'], [
-            'transmission_type' => 'automatic', 'vehicle_type' => 'Car', 'training_hours' => 15, 'price' => 1200.00,
-            'description' => 'Complete TDC for LTO written exam.',
-        ]);
+        $courses[] = $c3;
+        CoursePackage::updateOrCreate(['course_id' => $c3->id, 'name' => 'TDC 15-Hour'], ['transmission_type' => 'automatic', 'vehicle_type' => 'Car', 'training_hours' => 15, 'price' => 1200.00, 'description' => 'Complete TDC for LTO written exam.']);
 
         return $courses;
     }
 
     /**
-     * DriveED Hub: 3 PDC (Motorcycle, Manual, Automatic) + 2 TDC (Standard, Refresher)
+     * DriveED Hub: 3 PDC (Manual, Automatic, Motorcycle) + 2 TDC (Standard, Refresher)
      */
     private function createDriveEdHubCourses(School $school): array
     {
         $courses = [];
 
-        // PDC 1 – Manual Transmission
+        // PDC 1 – Manual
         $pdc1 = Course::updateOrCreate(
             ['school_id' => $school->id, 'title' => 'Practical Driving Course - Manual Transmission'],
-            [
-                'description' => 'Hands-on manual transmission driving training. Master clutch control, gear shifting, hill starts, and defensive driving techniques with our certified instructors.',
-                'type' => 'Practical', 'vehicle_type' => 'Car', 'status' => 'active', 'is_featured' => true,
-                'features' => ['Manual Transmission', 'Clutch Control', 'Hill Start', 'Gear Shifting', 'Defensive Driving', 'Parking Techniques'],
-            ]
+            ['description' => 'Hands-on manual transmission driving training. Master clutch control, gear shifting, hill starts, and defensive driving.', 'type' => 'Practical', 'vehicle_type' => 'Car', 'status' => 'active', 'is_featured' => true, 'features' => ['Manual Transmission', 'Clutch Control', 'Hill Start', 'Gear Shifting', 'Defensive Driving', 'Parking Techniques']]
         );
         $courses[] = $pdc1;
-        CoursePackage::updateOrCreate(['course_id' => $pdc1->id, 'name' => 'Manual 10-Hour'], [
-            'transmission_type' => 'manual', 'vehicle_type' => 'Car', 'training_hours' => 10, 'price' => 6000.00,
-            'description' => 'Beginner manual driving – 10 hours of practical training.',
-        ]);
-        CoursePackage::updateOrCreate(['course_id' => $pdc1->id, 'name' => 'Manual 15-Hour'], [
-            'transmission_type' => 'manual', 'vehicle_type' => 'Car', 'training_hours' => 15, 'price' => 8500.00,
-            'description' => 'Complete manual driving with highway & city practice.', 'is_popular' => true,
-        ]);
-        CoursePackage::updateOrCreate(['course_id' => $pdc1->id, 'name' => 'Manual 20-Hour'], [
-            'transmission_type' => 'manual', 'vehicle_type' => 'Car', 'training_hours' => 20, 'price' => 10500.00,
-            'description' => 'Advanced manual driving – includes LTO exam preparation.',
-        ]);
+        CoursePackage::updateOrCreate(['course_id' => $pdc1->id, 'name' => 'Manual 10-Hour'], ['transmission_type' => 'manual', 'vehicle_type' => 'Car', 'training_hours' => 10, 'price' => 6000.00, 'description' => 'Beginner manual driving – 10 hours.']);
+        CoursePackage::updateOrCreate(['course_id' => $pdc1->id, 'name' => 'Manual 15-Hour'], ['transmission_type' => 'manual', 'vehicle_type' => 'Car', 'training_hours' => 15, 'price' => 8500.00, 'description' => 'Complete manual driving with highway & city practice.', 'is_popular' => true]);
+        CoursePackage::updateOrCreate(['course_id' => $pdc1->id, 'name' => 'Manual 20-Hour'], ['transmission_type' => 'manual', 'vehicle_type' => 'Car', 'training_hours' => 20, 'price' => 10500.00, 'description' => 'Advanced manual driving – includes LTO exam preparation.']);
 
-        // PDC 2 – Automatic Transmission
+        // PDC 2 – Automatic
         $pdc2 = Course::updateOrCreate(
             ['school_id' => $school->id, 'title' => 'Practical Driving Course - Automatic Transmission'],
-            [
-                'description' => 'Learn to drive automatic vehicles with confidence. Perfect for city driving, commuting, and everyday use.',
-                'type' => 'Practical', 'vehicle_type' => 'Car', 'status' => 'active', 'is_featured' => true,
-                'features' => ['Automatic Transmission', 'City Driving', 'Highway Driving', 'Parking', 'Defensive Driving'],
-            ]
+            ['description' => 'Learn to drive automatic vehicles with confidence. Perfect for city driving and commuting.', 'type' => 'Practical', 'vehicle_type' => 'Car', 'status' => 'active', 'is_featured' => true, 'features' => ['Automatic Transmission', 'City Driving', 'Highway Driving', 'Parking', 'Defensive Driving']]
         );
         $courses[] = $pdc2;
-        CoursePackage::updateOrCreate(['course_id' => $pdc2->id, 'name' => 'Automatic 8-Hour'], [
-            'transmission_type' => 'automatic', 'vehicle_type' => 'Car', 'training_hours' => 8, 'price' => 5000.00,
-            'description' => 'Quick starter course for automatic vehicles.',
-        ]);
-        CoursePackage::updateOrCreate(['course_id' => $pdc2->id, 'name' => 'Automatic 12-Hour'], [
-            'transmission_type' => 'automatic', 'vehicle_type' => 'Car', 'training_hours' => 12, 'price' => 7000.00,
-            'description' => 'Complete automatic driving with city & highway practice.', 'is_popular' => true,
-        ]);
+        CoursePackage::updateOrCreate(['course_id' => $pdc2->id, 'name' => 'Automatic 8-Hour'], ['transmission_type' => 'automatic', 'vehicle_type' => 'Car', 'training_hours' => 8, 'price' => 5000.00, 'description' => 'Quick starter course for automatic vehicles.']);
+        CoursePackage::updateOrCreate(['course_id' => $pdc2->id, 'name' => 'Automatic 12-Hour'], ['transmission_type' => 'automatic', 'vehicle_type' => 'Car', 'training_hours' => 12, 'price' => 7000.00, 'description' => 'Complete automatic driving with city & highway practice.', 'is_popular' => true]);
 
         // PDC 3 – Motorcycle
         $pdc3 = Course::updateOrCreate(
             ['school_id' => $school->id, 'title' => 'Practical Driving Course - Motorcycle'],
-            [
-                'description' => 'Comprehensive motorcycle riding course. From basic balance to highway riding. Scooter and manual bikes covered.',
-                'type' => 'Practical', 'vehicle_type' => 'Motorcycle', 'status' => 'active', 'is_featured' => true,
-                'features' => ['Motorcycle Basics', 'Balance Training', 'Gear Shifting', 'Defensive Riding', 'Night Riding', 'License Preparation'],
-            ]
+            ['description' => 'Comprehensive motorcycle riding course. From basic balance to highway riding.', 'type' => 'Practical', 'vehicle_type' => 'Motorcycle', 'status' => 'active', 'is_featured' => true, 'features' => ['Motorcycle Basics', 'Balance Training', 'Gear Shifting', 'Defensive Riding', 'Night Riding', 'License Preparation']]
         );
         $courses[] = $pdc3;
-        CoursePackage::updateOrCreate(['course_id' => $pdc3->id, 'name' => 'Motorcycle 6-Hour'], [
-            'transmission_type' => 'manual', 'vehicle_type' => 'Motorcycle', 'training_hours' => 6, 'price' => 3500.00,
-            'description' => 'Basic motorcycle riding fundamentals.',
-        ]);
-        CoursePackage::updateOrCreate(['course_id' => $pdc3->id, 'name' => 'Motorcycle 10-Hour'], [
-            'transmission_type' => 'manual', 'vehicle_type' => 'Motorcycle', 'training_hours' => 10, 'price' => 5500.00,
-            'description' => 'Complete motorcycle course with road practice.', 'is_popular' => true,
-        ]);
+        CoursePackage::updateOrCreate(['course_id' => $pdc3->id, 'name' => 'Motorcycle 6-Hour'], ['transmission_type' => 'manual', 'vehicle_type' => 'Motorcycle', 'training_hours' => 6, 'price' => 3500.00, 'description' => 'Basic motorcycle riding fundamentals.']);
+        CoursePackage::updateOrCreate(['course_id' => $pdc3->id, 'name' => 'Motorcycle 10-Hour'], ['transmission_type' => 'manual', 'vehicle_type' => 'Motorcycle', 'training_hours' => 10, 'price' => 5500.00, 'description' => 'Complete motorcycle course with road practice.', 'is_popular' => true]);
 
         // TDC 1 – Standard
         $tdc1 = Course::updateOrCreate(
             ['school_id' => $school->id, 'title' => 'Theoretical Driving Course - Standard (TDC)'],
-            [
-                'description' => 'LTO-accredited 15-hour TDC for new applicants. Covers traffic rules, road signs, vehicle operation, and defensive driving principles.',
-                'type' => 'Theoretical', 'vehicle_type' => 'Car', 'status' => 'active', 'is_featured' => true,
-                'features' => ['Traffic Rules & Regulations', 'Road Signs & Markings', 'Defensive Driving', 'Vehicle Operation Basics', 'LTO Written Exam Prep', 'TDC Certificate'],
-            ]
+            ['description' => 'LTO-accredited 15-hour TDC for new applicants. Covers traffic rules, road signs, and defensive driving.', 'type' => 'Theoretical', 'vehicle_type' => 'Car', 'status' => 'active', 'is_featured' => true, 'features' => ['Traffic Rules & Regulations', 'Road Signs & Markings', 'Defensive Driving', 'Vehicle Operation Basics', 'LTO Written Exam Prep', 'TDC Certificate']]
         );
         $courses[] = $tdc1;
-        CoursePackage::updateOrCreate(['course_id' => $tdc1->id, 'name' => 'TDC Standard 15-Hour'], [
-            'transmission_type' => 'automatic', 'vehicle_type' => 'Car', 'training_hours' => 15, 'price' => 2500.00,
-            'description' => 'Complete 15-hour TDC for new license applicants.', 'is_popular' => true,
-        ]);
+        CoursePackage::updateOrCreate(['course_id' => $tdc1->id, 'name' => 'TDC Standard 15-Hour'], ['transmission_type' => 'automatic', 'vehicle_type' => 'Car', 'training_hours' => 15, 'price' => 2500.00, 'description' => 'Complete 15-hour TDC for new license applicants.', 'is_popular' => true]);
 
         // TDC 2 – Refresher
         $tdc2 = Course::updateOrCreate(
             ['school_id' => $school->id, 'title' => 'Theoretical Driving Course - Refresher (TDC-R)'],
-            [
-                'description' => 'Shortened TDC refresher for license renewal, reinstatement, or drivers returning after a long break. Updated traffic laws included.',
-                'type' => 'Theoretical', 'vehicle_type' => 'Car', 'status' => 'active',
-                'features' => ['Updated Traffic Laws', 'Road Safety Refresher', 'Anti-Distracted Driving Act', 'Quick License Renewal Prep', 'TDC-R Certificate'],
-            ]
+            ['description' => 'Shortened TDC refresher for license renewal, reinstatement, or returning drivers.', 'type' => 'Theoretical', 'vehicle_type' => 'Car', 'status' => 'active', 'features' => ['Updated Traffic Laws', 'Road Safety Refresher', 'Anti-Distracted Driving Act', 'Quick License Renewal Prep', 'TDC-R Certificate']]
         );
         $courses[] = $tdc2;
-        CoursePackage::updateOrCreate(['course_id' => $tdc2->id, 'name' => 'TDC Refresher 8-Hour'], [
-            'transmission_type' => 'automatic', 'vehicle_type' => 'Car', 'training_hours' => 8, 'price' => 1500.00,
-            'description' => '8-hour refresher course for experienced drivers.',
-        ]);
+        CoursePackage::updateOrCreate(['course_id' => $tdc2->id, 'name' => 'TDC Refresher 8-Hour'], ['transmission_type' => 'automatic', 'vehicle_type' => 'Car', 'training_hours' => 8, 'price' => 1500.00, 'description' => '8-hour refresher course for experienced drivers.']);
 
         return $courses;
     }
 
     // ───────────────────────────────────────────────
-    //  STUDENTS
+    //  DRIVED HUB STUDENTS
     // ───────────────────────────────────────────────
-
-    private function createSmartDrivingStudents(School $school, array $branches): array
-    {
-        $names = [
-            'Sofia Angelica Reyes', 'Luis Antonio Cruz', 'Isabella Marie Flores', 'Diego Rafael Torres',
-            'Carmen Elena Ramos', 'Rafael Jose Mendoza', 'Valentina Rose Garcia', 'Gabriel Miguel Lopez',
-            'Lucia Patricia Perez', 'Daniel Carlos Rivera', 'Angela Maria Castro', 'Roberto Francisco Ortiz',
-            'Cristina Grace Martinez', 'Fernando Jose Fernandez', 'Natalia Anne Santos', 'Enrique Paolo Dizon',
-            'Mariana Joy Navarro', 'Benito Carlo Medina', 'Teresa Lyn Jimenez', 'Oscar Manuel Alvarez',
-            'Paulina Faith Ruiz', 'Ricardo James Sanchez', 'Gloria Dawn Ramirez', 'Alejandro Neil Castillo',
-            'Cecilia Hope Domingo', 'Marco Luis Espino', 'Bianca Joy Ferrer', 'Dario Miguel Galang',
-            'Elena Rose Ilagan', 'Franco Kai Julian', 'Gemma Rae Lara', 'Hector Roy Manalo',
-            'Iris May Oliva', 'Jaime Cruz Pineda', 'Karla Jean Salazar', 'Lorenzo Miguel Tolentino',
-            'Mila Grace Umali', 'Noel Patrick Valencia', 'Olive Ruth Yap', 'Pablo John Abad',
-            'Queenie Mae Buenaventura', 'Renzo Dale Cordero', 'Samantha Claire Dela Rosa', 'Tito Vince Enriquez',
-            'Ursula Faith Francisco', 'Victor Hugo Guevara', 'Wendy Joy Hidalgo', 'Xavier Luis Ignacio',
-            'Yvette Marie Javier', 'Zenaida Pearl Laurel', 'Adrian Luke Mercado', 'Bella Sophia Nicolas',
-            'Carlo Jude Panganiban', 'Diana Rose Quinto', 'Edison Marc Roxas', 'Florence May Soriano',
-            'Gonzalo Ray Tan', 'Hazel Marie Uy', 'Ivan James Velasco', 'Josephine Anne Zamora',
-        ];
-
-        $students = [];
-        foreach ($names as $i => $name) {
-            $emailSlug = strtolower(str_replace(' ', '.', $name));
-            $students[] = Student::updateOrCreate(
-                ['school_id' => $school->id, 'email' => "{$emailSlug}@gmail.com"],
-                [
-                    'name' => $name,
-                    'branch_id' => $branches[$i % count($branches)]->id,
-                    'contact' => '+63-9' . rand(10, 99) . '-' . rand(100, 999) . '-' . rand(1000, 9999),
-                    'password' => Hash::make($this->password),
-                    'status' => 'active', 'role' => 'student',
-                    'enrollment_date' => now()->subDays(rand(7, 90)),
-                ]
-            );
-        }
-
-        // Demo student account
-        $students[] = Student::updateOrCreate(
-            ['school_id' => $school->id, 'email' => 'student@gmail.com'],
-            [
-                'name' => 'Demo Student', 'branch_id' => $branches[0]->id,
-                'contact' => '+63-900-000-0001', 'password' => Hash::make($this->password),
-                'status' => 'active', 'role' => 'student', 'enrollment_date' => now()->subDays(30),
-            ]
-        );
-
-        return $students;
-    }
-
-    private function createLySpeedStudents(School $school, array $branches): array
-    {
-        $names = [
-            'Maria Josephine Rodriguez', 'Antonio Rafael Hernandez', 'Teresa Lyn Jimenez',
-            'Marco Paulo Ruiz', 'Laura Anne Sanchez', 'Pedro Miguel Ramirez',
-            'Ana Christina Alvarez', 'Jorge Luis Medina', 'Beatriz Elena Navarro',
-            'Carlos Manuel Espiritu', 'Diana Grace Villanueva', 'Edgar Paolo Manansala',
-            'Felisa Joy Cunanan', 'Gerardo Jose David', 'Hazel Anne Lugtu',
-            'Isidro Roy Pineda', 'Jasmine Faith Ocampo', 'Kenneth Marc Pangilinan',
-            'Lourdes Marie Aquino', 'Manuel Jose Dela Peña', 'Nora Beth Castro',
-            'Oliver James Reyes', 'Patricia Rose Bautista', 'Quintin Luke Flores',
-            'Rosalinda May Garcia', 'Salvador John Torres', 'Thelma Grace Lopez',
-            'Ulysses Ray Gonzales', 'Victoria Anne Rivera', 'Wilfredo Jose Hernandez',
-        ];
-
-        $students = [];
-        foreach ($names as $i => $name) {
-            $emailSlug = strtolower(str_replace([' ', 'ñ'], ['.', 'n'], $name));
-            $students[] = Student::updateOrCreate(
-                ['school_id' => $school->id, 'email' => "{$emailSlug}@gmail.com"],
-                [
-                    'name' => $name,
-                    'branch_id' => $branches[$i % count($branches)]->id,
-                    'contact' => '+63-9' . rand(10, 99) . '-' . rand(100, 999) . '-' . rand(1000, 9999),
-                    'password' => Hash::make($this->password),
-                    'status' => 'active', 'role' => 'student',
-                    'enrollment_date' => now()->subDays(rand(7, 60)),
-                ]
-            );
-        }
-
-        // Demo student account
-        $students[] = Student::updateOrCreate(
-            ['school_id' => $school->id, 'email' => 'lyspeed.student@gmail.com'],
-            [
-                'name' => 'LySpeed Demo Student', 'branch_id' => $branches[0]->id,
-                'contact' => '+63-918-999-0001', 'password' => Hash::make($this->password),
-                'status' => 'active', 'role' => 'student', 'enrollment_date' => now()->subDays(30),
-            ]
-        );
-
-        return $students;
-    }
 
     private function createDriveEdHubStudents(School $school, array $branches): array
     {
-        $studentData = [
+        $data = [
             ['name' => 'Juan Miguel Dela Cruz', 'email' => 'student1@gmail.com', 'level' => 'new_driver'],
             ['name' => 'Maria Victoria Garcia', 'email' => 'student2@gmail.com', 'level' => 'new_driver'],
             ['name' => 'Pedro Jose Santos', 'email' => 'student3@gmail.com', 'level' => 'new_driver'],
@@ -932,21 +790,17 @@ class UnifiedSeeder extends Seeder
         ];
 
         $students = [];
-        foreach ($studentData as $i => $s) {
+        foreach ($data as $i => $s) {
             $students[] = Student::updateOrCreate(
                 ['school_id' => $school->id, 'email' => $s['email']],
                 [
-                    'name' => $s['name'],
-                    'branch_id' => $branches[$i % count($branches)]->id,
+                    'name' => $s['name'], 'branch_id' => $branches[$i % count($branches)]->id,
                     'contact' => '+63-9' . rand(10, 99) . '-' . rand(100, 999) . '-' . rand(1000, 9999),
-                    'password' => Hash::make($this->password),
-                    'status' => 'active', 'role' => 'student',
-                    'experience_level' => $s['level'],
-                    'enrollment_date' => now()->subDays(rand(7, 60)),
+                    'password' => $this->hashedPassword, 'status' => 'active', 'role' => 'student',
+                    'experience_level' => $s['level'], 'enrollment_date' => now()->subDays(rand(7, 60)),
                 ]
             );
         }
-
         return $students;
     }
 
@@ -961,129 +815,59 @@ class UnifiedSeeder extends Seeder
         // Guest 1 – Enrolled (approved)
         $g1 = Student::updateOrCreate(
             ['school_id' => $school->id, 'email' => 'guest.enrolled1@drivedhub.test'],
-            [
-                'name' => 'Elena Joy Reyes',
-                'contact' => '+63-919-800-1001',
-                'password' => Hash::make($this->password),
-                'status' => 'active', 'role' => 'guest',
-                'student_license_status' => 'verified',
-                'student_license_verified_at' => now()->subDays(10),
-                'experience_level' => 'new_driver',
-            ]
+            ['name' => 'Elena Joy Reyes', 'contact' => '+63-919-800-1001', 'password' => $this->hashedPassword, 'status' => 'active', 'role' => 'guest', 'student_license_status' => 'verified', 'student_license_verified_at' => now()->subDays(10), 'experience_level' => 'new_driver']
         );
         $guests[] = $g1;
         if (!empty($courses)) {
-            $course = $courses[0]; // PDC Manual
             EnrollmentRequest::updateOrCreate(
-                ['school_id' => $school->id, 'learner_id' => $g1->id, 'course_id' => $course->id],
-                [
-                    'status' => 'approved',
-                    'payment_status' => 'paid',
-                    'experience_level' => 'new_driver',
-                    'requested_license_type' => 'non_professional',
-                    'approved_by' => !empty($admins) ? $admins[0]->id : null,
-                    'approved_at' => now()->subDays(5),
-                    'enrolled_at' => now()->subDays(5),
-                    'branch_id' => $branches[0]->id,
-                ]
+                ['school_id' => $school->id, 'learner_id' => $g1->id, 'course_id' => $courses[0]->id],
+                ['status' => 'approved', 'payment_status' => 'paid', 'experience_level' => 'new_driver', 'requested_license_type' => 'non_professional', 'approved_by' => $admins[0]->id ?? null, 'approved_at' => now()->subDays(5), 'enrolled_at' => now()->subDays(5), 'branch_id' => $branches[0]->id]
             );
         }
 
-        // Guest 2 – Enrolled (approved, different course)
+        // Guest 2 – Enrolled (approved, TDC)
         $g2 = Student::updateOrCreate(
             ['school_id' => $school->id, 'email' => 'guest.enrolled2@drivedhub.test'],
-            [
-                'name' => 'Mark Anthony Dizon',
-                'contact' => '+63-919-800-1002',
-                'password' => Hash::make($this->password),
-                'status' => 'active', 'role' => 'guest',
-                'student_license_status' => 'verified',
-                'student_license_verified_at' => now()->subDays(8),
-                'experience_level' => 'experienced',
-            ]
+            ['name' => 'Mark Anthony Dizon', 'contact' => '+63-919-800-1002', 'password' => $this->hashedPassword, 'status' => 'active', 'role' => 'guest', 'student_license_status' => 'verified', 'student_license_verified_at' => now()->subDays(8), 'experience_level' => 'experienced']
         );
         $guests[] = $g2;
         if (count($courses) > 3) {
-            $course = $courses[3]; // TDC Standard
             EnrollmentRequest::updateOrCreate(
-                ['school_id' => $school->id, 'learner_id' => $g2->id, 'course_id' => $course->id],
-                [
-                    'status' => 'approved',
-                    'payment_status' => 'paid',
-                    'experience_level' => 'experienced',
-                    'requested_license_type' => 'non_professional',
-                    'approved_by' => !empty($admins) ? $admins[0]->id : null,
-                    'approved_at' => now()->subDays(3),
-                    'enrolled_at' => now()->subDays(3),
-                    'branch_id' => $branches[1]->id,
-                ]
+                ['school_id' => $school->id, 'learner_id' => $g2->id, 'course_id' => $courses[3]->id],
+                ['status' => 'approved', 'payment_status' => 'paid', 'experience_level' => 'experienced', 'requested_license_type' => 'non_professional', 'approved_by' => $admins[0]->id ?? null, 'approved_at' => now()->subDays(3), 'enrolled_at' => now()->subDays(3), 'branch_id' => $branches[1]->id]
             );
         }
 
         // Guest 3 – NOT enrolled (no request)
         $g3 = Student::updateOrCreate(
             ['school_id' => $school->id, 'email' => 'guest.new1@drivedhub.test'],
-            [
-                'name' => 'Jamie Lyn Pascual',
-                'contact' => '+63-919-800-1003',
-                'password' => Hash::make($this->password),
-                'status' => 'active', 'role' => 'guest',
-                'student_license_status' => 'none',
-                'experience_level' => 'new_driver',
-            ]
+            ['name' => 'Jamie Lyn Pascual', 'contact' => '+63-919-800-1003', 'password' => $this->hashedPassword, 'status' => 'active', 'role' => 'guest', 'student_license_status' => 'none', 'experience_level' => 'new_driver']
         );
         $guests[] = $g3;
 
-        // Guest 4 – NOT enrolled (pending request, not yet approved)
+        // Guest 4 – NOT enrolled (pending request)
         $g4 = Student::updateOrCreate(
             ['school_id' => $school->id, 'email' => 'guest.pending@drivedhub.test'],
-            [
-                'name' => 'Carlo Miguel Bautista',
-                'contact' => '+63-919-800-1004',
-                'password' => Hash::make($this->password),
-                'status' => 'active', 'role' => 'guest',
-                'student_license_status' => 'pending',
-                'experience_level' => 'new_driver',
-            ]
+            ['name' => 'Carlo Miguel Bautista', 'contact' => '+63-919-800-1004', 'password' => $this->hashedPassword, 'status' => 'active', 'role' => 'guest', 'student_license_status' => 'pending', 'experience_level' => 'new_driver']
         );
         $guests[] = $g4;
         if (!empty($courses)) {
-            $course = $courses[1]; // PDC Automatic
             EnrollmentRequest::updateOrCreate(
-                ['school_id' => $school->id, 'learner_id' => $g4->id, 'course_id' => $course->id],
-                [
-                    'status' => 'pending',
-                    'payment_status' => 'pending',
-                    'experience_level' => 'new_driver',
-                    'requested_license_type' => 'non_professional',
-                ]
+                ['school_id' => $school->id, 'learner_id' => $g4->id, 'course_id' => $courses[1]->id],
+                ['status' => 'pending', 'payment_status' => 'pending', 'experience_level' => 'new_driver', 'requested_license_type' => 'non_professional']
             );
         }
 
         // Guest 5 – NOT enrolled (rejected)
         $g5 = Student::updateOrCreate(
             ['school_id' => $school->id, 'email' => 'guest.rejected@drivedhub.test'],
-            [
-                'name' => 'Angelica Mae Soriano',
-                'contact' => '+63-919-800-1005',
-                'password' => Hash::make($this->password),
-                'status' => 'active', 'role' => 'guest',
-                'student_license_status' => 'none',
-                'experience_level' => 'new_driver',
-            ]
+            ['name' => 'Angelica Mae Soriano', 'contact' => '+63-919-800-1005', 'password' => $this->hashedPassword, 'status' => 'active', 'role' => 'guest', 'student_license_status' => 'none', 'experience_level' => 'new_driver']
         );
         $guests[] = $g5;
         if (count($courses) > 2) {
-            $course = $courses[2]; // PDC Motorcycle
             EnrollmentRequest::updateOrCreate(
-                ['school_id' => $school->id, 'learner_id' => $g5->id, 'course_id' => $course->id],
-                [
-                    'status' => 'rejected',
-                    'payment_status' => 'pending',
-                    'experience_level' => 'new_driver',
-                    'requested_license_type' => 'non_professional',
-                    'remarks' => 'Incomplete documentation. Please re-submit with valid student license.',
-                ]
+                ['school_id' => $school->id, 'learner_id' => $g5->id, 'course_id' => $courses[2]->id],
+                ['status' => 'rejected', 'payment_status' => 'pending', 'experience_level' => 'new_driver', 'requested_license_type' => 'non_professional', 'remarks' => 'Incomplete documentation. Please re-submit with valid student license.']
             );
         }
 
@@ -1103,49 +887,21 @@ class UnifiedSeeder extends Seeder
             ['name' => 'Jamie Lyn Pascual', 'email' => "guest3@{$slug}.test", 'license_status' => 'verified', 'enrollment_status' => 'rejected'],
             ['name' => 'Carlo Miguel Bautista', 'email' => "guest4@{$slug}.test", 'license_status' => 'none', 'enrollment_status' => null],
         ];
-
         $guests = [];
         foreach ($guestData as $g) {
             $guest = Student::updateOrCreate(
                 ['school_id' => $school->id, 'email' => $g['email']],
-                [
-                    'name' => $g['name'],
-                    'contact' => '+63-9' . rand(10, 99) . '-' . rand(100, 999) . '-' . rand(1000, 9999),
-                    'password' => Hash::make($this->password),
-                    'status' => 'active', 'role' => 'guest',
-                    'student_license_status' => $g['license_status'],
-                    'student_license_verified_at' => $g['license_status'] === 'verified' ? now()->subDays(5) : null,
-                ]
+                ['name' => $g['name'], 'contact' => '+63-9' . rand(10, 99) . '-' . rand(100, 999) . '-' . rand(1000, 9999), 'password' => $this->hashedPassword, 'status' => 'active', 'role' => 'guest', 'student_license_status' => $g['license_status'], 'student_license_verified_at' => $g['license_status'] === 'verified' ? now()->subDays(5) : null]
             );
             $guests[] = $guest;
-
             if ($g['enrollment_status'] && !empty($courses)) {
                 $course = $courses[array_rand($courses)];
-                $enrollmentData = [
-                    'school_id' => $school->id,
-                    'learner_id' => $guest->id,
-                    'course_id' => $course->id,
-                    'status' => $g['enrollment_status'],
-                    'payment_status' => 'pending',
-                    'experience_level' => 'new_driver',
-                    'requested_license_type' => $course->license_type ?? 'non_professional',
-                ];
-                if ($g['enrollment_status'] === 'rejected') {
-                    $enrollmentData['remarks'] = 'Incomplete documentation. Please re-submit with valid credentials.';
-                }
-                if ($g['enrollment_status'] === 'approved' && !empty($admins)) {
-                    $admin = $admins[array_rand($admins)];
-                    $enrollmentData['approved_by'] = $admin->id;
-                    $enrollmentData['approved_at'] = now()->subDays(2);
-                    $enrollmentData['enrolled_at'] = now()->subDays(2);
-                }
-                EnrollmentRequest::updateOrCreate(
-                    ['school_id' => $school->id, 'learner_id' => $guest->id, 'course_id' => $course->id],
-                    $enrollmentData
-                );
+                $ed = ['school_id' => $school->id, 'learner_id' => $guest->id, 'course_id' => $course->id, 'status' => $g['enrollment_status'], 'payment_status' => 'pending', 'experience_level' => 'new_driver', 'requested_license_type' => $course->license_type ?? 'non_professional'];
+                if ($g['enrollment_status'] === 'rejected') $ed['remarks'] = 'Incomplete documentation. Please re-submit with valid credentials.';
+                if ($g['enrollment_status'] === 'approved' && !empty($admins)) { $ed['approved_by'] = $admins[0]->id; $ed['approved_at'] = now()->subDays(2); $ed['enrolled_at'] = now()->subDays(2); }
+                EnrollmentRequest::updateOrCreate(['school_id' => $school->id, 'learner_id' => $guest->id, 'course_id' => $course->id], $ed);
             }
         }
-
         return $guests;
     }
 
@@ -1156,46 +912,23 @@ class UnifiedSeeder extends Seeder
     private function createTimeSlotsAndAssignments(School $school, array $instructors, array $courses, array $branches): void
     {
         $times = [
-            ['08:00:00', '09:00:00'], ['09:00:00', '10:00:00'],
-            ['10:00:00', '11:00:00'], ['11:00:00', '12:00:00'],
-            ['13:00:00', '14:00:00'], ['14:00:00', '15:00:00'],
-            ['15:00:00', '16:00:00'], ['16:00:00', '17:00:00'],
+            ['08:00:00', '09:00:00'], ['09:00:00', '10:00:00'], ['10:00:00', '11:00:00'], ['11:00:00', '12:00:00'],
+            ['13:00:00', '14:00:00'], ['14:00:00', '15:00:00'], ['15:00:00', '16:00:00'], ['16:00:00', '17:00:00'],
         ];
-
-        $branchIndex = 0;
-
+        $bi = 0;
         for ($day = 0; $day < 14; $day++) {
             $date = now()->addDays($day)->format('Y-m-d');
-            if (now()->addDays($day)->dayOfWeek == 0) continue; // skip Sundays
-
+            if (now()->addDays($day)->dayOfWeek == 0) continue; // Skip Sundays
             foreach ($courses as $course) {
-                $slotCount = rand(4, min(6, count($times)));
-                $daySlots = array_rand($times, $slotCount);
-                if (!is_array($daySlots)) $daySlots = [$daySlots];
-
-                foreach ($daySlots as $slotIndex) {
-                    $branch = $branches[$branchIndex % count($branches)];
-                    $branchIndex++;
-
-                    $timeSlot = TimeSlot::create([
-                        'school_id' => $school->id,
-                        'branch_id' => $branch->id,
-                        'course_id' => $course->id,
-                        'date' => $date,
-                        'start_time' => $times[$slotIndex][0],
-                        'end_time' => $times[$slotIndex][1],
-                        'status' => 'open',
-                        'max_instructors' => 1,
-                    ]);
-
+                $sc = rand(4, min(6, count($times)));
+                $ds = array_rand($times, $sc);
+                if (!is_array($ds)) $ds = [$ds];
+                foreach ($ds as $si) {
+                    $branch = $branches[$bi % count($branches)];
+                    $bi++;
+                    $ts = TimeSlot::create(['school_id' => $school->id, 'branch_id' => $branch->id, 'course_id' => $course->id, 'date' => $date, 'start_time' => $times[$si][0], 'end_time' => $times[$si][1], 'status' => 'open', 'max_instructors' => 1]);
                     if (!empty($instructors)) {
-                        $instructor = $instructors[array_rand($instructors)];
-                        ScheduleInstructor::create([
-                            'time_slot_id' => $timeSlot->id,
-                            'instructor_id' => $instructor->id,
-                            'school_id' => $school->id,
-                            'assignment_type' => 'admin_assigned',
-                        ]);
+                        ScheduleInstructor::create(['time_slot_id' => $ts->id, 'instructor_id' => $instructors[array_rand($instructors)]->id, 'school_id' => $school->id, 'assignment_type' => 'admin_assigned']);
                     }
                 }
             }
@@ -1206,35 +939,25 @@ class UnifiedSeeder extends Seeder
     //  BOOKINGS & PAYMENTS
     // ───────────────────────────────────────────────
 
-    private function createBookingsAndPayments(School $school, array $students, array $instructors, array $courses, array $branches): void
+    private function createBookingsAndPayments(School $school, array $students, array $instructors, array $courses, array $branches, int $count = 10): void
     {
         if (empty($students) || empty($instructors) || empty($courses)) return;
-
-        $bookingCount = rand(8, 12);
         $statuses = ['confirmed', 'confirmed', 'confirmed', 'completed', 'completed', 'pending', 'cancelled'];
-
-        for ($i = 0; $i < $bookingCount; $i++) {
+        for ($i = 0; $i < $count; $i++) {
             $student = $students[array_rand($students)];
             $instructor = $instructors[array_rand($instructors)];
             $course = $courses[array_rand($courses)];
             $package = CoursePackage::where('course_id', $course->id)->inRandomOrder()->first();
             if (!$package) continue;
-
             $status = $statuses[array_rand($statuses)];
             $bookingDate = $status == 'completed' ? now()->subDays(rand(1, 30)) : now()->addDays(rand(1, 14));
             $branch = $branches[array_rand($branches)];
-
             $booking = Booking::create([
-                'school_id' => $school->id,
-                'branch_id' => $branch->id,
-                'student_id' => $student->id,
-                'instructor_id' => $instructor->id,
-                'course_id' => $course->id,
-                'package_id' => $package->id,
-                'scheduled_at' => $bookingDate,
-                'booking_date' => $bookingDate,
-                'status' => $status,
-                'payment_status' => $status == 'completed' ? 'paid' : 'pending',
+                'school_id' => $school->id, 'branch_id' => $branch->id,
+                'student_id' => $student->id, 'instructor_id' => $instructor->id,
+                'course_id' => $course->id, 'package_id' => $package->id,
+                'scheduled_at' => $bookingDate, 'booking_date' => $bookingDate,
+                'status' => $status, 'payment_status' => $status == 'completed' ? 'paid' : 'pending',
                 'total_amount' => $package->price,
                 'notes' => $status == 'cancelled' ? 'Student requested cancellation' : null,
                 'cancelled_by' => $status == 'cancelled' ? 'student' : null,
@@ -1243,34 +966,11 @@ class UnifiedSeeder extends Seeder
                 'attendance_status' => $status == 'completed' ? 'attended' : null,
                 'session_status' => $status == 'completed' ? 'completed' : null,
             ]);
-
             if ($status == 'completed') {
-                Payment::create([
-                    'school_id' => $school->id,
-                    'booking_id' => $booking->id,
-                    'amount' => $package->price,
-                    'paid_on' => $bookingDate,
-                    'method' => ['cash', 'gcash', 'bank_transfer'][rand(0, 2)],
-                    'status' => 'completed',
-                ]);
-
-                $existingProgress = Progress::where('student_id', $student->id)->where('course_id', $course->id)->first();
-                if ($existingProgress) {
-                    $existingProgress->update([
-                        'completion_percent' => min(100, $existingProgress->completion_percent + rand(10, 25)),
-                        'last_updated' => now(),
-                        'notes' => 'Good progress, student is learning well.',
-                    ]);
-                } else {
-                    Progress::create([
-                        'school_id' => $school->id,
-                        'student_id' => $student->id,
-                        'course_id' => $course->id,
-                        'completion_percent' => rand(10, 40),
-                        'last_updated' => now(),
-                        'notes' => 'Good progress, student is learning well.',
-                    ]);
-                }
+                Payment::create(['school_id' => $school->id, 'booking_id' => $booking->id, 'amount' => $package->price, 'paid_on' => $bookingDate, 'method' => ['cash', 'gcash', 'bank_transfer'][rand(0, 2)], 'status' => 'completed']);
+                $prog = Progress::where('student_id', $student->id)->where('course_id', $course->id)->first();
+                if ($prog) { $prog->update(['completion_percent' => min(100, $prog->completion_percent + rand(10, 25)), 'last_updated' => now(), 'notes' => 'Good progress.']); }
+                else { Progress::create(['school_id' => $school->id, 'student_id' => $student->id, 'course_id' => $course->id, 'completion_percent' => rand(10, 40), 'last_updated' => now(), 'notes' => 'Good progress.']); }
             }
         }
     }
@@ -1282,38 +982,19 @@ class UnifiedSeeder extends Seeder
     private function createSampleNotifications(School $school, array $students, array $instructors, array $admins, array $guests): void
     {
         $slug = $school->slug;
-
         if (!empty($admins)) {
-            $admin = $admins[0];
-            Notification::send($admin, 'new_enrollment_request', 'New Enrollment Request',
-                'A new student has requested enrollment in a driving course.', 'enrollment', "/{$slug}/admin/enrollments");
-            Notification::send($admin, 'license_uploaded', 'License Pending Review',
-                'A student has uploaded a driver\'s license for verification.', 'license', "/{$slug}/admin/enrollments");
+            Notification::send($admins[0], 'new_enrollment_request', 'New Enrollment Request', 'A new student has requested enrollment.', 'enrollment', "/{$slug}/admin/enrollments");
+            Notification::send($admins[0], 'license_uploaded', 'License Pending Review', 'A student has uploaded a license for verification.', 'license', "/{$slug}/admin/enrollments");
         }
-
         if (!empty($students)) {
-            Notification::send($students[0], 'enrollment_approved', 'Enrollment Approved!',
-                'Your enrollment has been approved. Welcome aboard!', 'success', "/{$slug}/student");
-            Notification::send($students[0], 'session_reminder', 'Upcoming Session',
-                'You have a driving session tomorrow. Don\'t forget to bring your license!', 'session', "/{$slug}/student/schedule");
-            if (count($students) > 1) {
-                Notification::send($students[1], 'session_reminder', 'Session Tomorrow',
-                    'Reminder: You have a practical driving session scheduled for tomorrow morning.', 'session', "/{$slug}/student/schedule");
-            }
+            Notification::send($students[0], 'enrollment_approved', 'Enrollment Approved!', 'Your enrollment has been approved. Welcome!', 'success', "/{$slug}/student");
+            Notification::send($students[0], 'session_reminder', 'Upcoming Session', 'You have a driving session tomorrow.', 'session', "/{$slug}/student/schedule");
+            if (count($students) > 1) Notification::send($students[1], 'session_reminder', 'Session Tomorrow', 'Reminder: practical session tomorrow morning.', 'session', "/{$slug}/student/schedule");
         }
-
-        if (!empty($instructors)) {
-            Notification::send($instructors[0], 'session_reminder', 'Upcoming Session',
-                'You have a driving session with a student tomorrow at 9:00 AM.', 'session', "/{$slug}/instructor/my-schedule");
-        }
-
+        if (!empty($instructors)) Notification::send($instructors[0], 'session_reminder', 'Upcoming Session', 'You have a driving session tomorrow at 9:00 AM.', 'session', "/{$slug}/instructor/my-schedule");
         if (!empty($guests)) {
-            Notification::send($guests[0], 'enrollment_received', 'Enrollment Request Submitted',
-                'Your enrollment request has been submitted and is under review.', 'enrollment', "/{$slug}/guest/enrollment-requests");
-            if (count($guests) > 2) {
-                Notification::send($guests[2], 'enrollment_rejected', 'Enrollment Request Update',
-                    'Your enrollment request was not approved. Check your email for details.', 'warning', "/{$slug}/guest/enrollment-requests");
-            }
+            Notification::send($guests[0], 'enrollment_received', 'Request Submitted', 'Your enrollment request is under review.', 'enrollment', "/{$slug}/guest/enrollment-requests");
+            if (count($guests) > 2) Notification::send($guests[2], 'enrollment_rejected', 'Request Update', 'Your enrollment request was not approved.', 'warning', "/{$slug}/guest/enrollment-requests");
         }
     }
 
@@ -1324,7 +1005,6 @@ class UnifiedSeeder extends Seeder
     private function printCredentialsSummary(): void
     {
         $pw = $this->password;
-
         $this->command->info('');
         $this->command->info('╔══════════════════════════════════════════════════════════════╗');
         $this->command->info('║                    LOGIN CREDENTIALS                          ║');
@@ -1333,46 +1013,41 @@ class UnifiedSeeder extends Seeder
         $this->command->info("   All passwords: {$pw}");
         $this->command->info('');
         $this->command->info('🔐 SYSTEM ADMINISTRATORS');
-        $this->command->info('   systemadmin@gmail.com');
-        $this->command->info('   systemadmin2@gmail.com');
+        $this->command->info('   systemadmin@gmail.com / systemadmin2@gmail.com');
         $this->command->info('   URL: /system-admin');
         $this->command->info('');
         $this->command->info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
         $this->command->info('');
-        $this->command->info('🏫 SMART DRIVING SCHOOL  (25 branches) — slug: smart-driving');
+        $this->command->info('🏫 SMART DRIVING SCHOOL  (25 branches) — /smart-driving');
         $this->command->info('   ADMIN:      schooladmin@gmail.com');
-        $this->command->info('   SECRETARY:  secretary@gmail.com');
+        $this->command->info('   MANAGER:    secretary@gmail.com (Main Branch)');
         $this->command->info('   INSTRUCTOR: instructor@gmail.com');
         $this->command->info('   STUDENT:    student@gmail.com');
-        $this->command->info('   URL: /smart-driving');
+        $this->command->info('   Per branch: 1 manager, 3 instructors, 8 students');
         $this->command->info('');
         $this->command->info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
         $this->command->info('');
-        $this->command->info('🏫 LYSPEED DRIVING SCHOOL  (10 branches) — slug: lyspeed-driving');
+        $this->command->info('🏫 LYSPEED DRIVING SCHOOL  (10 branches) — /lyspeed-driving');
         $this->command->info('   ADMIN:      lyspeed.admin@gmail.com');
         $this->command->info('   INSTRUCTOR: lyspeed.instructor@gmail.com');
         $this->command->info('   STUDENT:    lyspeed.student@gmail.com');
-        $this->command->info('   URL: /lyspeed-driving');
+        $this->command->info('   Per branch: 1 manager, 3 instructors, 8 students');
         $this->command->info('');
         $this->command->info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
         $this->command->info('');
-        $this->command->info('🏫 DRIVED HUB DRIVING SCHOOL  (2 branches) — slug: drived-hub');
+        $this->command->info('🏫 DRIVED HUB DRIVING SCHOOL  (2 branches) — /drived-hub');
         $this->command->info('   ADMIN:       admin@gmail.com');
-        $this->command->info('   MANAGER 1:   manager.clark@drivedhub.com');
-        $this->command->info('   MANAGER 2:   manager.balibago@drivedhub.com');
-        $this->command->info('   INSTRUCTORS: ricardo.cruz@drivedhub.com');
-        $this->command->info('                maria.santos@drivedhub.com');
-        $this->command->info('                angelo.ramos@drivedhub.com');
-        $this->command->info('                sofia.torres@drivedhub.com');
+        $this->command->info('   MANAGERS:    manager.clark@drivedhub.com');
+        $this->command->info('                manager.balibago@drivedhub.com');
+        $this->command->info('   INSTRUCTORS: ricardo.cruz / maria.santos / angelo.ramos / sofia.torres @drivedhub.com');
         $this->command->info('   STUDENTS:    student1-10@gmail.com');
         $this->command->info('   GUESTS:      guest.enrolled1@drivedhub.test (enrolled)');
         $this->command->info('                guest.enrolled2@drivedhub.test (enrolled)');
         $this->command->info('                guest.new1@drivedhub.test (not enrolled)');
-        $this->command->info('                guest.pending@drivedhub.test (pending request)');
-        $this->command->info('                guest.rejected@drivedhub.test (rejected request)');
-        $this->command->info('   COURSES:     3 PDC (Manual, Automatic, Motorcycle)');
-        $this->command->info('                2 TDC (Standard 15hr, Refresher 8hr)');
-        $this->command->info('   URL: /drived-hub');
+        $this->command->info('                guest.pending@drivedhub.test (pending)');
+        $this->command->info('                guest.rejected@drivedhub.test (rejected)');
+        $this->command->info('   COURSES:     3 PDC (Manual, Automatic, Motorcycle) + 2 TDC (Standard, Refresher)');
+        $this->command->info('   Per branch:  1 manager, 2 instructors, 5 students');
         $this->command->info('');
         $this->command->info('╔══════════════════════════════════════════════════════════════╗');
         $this->command->info('║              ✓ UNIFIED SEEDER COMPLETED!                     ║');
