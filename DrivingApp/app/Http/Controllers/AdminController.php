@@ -8,8 +8,6 @@ use App\Models\Branch;
 use App\Models\EnrollmentRequest;
 use App\Models\Instructor;
 use App\Models\InstructorRemovalRequest;
-use App\Models\Log;
-use App\Models\RegistrationRequest;
 use App\Models\School;
 use App\Models\SchoolSetting;
 use App\Models\Student;

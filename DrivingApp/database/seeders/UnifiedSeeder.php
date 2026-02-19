@@ -183,6 +183,42 @@ class UnifiedSeeder extends Seeder
 
         $this->command->info('   ✓ 4 School Admins created');
 
+        // Create Branch Secretaries (one per branch)
+        $secretaryData = [
+            ['name' => 'Rosa Marie Lim', 'email' => 'rosa.lim@smartdriving.com', 'branch_index' => 0],
+            ['name' => 'Fernando Bautista', 'email' => 'fernando.bautista@smartdriving.com', 'branch_index' => 1],
+            ['name' => 'Lorna Aguilar', 'email' => 'lorna.aguilar@smartdriving.com', 'branch_index' => 2],
+        ];
+
+        foreach ($secretaryData as $sec) {
+            Admin::updateOrCreate(
+                ['email' => $sec['email']],
+                [
+                    'school_id' => $school->id,
+                    'branch_id' => $branches[$sec['branch_index']]->id,
+                    'name' => $sec['name'],
+                    'password' => Hash::make('password123'),
+                    'role' => 'branch_secretary',
+                    'is_active' => true,
+                ]
+            );
+        }
+
+        // Test Branch Secretary Account
+        Admin::updateOrCreate(
+            ['email' => 'secretary@gmail.com'],
+            [
+                'school_id' => $school->id,
+                'branch_id' => $branches[0]->id,
+                'name' => 'Demo Branch Secretary',
+                'password' => Hash::make('password123'),
+                'role' => 'branch_secretary',
+                'is_active' => true,
+            ]
+        );
+
+        $this->command->info('   ✓ 4 Branch Secretaries created');
+
         // Create Instructors
         $instructorData = [
             [

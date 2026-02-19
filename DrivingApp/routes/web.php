@@ -134,7 +134,7 @@ Route::prefix('{school:slug}')
             });
         });
 
-        Route::prefix('admin')->name('admin.')->middleware(['auth:admin', 'redirect.system.admin'])->group(function (): void {
+        Route::prefix('admin')->name('admin.')->middleware(['auth:admin', 'redirect.system.admin', 'branch.access'])->group(function (): void {
             // Routes that need ajax middleware (existing modal-based pages)
             Route::middleware(['ajax'])->group(function () {
                 Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
