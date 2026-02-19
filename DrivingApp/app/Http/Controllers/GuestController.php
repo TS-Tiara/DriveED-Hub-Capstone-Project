@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Student;
 use App\Models\School;
 use App\Models\Course;
+use App\Models\Branch;
 use App\Models\EnrollmentRequest;
 use App\Http\Requests\StoreEnrollmentRequestRequest;
 use App\Models\Notification;
@@ -149,8 +150,17 @@ class GuestController extends Controller
             $course->hasBannerImage = $course->banner_image && file_exists(public_path($course->banner_image));
         }
 
+        $branches = collect();
+        $enableBranches = $school->schoolSetting->enable_branches ?? false;
+        if ($enableBranches) {
+            $branches = Branch::where('school_id', $school->id)
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get();
+        }
+
         return view('school.guest.courses', compact(
-            'school', 'guest', 'courses', 'enrolledCourseIds', 'enrollmentStatuses'
+            'school', 'guest', 'courses', 'enrolledCourseIds', 'enrollmentStatuses', 'branches', 'enableBranches'
         ));
     }
 
@@ -205,6 +215,7 @@ class GuestController extends Controller
                 'remarks' => $request->notes,
                 'branch' => $request->branch ?? $guest->branch,
                 'location' => $request->location ?? $guest->location,
+                'branch_id' => $request->input('branch_id'),
             ];
 
             // Handle credential file upload for experienced drivers
@@ -277,7 +288,7 @@ class GuestController extends Controller
         }
 
         $requests = $guest->enrollmentRequests()
-            ->with('course')
+            ->with('course', 'branchRelation')
             ->orderBy('created_at', 'desc')
             ->get();
 

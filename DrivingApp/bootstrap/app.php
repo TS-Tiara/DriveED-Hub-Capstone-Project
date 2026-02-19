@@ -23,6 +23,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'student.role' => \App\Http\Middleware\EnsureStudentRole::class,
             'system.admin' => \App\Http\Middleware\EnsureSystemAdmin::class,
             'redirect.system.admin' => \App\Http\Middleware\RedirectSystemAdmin::class,
+            'school.admin.only' => \App\Http\Middleware\EnsureSchoolAdminOnly::class,
+            'branch.access' => \App\Http\Middleware\EnsureBranchAccess::class,
         ]);
         
         // Handle guest redirects for multi-tenant authentication

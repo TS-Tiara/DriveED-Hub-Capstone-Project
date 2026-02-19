@@ -1733,15 +1733,23 @@
                     </div>
                     <div class="nav-category-items">
                         <a href="{{ $schoolRoute('admin.payments.index') }}" class="nav-item" data-page="payments">Payments</a>
+                        @if(Auth::guard('admin')->user()?->isSchoolAdmin())
                         <a href="{{ $schoolRoute('admin.reports.index') }}" class="nav-item" data-page="reports">Reports & Analytics</a>
+                        @endif
                     </div>
                 </div>
 
                 <div class="nav-divider"></div>
 
-                {{-- Settings & Branch Management (standalone bottom) --}}
+                {{-- Student Action Requests (visible to all admins) --}}
+                <a href="{{ $schoolRoute('admin.student-action-requests.index') }}" class="nav-item" data-page="student-action-requests">Student Requests</a>
+
+                {{-- Settings & Branch Management (school_admin only) --}}
+                @if(Auth::guard('admin')->user()?->isSchoolAdmin())
+                <a href="{{ $schoolRoute('admin.admin-management.index') }}" class="nav-item" data-page="admin-management">Admin Management</a>
                 <a href="{{ $schoolRoute('admin.branches.index') }}" class="nav-item" data-page="branches">Branches</a>
                 <a href="{{ $schoolRoute('admin.settings') }}" class="nav-item" data-page="settings">Settings</a>
+                @endif
             @elseif(Auth::guard('instructor')->check())
                 <a href="{{ $schoolRoute('instructor.dashboard') }}" class="nav-item" data-page="dashboard">Dashboard</a>
                 <a href="{{ $schoolRoute('instructor.schedule') }}" class="nav-item" data-page="my-schedule">My Schedule</a>

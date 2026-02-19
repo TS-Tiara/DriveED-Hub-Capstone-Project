@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Admin;
+use App\Models\Branch;
 use App\Models\EnrollmentRequest;
 use App\Models\Instructor;
 use App\Models\InstructorRemovalRequest;
@@ -31,27 +32,29 @@ class AdminController extends Controller
     public function dashboard(School $school)
     {
         try {
+            $admin = Auth::guard('admin')->user();
+
             // Get counts and statistics
-            $totalStudents = Student::where('school_id', $school->id)->count();
-            $activeStudents = Student::where('school_id', $school->id)->where('status', 'active')->count();
+            $totalStudents = $admin->scopeToBranch(Student::where('school_id', $school->id))->count();
+            $activeStudents = $admin->scopeToBranch(Student::where('school_id', $school->id))->where('status', 'active')->count();
             $inactiveStudents = $totalStudents - $activeStudents;
             
-            $totalInstructors = Instructor::where('school_id', $school->id)->count();
-            $activeInstructors = Instructor::where('school_id', $school->id)->where('status', 'active')->count();
-            $availableInstructors = Instructor::where('school_id', $school->id)
+            $totalInstructors = $admin->scopeToBranch(Instructor::where('school_id', $school->id))->count();
+            $activeInstructors = $admin->scopeToBranch(Instructor::where('school_id', $school->id))->where('status', 'active')->count();
+            $availableInstructors = $admin->scopeToBranch(Instructor::where('school_id', $school->id))
                 ->where('status', 'active')
                 ->where('availability', 'available')
                 ->count();
             
             // Get recent activities (last 5) - Optimized with select to reduce data transfer
-            $recentStudents = Student::where('school_id', $school->id)
-                ->select('id', 'school_id', 'name', 'email', 'status', 'created_at')
+            $recentStudents = $admin->scopeToBranch(Student::where('school_id', $school->id))
+                ->select('id', 'school_id', 'branch_id', 'name', 'email', 'status', 'created_at')
                 ->orderBy('created_at', 'desc')
                 ->limit(5)
                 ->get();
                 
-            $recentInstructors = Instructor::where('school_id', $school->id)
-                ->select('id', 'school_id', 'name', 'email', 'status', 'availability', 'created_at')
+            $recentInstructors = $admin->scopeToBranch(Instructor::where('school_id', $school->id))
+                ->select('id', 'school_id', 'branch_id', 'name', 'email', 'status', 'availability', 'created_at')
                 ->orderBy('created_at', 'desc')
                 ->limit(5)
                 ->get();
@@ -63,7 +66,7 @@ class AdminController extends Controller
             $enrollmentData = [];
             for ($i = 29; $i >= 0; $i--) {
                 $date = Carbon::today()->subDays($i);
-                $count = Student::where('school_id', $school->id)
+                $count = $admin->scopeToBranch(Student::where('school_id', $school->id))
                     ->whereDate('created_at', $date)
                     ->count();
                 $enrollmentData[] = [
@@ -76,11 +79,11 @@ class AdminController extends Controller
             $currentMonth = Carbon::now()->month;
             $lastMonth = Carbon::now()->subMonth()->month;
             
-            $studentsThisMonth = Student::where('school_id', $school->id)
+            $studentsThisMonth = $admin->scopeToBranch(Student::where('school_id', $school->id))
                 ->whereMonth('created_at', $currentMonth)
                 ->count();
                 
-            $studentsLastMonth = Student::where('school_id', $school->id)
+            $studentsLastMonth = $admin->scopeToBranch(Student::where('school_id', $school->id))
                 ->whereMonth('created_at', $lastMonth)
                 ->count();
                 
@@ -88,11 +91,11 @@ class AdminController extends Controller
                 ? round((($studentsThisMonth - $studentsLastMonth) / $studentsLastMonth) * 100, 1)
                 : ($studentsThisMonth > 0 ? 100 : 0);
                 
-            $instructorsThisMonth = Instructor::where('school_id', $school->id)
+            $instructorsThisMonth = $admin->scopeToBranch(Instructor::where('school_id', $school->id))
                 ->whereMonth('created_at', $currentMonth)
                 ->count();
                 
-            $instructorsLastMonth = Instructor::where('school_id', $school->id)
+            $instructorsLastMonth = $admin->scopeToBranch(Instructor::where('school_id', $school->id))
                 ->whereMonth('created_at', $lastMonth)
                 ->count();
                 
@@ -101,11 +104,12 @@ class AdminController extends Controller
                 : ($instructorsThisMonth > 0 ? 100 : 0);
             
             // Pending action counts for dashboard
-            $pendingEnrollments = EnrollmentRequest::where('school_id', $school->id)->where('status', 'pending')->count();
-            $pendingProgressions = PhaseProgression::where('school_id', $school->id)->where('status', 'pending')->count();
+            $pendingEnrollments = $admin->scopeToBranch(EnrollmentRequest::where('school_id', $school->id))->where('status', 'pending')->count();
+            $pendingProgressions = $admin->scopeToBranch(PhaseProgression::where('school_id', $school->id))->where('status', 'pending')->count();
 
             return view($school->resolveView('admin.dashboard'), [
                 'school' => $school,
+                'admin' => $admin,
                 'totalStudents' => $totalStudents,
                 'activeStudents' => $activeStudents,
                 'inactiveStudents' => $inactiveStudents,
@@ -142,17 +146,19 @@ class AdminController extends Controller
     public function userManagement(School $school)
     {
         try {
+            $admin = Auth::guard('admin')->user();
+
             // Select only needed columns to reduce memory footprint
-            $students = Student::where('school_id', $school->id)
+            $students = $admin->scopeToBranch(Student::where('school_id', $school->id))
                 ->select('id', 'school_id', 'branch_id', 'name', 'email', 'contact', 'address', 'status', 'role', 'created_at')
                 ->orderBy('name')
                 ->get();
-            $instructors = Instructor::where('school_id', $school->id)
+            $instructors = $admin->scopeToBranch(Instructor::where('school_id', $school->id))
                 ->select('id', 'school_id', 'branch_id', 'name', 'email', 'contact', 'license_number', 'status', 'availability', 'created_at')
                 ->orderBy('name')
                 ->get();
 
-            $branches = \App\Models\Branch::where('school_id', $school->id)
+            $branches = Branch::where('school_id', $school->id)
                 ->where('is_active', true)
                 ->orderBy('sort_order')
                 ->orderBy('name')
@@ -162,6 +168,7 @@ class AdminController extends Controller
 
             return view($school->resolveView('admin.user-management'), [
                 'school' => $school,
+                'admin' => $admin,
                 'students' => $students,
                 'instructors' => $instructors,
                 'branches' => $branches,
@@ -851,14 +858,16 @@ class AdminController extends Controller
      */
     public function schedules(Request $request, School $school)
     {
-        $timeslots = TimeSlot::with(['instructors', 'course'])
-            ->where('school_id', $school->id)
+        $admin = Auth::guard('admin')->user();
+
+        $timeslots = $admin->scopeToBranch(TimeSlot::with(['instructors', 'course'])
+            ->where('school_id', $school->id))
             ->orderBy('date')
             ->orderBy('start_time')
             ->get()
             ->groupBy('date');
         
-        $instructors = Instructor::where('school_id', $school->id)
+        $instructors = $admin->scopeToBranch(Instructor::where('school_id', $school->id))
             ->where('status', 'active')
             ->get();
         

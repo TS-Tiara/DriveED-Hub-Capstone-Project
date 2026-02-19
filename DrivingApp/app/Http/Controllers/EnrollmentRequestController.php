@@ -13,7 +13,9 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\EnrollmentApproved;
 use App\Mail\EnrollmentRejected;
+use App\Models\Branch;
 use App\Models\Notification;
+use App\Models\SystemLog;
 
 class EnrollmentRequestController extends Controller
 {
@@ -22,10 +24,15 @@ class EnrollmentRequestController extends Controller
      */
     public function index(School $school)
     {
-        $allRequests = EnrollmentRequest::where('school_id', $school->id)
-            ->with(['learner', 'course', 'approvedBy'])
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $admin = Auth::guard('admin')->user();
+
+        $query = EnrollmentRequest::where('school_id', $school->id)
+            ->with(['learner', 'course', 'approvedBy', 'branchRelation'])
+            ->orderBy('created_at', 'desc');
+
+        $admin->scopeToBranch($query);
+
+        $allRequests = $query->get();
 
         $pendingRequests = $allRequests->where('status', 'pending');
         $approvedRequests = $allRequests->where('status', 'approved');
@@ -33,9 +40,12 @@ class EnrollmentRequestController extends Controller
         $cancelledRequests = $allRequests->where('status', 'cancelled');
         $rejectedRequests = $allRequests->where('status', 'rejected');
 
+        $branches = Branch::where('school_id', $school->id)->where('is_active', true)->orderBy('name')->get();
+
         return view('school.admin.enrollment-requests.index', compact(
             'school', 'allRequests', 'pendingRequests', 'approvedRequests',
-            'completedRequests', 'cancelledRequests', 'rejectedRequests'
+            'completedRequests', 'cancelledRequests', 'rejectedRequests',
+            'admin', 'branches'
         ));
     }
 
@@ -50,6 +60,11 @@ class EnrollmentRequestController extends Controller
         $admin = Auth::guard('admin')->user();
         if (!$admin || $admin->school_id !== $school->id) {
             abort(403, 'Unauthorized action.');
+        }
+
+        // Branch secretary access check
+        if ($admin->isBranchSecretary() && !$admin->canAccessBranch($enrollmentRequest->branch_id)) {
+            abort(403, 'You do not have access to this enrollment request.');
         }
 
         $enrollmentRequest->load(['learner', 'course', 'approvedBy', 'sessionCompletions.instructor', 'payments', 'bookings']);
@@ -92,6 +107,14 @@ class EnrollmentRequestController extends Controller
         $admin = Auth::guard('admin')->user();
         if (!$admin || $admin->school_id !== $school->id) {
             abort(403, 'Unauthorized action.');
+        }
+
+        // Security Check: Branch secretary permission and access
+        if (!$admin->canApproveEnrollments()) {
+            abort(403, 'You do not have permission to approve enrollments.');
+        }
+        if ($admin->isBranchSecretary() && !$admin->canAccessBranch($enrollmentRequest->branch_id)) {
+            abort(403, 'You do not have access to this enrollment request.');
         }
 
         // Security Check 3: Prevent duplicate approvals
@@ -189,6 +212,14 @@ class EnrollmentRequestController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
+        // Security Check: Branch secretary permission and access
+        if (!$admin->canApproveEnrollments()) {
+            abort(403, 'You do not have permission to reject enrollments.');
+        }
+        if ($admin->isBranchSecretary() && !$admin->canAccessBranch($enrollmentRequest->branch_id)) {
+            abort(403, 'You do not have access to this enrollment request.');
+        }
+
         // Security Check 3: Prevent duplicate rejections
         if ($enrollmentRequest->status === 'rejected') {
             return redirect()
@@ -239,6 +270,7 @@ class EnrollmentRequestController extends Controller
     {
         $validated = $request->validate([
             'payment_status' => ['required', 'in:pending,on_hold,paid'],
+            'payment_notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
         // Security Check 1: Verify the request belongs to this school
@@ -252,6 +284,14 @@ class EnrollmentRequestController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
+        // Security Check: Payment confirmation permission and branch access
+        if (!$admin->canConfirmPayments()) {
+            abort(403, 'You do not have permission to update payment status.');
+        }
+        if ($admin->isBranchSecretary() && !$admin->canAccessBranch($enrollmentRequest->branch_id)) {
+            abort(403, 'You do not have access to this enrollment request.');
+        }
+
         // Security Check 3: Only allow payment updates for approved enrollments
         if ($enrollmentRequest->status !== 'approved') {
             return redirect()
@@ -259,9 +299,38 @@ class EnrollmentRequestController extends Controller
                 ->with('error', 'Payment status can only be updated for approved enrollments.');
         }
 
-        $enrollmentRequest->update([
+        $oldPaymentStatus = $enrollmentRequest->payment_status;
+
+        $updateData = [
             'payment_status' => $validated['payment_status'],
-        ]);
+        ];
+
+        // Set payment confirmation fields when marking as paid
+        if ($validated['payment_status'] === 'paid') {
+            $updateData['payment_confirmed_by'] = $admin->id;
+            $updateData['payment_confirmed_at'] = now();
+            $updateData['payment_confirmation_notes'] = $request->input('payment_notes');
+        }
+
+        $enrollmentRequest->update($updateData);
+
+        // Log the payment status update
+        SystemLog::logInfo(
+            "Payment status updated to '{$validated['payment_status']}' for enrollment #{$enrollmentRequest->id}",
+            'payment',
+            [
+                'enrollment_id' => $enrollmentRequest->id,
+                'branch_id' => $enrollmentRequest->branch_id,
+                'student_name' => $enrollmentRequest->learner?->name,
+                'old_status' => $oldPaymentStatus,
+                'new_status' => $validated['payment_status'],
+                'confirmed_by_name' => $admin->name,
+                'confirmed_by_role' => $admin->role,
+                'notes' => $request->input('payment_notes'),
+            ],
+            $school->id,
+            'payment_status_updated'
+        );
 
         // Notify student about payment status change
         if ($enrollmentRequest->student) {

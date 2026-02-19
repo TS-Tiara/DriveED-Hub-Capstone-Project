@@ -25,6 +25,7 @@ class StoreEnrollmentRequestRequest extends FormRequest
         return [
             'experience_level' => ['required', 'in:new_driver,experienced_driver'],
             'package_id' => ['nullable', 'exists:course_packages,id'],
+            'branch_id' => ['nullable', 'integer', 'exists:branches,id'],
             'credential_file' => [
                 'nullable',
                 'file',

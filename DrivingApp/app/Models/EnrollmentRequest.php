@@ -16,6 +16,9 @@ class EnrollmentRequest extends Model
         'course_id',
         'status',
         'payment_status',
+        'payment_confirmed_by',
+        'payment_confirmed_at',
+        'payment_confirmation_notes',
         'remarks',
         'branch',
         'location',
@@ -42,6 +45,7 @@ class EnrollmentRequest extends Model
         'cancelled_at' => 'datetime',
         'theoretical_passed' => 'boolean',
         'theoretical_passed_at' => 'datetime',
+        'payment_confirmed_at' => 'datetime',
     ];
 
     // Relationships
@@ -79,6 +83,11 @@ class EnrollmentRequest extends Model
     public function theoreticalPassedBy()
     {
         return $this->belongsTo(Admin::class, 'theoretical_passed_by');
+    }
+
+    public function paymentConfirmedBy()
+    {
+        return $this->belongsTo(Admin::class, 'payment_confirmed_by');
     }
 
     // New relationships (replacing old enrollments table)

@@ -852,6 +852,26 @@
                     </div>
                     @endif
 
+                    <!-- Branch Selection -->
+                    @if($enableBranches && $branches->count() > 0)
+                    <div class="mb-3">
+                        <label for="branch_id{{ $course->id }}" class="form-label">
+                            <strong>Preferred Branch</strong> <span class="text-danger">*</span>
+                        </label>
+                        <select name="branch_id" id="branch_id{{ $course->id }}" class="form-select @error('branch_id') is-invalid @enderror" required>
+                            <option value="">Select Branch...</option>
+                            @foreach($branches as $branch)
+                                <option value="{{ $branch->id }}" {{ old('branch_id') == $branch->id ? 'selected' : '' }}>
+                                    {{ $branch->name }}{{ $branch->address ? ' — ' . $branch->address : '' }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('branch_id')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    @endif
+
                     <!-- Experience Level Selection -->
                     <div class="mb-3">
                         <label for="experience_level{{ $course->id }}" class="form-label">

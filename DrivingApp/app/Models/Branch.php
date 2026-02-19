@@ -69,4 +69,19 @@ class Branch extends Model
     {
         return $this->hasMany(EnrollmentRequest::class);
     }
+
+    public function admins()
+    {
+        return $this->hasMany(Admin::class);
+    }
+
+    public function secretaries()
+    {
+        return $this->hasMany(Admin::class)->where('role', Admin::ROLE_BRANCH_SECRETARY);
+    }
+
+    public function studentActionRequests()
+    {
+        return $this->hasMany(StudentActionRequest::class);
+    }
 }

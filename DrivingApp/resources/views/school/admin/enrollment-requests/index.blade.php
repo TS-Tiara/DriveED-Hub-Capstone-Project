@@ -470,7 +470,25 @@
             <p class="page-subtitle">View and manage all enrollment requests and active student enrollments</p>
         </div>
     </div>
-    
+
+    @if($admin->isBranchSecretary() && $admin->branch)
+    <div style="padding: 12px 18px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#2563eb" style="width: 20px; height: 20px; flex-shrink: 0;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" /></svg>
+        <span style="color: #1e40af; font-size: 0.9rem; font-weight: 500;">Showing enrollments for your branch: <strong>{{ $admin->branch->name }}</strong></span>
+    </div>
+    @endif
+
+    @if($branches->count() > 0)
+    <div class="mb-3" style="margin-bottom: 16px;">
+        <select id="branchFilter" class="form-select" style="max-width: 300px; display: inline-block; padding: 8px 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 0.9rem;">
+            <option value="">All Branches</option>
+            @foreach($branches as $branch)
+                <option value="{{ $branch->name }}">{{ $branch->name }}</option>
+            @endforeach
+        </select>
+    </div>
+    @endif
+
     <!-- Alert Messages -->
     @if(session('success'))
     <div class="flash-message success">
@@ -646,6 +664,7 @@
                     </th>
                     <th>Learner</th>
                     <th>Course</th>
+                    <th>Branch</th>
                     <th>Fee</th>
                     <th>Status</th>
                     <th>Payment</th>
@@ -655,7 +674,7 @@
             </thead>
             <tbody>
                 @foreach($allRequests as $request)
-                    <tr data-status="{{ $request->status }}" data-request-id="{{ $request->id }}">
+                    <tr data-status="{{ $request->status }}" data-request-id="{{ $request->id }}" data-branch="{{ $request->branchRelation?->name ?? '' }}">
                         <td>
                             @if($request->status === 'pending')
                                 <input type="checkbox" class="request-checkbox" value="{{ $request->id }}" onchange="updateBulkActions()" style="cursor: pointer; width: 18px; height: 18px;">
@@ -695,6 +714,7 @@
                                 <div class="course-type">{{ ucfirst($request->course->type ?? 'standard') }}</div>
                             </div>
                         </td>
+                        <td>{{ $request->branchRelation?->name ?? '—' }}</td>
                         <td>
                             <strong>₱{{ number_format($request->course->price ?? 0, 2) }}</strong>
                         </td>
@@ -762,7 +782,7 @@
         
         {{-- Mobile card view --}}
         @foreach($allRequests as $request)
-        <div class="mobile-card" data-status="{{ $request->status }}" data-request-id="{{ $request->id }}">
+        <div class="mobile-card" data-status="{{ $request->status }}" data-request-id="{{ $request->id }}" data-branch="{{ $request->branchRelation?->name ?? '' }}">
             <div class="mobile-card-header">
                 <div>
                     <strong style="font-size: 1rem;">{{ $request->learner->name }}</strong>
@@ -777,6 +797,10 @@
             <div class="mobile-card-row">
                 <span class="mobile-card-label">Course</span>
                 <span class="mobile-card-value">{{ $request->course->title ?? 'N/A' }}</span>
+            </div>
+            <div class="mobile-card-row">
+                <span class="mobile-card-label">Branch</span>
+                <span class="mobile-card-value">{{ $request->branchRelation?->name ?? '—' }}</span>
             </div>
             <div class="mobile-card-row">
                 <span class="mobile-card-label">Fee</span>
@@ -908,21 +932,44 @@
 </div>
 
 <script>
+var currentStatusFilter = 'all';
+var currentBranchFilter = '';
+
+function applyFilters() {
+    const rows = document.querySelectorAll('.requests-table tbody tr');
+    const mobileCards = document.querySelectorAll('.mobile-card');
+    
+    function shouldShow(el) {
+        const statusMatch = currentStatusFilter === 'all' || el.dataset.status === currentStatusFilter;
+        const branchMatch = currentBranchFilter === '' || el.dataset.branch === currentBranchFilter;
+        return statusMatch && branchMatch;
+    }
+    
+    rows.forEach(row => {
+        row.style.display = shouldShow(row) ? '' : 'none';
+    });
+    mobileCards.forEach(card => {
+        card.style.display = shouldShow(card) ? 'block' : 'none';
+    });
+}
+
 function filterRequests(status, cardElement) {
     const cards = document.querySelectorAll('.stat-card');
-    const rows = document.querySelectorAll('.requests-table tbody tr');
     
     // Update active card
     cards.forEach(card => card.classList.remove('active'));
     cardElement.classList.add('active');
     
-    // Filter rows
-    rows.forEach(row => {
-        if (status === 'all' || row.dataset.status === status) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
-        }
+    currentStatusFilter = status;
+    applyFilters();
+}
+
+// Branch filter
+var branchSelect = document.getElementById('branchFilter');
+if (branchSelect) {
+    branchSelect.addEventListener('change', function() {
+        currentBranchFilter = this.value;
+        applyFilters();
     });
 }
 

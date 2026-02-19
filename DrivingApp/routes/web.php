@@ -24,6 +24,8 @@ use App\Http\Controllers\ExportController;
 use App\Http\Controllers\ModuleLessonController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PhaseProgressionController;
+use App\Http\Controllers\StudentActionRequestController;
+use App\Http\Controllers\AdminManagementController;
 use App\Models\School;
 
 Route::get('/', function () {
@@ -221,6 +223,29 @@ Route::prefix('{school:slug}')
                 // Statistics route MUST be before the resource to avoid conflict with payments/{payment}
                 Route::get('/payments/statistics', [PaymentController::class, 'statistics'])->name('payments.statistics');
                 Route::resource('payments', PaymentController::class)->except(['create', 'edit']);
+
+                // Admin/Secretary management (school_admin only)
+                Route::middleware(['school.admin.only'])->group(function () {
+                    Route::prefix('admin-management')->name('admin-management.')->group(function () {
+                        Route::get('/', [AdminManagementController::class, 'index'])->name('index');
+                        Route::post('/', [AdminManagementController::class, 'store'])->name('store');
+                        Route::put('/{targetAdmin}', [AdminManagementController::class, 'update'])->name('update');
+                        Route::patch('/{targetAdmin}/toggle-status', [AdminManagementController::class, 'toggleStatus'])->name('toggleStatus');
+                        Route::delete('/{targetAdmin}', [AdminManagementController::class, 'destroy'])->name('destroy');
+                    });
+
+                    // School-admin-only routes: settings, financial reports
+                    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index.protected');
+                });
+
+                // Student action requests (secretaries create, school admins approve/deny)
+                Route::prefix('student-action-requests')->name('student-action-requests.')->group(function () {
+                    Route::get('/', [StudentActionRequestController::class, 'index'])->name('index');
+                    Route::post('/add', [StudentActionRequestController::class, 'storeAddRequest'])->name('add');
+                    Route::post('/remove', [StudentActionRequestController::class, 'storeRemoveRequest'])->name('remove');
+                    Route::post('/{actionRequest}/approve', [StudentActionRequestController::class, 'approve'])->name('approve');
+                    Route::post('/{actionRequest}/deny', [StudentActionRequestController::class, 'deny'])->name('deny');
+                });
             });
 
             // New LMS routes WITH ajax middleware for layout consistency
