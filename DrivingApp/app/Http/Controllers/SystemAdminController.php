@@ -108,6 +108,8 @@ class SystemAdminController extends Controller
             );
 
             Auth::guard('admin')->logout();
+            Auth::guard('instructor')->logout();
+            Auth::guard('student')->logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 

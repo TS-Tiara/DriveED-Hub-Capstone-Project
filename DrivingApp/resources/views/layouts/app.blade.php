@@ -183,19 +183,45 @@
             gap: 15px;
         }
         
-        .burger-menu {
-            background: none;
-            border: none;
+        /* Floating Sidebar Toggle Tab */
+        .sidebar-toggle-tab {
+            position: fixed;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1000;
+            background: var(--primary-color, #667eea);
             color: white;
-            font-size: 1.5rem;
+            border: none;
+            border-radius: 0 8px 8px 0;
+            width: 28px;
+            height: 56px;
             cursor: pointer;
-            padding: 8px;
-            border-radius: 4px;
-            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+            padding: 0;
         }
         
-        .burger-menu:hover {
-            background-color: rgba(255,255,255,0.1);
+        .sidebar-toggle-tab:hover {
+            width: 34px;
+            background: var(--primary-color, #5a6fd6);
+            box-shadow: 3px 2px 14px rgba(0,0,0,0.2);
+        }
+        
+        .sidebar-toggle-tab svg {
+            display: block;
+            transition: transform 0.3s ease;
+        }
+        
+        .sidebar-toggle-tab.active {
+            left: 300px;
+        }
+        
+        .sidebar-toggle-tab.active svg {
+            transform: rotate(180deg);
         }
         
         .notification-icon, .profile-dropdown {
@@ -863,9 +889,11 @@
             top: 60px;
             left: 0;
             right: 0;
-            background: #ffffff;
-            padding: 10px 24px;
-            border-bottom: 1px solid #e5e7eb;
+            background: rgba(255, 255, 255, 0.45);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 8px 24px;
+            border-bottom: 1px solid rgba(var(--primary-rgb), 0.1);
             display: flex;
             align-items: center;
             font-size: 13px;
@@ -876,24 +904,24 @@
         }
         
         .breadcrumb-bar a {
-            color: #667eea;
+            color: var(--primary-color);
             text-decoration: none;
             transition: color 0.2s;
         }
         
         .breadcrumb-bar a:hover {
-            color: #5a3e9a;
+            color: var(--accent-color);
             text-decoration: underline;
         }
         
         .breadcrumb-separator {
             margin: 0 8px;
-            color: #d1d5db;
+            color: rgba(var(--primary-rgb), 0.35);
             font-size: 11px;
         }
         
         .breadcrumb-current {
-            color: #1f2937;
+            color: #374151;
             font-weight: 600;
         }
         
@@ -1032,6 +1060,10 @@
                 left: -280px;
             }
             
+            .sidebar-toggle-tab.active {
+                left: 280px;
+            }
+            
             .main-content {
                 padding: 18px;
             }
@@ -1053,9 +1085,13 @@
                 white-space: nowrap;
             }
             
-            .burger-menu {
-                font-size: 1.3rem;
-                padding: 7px;
+            .sidebar-toggle-tab {
+                width: 24px;
+                height: 48px;
+            }
+            
+            .sidebar-toggle-tab.active {
+                left: 280px;
             }
             
             .notification-icon, .profile-dropdown {
@@ -1129,9 +1165,13 @@
                 gap: 6px;
             }
             
-            .burger-menu {
-                font-size: 1.2rem;
-                padding: 6px;
+            .sidebar-toggle-tab {
+                width: 22px;
+                height: 44px;
+            }
+            
+            .sidebar-toggle-tab.active {
+                left: 270px;
             }
             
             .notification-icon, .profile-dropdown {
@@ -1209,9 +1249,13 @@
                 gap: 5px;
             }
             
-            .burger-menu {
-                font-size: 1.15rem;
-                padding: 5px;
+            .sidebar-toggle-tab {
+                width: 22px;
+                height: 44px;
+            }
+            
+            .sidebar-toggle-tab.active {
+                left: 260px;
             }
             
             .notification-icon, .profile-dropdown {
@@ -1294,9 +1338,13 @@
                 white-space: nowrap;
             }
             
-            .burger-menu {
-                font-size: 1rem;
-                padding: 3px;
+            .sidebar-toggle-tab {
+                width: 20px;
+                height: 40px;
+            }
+            
+            .sidebar-toggle-tab.active {
+                left: 240px;
             }
             
             .notification-icon, .profile-dropdown {
@@ -1393,11 +1441,13 @@
                 white-space: nowrap;
             }
             
-            .burger-menu {
-                font-size: 0.9rem;
-                padding: 6px;
-                min-height: 36px;
-                min-width: 36px;
+            .sidebar-toggle-tab {
+                width: 20px;
+                height: 38px;
+            }
+            
+            .sidebar-toggle-tab.active {
+                left: 220px;
             }
             
             .notification-icon, .profile-dropdown {
@@ -1477,7 +1527,7 @@
         
         /* ====== Print Styles ====== */
         @media print {
-            .topbar, .sidebar, .sidebar-overlay, .burger-menu,
+            .topbar, .sidebar, .sidebar-overlay, .sidebar-toggle-tab,
             .breadcrumb-bar, .btn, button, .dropdown,
             .notification-badge, .profile-dropdown { display: none !important; }
             .main-content { margin-left: 0 !important; padding: 0 !important; }
@@ -1494,6 +1544,13 @@
     </style>
 </head>
 <body>
+    <!-- Floating Sidebar Toggle Tab -->
+    <button class="sidebar-toggle-tab" id="sidebarToggleTab" onclick="toggleSidebar()" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="sidebar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+    </button>
+    
     <!-- Topbar -->
     <nav class="topbar" role="banner">
         <div class="topbar-left">
@@ -1503,9 +1560,6 @@
         </div>
         
         <div class="topbar-right">
-            <button class="burger-menu" onclick="toggleSidebar()" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="sidebar">
-                ☰
-            </button>
             
             <div class="notification-icon" onclick="toggleNotificationDropdown(event)" role="button" aria-label="Notifications" aria-expanded="false" aria-haspopup="true" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleNotificationDropdown(event)}">
                 🔔
@@ -1750,7 +1804,7 @@
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()" role="presentation" aria-hidden="true"></div>
     
     <!-- Loading Overlay -->
-    <div class="loading-overlay" id="loadingOverlay" role="status\" aria-label=\"Loading\">
+    <div class="loading-overlay" id="loadingOverlay" role="status" aria-label="Loading">
         <div class="loading-spinner"></div>
     </div>
     
@@ -1807,30 +1861,34 @@
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('sidebarOverlay');
-            const mainContent = document.getElementById('mainContent');
-            const burger = document.querySelector('.burger-menu');
+            const toggleTab = document.getElementById('sidebarToggleTab');
             
             sidebarOpen = !sidebarOpen;
             
             if (sidebarOpen) {
                 sidebar.classList.add('active');
                 overlay.classList.add('active');
+                if (toggleTab) toggleTab.classList.add('active');
             } else {
                 sidebar.classList.remove('active');
                 overlay.classList.remove('active');
+                if (toggleTab) toggleTab.classList.remove('active');
             }
-            if (burger) burger.setAttribute('aria-expanded', sidebarOpen);
+            if (toggleTab) toggleTab.setAttribute('aria-expanded', sidebarOpen);
         }
         
         function closeSidebar() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('sidebarOverlay');
-            const burger = document.querySelector('.burger-menu');
+            const toggleTab = document.getElementById('sidebarToggleTab');
             
             sidebarOpen = false;
             sidebar.classList.remove('active');
             overlay.classList.remove('active');
-            if (burger) burger.setAttribute('aria-expanded', 'false');
+            if (toggleTab) {
+                toggleTab.classList.remove('active');
+                toggleTab.setAttribute('aria-expanded', 'false');
+            }
         }
         
         function toggleProfileDropdown() {
@@ -2970,7 +3028,7 @@
             }
             
             // Close sidebar if clicking outside
-            if (sidebarOpen && !e.target.closest('.sidebar') && !e.target.closest('.burger-menu')) {
+            if (sidebarOpen && !e.target.closest('.sidebar') && !e.target.closest('.sidebar-toggle-tab')) {
                 closeSidebar();
             }
             

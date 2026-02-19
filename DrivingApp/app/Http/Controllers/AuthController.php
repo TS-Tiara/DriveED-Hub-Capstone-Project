@@ -66,6 +66,7 @@ class AuthController extends Controller
                 ]);
                 
                 Auth::guard('admin')->login($admin, $remember);
+                $request->session()->regenerate();
                 
                 // Log successful school admin login
                 SystemLog::logInfo(
@@ -168,6 +169,7 @@ class AuthController extends Controller
             ]);
             
             Auth::guard('instructor')->login($instructor, $remember);
+            $request->session()->regenerate();
             
             // Log successful instructor login
             SystemLog::logInfo(
@@ -275,6 +277,7 @@ class AuthController extends Controller
             ]);
             
             Auth::guard('student')->login($student, $remember);
+            $request->session()->regenerate();
             
             // Log successful student/guest login
             $userType = $student->role === 'guest' ? 'Guest' : 'Student';
@@ -316,26 +319,29 @@ class AuthController extends Controller
         $logContext = [];
         $action = 'logout';
         
+        // Log the primary authenticated guard before logout
         if (Auth::guard('admin')->check()) {
             $admin = Auth::guard('admin')->user();
             $logMessage = "School admin logged out: {$admin->name}";
             $logContext = ['admin_id' => $admin->id, 'email' => $admin->email];
             $action = 'school_admin_logout';
-            Auth::guard('admin')->logout();
         } elseif (Auth::guard('instructor')->check()) {
             $instructor = Auth::guard('instructor')->user();
             $logMessage = "Instructor logged out: {$instructor->name}";
             $logContext = ['instructor_id' => $instructor->id, 'email' => $instructor->email];
             $action = 'instructor_logout';
-            Auth::guard('instructor')->logout();
         } elseif (Auth::guard('student')->check()) {
             $student = Auth::guard('student')->user();
             $userType = $student->role === 'guest' ? 'Guest' : 'Student';
             $logMessage = "{$userType} logged out: {$student->name}";
             $logContext = ['student_id' => $student->id, 'email' => $student->email, 'role' => $student->role];
             $action = strtolower($userType) . '_logout';
-            Auth::guard('student')->logout();
         }
+
+        // Clear ALL guards to prevent stale remember cookies from interfering
+        Auth::guard('admin')->logout();
+        Auth::guard('instructor')->logout();
+        Auth::guard('student')->logout();
 
         // Log the logout event
         if ($logMessage) {
