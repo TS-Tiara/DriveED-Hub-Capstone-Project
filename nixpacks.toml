@@ -26,10 +26,8 @@ cmds = [
     "cd DrivingApp && composer install --no-dev --optimize-autoloader",
     "cd DrivingApp && npm ci",
     "cd DrivingApp && npm run build",
-    "cd DrivingApp && php artisan config:cache",
-    "cd DrivingApp && php artisan route:cache",
     "cd DrivingApp && php artisan view:cache"
 ]
 
 [start]
-cmd = "cd DrivingApp && php artisan storage:link --force && php artisan migrate --force && php artisan app:seed-once && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"
+cmd = "cd DrivingApp && php artisan config:cache && php artisan route:cache && php artisan storage:link --force && php artisan migrate --force && php artisan app:seed-once && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"
