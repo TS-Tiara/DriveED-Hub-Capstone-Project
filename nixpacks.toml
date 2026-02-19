@@ -1,0 +1,34 @@
+# Nixpacks configuration for Railway deployment
+# App lives in the DrivingApp/ subdirectory
+
+[phases.setup]
+nixPkgs = [
+    "php83",
+    "php83Extensions.pdo",
+    "php83Extensions.pdo_mysql",
+    "php83Extensions.mbstring",
+    "php83Extensions.xml",
+    "php83Extensions.curl",
+    "php83Extensions.zip",
+    "php83Extensions.bcmath",
+    "php83Extensions.gd",
+    "php83Extensions.tokenizer",
+    "php83Extensions.dom",
+    "php83Extensions.fileinfo",
+    "nodejs_20"
+]
+
+[phases.build]
+cmds = [
+    "cd DrivingApp && mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs storage/app/public",
+    "cd DrivingApp && chmod -R 775 storage bootstrap/cache",
+    "cd DrivingApp && composer install --no-dev --optimize-autoloader",
+    "cd DrivingApp && npm ci",
+    "cd DrivingApp && npm run build",
+    "cd DrivingApp && php artisan config:cache",
+    "cd DrivingApp && php artisan route:cache",
+    "cd DrivingApp && php artisan view:cache"
+]
+
+[start]
+cmd = "cd DrivingApp && php artisan storage:link --force && php artisan migrate --force && php artisan app:seed-once && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"
