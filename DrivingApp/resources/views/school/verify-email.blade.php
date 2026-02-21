@@ -397,7 +397,7 @@
     </div>
     </div>
 
-    @if(session('test_credentials') && config('app.env') === 'local')
+    @if(session('test_credentials') && app()->environment('local', 'development', 'testing'))
     <!-- Test Credentials Popup Modal (Development Only) -->
     <div id="testCredentialsModal" style="display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
         <div style="background: white; border-radius: 20px; max-width: 500px; width: 90%; box-shadow: 0 25px 50px rgba(0,0,0,0.5); overflow: hidden; animation: slideIn 0.3s ease;">

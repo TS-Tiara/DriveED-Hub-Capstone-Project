@@ -263,6 +263,13 @@ class AuthController extends Controller
                 // In local/dev environment, store OTP in session for testing (since emails don't send to fake addresses)
                 if (app()->environment('local', 'development', 'testing')) {
                     session(['dev_verification_code' => $otp]);
+                    // Also flash test credentials for easier testing (mirrors guest registration)
+                    session()->flash('test_credentials', [
+                        'email' => $student->email,
+                        'password' => $password,
+                        'name' => $student->name,
+                        'otp' => $otp,
+                    ]);
                 }
                 
                 return redirect()->route('schools.verification.show', $school)

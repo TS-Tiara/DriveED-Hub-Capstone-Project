@@ -500,7 +500,17 @@ class GuestController extends Controller
             return back()->withErrors(['error' => 'Failed to send email. Please try again.']);
         }
 
-        return back()->with('success', 'Verification code sent! Check your email.')
-            ->with(app()->environment('local', 'development', 'testing') ? ['dev_verification_code' => $otp] : []);
+        // In local/dev environments also expose dev OTP and test credentials for convenience
+        if (app()->environment('local', 'development', 'testing')) {
+            session(['dev_verification_code' => $otp]);
+            session()->flash('test_credentials', [
+                'email' => $student->email,
+                'password' => '',
+                'name' => $student->name ?? '',
+                'otp' => $otp,
+            ]);
+        }
+
+        return back()->with('success', 'Verification code sent! Check your email.');
     }
 }
