@@ -356,7 +356,7 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('schools.verification.verify', $school) }}">
+        <form method="POST" action="{{ route('schools.verification.verify', $school, false) }}">
             @csrf
             
             <div class="form-group">
@@ -385,7 +385,7 @@
 
         <div class="resend-section">
             <p class="resend-text">Didn't receive the code?</p>
-            <form method="POST" action="{{ route('schools.verification.resend', $school) }}" style="display: inline;">
+            <form method="POST" action="{{ route('schools.verification.resend', $school, false) }}" style="display: inline;">
                 @csrf
                 <button type="submit" class="resend-btn">Resend Code</button>
             </form>

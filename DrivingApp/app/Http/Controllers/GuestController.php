@@ -69,19 +69,37 @@ class GuestController extends Controller
 
         // Auto-login the guest
         Auth::guard('student')->login($guest);
+        // Generate verification code and send verification email
+        try {
+            $otp = $guest->generateVerificationCode();
 
-        // For development: Flash credentials for testing popup
-        if (config('app.env') === 'local') {
+            Mail::raw(
+                "Please verify your email.\n\nYour verification code is: {$otp}\n\nThis code will expire in 15 minutes.",
+                function ($message) use ($guest, $school) {
+                    $message->to($guest->email)
+                        ->subject("{$school->name} - Email Verification Required");
+                }
+            );
+        } catch (\Exception $e) {
+            Log::warning('Failed to send verification email on registration: ' . $e->getMessage());
+        }
+
+        // Store verification session and expose dev OTP when applicable
+        session(['verification_email' => $guest->email, 'school_slug' => $school->slug]);
+        if (app()->environment('local', 'development', 'testing')) {
+            session(['dev_verification_code' => $otp]);
+            // Include OTP in test credentials flash popup for convenience
             session()->flash('test_credentials', [
                 'email' => $validated['email'],
                 'password' => $validated['password'],
-                'name' => $validated['name']
+                'name' => $validated['name'],
+                'otp' => $otp,
             ]);
         }
 
         return redirect()
-            ->route('schools.guest.dashboard', ['school' => $school->slug])
-            ->with('success', 'Registration successful! Welcome to ' . $school->name);
+            ->route('schools.verification.show', ['school' => $school->slug])
+            ->with('success', 'Registration successful! Please verify your email to continue.');
     }
 
     /**

@@ -6,6 +6,7 @@ use App\Models\School;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpFoundation\Response;
 
 class EnsureSchoolContext
@@ -47,7 +48,18 @@ class EnsureSchoolContext
         view()->share('schoolRoute', static function (string $name, array $parameters = []) use ($school) {
             $routeName = str_starts_with($name, 'schools.') ? $name : 'schools.' . $name;
 
-            return route($routeName, array_merge(['school' => $school], $parameters));
+            $candidates = [$routeName, $routeName . '.protected'];
+
+            foreach ($candidates as $candidate) {
+                if (Route::has($candidate)) {
+                    return route($candidate, array_merge(['school' => $school], $parameters));
+                }
+            }
+
+            // Fallback: try to build a URL path for the given name to avoid throwing
+            $fallbackPath = trim(str_replace('.', '/', preg_replace('/^schools\./', '', $routeName)), '/');
+
+            return url($school->slug . '/' . $fallbackPath);
         });
 
         foreach (['admin', 'instructor', 'student'] as $guard) {
