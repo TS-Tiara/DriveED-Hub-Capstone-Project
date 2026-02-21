@@ -16,19 +16,19 @@ return new class extends Migration
         if (Schema::hasTable('schools')) {
             Schema::table('schools', function (Blueprint $table) {
                 if (! Schema::hasColumn('schools', 'subdomain')) {
-                    $table->string('subdomain')->nullable()->after('name');
+                    $table->string('subdomain')->nullable();
                 }
                 if (! Schema::hasColumn('schools', 'email')) {
-                    $table->string('email')->nullable()->after('subdomain');
+                    $table->string('email')->nullable();
                 }
                 if (! Schema::hasColumn('schools', 'contact_number')) {
-                    $table->string('contact_number')->nullable()->after('email');
+                    $table->string('contact_number')->nullable();
                 }
                 if (! Schema::hasColumn('schools', 'address')) {
-                    $table->text('address')->nullable()->after('contact_number');
+                    $table->text('address')->nullable();
                 }
                 if (! Schema::hasColumn('schools', 'status')) {
-                    $table->string('status')->default('active')->after('address');
+                    $table->string('status')->default('active');
                 }
             });
         }
@@ -36,7 +36,7 @@ return new class extends Migration
         if (Schema::hasTable('school_settings')) {
             Schema::table('school_settings', function (Blueprint $table) {
                 if (! Schema::hasColumn('school_settings', 'logo_path')) {
-                    $table->string('logo_path')->nullable()->after('value');
+                    $table->string('logo_path')->nullable();
                 }
             });
         }
