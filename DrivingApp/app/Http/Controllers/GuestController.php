@@ -456,9 +456,14 @@ class GuestController extends Controller
 
         // Auto login
         Auth::guard('student')->login($student);
-
-        return redirect()->route('schools.guest.dashboard', $school)
-            ->with('success', 'Email verified successfully! Welcome to ' . $school->name);
+        $request->session()->regenerate();
+        if ($student->role === 'guest') {
+            return redirect()->route('schools.guest.dashboard', $school)
+                ->with('success', 'Email verified successfully! Welcome to ' . $school->name);
+        } else {
+            return redirect()->route('schools.student.dashboard', $school)
+                ->with('success', 'Email verified successfully! Welcome to ' . $school->name);
+        }
     }
 
     /**

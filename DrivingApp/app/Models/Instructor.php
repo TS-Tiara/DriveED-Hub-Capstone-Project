@@ -17,9 +17,7 @@ class Instructor extends Authenticatable
         'email',
         'password',
         'contact',
-        'address',
         'status',
-        'enrollment_date',
         'availability',
         'license_number',
         'bio',
@@ -28,6 +26,7 @@ class Instructor extends Authenticatable
         'failed_login_attempts',
         'locked_until',
         'last_login_at',
+        'address', // Added address field
     ];
 
     protected $hidden = [

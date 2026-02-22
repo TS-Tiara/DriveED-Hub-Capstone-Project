@@ -8,6 +8,8 @@ use App\Models\Branch;
 use App\Models\EnrollmentRequest;
 use App\Models\Instructor;
 use App\Models\InstructorRemovalRequest;
+use App\Models\Log;
+use App\Models\RegistrationRequest;
 use App\Models\School;
 use App\Models\SchoolSetting;
 use App\Models\Student;
@@ -236,6 +238,7 @@ class AdminController extends Controller
                 'status' => 'active',
                 'availability' => 'available',
                 'branch_id' => $request->branch_id,
+                'address' => $request->address ?? null, // Restored address field
             ]));
             $successMessage = 'Instructor created successfully!';
             
