@@ -65,7 +65,7 @@ class EnsureSchoolContext
         foreach (['admin', 'instructor', 'student'] as $guard) {
             $user = Auth::guard($guard)->user();
 
-            if ($user && (int) $user->school_id !== (int) $school->id) {
+            if ($user && (int)$user->school_id !== (int)$school->id) {
                 Auth::guard($guard)->logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
