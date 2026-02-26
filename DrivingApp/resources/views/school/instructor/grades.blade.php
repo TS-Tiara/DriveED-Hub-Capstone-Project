@@ -472,12 +472,10 @@
                     @endforeach
                 </tbody>
             </table>
-        @else
-            <div class="empty-state">
-                <p style="font-size: 1rem; font-weight: 600; margin-bottom: 8px;">No Students Found</p>
-                <p>You don't have any students assigned yet.</p>
-            </div>
         @endif
+    </div>
+    <div class="mt-4">
+        {{ $students->links() }}
     </div>
 </div>
 

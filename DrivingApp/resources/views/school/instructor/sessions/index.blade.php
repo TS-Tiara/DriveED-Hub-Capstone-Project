@@ -9,9 +9,7 @@
     $primaryColor = $settings?->primary_color ?? '#667eea';
     $secondaryColor = $settings?->secondary_color ?? '#764ba2';
     $useGradient = $settings?->use_gradient_header ?? true;
-    $schoolRoute = function($routeName, $params = []) use ($school) {
-        return route('schools.' . $routeName, array_merge(['school' => $school->slug], $params));
-    };
+    // ...existing code...
 @endphp
 
 @include('school.admin.partials.admin-styles')
@@ -363,17 +361,17 @@
                     Export
                 </button>
                 <div class="export-menu" id="exportMenu">
-                    <a href="{{ $schoolRoute('instructor.exports.sessions.pdf') }}">
+                    <a href="{{ school_route('instructor.exports.sessions.pdf') }}">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#ef4444" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                         Download PDF
                     </a>
-                    <a href="{{ $schoolRoute('instructor.exports.sessions.excel') }}">
+                    <a href="{{ school_route('instructor.exports.sessions.excel') }}">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#10b981" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                         Download Excel
                     </a>
                 </div>
             </div>
-            <a href="{{ $schoolRoute('instructor.sessions.create') }}" class="btn-log-session">
+            <a href="{{ school_route('instructor.sessions.create') }}" class="btn-log-session">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:18px;height:18px;">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                 </svg>
@@ -384,10 +382,10 @@
 
     <!-- Stats Cards -->
     @php
-        $totalSessions = $sessions->total();
-        $totalHours = $sessions->sum('hours_completed');
-        $theoreticalCount = $sessions->where('session_type', 'theoretical')->count();
-        $practicalCount = $sessions->where('session_type', 'practical')->count();
+        $totalSessions = $stats['total_sessions'] ?? 0;
+        $totalHours = $stats['total_hours'] ?? 0;
+        $theoreticalCount = $stats['theoretical_count'] ?? 0;
+        $practicalCount = $stats['practical_count'] ?? 0;
     @endphp
     <div class="stats-grid">
         <div class="stat-card total">
@@ -506,14 +504,14 @@
                         </td>
                         <td>
                             <div class="action-btns">
-                                <a href="{{ $schoolRoute('instructor.sessions.show', ['sessionCompletion' => $session->id]) }}" 
+                                <a href="{{ school_route('instructor.sessions.show', ['sessionCompletion' => $session->id]) }}" 
                                    class="btn-action btn-view" title="View Details">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:16px;height:16px;">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                                     </svg>
                                 </a>
-                                <a href="{{ $schoolRoute('instructor.sessions.edit', ['sessionCompletion' => $session->id]) }}" 
+                                <a href="{{ school_route('instructor.sessions.edit', ['sessionCompletion' => $session->id]) }}" 
                                    class="btn-action btn-edit" title="Edit Session">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:16px;height:16px;">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
@@ -551,8 +549,8 @@
                     <span class="card-val">{{ number_format($session->hours_completed, 1) }}h</span>
                 </div>
                 <div class="card-actions">
-                    <a href="{{ $schoolRoute('instructor.sessions.show', ['sessionCompletion' => $session->id]) }}" class="btn-view-card">View</a>
-                    <a href="{{ $schoolRoute('instructor.sessions.edit', ['sessionCompletion' => $session->id]) }}" class="btn-edit-card">Edit</a>
+                    <a href="{{ school_route('instructor.sessions.show', ['sessionCompletion' => $session->id]) }}" class="btn-view-card">View</a>
+                    <a href="{{ school_route('instructor.sessions.edit', ['sessionCompletion' => $session->id]) }}" class="btn-edit-card">Edit</a>
                 </div>
             </div>
             @endforeach
@@ -574,7 +572,7 @@
                 </div>
                 <h3>No sessions logged yet</h3>
                 <p>Start logging your driving sessions to track your teaching progress.</p>
-                <a href="{{ $schoolRoute('instructor.sessions.create') }}" class="btn-first-session">
+                <a href="{{ school_route('instructor.sessions.create') }}" class="btn-first-session">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:18px;height:18px;">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                     </svg>

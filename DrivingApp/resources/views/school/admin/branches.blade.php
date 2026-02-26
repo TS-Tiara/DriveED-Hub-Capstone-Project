@@ -510,14 +510,14 @@
         <div class="stat-card">
             <div class="stat-icon"><i class="bi bi-building"></i></div>
             <div>
-                <div class="stat-value">{{ $branches->count() }}</div>
+                <div class="stat-value">{{ $totalBranchesCount }}</div>
                 <div class="stat-label">Total Branches</div>
             </div>
         </div>
         <div class="stat-card">
             <div class="stat-icon"><i class="bi bi-check-circle"></i></div>
             <div>
-                <div class="stat-value">{{ $branches->where('is_active', true)->count() }}</div>
+                <div class="stat-value">{{ $activeBranchesCount }}</div>
                 <div class="stat-label">Active Branches</div>
             </div>
         </div>
@@ -610,6 +610,9 @@
                 </tbody>
             </table>
         </div>
+        <div class="mt-4">
+            {{ $branches->links() }}
+        </div>
     @endif
 </div>
 
@@ -620,7 +623,7 @@
             <h5 id="branchModalTitle">Add New Branch</h5>
             <button class="btn-close-modal" onclick="closeBranchModal()">&times;</button>
         </div>
-        <form id="branchForm" method="POST" action="{{ route('admin.branches.store', $school) }}">
+        <form id="branchForm" method="POST" action="{{ route('schools.admin.branches.store', $school) }}">
             @csrf
             <input type="hidden" name="_method" id="branchMethod" value="POST">
             <div class="modal-body">

@@ -1083,7 +1083,7 @@
                 <i class="bi bi-calendar-plus"></i> Create Schedule
             </button>
             <div class="export-buttons">
-                <a href="{{ $schoolRoute('admin.exports.schedules.pdf') }}" class="btn-export btn-export-pdf">
+                <a href="{{ school_route('admin.exports.schedules.pdf') }}" class="btn-export btn-export-pdf">
                     Export PDF
                 </a>
             </div>

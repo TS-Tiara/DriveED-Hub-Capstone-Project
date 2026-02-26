@@ -15,29 +15,33 @@ class PaymentController extends Controller
      */
     public function index(School $school)
     {
-        $query = Payment::where('school_id', $school->id)
+        $query = Payment::where('school_id', '=', $school->id)
             ->with(['booking.student', 'booking.course']);
 
         // Filter by role
         if (Auth::guard('student')->check()) {
             $studentId = Auth::guard('student')->id();
-            $query->whereHas('booking', function($q) use ($studentId) {
-                $q->where('student_id', $studentId);
+            $query->whereHas('booking', function ($q) use ($studentId) {
+                $q->where('student_id', '=', $studentId);
             });
         }
 
         if (request('status')) {
-            $query->where('status', request('status'));
+            $query->where('status', '=', request('status'));
         }
 
         if (request('method')) {
-            $query->where('method', request('method'));
+            $query->where('method', '=', request('method'));
         }
 
-        // Pre-compute total for display (before pagination)
-        $totalPaid = (clone $query)->where('status', 'completed')->sum('amount');
+        // Pre-compute statistics for display (before pagination)
+        $stats = [
+            'total_revenue' => (clone $query)->where('status', 'completed')->sum('amount'),
+            'completed_count' => (clone $query)->where('status', 'completed')->count(),
+            'pending_count' => (clone $query)->where('status', 'pending')->count(),
+        ];
 
-        $payments = $query->latest('paid_on')->paginate(15);
+        $payments = $query->latest('paid_on')->paginate(10);
 
         // Only return JSON if explicitly requested via Accept header
         if (request()->expectsJson()) {
@@ -50,7 +54,7 @@ class PaymentController extends Controller
         // Only admin and student have payment views
         $guard = Auth::guard('admin')->check() ? 'admin' : 'student';
         $view = "{$guard}.payments";
-        return view($school->resolveView($view), compact('school', 'payments', 'totalPaid'));
+        return view($school->resolveView($view), compact('school', 'payments', 'stats'));
     }
 
     /**
@@ -192,18 +196,18 @@ class PaymentController extends Controller
     {
         $stats = [
             'total_revenue' => Payment::where('school_id', $school->id)
-                ->where('status', 'completed')
-                ->sum('amount'),
+            ->where('status', 'completed')
+            ->sum('amount'),
             'pending_payments' => Payment::where('school_id', $school->id)
-                ->where('status', 'pending')
-                ->count(),
+            ->where('status', 'pending')
+            ->count(),
             'total_payments' => Payment::where('school_id', $school->id)
-                ->count(),
+            ->count(),
             'by_method' => Payment::where('school_id', $school->id)
-                ->where('status', 'completed')
-                ->selectRaw('method, SUM(amount) as total')
-                ->groupBy('method')
-                ->get(),
+            ->where('status', 'completed')
+            ->selectRaw('method, SUM(amount) as total')
+            ->groupBy('method')
+            ->get(),
         ];
 
         return response()->json([

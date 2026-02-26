@@ -23,7 +23,8 @@ class ProgressController extends Controller
         // Filter by role
         if (Auth::guard('student')->check()) {
             $query->where('student_id', Auth::guard('student')->id());
-        } elseif (Auth::guard('instructor')->check()) {
+        }
+        elseif (Auth::guard('instructor')->check()) {
             // Instructors see progress for students they have bookings with
             $instructorId = Auth::guard('instructor')->id();
             $studentIds = \App\Models\Booking::where('school_id', $school->id)
@@ -41,7 +42,7 @@ class ProgressController extends Controller
             $query->where('course_id', request('course_id'));
         }
 
-        $progresses = $query->latest('last_updated')->get();
+        $progresses = $query->latest('last_updated')->paginate(10);
 
         // Pre-load booking data for each progress record (avoids N+1 in views)
         $allStudentIds = $progresses->pluck('student_id')->unique()->toArray();
@@ -112,11 +113,11 @@ class ProgressController extends Controller
 
         // Update existing progress or create new
         $progress = Progress::updateOrCreate(
-            [
-                'school_id' => $school->id,
-                'student_id' => $validated['student_id'],
-                'course_id' => $validated['course_id'],
-            ],
+        [
+            'school_id' => $school->id,
+            'student_id' => $validated['student_id'],
+            'course_id' => $validated['course_id'],
+        ],
             $validated
         );
 
@@ -143,7 +144,7 @@ class ProgressController extends Controller
 
         $progress->load(['student', 'course']);
 
-        if (request()->ajax() || request()->wantsJson()) {
+        if (request()->expectsJson()) {
             return response()->json([
                 'success' => true,
                 'progress' => $progress
@@ -232,12 +233,12 @@ class ProgressController extends Controller
             'total_courses' => $progresses->count(),
             'completed_courses' => $progresses->where('completion_percent', '>=', 100)->count(),
             'in_progress_courses' => $progresses->where('completion_percent', '>', 0)
-                ->where('completion_percent', '<', 100)->count(),
+            ->where('completion_percent', '<', 100)->count(),
             'average_completion' => $progresses->avg('completion_percent'),
             'progresses' => $progresses,
         ];
 
-        if (request()->ajax() || request()->wantsJson()) {
+        if (request()->expectsJson()) {
             return response()->json([
                 'success' => true,
                 'summary' => $summary

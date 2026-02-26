@@ -17,21 +17,21 @@ class CourseController extends Controller
      */
     public function index(School $school)
     {
-        $courses = Course::where('school_id', $school->id)
+        $courses = Course::where('school_id', '=', $school->id)
             ->with('packages', 'modules')
             ->when(request('status'), function ($query, $status) {
-                return $query->where('status', $status);
-            })
+            return $query->where('status', '=', $status);
+        })
             ->when(request('course_type'), function ($query, $type) {
-                return $query->where('course_type', $type);
-            })
+            return $query->where('course_type', '=', $type);
+        })
             ->when(request('license_type'), function ($query, $license) {
-                return $query->where('license_type', $license);
-            })
+            return $query->where('license_type', '=', $license);
+        })
             ->orderBy('sort_order')
             ->orderBy('is_featured', 'desc')
             ->latest()
-            ->get();
+            ->paginate(10);
 
         // Only return JSON if explicitly requested via Accept header
         if (request()->expectsJson()) {
@@ -48,7 +48,7 @@ class CourseController extends Controller
         // Get instructors for admin view
         $instructors = [];
         if ($guard === 'admin') {
-            $instructors = \App\Models\Instructor::where('school_id', $school->id)->get();
+            $instructors = \App\Models\Instructor::where('school_id', '=', $school->id)->get(['*']);
         }
 
         // Check if this is an AJAX request
@@ -59,8 +59,8 @@ class CourseController extends Controller
         if ($guard === 'student') {
             $student = Auth::guard('student')->user();
             if ($student) {
-                $requests = \App\Models\EnrollmentRequest::where('learner_id', $student->id)
-                    ->where('school_id', $school->id)
+                $requests = \App\Models\EnrollmentRequest::where('learner_id', '=', $student->id)
+                    ->where('school_id', '=', $school->id)
                     ->whereIn('status', ['pending', 'approved', 'completed'])
                     ->get(['course_id', 'status']);
                 foreach ($requests as $req) {
@@ -141,13 +141,13 @@ class CourseController extends Controller
     public function show(School $school, Course $course)
     {
         // Authorization check can be added here if needed
-        
+
         $course->load(['bookings.student', 'bookings.instructor', 'modules.lessons']);
-        
+
         // Check if student can enroll (for student view)
         $canEnroll = null;
         $enrollmentValidation = null;
-        
+
         if (Auth::guard('student')->check()) {
             $student = Auth::guard('student')->user();
             if ($student) {
@@ -156,7 +156,7 @@ class CourseController extends Controller
             }
         }
 
-        if (request()->ajax() || request()->wantsJson()) {
+        if (request()->expectsJson()) {
             return response()->json([
                 'success' => true,
                 'course' => $course,
@@ -167,7 +167,7 @@ class CourseController extends Controller
 
         $guard = Auth::guard('admin')->check() ? 'admin' : (Auth::guard('student')->check() ? 'student' : 'instructor');
         $view = $guard === 'admin' ? 'admin.course-show' : ($guard === 'student' ? 'student.course-show' : 'instructor.course-show');
-        
+
         return view($school->resolveView($view), compact('school', 'course', 'canEnroll', 'enrollmentValidation'));
     }
 
@@ -186,7 +186,7 @@ class CourseController extends Controller
     public function update(Request $request, School $school, Course $course)
     {
         // Authorization check can be added here if needed
-        
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -205,7 +205,8 @@ class CourseController extends Controller
         // Handle banner image upload
         if ($request->hasFile('banner_image')) {
             $validated['banner_image'] = $request->file('banner_image')->store('courses/banners', 'public');
-        } else {
+        }
+        else {
             unset($validated['banner_image']);
         }
 
@@ -237,11 +238,11 @@ class CourseController extends Controller
     public function destroy(Request $request, School $school, Course $course)
     {
         // Authorization check can be added here if needed
-        
+
         try {
             // Check if course has bookings
             $bookingsCount = $course->bookings()->count();
-            
+
             if ($bookingsCount > 0) {
                 if ($request->ajax() || $request->wantsJson()) {
                     return response()->json([
@@ -249,14 +250,14 @@ class CourseController extends Controller
                         'message' => "Cannot delete course. It has {$bookingsCount} booking(s). Please delete or reassign bookings first."
                     ], 400);
                 }
-                
+
                 return redirect()->back()
                     ->with('error', "Cannot delete course. It has {$bookingsCount} booking(s).");
             }
-            
+
             // Delete related records first
             $course->progresses()->delete();
-            
+
             // Now delete the course
             $course->delete();
 
@@ -269,17 +270,18 @@ class CourseController extends Controller
 
             return redirect()->route('courses.index', $school->slug)
                 ->with('success', 'Course deleted successfully');
-                
-        } catch (\Exception $e) {
+
+        }
+        catch (\Exception $e) {
             Log::error('Course deletion error: ' . $e->getMessage());
-            
+
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Error deleting course: ' . $e->getMessage()
                 ], 500);
             }
-            
+
             return redirect()->back()
                 ->with('error', 'Error deleting course. Please try again.');
         }

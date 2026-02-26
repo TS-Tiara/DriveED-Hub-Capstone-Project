@@ -151,7 +151,7 @@
 
     <!-- Key Statistics -->
     <div class="stats-grid">
-        <a href="{{ $schoolRoute('admin.userManagement') }}" class="stat-card students" onclick="loadContent(this.href); return false;" style="text-decoration: none; cursor: pointer;">
+        <a href="{{ school_route('admin.userManagement') }}" class="stat-card students" onclick="loadContent(this.href); return false;" style="text-decoration: none; cursor: pointer;">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -176,7 +176,7 @@
             </div>
         </a>
         
-        <a href="{{ $schoolRoute('admin.userManagement') }}" class="stat-card instructors" onclick="loadContent(this.href); return false;" style="text-decoration: none; cursor: pointer;">
+        <a href="{{ school_route('admin.userManagement') }}" class="stat-card instructors" onclick="loadContent(this.href); return false;" style="text-decoration: none; cursor: pointer;">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>

@@ -518,7 +518,7 @@
                 <div class="stat-header">
                     <div>
                         <div class="stat-label">All Enrollments</div>
-                        <div class="stat-value">{{ $allRequests->count() }}</div>
+                        <div class="stat-value">{{ $stats['total'] }}</div>
                     </div>
                     <div class="stat-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
@@ -533,7 +533,7 @@
                 <div class="stat-header">
                     <div>
                         <div class="stat-label">Pending Approval</div>
-                        <div class="stat-value">{{ $pendingRequests->count() }}</div>
+                        <div class="stat-value">{{ $stats['pending'] }}</div>
                     </div>
                     <div class="stat-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
@@ -548,7 +548,7 @@
                 <div class="stat-header">
                     <div>
                         <div class="stat-label">Active</div>
-                        <div class="stat-value">{{ $approvedRequests->count() }}</div>
+                        <div class="stat-value">{{ $stats['approved'] }}</div>
                     </div>
                     <div class="stat-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
@@ -563,7 +563,7 @@
                 <div class="stat-header">
                     <div>
                         <div class="stat-label">Completed</div>
-                        <div class="stat-value">{{ $completedRequests->count() }}</div>
+                        <div class="stat-value">{{ $stats['completed'] }}</div>
                     </div>
                     <div class="stat-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
@@ -578,7 +578,7 @@
                 <div class="stat-header">
                     <div>
                         <div class="stat-label">Cancelled</div>
-                        <div class="stat-value">{{ $cancelledRequests->count() }}</div>
+                        <div class="stat-value">{{ $stats['cancelled'] }}</div>
                     </div>
                     <div class="stat-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
@@ -593,7 +593,7 @@
                 <div class="stat-header">
                     <div>
                         <div class="stat-label">Rejected</div>
-                        <div class="stat-value">{{ $rejectedRequests->count() }}</div>
+                        <div class="stat-value">{{ $stats['rejected'] }}</div>
                     </div>
                     <div class="stat-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
@@ -834,6 +834,9 @@
         </div>
         @endforeach
         
+        <div class="mt-4">
+            {{ $allRequests->links() }}
+        </div>
     @else
         <div class="no-requests">
             <div class="no-requests-icon">

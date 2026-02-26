@@ -564,7 +564,7 @@
                                     @endif
                                 </p>
                             </div>
-                            <a href="{{ $schoolRoute('student.courses.show', ['course' => $availableCourse->id]) }}" class="enroll-btn">
+                            <a href="{{ school_route('student.courses.show', ['course' => $availableCourse->id]) }}" class="enroll-btn">
                                 View Details
                             </a>
                         </div>

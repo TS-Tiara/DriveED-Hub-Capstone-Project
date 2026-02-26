@@ -9,9 +9,7 @@
     $primaryColor = $settings->primary_color ?? '#667eea';
     $secondaryColor = $settings->secondary_color ?? '#764ba2';
 
-    $schoolRoute = function($routeName, $params = []) use ($school) {
-        return route('schools.' . $routeName, array_merge(['school' => $school->slug], $params));
-    };
+    // ...existing code...
 @endphp
 
 @include('school.admin.partials.admin-styles')
@@ -384,7 +382,7 @@
             <h1 class="page-title">Passed Students</h1>
             <p class="page-subtitle">Students who have successfully completed theoretical training</p>
         </div>
-        <a href="{{ $schoolRoute('admin.theoretical.index') }}" class="back-link">
+        <a href="{{ school_route('admin.theoretical.index') }}" class="back-link">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 16px; height: 16px;">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
@@ -494,7 +492,7 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <a href="{{ $schoolRoute('admin.userManagement') }}"
+                                    <a href="{{ school_route('admin.userManagement') }}"
                                        class="btn-action btn-view" title="View Student Profile">
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 14px; height: 14px;">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />

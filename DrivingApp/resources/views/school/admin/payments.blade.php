@@ -250,10 +250,10 @@
             <p class="page-subtitle">Track and manage all payments for {{ $schoolName }}</p>
         </div>
         <div class="export-buttons">
-            <a href="{{ $schoolRoute('admin.exports.payments.pdf') }}" class="btn-export btn-export-pdf">
+            <a href="{{ school_route('admin.exports.payments.pdf') }}" class="btn-export btn-export-pdf">
                 Export PDF
             </a>
-            <a href="{{ $schoolRoute('admin.exports.payments.excel') }}" class="btn-export btn-export-excel">
+            <a href="{{ school_route('admin.exports.payments.excel') }}" class="btn-export btn-export-excel">
                 Export Excel
             </a>
         </div>
@@ -266,7 +266,7 @@
                 <div class="stat-header">
                     <div>
                         <div class="stat-label">Total Revenue</div>
-                        <div class="stat-value">₱{{ number_format($payments->where('status', 'completed')->sum('amount'), 2) }}</div>
+                        <div class="stat-value">₱{{ number_format($stats['total_revenue'], 2) }}</div>
                     </div>
                     <div class="stat-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
@@ -281,7 +281,7 @@
                 <div class="stat-header">
                     <div>
                         <div class="stat-label">Completed Payments</div>
-                        <div class="stat-value">{{ $payments->where('status', 'completed')->count() }}</div>
+                        <div class="stat-value">{{ $stats['completed_count'] }}</div>
                     </div>
                     <div class="stat-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
@@ -296,7 +296,7 @@
                 <div class="stat-header">
                     <div>
                         <div class="stat-label">Pending Payments</div>
-                        <div class="stat-value">{{ $payments->where('status', 'pending')->count() }}</div>
+                        <div class="stat-value">{{ $stats['pending_count'] }}</div>
                     </div>
                     <div class="stat-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
@@ -413,6 +413,9 @@
             <p class="empty-state-text">Payment records will appear here</p>
         </div>
         @endforelse
+    </div>
+    <div class="mt-4">
+        {{ $payments->links() }}
     </div>
 </div>
 

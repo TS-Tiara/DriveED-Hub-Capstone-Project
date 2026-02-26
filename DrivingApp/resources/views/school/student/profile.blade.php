@@ -644,7 +644,7 @@
         
         <!-- Edit Form -->
         <div id="editForm" class="edit-form">
-            <form method="POST" action="{{ $schoolRoute('student.profile.update') }}">
+            <form method="POST" action="{{ school_route('student.profile.update') }}">
                 @csrf
                 @method('PUT')
                 
@@ -750,7 +750,7 @@
         const originalText = overlay.textContent;
         overlay.textContent = 'Uploading...';
         
-        fetch('{{ $schoolRoute('student.profile.picture') }}', {
+        fetch('{{ school_route('student.profile.picture') }}', {
             method: 'POST',
             body: formData,
             headers: {

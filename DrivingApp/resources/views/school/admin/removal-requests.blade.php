@@ -372,8 +372,8 @@
         <div>
             <h1 class="page-title">
                 Instructor Removal Requests
-                @if($pendingRequests->count() > 0)
-                    <span class="badge-count">{{ $pendingRequests->count() }}</span>
+                @if($pendingCount > 0)
+                    <span class="badge-count">{{ $pendingCount }}</span>
                 @endif
             </h1>
             <p class="page-subtitle">Review and process instructor schedule removal requests for {{ $schoolName }}</p>
@@ -404,10 +404,10 @@
 
     <div class="tabs">
         <button class="tab-btn active" data-tab="pending" onclick="switchTab('pending')">
-            Pending ({{ $pendingRequests->count() }})
+            Pending ({{ $pendingCount }})
         </button>
         <button class="tab-btn" data-tab="processed" onclick="switchTab('processed')">
-            Processed ({{ $processedRequests->count() }})
+            Processed ({{ $processedCount }})
         </button>
     </div>
 
@@ -468,6 +468,9 @@
                     </div>
                 </div>
             @endforeach
+            <div class="mt-4">
+                {{ $pendingRequests->appends(['processed_page' => $processedRequests->currentPage()])->links() }}
+            </div>
         @endif
     </div>
 
@@ -528,6 +531,9 @@
                     </div>
                 </div>
             @endforeach
+            <div class="mt-4">
+                {{ $processedRequests->appends(['pending_page' => $pendingRequests->currentPage()])->links() }}
+            </div>
         @endif
     </div>
 </div>
