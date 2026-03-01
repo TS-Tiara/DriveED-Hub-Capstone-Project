@@ -28,8 +28,9 @@ class AdminModalTest extends DuskTestCase
      */
     protected function screenshot(Browser $browser, string $stepName): void
     {
-        $folder = "Test {$this->currentTestNumber} - {$this->currentTestName}";
-        $browser->screenshot("{$folder}/{$stepName}");
+        $folderNumber = str_pad((string) $this->currentTestNumber, 3, '0', STR_PAD_LEFT);
+        $scenario = "Test {$folderNumber} - {$this->currentTestName}";
+        $this->captureRoleScreenshot($browser, $this->role, $scenario, $stepName);
     }
 
     /**

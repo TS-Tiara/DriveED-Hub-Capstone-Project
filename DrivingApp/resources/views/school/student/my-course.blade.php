@@ -377,6 +377,32 @@
     opacity: 0.9;
 }
 
+.course-description-text {
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.materials-note {
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 15px;
+}
+
+.no-course-icon-svg {
+    width: 48px;
+    height: 48px;
+    color: #9ca3af;
+}
+
+.pending-submitted {
+    color: #666;
+}
+
+.course-type-compact {
+    font-size: 0.7rem;
+    padding: 3px 8px;
+}
+
 @media (max-width: 768px) {
     .course-header {
         flex-direction: column;
@@ -404,7 +430,7 @@
             </div>
 
             @if($course->description)
-                <p style="color: #666; margin-bottom: 20px;">{{ $course->description }}</p>
+                <p class="course-description-text">{{ $course->description }}</p>
             @endif
 
             {{-- Progress Bar --}}
@@ -414,7 +440,7 @@
                     <span>{{ $hoursCompleted }} / {{ $hoursRequired }} hours</span>
                 </div>
                 <div class="progress-bar-container">
-                    <div class="progress-bar-fill" style="width: {{ $progressPercentage }}%">
+                    <div class="progress-bar-fill progress-fill" data-progress="{{ $progressPercentage }}">
                         @if($progressPercentage > 10)
                             {{ $progressPercentage }}%
                         @endif
@@ -447,7 +473,7 @@
         @if($modules->count() > 0)
             <div class="course-card">
                 <h3 class="section-title">Course Materials</h3>
-                <p style="color: #666; font-size: 0.9rem; margin-bottom: 15px;">
+                <p class="materials-note">
                     These materials are provided as reference. Click a module to view its lessons.
                 </p>
                 
@@ -516,7 +542,7 @@
         {{-- No Active Course --}}
         <div class="course-card no-course-card">
             <div class="no-course-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 48px; height: 48px; color: #9ca3af;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="no-course-icon-svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
             </div>
             <h2 class="no-course-title">No Active Course</h2>
             <p class="no-course-text">
@@ -535,7 +561,7 @@
                             <div>
                                 <strong>{{ $request->course->title ?? 'Unknown Course' }}</strong>
                                 <br>
-                                <small style="color: #666;">Submitted: {{ $request->created_at->format('M d, Y') }}</small>
+                                <small class="pending-submitted">Submitted: {{ $request->created_at->format('M d, Y') }}</small>
                             </div>
                             <span class="pending-badge">Pending Review</span>
                         </div>
@@ -554,7 +580,7 @@
                             <div class="course-info">
                                 <h4>{{ $availableCourse->title }}</h4>
                                 <p>
-                                    <span class="course-type-badge course-type-{{ $availableCourse->course_type ?? 'theoretical' }}" style="font-size: 0.7rem; padding: 3px 8px;">
+                                    <span class="course-type-badge course-type-{{ $availableCourse->course_type ?? 'theoretical' }} course-type-compact">
                                         {{ ucfirst($availableCourse->course_type ?? 'Theoretical') }}
                                     </span>
                                     &nbsp;•&nbsp;
@@ -586,5 +612,13 @@ function toggleModule(header) {
         toggle.classList.toggle('expanded');
     }
 }
+
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.progress-fill').forEach(function (bar) {
+        const value = Number(bar.dataset.progress || 0);
+        const clamped = Math.max(0, Math.min(100, value));
+        bar.style.width = clamped + '%';
+    });
+});
 </script>
 @endsection

@@ -183,6 +183,94 @@
 
     .btn-export:hover { background: #059669; color: white; }
 
+    .icon-18 {
+        width: 18px;
+        height: 18px;
+    }
+
+    .icon-24 {
+        width: 24px;
+        height: 24px;
+    }
+
+    .chart-card-spaced {
+        margin-bottom: 24px;
+    }
+
+    .month-stat-primary {
+        color: {{ $primaryColor }};
+    }
+
+    .month-stat-muted {
+        color: #9ca3af;
+    }
+
+    .month-arrow {
+        color: #d1d5db;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .month-arrow-icon {
+        width: 20px;
+        height: 20px;
+        stroke: currentColor;
+        stroke-width: 2.2;
+        fill: none;
+    }
+
+    .table-student-wrap {
+        display: flex;
+        align-items: center;
+    }
+
+    .upcoming-lessons-scroll {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .avg-grade-wrap {
+        text-align: center;
+        padding: 24px;
+    }
+
+    .avg-grade-value {
+        font-size: 4rem;
+        font-weight: 700;
+        color: {{ $primaryColor }};
+    }
+
+    .avg-grade-scale {
+        font-size: 1rem;
+        color: #6b7280;
+        margin-top: 6px;
+    }
+
+    .avg-grade-note {
+        margin-top: 16px;
+        padding: 12px;
+        background: #f9fafb;
+        border-radius: 8px;
+    }
+
+    .avg-grade-note-text {
+        font-size: 0.88rem;
+        color: #374151;
+    }
+
+    .avg-grade-rating-good {
+        color: #f59e0b;
+    }
+
+    .avg-grade-rating-excellent {
+        color: #10b981;
+    }
+
+    .avg-grade-rating-needs {
+        color: #ef4444;
+    }
+
     @media (max-width: 1024px) {
         .charts-grid { grid-template-columns: 1fr; }
     }
@@ -196,7 +284,7 @@
             <p class="page-subtitle">Overview of your teaching performance and trends</p>
         </div>
         <a href="{{ route('schools.instructor.exports.reports.pdf', $school) }}" class="btn-export">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-18"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
             Export PDF
         </a>
     </div>
@@ -211,7 +299,7 @@
                         <div class="stat-value">{{ $totalLessonsCompleted }}</div>
                     </div>
                     <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:24px;height:24px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
                     </div>
                 </div>
                 <div class="stat-detail">All time completed</div>
@@ -225,7 +313,7 @@
                         <div class="stat-value">{{ $totalHoursTaught }}</div>
                     </div>
                     <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:24px;height:24px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     </div>
                 </div>
                 <div class="stat-detail">Teaching time</div>
@@ -239,7 +327,7 @@
                         <div class="stat-value">{{ $totalStudentsTaught }}</div>
                     </div>
                     <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:24px;height:24px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                     </div>
                 </div>
                 <div class="stat-detail">{{ $activeStudents }} active now</div>
@@ -253,7 +341,7 @@
                         <div class="stat-value">{{ $attendanceRate }}%</div>
                     </div>
                     <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:24px;height:24px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     </div>
                 </div>
                 <div class="stat-detail">Last 30 days</div>
@@ -262,18 +350,20 @@
     </div>
 
     <!-- Monthly Comparison -->
-    <div class="chart-card" style="margin-bottom: 24px;">
+    <div class="chart-card chart-card-spaced">
         <h3>Monthly Performance</h3>
         <div class="monthly-comparison">
             <div class="month-stat">
                 <div class="month-stat-label">This Month</div>
-                <div class="month-stat-value" style="color: {{ $primaryColor }};">{{ $thisMonthLessons }}</div>
+                <div class="month-stat-value month-stat-primary">{{ $thisMonthLessons }}</div>
                 <div class="month-stat-sub">Completed Lessons</div>
             </div>
-            <div style="font-size: 2rem; color: #e5e7eb;">→</div>
+            <div class="month-arrow" aria-hidden="true">
+                <svg class="month-arrow-icon" viewBox="0 0 24 24"><path d="M5 12h14m0 0l-6-6m6 6l-6 6"/></svg>
+            </div>
             <div class="month-stat">
                 <div class="month-stat-label">Last Month</div>
-                <div class="month-stat-value" style="color: #9ca3af;">{{ $lastMonthLessons }}</div>
+                <div class="month-stat-value month-stat-muted">{{ $lastMonthLessons }}</div>
                 <div class="month-stat-sub">Completed Lessons</div>
             </div>
             <div class="month-stat">
@@ -325,7 +415,7 @@
                         @foreach($topStudents as $record)
                             <tr>
                                 <td>
-                                    <div style="display: flex; align-items: center;">
+                                    <div class="table-student-wrap">
                                         <div class="student-avatar-sm">
                                             {{ strtoupper(substr($record->student->name ?? 'U', 0, 1)) }}
                                         </div>
@@ -345,7 +435,7 @@
         <div class="chart-card">
             <h3>Upcoming Schedule</h3>
             @if($upcomingLessons->count() > 0)
-                <div style="max-height: 400px; overflow-y: auto;">
+                <div class="upcoming-lessons-scroll">
                     @foreach($upcomingLessons as $lesson)
                         <div class="upcoming-lesson">
                             <div class="lesson-time">
@@ -368,15 +458,15 @@
     @if($avgGrade)
         <div class="chart-card">
             <h3>Average Session Grade</h3>
-            <div style="text-align: center; padding: 24px;">
-                <div style="font-size: 4rem; font-weight: 700; color: {{ $primaryColor }};">
+            <div class="avg-grade-wrap">
+                <div class="avg-grade-value">
                     {{ number_format($avgGrade, 1) }}
                 </div>
-                <div style="font-size: 1rem; color: #6b7280; margin-top: 6px;">out of 100</div>
-                <div style="margin-top: 16px; padding: 12px; background: #f9fafb; border-radius: 8px;">
-                    <div style="font-size: 0.88rem; color: #374151;">
+                <div class="avg-grade-scale">out of 100</div>
+                <div class="avg-grade-note">
+                    <div class="avg-grade-note-text">
                         Performance Rating: 
-                        <strong style="color: {{ $avgGrade >= 90 ? '#10b981' : ($avgGrade >= 75 ? '#f59e0b' : '#ef4444') }};">
+                        <strong class="{{ $avgGrade >= 90 ? 'avg-grade-rating-excellent' : ($avgGrade >= 75 ? 'avg-grade-rating-good' : 'avg-grade-rating-needs') }}">
                             {{ $avgGrade >= 90 ? 'Excellent' : ($avgGrade >= 75 ? 'Good' : 'Needs Improvement') }}
                         </strong>
                     </div>

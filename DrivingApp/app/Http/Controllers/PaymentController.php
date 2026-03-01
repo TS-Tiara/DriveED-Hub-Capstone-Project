@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\School;
 use Illuminate\Http\Request;
@@ -58,29 +57,6 @@ class PaymentController extends Controller
     }
 
     /**
-     * Show the form for creating a new payment.
-     */
-    public function create(School $school, Request $request)
-    {
-        $bookingId = $request->query('booking_id');
-        $booking = null;
-
-        if ($bookingId) {
-            $booking = Booking::where('school_id', $school->id)
-                ->where('id', $bookingId)
-                ->with(['student', 'course'])
-                ->first();
-        }
-
-        $bookings = Booking::where('school_id', $school->id)
-            ->whereDoesntHave('payment')
-            ->with(['student', 'course'])
-            ->get();
-
-        return view($school->resolveView('admin.payment-create'), compact('school', 'bookings', 'booking'));
-    }
-
-    /**
      * Store a newly created payment.
      */
     public function store(Request $request, School $school)
@@ -127,16 +103,6 @@ class PaymentController extends Controller
             'success' => true,
             'payment' => $payment
         ]);
-    }
-
-    /**
-     * Show the form for editing the specified payment.
-     */
-    public function edit(School $school, Payment $payment)
-    {
-        abort_if($payment->school_id !== $school->id, 404);
-
-        return view($school->resolveView('admin.payment-edit'), compact('school', 'payment'));
     }
 
     /**

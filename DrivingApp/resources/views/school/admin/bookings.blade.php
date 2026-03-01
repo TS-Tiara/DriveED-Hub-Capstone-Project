@@ -143,6 +143,24 @@
         gap: 5px;
     }
 
+    .stat-card-clickable {
+        cursor: pointer;
+    }
+
+    .icon-24 {
+        width: 24px;
+        height: 24px;
+    }
+
+    .detail-value-amount {
+        color: #059669;
+        font-weight: 600;
+    }
+
+    .detail-item-full {
+        grid-column: 1 / -1;
+    }
+
     @media (max-width: 768px) {
         .booking-details { 
             grid-template-columns: 1fr 1fr; 
@@ -186,13 +204,13 @@
     <div class="page-header">
         <div class="page-header-left">
             <h1 class="page-title">Student Sessions</h1>
-            <p class="page-subtitle">Manage and track all driving session bookings for {{ $schoolName }}</p>
+            <p class="page-subtitle">Manage and track all driving session schedules for {{ $schoolName }}</p>
         </div>
     </div>
 
     <!-- Statistics Cards (clickable - serve as filters) -->
     <div class="stats-grid">
-        <div class="stat-card total" onclick="filterBookings('all')" style="cursor:pointer;">
+        <div class="stat-card total stat-card-clickable" onclick="filterBookings('all')">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -200,15 +218,15 @@
                         <div class="stat-value">{{ $stats['total'] }}</div>
                     </div>
                     <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                        <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
                     </div>
                 </div>
-                <div class="stat-detail">Total booking records</div>
+                <div class="stat-detail">Total schedule records</div>
             </div>
         </div>
-        <div class="stat-card active" onclick="filterBookings('scheduled')" style="cursor:pointer;">
+        <div class="stat-card active stat-card-clickable" onclick="filterBookings('scheduled')">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -216,7 +234,7 @@
                         <div class="stat-value">{{ $stats['scheduled'] }}</div>
                     </div>
                     <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                        <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                     </div>
@@ -224,7 +242,7 @@
                 <div class="stat-detail">Upcoming sessions</div>
             </div>
         </div>
-        <div class="stat-card growth" onclick="filterBookings('completed')" style="cursor:pointer;">
+        <div class="stat-card growth stat-card-clickable" onclick="filterBookings('completed')">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -232,7 +250,7 @@
                         <div class="stat-value">{{ $stats['completed'] }}</div>
                     </div>
                     <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                        <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
@@ -240,7 +258,7 @@
                 <div class="stat-detail">Finished sessions</div>
             </div>
         </div>
-        <div class="stat-card danger" onclick="filterBookings('cancelled')" style="cursor:pointer;">
+        <div class="stat-card danger stat-card-clickable" onclick="filterBookings('cancelled')">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -248,15 +266,15 @@
                         <div class="stat-value">{{ $stats['cancelled'] }}</div>
                     </div>
                     <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                        <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
                 </div>
-                <div class="stat-detail">Cancelled bookings</div>
+                <div class="stat-detail">Cancelled schedules</div>
             </div>
         </div>
-        <div class="stat-card inactive" onclick="filterBookings('pending')" style="cursor:pointer;">
+        <div class="stat-card inactive stat-card-clickable" onclick="filterBookings('pending')">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -264,7 +282,7 @@
                         <div class="stat-value">{{ $stats['pending'] }}</div>
                     </div>
                     <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                        <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
@@ -323,7 +341,7 @@
                 @endif
                 <div class="detail-item">
                     <span class="detail-label">Price</span>
-                    <span class="detail-value" style="color: #059669; font-weight: 600;">₱{{ number_format($booking->total_amount, 2) }}</span>
+                    <span class="detail-value detail-value-amount">₱{{ number_format($booking->total_amount, 2) }}</span>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Payment</span>
@@ -334,7 +352,7 @@
                     </span>
                 </div>
                 @if($booking->notes)
-                <div class="detail-item" style="grid-column: 1 / -1;">
+                <div class="detail-item detail-item-full">
                     <span class="detail-label">Notes</span>
                     <span class="detail-value">{{ $booking->notes }}</span>
                 </div>

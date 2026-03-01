@@ -138,6 +138,15 @@
         font-size: 1rem;
     }
 
+    .contact-email {
+        font-size: 0.85rem;
+        color: #6b7280;
+    }
+
+    .required-mark {
+        color: #dc3545;
+    }
+
     /* Branch Table */
     .branch-table-card {
         background: white;
@@ -572,7 +581,7 @@
                                     <div>{{ $branch->contact_number }}</div>
                                 @endif
                                 @if($branch->email)
-                                    <div style="font-size: 0.85rem; color: #6b7280;">{{ $branch->email }}</div>
+                                    <div class="contact-email">{{ $branch->email }}</div>
                                 @endif
                             @else
                                 -
@@ -628,7 +637,7 @@
             <input type="hidden" name="_method" id="branchMethod" value="POST">
             <div class="modal-body">
                 <div class="form-group">
-                    <label for="branchName">Branch Name <span style="color: #dc3545;">*</span></label>
+                    <label for="branchName">Branch Name <span class="required-mark">*</span></label>
                     <input type="text" id="branchName" name="name" required placeholder="e.g. Main Branch, Makati Branch">
                     <div class="form-hint">A unique URL slug will be generated automatically.</div>
                 </div>

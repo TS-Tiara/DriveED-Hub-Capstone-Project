@@ -554,8 +554,8 @@
         }
         
         .main-toggle-btn {
-            padding: 6px 12px;
-            font-size: 0.75rem;
+            padding: 8px 14px;
+            font-size: 0.85rem;
         }
         
         .schedule-main,
@@ -625,8 +625,8 @@
         }
         
         .collapse-btn {
-            padding: 6px 12px;
-            font-size: 0.75rem;
+            padding: 8px 14px;
+            font-size: 0.85rem;
             margin-bottom: 8px;
         }
         
@@ -653,13 +653,14 @@
         }
         
         .instructor-select {
-            font-size: 0.7rem;
-            padding: 6px 8px;
+            font-size: 0.85rem;
+            padding: 8px 10px;
         }
         
         .book-now-btn {
-            padding: 8px 12px;
-            font-size: 0.75rem;
+            padding: 10px 14px;
+            font-size: 0.85rem;
+            min-height: 38px;
         }
         
         .sidebar-section {
@@ -694,8 +695,8 @@
         }
         
         .main-toggle-btn {
-            padding: 6px 10px;
-            font-size: 11px;
+            padding: 8px 12px;
+            font-size: 13px;
             font-weight: 500;
         }
         
@@ -766,8 +767,8 @@
         }
         
         .collapse-btn {
-            padding: 6px 12px;
-            font-size: 0.75rem;
+            padding: 8px 14px;
+            font-size: 0.85rem;
             margin-bottom: 10px;
         }
         
@@ -794,15 +795,16 @@
         }
         
         .instructor-select {
-            font-size: 0.75rem;
-            padding: 6px 8px;
+            font-size: 0.85rem;
+            padding: 8px 10px;
             margin-bottom: 6px;
         }
         
         .book-now-btn {
-            padding: 6px 12px;
-            font-size: 0.75rem;
+            padding: 8px 14px;
+            font-size: 0.85rem;
             font-weight: 600;
+            min-height: 38px;
         }
         
         /* Make cards more compact */
@@ -822,7 +824,7 @@
         
         /* Simplify available schedule cards */
         .available-schedule-card {
-            padding: 8px;
+            padding: 10px;
         }
         
         /* Show mobile queue button */
@@ -898,6 +900,12 @@
     .queue-close-btn:hover {
         color: #000;
     }
+
+    .queue-close-btn:focus-visible {
+        outline: 2px solid {{ $primaryColor }};
+        outline-offset: 2px;
+        border-radius: 6px;
+    }
     
     .queue-popup-body {
         padding: 16px 20px;
@@ -932,6 +940,333 @@
         height: 18px;
         cursor: pointer;
         accent-color: {{ $primaryColor }};
+    }
+
+    .mobile-queue-btn {
+        display: none;
+    }
+
+    .queue-meta {
+        font-size: 0.78rem;
+        color: #6c757d;
+    }
+
+    .queue-action-row {
+        display: flex;
+        gap: 4px;
+        margin-top: 8px;
+    }
+
+    .queue-action-form {
+        flex: 1;
+    }
+
+    .queue-action-btn {
+        width: 100%;
+        color: white;
+        border: none;
+        padding: 7px 10px;
+        border-radius: 4px;
+        font-size: 0.82rem;
+        cursor: pointer;
+        min-height: 34px;
+    }
+
+    .queue-action-confirm {
+        background: #28a745;
+    }
+
+    .queue-action-remove {
+        background: #dc3545;
+    }
+
+    .schedule-alert {
+        padding: 12px 16px;
+        border-radius: 6px;
+        margin-bottom: 16px;
+        position: relative;
+    }
+
+    .schedule-alert-success {
+        background: #d4edda;
+        border: 1px solid #c3e6cb;
+        color: #155724;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .schedule-alert-error {
+        background: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+    }
+
+    .dismiss-alert-btn {
+        background: none;
+        border: none;
+        font-size: 1.2rem;
+        cursor: pointer;
+        padding: 0 4px;
+        line-height: 1;
+    }
+
+    .dismiss-alert-btn-success {
+        color: #155724;
+    }
+
+    .dismiss-alert-btn-error {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        color: #721c24;
+    }
+
+    .error-list-compact {
+        margin: 0;
+        padding-left: 20px;
+    }
+
+    .schedule-section-title {
+        margin: 0;
+        color: #000;
+        font-size: 1.2rem;
+        font-weight: 600;
+    }
+
+    .schedule-empty-state {
+        text-align: center;
+        color: #6c757d;
+        padding: 40px;
+    }
+
+    .schedule-empty-state-compact {
+        text-align: center;
+        color: #6c757d;
+        padding: 20px;
+        font-size: 14px;
+    }
+
+    .schedule-cancelled-title {
+        margin: 30px 0 12px 0;
+        color: #dc3545;
+        font-size: 1.1rem;
+    }
+
+    .is-hidden {
+        display: none;
+    }
+
+    .schedule-bookings-expanded {
+        max-height: 800px;
+    }
+
+    .booking-side-strip {
+        width: 4px;
+        border-radius: 2px;
+        flex-shrink: 0;
+        align-self: stretch;
+    }
+
+    .booking-side-strip-completed {
+        background: #28a745;
+    }
+
+    .booking-side-strip-primary {
+        background: {{ $secondaryColor }};
+    }
+
+    .booking-side-strip-cancelled {
+        background: #dc3545;
+    }
+
+    .booking-status-pill {
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+    }
+
+    .booking-status-completed {
+        background: #28a745;
+        color: #fff;
+    }
+
+    .booking-status-cancelled-you {
+        background: #ffc107;
+        color: #000;
+    }
+
+    .booking-status-cancelled-instructor {
+        background: #17a2b8;
+        color: #fff;
+    }
+
+    .booking-status-cancelled-school {
+        background: #6c757d;
+        color: #fff;
+    }
+
+    .booking-status-cancelled-default {
+        background: #dc3545;
+        color: #fff;
+    }
+
+    .booking-cancel-reason {
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-top: 4px;
+        font-style: italic;
+    }
+
+    .queue-sidebar-highlight {
+        background: #fff3cd;
+        border: 2px solid #ffc107;
+    }
+
+    .queue-sidebar-highlight-my {
+        margin-top: 35px;
+    }
+
+    .queue-sidebar-title {
+        color: #856404;
+    }
+
+    .queue-sidebar-help {
+        font-size: 0.85rem;
+        color: #856404;
+        margin-bottom: 12px;
+    }
+
+    .mini-booking-card-queued {
+        border-left-color: #ffc107;
+        background: white;
+    }
+
+    .mini-booking-date-queued {
+        color: #856404;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .mini-booking-info-strong {
+        font-weight: 600;
+        color: #000;
+    }
+
+    .queue-vehicle-chip {
+        background: #17a2b8;
+        color: white;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 0.65rem;
+        margin-left: 4px;
+    }
+
+    .available-filter-select {
+        padding: 5px 10px;
+        border: 1.5px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        background: white;
+        cursor: pointer;
+    }
+
+    .booking-time-wrap {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .course-badge-primary {
+        background: {{ $primaryColor }};
+        color: white;
+    }
+
+    .course-badge-enrolled {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .course-badge-branch {
+        background: #e0e7ff;
+        color: #3730a3;
+        font-size: 0.78rem;
+    }
+
+    .available-actions-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin-top: 8px;
+        flex-wrap: wrap;
+    }
+
+    .booking-status-inline {
+        margin: 0;
+        flex: 1;
+    }
+
+    .book-now-btn-inline {
+        margin: 0;
+    }
+
+    .book-now-btn-disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .queue-popup-queued-section {
+        background: #fff3cd;
+        border: 2px solid #ffc107;
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 16px;
+    }
+
+    .queue-popup-queued-title {
+        margin: 0 0 8px 0;
+        color: #856404;
+        font-size: 0.9rem;
+    }
+
+    .queue-popup-queued-help {
+        margin: 0 0 10px 0;
+        color: #856404;
+        font-size: 0.75rem;
+    }
+
+    .queue-popup-queued-card {
+        background: white;
+        border-radius: 6px;
+        padding: 10px;
+        margin-bottom: 8px;
+        border: 1px solid #ffc107;
+    }
+
+    .queue-popup-queued-date {
+        font-weight: 600;
+        color: #000;
+        font-size: 0.85rem;
+        margin-bottom: 4px;
+    }
+
+    .queue-popup-queued-info {
+        color: #6c757d;
+        font-size: 0.75rem;
+    }
+
+    .queue-popup-queued-meta {
+        color: #6c757d;
+        font-size: 0.75rem;
+        margin-top: 2px;
+    }
+
+    .queue-popup-upcoming-title {
+        margin: 0 0 10px 0;
+        color: #000;
+        font-size: 0.9rem;
     }
     
     @media (max-width: 768px) {
@@ -1001,16 +1336,16 @@
     </div>
     
     @if(session('success'))
-        <div id="success-alert" style="background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 12px 16px; border-radius: 6px; margin-bottom: 16px; position: relative; display: flex; align-items: center; justify-content: space-between;">
+        <div id="success-alert" class="schedule-alert schedule-alert-success">
             <span>{{ session('success') }}</span>
-            <button onclick="this.parentElement.remove()" style="background: none; border: none; color: #155724; font-size: 1.2rem; cursor: pointer; padding: 0 4px; line-height: 1;">&times;</button>
+            <button type="button" class="dismiss-alert-btn dismiss-alert-btn-success" aria-label="Dismiss success message" onclick="this.parentElement.remove()">&times;</button>
         </div>
     @endif
     
     @if($errors->any())
-        <div id="error-alert" style="background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 12px 16px; border-radius: 6px; margin-bottom: 16px; position: relative;">
-            <button onclick="this.parentElement.remove()" style="position: absolute; top: 8px; right: 8px; background: none; border: none; color: #721c24; font-size: 1.2rem; cursor: pointer; padding: 0 4px; line-height: 1;">&times;</button>
-            <ul style="margin: 0; padding-left: 20px;">
+        <div id="error-alert" class="schedule-alert schedule-alert-error">
+            <button type="button" class="dismiss-alert-btn dismiss-alert-btn-error" aria-label="Dismiss error messages" onclick="this.parentElement.remove()">&times;</button>
+            <ul class="error-list-compact">
                 @foreach($errors->all() as $error)
                     <li>{{ $error }}</li>
                 @endforeach
@@ -1023,8 +1358,8 @@
     <div class="schedule-grid">
         <!-- Left: Schedule List -->
         <div class="schedule-main">
-            <div class="schedule-header-controls" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; margin-top: 20px; flex-wrap: wrap; gap: 12px;">
-                <h3 style="margin: 0; color: #000; font-size: 1.2rem; font-weight: 600;">My Confirmed Schedule</h3>
+            <div class="schedule-header-controls">
+                <h3 class="schedule-section-title">My Confirmed Schedule</h3>
                 <div class="schedule-filters">
                     <label class="filter-checkbox">
                         <input type="checkbox" id="collapse-all-my" onchange="toggleCollapseAllMySchedule(this)">
@@ -1034,7 +1369,7 @@
                         <input type="checkbox" id="show-past-my" onchange="toggleShowPastMySchedule(this)">
                         <span>Show Past</span>
                     </label>
-                    <button class="collapse-btn mobile-queue-btn" onclick="toggleQueuePopup()" style="display: none; padding: 6px 12px; font-size: 14px;">My Schedule</button>
+                    <button class="collapse-btn mobile-queue-btn" onclick="toggleQueuePopup()">My Schedule</button>
                 </div>
             </div>
             
@@ -1042,15 +1377,15 @@
                 @php
                     $isPast = \Carbon\Carbon::parse($date)->lt(now()->startOfDay());
                 @endphp
-                <div class="schedule-item" data-is-past="{{ $isPast ? 'true' : 'false' }}" style="{{ $isPast ? 'display: none;' : '' }}">
+                <div class="schedule-item {{ $isPast ? 'is-hidden' : '' }}" data-is-past="{{ $isPast ? 'true' : 'false' }}">
                     <div class="schedule-date-header" onclick="toggleDate(this)">
                         <span class="date-text">{{ \Carbon\Carbon::parse($date)->format('l, F d, Y') }}</span>
                         <span class="toggle-icon">▼</span>
                     </div>
-                    <div class="schedule-bookings" style="max-height: 800px;">
+                    <div class="schedule-bookings schedule-bookings-expanded">
                         @foreach($dateBookings as $booking)
                             <div class="booking-item">
-                                <div style="width: 4px; background: {{ $booking->status === 'completed' ? '#28a745' : $secondaryColor }}; border-radius: 2px; flex-shrink: 0; align-self: stretch;"></div>
+                                <div class="booking-side-strip {{ $booking->status === 'completed' ? 'booking-side-strip-completed' : 'booking-side-strip-primary' }}"></div>
                                 <div class="booking-details">
                                     <div class="booking-instructor">
                                         {{ $booking->instructor->name ?? 'Instructor\'s Name' }}
@@ -1070,7 +1405,7 @@
                                     </div>
                                     <div class="booking-status">
                                         @if($booking->status === 'completed')
-                                            <span style="background: #28a745; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;">
+                                            <span class="booking-status-pill booking-status-completed">
                                                 ✓ Completed
                                             </span>
                                         @else
@@ -1083,25 +1418,25 @@
                     </div>
                 </div>
             @empty
-                <p style="text-align: center; color: #6c757d; padding: 40px;">No confirmed schedule.</p>
+                <p class="schedule-empty-state">No confirmed schedule.</p>
             @endforelse
             
-            <!-- Cancelled Bookings Section -->
+            <!-- Cancelled Schedules Section -->
             @if($groupedCancelledBookings->count() > 0)
-            <h3 style="margin: 30px 0 12px 0; color: #dc3545; font-size: 1.1rem;">Cancelled Schedules</h3>
+            <h3 class="schedule-cancelled-title">Cancelled Schedules</h3>
             @foreach($groupedCancelledBookings as $date => $dateCancelledBookings)
                 @php
                     $isPast = \Carbon\Carbon::parse($date)->lt(now()->startOfDay());
                 @endphp
-                <div class="schedule-item" data-is-past="{{ $isPast ? 'true' : 'false' }}" style="{{ $isPast ? 'display: none;' : '' }}">
+                <div class="schedule-item {{ $isPast ? 'is-hidden' : '' }}" data-is-past="{{ $isPast ? 'true' : 'false' }}">
                     <div class="schedule-date-header cancelled-header" onclick="toggleDate(this)">
                         <span class="date-text">{{ \Carbon\Carbon::parse($date)->format('l, F d, Y') }}</span>
                         <span class="toggle-icon">▼</span>
                     </div>
-                    <div class="schedule-bookings" style="max-height: 800px;">
+                    <div class="schedule-bookings schedule-bookings-expanded">
                         @foreach($dateCancelledBookings as $booking)
                             <div class="booking-item">
-                                <div style="width: 4px; background: #dc3545; border-radius: 2px; flex-shrink: 0; align-self: stretch;"></div>
+                                <div class="booking-side-strip booking-side-strip-cancelled"></div>
                                 <div class="booking-details">
                                     <div class="booking-instructor">
                                         {{ $booking->instructor->name ?? 'Instructor\'s Name' }}
@@ -1121,25 +1456,25 @@
                                     </div>
                                     <div class="booking-status">
                                         @if($booking->cancelled_by === 'student')
-                                            <span style="background: #ffc107; color: #000; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;">
+                                            <span class="booking-status-pill booking-status-cancelled-you">
                                                 Cancelled by You
                                             </span>
                                         @elseif($booking->cancelled_by === 'instructor')
-                                            <span style="background: #17a2b8; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;">
+                                            <span class="booking-status-pill booking-status-cancelled-instructor">
                                                 Cancelled by Instructor
                                             </span>
                                         @elseif($booking->cancelled_by === 'admin')
-                                            <span style="background: #6c757d; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;">
+                                            <span class="booking-status-pill booking-status-cancelled-school">
                                                 Cancelled by School
                                             </span>
                                         @else
-                                            <span style="background: #dc3545; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;">
+                                            <span class="booking-status-pill booking-status-cancelled-default">
                                                 Cancelled
                                             </span>
                                         @endif
                                     </div>
                                     @if($booking->cancellation_reason)
-                                        <div style="font-size: 0.8rem; color: #6c757d; margin-top: 4px; font-style: italic;">
+                                        <div class="booking-cancel-reason">
                                             Reason: {{ $booking->cancellation_reason }}
                                         </div>
                                     @endif
@@ -1155,22 +1490,22 @@
         <!-- Right: Requests Sidebar -->
         <div class="requests-sidebar">
             @if($queueEnabled && $queuedBookings->count() > 0)
-            <div class="sidebar-section" style="background: #fff3cd; border: 2px solid #ffc107; margin-top: 35px;">
-                <h3 class="sidebar-section-title-simple" style="color: #856404;">
-                    Schedule Queued ({{ $queuedBookings->count() }})
+            <div class="sidebar-section queue-sidebar-highlight queue-sidebar-highlight-my">
+                <h3 class="sidebar-section-title-simple queue-sidebar-title">
+                    Queued Schedules ({{ $queuedBookings->count() }})
                 </h3>
-                <p style="font-size: 0.85rem; color: #856404; margin-bottom: 12px;">
-                    Pending bookings will auto-confirm in {{ $queueDays }} days
+                <p class="queue-sidebar-help">
+                    Pending schedules are auto-confirmed after {{ $queueDays }} days
                 </p>
                 @foreach($queuedBookings as $booking)
-                    <div class="mini-booking-card" style="border-left-color: #ffc107; background: white;">
-                        <div class="mini-booking-date" style="color: #856404; display: flex; justify-content: space-between; align-items: center;">
+                    <div class="mini-booking-card mini-booking-card-queued">
+                        <div class="mini-booking-date mini-booking-date-queued">
                             <span>{{ \Carbon\Carbon::parse($booking->booking_date)->format('M d, Y') }}</span>
                         </div>
-                        <div class="mini-booking-info" style="font-weight: 600; color: #000;">
+                        <div class="mini-booking-info mini-booking-info-strong">
                             {{ $booking->course->title ?? 'Course' }}
                             @if($booking->course)
-                                <span style="background: #17a2b8; color: white; padding: 2px 6px; border-radius: 3px; font-size: 0.65rem; margin-left: 4px;">
+                                <span class="queue-vehicle-chip">
                                     {{ $booking->course->vehicle_type ?? 'Manual' }}
                                 </span>
                             @endif
@@ -1182,21 +1517,21 @@
                                 {{ \Carbon\Carbon::parse($booking->scheduled_at)->format('g:i A') }}
                             @endif
                         </div>
-                        <div class="mini-booking-info" style="font-size: 0.7rem; color: #6c757d;">
+                        <div class="mini-booking-info queue-meta">
                             Added {{ \Carbon\Carbon::parse($booking->created_at)->diffForHumans() }}
                         </div>
-                        <div style="display: flex; gap: 4px; margin-top: 8px;">
-                            <form method="POST" action="{{ route('schools.student.bookings.confirm', [$school->slug, $booking->id]) }}" style="flex: 1;">
+                        <div class="queue-action-row">
+                            <form method="POST" action="{{ route('schools.student.bookings.confirm', [$school->slug, $booking->id]) }}" class="queue-action-form">
                                 @csrf
-                                <button type="button" style="width: 100%; background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer;" onclick="showConfirm({title:'Confirm Booking',message:'Confirm this booking now?',type:'success',onConfirm:()=>this.closest('form').submit()})">
-                                    Confirm
+                                <button type="button" class="queue-action-btn queue-action-confirm" onclick="showConfirm({title:'Confirm Schedule',message:'Confirm this queued schedule now?',type:'success',onConfirm:()=>this.closest('form').submit()})">
+                                    Confirm Now
                                 </button>
                             </form>
-                            <form method="POST" action="{{ route('schools.student.bookings.removeQueue', [$school->slug, $booking->id]) }}" style="flex: 1;">
+                            <form method="POST" action="{{ route('schools.student.bookings.removeQueue', [$school->slug, $booking->id]) }}" class="queue-action-form">
                                 @csrf
                                 @method('DELETE')
-                                <button type="button" style="width: 100%; background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer;" onclick="showConfirm({title:'Cancel Booking',message:'Cancel this booking?',type:'danger',onConfirm:()=>this.closest('form').submit()})">
-                                    Cancel
+                                <button type="button" class="queue-action-btn queue-action-remove" onclick="showConfirm({title:'Remove Schedule',message:'Remove this schedule from your queue?',type:'danger',onConfirm:()=>this.closest('form').submit()})">
+                                    Remove
                                 </button>
                             </form>
                         </div>
@@ -1230,8 +1565,8 @@
                         @endif
                     </div>
                 @empty
-                    <p style="text-align: center; color: #6c757d; padding: 20px; font-size: 14px;">
-                        No scheduled lessons.
+                    <p class="schedule-empty-state-compact">
+                        No upcoming schedules yet.
                     </p>
                 @endforelse
             </div>
@@ -1245,8 +1580,8 @@
     <div class="schedule-grid">
         <!-- Left: Available Time Slots -->
         <div class="schedule-main">
-            <div class="schedule-header-controls" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; margin-top: 20px; flex-wrap: wrap; gap: 12px;">
-                <h3 style="margin: 0; color: #000; font-size: 1.2rem; font-weight: 600;">Available Schedules</h3>
+            <div class="schedule-header-controls">
+                <h3 class="schedule-section-title">Available Schedules</h3>
                 <div class="schedule-filters">
                     <label class="filter-checkbox">
                         <input type="checkbox" id="collapse-all-available" onchange="toggleCollapseAllAvailable(this)">
@@ -1264,14 +1599,14 @@
                         $branchesForFilter = \App\Models\Branch::where('school_id', $school->id)->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
                     @endphp
                     @if($branchesForFilter->count() > 0)
-                    <select id="branch-filter-available" onchange="filterByBranchSchedule()" style="padding: 5px 10px; border: 1.5px solid #d1d5db; border-radius: 6px; font-size: 0.85rem; background: white; cursor: pointer;">
+                    <select id="branch-filter-available" onchange="filterByBranchSchedule()" class="available-filter-select">
                         <option value="">All Branches</option>
                         @foreach($branchesForFilter as $b)
                             <option value="{{ $b->id }}">{{ $b->name }}</option>
                         @endforeach
                     </select>
                     @endif
-                    <button class="collapse-btn mobile-queue-btn" onclick="toggleQueuePopup()" style="display: none; padding: 6px 12px; font-size: 14px;">My Schedule</button>
+                    <button class="collapse-btn mobile-queue-btn" onclick="toggleQueuePopup()">My Schedule</button>
                 </div>
             </div>
             
@@ -1283,37 +1618,36 @@
                         return empty($enrolledCourseIds) || in_array($slot->course_id, $enrolledCourseIds);
                     })->count() > 0;
                 @endphp
-                <div class="schedule-item" data-is-past="{{ $isPast ? 'true' : 'false' }}" data-has-visible="{{ $hasVisibleSlots ? 'true' : 'false' }}" style="{{ $isPast || !$hasVisibleSlots ? 'display: none;' : '' }}">
+                <div class="schedule-item {{ $isPast || !$hasVisibleSlots ? 'is-hidden' : '' }}" data-is-past="{{ $isPast ? 'true' : 'false' }}" data-has-visible="{{ $hasVisibleSlots ? 'true' : 'false' }}">
                     <div class="schedule-date-header" onclick="toggleDate(this)">
                         <span class="date-text">{{ \Carbon\Carbon::parse($date)->format('l, F d, Y') }}</span>
                         <span class="toggle-icon">▼</span>
                     </div>
-                    <div class="schedule-bookings" style="max-height: 800px;">
+                    <div class="schedule-bookings schedule-bookings-expanded">
                         @foreach($dateSchedules as $timeSlot)
                             @php
                                 $isEnrolledInCourse = empty($enrolledCourseIds) || in_array($timeSlot->course_id, $enrolledCourseIds);
                                 $courseName = $timeSlot->course->title ?? 'Driving Lesson';
                             @endphp
-                            <div class="available-schedule-card" 
+                               <div class="available-schedule-card {{ !$isEnrolledInCourse ? 'is-hidden' : '' }}" 
                                  data-course-id="{{ $timeSlot->course_id ?? '' }}" 
                                  data-course-name="{{ $courseName }}"
                                  data-branch-id="{{ $timeSlot->branch_id ?? '' }}"
                                  data-date="{{ $date }}"
                                  data-start-time="{{ \Carbon\Carbon::parse($timeSlot->start_time)->format('H:i') }}"
                                  data-end-time="{{ \Carbon\Carbon::parse($timeSlot->end_time)->format('H:i') }}"
-                                 data-enrolled="{{ $isEnrolledInCourse ? 'true' : 'false' }}"
-                                 style="{{ !$isEnrolledInCourse ? 'display: none;' : '' }}">
+                                   data-enrolled="{{ $isEnrolledInCourse ? 'true' : 'false' }}">
                                 <div class="available-details">
-                                    <div class="booking-time" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                    <div class="booking-time booking-time-wrap">
                                         {{ \Carbon\Carbon::parse($timeSlot->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($timeSlot->end_time)->format('g:i A') }}
                                         @if($timeSlot->course)
-                                            <span class="course-badge" style="background: {{ $primaryColor }}; color: white;">{{ $timeSlot->course->title ?? 'Course' }}</span>
+                                            <span class="course-badge course-badge-primary">{{ $timeSlot->course->title ?? 'Course' }}</span>
                                             @if($isEnrolledInCourse)
-                                                <span class="course-badge" style="background: #d4edda; color: #155724;">&#10003; Enrolled</span>
+                                                <span class="course-badge course-badge-enrolled">&#10003; Enrolled</span>
                                             @endif
                                         @endif
                                         @if($timeSlot->branch_id && $timeSlot->branch)
-                                            <span class="course-badge" style="background: #e0e7ff; color: #3730a3; font-size: 0.78rem;">{{ $timeSlot->branch->name }}</span>
+                                            <span class="course-badge course-badge-branch">{{ $timeSlot->branch->name }}</span>
                                         @endif
                                     </div>
                                     
@@ -1324,7 +1658,7 @@
                                     @if($selectionMode === 'student_chooses')
                                         <!-- Student selects instructor -->
                                         <select class="instructor-select" id="instructor-{{ $timeSlot->id }}" onchange="updateBookButton({{ $timeSlot->id }})">
-                                            <option value="">Instructor's Name</option>
+                                            <option value="">Select an instructor</option>
                                             @if($timeSlot->instructors->count() > 0)
                                                 @foreach($timeSlot->instructors as $instructor)
                                                     <option value="{{ $instructor->id }}">{{ $instructor->name }}</option>
@@ -1332,41 +1666,41 @@
                                             @endif
                                         </select>
                                         
-                                        <div style="display: flex; gap: 8px; align-items: center; margin-top: 8px; flex-wrap: wrap;">
+                                        <div class="available-actions-row">
                                             @if($timeSlot->course)
                                                 <span class="course-badge">{{ $timeSlot->course->vehicle_type ?? 'Manual' }}</span>
                                             @endif
-                                            <div class="booking-status" style="margin: 0; flex: 1;">
-                                                {{ $timeSlot->getAvailableSpots() }} spot(s) available
+                                            <div class="booking-status booking-status-inline">
+                                                {{ $timeSlot->getAvailableSpots() }} {{ $timeSlot->getAvailableSpots() === 1 ? 'spot' : 'spots' }} available
                                             </div>
-                                            <button class="book-now-btn" id="book-btn-{{ $timeSlot->id }}" onclick="bookTimeSlot({{ $timeSlot->id }})" disabled style="opacity: 0.5; cursor: not-allowed; margin: 0;">
-                                                Book Lesson
+                                            <button class="book-now-btn book-now-btn-inline book-now-btn-disabled" id="book-btn-{{ $timeSlot->id }}" onclick="bookTimeSlot({{ $timeSlot->id }})" disabled>
+                                                Schedule Lesson
                                             </button>
                                         </div>
                                     @elseif($selectionMode === 'auto_assign')
                                         <!-- System auto-assigns -->
-                                        <div style="display: flex; gap: 8px; align-items: center; margin-top: 8px; flex-wrap: wrap;">
+                                        <div class="available-actions-row">
                                             @if($timeSlot->course)
                                                 <span class="course-badge">{{ $timeSlot->course->vehicle_type ?? 'Manual' }}</span>
                                             @endif
-                                            <div class="booking-status" style="margin: 0; flex: 1;">
-                                                {{ $timeSlot->getAvailableSpots() }} spot(s) available
+                                            <div class="booking-status booking-status-inline">
+                                                {{ $timeSlot->getAvailableSpots() }} {{ $timeSlot->getAvailableSpots() === 1 ? 'spot' : 'spots' }} available
                                             </div>
-                                            <button class="book-now-btn" onclick="bookTimeSlotAuto({{ $timeSlot->id }})" style="margin: 0;">
+                                            <button class="book-now-btn book-now-btn-inline" onclick="bookTimeSlotAuto({{ $timeSlot->id }})">
                                                 Schedule Now
                                             </button>
                                         </div>
                                     @else
                                         <!-- Admin assigns (wait for admin) -->
-                                        <div style="display: flex; gap: 8px; align-items: center; margin-top: 8px; flex-wrap: wrap;">
+                                        <div class="available-actions-row">
                                             @if($timeSlot->course)
                                                 <span class="course-badge">{{ $timeSlot->course->vehicle_type ?? 'Manual' }}</span>
                                             @endif
-                                            <div class="booking-status" style="margin: 0; flex: 1;">
-                                                {{ $timeSlot->getAvailableSpots() }} spot(s) available
+                                            <div class="booking-status booking-status-inline">
+                                                {{ $timeSlot->getAvailableSpots() }} {{ $timeSlot->getAvailableSpots() === 1 ? 'spot' : 'spots' }} available
                                             </div>
-                                            <button class="book-now-btn" onclick="bookTimeSlotAdmin({{ $timeSlot->id }})" style="margin: 0;">
-                                                Request Booking
+                                            <button class="book-now-btn book-now-btn-inline" onclick="bookTimeSlotAdmin({{ $timeSlot->id }})">
+                                                Request Schedule
                                             </button>
                                         </div>
                                     @endif
@@ -1376,7 +1710,7 @@
                     </div>
                 </div>
             @empty
-                <p style="text-align: center; color: #6c757d; padding: 40px;">No available time slots at the moment.</p>
+                <p class="schedule-empty-state">No schedules are currently available.</p>
             @endforelse
         </div>
         
@@ -1384,22 +1718,22 @@
         <div class="requests-sidebar">
             <!-- Schedule Queued Section -->
             @if($queueEnabled && $queuedBookings->count() > 0)
-            <div class="sidebar-section" style="background: #fff3cd; border: 2px solid #ffc107;">
-                <h3 class="sidebar-section-title-simple" style="color: #856404;">
-                    Schedule Queued ({{ $queuedBookings->count() }})
+            <div class="sidebar-section queue-sidebar-highlight">
+                <h3 class="sidebar-section-title-simple queue-sidebar-title">
+                    Queued Schedules ({{ $queuedBookings->count() }})
                 </h3>
-                <p style="font-size: 0.85rem; color: #856404; margin-bottom: 12px;">
-                    Pending bookings will auto-confirm in {{ $queueDays }} days
+                <p class="queue-sidebar-help">
+                    Pending schedules are auto-confirmed after {{ $queueDays }} days
                 </p>
                 @foreach($queuedBookings as $booking)
-                    <div class="mini-booking-card" style="border-left-color: #ffc107; background: white;">
-                        <div class="mini-booking-date" style="color: #856404; display: flex; justify-content: space-between; align-items: center;">
+                    <div class="mini-booking-card mini-booking-card-queued">
+                        <div class="mini-booking-date mini-booking-date-queued">
                             <span>{{ \Carbon\Carbon::parse($booking->booking_date)->format('M d, Y') }}</span>
                         </div>
-                        <div class="mini-booking-info" style="font-weight: 600; color: #000;">
+                        <div class="mini-booking-info mini-booking-info-strong">
                             {{ $booking->course->title ?? 'Course' }}
                             @if($booking->course)
-                                <span style="background: #17a2b8; color: white; padding: 2px 6px; border-radius: 3px; font-size: 0.65rem; margin-left: 4px;">
+                                <span class="queue-vehicle-chip">
                                     {{ $booking->course->vehicle_type ?? 'Manual' }}
                                 </span>
                             @endif
@@ -1411,21 +1745,21 @@
                                 {{ \Carbon\Carbon::parse($booking->scheduled_at)->format('g:i A') }}
                             @endif
                         </div>
-                        <div class="mini-booking-info" style="font-size: 0.7rem; color: #6c757d;">
+                        <div class="mini-booking-info queue-meta">
                             Added {{ \Carbon\Carbon::parse($booking->created_at)->diffForHumans() }}
                         </div>
-                        <div style="display: flex; gap: 4px; margin-top: 8px;">
-                            <form method="POST" action="{{ route('schools.student.bookings.confirm', [$school->slug, $booking->id]) }}" style="flex: 1;">
+                        <div class="queue-action-row">
+                            <form method="POST" action="{{ route('schools.student.bookings.confirm', [$school->slug, $booking->id]) }}" class="queue-action-form">
                                 @csrf
-                                <button type="button" style="width: 100%; background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer;" onclick="showConfirm({title:'Confirm Booking',message:'Confirm this booking now?',type:'success',onConfirm:()=>this.closest('form').submit()})">
-                                    Confirm
+                                <button type="button" class="queue-action-btn queue-action-confirm" onclick="showConfirm({title:'Confirm Schedule',message:'Confirm this queued schedule now?',type:'success',onConfirm:()=>this.closest('form').submit()})">
+                                    Confirm Now
                                 </button>
                             </form>
-                            <form method="POST" action="{{ route('schools.student.bookings.removeQueue', [$school->slug, $booking->id]) }}" style="flex: 1;">
+                            <form method="POST" action="{{ route('schools.student.bookings.removeQueue', [$school->slug, $booking->id]) }}" class="queue-action-form">
                                 @csrf
                                 @method('DELETE')
-                                <button type="button" style="width: 100%; background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer;" onclick="showConfirm({title:'Cancel Booking',message:'Cancel this booking?',type:'danger',onConfirm:()=>this.closest('form').submit()})">
-                                    Cancel
+                                <button type="button" class="queue-action-btn queue-action-remove" onclick="showConfirm({title:'Remove Schedule',message:'Remove this schedule from your queue?',type:'danger',onConfirm:()=>this.closest('form').submit()})">
+                                    Remove
                                 </button>
                             </form>
                         </div>
@@ -1459,8 +1793,8 @@
                         @endif
                     </div>
                 @empty
-                    <p style="text-align: center; color: #6c757d; padding: 20px; font-size: 14px;">
-                        No scheduled lessons.
+                    <p class="schedule-empty-state-compact">
+                        No upcoming schedules yet.
                     </p>
                 @endforelse
             </div>
@@ -1475,47 +1809,47 @@
     <div class="queue-popup-content">
         <div class="queue-popup-header">
             <h3>My Schedule</h3>
-            <button class="queue-close-btn" onclick="toggleQueuePopup()">&times;</button>
+            <button type="button" class="queue-close-btn" aria-label="Close schedule queue" onclick="toggleQueuePopup()">&times;</button>
         </div>
         <div class="queue-popup-body">
             @if($queueEnabled && $queuedBookings->count() > 0)
-            <div style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; padding: 12px; margin-bottom: 16px;">
-                <h4 style="margin: 0 0 8px 0; color: #856404; font-size: 0.9rem;">Schedule Queued ({{ $queuedBookings->count() }})</h4>
-                <p style="margin: 0 0 10px 0; color: #856404; font-size: 0.75rem;">
-                    Auto-confirms in {{ $queueDays }} days
+            <div class="queue-popup-queued-section">
+                <h4 class="queue-popup-queued-title">Queued Schedules ({{ $queuedBookings->count() }})</h4>
+                <p class="queue-popup-queued-help">
+                    Auto-confirms after {{ $queueDays }} days
                 </p>
                 @foreach($queuedBookings as $booking)
-                    <div style="background: white; border-radius: 6px; padding: 10px; margin-bottom: 8px; border: 1px solid #ffc107;">
-                        <div style="font-weight: 600; color: #000; font-size: 0.85rem; margin-bottom: 4px;">
+                    <div class="queue-popup-queued-card">
+                        <div class="queue-popup-queued-date">
                             {{ \Carbon\Carbon::parse($booking->booking_date)->format('M d, Y') }}
                         </div>
-                        <div style="color: #6c757d; font-size: 0.75rem;">
+                        <div class="queue-popup-queued-info">
                             {{ $booking->course->title ?? 'Course' }}
                             @if($booking->course)
-                                <span style="background: #17a2b8; color: white; padding: 2px 6px; border-radius: 3px; font-size: 0.65rem; margin-left: 4px;">
+                                <span class="queue-vehicle-chip">
                                     {{ $booking->course->vehicle_type ?? 'Manual' }}
                                 </span>
                             @endif
                         </div>
-                        <div style="color: #6c757d; font-size: 0.75rem; margin-top: 2px;">
+                        <div class="queue-popup-queued-meta">
                             @if($booking->timeSlot)
                                 {{ \Carbon\Carbon::parse($booking->timeSlot->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($booking->timeSlot->end_time)->format('g:i A') }}
                             @elseif($booking->scheduled_at)
                                 {{ \Carbon\Carbon::parse($booking->scheduled_at)->format('g:i A') }}
                             @endif
                         </div>
-                        <div style="display: flex; gap: 4px; margin-top: 6px;">
-                            <form method="POST" action="{{ route('schools.student.bookings.confirm', [$school->slug, $booking->id]) }}" style="flex: 1;">
+                        <div class="queue-action-row">
+                            <form method="POST" action="{{ route('schools.student.bookings.confirm', [$school->slug, $booking->id]) }}" class="queue-action-form">
                                 @csrf
-                                <button type="button" style="width: 100%; background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer;" onclick="showConfirm({title:'Confirm Booking',message:'Confirm this booking now?',type:'success',onConfirm:()=>this.closest('form').submit()})">
-                                    Confirm
+                                <button type="button" class="queue-action-btn queue-action-confirm" onclick="showConfirm({title:'Confirm Schedule',message:'Confirm this queued schedule now?',type:'success',onConfirm:()=>this.closest('form').submit()})">
+                                    Confirm Now
                                 </button>
                             </form>
-                            <form method="POST" action="{{ route('schools.student.bookings.removeQueue', [$school->slug, $booking->id]) }}" style="flex: 1;">
+                            <form method="POST" action="{{ route('schools.student.bookings.removeQueue', [$school->slug, $booking->id]) }}" class="queue-action-form">
                                 @csrf
                                 @method('DELETE')
-                                <button type="button" style="width: 100%; background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer;" onclick="showConfirm({title:'Cancel Booking',message:'Cancel this booking?',type:'danger',onConfirm:()=>this.closest('form').submit()})">
-                                    Cancel
+                                <button type="button" class="queue-action-btn queue-action-remove" onclick="showConfirm({title:'Remove Schedule',message:'Remove this schedule from your queue?',type:'danger',onConfirm:()=>this.closest('form').submit()})">
+                                    Remove
                                 </button>
                             </form>
                         </div>
@@ -1524,7 +1858,7 @@
             </div>
             @endif
             
-            <h4 style="margin: 0 0 10px 0; color: #000; font-size: 0.9rem;">Upcoming This Week</h4>
+            <h4 class="queue-popup-upcoming-title">Upcoming This Week</h4>
             
             @forelse($upcomingBookings->take(10) as $booking)
                 <div class="mini-booking-card">
@@ -1548,8 +1882,8 @@
                     @endif
                 </div>
             @empty
-                <p style="text-align: center; color: #6c757d; padding: 20px; font-size: 14px;">
-                    No scheduled lessons.
+                <p class="schedule-empty-state-compact">
+                    No upcoming schedules yet.
                 </p>
             @endforelse
         </div>
@@ -1798,23 +2132,21 @@
         
         if (select.value) {
             button.disabled = false;
-            button.style.opacity = '1';
-            button.style.cursor = 'pointer';
+            button.classList.remove('book-now-btn-disabled');
         } else {
             button.disabled = true;
-            button.style.opacity = '0.5';
-            button.style.cursor = 'not-allowed';
+            button.classList.add('book-now-btn-disabled');
         }
     }
 </script>
 
 <!-- Booking Modal -->
-<div id="bookingModal" class="booking-modal" style="display: none;">
+<div id="bookingModal" class="booking-modal">
     <div class="booking-modal-overlay" onclick="closeBookingModal()"></div>
     <div class="booking-modal-content">
         <div class="booking-modal-header">
-            <h3>Schedule a Lesson</h3>
-            <button type="button" class="modal-close-btn" onclick="closeBookingModal()">&times;</button>
+            <h3>Add a Schedule Request</h3>
+            <button type="button" class="modal-close-btn" aria-label="Close schedule request modal" onclick="closeBookingModal()">&times;</button>
         </div>
         <div class="booking-modal-body">
             <form id="bookingForm" method="POST" action="{{ route('schools.student.bookings.store', $school->slug) }}">
@@ -1843,13 +2175,13 @@
                 <div class="form-group">
                     <label class="form-label" for="notes">Additional Notes (Optional)</label>
                     <textarea class="form-control" id="notes" name="notes" rows="3" 
-                              placeholder="Any special requests or notes..."></textarea>
+                              placeholder="Add optional notes for your instructor or scheduler..."></textarea>
                 </div>
 
                 <div class="modal-actions">
                     <button type="button" class="btn btn-secondary" onclick="closeBookingModal()">Cancel</button>
                     <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-check-circle"></i> Add to Queue
+                        <i class="bi bi-check-circle"></i> Add Schedule Request
                     </button>
                 </div>
             </form>
@@ -1865,7 +2197,7 @@
     width: 100%;
     height: 100%;
     z-index: 9999;
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
 }
@@ -1937,6 +2269,80 @@
 
 .modal-close-btn:hover {
     background: rgba(255, 255, 255, 0.1);
+}
+
+.modal-close-btn:focus-visible {
+    outline: 2px solid #ffffff;
+    outline-offset: 2px;
+    border-radius: 6px;
+}
+
+.dismiss-alert-btn:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+    border-radius: 6px;
+}
+
+.notification-dismiss-btn {
+    margin-left: 12px;
+    color: inherit;
+}
+
+.confirm-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 10001;
+    align-items: center;
+    justify-content: center;
+}
+
+.confirm-modal-card {
+    background: white;
+    padding: 24px;
+    border-radius: 8px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.confirm-modal-title {
+    margin: 0 0 16px 0;
+    font-size: 1.1rem;
+    color: #333;
+}
+
+.confirm-modal-message {
+    margin: 0 0 20px 0;
+    color: #666;
+}
+
+.confirm-modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.confirm-modal-btn {
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.confirm-modal-btn-cancel {
+    border: 1px solid #ddd;
+    background: white;
+}
+
+.confirm-modal-btn-confirm {
+    border: none;
+    background: #0d6efd;
+    color: white;
 }
 
 .booking-modal-body {
@@ -2222,19 +2628,19 @@ document.getElementById('bookingForm').addEventListener('submit', function(e) {
     .then(data => {
         if (data.success) {
             closeBookingModal();
-            showNotification(data.message || 'Booking added to queue successfully!', 'success');
+            showNotification(data.message || 'Schedule request added to your queue.', 'success');
             setTimeout(() => window.location.reload(), 1000);
         } else {
-            showNotification(data.message || 'Error creating booking. Please try again.', 'error');
+            showNotification(data.message || 'Could not create your schedule request. Please try again.', 'error');
             submitBtn.disabled = false;
-            submitBtn.innerHTML = '<i class="bi bi-check-circle"></i> Add to Queue';
+            submitBtn.innerHTML = '<i class="bi bi-check-circle"></i> Add Schedule Request';
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        showNotification('An error occurred. Please try again.', 'error');
+        showNotification('Something went wrong while submitting your schedule request. Please try again.', 'error');
         submitBtn.disabled = false;
-        submitBtn.innerHTML = '<i class="bi bi-check-circle"></i> Add to Queue';
+        submitBtn.innerHTML = '<i class="bi bi-check-circle"></i> Add Schedule Request';
     });
 });
 
@@ -2312,7 +2718,7 @@ function showNotification(message, type = 'info') {
     
     notification.innerHTML = `
         <span>${message}</span>
-        <button onclick="this.parentElement.remove()" style="background: none; border: none; color: ${textColors[type] || textColors['info']}; font-size: 1.2rem; cursor: pointer; padding: 0 4px; margin-left: 12px; line-height: 1;">&times;</button>
+        <button type="button" class="dismiss-alert-btn notification-dismiss-btn" aria-label="Dismiss notification" onclick="this.parentElement.remove()">&times;</button>
     `;
     
     document.body.appendChild(notification);
@@ -2333,26 +2739,15 @@ function showConfirmDialog(message, onConfirm, onCancel = null) {
     if (!modal) {
         modal = document.createElement('div');
         modal.id = 'confirmModal';
-        modal.style.cssText = `
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 10001;
-            align-items: center;
-            justify-content: center;
-        `;
+        modal.className = 'confirm-modal';
         
         modal.innerHTML = `
-            <div style="background: white; padding: 24px; border-radius: 8px; max-width: 400px; width: 90%; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                <h3 style="margin: 0 0 16px 0; font-size: 1.1rem; color: #333;">Confirm Action</h3>
-                <p id="confirmMessage" style="margin: 0 0 20px 0; color: #666;"></p>
-                <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                    <button onclick="closeConfirmModal(false)" style="padding: 8px 16px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer; font-size: 0.9rem;">Cancel</button>
-                    <button onclick="closeConfirmModal(true)" style="padding: 8px 16px; border: none; background: #0d6efd; color: white; border-radius: 4px; cursor: pointer; font-size: 0.9rem;">Confirm</button>
+            <div class="confirm-modal-card">
+                <h3 class="confirm-modal-title">Confirm Action</h3>
+                <p id="confirmMessage" class="confirm-modal-message"></p>
+                <div class="confirm-modal-actions">
+                    <button onclick="closeConfirmModal(false)" class="confirm-modal-btn confirm-modal-btn-cancel">Cancel</button>
+                    <button onclick="closeConfirmModal(true)" class="confirm-modal-btn confirm-modal-btn-confirm">Confirm</button>
                 </div>
             </div>
         `;

@@ -193,7 +193,7 @@ class ReportController extends Controller
         }),
 
             // Optimized Course Stats & Revenue (Combined to prevent N+1)
-            'course_stats' => Course::where('school_id', $school->id)
+            'course_stats' => Course::where('courses.school_id', $school->id)
             ->leftJoin('bookings', 'courses.id', '=', 'bookings.course_id')
             ->leftJoin('payments', 'bookings.id', '=', 'payments.booking_id')
             ->select(

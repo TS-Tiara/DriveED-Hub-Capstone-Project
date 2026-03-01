@@ -283,6 +283,73 @@
     line-height: 1.6;
 }
 
+.th-expand {
+    width: 40px;
+}
+
+.text-muted-italic {
+    color: #9ca3af;
+    font-style: italic;
+}
+
+.detail-empty-assignment {
+    text-align: center;
+    padding: 20px;
+    color: #9ca3af;
+}
+
+.progress-fill-dynamic {
+    width: 0;
+}
+
+.progress-meta-row {
+    margin-top: 15px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    color: #6b7280;
+}
+
+.detail-section-full {
+    grid-column: 1 / -1;
+    margin-top: 10px;
+}
+
+.table-scroll-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.recent-table {
+    width: 100%;
+    margin-top: 10px;
+}
+
+.recent-thead {
+    background: #f3f4f6;
+}
+
+.recent-th {
+    padding: 10px;
+    text-align: left;
+    font-size: 0.85rem;
+}
+
+.recent-row {
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.recent-td {
+    padding: 10px;
+    font-size: 0.85rem;
+}
+
+.empty-state-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
 @media (max-width: 768px) {
     .progress-table { overflow-x: auto; }
     .detail-grid { grid-template-columns: 1fr; }
@@ -303,7 +370,7 @@
         <table>
             <thead>
                 <tr>
-                    <th style="width: 40px;"></th>
+                    <th class="th-expand"></th>
                     <th>Student Name</th>
                     <th>Current Session</th>
                     <th>Current Instructor</th>
@@ -327,7 +394,7 @@
                                     {{ $progress->currentBooking->instructor->name }}
                                 </span>
                             @else
-                                <span style="color: #9ca3af; font-style: italic;">Not assigned</span>
+                                <span class="text-muted-italic">Not assigned</span>
                             @endif
                         </td>
                         <td>
@@ -336,7 +403,7 @@
                                     {{ $progress->nextBooking->scheduled_at->format('M d, Y h:i A') }}
                                 </span>
                             @else
-                                <span style="color: #9ca3af; font-style: italic;">No upcoming schedule</span>
+                                <span class="text-muted-italic">No upcoming schedule</span>
                             @endif
                         </td>
                     </tr>
@@ -432,7 +499,7 @@
                                                 <span class="detail-value">{{ $progress->currentBooking->instructor->contact ?? 'N/A' }}</span>
                                             </div>
                                         @else
-                                            <div style="text-align: center; padding: 20px; color: #9ca3af;">
+                                                <div class="detail-empty-assignment">
                                                 <p>No instructor assigned yet</p>
                                             </div>
                                         @endif
@@ -444,7 +511,7 @@
                                     <h4 class="detail-section-title">Overall Completion Progress</h4>
                                     <div class="progress-bar-wrapper">
                                         <div class="progress-bar-container">
-                                            <div class="progress-bar-fill" style="width: {{ $progress->completion_percent }}%;">
+                                            <div class="progress-bar-fill progress-fill-dynamic" data-width="{{ $progress->completion_percent }}">
                                                 @if($progress->completion_percent > 10)
                                                     {{ number_format($progress->completion_percent, 0) }}%
                                                 @endif
@@ -452,7 +519,7 @@
                                         </div>
                                         <div class="progress-percentage">{{ number_format($progress->completion_percent, 0) }}%</div>
                                     </div>
-                                    <div style="margin-top: 15px; display: flex; justify-content: space-between; font-size: 0.85rem; color: #6b7280;">
+                                    <div class="progress-meta-row">
                                         <span>Last Updated: {{ $progress->last_updated ? $progress->last_updated->format('M d, Y h:i A') : 'Never' }}</span>
                                         <span>
                                             @if($progress->completion_percent == 100)
@@ -476,27 +543,27 @@
 
                                 <!-- Recent Bookings -->
                                 @if($progress->bookingsList->count() > 0)
-                                <div class="detail-section" style="grid-column: 1 / -1; margin-top: 10px;">
+                                <div class="detail-section detail-section-full">
                                     <h4 class="detail-section-title">Recent Schedules</h4>
-                                    <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
-                                    <table style="width: 100%; margin-top: 10px;">
-                                        <thead style="background: #f3f4f6;">
+                                    <div class="table-scroll-wrap">
+                                    <table class="recent-table">
+                                        <thead class="recent-thead">
                                             <tr>
-                                                <th style="padding: 10px; text-align: left; font-size: 0.85rem;">Date & Time</th>
-                                                <th style="padding: 10px; text-align: left; font-size: 0.85rem;">Instructor</th>
-                                                <th style="padding: 10px; text-align: left; font-size: 0.85rem;">Status</th>
-                                                <th style="padding: 10px; text-align: left; font-size: 0.85rem;">Notes</th>
+                                                <th class="recent-th">Date & Time</th>
+                                                <th class="recent-th">Instructor</th>
+                                                <th class="recent-th">Status</th>
+                                                <th class="recent-th">Notes</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             @foreach($progress->bookingsList->take(5) as $booking)
-                                            <tr style="border-bottom: 1px solid #e5e7eb;">
-                                                <td style="padding: 10px; font-size: 0.85rem;">{{ $booking->scheduled_at->format('M d, Y h:i A') }}</td>
-                                                <td style="padding: 10px; font-size: 0.85rem;">{{ $booking->instructor->name ?? 'N/A' }}</td>
-                                                <td style="padding: 10px; font-size: 0.85rem;">
+                                            <tr class="recent-row">
+                                                <td class="recent-td">{{ $booking->scheduled_at->format('M d, Y h:i A') }}</td>
+                                                <td class="recent-td">{{ $booking->instructor->name ?? 'N/A' }}</td>
+                                                <td class="recent-td">
                                                     <span class="badge badge-{{ strtolower($booking->status) }}">{{ ucfirst($booking->status) }}</span>
                                                 </td>
-                                                <td style="padding: 10px; font-size: 0.85rem;">{{ Str::limit($booking->notes ?? 'No notes', 50) }}</td>
+                                                <td class="recent-td">{{ Str::limit($booking->notes ?? 'No notes', 50) }}</td>
                                             </tr>
                                             @endforeach
                                         </tbody>
@@ -515,7 +582,7 @@
         {{ $progresses->links() }}
     </div>
     @else
-        <div class="empty-state" style="background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+        <div class="empty-state empty-state-card">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
             <p class="empty-state-title">No progress records found</p>
             <p class="empty-state-text">Student progress will appear here once training begins</p>
@@ -537,6 +604,13 @@ function toggleDetails(index) {
         progressRow.classList.add('expanded');
     }
 }
+
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.progress-fill-dynamic').forEach(function (element) {
+        const width = parseFloat(element.getAttribute('data-width') || '0');
+        element.style.width = width + '%';
+    });
+});
 </script>
 
 @endsection

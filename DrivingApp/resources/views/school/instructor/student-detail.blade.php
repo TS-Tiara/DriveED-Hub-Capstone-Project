@@ -198,6 +198,41 @@
         color: #9ca3af;
     }
 
+    .icon-13 {
+        width: 13px;
+        height: 13px;
+    }
+
+    .icon-14 {
+        width: 14px;
+        height: 14px;
+    }
+
+    .icon-16 {
+        width: 16px;
+        height: 16px;
+    }
+
+    .icon-18 {
+        width: 18px;
+        height: 18px;
+    }
+
+    .status-dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+    }
+
+    .status-dot-active {
+        background: #10b981;
+    }
+
+    .status-dot-inactive {
+        background: #ef4444;
+    }
+
     @media (max-width: 768px) {
         .student-header-content { flex-direction: column; gap: 16px; }
         .student-main-info h1 { font-size: 1.3rem; }
@@ -209,7 +244,7 @@
 <div class="admin-container">
     <!-- Back Button -->
     <button class="back-btn" onclick="goBack()">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:16px;height:16px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
         Back to Students
     </button>
 
@@ -220,12 +255,12 @@
                 <h1>{{ $student->name }}</h1>
                 @if($student->contact)
                     <p>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:14px;height:14px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
                         {{ $student->contact }}
                     </p>
                 @endif
                 <p>
-                    <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:{{ $student->status === 'active' ? '#10b981' : '#ef4444' }}"></span>
+                    <span class="status-dot {{ $student->status === 'active' ? 'status-dot-active' : 'status-dot-inactive' }}"></span>
                     {{ ucfirst($student->status) }} Student
                 </p>
             </div>
@@ -250,7 +285,7 @@
     <!-- Session History Header -->
     <div class="section-header">
         <h2>
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:18px;height:18px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-18"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             Session History for {{ $student->name }}
         </h2>
         <p class="section-subtitle">View notes from all instructors to maintain teaching continuity</p>
@@ -267,7 +302,7 @@
                                 <div class="session-date">{{ \Carbon\Carbon::parse($session['date'])->format('l, M d, Y - g:i A') }}</div>
                                 <div class="session-course">{{ $session['course'] }}</div>
                                 <div class="session-instructor">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:13px;height:13px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-13"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                                     {{ $session['is_mine'] ? 'You' : $session['instructor_name'] }}
                                 </div>
                             </div>

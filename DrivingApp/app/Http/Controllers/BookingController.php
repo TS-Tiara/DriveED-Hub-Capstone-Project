@@ -22,7 +22,7 @@ class BookingController extends Controller
         // Optimize query with selective column loading
         $query = Booking::where('school_id', $school->id)
             ->with([
-                'student:id,name,email,contact',
+                'student:id,name,email,contact,branch_id',
                 'instructor:id,name,email',
                 'course:id,title,duration_hours,price',
                 'package:id,course_id,name,price',
@@ -34,6 +34,14 @@ class BookingController extends Controller
             $query->where('student_id', Auth::guard('student')->id());
         } elseif (Auth::guard('instructor')->check()) {
             $query->where('instructor_id', Auth::guard('instructor')->id());
+        } elseif (Auth::guard('admin')->check()) {
+            // Branch secretary scope: filter by their branch
+            $admin = Auth::guard('admin')->user();
+            if ($admin->isBranchSecretary() && $admin->branch_id) {
+                $query->whereHas('student', function ($q) use ($admin) {
+                    $q->where('branch_id', $admin->branch_id);
+                });
+            }
         }
 
         // Additional filters
@@ -47,7 +55,17 @@ class BookingController extends Controller
             $query->past();
         }
 
-        $bookings = $query->latest('booking_date')->get();
+        $statsQuery = clone $query;
+
+        $stats = [
+            'total' => (clone $statsQuery)->count(),
+            'scheduled' => (clone $statsQuery)->where('status', 'scheduled')->count(),
+            'completed' => (clone $statsQuery)->where('status', 'completed')->count(),
+            'cancelled' => (clone $statsQuery)->where('status', 'cancelled')->count(),
+            'pending' => (clone $statsQuery)->where('status', 'pending')->count(),
+        ];
+
+        $bookings = $query->latest('booking_date')->paginate(10)->withQueryString();
 
         // Only return JSON if explicitly requested via Accept header
         if (request()->expectsJson()) {
@@ -59,7 +77,9 @@ class BookingController extends Controller
 
         // Only admin has bookings list view
         $view = 'admin.bookings';
-        return view($school->resolveView($view), compact('school', 'bookings'));
+        $isAjax = request()->ajax() || request()->header('X-Requested-With') === 'XMLHttpRequest';
+        
+        return view($school->resolveView($view), compact('school', 'bookings', 'stats', 'isAjax'));
     }
 
     /**

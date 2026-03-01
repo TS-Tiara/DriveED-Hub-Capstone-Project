@@ -310,6 +310,21 @@
         margin-top: 1px;
     }
 
+    .icon-16 {
+        width: 16px;
+        height: 16px;
+    }
+
+    .icon-18 {
+        width: 18px;
+        height: 18px;
+    }
+
+    .icon-inline-start {
+        vertical-align: middle;
+        margin-right: 6px;
+    }
+
     @media (max-width: 900px) {
         .form-grid {
             grid-template-columns: 1fr;
@@ -337,7 +352,7 @@
             <p class="page-subtitle">Record a completed training session</p>
         </div>
         <a href="{{ route('schools.instructor.sessions.index', $school) }}" class="btn-back">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 18px; height: 18px;">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-18">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
             Back to Sessions
@@ -411,7 +426,7 @@
                             <option value="theoretical" {{ old('session_type') == 'theoretical' ? 'selected' : '' }}>Theoretical</option>
                             <option value="practical" {{ old('session_type') == 'practical' ? 'selected' : '' }}>Practical</option>
                         </select>
-                        <div class="form-hint">Must match the enrolled course type</div>
+                        <div class="form-hint" id="sessionTypeHint">Must match the enrolled course type</div>
                     </div>
 
                     <!-- Date and Time Row -->
@@ -453,7 +468,7 @@
                     <div class="form-actions">
                         <a href="{{ route('schools.instructor.sessions.index', $school) }}" class="btn-cancel">Cancel</a>
                         <button type="submit" class="btn-submit">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 18px; height: 18px; vertical-align: middle; margin-right: 6px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-18 icon-inline-start">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                             </svg>
                             Log Session
@@ -467,7 +482,7 @@
         <div class="guidelines-card">
             <div class="card-header">
                 <h2>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 18px; height: 18px; vertical-align: middle; margin-right: 6px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-18 icon-inline-start">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     Session Guidelines
@@ -477,7 +492,7 @@
                 <ul class="guidelines-list">
                     <li>
                         <span class="icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 16px; height: 16px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-16">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                             </svg>
                         </span>
@@ -485,7 +500,7 @@
                     </li>
                     <li>
                         <span class="icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 16px; height: 16px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-16">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                             </svg>
                         </span>
@@ -493,7 +508,7 @@
                     </li>
                     <li>
                         <span class="icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 16px; height: 16px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-16">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                             </svg>
                         </span>
@@ -501,7 +516,7 @@
                     </li>
                     <li>
                         <span class="icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 16px; height: 16px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-16">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                             </svg>
                         </span>
@@ -509,7 +524,7 @@
                     </li>
                     <li>
                         <span class="icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 16px; height: 16px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-16">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                             </svg>
                         </span>
@@ -517,7 +532,7 @@
                     </li>
                     <li>
                         <span class="icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 16px; height: 16px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-16">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                             </svg>
                         </span>
@@ -534,6 +549,33 @@ document.addEventListener('DOMContentLoaded', function() {
     const enrollmentSelect = document.getElementById('enrollment_id');
     const enrollmentInfo = document.getElementById('enrollmentInfo');
     const sessionTypeSelect = document.getElementById('session_type');
+    const sessionTypeHint = document.getElementById('sessionTypeHint');
+
+    function formatCourseType(courseType) {
+        return courseType ? courseType.charAt(0).toUpperCase() + courseType.slice(1) : '';
+    }
+
+    function updateSessionTypeHint(courseType, selectedLabel) {
+        if (!sessionTypeHint) {
+            return;
+        }
+
+        if (!courseType) {
+            sessionTypeHint.textContent = 'Must match the enrolled course type';
+            return;
+        }
+
+        const selectedSessionType = sessionTypeSelect.value;
+        const readableType = formatCourseType(courseType);
+        const enrollmentLabel = selectedLabel ? selectedLabel.split(' - ')[0].trim() : 'selected enrollment';
+
+        if (selectedSessionType && selectedSessionType !== courseType) {
+            sessionTypeHint.textContent = enrollmentLabel + ' requires ' + readableType + ' sessions.';
+            return;
+        }
+
+        sessionTypeHint.textContent = enrollmentLabel + ' requires ' + readableType + ' sessions.';
+    }
     
     function updateEnrollmentInfo() {
         const selected = enrollmentSelect.selectedOptions[0];
@@ -544,7 +586,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const hoursCompleted = parseFloat(selected.getAttribute('data-hours-completed'));
             const hoursRemaining = Math.max(0, hoursRequired - hoursCompleted);
             
-            document.getElementById('courseType').textContent = courseType ? courseType.charAt(0).toUpperCase() + courseType.slice(1) : '—';
+            document.getElementById('courseType').textContent = formatCourseType(courseType) || '—';
             document.getElementById('hoursCompleted').textContent = hoursCompleted.toFixed(1) + ' hrs';
             document.getElementById('hoursRemaining').textContent = hoursRemaining.toFixed(1) + ' hrs';
             
@@ -552,19 +594,30 @@ document.addEventListener('DOMContentLoaded', function() {
             if (courseType) {
                 sessionTypeSelect.value = courseType;
             }
+
+            updateSessionTypeHint(courseType, selected.textContent);
             
             enrollmentInfo.classList.add('visible');
         } else {
             enrollmentInfo.classList.remove('visible');
             sessionTypeSelect.value = '';
+            updateSessionTypeHint('', '');
         }
     }
     
     enrollmentSelect.addEventListener('change', updateEnrollmentInfo);
+    sessionTypeSelect.addEventListener('change', function() {
+        const selected = enrollmentSelect.selectedOptions[0];
+        const courseType = selected ? selected.getAttribute('data-course-type') : '';
+        const selectedLabel = selected ? selected.textContent : '';
+        updateSessionTypeHint(courseType, selectedLabel);
+    });
     
     // Initialize on page load
     if (enrollmentSelect.value) {
         updateEnrollmentInfo();
+    } else {
+        updateSessionTypeHint('', '');
     }
 });
 </script>

@@ -24,8 +24,9 @@ class EnsureSchoolContext
             abort(403, 'This school portal is currently unavailable.');
         }
 
-        // Skip school validation for logout route to prevent conflicts
-        if ($request->route()->getName() === 'schools.logout') {
+        // Skip school validation for any school logout route to prevent guard conflicts
+        $routeName = (string) optional($request->route())->getName();
+        if ($routeName !== '' && str_ends_with($routeName, '.logout')) {
             return $next($request);
         }
 

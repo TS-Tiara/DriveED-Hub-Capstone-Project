@@ -85,6 +85,13 @@
     .alert-close:hover {
         opacity: 1;
     }
+
+    .alert-close:focus-visible,
+    .btn-close:focus-visible {
+        outline: 2px solid currentColor;
+        outline-offset: 2px;
+        border-radius: 6px;
+    }
     
     .courses-grid {
         display: grid;
@@ -209,6 +216,11 @@
         height: 14px;
         background: {{ $primaryColor }};
         border-radius: 50%;
+    }
+
+    .feature-more-primary {
+        color: {{ $primaryColor }};
+        font-weight: 600;
     }
     
     .course-info {
@@ -387,6 +399,20 @@
     .empty-state p {
         margin: 5px 0;
     }
+
+    .empty-state-title { font-size: 1.1rem; }
+    .empty-state-subtitle { font-size: 0.9rem; }
+    .license-required-note {
+        text-align: center;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        background: #fef3c7;
+        color: #92400e;
+        margin-bottom: 8px;
+    }
+    .alert-warning-compact { font-size: 0.9rem; }
+    .credential-section-hidden { display: none; }
     
     @media (max-width: 768px) {
         .courses-container {
@@ -470,12 +496,13 @@
         background: none;
         border: none;
         color: white;
-        font-size: 1.5rem;
+        font-size: 1.75rem;
+        line-height: 1;
         cursor: pointer;
         opacity: 0.8;
         padding: 0;
-        width: 30px;
-        height: 30px;
+        width: 40px;
+        height: 40px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -488,8 +515,12 @@
         background: rgba(255,255,255,0.1);
     }
     
-    .btn-close::before {
-        content: 'Ã—';
+    @media (max-width: 768px) {
+        .btn-close {
+            width: 44px;
+            height: 44px;
+            font-size: 1.9rem;
+        }
     }
     
     .modal-body {
@@ -667,29 +698,29 @@
 
     @if(session('success'))
         <div class="alert alert-success">
-            <span>âœ“ {{ session('success') }}</span>
-            <button class="alert-close" onclick="this.parentElement.remove()">&times;</button>
+            <span>✓ {{ session('success') }}</span>
+            <button type="button" class="alert-close" aria-label="Dismiss success message" onclick="this.parentElement.remove()">&times;</button>
         </div>
     @endif
     
     @if(session('error'))
         <div class="alert alert-error">
-            <span>âœ• {{ session('error') }}</span>
-            <button class="alert-close" onclick="this.parentElement.remove()">&times;</button>
+            <span>✕ {{ session('error') }}</span>
+            <button type="button" class="alert-close" aria-label="Dismiss error message" onclick="this.parentElement.remove()">&times;</button>
         </div>
     @endif
     
     @if(session('warning'))
         <div class="alert alert-warning">
-            <span>âš  {{ session('warning') }}</span>
-            <button class="alert-close" onclick="this.parentElement.remove()">&times;</button>
+            <span>⚠ {{ session('warning') }}</span>
+            <button type="button" class="alert-close" aria-label="Dismiss warning message" onclick="this.parentElement.remove()">&times;</button>
         </div>
     @endif
     
     @if(session('info'))
         <div class="alert alert-info">
-            <span>â„¹ {{ session('info') }}</span>
-            <button class="alert-close" onclick="this.parentElement.remove()">&times;</button>
+            <span>ℹ {{ session('info') }}</span>
+            <button type="button" class="alert-close" aria-label="Dismiss information message" onclick="this.parentElement.remove()">&times;</button>
         </div>
     @endif
 
@@ -707,7 +738,7 @@
                 @endif
                 
                 @if($course->is_featured)
-                    <span class="featured-badge">â­ Featured</span>
+                    <span class="featured-badge">⭐ Featured</span>
                 @endif
             </div>
             
@@ -732,7 +763,7 @@
                             <li>{{ $feature }}</li>
                         @endforeach
                         @if(count($features) > 3)
-                            <li style="color: {{ $primaryColor }}; font-weight: 600;">+{{ count($features) - 3 }} more</li>
+                            <li class="feature-more-primary">+{{ count($features) - 3 }} more</li>
                         @endif
                     </ul>
                 @endif
@@ -794,7 +825,7 @@
                     </button>
                 @else
                     @if($course->course_type === 'practical' && (!$guest || !$guest->hasVerifiedLicense()))
-                        <div style="text-align: center; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; background: #fef3c7; color: #92400e; margin-bottom: 8px;">
+                        <div class="license-required-note">
                             <i class="fas fa-exclamation-triangle me-1"></i>
                             Student Driver's License required for PDC
                         </div>
@@ -815,8 +846,8 @@
                 <path d="M8.211 2.047a.5.5 0 0 0-.422 0l-7.5 3.5a.5.5 0 0 0 .025.917l7.5 3a.5.5 0 0 0 .372 0L14 7.14V13a1 1 0 0 0-1 1v2h3v-2a1 1 0 0 0-1-1V6.739l.686-.275a.5.5 0 0 0 .025-.917l-7.5-3.5Z"/>
                 <path d="M4.176 9.032a.5.5 0 0 0-.656.327l-.5 1.7a.5.5 0 0 0 .294.605l4.5 1.8a.5.5 0 0 0 .372 0l4.5-1.8a.5.5 0 0 0 .294-.605l-.5-1.7a.5.5 0 0 0-.656-.327L8 10.466 4.176 9.032Z"/>
             </svg>
-            <p style="font-size: 1.1rem;">No courses available at the moment</p>
-            <p style="font-size: 0.9rem;">Please check back later for new courses.</p>
+            <p class="empty-state-title">No courses available at the moment</p>
+            <p class="empty-state-subtitle">Please check back later for new courses.</p>
         </div>
         @endforelse
     </div>
@@ -831,7 +862,7 @@
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title" id="enrollModalLabel{{ $course->id }}">Enroll in {{ $course->title }}</h5>
-                    <button type="button" class="btn-close" onclick="closeEnrollModal({{ $course->id }})" aria-label="Close"></button>
+                    <button type="button" class="btn-close" onclick="closeEnrollModal({{ $course->id }})" aria-label="Close enrollment form">×</button>
                 </div>
                 <div class="modal-body">
                     <!-- Course Type Badge -->
@@ -846,7 +877,7 @@
 
                     @if($course->course_type === 'practical')
                     <!-- PDC License Requirement Notice -->
-                    <div class="alert alert-warning mb-3" style="font-size: 0.9rem;">
+                    <div class="alert alert-warning alert-warning-compact mb-3">
                         <i class="fas fa-id-card me-1"></i>
                         <strong>PDC Requirement:</strong> Practical Driving Courses require a verified Student Driver's License. Only experienced drivers with valid credentials can enroll.
                     </div>
@@ -904,7 +935,7 @@
                     </div>
 
                     <!-- Credential Upload (shown for experienced drivers on practical courses) -->
-                    <div class="mb-3" id="credentialSection{{ $course->id }}" style="display: none;">
+                    <div class="mb-3 credential-section-hidden" id="credentialSection{{ $course->id }}">
                         <label for="credential_file{{ $course->id }}" class="form-label">
                             <strong>Student Driver's License / Credential</strong>
                             @if($course->course_type === 'practical')
@@ -1021,6 +1052,18 @@ window.onclick = function(event) {
         event.target.style.display = 'none';
     }
 }
+
+document.addEventListener('keydown', function(event) {
+    if (event.key !== 'Escape') {
+        return;
+    }
+
+    document.querySelectorAll('.modal').forEach(function(modal) {
+        if (modal.style.display === 'flex') {
+            modal.style.display = 'none';
+        }
+    });
+});
 </script>
 
 @endsection

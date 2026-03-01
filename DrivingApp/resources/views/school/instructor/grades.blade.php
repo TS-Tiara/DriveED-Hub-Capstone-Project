@@ -249,10 +249,47 @@
     .btn-save { color: #10b981; }
     .btn-save:hover { background: #d1fae5; }
 
+    .icon-16 {
+        width: 16px;
+        height: 16px;
+    }
+
+    .icon-18 {
+        width: 18px;
+        height: 18px;
+    }
+
+    .icon-28 {
+        width: 28px;
+        height: 28px;
+    }
+
+    .text-muted {
+        color: #9ca3af;
+    }
+
     .empty-state {
         text-align: center;
         padding: 48px 20px;
         color: #9ca3af;
+    }
+
+    .table-footer {
+        margin-top: 16px;
+        padding: 14px 20px;
+        border-top: 1px solid #f3f4f6;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .pagination-info {
+        font-size: 0.82rem;
+        color: #6b7280;
     }
 
     @media (max-width: 768px) {
@@ -263,6 +300,7 @@
         .grades-table { min-width: 700px; }
         .btn-icon { min-height: 44px; min-width: 44px; padding: 8px 12px; }
         .grade-input { min-height: 44px; padding: 8px; }
+        .table-footer { flex-direction: column; align-items: stretch; }
     }
     
     @media (max-width: 480px) {
@@ -290,7 +328,7 @@
                         <span class="stat-value">{{ $students->count() }}</span>
                     </div>
                     <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:28px;height:28px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-28"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                     </div>
                 </div>
             </div>
@@ -303,7 +341,7 @@
                         <span class="stat-value">{{ $gradedSessions }}</span>
                     </div>
                     <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:28px;height:28px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-28"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     </div>
                 </div>
             </div>
@@ -316,7 +354,7 @@
                         <span class="stat-value">{{ number_format($averageGrade, 1) }}</span>
                     </div>
                     <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:28px;height:28px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-28"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
                     </div>
                 </div>
             </div>
@@ -329,7 +367,7 @@
                         <span class="stat-value">{{ $pendingGrades }}</span>
                     </div>
                     <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:28px;height:28px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-28"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     </div>
                 </div>
             </div>
@@ -355,22 +393,22 @@
         <div class="action-buttons">
             <div class="export-dropdown">
                 <button class="btn-export" onclick="toggleExportMenu()">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:16px;height:16px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                     Export
                 </button>
                 <div class="export-menu" id="exportMenu">
                     <a href="{{ route('schools.instructor.exports.grades.pdf', $school) }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#ef4444" style="width:18px;height:18px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#ef4444" class="icon-18"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                         Download PDF
                     </a>
                     <a href="{{ route('schools.instructor.exports.grades.excel', $school) }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#10b981" style="width:18px;height:18px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#10b981" class="icon-18"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                         Download Excel
                     </a>
                 </div>
             </div>
             <button class="btn-save-all" onclick="saveAllChanges()">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:16px;height:16px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                 Save All
             </button>
         </div>
@@ -433,14 +471,14 @@
                                 @if($lastSession && ($lastSession->scheduled_at || $lastSession->booking_date))
                                     {{ ($lastSession->scheduled_at ?? $lastSession->booking_date)?->format('M d, Y') ?? 'N/A' }}
                                 @else
-                                    <span style="color: #9ca3af;">No sessions</span>
+                                    <span class="text-muted">No sessions</span>
                                 @endif
                             </td>
                             <td>
                                 @if($lastSession && $lastSession->session_grade)
                                     <strong>{{ $lastSession->session_grade }}</strong>
                                 @else
-                                    <span style="color: #9ca3af;">-</span>
+                                    <span class="text-muted">-</span>
                                 @endif
                             </td>
                             <td>
@@ -474,9 +512,14 @@
             </table>
         @endif
     </div>
-    <div class="mt-4">
-        {{ $students->links() }}
-    </div>
+    @if($students->hasPages())
+        <div class="table-footer">
+            <div class="pagination-info">
+                Showing {{ $students->firstItem() }} to {{ $students->lastItem() }} of {{ $students->total() }} students
+            </div>
+            {{ $students->links() }}
+        </div>
+    @endif
 </div>
 
 <script>

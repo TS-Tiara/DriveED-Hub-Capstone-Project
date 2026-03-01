@@ -157,6 +157,55 @@
         opacity: 0.9;
     }
 
+    .error-list-compact {
+        margin: 0;
+        padding-left: 20px;
+    }
+
+    .avatar-container-rel {
+        position: relative;
+    }
+
+    .hidden-file-input {
+        display: none;
+    }
+
+    .password-section {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .password-section-title {
+        margin: 0 0 15px 0;
+        font-size: 0.95rem;
+        color: #374151;
+        font-weight: 600;
+    }
+
+    .password-section-title-note {
+        font-weight: 400;
+        color: #9ca3af;
+        font-size: 0.8rem;
+    }
+
+    .password-error-box {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #dc2626;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        margin-bottom: 12px;
+    }
+
+    .password-error-text {
+        color: #dc2626;
+        font-size: 0.8rem;
+        margin-top: 4px;
+        display: block;
+    }
+
     .edit-form {
         display: none;
         padding: 30px;
@@ -582,7 +631,7 @@
     
     @if($errors->any())
         <div class="error-message">
-            <ul style="margin: 0; padding-left: 20px;">
+            <ul class="error-list-compact">
                 @foreach($errors->all() as $error)
                     <li>{{ $error }}</li>
                 @endforeach
@@ -594,7 +643,7 @@
         <div class="status-badge">{{ ucfirst($student->status ?? 'Active') }}</div>
         
         <div class="profile-header">
-            <div class="profile-avatar" id="avatarContainer" style="position: relative;">
+            <div class="profile-avatar avatar-container-rel" id="avatarContainer">
                 @if($student->profile_picture && file_exists(public_path('storage/' . $student->profile_picture)))
                     <img src="{{ asset('storage/' . $student->profile_picture) }}" alt="{{ $student->name }}" id="avatarImage">
                 @else
@@ -604,7 +653,7 @@
                     <span>Change Photo</span>
                 </div>
             </div>
-            <input type="file" id="profilePictureInput" accept="image/png,image/jpg,image/jpeg,image/webp" style="display: none;" onchange="uploadProfilePicture(this)">
+            <input type="file" id="profilePictureInput" accept="image/png,image/jpg,image/jpeg,image/webp" class="hidden-file-input" onchange="uploadProfilePicture(this)">
             
             <h1 class="profile-title">{{ $student->name ?? 'Student\'s Name' }}</h1>
         </div>
@@ -673,11 +722,11 @@
                     <input type="date" id="date_of_birth" name="date_of_birth" value="{{ old('date_of_birth', $student->date_of_birth) }}">
                 </div>
 
-                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-                    <h4 style="margin: 0 0 15px 0; font-size: 0.95rem; color: #374151; font-weight: 600;">Change Password <span style="font-weight: 400; color: #9ca3af; font-size: 0.8rem;">(optional)</span></h4>
+                <div class="password-section">
+                    <h4 class="password-section-title">Change Password <span class="password-section-title-note">(optional)</span></h4>
                     
                     @error('current_password')
-                        <div style="background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; margin-bottom: 12px;">{{ $message }}</div>
+                        <div class="password-error-box">{{ $message }}</div>
                     @enderror
 
                     <div class="form-group">
@@ -689,7 +738,7 @@
                         <label for="new_password">New Password:</label>
                         <input type="password" id="new_password" name="new_password" placeholder="Min 8 chars, uppercase, lowercase, number">
                         @error('new_password')
-                            <span style="color: #dc2626; font-size: 0.8rem; margin-top: 4px; display: block;">{{ $message }}</span>
+                            <span class="password-error-text">{{ $message }}</span>
                         @enderror
                     </div>
 

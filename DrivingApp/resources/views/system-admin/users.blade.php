@@ -4,14 +4,6 @@
 
 @section('styles')
 <style>
-    @php
-        $totalStudents = isset($students) ? $students->count() : 0;
-        $activeStudents = isset($students) ? $students->where('status', 'active')->count() : 0;
-        $totalInstructors = isset($instructors) ? $instructors->count() : 0;
-        $activeInstructors = isset($instructors) ? $instructors->where('status', 'active')->count() : 0;
-        $totalUsers = $totalStudents + $totalInstructors;
-    @endphp
-
     /* Statistics Cards */
     .stats-row {
         display: grid;
@@ -127,6 +119,14 @@
         gap: 1rem;
         flex-wrap: wrap;
         align-items: flex-end;
+    }
+
+    .filter-form-inline {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        width: 100%;
     }
     
     .filter-group {
@@ -295,6 +295,24 @@
         align-items: center;
     }
 
+    .inline-form {
+        display: inline;
+    }
+
+    .user-name-wrap {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .modal-title-icon {
+        margin-right: 8px;
+    }
+
+    .users-pagination {
+        margin-top: 1rem;
+    }
+
     /* Modal Styles */
     .modal-overlay {
         display: none;
@@ -426,10 +444,10 @@
 
 @section('content')
 @php
-    $totalStudents = isset($students) ? $students->count() : 0;
-    $activeStudents = isset($students) ? $students->where('status', 'active')->count() : 0;
-    $totalInstructors = isset($instructors) ? $instructors->count() : 0;
-    $activeInstructors = isset($instructors) ? $instructors->where('status', 'active')->count() : 0;
+    $totalStudents = $totalStudents ?? (isset($students) ? $students->count() : 0);
+    $activeStudents = $activeStudents ?? (isset($students) ? $students->where('status', 'active')->count() : 0);
+    $totalInstructors = $totalInstructors ?? (isset($instructors) ? $instructors->count() : 0);
+    $activeInstructors = $activeInstructors ?? (isset($instructors) ? $instructors->where('status', 'active')->count() : 0);
     $totalUsers = $totalStudents + $totalInstructors;
     $totalActive = $activeStudents + $activeInstructors;
 @endphp
@@ -460,7 +478,7 @@
 
 <!-- Filter Bar -->
 <div class="filter-bar">
-    <form method="GET" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end; width: 100%;">
+    <form method="GET" class="filter-form-inline">
         <div class="filter-group">
             <label>School</label>
             <select name="school_id">
@@ -483,18 +501,18 @@
 
 <!-- Tabs -->
 <div class="tabs-container">
-    <div class="tabs">
-        <button class="tab active" onclick="switchTab('students')">
+    <div class="tabs" role="tablist" aria-label="User type tabs">
+        <button class="tab active" type="button" data-tab="students" id="students-tab-btn" role="tab" aria-selected="true" aria-controls="students-tab" onclick="switchTab('students', this)">
             <i class="fas fa-user-graduate"></i> Students ({{ $totalStudents }})
         </button>
-        <button class="tab" onclick="switchTab('instructors')">
+        <button class="tab" type="button" data-tab="instructors" id="instructors-tab-btn" role="tab" aria-selected="false" aria-controls="instructors-tab" tabindex="-1" onclick="switchTab('instructors', this)">
             <i class="fas fa-chalkboard-teacher"></i> Instructors ({{ $totalInstructors }})
         </button>
     </div>
 </div>
 
 <!-- Students Tab Content -->
-<div id="students-tab" class="tab-content active">
+<div id="students-tab" class="tab-content active" role="tabpanel" aria-labelledby="students-tab-btn" tabindex="0">
     <div class="card">
         <div class="card-body">
             @if(isset($students) && $students->count() > 0)
@@ -514,7 +532,7 @@
                     @foreach($students as $student)
                     <tr>
                         <td>
-                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <div class="user-name-wrap">
                                 <div class="user-avatar student">
                                     {{ strtoupper(substr($student->name, 0, 1)) }}
                                 </div>
@@ -536,7 +554,7 @@
                         <td>{{ $student->created_at->format('M d, Y') }}</td>
                         <td>
                             <div class="actions-cell">
-                                <form action="{{ route('system-admin.users.toggle-status', ['type' => 'student', 'id' => $student->id]) }}" method="POST" style="display: inline;">
+                                <form action="{{ route('system-admin.users.toggle-status', ['type' => 'student', 'id' => $student->id]) }}" method="POST" class="inline-form">
                                     @csrf
                                     @method('PATCH')
                                     <button type="submit" class="btn-sm btn-toggle {{ $student->status === 'active' ? 'btn-active' : 'btn-inactive' }}" 
@@ -557,6 +575,9 @@
                 </tbody>
             </table>
             </div>
+            <div class="users-pagination">
+                {{ $students->appends(array_merge(request()->query(), ['tab' => 'students']))->links() }}
+            </div>
             @else
             <div class="empty-state">
                 <i class="fas fa-user-graduate"></i>
@@ -568,7 +589,7 @@
 </div>
 
 <!-- Instructors Tab Content -->
-<div id="instructors-tab" class="tab-content">
+<div id="instructors-tab" class="tab-content" role="tabpanel" aria-labelledby="instructors-tab-btn" tabindex="0">
     <div class="card">
         <div class="card-body">
             @if(isset($instructors) && $instructors->count() > 0)
@@ -588,7 +609,7 @@
                     @foreach($instructors as $instructor)
                     <tr>
                         <td>
-                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <div class="user-name-wrap">
                                 <div class="user-avatar instructor">
                                     {{ strtoupper(substr($instructor->name, 0, 1)) }}
                                 </div>
@@ -610,7 +631,7 @@
                         <td>{{ $instructor->created_at->format('M d, Y') }}</td>
                         <td>
                             <div class="actions-cell">
-                                <form action="{{ route('system-admin.users.toggle-status', ['type' => 'instructor', 'id' => $instructor->id]) }}" method="POST" style="display: inline;">
+                                <form action="{{ route('system-admin.users.toggle-status', ['type' => 'instructor', 'id' => $instructor->id]) }}" method="POST" class="inline-form">
                                     @csrf
                                     @method('PATCH')
                                     <button type="submit" class="btn-sm btn-toggle {{ $instructor->status === 'active' ? 'btn-active' : 'btn-inactive' }}" 
@@ -631,6 +652,9 @@
                 </tbody>
             </table>
             </div>
+            <div class="users-pagination">
+                {{ $instructors->appends(array_merge(request()->query(), ['tab' => 'instructors']))->links() }}
+            </div>
             @else
             <div class="empty-state">
                 <i class="fas fa-chalkboard-teacher"></i>
@@ -642,11 +666,11 @@
 </div>
 
 <!-- Delete User Confirmation Modal -->
-<div class="modal-overlay" id="deleteUserModal">
+<div class="modal-overlay" id="deleteUserModal" role="dialog" aria-modal="true" aria-labelledby="deleteUserModalTitle" aria-hidden="true">
     <div class="modal-content modal-danger">
         <div class="modal-header">
-            <h3><i class="fas fa-exclamation-triangle" style="margin-right: 8px;"></i>Delete User</h3>
-            <button type="button" class="modal-close" onclick="closeModal('deleteUserModal')">&times;</button>
+            <h3 id="deleteUserModalTitle"><i class="fas fa-exclamation-triangle modal-title-icon"></i>Delete User</h3>
+            <button type="button" class="modal-close" onclick="closeModal('deleteUserModal')" aria-label="Close delete user modal">&times;</button>
         </div>
         <form id="deleteUserForm" method="POST">
             @csrf
@@ -667,30 +691,62 @@
 </div>
 
 <script>
-function switchTab(tabName) {
+function switchTab(tabName, tabButton = null) {
+    const tabs = Array.from(document.querySelectorAll('.tab'));
+
     // Hide all tab contents
     document.querySelectorAll('.tab-content').forEach(content => {
         content.classList.remove('active');
     });
     
     // Deactivate all tabs
-    document.querySelectorAll('.tab').forEach(tab => {
+    tabs.forEach(tab => {
         tab.classList.remove('active');
+        tab.setAttribute('aria-selected', 'false');
+        tab.setAttribute('tabindex', '-1');
     });
     
     // Show selected tab content
-    document.getElementById(tabName + '-tab').classList.add('active');
+    const selectedPanel = document.getElementById(tabName + '-tab');
+    selectedPanel.classList.add('active');
     
     // Activate clicked tab
-    event.currentTarget.classList.add('active');
+    if (tabButton) {
+        tabButton.classList.add('active');
+        tabButton.setAttribute('aria-selected', 'true');
+        tabButton.setAttribute('tabindex', '0');
+        tabButton.focus();
+    }
+
+    const newUrl = new URL(window.location.href);
+    newUrl.searchParams.set('tab', tabName);
+    window.history.replaceState({}, '', newUrl.toString());
 }
 
+let activeModal = null;
+let modalTrigger = null;
+
 function openModal(id) {
-    document.getElementById(id).classList.add('active');
+    const modal = document.getElementById(id);
+    modalTrigger = document.activeElement;
+    modal.classList.add('active');
+    modal.setAttribute('aria-hidden', 'false');
+    activeModal = modal;
+
+    const firstFocusable = modal.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+    if (firstFocusable) {
+        firstFocusable.focus();
+    }
 }
 
 function closeModal(id) {
-    document.getElementById(id).classList.remove('active');
+    const modal = document.getElementById(id);
+    modal.classList.remove('active');
+    modal.setAttribute('aria-hidden', 'true');
+    activeModal = null;
+    if (modalTrigger) {
+        modalTrigger.focus();
+    }
 }
 
 // Delete confirmation via event delegation (XSS-safe)
@@ -704,11 +760,72 @@ document.addEventListener('click', function(e) {
 
 // Close modal when clicking outside
 document.querySelectorAll('.modal-overlay').forEach(modal => {
+    modal.setAttribute('aria-hidden', 'true');
     modal.addEventListener('click', function(e) {
         if (e.target === this) {
             this.classList.remove('active');
+            this.setAttribute('aria-hidden', 'true');
+            activeModal = null;
+            if (modalTrigger) {
+                modalTrigger.focus();
+            }
         }
     });
 });
+
+document.addEventListener('keydown', function(e) {
+    if (activeModal && e.key === 'Escape') {
+        e.preventDefault();
+        closeModal(activeModal.id);
+        return;
+    }
+
+    if (!activeModal || e.key !== 'Tab') {
+        return;
+    }
+
+    const focusable = Array.from(activeModal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'));
+    if (focusable.length === 0) {
+        return;
+    }
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+
+    if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+    }
+});
+
+document.querySelectorAll('.tab').forEach((tab, index, tabs) => {
+    tab.addEventListener('keydown', function(e) {
+        if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) {
+            return;
+        }
+
+        e.preventDefault();
+        let nextIndex = index;
+
+        if (e.key === 'ArrowRight') nextIndex = (index + 1) % tabs.length;
+        if (e.key === 'ArrowLeft') nextIndex = (index - 1 + tabs.length) % tabs.length;
+        if (e.key === 'Home') nextIndex = 0;
+        if (e.key === 'End') nextIndex = tabs.length - 1;
+
+        const nextTab = tabs[nextIndex];
+        switchTab(nextTab.dataset.tab, nextTab);
+    });
+});
+
+const initialTab = new URLSearchParams(window.location.search).get('tab');
+if (initialTab === 'instructors') {
+    const instructorsTabButton = document.querySelector('.tab[data-tab="instructors"]');
+    if (instructorsTabButton) {
+        switchTab('instructors', instructorsTabButton);
+    }
+}
 </script>
 @endsection

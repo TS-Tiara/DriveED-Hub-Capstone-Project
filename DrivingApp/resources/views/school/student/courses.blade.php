@@ -325,6 +325,29 @@
         background: #9ca3af;
         cursor: not-allowed;
     }
+
+    .feature-more-primary {
+        color: {{ $primaryColor }};
+        font-weight: 600;
+    }
+
+    .btn-enroll-approved {
+        background: #10b981;
+        cursor: default;
+    }
+
+    .btn-enroll-pending {
+        background: #f59e0b;
+        cursor: default;
+    }
+
+    .empty-state-title {
+        font-size: 1.1rem;
+    }
+
+    .empty-state-subtitle {
+        font-size: 0.9rem;
+    }
     
     .empty-state {
         grid-column: 1 / -1;
@@ -426,7 +449,7 @@
                             <li>{{ $feature }}</li>
                         @endforeach
                         @if(count($features) > 3)
-                            <li style="color: {{ $primaryColor }}; font-weight: 600;">+{{ count($features) - 3 }} more</li>
+                            <li class="feature-more-primary">+{{ count($features) - 3 }} more</li>
                         @endif
                     </ul>
                 @endif
@@ -471,9 +494,9 @@
                 @endif
 
                 @if(isset($enrollmentStatuses[$course->id]) && $enrollmentStatuses[$course->id] === 'approved')
-                    <button class="btn-enroll" disabled style="background: #10b981; cursor: default;">Currently Enrolled</button>
+                    <button class="btn-enroll btn-enroll-approved" disabled>Currently Enrolled</button>
                 @elseif(isset($enrollmentStatuses[$course->id]) && $enrollmentStatuses[$course->id] === 'pending')
-                    <button class="btn-enroll" disabled style="background: #f59e0b; cursor: default;">Enrollment Pending</button>
+                    <button class="btn-enroll btn-enroll-pending" disabled>Enrollment Pending</button>
                 @elseif(isset($enrollmentStatuses[$course->id]) && $enrollmentStatuses[$course->id] === 'completed')
                     <button class="btn-enroll" onclick="bookCourse({{ $course->id }})">View Course</button>
                 @elseif($course->isFull())
@@ -493,8 +516,8 @@
                 <path d="M8.211 2.047a.5.5 0 0 0-.422 0l-7.5 3.5a.5.5 0 0 0 .025.917l7.5 3a.5.5 0 0 0 .372 0L14 7.14V13a1 1 0 0 0-1 1v2h3v-2a1 1 0 0 0-1-1V6.739l.686-.275a.5.5 0 0 0 .025-.917l-7.5-3.5Z"/>
                 <path d="M4.176 9.032a.5.5 0 0 0-.656.327l-.5 1.7a.5.5 0 0 0 .294.605l4.5 1.8a.5.5 0 0 0 .372 0l4.5-1.8a.5.5 0 0 0 .294-.605l-.5-1.7a.5.5 0 0 0-.656-.327L8 10.466 4.176 9.032Z"/>
             </svg>
-            <p style="font-size: 1.1rem;">No courses available at the moment</p>
-            <p style="font-size: 0.9rem;">Please check back later for new courses.</p>
+            <p class="empty-state-title">No courses available at the moment</p>
+            <p class="empty-state-subtitle">Please check back later for new courses.</p>
         </div>
         @endforelse
     </div>

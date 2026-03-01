@@ -240,6 +240,11 @@
         gap: 8px;
     }
 
+    .icon-18 {
+        width: 18px;
+        height: 18px;
+    }
+
     .btn-submit:hover {
         transform: translateY(-1px);
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
@@ -272,7 +277,7 @@
             <p class="page-subtitle">Update session details</p>
         </div>
         <a href="{{ route('schools.instructor.sessions.index', $school) }}" class="btn-back">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 18px; height: 18px;">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-18">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
             Back to Sessions
@@ -370,7 +375,7 @@
                 <div class="form-actions">
                     <a href="{{ route('schools.instructor.sessions.index', $school) }}" class="btn-cancel">Cancel</a>
                     <button type="submit" class="btn-submit">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 18px; height: 18px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-18">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                         </svg>
                         Update Session

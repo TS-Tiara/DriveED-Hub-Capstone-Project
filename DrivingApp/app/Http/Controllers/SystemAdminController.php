@@ -534,65 +534,50 @@ class SystemAdminController extends Controller
     public function users(Request $request)
     {
         try {
-            // Get students
-            $studentsQuery = Student::with('school')->select([
-                'id', 'name', 'email', 'school_id', 'status', 'created_at',
-                DB::raw("'student' as user_type")
-            ]);
+            $studentsBase = Student::with('school');
+            $instructorsBase = Instructor::with('school');
 
-            // Get instructors  
-            $instructorsQuery = Instructor::with('school')->select([
-                'id', 'name', 'email', 'school_id', 'status', 'created_at',
-                DB::raw("'instructor' as user_type")
-            ]);
-
-            // Apply school filter if provided
             if ($request->filled('school_id')) {
-                $studentsQuery->where('school_id', $request->school_id);
-                $instructorsQuery->where('school_id', $request->school_id);
+                $studentsBase->where('school_id', $request->school_id);
+                $instructorsBase->where('school_id', $request->school_id);
             }
 
-            // Apply type filter if provided
-            $userType = $request->input('user_type');
-
-            if ($userType === 'student') {
-                $users = $studentsQuery->orderBy('created_at', 'desc')->paginate(50);
+            if ($request->filled('search')) {
+                $search = $request->search;
+                $studentsBase->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
+                });
+                $instructorsBase->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
+                });
             }
-            elseif ($userType === 'instructor') {
-                $users = $instructorsQuery->orderBy('created_at', 'desc')->paginate(50);
-            }
-            else {
-                // Get both - we'll display them separately
-                $students = Student::with('school');
-                $instructors = Instructor::with('school');
 
-                if ($request->filled('school_id')) {
-                    $students->where('school_id', $request->school_id);
-                    $instructors->where('school_id', $request->school_id);
-                }
+            $totalStudents = (clone $studentsBase)->count();
+            $activeStudents = (clone $studentsBase)->where('status', 'active')->count();
+            $totalInstructors = (clone $instructorsBase)->count();
+            $activeInstructors = (clone $instructorsBase)->where('status', 'active')->count();
 
-                if ($request->filled('search')) {
-                    $search = $request->search;
-                    $students->where(function ($q) use ($search) {
-                        $q->where('name', 'like', "%{$search}%")
-                            ->orWhere('email', 'like', "%{$search}%");
-                    });
-                    $instructors->where(function ($q) use ($search) {
-                        $q->where('name', 'like', "%{$search}%")
-                            ->orWhere('email', 'like', "%{$search}%");
-                    });
-                }
+            $students = (clone $studentsBase)
+                ->orderBy('created_at', 'desc')
+                ->paginate(20, ['*'], 'students_page');
 
-                $students = $students->orderBy('created_at', 'desc')->get();
-                $instructors = $instructors->orderBy('created_at', 'desc')->get();
-                $schools = School::orderBy('name')->get();
-
-                return view('system-admin.users', compact('students', 'instructors', 'schools'));
-            }
+            $instructors = (clone $instructorsBase)
+                ->orderBy('created_at', 'desc')
+                ->paginate(20, ['*'], 'instructors_page');
 
             $schools = School::orderBy('name')->get();
 
-            return view('system-admin.users', compact('users', 'schools'));
+            return view('system-admin.users', compact(
+                'students',
+                'instructors',
+                'schools',
+                'totalStudents',
+                'activeStudents',
+                'totalInstructors',
+                'activeInstructors'
+            ));
         }
         catch (\Exception $e) {
             SystemLog::logError(

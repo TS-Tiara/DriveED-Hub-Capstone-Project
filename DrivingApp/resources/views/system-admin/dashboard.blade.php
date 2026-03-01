@@ -3,30 +3,86 @@
 @section('title', 'Dashboard')
 @section('page-title', 'Platform Overview')
 
+@section('styles')
+<style>
+    .dashboard-stat-schools { color: #053d86; }
+    .dashboard-stat-admins { color: #0a4a9e; }
+    .dashboard-stat-users { color: #10b981; }
+    .dashboard-stat-logs { color: #f97316; }
+    .dashboard-btn-small { font-size: 0.875rem; }
+    .dashboard-school-name { font-weight: 600; }
+    .dashboard-slug-code {
+        background: #f3f4f6;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.8rem;
+    }
+    .dashboard-activity-item {
+        display: flex;
+        align-items: start;
+        gap: 12px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #f3f4f6;
+        margin-bottom: 16px;
+    }
+    .dashboard-activity-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-top: 6px;
+        flex-shrink: 0;
+    }
+    .dashboard-dot-error { background: #ef4444; }
+    .dashboard-dot-warning { background: #f59e0b; }
+    .dashboard-dot-normal { background: #10b981; }
+    .dashboard-activity-content {
+        flex: 1;
+        min-width: 0;
+    }
+    .dashboard-activity-message {
+        font-size: 0.875rem;
+        color: #1f2937;
+        word-break: break-word;
+    }
+    .dashboard-activity-meta {
+        margin-top: 4px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        font-size: 0.75rem;
+        color: #9ca3af;
+    }
+    .dashboard-level-badge {
+        background: #f3f4f6;
+        color: #6b7280;
+    }
+</style>
+@endsection
+
 @section('content')
 <!-- Platform Statistics Cards -->
 <div class="stats-grid">
     <div class="stat-card">
         <h3>Registered Schools</h3>
-        <div class="value" style="color: #053d86;">{{ $stats['total_schools'] }}</div>
+        <div class="value dashboard-stat-schools">{{ $stats['total_schools'] }}</div>
         <div class="subtext">Driving schools on platform</div>
     </div>
 
     <div class="stat-card">
         <h3>School Admins</h3>
-        <div class="value" style="color: #0a4a9e;">{{ $stats['total_school_admins'] }}</div>
+        <div class="value dashboard-stat-admins">{{ $stats['total_school_admins'] }}</div>
         <div class="subtext">Managing their schools</div>
     </div>
 
     <div class="stat-card">
         <h3>Total Users</h3>
-        <div class="value" style="color: #10b981;">{{ $stats['total_users'] }}</div>
+        <div class="value dashboard-stat-users">{{ $stats['total_users'] }}</div>
         <div class="subtext">{{ $stats['total_students'] }} students, {{ $stats['total_instructors'] }} instructors</div>
     </div>
 
     <div class="stat-card">
         <h3>System Logs</h3>
-        <div class="value" style="color: #f97316;">{{ $stats['total_logs'] }}</div>
+        <div class="value dashboard-stat-logs">{{ $stats['total_logs'] }}</div>
         <div class="subtext">{{ $stats['error_logs'] }} errors, {{ $stats['warning_logs'] }} warnings</div>
     </div>
 </div>
@@ -35,7 +91,7 @@
 <div class="card">
     <div class="card-header">
         <h3>Registered Schools</h3>
-        <a href="{{ route('system-admin.schools') }}" class="btn btn-primary" style="font-size: 0.875rem;">View All</a>
+        <a href="{{ route('system-admin.schools') }}" class="btn btn-primary dashboard-btn-small">View All</a>
     </div>
     <div class="card-body">
         <div class="table-container">
@@ -54,10 +110,10 @@
                     @forelse($schools as $school)
                     <tr>
                         <td>
-                            <div style="font-weight: 600;">{{ $school->name }}</div>
+                            <div class="dashboard-school-name">{{ $school->name }}</div>
                         </td>
                         <td>
-                            <code style="background: #f3f4f6; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem;">{{ $school->slug }}</code>
+                            <code class="dashboard-slug-code">{{ $school->slug }}</code>
                         </td>
                         <td>{{ $school->students_count }}</td>
                         <td>{{ $school->instructors_count }}</td>
@@ -85,21 +141,21 @@
 <div class="card">
     <div class="card-header">
         <h3>Recent System Logs</h3>
-        <a href="{{ route('system-admin.logs') }}" class="btn btn-primary" style="font-size: 0.875rem;">View All Logs</a>
+        <a href="{{ route('system-admin.logs') }}" class="btn btn-primary dashboard-btn-small">View All Logs</a>
     </div>
     <div class="card-body">
         @forelse($recentActivities->take(10) as $activity)
-        <div style="display: flex; align-items: start; gap: 12px; padding-bottom: 16px; border-bottom: 1px solid #f3f4f6; margin-bottom: 16px;">
-            <div style="width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; background: 
-                @if($activity->level === 'critical' || $activity->level === 'error') #ef4444
-                @elseif($activity->level === 'warning') #f59e0b
-                @else #10b981
-                @endif;">
-            </div>
-            <div style="flex: 1; min-width: 0;">
-                <div style="font-size: 0.875rem; color: #1f2937; word-break: break-word;">{{ Str::limit($activity->message, 100) }}</div>
-                <div style="margin-top: 4px; display: flex; flex-wrap: wrap; gap: 8px; font-size: 0.75rem; color: #9ca3af;">
-                    <span class="badge" style="background: #f3f4f6; color: #6b7280;">{{ $activity->level }}</span>
+        @php
+            $dotClass = in_array($activity->level, ['critical', 'error'])
+                ? 'dashboard-dot-error'
+                : ($activity->level === 'warning' ? 'dashboard-dot-warning' : 'dashboard-dot-normal');
+        @endphp
+        <div class="dashboard-activity-item">
+            <div class="dashboard-activity-dot {{ $dotClass }}"></div>
+            <div class="dashboard-activity-content">
+                <div class="dashboard-activity-message">{{ Str::limit($activity->message, 100) }}</div>
+                <div class="dashboard-activity-meta">
+                    <span class="badge dashboard-level-badge">{{ $activity->level }}</span>
                     <span>{{ $activity->school ? $activity->school->name : 'System' }}</span>
                     <span>•</span>
                     <span>{{ $activity->category }}</span>

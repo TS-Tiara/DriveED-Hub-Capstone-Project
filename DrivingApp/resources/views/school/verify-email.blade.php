@@ -278,6 +278,238 @@
             text-decoration: underline;
         }
 
+        .dev-code-box {
+            background: #fef3c7;
+            border: 2px dashed #f59e0b;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .dev-code-label {
+            font-size: 0.8rem;
+            color: #92400e;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .dev-code-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #78350f;
+            letter-spacing: 8px;
+            font-family: monospace;
+        }
+
+        .dev-code-hint {
+            font-size: 0.75rem;
+            color: #a16207;
+            margin-top: 6px;
+        }
+
+        .center-message {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .inline-success-icon {
+            width: 16px;
+            height: 16px;
+        }
+
+        .resend-inline-form {
+            display: inline;
+        }
+
+        .tc-modal-overlay {
+            display: flex;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .tc-modal-card {
+            background: white;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            max-height: min(92vh, 760px);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            overflow: hidden;
+            animation: slideIn 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tc-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 25px;
+            text-align: center;
+            color: white;
+        }
+
+        .tc-header-icon-wrap {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .tc-header-icon {
+            width: 48px;
+            height: 48px;
+        }
+
+        .tc-header-title {
+            margin: 0;
+            font-size: 1.8rem;
+        }
+
+        .tc-header-subtitle {
+            margin: 10px 0 0 0;
+            opacity: 0.95;
+            font-size: 0.95rem;
+        }
+
+        .tc-warning-banner {
+            background: #fbbf24;
+            color: #78350f;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .tc-content {
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .tc-content-intro {
+            margin-bottom: 25px;
+            color: #4b5563;
+            text-align: center;
+            font-size: 0.95rem;
+        }
+
+        .tc-field-group {
+            margin-bottom: 20px;
+        }
+
+        .tc-field-group-last {
+            margin-bottom: 25px;
+        }
+
+        .tc-field-label {
+            display: block;
+            font-size: 0.75rem;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .tc-field-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #f9fafb;
+            padding: 14px 16px;
+            border-radius: 10px;
+            border: 2px solid #e5e7eb;
+        }
+
+        .tc-field-row-otp {
+            background: #f0fdf4;
+            border-color: #86efac;
+        }
+
+        .tc-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            font-size: 1rem;
+            color: #1f2937;
+            outline: none;
+        }
+
+        .tc-input-mono {
+            font-family: 'Courier New', monospace;
+        }
+
+        .tc-input-otp {
+            font-size: 1.3rem;
+            color: #166534;
+            font-weight: 700;
+            letter-spacing: 4px;
+        }
+
+        .tc-copy-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .tc-copy-btn-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .tc-copy-btn-copied {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .tc-info-box {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .tc-info-row {
+            display: flex;
+            gap: 10px;
+            align-items: start;
+        }
+
+        .tc-info-text {
+            margin: 0;
+            font-size: 0.85rem;
+            color: #1e40af;
+            line-height: 1.5;
+        }
+
+        .tc-close-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
         @media (max-width: 480px) {
             .verify-container {
                 padding: 24px;
@@ -303,6 +535,29 @@
 
             .verify-wrapper {
                 padding: 70px 15px 30px;
+            }
+
+            .tc-modal-overlay {
+                padding: 8px;
+            }
+
+            .tc-modal-card {
+                width: 100%;
+                max-height: calc(100vh - 16px);
+                border-radius: 14px;
+            }
+
+            .tc-header {
+                padding: 16px;
+            }
+
+            .tc-content {
+                padding: 16px;
+            }
+
+            .tc-close-btn {
+                position: sticky;
+                bottom: 0;
             }
         }
     </style>
@@ -331,27 +586,27 @@
         <div class="email-display">{{ $email ?? 'your email' }}</div>
 
         @if(app()->environment('local', 'development', 'testing') && (session('dev_verification_code') || session('_flash.dev_verification_code')))
-            <div style="background: #fef3c7; border: 2px dashed #f59e0b; border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; text-align: center;">
-                <div style="font-size: 0.8rem; color: #92400e; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">
+            <div class="dev-code-box">
+                <div class="dev-code-label">
                     DEV MODE — Verification Code
                 </div>
-                <div style="font-size: 2rem; font-weight: 700; color: #78350f; letter-spacing: 8px; font-family: monospace;">
+                <div class="dev-code-value">
                     {{ session('dev_verification_code') }}
                 </div>
-                <div style="font-size: 0.75rem; color: #a16207; margin-top: 6px;">
+                <div class="dev-code-hint">
                     This is only visible in local/dev environment
                 </div>
             </div>
         @endif
 
         @if(session('success'))
-            <div class="success" style="text-align: center; margin-bottom: 20px;">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 16px; height: 16px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> {{ session('success') }}
+            <div class="success center-message">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="inline-success-icon"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> {{ session('success') }}
             </div>
         @endif
 
         @if(session('info'))
-            <div class="info" style="text-align: center; margin-bottom: 20px;">
+            <div class="info center-message">
                 {{ session('info') }}
             </div>
         @endif
@@ -385,7 +640,7 @@
 
         <div class="resend-section">
             <p class="resend-text">Didn't receive the code?</p>
-            <form method="POST" action="{{ route('schools.verification.resend', $school, false) }}" style="display: inline;">
+            <form method="POST" action="{{ route('schools.verification.resend', $school, false) }}" class="resend-inline-form">
                 @csrf
                 <button type="submit" class="resend-btn">Resend Code</button>
             </form>
@@ -399,72 +654,72 @@
 
     @if(session('test_credentials') && app()->environment('local', 'development', 'testing'))
     <!-- Test Credentials Popup Modal (Development Only) -->
-    <div id="testCredentialsModal" style="display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
-        <div style="background: white; border-radius: 20px; max-width: 500px; width: 90%; box-shadow: 0 25px 50px rgba(0,0,0,0.5); overflow: hidden; animation: slideIn 0.3s ease;">
+    <div id="testCredentialsModal" class="tc-modal-overlay">
+        <div class="tc-modal-card">
             <!-- Header -->
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 25px; text-align: center; color: white;">
-                <div style="font-size: 48px; margin-bottom: 10px;"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 48px; height: 48px;">
+            <div class="tc-header">
+                <div class="tc-header-icon-wrap"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="tc-header-icon">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg></div>
-                <h2 style="margin: 0; font-size: 1.8rem;">Registration Successful!</h2>
-                <p style="margin: 10px 0 0 0; opacity: 0.95; font-size: 0.95rem;">Testing Credentials</p>
+                <h2 class="tc-header-title">Registration Successful!</h2>
+                <p class="tc-header-subtitle">Testing Credentials</p>
             </div>
             
             <!-- Warning Banner -->
-            <div style="background: #fbbf24; color: #78350f; padding: 12px 20px; display: flex; align-items: center; gap: 10px; font-size: 0.85rem; font-weight: 600;">
+            <div class="tc-warning-banner">
                 <span>DEVELOPMENT MODE ONLY - This popup won't appear in production</span>
             </div>
             
             <!-- Content -->
-            <div style="padding: 30px;">
-                <p style="margin-bottom: 25px; color: #4b5563; text-align: center; font-size: 0.95rem;">
+            <div class="tc-content">
+                <p class="tc-content-intro">
                     Save these credentials for testing. You can copy them with one click:
                 </p>
                 
                 <!-- Email -->
-                <div style="margin-bottom: 20px;">
-                    <label style="display: block; font-size: 0.75rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; font-weight: 600;">Email Address</label>
-                    <div style="display: flex; align-items: center; gap: 10px; background: #f9fafb; padding: 14px 16px; border-radius: 10px; border: 2px solid #e5e7eb;">
-                        <input type="text" value="{{ session('test_credentials')['email'] }}" readonly style="flex: 1; background: transparent; border: none; font-family: 'Courier New', monospace; font-size: 1rem; color: #1f2937; outline: none;">
-                        <button onclick="copyText('{{ session('test_credentials')['email'] }}', this)" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; transition: all 0.2s;">
+                <div class="tc-field-group">
+                    <label class="tc-field-label">Email Address</label>
+                    <div class="tc-field-row">
+                        <input type="text" value="{{ session('test_credentials')['email'] }}" readonly class="tc-input tc-input-mono">
+                        <button type="button" onclick="copyText('{{ session('test_credentials')['email'] }}', this)" class="tc-copy-btn">
                             Copy
                         </button>
                     </div>
                 </div>
                 
                 <!-- Password -->
-                <div style="margin-bottom: 20px;">
-                    <label style="display: block; font-size: 0.75rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; font-weight: 600;">Password</label>
-                    <div style="display: flex; align-items: center; gap: 10px; background: #f9fafb; padding: 14px 16px; border-radius: 10px; border: 2px solid #e5e7eb;">
-                        <input type="text" value="{{ session('test_credentials')['password'] }}" readonly style="flex: 1; background: transparent; border: none; font-family: 'Courier New', monospace; font-size: 1rem; color: #1f2937; outline: none;">
-                        <button onclick="copyText('{{ session('test_credentials')['password'] }}', this)" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; transition: all 0.2s;">
+                <div class="tc-field-group">
+                    <label class="tc-field-label">Password</label>
+                    <div class="tc-field-row">
+                        <input type="text" value="{{ session('test_credentials')['password'] }}" readonly class="tc-input tc-input-mono">
+                        <button type="button" onclick="copyText('{{ session('test_credentials')['password'] }}', this)" class="tc-copy-btn">
                             Copy
                         </button>
                     </div>
                 </div>
                 
                 <!-- OTP Code -->
-                <div style="margin-bottom: 25px;">
-                    <label style="display: block; font-size: 0.75rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; font-weight: 600;">Verification Code (OTP)</label>
-                    <div style="display: flex; align-items: center; gap: 10px; background: #f0fdf4; padding: 14px 16px; border-radius: 10px; border: 2px solid #86efac;">
-                        <input type="text" value="{{ session('test_credentials')['otp'] }}" readonly style="flex: 1; background: transparent; border: none; font-family: 'Courier New', monospace; font-size: 1.3rem; color: #166534; font-weight: 700; outline: none; letter-spacing: 4px;">
-                        <button onclick="copyText('{{ session('test_credentials')['otp'] }}', this)" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; transition: all 0.2s;">
+                <div class="tc-field-group tc-field-group-last">
+                    <label class="tc-field-label">Verification Code (OTP)</label>
+                    <div class="tc-field-row tc-field-row-otp">
+                        <input type="text" value="{{ session('test_credentials')['otp'] }}" readonly class="tc-input tc-input-mono tc-input-otp">
+                        <button type="button" onclick="copyText('{{ session('test_credentials')['otp'] }}', this)" class="tc-copy-btn tc-copy-btn-success">
                             Copy
                         </button>
                     </div>
                 </div>
                 
                 <!-- Info Box -->
-                <div style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #3b82f6;">
-                    <div style="display: flex; gap: 10px; align-items: start;">
-                        <p style="margin: 0; font-size: 0.85rem; color: #1e40af; line-height: 1.5;">
+                <div class="tc-info-box">
+                    <div class="tc-info-row">
+                        <p class="tc-info-text">
                             <strong>Quick Tip:</strong> The verification code is already displayed above and in your email. Just copy and paste it into the form below!
                         </p>
                     </div>
                 </div>
                 
                 <!-- Close Button -->
-                <button onclick="closeModal()" style="width: 100%; padding: 14px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; font-size: 1.05rem; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
+                <button type="button" onclick="closeModal()" class="tc-close-btn">
                     Got it! Continue to Verification
                 </button>
             </div>
@@ -488,14 +743,12 @@
         function copyText(text, button) {
             navigator.clipboard.writeText(text).then(() => {
                 const originalText = button.textContent;
-                button.textContent = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 14px; height: 14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> Copied!';
-                button.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+                button.textContent = '✓ Copied!';
+                button.classList.add('tc-copy-btn-copied');
                 
                 setTimeout(() => {
                     button.textContent = originalText;
-                    if (originalText === 'Copy') {
-                        button.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-                    }
+                    button.classList.remove('tc-copy-btn-copied');
                 }, 2000);
             }).catch(err => {
                 console.error('Failed to copy:', err);

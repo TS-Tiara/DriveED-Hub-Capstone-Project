@@ -571,6 +571,107 @@
         line-height: 1.4;
     }
 
+    .header-profile-row {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .header-avatar-img {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid {{ $primaryColor }};
+    }
+
+    .header-avatar-fallback {
+        width: 60px;
+        height: 60px;
+        background: {{ $primaryColor }};
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 24px;
+        font-weight: bold;
+    }
+
+    .header-title-tight {
+        margin-bottom: 4px;
+    }
+
+    .header-email {
+        margin: 0;
+        color: #6b7280;
+        font-size: 0.9rem;
+    }
+
+    .header-branch {
+        margin: 2px 0 0;
+        color: #6b7280;
+        font-size: 0.85rem;
+    }
+
+    .header-branch-icon {
+        margin-right: 4px;
+    }
+
+    .progress-fill-dynamic {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.5s ease;
+    }
+
+    .theory-status-passed {
+        color: #10b981;
+    }
+
+    .theory-status-progress {
+        color: #f59e0b;
+    }
+
+    .mobile-progress-center {
+        text-align: center;
+        margin-bottom: 8px;
+    }
+
+    .mobile-progress-ring-inline {
+        display: inline-block;
+    }
+
+    .mobile-progress-percent {
+        font-size: 1rem;
+    }
+
+    .feedback-card-body {
+        padding: 0;
+    }
+
+    .feedback-empty {
+        padding: 30px;
+        text-align: center;
+        color: #9ca3af;
+    }
+
+    .feedback-empty-icon {
+        width: 40px;
+        height: 40px;
+        fill: #d1d5db;
+        margin: 0 auto 10px;
+    }
+
+    .feedback-empty-text {
+        margin: 0;
+        font-size: 0.9rem;
+    }
+
+    .lesson-instructor-icon {
+        fill: currentColor;
+        margin-right: 4px;
+    }
+
     .grade-badge {
         display: inline-flex;
         align-items: center;
@@ -606,19 +707,19 @@
 
 <div class="student-dashboard">
     <div class="page-header">
-        <div style="display: flex; align-items: center; gap: 16px;">
+        <div class="header-profile-row">
             @if($student->profile_picture)
-                <img src="{{ asset('storage/' . $student->profile_picture) }}" alt="Profile" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 3px solid {{ $primaryColor }};">
+                <img src="{{ asset('storage/' . $student->profile_picture) }}" alt="Profile" class="header-avatar-img">
             @else
-                <div style="width: 60px; height: 60px; background: {{ $primaryColor }}; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; font-weight: bold;">
+                <div class="header-avatar-fallback">
                     {{ strtoupper(substr($student->name, 0, 1)) }}
                 </div>
             @endif
             <div>
-                <h1 class="page-title" style="margin-bottom: 4px;">Welcome, {{ $student->name }}</h1>
-                <p style="margin: 0; color: #6b7280; font-size: 0.9rem;">{{ $student->email }}</p>
+                <h1 class="page-title header-title-tight">Welcome, {{ $student->name }}</h1>
+                <p class="header-email">{{ $student->email }}</p>
                 @if($student->branchRelation)
-                    <p style="margin: 2px 0 0; color: #6b7280; font-size: 0.85rem;"><i class="bi bi-building" style="margin-right: 4px;"></i>{{ $student->branchRelation->name }}</p>
+                    <p class="header-branch"><i class="bi bi-building header-branch-icon"></i>{{ $student->branchRelation->name }}</p>
                 @endif
             </div>
         </div>
@@ -668,7 +769,7 @@
                 </div>
                 <div class="progress-bar-wrapper">
                     <div class="progress-bar-container">
-                        <div class="progress-bar-fill" style="width: {{ $progressPercentage }}%; background: {{ $ringColor }}"></div>
+                        <div class="progress-bar-fill progress-fill-dynamic" data-progress="{{ $progressPercentage }}" data-fill="{{ $ringColor }}"></div>
                     </div>
                 </div>
             </div>
@@ -729,7 +830,7 @@
                 </div>
                 <div class="info-row">
                     <span class="info-label">Theoretical Status</span>
-                    <span class="info-value" style="color: {{ $hasPassedTheoretical ? '#10b981' : '#f59e0b' }}">
+                    <span class="info-value {{ $hasPassedTheoretical ? 'theory-status-passed' : 'theory-status-progress' }}">
                         {{ $hasPassedTheoretical ? 'Passed' : 'In Progress' }}
                     </span>
                 </div>
@@ -791,8 +892,8 @@
         <div class="info-card">
             <div class="card-header">Learning Progress</div>
             <div class="card-body">
-                <div style="text-align: center; margin-bottom: 8px;">
-                    <div class="progress-ring-wrapper" style="display: inline-block;">
+                <div class="mobile-progress-center">
+                    <div class="progress-ring-wrapper mobile-progress-ring-inline">
                         <svg class="progress-ring" width="80" height="80" viewBox="0 0 96 96">
                             <circle class="progress-ring-bg" cx="48" cy="48" r="{{ $ringRadius }}"></circle>
                             <circle class="progress-ring-fill" cx="48" cy="48" r="{{ $ringRadius }}"
@@ -801,7 +902,7 @@
                                 stroke-dashoffset="{{ $ringOffset }}"></circle>
                         </svg>
                         <div class="progress-ring-text">
-                            <div class="progress-ring-percent" style="font-size: 1rem;">{{ $progressPercentage }}%</div>
+                            <div class="progress-ring-percent mobile-progress-percent">{{ $progressPercentage }}%</div>
                             <div class="progress-ring-label">Done</div>
                         </div>
                     </div>
@@ -816,7 +917,7 @@
                 </div>
                 <div class="progress-bar-wrapper">
                     <div class="progress-bar-container">
-                        <div class="progress-bar-fill" style="width: {{ $progressPercentage }}%; background: {{ $ringColor }}"></div>
+                        <div class="progress-bar-fill progress-fill-dynamic" data-progress="{{ $progressPercentage }}" data-fill="{{ $ringColor }}"></div>
                     </div>
                 </div>
             </div>
@@ -835,7 +936,7 @@
                 </div>
                 <div class="info-row">
                     <span class="info-label">Theoretical</span>
-                    <span class="info-value" style="color: {{ $hasPassedTheoretical ? '#10b981' : '#f59e0b' }}">
+                    <span class="info-value {{ $hasPassedTheoretical ? 'theory-status-passed' : 'theory-status-progress' }}">
                         {{ $hasPassedTheoretical ? 'Passed' : 'In Progress' }}
                     </span>
                 </div>
@@ -851,7 +952,7 @@
     <div class="recent-feedback-section">
         <div class="feedback-card">
             <div class="card-header">Recent Grades & Feedback</div>
-            <div class="card-body" style="padding: 0;">
+            <div class="card-body feedback-card-body">
                 @if(($recentGrades ?? collect())->count() > 0)
                     @foreach($recentGrades as $grade)
                         <div class="feedback-item">
@@ -877,11 +978,11 @@
                         </div>
                     @endforeach
                 @else
-                    <div style="padding: 30px; text-align: center; color: #9ca3af;">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width: 40px; height: 40px; fill: #d1d5db; margin: 0 auto 10px;">
+                    <div class="feedback-empty">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="feedback-empty-icon">
                             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
                         </svg>
-                        <p style="margin: 0; font-size: 0.9rem;">No graded sessions yet. Your grades and instructor feedback will appear here.</p>
+                        <p class="feedback-empty-text">No graded sessions yet. Your grades and instructor feedback will appear here.</p>
                     </div>
                 @endif
             </div>
@@ -926,7 +1027,7 @@
                 <div class="lesson-details">
                     <div class="lesson-course-name">{{ $lesson->course->title ?? 'Driving Lesson' }}</div>
                     <div class="lesson-instructor-name">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" style="fill: currentColor; margin-right: 4px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" class="lesson-instructor-icon">
                             <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
                         </svg>
                         {{ $lesson->instructor->name ?? 'Instructor TBA' }}
@@ -937,4 +1038,19 @@
         @endif
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.progress-fill-dynamic').forEach(function (bar) {
+        const value = Number(bar.dataset.progress || 0);
+        const clamped = Math.max(0, Math.min(100, value));
+        bar.style.width = clamped + '%';
+
+        const fill = bar.dataset.fill;
+        if (fill) {
+            bar.style.background = fill;
+        }
+    });
+});
+</script>
 @endsection

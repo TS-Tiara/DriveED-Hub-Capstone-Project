@@ -38,6 +38,12 @@
         color: #1f2937;
         margin: 0;
     }
+
+    .page-subtitle {
+        color: #6b7280;
+        font-size: 0.9rem;
+        margin-top: 5px;
+    }
     
     /* Statistics Cards - Using shared styles from admin-styles.blade.php */
     .stats-grid {
@@ -85,6 +91,38 @@
         position: relative;
         flex: 1;
         max-width: 400px;
+    }
+
+    .control-label {
+        display: block;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #4b5563;
+        margin-bottom: 6px;
+    }
+
+    .action-controls {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .branch-filter-select {
+        padding: 10px 14px;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        background: white;
+        cursor: pointer;
+    }
+
+    .branch-modal-select {
+        width: 100%;
+        padding: 10px 14px;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 0.95rem;
     }
     
     .search-box input {
@@ -134,18 +172,48 @@
         transform: translateY(-2px);
         box-shadow: 0 6px 20px rgba(0,0,0,0.18);
     }
+
+    .icon-24 {
+        width: 24px;
+        height: 24px;
+    }
+
+    .icon-18 {
+        width: 18px;
+        height: 18px;
+    }
+
+    .icon-14 {
+        width: 14px;
+        height: 14px;
+    }
     
     /* Table Styles */
     .table-container {
         background: white;
         border-radius: 12px;
-        overflow: hidden;
+        overflow-x: auto;
+        overflow-y: visible;
+        -webkit-overflow-scrolling: touch;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     
     table {
         width: 100%;
+        min-width: 900px;
         border-collapse: collapse;
+    }
+
+    .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        border: 0;
+        white-space: nowrap;
     }
     
     thead {
@@ -209,6 +277,18 @@
     .role-instructor {
         background: #ede9fe;
         color: #5b21b6;
+    }
+
+    .branch-label {
+        font-size: 0.85rem;
+    }
+
+    .branch-assigned {
+        color: #374151;
+    }
+
+    .branch-unassigned {
+        color: #9ca3af;
     }
 
     .btn-action {
@@ -405,6 +485,18 @@
         font-size: 1.2rem;
         color: #666;
     }
+
+    .pagination-groups {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .pagination-title {
+        font-size: 0.9rem;
+        margin-bottom: 5px;
+        color: #6b7280;
+    }
     
     /* Export Dropdown */
     .export-dropdown {
@@ -562,6 +654,11 @@
             max-width: 100%;
             width: 100%;
         }
+
+        .control-label {
+            font-size: 0.8rem;
+            margin-bottom: 4px;
+        }
         
         .btn-create {
             width: 100%;
@@ -574,10 +671,12 @@
         
         table {
             font-size: 0.85rem;
+            min-width: 780px;
         }
         
         th, td {
             padding: 10px 8px;
+            white-space: nowrap;
         }
         
         .btn-action {
@@ -656,14 +755,20 @@
         
         table {
             font-size: 0.8rem;
+            min-width: 720px;
         }
         
         th, td {
             padding: 8px 6px;
+            white-space: nowrap;
         }
         
         .btn-action {
-            padding: 4px 6px;\n            font-size: 0.75rem;\n        }\n        \n        .form-group label {
+            padding: 4px 6px;
+            font-size: 0.75rem;
+        }
+
+        .form-group label {
             font-size: 0.9rem;
         }
         
@@ -673,6 +778,8 @@
             font-size: 0.95rem;
         }
     }
+
+    /* Pagination styles are inherited from shared admin-styles */
 </style>
 
 <div class="user-management-container">
@@ -680,7 +787,7 @@
     <div class="page-header">
         <div class="page-header-left">
             <h1 class="page-title">User Management</h1>
-            <p style="color: #6b7280; font-size: 0.9rem; margin-top: 5px;">Manage students and instructors in your driving school</p>
+            <p class="page-subtitle">Manage students and instructors in your driving school</p>
         </div>
     </div>
     
@@ -694,7 +801,7 @@
                         <div class="stat-value">{{ $totalUsers }}</div>
                     </div>
                     <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                        <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                         </svg>
                     </div>
@@ -711,7 +818,7 @@
                         <div class="stat-value">{{ $totalActive }}</div>
                     </div>
                     <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                        <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
@@ -728,7 +835,7 @@
                         <div class="stat-value">{{ $totalInactive }}</div>
                     </div>
                     <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                        <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
@@ -745,7 +852,7 @@
                         <div class="stat-value">{{ $totalStudents }}</div>
                     </div>
                     <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                        <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                         </svg>
                     </div>
@@ -762,7 +869,7 @@
                         <div class="stat-value">{{ $totalInstructors }}</div>
                     </div>
                     <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                        <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                         </svg>
                     </div>
@@ -798,11 +905,13 @@
     <div id="usersSection" class="user-section">
         <div class="action-bar">
             <div class="search-box">
-                <input type="text" id="userSearch" placeholder="Search users by name, email, or role..." onkeyup="filterTable('userSearch', 'usersTable')">
+                <label for="userSearch" class="control-label">Search Users</label>
+                <input type="text" id="userSearch" placeholder="Search users by name, email, or role..." onkeyup="filterTable('userSearch', 'usersTable')" aria-label="Search users by name, email, or role">
             </div>
-            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <div class="action-controls">
                 @if(isset($branches) && $branches->count() > 0)
-                <select id="branchFilter" onchange="filterByBranch()" style="padding: 10px 14px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 0.9rem; background: white; cursor: pointer;">
+                <label for="branchFilter" class="control-label">Branch Filter</label>
+                <select id="branchFilter" class="branch-filter-select" onchange="filterByBranch()">
                     <option value="">All Branches</option>
                     <option value="unassigned">Unassigned</option>
                     @foreach($branches as $branch)
@@ -812,9 +921,9 @@
                 @endif
                 <div class="export-dropdown" id="exportDropdown">
                     <button class="btn-export-trigger" onclick="toggleExportDropdown()">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        <svg class="icon-18" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                         Export
-                        <svg class="chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:14px;height:14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        <svg class="chevron icon-14" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                     </button>
                     <div class="export-dropdown-menu">
                         <div class="dropdown-header">Students</div>
@@ -835,11 +944,11 @@
                     </div>
                 </div>
                 <button class="btn-create" onclick="openCreateStudentModal()">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+                    <svg class="icon-18" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
                     Add Student
                 </button>
                 <button class="btn-create" onclick="openCreateInstructorModal()">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+                    <svg class="icon-18" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
                     Add Instructor
                 </button>
             </div>
@@ -906,7 +1015,7 @@
                                 </span>
                             </td>
                             <td>
-                                <span style="font-size: 0.85rem; color: {{ $user->branch_name ? '#374151' : '#9ca3af' }};">{{ $user->branch_name ?? 'Unassigned' }}</span>
+                                <span class="branch-label {{ $user->branch_name ? 'branch-assigned' : 'branch-unassigned' }}">{{ $user->branch_name ?? 'Unassigned' }}</span>
                             </td>
                             <td>
                                 <span class="status-badge status-{{ $user->status }}">
@@ -941,17 +1050,17 @@
             @endif
         </div>
         
-        <div class="mt-4" style="display: flex; flex-direction: column; gap: 15px;">
+        <div class="mt-4 pagination-groups">
             @if($students->hasPages())
                 <div>
-                    <h4 style="font-size: 0.9rem; margin-bottom: 5px; color: #6b7280;">Student Pages:</h4>
+                    <h4 class="pagination-title">Student Pages:</h4>
                     {{ $students->appends(['instructors_page' => request('instructors_page')])->links() }}
                 </div>
             @endif
             
             @if($instructors->hasPages())
                 <div>
-                    <h4 style="font-size: 0.9rem; margin-bottom: 5px; color: #6b7280;">Instructor Pages:</h4>
+                    <h4 class="pagination-title">Instructor Pages:</h4>
                     {{ $instructors->appends(['students_page' => request('students_page')])->links() }}
                 </div>
             @endif
@@ -988,7 +1097,7 @@
             @if(isset($branches) && $branches->count() > 0)
             <div class="form-group">
                 <label>Branch:</label>
-                <select name="branch_id" style="width: 100%; padding: 10px 14px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 0.95rem;">
+                <select name="branch_id" class="branch-modal-select">
                     <option value="">No Branch</option>
                     @foreach($branches as $branch)
                         <option value="{{ $branch->id }}">{{ $branch->name }}</option>
@@ -1031,7 +1140,7 @@
             @if(isset($branches) && $branches->count() > 0)
             <div class="form-group">
                 <label>Branch:</label>
-                <select id="edit_student_branch" name="branch_id" style="width: 100%; padding: 10px 14px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 0.95rem;">
+                <select id="edit_student_branch" name="branch_id" class="branch-modal-select">
                     <option value="">No Branch</option>
                     @foreach($branches as $branch)
                         <option value="{{ $branch->id }}">{{ $branch->name }}</option>
@@ -1076,7 +1185,7 @@
             @if(isset($branches) && $branches->count() > 0)
             <div class="form-group">
                 <label>Branch:</label>
-                <select name="branch_id" style="width: 100%; padding: 10px 14px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 0.95rem;">
+                <select name="branch_id" class="branch-modal-select">
                     <option value="">No Branch</option>
                     @foreach($branches as $branch)
                         <option value="{{ $branch->id }}">{{ $branch->name }}</option>
@@ -1119,7 +1228,7 @@
             @if(isset($branches) && $branches->count() > 0)
             <div class="form-group">
                 <label>Branch:</label>
-                <select id="edit_instructor_branch" name="branch_id" style="width: 100%; padding: 10px 14px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 0.95rem;">
+                <select id="edit_instructor_branch" name="branch_id" class="branch-modal-select">
                     <option value="">No Branch</option>
                     @foreach($branches as $branch)
                         <option value="{{ $branch->id }}">{{ $branch->name }}</option>
