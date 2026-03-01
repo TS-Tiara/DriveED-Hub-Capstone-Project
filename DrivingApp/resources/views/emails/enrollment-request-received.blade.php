@@ -27,7 +27,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1 style="margin: 0;">📋 Enrollment Request Received</h1>
+            <h1 style="margin: 0;">Enrollment Request Received</h1>
         </div>
         <div class="content">
             <p>Dear {{ $enrollment->learner->name }},</p>
@@ -59,7 +59,7 @@
             <h3 style="color: #1f2937; margin-top: 25px;">What's Next?</h3>
             <div class="timeline">
                 <div class="timeline-step">
-                    <div class="timeline-dot done">✓</div>
+                    <div class="timeline-dot done"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 14px; height: 14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg></div>
                     <div class="timeline-text">Request submitted</div>
                 </div>
                 <div class="timeline-step">

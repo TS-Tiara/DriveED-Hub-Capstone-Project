@@ -1046,7 +1046,7 @@
                         @endif
                         
                         @if($course->is_featured)
-                            <span class="featured-badge">⭐ Featured</span>
+                            <span class="featured-badge">Featured</span>
                         @endif
                         
                         <span class="status-badge status-{{ $course->status }}">
@@ -1083,7 +1083,7 @@
                         @if($course->packages && $course->packages->count() > 0)
                             <div class="packages-section">
                                 <div class="packages-header">
-                                    <span class="packages-title">📦 Packages ({{ $course->packages->count() }})</span>
+                                    <span class="packages-title">Packages ({{ $course->packages->count() }})</span>
                                     <button class="btn-add-package" onclick="openPackageModal({{ $course->id }}, null)">
                                         <i class="bi bi-plus"></i> Add
                                     </button>
@@ -1168,7 +1168,7 @@
                                         {{ ucfirst($course->status) }}
                                     </span>
                                     @if($course->is_featured)
-                                        <span class="featured-badge" style="position: static;">⭐ Featured</span>
+                                        <span class="featured-badge" style="position: static;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width: 16px; height: 16px; margin-right: 4px;"><path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z" clip-rule="evenodd" /></svg>Featured</span>
                                     @endif
                                 </div>
                                 @if($course->description)
@@ -1706,7 +1706,7 @@
                 <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin-bottom: 15px;">
                     <span style="background: rgba(255,255,255,0.2); padding: 8px 20px; border-radius: 20px; font-weight: 600;">${course.type}</span>
                     ${course.vehicle_type ? `<span style="background: rgba(255,255,255,0.2); padding: 8px 20px; border-radius: 20px; font-weight: 600;">${course.vehicle_type}</span>` : ''}
-                    ${course.is_featured ? `<span style="background: #f59e0b; padding: 8px 20px; border-radius: 20px; font-weight: 600;">⭐ Featured</span>` : ''}
+                    ${course.is_featured ? `<span style="background: #f59e0b; padding: 8px 20px; border-radius: 20px; font-weight: 600;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width: 16px; height: 16px; margin-right: 4px;"><path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z" clip-rule="evenodd" /></svg>Featured</span>` : ''}
                 </div>
                 ${course.description ? `<p style="font-size: 1.1rem; max-width: 700px; margin: 0 auto; opacity: 0.95;">${course.description}</p>` : ''}
             </div>
@@ -1728,7 +1728,7 @@
 
                 ${course.packages && course.packages.length > 0 ? `
                     <div>
-                        <h3 style="font-size: 1.8rem; font-weight: 700; color: #2d3748; margin-bottom: 25px; text-align: center;">📦 Choose Your Package</h3>
+                        <h3 style="font-size: 1.8rem; font-weight: 700; color: #2d3748; margin-bottom: 25px; text-align: center;">Choose Your Package</h3>
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; max-width: 1000px; margin: 0 auto;">
                             ${course.packages.map(pkg => `
                                 <div style="background: white; border: 3px solid ${pkg.is_popular ? '#f59e0b' : '#e2e8f0'}; border-radius: 12px; padding: 25px; position: relative; transition: all 0.3s; ${pkg.is_popular ? 'box-shadow: 0 8px 25px rgba(245, 158, 11, 0.3);' : ''}">

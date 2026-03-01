@@ -943,7 +943,7 @@
                             <button type="button" class="preview-button" id="button-success-preview" style="padding: 10px 20px; border: none; color: white; cursor: pointer; font-weight: 600;">Success Button</button>
                             <button type="button" class="preview-button" id="button-danger-preview" style="padding: 10px 20px; border: none; color: white; cursor: pointer; font-weight: 600;">Danger Button</button>
                         </div>
-                        <p style="color: #6b7280; font-size: 0.85rem; margin-top: 15px;">🎨 These are preview buttons - they won't submit the form. Adjust colors above to see changes in real-time!</p>
+                        <p style="color: #6b7280; font-size: 0.85rem; margin-top: 15px;">These are preview buttons - they won't submit the form. Adjust colors above to see changes in real-time!</p>
                     </div>
                 </div>
             </div>
@@ -1093,7 +1093,7 @@
                                 <div class="calendar-day-preview" style="min-height: 60px; padding: 8px; background: white; border-radius: 8px; cursor: pointer; transition: all 0.3s;">6</div>
                                 <div class="calendar-day-preview" style="min-height: 60px; padding: 8px; background: white; border-radius: 8px; cursor: pointer; transition: all 0.3s;">7</div>
                             </div>
-                            <p style="color: #6b7280; font-size: 0.85rem; margin-top: 10px;">💡 Hover over calendar days to see the hover effect!</p>
+                            <p style="color: #6b7280; font-size: 0.85rem; margin-top: 10px;">Hover over calendar days to see the hover effect!</p>
                         </div>
                     </div>
                 </div>
@@ -1143,8 +1143,8 @@
                     <div class="preview-content">
                         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                             <span class="preview-badge" id="badge-pending-preview" style="padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; color: white;">Pending</span>
-                            <span class="preview-badge" id="badge-approved-preview" style="padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; color: white;">✓ Approved</span>
-                            <span class="preview-badge" id="badge-cancelled-preview" style="padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; color: white;">✗ Cancelled</span>
+                            <span class="preview-badge" id="badge-approved-preview" style="padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; color: white;"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 16px; height: 16px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> Approved</span>
+                            <span class="preview-badge" id="badge-cancelled-preview" style="padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; color: white;"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 16px; height: 16px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg> Cancelled</span>
                         </div>
                         <p style="color: #6b7280; font-size: 0.85rem; margin-top: 15px;">Used for request statuses throughout the system</p>
                     </div>
@@ -1319,7 +1319,7 @@
                     </div>
 
                     <div style="background: #f0f9ff; padding: 15px; border-radius: 8px; border-left: 4px solid #3b82f6; margin-top: 20px;">
-                        <strong style="color: #1e40af; display: block; margin-bottom: 8px;">💡 Preview Your Changes</strong>
+                        <strong style="color: #1e40af; display: block; margin-bottom: 8px;">Preview Your Changes</strong>
                         <p style="color: #1e3a8a; font-size: 0.9rem; margin: 0;">
                             Visit your login page at <code style="background: #dbeafe; padding: 2px 6px; border-radius: 4px;">/{{ $school->slug }}/login</code> to see your customizations in action!
                         </p>

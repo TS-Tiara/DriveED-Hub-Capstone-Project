@@ -25,17 +25,17 @@ class PhaseProgressionController extends Controller
         $progressions = PhaseProgression::with(['enrollment.student', 'enrollment.course', 'reviewedBy'])
             ->forSchool($school->id)
             ->when($request->status, function ($query, $status) {
-                $query->where('status', $status);
-            })
+            $query->where('status', $status);
+        })
             ->when($request->from_phase, function ($query, $phase) {
-                $query->where('from_phase', $phase);
-            })
+            $query->where('from_phase', $phase);
+        })
             ->latest('requested_at')
             ->paginate(20);
 
         $pendingCount = PhaseProgression::forSchool($school->id)->pending()->count();
 
-        return view('school.admin.phase-progressions.index', compact('school', 'progressions', 'pendingCount'));
+        return view($school->resolveView('admin.phase_progressions.index'), compact('school', 'progressions', 'pendingCount'));
     }
 
     /**
@@ -92,7 +92,8 @@ class PhaseProgressionController extends Controller
                         'success',
                         "/{$school->slug}/student"
                     );
-                } catch (\Exception $e) {
+                }
+                catch (\Exception $e) {
                     Log::warning('Failed to send phase progression notification: ' . $e->getMessage());
                 }
             }
@@ -103,7 +104,8 @@ class PhaseProgressionController extends Controller
                 ->back()
                 ->with('success', "Phase progression approved: {$phaseProgression->getTransitionLabel()}");
 
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             DB::rollBack();
             Log::error('Phase progression approval failed: ' . $e->getMessage());
 
@@ -153,7 +155,8 @@ class PhaseProgressionController extends Controller
                         'warning',
                         "/{$school->slug}/student"
                     );
-                } catch (\Exception $e) {
+                }
+                catch (\Exception $e) {
                     Log::warning('Failed to send phase progression rejection notification: ' . $e->getMessage());
                 }
             }
@@ -164,7 +167,8 @@ class PhaseProgressionController extends Controller
                 ->back()
                 ->with('success', 'Phase progression request rejected.');
 
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             DB::rollBack();
             Log::error('Phase progression rejection failed: ' . $e->getMessage());
 

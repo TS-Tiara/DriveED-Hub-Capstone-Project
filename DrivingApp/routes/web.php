@@ -60,7 +60,7 @@ Route::prefix('system-admin')->name('system-admin.')->group(function () {
     Route::post('/login', [SystemAdminController::class , 'login'])->name('login.submit')->middleware('throttle:5,1');
 
     // Protected routes (system admin only)
-    Route::middleware(['system.admin'])->group(function () {
+    Route::middleware(['system.admin', 'nocache'])->group(function () {
             Route::get('/', [SystemAdminController::class , 'dashboard'])->name('dashboard');
             Route::get('/dashboard', [SystemAdminController::class , 'dashboard']);
 
@@ -130,7 +130,7 @@ Route::prefix('{school:slug}')
 
         // Guest-authenticated routes (must have guest role)
         Route::prefix('guest')->name('guest.')->group(function (): void {
-            Route::middleware(['auth:student', 'guest.role'])->group(function (): void {
+            Route::middleware(['auth:student', 'guest.role', 'nocache'])->group(function (): void {
                     Route::get('/dashboard', [GuestController::class , 'dashboard'])->name('dashboard');
                     Route::get('/courses', [GuestController::class , 'courses'])->name('courses');
                     Route::post('/enroll/{course}', [GuestController::class , 'enroll'])->name('enroll');
@@ -141,7 +141,7 @@ Route::prefix('{school:slug}')
             }
             );
 
-            Route::prefix('admin')->name('admin.')->middleware(['auth:admin', 'redirect.system.admin', 'branch.access'])->group(function (): void {
+            Route::prefix('admin')->name('admin.')->middleware(['auth:admin', 'redirect.system.admin', 'branch.access', 'nocache'])->group(function (): void {
             // Routes that need ajax middleware (existing modal-based pages)
             Route::middleware(['ajax'])->group(function () {
                     Route::get('/', [AdminController::class , 'dashboard'])->name('dashboard');
@@ -350,7 +350,7 @@ Route::prefix('{school:slug}')
                         }
                         );
 
-                        Route::prefix('instructor')->name('instructor.')->middleware(['auth:instructor'])->group(function (): void {
+                        Route::prefix('instructor')->name('instructor.')->middleware(['auth:instructor', 'nocache'])->group(function (): void {
             // Routes with ajax middleware (existing modal pages)
             Route::middleware(['ajax'])->group(function () {
                     Route::get('/', [InstructorController::class , 'dashboard'])->name('dashboard');
@@ -445,7 +445,7 @@ Route::prefix('{school:slug}')
                     }
                     );
 
-                    Route::prefix('student')->name('student.')->middleware(['auth:student', 'student.role'])->group(function (): void {
+                    Route::prefix('student')->name('student.')->middleware(['auth:student', 'student.role', 'nocache'])->group(function (): void {
             // Routes with ajax middleware (existing pages)
             Route::middleware(['ajax'])->group(function () {
                     Route::get('/', [StudentController::class , 'dashboard'])->name('dashboard');

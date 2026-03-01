@@ -17,6 +17,21 @@ class AuthController extends Controller
 {
     public function showLogin(School $school)
     {
+        // Redirect if already authenticated
+        if (Auth::guard('admin')->check()) {
+            return redirect()->route('schools.admin.dashboard', $school);
+        }
+        if (Auth::guard('instructor')->check()) {
+            return redirect()->route('schools.instructor.dashboard', $school);
+        }
+        if (Auth::guard('student')->check()) {
+            $student = Auth::guard('student')->user();
+            if ($student->role === 'guest') {
+                return redirect()->route('schools.guest.dashboard', $school);
+            }
+            return redirect()->route('schools.student.dashboard', $school);
+        }
+
         // Eager load schoolSetting to prevent N+1 query in login view
         $school->load('schoolSetting');
 
@@ -24,6 +39,7 @@ class AuthController extends Controller
             'school' => $school,
         ]);
     }
+
 
     public function login(Request $request, School $school)
     {

@@ -697,7 +697,7 @@
                                             @csrf
                                             <button type="button" class="btn-license-verify" onclick="showConfirm({title:'Verify License',message:'Verify this student\'s license?',type:'success',onConfirm:()=>this.closest('form').submit()})">✓ Verify</button>
                                         </form>
-                                        <button type="button" class="btn-license-reject" onclick="showLicenseRejectModal({{ $request->learner->id }}, '{{ addslashes($request->learner->name) }}')">✗ Reject</button>
+                                        <button type="button" class="btn-license-reject" onclick="showLicenseRejectModal({{ $request->learner->id }}, '{{ addslashes($request->learner->name) }}')"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 14px; height: 14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg> Reject</button>
                                     </div>
                                 @elseif($licenseStatus === 'verified')
                                     @if($request->learner->student_license_path)
@@ -744,7 +744,7 @@
                                         </button>
                                     </form>
                                     <button class="btn btn-reject" onclick="showRejectModal({{ $request->id }})">
-                                        ✗ Reject
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 14px; height: 14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg> Reject
                                     </button>
                                 </div>
                             @elseif($request->status === 'approved')
@@ -756,7 +756,7 @@
                                         </button>
                                     </form>
                                     <button class="btn btn-reject" onclick="showCancelModal({{ $request->id }})">
-                                        ✗ Cancel
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 14px; height: 14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg> Cancel
                                     </button>
                                 </div>
                             @else
@@ -820,7 +820,7 @@
                         @csrf
                         <button type="button" class="btn btn-approve" onclick="document.getElementById('approveForm{{ $request->id }}').submit()">✓ Approve</button>
                     </form>
-                    <button class="btn btn-reject" onclick="showRejectModal({{ $request->id }})">✗ Reject</button>
+                    <button class="btn btn-reject" onclick="showRejectModal({{ $request->id }})"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 14px; height: 14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg> Reject</button>
                 </div>
             @elseif($request->status === 'approved')
                 <div class="mobile-card-actions">
@@ -828,7 +828,7 @@
                         @csrf
                         <button type="button" class="btn btn-approve" onclick="completeEnrollment({{ $request->id }})">✓ Complete</button>
                     </form>
-                    <button class="btn btn-reject" onclick="showCancelModal({{ $request->id }})">✗ Cancel</button>
+                    <button class="btn btn-reject" onclick="showCancelModal({{ $request->id }})"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 14px; height: 14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg> Cancel</button>
                 </div>
             @endif
         </div>

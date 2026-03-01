@@ -1,237 +1,210 @@
-@extends($isAjax ?? false ? 'layouts.ajax' : 'layouts.app')
-
-@section('title', 'Reset Password')
-
-@section('content')
-@php
-    $school = $school ?? $currentSchool ?? null;
-    $settings = $school?->schoolSetting;
-    $primaryColor = $settings->primary_color ?? '#667eea';
-    $secondaryColor = $settings->secondary_color ?? '#764ba2';
-@endphp
-
-<style>
-    body {
-        margin: 0;
-        padding: 0;
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    }
-
-    .reset-container {
-        width: 100%;
-        max-width: 450px;
-        margin: 20px;
-    }
-
-    .reset-card {
-        background: white;
-        border-radius: 16px;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-        padding: 40px;
-    }
-
-    .logo-section {
-        text-align: center;
-        margin-bottom: 30px;
-    }
-
-    .logo-section h1 {
-        font-size: 28px;
-        font-weight: 700;
-        color: #1f2937;
-        margin: 15px 0 10px 0;
-    }
-
-    .logo-section p {
-        color: #6b7280;
-        font-size: 15px;
-        margin: 0;
-    }
-
-    .form-group {
-        margin-bottom: 20px;
-    }
-
-    .form-label {
-        display: block;
-        font-size: 14px;
-        font-weight: 600;
-        color: #374151;
-        margin-bottom: 8px;
-    }
-
-    .form-control {
-        width: 100%;
-        padding: 12px 16px;
-        border: 2px solid #e5e7eb;
-        border-radius: 8px;
-        font-size: 15px;
-        transition: all 0.3s ease;
-        box-sizing: border-box;
-    }
-
-    .form-control:focus {
-        outline: none;
-        border-color: {{ $primaryColor }};
-        box-shadow: 0 0 0 3px {{ $primaryColor }}20;
-    }
-
-    .btn-primary {
-        width: 100%;
-        padding: 14px;
-        background: {{ $primaryColor }};
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-size: 16px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        margin-top: 10px;
-    }
-
-    .btn-primary:hover {
-        background: {{ $secondaryColor }};
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-    }
-
-    .alert {
-        padding: 12px 16px;
-        border-radius: 8px;
-        margin-bottom: 20px;
-        font-size: 14px;
-    }
-
-    .alert-danger {
-        background: #fee2e2;
-        color: #991b1b;
-        border: 1px solid #fca5a5;
-    }
-
-    .password-strength {
-        margin-top: 8px;
-        font-size: 12px;
-    }
-
-    .strength-bar {
-        height: 4px;
-        background: #e5e7eb;
-        border-radius: 2px;
-        margin-top: 8px;
-        overflow: hidden;
-    }
-
-    .strength-fill {
-        height: 100%;
-        transition: all 0.3s ease;
-        background: #dc2626;
-    }
-
-    .strength-weak { width: 33%; background: #dc2626; }
-    .strength-medium { width: 66%; background: #f59e0b; }
-    .strength-strong { width: 100%; background: #10b981; }
-</style>
-
-<div class="reset-container">
-    <div class="reset-card">
-        <div class="logo-section">
-            <h1>🔑 Reset Password</h1>
-            <p>{{ $school->name }}</p>
-        </div>
-
-        @if($errors->any())
-            <div class="alert alert-danger">
-                @foreach($errors->all() as $error)
-                    <div>{{ $error }}</div>
-                @endforeach
-            </div>
-        @endif
-
-        <form method="POST" action="{{ route('schools.password.update', $school) }}">
-            @csrf
-            <input type="hidden" name="token" value="{{ $token }}">
-            <input type="hidden" name="email" value="{{ $email }}">
-            <input type="hidden" name="user_type" value="{{ $type }}">
-
-            <div class="form-group">
-                <label class="form-label" for="email_display">Email Address</label>
-                <input type="email" 
-                       class="form-control" 
-                       id="email_display" 
-                       value="{{ $email }}"
-                       disabled>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label" for="password">New Password</label>
-                <input type="password" 
-                       class="form-control" 
-                       id="password" 
-                       name="password" 
-                       placeholder="Enter new password (min. 8 characters)"
-                       required
-                       minlength="8">
-                <div class="strength-bar">
-                    <div class="strength-fill" id="strengthBar"></div>
-                </div>
-                <div class="password-strength" id="strengthText"></div>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label" for="password_confirmation">Confirm New Password</label>
-                <input type="password" 
-                       class="form-control" 
-                       id="password_confirmation" 
-                       name="password_confirmation" 
-                       placeholder="Re-enter your new password"
-                       required
-                       minlength="8">
-            </div>
-
-            <button type="submit" class="btn-primary">
-                Reset Password
-            </button>
-        </form>
-    </div>
-</div>
-
-<script>
-    // Password strength checker
-    const passwordInput = document.getElementById('password');
-    const strengthBar = document.getElementById('strengthBar');
-    const strengthText = document.getElementById('strengthText');
-
-    passwordInput.addEventListener('input', function() {
-        const password = this.value;
-        let strength = 0;
-
-        if (password.length >= 8) strength++;
-        if (password.length >= 12) strength++;
-        if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
-        if (/[0-9]/.test(password)) strength++;
-        if (/[^a-zA-Z0-9]/.test(password)) strength++;
-
-        strengthBar.className = 'strength-fill';
+<!DOCTYPE html>
+<html>
+<head>
+    @php
+        $school = $school ?? $currentSchool ?? null;
+        $slug = $school?->slug ?? 'default';
+        $settings = $school?->schoolSetting;
         
-        if (strength <= 2) {
-            strengthBar.classList.add('strength-weak');
-            strengthText.textContent = 'Password strength: Weak';
-            strengthText.style.color = '#dc2626';
-        } else if (strength <= 3) {
-            strengthBar.classList.add('strength-medium');
-            strengthText.textContent = 'Password strength: Medium';
-            strengthText.style.color = '#f59e0b';
+        // School branding
+        $schoolName = $school->name ?? 'DriveEd Hub';
+        
+        // Custom colors
+        $primaryColor = $settings?->primary_color ?? '#2563eb';
+        $secondaryColor = $settings?->secondary_color ?? '#f59e0b';
+        
+        // Header settings
+        $headerHeight = $settings?->login_header_height ?? 60;
+        $headerTextColor = $settings?->login_header_text_color ?? '#ffffff';
+        $headerShadow = $settings?->login_header_shadow ?? true;
+        $headerBgType = $settings?->login_header_bg_type ?? 'gradient';
+        $headerBgColor = $settings?->login_header_bg_color;
+        $headerBgImage = $settings?->login_header_bg_image;
+        $useGradient = $settings?->use_gradient_header ?? false;
+
+        if ($headerBgType === 'solid' && $headerBgColor) {
+            $headerBackground = $headerBgColor;
+        } elseif ($headerBgType === 'image' && $headerBgImage) {
+            $headerBackground = "url('" . asset('storage/' . $headerBgImage) . "')";
+        } elseif ($useGradient) {
+            $headerBackground = "linear-gradient(135deg, {$primaryColor} 0%, {$secondaryColor} 100%)";
         } else {
-            strengthBar.classList.add('strength-strong');
-            strengthText.textContent = 'Password strength: Strong';
-            strengthText.style.color = '#10b981';
+            $headerBackground = $primaryColor;
         }
-    });
-</script>
-@endsection
+        
+        // Page background
+        $pageBgType = $settings?->login_page_bg_type ?? 'color';
+        $pageBgColor = $settings?->login_page_bg_color ?? '#f5f5f5';
+        $pageBgImage = $settings?->login_page_bg_image;
+        $pageBgOpacity = $settings?->login_page_bg_opacity ?? 100;
+        
+        if ($pageBgType === 'image' && $pageBgImage) {
+            $pageBackground = "url('" . asset('storage/' . $pageBgImage) . "')";
+        } else {
+            $pageBackground = $pageBgColor;
+        }
+    @endphp
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{{ $schoolName }} - Reset Password</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            @if($pageBgType === 'image' && $pageBgImage)
+            background: {{ $pageBackground }} no-repeat center center fixed;
+            background-size: cover;
+            @else
+            background: {{ $pageBackground }};
+            @endif
+            opacity: {{ $pageBgOpacity / 100 }};
+            z-index: -1;
+        }
+        .login-header {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: {{ $headerHeight }}px;
+            background: {{ $headerBackground }};
+            color: {{ $headerTextColor }};
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 25px;
+            @if($headerShadow) box-shadow: 0 3px 20px rgba(0,0,0,0.15); @endif
+        }
+        .header-school-name { font-size: 20px; font-weight: 600; text-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+        .main-content {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: calc(100vh - {{ $headerHeight }}px);
+            margin-top: {{ $headerHeight }}px;
+            padding: 15px;
+        }
+        .login-container {
+            background: rgba(255, 255, 255, 0.98);
+            padding: 35px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            width: 420px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .login-title { font-size: 22px; font-weight: bold; color: #1f2937; margin-bottom: 25px; }
+        .alert { padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; text-align: left; }
+        .alert-error { background-color: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+        .form-group { margin-bottom: 20px; text-align: left; }
+        .form-label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 8px; }
+        input[type="email"], input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            background: rgba(255, 255, 255, 0.9);
+        }
+        input[type="email"]:disabled { background: #f3f4f6; color: #6b7280; }
+        input[type="password"]:focus { outline: none; border-color: {{ $primaryColor }}; box-shadow: 0 0 0 3px {{ $primaryColor }}20; }
+        .login-button {
+            width: 100%;
+            padding: 14px;
+            background: {{ $primaryColor }};
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            margin-top: 10px;
+        }
+        .login-button:hover { opacity: 0.9; }
+        .requirements { font-size: 11px; color: #6b7280; margin-top: 8px; line-height: 1.4; }
+        .strength-bar { height: 4px; background: #e5e7eb; border-radius: 2px; margin-top: 8px; overflow: hidden; }
+        .strength-fill { height: 100%; transition: all 0.3s ease; width: 0; }
+        .strength-weak { background: #dc2626; width: 33%; }
+        .strength-medium { background: #f59e0b; width: 66%; }
+        .strength-strong { background: #10b981; width: 100%; }
+    </style>
+</head>
+<body>
+    <nav class="login-header">
+        <div class="header-school-name">{{ $schoolName }}</div>
+    </nav>
+
+    <div class="main-content">
+        <div class="login-container">
+            <h2 class="login-title">Reset Password</h2>
+
+            @if($errors->any())
+                <div class="alert alert-error">
+                    @foreach($errors->all() as $error)
+                        <div>{{ $error }}</div>
+                    @endforeach
+                </div>
+            @endif
+
+            <form method="POST" action="{{ route('schools.password.update', $school) }}">
+                @csrf
+                <input type="hidden" name="token" value="{{ $token }}">
+                <input type="hidden" name="email" value="{{ $email }}">
+                <input type="hidden" name="user_type" value="{{ $type }}">
+
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" value="{{ $email }}" disabled>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="password">New Password</label>
+                    <input type="password" id="password" name="password" placeholder="Enter secure password" required autofocus>
+                    <div class="strength-bar"><div id="strengthBar" class="strength-fill"></div></div>
+                    <div class="requirements">
+                        Must be at least 8 characters with at least one uppercase letter, one number, and one special character.
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="password_confirmation">Confirm Password</label>
+                    <input type="password" id="password_confirmation" name="password_confirmation" placeholder="Repeat your new password" required>
+                </div>
+
+                <button type="submit" class="login-button">Update Password</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const passwordInput = document.getElementById('password');
+        const strengthBar = document.getElementById('strengthBar');
+
+        passwordInput.addEventListener('input', function() {
+            const password = this.value;
+            let strength = 0;
+            if (password.length >= 8) strength++;
+            if (/[A-Z]/.test(password)) strength++;
+            if (/[0-9]/.test(password)) strength++;
+            if (/[^a-zA-Z0-9]/.test(password)) strength++;
+
+            strengthBar.className = 'strength-fill';
+            if (password.length > 0) {
+                if (strength <= 2) strengthBar.classList.add('strength-weak');
+                else if (strength === 3) strengthBar.classList.add('strength-medium');
+                else strengthBar.classList.add('strength-strong');
+            }
+        });
+    </script>
+</body>
+</html>

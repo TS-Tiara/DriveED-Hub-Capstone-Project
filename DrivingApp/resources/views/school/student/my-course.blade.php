@@ -487,7 +487,7 @@
         {{-- Session History --}}
         @if($sessionCompletions->count() > 0)
             <div class="course-card">
-                <h3 class="section-title">📝 Session History</h3>
+                <h3 class="section-title">Session History</h3>
                 
                 <div class="sessions-section">
                     @foreach($sessionCompletions->sortByDesc('session_date')->take(10) as $session)
@@ -547,7 +547,7 @@
         {{-- Available Courses --}}
         @if($availableCourses->count() > 0)
             <div class="course-card">
-                <h3 class="section-title">📋 Available Courses</h3>
+                <h3 class="section-title">Available Courses</h3>
                 <div class="available-courses">
                     @foreach($availableCourses as $availableCourse)
                         <div class="available-course-item">
