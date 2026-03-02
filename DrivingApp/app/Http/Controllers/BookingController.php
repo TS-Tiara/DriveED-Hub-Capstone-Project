@@ -29,11 +29,16 @@ class BookingController extends Controller
                 'timeSlot:id,date,start_time,end_time'
             ]);
 
+        // Base query for statistics cards (before status/date filters)
+        $statsQuery = Booking::where('school_id', $school->id);
+
         // Filter by role
         if (Auth::guard('student')->check()) {
             $query->where('student_id', Auth::guard('student')->id());
+            $statsQuery->where('student_id', Auth::guard('student')->id());
         } elseif (Auth::guard('instructor')->check()) {
             $query->where('instructor_id', Auth::guard('instructor')->id());
+            $statsQuery->where('instructor_id', Auth::guard('instructor')->id());
         }
 
         // Additional filters
@@ -47,7 +52,18 @@ class BookingController extends Controller
             $query->past();
         }
 
-        $bookings = $query->latest('booking_date')->get();
+        $bookings = $query
+            ->latest('booking_date')
+            ->paginate(15)
+            ->withQueryString();
+
+        $stats = [
+            'total' => (clone $statsQuery)->count(),
+            'scheduled' => (clone $statsQuery)->whereIn('status', ['scheduled', 'confirmed'])->count(),
+            'completed' => (clone $statsQuery)->where('status', 'completed')->count(),
+            'cancelled' => (clone $statsQuery)->whereIn('status', ['cancelled', 'no_show', 'no-show'])->count(),
+            'pending' => (clone $statsQuery)->where('status', 'pending')->count(),
+        ];
 
         // Only return JSON if explicitly requested via Accept header
         if (request()->expectsJson()) {
@@ -59,7 +75,7 @@ class BookingController extends Controller
 
         // Only admin has bookings list view
         $view = 'admin.bookings';
-        return view($school->resolveView($view), compact('school', 'bookings'));
+        return view($school->resolveView($view), compact('school', 'bookings', 'stats'));
     }
 
     /**
