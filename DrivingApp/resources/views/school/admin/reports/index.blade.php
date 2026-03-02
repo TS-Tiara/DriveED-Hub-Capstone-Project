@@ -522,6 +522,15 @@
 
     <!-- Time Period Filter -->
     @php $currentPeriod = request('period', 'all'); @endphp
+    @php
+        $periodLabel = match($currentPeriod) {
+            'today' => 'Today',
+            'week' => 'This Week',
+            'month' => 'This Month',
+            'year' => 'This Year',
+            default => 'All Time',
+        };
+    @endphp
     <div class="period-filter">
         <button class="period-btn {{ $currentPeriod === 'today' ? 'active' : '' }}" onclick="filterPeriod('today')">Today</button>
         <button class="period-btn {{ $currentPeriod === 'week' ? 'active' : '' }}" onclick="filterPeriod('week')">This Week</button>
@@ -627,17 +636,11 @@
                     <div class="value" style="color: #10b981;">{{ $analytics['active_students'] }}</div>
                 </div>
                 <div class="stat-box">
-                    <div class="label">This Month</div>
+                    <div class="label">{{ $periodLabel }}</div>
                     <div class="value">{{ $analytics['enrollments_this_month'] }}</div>
                 </div>
-                <div class="stat-box">
-                    <div class="label">Growth</div>
-                    <div class="value" style="color: {{ $analytics['enrollment_growth'] >= 0 ? '#10b981' : '#ef4444' }};">
-                        {{ $analytics['enrollment_growth'] >= 0 ? '+' : '' }}{{ $analytics['enrollment_growth'] }}%
-                    </div>
-                </div>
             </div>
-            
+                        <div class="stat-label">{{ $periodLabel }} Schedules</div>
             <table class="reports-table">
                 <thead>
                     <tr>
@@ -693,7 +696,7 @@
                     <div class="value">{{ $analytics['total_all_bookings'] }}</div>
                 </div>
                 <div class="stat-box">
-                    <div class="label">This Month</div>
+                    <div class="label">{{ $periodLabel }}</div>
                     <div class="value">{{ $analytics['total_bookings_this_month'] }}</div>
                 </div>
                 <div class="stat-box">
@@ -725,7 +728,7 @@
                                 'completed' => 'badge-success',
                                 'confirmed' => 'badge-info',
                                 'pending' => 'badge-warning',
-                                'cancelled', 'no-show' => 'badge-danger',
+                                'cancelled', 'no-show', 'no_show' => 'badge-danger',
                                 default => 'badge-secondary'
                             };
                         @endphp
@@ -948,7 +951,7 @@
                                     'completed' => 'badge-success',
                                     'confirmed' => 'badge-info',
                                     'pending' => 'badge-warning',
-                                    'cancelled' => 'badge-danger',
+                                    'cancelled', 'no-show', 'no_show' => 'badge-danger',
                                     default => 'badge-secondary'
                                 } }}">{{ ucfirst($statusData->status) }}</span>
                             </td>

@@ -338,10 +338,14 @@ class GuestController extends Controller
                 Storage::disk('public')->delete($guest->student_license_path);
             }
 
-            $path = $request->file('student_license')->store('student-licenses', 'public');
+            $uploadedFile = $request->file('student_license');
+            $fileData = base64_encode(file_get_contents($uploadedFile->getRealPath()));
 
             $guest->update([
-                'student_license_path' => $path,
+                'student_license_path' => null,
+                'student_license_data' => $fileData,
+                'student_license_mime_type' => $uploadedFile->getMimeType(),
+                'student_license_filename' => $uploadedFile->getClientOriginalName(),
                 'student_license_status' => 'pending',
                 'student_license_verified_at' => null,
                 'student_license_verified_by' => null,
@@ -351,7 +355,7 @@ class GuestController extends Controller
             Log::info('Student license uploaded', [
                 'student_id' => $guest->id,
                 'school_id' => $school->id,
-                'path' => $path,
+                'storage' => 'database',
             ]);
 
             // Notify admins about pending license verification

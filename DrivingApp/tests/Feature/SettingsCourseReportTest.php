@@ -262,21 +262,22 @@ describe('Admin Course Package Management', function () {
 // ===========================================
 describe('Admin Reports Management', function () {
     
-    test('admin can view reports index', function () {
+    test('admin can view unified reports analytics index', function () {
         $school = School::factory()->create();
         $admin = Admin::factory()->create([
             'school_id' => $school->id,
             'is_active' => true,
         ]);
         
-        // The route is schools.admin.reports.index
+        // Canonical unified analytics route
         $response = $this->actingAs($admin, 'admin')
             ->get(route('schools.admin.reports.index', $school));
         
-        $response->assertStatus(200);
+        $response->assertStatus(200)
+            ->assertSee('Reports &amp; Analytics', false);
     });
 
-    test('admin can view student reports', function () {
+    test('student reports route resolves to unified analytics page', function () {
         $school = School::factory()->create();
         $admin = Admin::factory()->create([
             'school_id' => $school->id,
@@ -287,10 +288,11 @@ describe('Admin Reports Management', function () {
         $response = $this->actingAs($admin, 'admin')
             ->get(route('schools.admin.reports.students', $school));
         
-        $response->assertStatus(200);
+        $response->assertStatus(200)
+            ->assertSee('Reports &amp; Analytics', false);
     });
 
-    test('admin can view instructor reports', function () {
+    test('instructor reports route resolves to unified analytics page', function () {
         $school = School::factory()->create();
         $admin = Admin::factory()->create([
             'school_id' => $school->id,
@@ -301,21 +303,23 @@ describe('Admin Reports Management', function () {
         $response = $this->actingAs($admin, 'admin')
             ->get(route('schools.admin.reports.instructors', $school));
         
-        $response->assertStatus(200);
+        $response->assertStatus(200)
+            ->assertSee('Reports &amp; Analytics', false);
     });
 
-    test('admin can view logs', function () {
+    test('logs reports route resolves to unified analytics page', function () {
         $school = School::factory()->create();
         $admin = Admin::factory()->create([
             'school_id' => $school->id,
             'is_active' => true,
         ]);
         
-        // The route is schools.admin.reports.logs
+        // Legacy route retained for compatibility, now unified to analytics
         $response = $this->actingAs($admin, 'admin')
             ->get(route('schools.admin.reports.logs', $school));
         
-        $response->assertStatus(200);
+        $response->assertStatus(200)
+            ->assertSee('Reports &amp; Analytics', false);
     });
 });
 

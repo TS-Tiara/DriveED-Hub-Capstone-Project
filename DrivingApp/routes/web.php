@@ -183,12 +183,9 @@ Route::prefix('{school:slug}')
                 Route::patch('/branches/{id}/toggle', [BranchController::class, 'toggleActive'])->name('branches.toggle');
                 Route::delete('/branches/{id}', [BranchController::class, 'destroy'])->name('branches.destroy');
 
-                Route::get('/reports/students', [AdminController::class, 'studentReports'])->name('reports.students');
-                Route::get('/reports/instructors', [AdminController::class, 'instructorReports'])->name('reports.instructors');
-                Route::get('/reports/logs', [AdminController::class, 'logs'])->name('reports.logs');
-                
-                // Reports - consolidated in single index view
-                Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+                Route::get('/reports/students', [ReportController::class, 'index'])->name('reports.students');
+                Route::get('/reports/instructors', [ReportController::class, 'index'])->name('reports.instructors');
+                Route::get('/reports/logs', [ReportController::class, 'index'])->name('reports.logs');
                 
                 // Report exports (CSV)
                 Route::get('/reports/export/students', [ReportController::class, 'exportStudents'])->name('reports.export.students');
@@ -235,7 +232,7 @@ Route::prefix('{school:slug}')
                     });
 
                     // School-admin-only routes: settings, financial reports
-                    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index.protected');
+                    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
                 });
 
                 // Student action requests (secretaries create, school admins approve/deny)
@@ -264,6 +261,7 @@ Route::prefix('{school:slug}')
                 Route::post('/{enrollmentRequest}/theoretical-passed', [EnrollmentRequestController::class, 'markTheoreticalPassed'])->name('theoreticalPassed');
                 
                 // Student license verification
+                Route::get('/student/{student}/view-license', [EnrollmentRequestController::class, 'viewLicense'])->name('viewLicense');
                 Route::post('/student/{student}/verify-license', [EnrollmentRequestController::class, 'verifyLicense'])->name('verifyLicense');
                 Route::post('/student/{student}/reject-license', [EnrollmentRequestController::class, 'rejectLicense'])->name('rejectLicense');
             });

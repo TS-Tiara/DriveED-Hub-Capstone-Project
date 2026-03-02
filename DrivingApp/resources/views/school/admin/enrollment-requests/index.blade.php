@@ -518,7 +518,7 @@
                 <div class="stat-header">
                     <div>
                         <div class="stat-label">All Enrollments</div>
-                        <div class="stat-value">{{ $allRequests->count() }}</div>
+                        <div class="stat-value">{{ $allRequestsCount }}</div>
                     </div>
                     <div class="stat-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
@@ -533,7 +533,7 @@
                 <div class="stat-header">
                     <div>
                         <div class="stat-label">Pending Approval</div>
-                        <div class="stat-value">{{ $pendingRequests->count() }}</div>
+                        <div class="stat-value">{{ $pendingRequestsCount }}</div>
                     </div>
                     <div class="stat-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
@@ -548,7 +548,7 @@
                 <div class="stat-header">
                     <div>
                         <div class="stat-label">Active</div>
-                        <div class="stat-value">{{ $approvedRequests->count() }}</div>
+                        <div class="stat-value">{{ $approvedRequestsCount }}</div>
                     </div>
                     <div class="stat-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
@@ -563,7 +563,7 @@
                 <div class="stat-header">
                     <div>
                         <div class="stat-label">Completed</div>
-                        <div class="stat-value">{{ $completedRequests->count() }}</div>
+                        <div class="stat-value">{{ $completedRequestsCount }}</div>
                     </div>
                     <div class="stat-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
@@ -578,7 +578,7 @@
                 <div class="stat-header">
                     <div>
                         <div class="stat-label">Cancelled</div>
-                        <div class="stat-value">{{ $cancelledRequests->count() }}</div>
+                        <div class="stat-value">{{ $cancelledRequestsCount }}</div>
                     </div>
                     <div class="stat-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
@@ -593,7 +593,7 @@
                 <div class="stat-header">
                     <div>
                         <div class="stat-label">Rejected</div>
-                        <div class="stat-value">{{ $rejectedRequests->count() }}</div>
+                        <div class="stat-value">{{ $rejectedRequestsCount }}</div>
                     </div>
                     <div class="stat-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
@@ -692,7 +692,7 @@
                                 </div>
                                 @if($licenseStatus === 'pending')
                                     <div class="license-actions">
-                                        <a href="{{ Storage::url($request->learner->student_license_path) }}" target="_blank" class="btn-license-view">View</a>
+                                        <button type="button" class="btn-license-view" onclick="showLicensePreviewModal('{{ route('schools.admin.enrollments.viewLicense', ['school' => $school, 'student' => $request->learner->id]) }}', '{{ addslashes($request->learner->name) }}')">View</button>
                                         <form method="POST" action="{{ route('schools.admin.enrollments.verifyLicense', ['school' => $school, 'student' => $request->learner->id]) }}" style="display:inline;">
                                             @csrf
                                             <button type="button" class="btn-license-verify" onclick="showConfirm({title:'Verify License',message:'Verify this student\'s license?',type:'success',onConfirm:()=>this.closest('form').submit()})">✓ Verify</button>
@@ -700,9 +700,9 @@
                                         <button type="button" class="btn-license-reject" onclick="showLicenseRejectModal({{ $request->learner->id }}, '{{ addslashes($request->learner->name) }}')">✗ Reject</button>
                                     </div>
                                 @elseif($licenseStatus === 'verified')
-                                    @if($request->learner->student_license_path)
+                                    @if($request->learner->student_license_path || $request->learner->student_license_data)
                                         <div class="license-actions">
-                                            <a href="{{ Storage::url($request->learner->student_license_path) }}" target="_blank" class="btn-license-view">View License</a>
+                                            <button type="button" class="btn-license-view" onclick="showLicensePreviewModal('{{ route('schools.admin.enrollments.viewLicense', ['school' => $school, 'student' => $request->learner->id]) }}', '{{ addslashes($request->learner->name) }}')">View License</button>
                                         </div>
                                     @endif
                                 @endif
@@ -833,6 +833,31 @@
             @endif
         </div>
         @endforeach
+
+        @if($allRequests->hasPages())
+            <div style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <div style="color: #6b7280; font-size: 0.9rem;">
+                    Showing {{ $allRequests->firstItem() ?? 0 }} to {{ $allRequests->lastItem() ?? 0 }} of {{ $allRequests->total() }} results
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    @if($allRequests->onFirstPage())
+                        <span style="padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 8px; color: #9ca3af; background: #f9fafb;">Previous</span>
+                    @else
+                        <a href="{{ $allRequests->previousPageUrl() }}" style="padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 8px; color: #374151; text-decoration: none; background: white;">Previous</a>
+                    @endif
+
+                    <span style="padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 8px; color: #374151; background: #f9fafb;">
+                        Page {{ $allRequests->currentPage() }} of {{ $allRequests->lastPage() }}
+                    </span>
+
+                    @if($allRequests->hasMorePages())
+                        <a href="{{ $allRequests->nextPageUrl() }}" style="padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 8px; color: #374151; text-decoration: none; background: white;">Next</a>
+                    @else
+                        <span style="padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 8px; color: #9ca3af; background: #f9fafb;">Next</span>
+                    @endif
+                </div>
+            </div>
+        @endif
         
     @else
         <div class="no-requests">
@@ -928,6 +953,22 @@
                 </button>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- License Preview Modal -->
+<div id="licensePreviewModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 1001; justify-content: center; align-items: center; padding: 16px;">
+    <div style="background: white; border-radius: 12px; width: min(1100px, 96vw); height: min(88vh, 900px); display: flex; flex-direction: column; overflow: hidden;">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid #e5e7eb;">
+            <div>
+                <h3 style="margin: 0; color: #111827; font-size: 1rem;">Student License Preview</h3>
+                <p id="licensePreviewStudent" style="margin: 2px 0 0 0; color: #6b7280; font-size: 0.85rem;"></p>
+            </div>
+            <button type="button" onclick="closeLicensePreviewModal()" style="border: none; background: transparent; font-size: 1.5rem; line-height: 1; color: #6b7280; cursor: pointer;">×</button>
+        </div>
+        <div style="flex: 1; background: #f3f4f6;">
+            <iframe id="licensePreviewFrame" src="" title="License Preview" style="width: 100%; height: 100%; border: 0;"></iframe>
+        </div>
     </div>
 </div>
 
@@ -1051,9 +1092,31 @@ function closeLicenseRejectModal() {
     document.getElementById('rejection_reason').value = '';
 }
 
+function showLicensePreviewModal(url, studentName) {
+    const modal = document.getElementById('licensePreviewModal');
+    const frame = document.getElementById('licensePreviewFrame');
+    const student = document.getElementById('licensePreviewStudent');
+    student.textContent = 'Student: ' + studentName;
+    frame.src = url;
+    modal.style.display = 'flex';
+}
+
+function closeLicensePreviewModal() {
+    const modal = document.getElementById('licensePreviewModal');
+    const frame = document.getElementById('licensePreviewFrame');
+    modal.style.display = 'none';
+    frame.src = '';
+}
+
 document.getElementById('licenseRejectModal').addEventListener('click', function(e) {
     if (e.target === this) {
         closeLicenseRejectModal();
+    }
+});
+
+document.getElementById('licensePreviewModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeLicensePreviewModal();
     }
 });
 

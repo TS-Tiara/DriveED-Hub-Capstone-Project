@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use App\Mail\EnrollmentApproved;
 use App\Mail\EnrollmentRejected;
 use App\Models\Branch;
@@ -22,29 +24,31 @@ class EnrollmentRequestController extends Controller
     /**
      * Display all enrollment requests (Admin)
      */
-    public function index(School $school)
+    public function index(Request $request, School $school)
     {
         $admin = Auth::guard('admin')->user();
 
-        $query = EnrollmentRequest::where('school_id', $school->id)
+        $baseQuery = EnrollmentRequest::where('school_id', $school->id)
             ->with(['learner', 'course', 'approvedBy', 'branchRelation'])
             ->orderBy('created_at', 'desc');
 
-        $admin->scopeToBranch($query);
+        $admin->scopeToBranch($baseQuery);
 
-        $allRequests = $query->get();
+        $allRequests = (clone $baseQuery)->paginate(20)->withQueryString();
 
-        $pendingRequests = $allRequests->where('status', 'pending');
-        $approvedRequests = $allRequests->where('status', 'approved');
-        $completedRequests = $allRequests->where('status', 'completed');
-        $cancelledRequests = $allRequests->where('status', 'cancelled');
-        $rejectedRequests = $allRequests->where('status', 'rejected');
+        $allRequestsCount = (clone $baseQuery)->count();
+        $pendingRequestsCount = (clone $baseQuery)->where('status', 'pending')->count();
+        $approvedRequestsCount = (clone $baseQuery)->where('status', 'approved')->count();
+        $completedRequestsCount = (clone $baseQuery)->where('status', 'completed')->count();
+        $cancelledRequestsCount = (clone $baseQuery)->where('status', 'cancelled')->count();
+        $rejectedRequestsCount = (clone $baseQuery)->where('status', 'rejected')->count();
 
         $branches = Branch::where('school_id', $school->id)->where('is_active', true)->orderBy('name')->get();
 
         return view('school.admin.enrollment-requests.index', compact(
-            'school', 'allRequests', 'pendingRequests', 'approvedRequests',
-            'completedRequests', 'cancelledRequests', 'rejectedRequests',
+            'school', 'allRequests', 'allRequestsCount',
+            'pendingRequestsCount', 'approvedRequestsCount',
+            'completedRequestsCount', 'cancelledRequestsCount', 'rejectedRequestsCount',
             'admin', 'branches'
         ));
     }
@@ -746,5 +750,74 @@ class EnrollmentRequestController extends Controller
         );
 
         return redirect()->back()->with('success', "Student driver's license for {$student->name} has been rejected.");
+    }
+
+    /**
+     * View a student's uploaded driver license file
+     */
+    public function viewLicense(Request $request, School $school, Student $student)
+    {
+        $admin = Auth::guard('admin')->user();
+        if (!$admin || $admin->school_id !== $school->id) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        if ($student->school_id !== $school->id) {
+            abort(403, 'Student does not belong to this school.');
+        }
+
+        if (!empty($student->student_license_data)) {
+            $decodedData = base64_decode($student->student_license_data, true);
+
+            if ($decodedData !== false) {
+                $licenseFilename = $student->student_license_filename ?: "student-license-{$student->id}";
+                $safeFilename = str_replace(["\r", "\n", '"'], '', basename($licenseFilename));
+
+                return response($decodedData, 200, [
+                    'Content-Type' => $student->student_license_mime_type ?: 'application/octet-stream',
+                    'Content-Disposition' => 'inline; filename="' . $safeFilename . '"',
+                ]);
+            }
+
+            Log::warning('Invalid base64 student license data', [
+                'school_id' => $school->id,
+                'student_id' => $student->id,
+            ]);
+        }
+
+        $storedPath = trim((string) $student->student_license_path);
+
+        if ($storedPath === '') {
+            abort(404, 'License file not found.');
+        }
+
+        $pathFromUrl = parse_url($storedPath, PHP_URL_PATH);
+        $normalizedPath = ltrim($pathFromUrl ?: $storedPath, '/');
+        $fileName = basename($normalizedPath);
+
+        $candidates = array_values(array_filter(array_unique([
+            $storedPath,
+            $normalizedPath,
+            Str::after($normalizedPath, 'storage/'),
+            Str::after($normalizedPath, 'public/'),
+            $fileName ? 'student-licenses/' . $fileName : null,
+        ])));
+
+        foreach (['public', 'local'] as $disk) {
+            foreach ($candidates as $candidatePath) {
+                if (Storage::disk($disk)->exists($candidatePath)) {
+                    return Storage::disk($disk)->response($candidatePath);
+                }
+            }
+        }
+
+        Log::warning('Student license file not found during admin view', [
+            'school_id' => $school->id,
+            'student_id' => $student->id,
+            'stored_path' => $storedPath,
+            'candidate_paths' => $candidates,
+        ]);
+
+        abort(404, 'License file not found.');
     }
 }

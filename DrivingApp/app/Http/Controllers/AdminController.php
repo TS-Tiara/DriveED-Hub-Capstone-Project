@@ -407,27 +407,6 @@ class AdminController extends Controller
     // ==========================
     // REPORTS & PROFILE
     // ==========================
-    public function studentReports(School $school)
-    {
-        return view($school->resolveView('admin.reports.students'), [
-            'school' => $school,
-        ]);
-    }
-
-    public function instructorReports(School $school)
-    {
-        return view($school->resolveView('admin.reports.instructors'), [
-            'school' => $school,
-        ]);
-    }
-
-    public function logs(School $school)
-    {
-        return view($school->resolveView('admin.reports.logs'), [
-            'school' => $school,
-        ]);
-    }
-
     public function profile(School $school)
     {
         $admin = Auth::guard('admin')->user();
