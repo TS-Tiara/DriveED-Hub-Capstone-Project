@@ -95,6 +95,18 @@
     font-size: 1.1rem;
 }
 
+.progress-status-completed {
+    color: #10b981;
+}
+
+.progress-status-in-progress {
+    color: #3b82f6;
+}
+
+.progress-status-not-started {
+    color: #6b7280;
+}
+
 .progress-info {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -275,7 +287,7 @@
             </div>
 
             <div class="progress-bar-container">
-                <div class="progress-bar-fill" style="width: {{ $progress->completion_percent }}%;">
+                <div class="progress-bar-fill progress-fill" data-progress="{{ $progress->completion_percent }}">
                     @if($progress->completion_percent > 10)
                     <span class="progress-bar-text">{{ $progress->completion_percent }}% Complete</span>
                     @endif
@@ -287,11 +299,11 @@
                     <div class="label">Status</div>
                     <div class="value">
                         @if($progress->completion_percent == 100)
-                            <span style="color: #10b981;">✓ Completed</span>
+                            <span class="progress-status-completed">✓ Completed</span>
                         @elseif($progress->completion_percent > 0)
-                            <span style="color: #3b82f6;">● In Progress</span>
+                            <span class="progress-status-in-progress">● In Progress</span>
                         @else
-                            <span style="color: #6b7280;">○ Not Started</span>
+                            <span class="progress-status-not-started">○ Not Started</span>
                         @endif
                     </div>
                 </div>
@@ -321,4 +333,14 @@
         @endforelse
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.progress-fill').forEach(function (bar) {
+        const value = Number(bar.dataset.progress || 0);
+        const clamped = Math.max(0, Math.min(100, value));
+        bar.style.width = clamped + '%';
+    });
+});
+</script>
 @endsection

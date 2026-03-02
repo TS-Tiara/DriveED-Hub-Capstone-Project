@@ -40,6 +40,94 @@
         margin-top: 4px;
         font-style: italic;
     }
+
+    .icon-24 {
+        width: 24px;
+        height: 24px;
+    }
+
+    .content-card-mb {
+        margin-bottom: 20px;
+    }
+
+    .form-control-auto {
+        width: auto;
+    }
+
+    .content-card-body-no-padding {
+        padding: 0;
+    }
+
+    .table-overflow-wrap {
+        overflow-x: auto;
+    }
+
+    .student-name-strong {
+        font-weight: 600;
+    }
+
+    .student-email-muted {
+        font-size: 0.8rem;
+        color: #6b7280;
+    }
+
+    .transition-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .reviewer-name {
+        font-weight: 500;
+    }
+
+    .reviewer-date {
+        font-size: 0.75rem;
+        color: #9ca3af;
+    }
+
+    .pending-review-text {
+        color: #9ca3af;
+        font-size: 0.85rem;
+    }
+
+    .pagination-wrap {
+        padding: 20px;
+    }
+
+    .modal-student-info {
+        margin-bottom: 20px;
+        padding: 15px;
+        background: #f9fafb;
+        border-radius: 8px;
+    }
+
+    .modal-section-label {
+        font-size: 0.9rem;
+        color: #6b7280;
+        margin-bottom: 4px;
+    }
+
+    .modal-student-name {
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin-bottom: 12px;
+    }
+
+    .modal-transition-label {
+        font-weight: 600;
+        color: {{ $primaryColor }};
+    }
+
+    .modal-action-row {
+        display: flex;
+        gap: 12px;
+        margin-top: 20px;
+    }
+
+    .modal-action-row .btn {
+        flex: 1;
+    }
 </style>
 
 <div class="admin-container">
@@ -62,7 +150,7 @@
                         <div class="stat-label">Pending Reviews</div>
                         <div class="stat-value">{{ $pendingCount }}</div>
                     </div>
-                    <div class="stat-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#f59e0b" style="width:24px;height:24px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
+                    <div class="stat-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#f59e0b" class="icon-24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
                 </div>
                 <div class="stat-detail">Requests awaiting decision</div>
             </div>
@@ -82,17 +170,17 @@
     </div>
 
     <!-- Filters -->
-    <div class="content-card" style="margin-bottom: 20px;">
+    <div class="content-card content-card-mb">
         <div class="content-card-body">
             <form id="filterForm" action="{{ school_route('admin.phase-progressions.index') }}" method="GET" class="filter-group" onsubmit="loadWithFilters(this); return false;">
-                <select name="status" class="form-control" style="width: auto;" onchange="this.form.dispatchEvent(new Event('submit'))">
+                <select name="status" class="form-control form-control-auto" onchange="this.form.dispatchEvent(new Event('submit'))">
                     <option value="">All Statuses</option>
                     <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
                     <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>Approved</option>
                     <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
                 </select>
                 
-                <select name="from_phase" class="form-control" style="width: auto;" onchange="this.form.dispatchEvent(new Event('submit'))">
+                <select name="from_phase" class="form-control form-control-auto" onchange="this.form.dispatchEvent(new Event('submit'))">
                     <option value="">All Phases</option>
                     <option value="theoretical" {{ request('from_phase') == 'theoretical' ? 'selected' : '' }}>Theoretical</option>
                     <option value="practical" {{ request('from_phase') == 'practical' ? 'selected' : '' }}>Practical</option>
@@ -118,8 +206,8 @@
     <!-- Requests Table -->
     <div class="content-card">
         <div class="content-card-header">Progression Requests</div>
-        <div class="content-card-body" style="padding: 0;">
-            <div style="overflow-x: auto;">
+        <div class="content-card-body content-card-body-no-padding">
+            <div class="table-overflow-wrap">
                 <table class="admin-table">
                     <thead>
                         <tr>
@@ -136,12 +224,12 @@
                         @forelse($progressions as $request)
                             <tr>
                                 <td>
-                                    <div style="font-weight: 600;">{{ $request->enrollment->student->name }}</div>
-                                    <div style="font-size: 0.8rem; color: #6b7280;">{{ $request->enrollment->student->email }}</div>
+                                    <div class="student-name-strong">{{ $request->enrollment->student->name }}</div>
+                                    <div class="student-email-muted">{{ $request->enrollment->student->email }}</div>
                                 </td>
                                 <td>{{ $request->enrollment->course->name }}</td>
                                 <td>
-                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                    <div class="transition-row">
                                         <span class="phase-badge phase-label-{{ $request->from_phase }}">{{ ucfirst($request->from_phase) }}</span>
                                         <span class="transition-arrow">→</span>
                                         <span class="phase-badge phase-label-{{ $request->to_phase }}">{{ ucfirst($request->to_phase) }}</span>
@@ -155,15 +243,15 @@
                                 </td>
                                 <td>
                                     @if($request->reviewedBy)
-                                        <div style="font-weight: 500;">{{ $request->reviewedBy->name }}</div>
-                                        <div style="font-size: 0.75rem; color: #9ca3af;">{{ $request->reviewed_at->format('M d, Y') }}</div>
+                                        <div class="reviewer-name">{{ $request->reviewedBy->name }}</div>
+                                        <div class="reviewer-date">{{ $request->reviewed_at->format('M d, Y') }}</div>
                                         @if($request->admin_notes)
                                             <div class="review-notes" title="{{ $request->admin_notes }}">
                                                 "{{ Str::limit($request->admin_notes, 30) }}"
                                             </div>
                                         @endif
                                     @else
-                                        <span style="color: #9ca3af; font-size: 0.85rem;">Pending Review</span>
+                                        <span class="pending-review-text">Pending Review</span>
                                     @endif
                                 </td>
                                 <td>
@@ -192,7 +280,7 @@
             </div>
 
             @if($progressions->hasPages())
-                <div style="padding: 20px;">
+                <div class="pagination-wrap">
                     {{ $progressions->links() }}
                 </div>
             @endif
@@ -208,12 +296,12 @@
             <button class="modal-close" onclick="closeReviewModal()">×</button>
         </div>
         <div class="modal-body">
-            <div id="modalStudentInfo" style="margin-bottom: 20px; padding: 15px; background: #f9fafb; border-radius: 8px;">
-                <div style="font-size: 0.9rem; color: #6b7280; margin-bottom: 4px;">Student</div>
-                <div id="modalStudentName" style="font-weight: 600; font-size: 1.1rem; margin-bottom: 12px;"></div>
+            <div id="modalStudentInfo" class="modal-student-info">
+                <div class="modal-section-label">Student</div>
+                <div id="modalStudentName" class="modal-student-name"></div>
                 
-                <div style="font-size: 0.9rem; color: #6b7280; margin-bottom: 4px;">Transition</div>
-                <div id="modalTransitionLabel" style="font-weight: 600; color: {{ $primaryColor }};"></div>
+                <div class="modal-section-label">Transition</div>
+                <div id="modalTransitionLabel" class="modal-transition-label"></div>
             </div>
 
             <form id="reviewForm" method="POST" onsubmit="submitReview(this); return false;">
@@ -223,11 +311,11 @@
                     <textarea name="admin_notes" class="form-control" rows="4" placeholder="Enter reason for approval or rejection..."></textarea>
                 </div>
                 
-                <div style="display: flex; gap: 12px; margin-top: 20px;">
-                    <button type="button" class="btn btn-success" style="flex: 1;" onclick="setDecision('approve')">
+                <div class="modal-action-row">
+                    <button type="button" class="btn btn-success" onclick="setDecision('approve')">
                         Approve Progression
                     </button>
-                    <button type="button" class="btn btn-danger" style="flex: 1;" onclick="setDecision('reject')">
+                    <button type="button" class="btn btn-danger" onclick="setDecision('reject')">
                         Reject Request
                     </button>
                 </div>

@@ -193,6 +193,11 @@
         transition: width 0.6s ease;
     }
 
+    .timeline-icon-sm {
+        width: 14px;
+        height: 14px;
+    }
+
     .timeline-step {
         display: flex;
         flex-direction: column;
@@ -321,6 +326,27 @@
         font-size: 0.85rem;
     }
 
+    .request-note-box {
+        margin-top: 15px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+
+    .request-note-title {
+        color: #444;
+    }
+
+    .request-note-text {
+        margin: 5px 0 0 0;
+        color: #666;
+    }
+
+    .empty-state-cta-icon {
+        width: 20px;
+        height: 20px;
+    }
+
     @media (max-width: 640px) {
         .enrollment-timeline {
             padding: 16px 8px 4px;
@@ -390,13 +416,13 @@
                     <!-- Enrollment Timeline -->
                     <div class="enrollment-timeline">
                         <div class="timeline-connector">
-                            <div class="timeline-connector-fill" style="width: {{ $connectorWidth }}%"></div>
+                            <div class="timeline-connector-fill" data-width="{{ $connectorWidth }}"></div>
                         </div>
 
                         <!-- Step 1: Submitted -->
                         <div class="timeline-step">
                             <div class="timeline-dot done">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 14px; height: 14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                <svg class="timeline-icon-sm" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                             </div>
                             <span class="timeline-label done">Submitted</span>
                             <span class="timeline-date">{{ $request->created_at->format('M d') }}</span>
@@ -406,22 +432,22 @@
                         <div class="timeline-step">
                             @if($isRejected)
                                 <div class="timeline-dot failed">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 14px; height: 14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg>
+                                    <svg class="timeline-icon-sm" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg>
                                 </div>
                                 <span class="timeline-label failed">Rejected</span>
                             @elseif($isCancelled)
                                 <div class="timeline-dot failed">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 14px; height: 14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg>
+                                    <svg class="timeline-icon-sm" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg>
                                 </div>
                                 <span class="timeline-label failed">Cancelled</span>
                             @elseif($isApproved)
                                 <div class="timeline-dot done">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 14px; height: 14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                    <svg class="timeline-icon-sm" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                                 </div>
                                 <span class="timeline-label done">Reviewed</span>
                             @elseif($request->status === 'pending')
                                 <div class="timeline-dot active">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 14px; height: 14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    <svg class="timeline-icon-sm" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                 </div>
                                 <span class="timeline-label active">Under Review</span>
                             @else
@@ -434,7 +460,7 @@
                         <div class="timeline-step">
                             @if($isApproved)
                                 <div class="timeline-dot done">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 14px; height: 14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                    <svg class="timeline-icon-sm" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                                 </div>
                                 <span class="timeline-label done">Approved</span>
                                 @if($request->approved_at)
@@ -453,12 +479,12 @@
                         <div class="timeline-step">
                             @if($isCompleted)
                                 <div class="timeline-dot done">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 14px; height: 14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                    <svg class="timeline-icon-sm" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                                 </div>
                                 <span class="timeline-label done">Completed</span>
                             @elseif($isApproved)
                                 <div class="timeline-dot active">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 14px; height: 14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253"/></svg>
+                                    <svg class="timeline-icon-sm" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253"/></svg>
                                 </div>
                                 <span class="timeline-label active">Learning</span>
                             @else
@@ -528,16 +554,16 @@
                                 <p>{{ $request->remarks }}</p>
                             </div>
                         @elseif($request->remarks)
-                            <div style="margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
-                                <strong style="color: #444;">Notes:</strong>
-                                <p style="margin: 5px 0 0 0; color: #666;">{{ $request->remarks }}</p>
+                            <div class="request-note-box">
+                                <strong class="request-note-title">Notes:</strong>
+                                <p class="request-note-text">{{ $request->remarks }}</p>
                             </div>
                         @endif
 
                         @if($request->notes)
-                            <div style="margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
-                                <strong style="color: #444;">Your Notes:</strong>
-                                <p style="margin: 5px 0 0 0; color: #666;">{{ $request->notes }}</p>
+                            <div class="request-note-box">
+                                <strong class="request-note-title">Your Notes:</strong>
+                                <p class="request-note-text">{{ $request->notes }}</p>
                             </div>
                         @endif
                     </div>
@@ -551,7 +577,7 @@
                 <h3>No Enrollment Requests Yet</h3>
                 <p>You haven't submitted any course enrollment requests. Browse our courses to get started!</p>
                 <a href="{{ route('schools.guest.courses', $school) }}" class="btn-primary">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 20px; height: 20px;">
+                    <svg class="empty-state-cta-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                     </svg>
                     Browse Courses
@@ -560,4 +586,13 @@
         @endif
     </div>
 </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.timeline-connector-fill[data-width]').forEach(function (connector) {
+            const value = parseFloat(connector.getAttribute('data-width'));
+            const width = Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : 0;
+            connector.style.width = width + '%';
+        });
+    });
+</script>
 @endsection

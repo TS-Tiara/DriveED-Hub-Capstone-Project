@@ -59,6 +59,8 @@ class SessionCompletionController extends Controller
 
         // Admin view
         if (Auth::guard('admin')->check()) {
+            $admin = Auth::guard('admin')->user();
+            
             $sessionsQuery = SessionCompletion::with(['enrollment.student', 'enrollment.course', 'instructor'])
                 ->whereHas('enrollment.course', function ($query) use ($school) {
                 $query->where('school_id', $school->id);
@@ -78,6 +80,13 @@ class SessionCompletionController extends Controller
                 ->latest('session_date')
                 ->latest('session_time');
 
+            // Branch secretary scope: filter by their branch
+            if ($admin->isBranchSecretary() && $admin->branch_id) {
+                $sessionsQuery->whereHas('enrollment', function ($query) use ($admin) {
+                    $query->where('branch_id', $admin->branch_id);
+                });
+            }
+
             // Pre-compute statistics before pagination
             $stats = [
                 'total_sessions' => (clone $sessionsQuery)->count(),
@@ -88,9 +97,14 @@ class SessionCompletionController extends Controller
 
             $sessions = $sessionsQuery->paginate(10);
 
-            $instructors = Instructor::where('school_id', $school->id)->get();
+            // Get instructors (branch secretaries only see instructors in their branch)
+            $instructorQuery = Instructor::where('school_id', $school->id);
+            $admin->scopeToBranch($instructorQuery);
+            $instructors = $instructorQuery->get();
 
-            return view('school.admin.sessions.index', compact('school', 'sessions', 'instructors', 'stats'));
+            $isAjax = request()->ajax() || request()->header('X-Requested-With') === 'XMLHttpRequest';
+
+            return view('school.admin.sessions.index', compact('school', 'sessions', 'instructors', 'stats', 'isAjax'));
         }
 
         abort(403);
@@ -252,7 +266,18 @@ class SessionCompletionController extends Controller
 
         // Admin view
         if (Auth::guard('admin')->check()) {
-            return view('school.admin.sessions.show', compact('school', 'sessionCompletion'));
+            $admin = Auth::guard('admin')->user();
+            
+            // Branch secretary can only view sessions from their branch
+            if ($admin->isBranchSecretary() && $admin->branch_id) {
+                if ($sessionCompletion->enrollment->branch_id !== $admin->branch_id) {
+                    abort(403, 'You do not have access to this session.');
+                }
+            }
+            
+            $isAjax = request()->ajax() || request()->header('X-Requested-With') === 'XMLHttpRequest';
+            
+            return view('school.admin.sessions.show', compact('school', 'sessionCompletion', 'isAjax'));
         }
 
         abort(403);
@@ -368,6 +393,13 @@ class SessionCompletionController extends Controller
 
         // Admin can delete any session
         if (Auth::guard('admin')->check()) {
+            $admin = Auth::guard('admin')->user();
+
+            // Branch secretary can only delete sessions from their branch
+            if ($admin->isBranchSecretary() && !$admin->canAccessBranch($sessionCompletion->enrollment?->branch_id)) {
+                abort(403, 'You do not have access to delete this session.');
+            }
+
             $sessionCompletion->delete();
             return redirect()
                 ->route('schools.admin.sessions.index', ['school' => $school->slug])

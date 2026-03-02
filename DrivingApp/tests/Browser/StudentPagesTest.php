@@ -36,9 +36,9 @@ class StudentPagesTest extends DuskTestCase
 
     protected function screenshot(Browser $browser, string $stepName): void
     {
-        $folderNumber = str_pad($this->currentTestNumber, 3, '0', STR_PAD_LEFT);
-        $folder = "Test {$folderNumber} - {$this->currentTestName}/{$this->role}";
-        $browser->screenshot("{$folder}/{$stepName}");
+        $folderNumber = str_pad((string) $this->currentTestNumber, 3, '0', STR_PAD_LEFT);
+        $scenario = "Test {$folderNumber} - {$this->currentTestName}";
+        $this->captureRoleScreenshot($browser, $this->role, $scenario, $stepName);
     }
 
     protected function loginAsStudent(Browser $browser): void

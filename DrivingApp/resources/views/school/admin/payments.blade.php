@@ -95,6 +95,53 @@
         transform: translateY(-1px);
         box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
     }
+
+    .icon-24 {
+        width: 24px;
+        height: 24px;
+    }
+
+    .icon-16 {
+        width: 16px;
+        height: 16px;
+        margin-right: 4px;
+    }
+
+    .table-scroll {
+        overflow-x: auto;
+    }
+
+    .payment-status-paid {
+        color: #059669;
+        font-size: 0.85rem;
+    }
+
+    .payment-status-none {
+        color: #6b7280;
+        font-size: 0.85rem;
+    }
+
+    .mobile-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+
+    .mobile-amount {
+        color: #10b981;
+    }
+
+    .mobile-action-wrap {
+        margin-top: 10px;
+    }
+
+    .btn-mark-paid-full {
+        width: 100%;
+        padding: 10px;
+        min-height: 44px;
+        text-align: center;
+    }
     
     /* Mobile Responsive Styles */
     @media (max-width: 768px) {
@@ -237,7 +284,7 @@
     .payment-mobile-card .card-val { font-weight: 600; color: #1f2937; font-size: 0.85rem; }
     
     @media (max-width: 768px) {
-        .content-card > div[style*="overflow-x"] { display: none; }
+        .content-card .table-scroll { display: none; }
         .payment-mobile-card { display: block; }
     }
 </style>
@@ -269,7 +316,7 @@
                         <div class="stat-value">₱{{ number_format($stats['total_revenue'], 2) }}</div>
                     </div>
                     <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                        <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
@@ -284,7 +331,7 @@
                         <div class="stat-value">{{ $stats['completed_count'] }}</div>
                     </div>
                     <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                        <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
@@ -299,7 +346,7 @@
                         <div class="stat-value">{{ $stats['pending_count'] }}</div>
                     </div>
                     <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                        <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
@@ -318,7 +365,7 @@
 
     <!-- Payments Table -->
     <div class="content-card">
-        <div style="overflow-x: auto;">
+        <div class="table-scroll">
             <table class="admin-table" id="paymentsTable">
                 <thead>
                     <tr>
@@ -349,15 +396,15 @@
                         <td>
                             @if($payment->status === 'pending')
                                 <button type="button" class="btn-action btn-mark-paid" onclick="markAsPaid({{ $payment->id }})" title="Mark as Paid">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 16px; height: 16px; margin-right: 4px;">
+                                    <svg class="icon-16" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                     Mark Paid
                                 </button>
                             @elseif($payment->status === 'completed')
-                                <span style="color: #059669; font-size: 0.85rem;">✓ Paid</span>
+                                <span class="payment-status-paid">✓ Paid</span>
                             @else
-                                <span style="color: #6b7280; font-size: 0.85rem;">—</span>
+                                <span class="payment-status-none">—</span>
                             @endif
                         </td>
                     </tr>
@@ -378,7 +425,7 @@
         {{-- Mobile card view --}}
         @forelse($payments as $payment)
         <div class="payment-mobile-card" data-status="{{ $payment->status }}">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <div class="mobile-card-header">
                 <strong>{{ $payment->booking->student->name ?? 'N/A' }}</strong>
                 <span class="badge badge-{{ $payment->status === 'completed' ? 'success' : ($payment->status === 'pending' ? 'warning' : 'danger') }}">{{ ucfirst($payment->status) }}</span>
             </div>
@@ -388,7 +435,7 @@
             </div>
             <div class="card-row">
                 <span class="card-label">Amount</span>
-                <span class="card-val" style="color: #10b981;">₱{{ number_format($payment->amount, 2) }}</span>
+                <span class="card-val mobile-amount">₱{{ number_format($payment->amount, 2) }}</span>
             </div>
             <div class="card-row">
                 <span class="card-label">Method</span>
@@ -399,8 +446,8 @@
                 <span class="card-val">{{ $payment->paid_on ? $payment->paid_on->format('M d, Y') : 'N/A' }}</span>
             </div>
             @if($payment->status === 'pending')
-            <div style="margin-top: 10px;">
-                <button type="button" class="btn-action btn-mark-paid" onclick="markAsPaid({{ $payment->id }})" style="width: 100%; padding: 10px; min-height: 44px; text-align: center;">
+            <div class="mobile-action-wrap">
+                <button type="button" class="btn-action btn-mark-paid btn-mark-paid-full" onclick="markAsPaid({{ $payment->id }})">
                     ✓ Mark Paid
                 </button>
             </div>
@@ -459,7 +506,7 @@ function markAsPaid(paymentId) {
                     }
                     const actionCell = row?.querySelector('td:last-child');
                     if (actionCell) {
-                        actionCell.innerHTML = '<span style="color: #059669; font-size: 0.85rem;">✓ Paid</span>';
+                        actionCell.innerHTML = '<span class="payment-status-paid">✓ Paid</span>';
                     }
                 }
             })

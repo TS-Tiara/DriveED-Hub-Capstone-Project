@@ -43,13 +43,30 @@ class EnrollmentRequestController extends Controller
         $cancelledRequestsCount = (clone $baseQuery)->where('status', 'cancelled')->count();
         $rejectedRequestsCount = (clone $baseQuery)->where('status', 'rejected')->count();
 
+        $stats = [
+            'total' => $allRequests->count(),
+            'pending' => $pendingRequests->count(),
+            'approved' => $approvedRequests->count(),
+            'completed' => $completedRequests->count(),
+            'cancelled' => $cancelledRequests->count(),
+            'rejected' => $rejectedRequests->count(),
+        ];
+
         $branches = Branch::where('school_id', $school->id)->where('is_active', true)->orderBy('name')->get();
 
+        $isAjax = request()->ajax() || request()->header('X-Requested-With') === 'XMLHttpRequest';
+
         return view('school.admin.enrollment-requests.index', compact(
+<<<<<<< HEAD
             'school', 'allRequests', 'allRequestsCount',
             'pendingRequestsCount', 'approvedRequestsCount',
             'completedRequestsCount', 'cancelledRequestsCount', 'rejectedRequestsCount',
             'admin', 'branches'
+=======
+            'school', 'allRequests', 'pendingRequests', 'approvedRequests',
+            'completedRequests', 'cancelledRequests', 'rejectedRequests',
+            'admin', 'branches', 'isAjax', 'stats'
+>>>>>>> deploy-testing
         ));
     }
 

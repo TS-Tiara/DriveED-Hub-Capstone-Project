@@ -223,6 +223,16 @@
         background: linear-gradient(90deg, #ef4444 0%, #f97316 100%);
     }
 
+    .icon-size-16 {
+        width: 16px;
+        height: 16px;
+    }
+
+    .icon-size-18 {
+        width: 18px;
+        height: 18px;
+    }
+
     /* Session table */
     .table-wrapper {
         overflow-x: auto;
@@ -377,7 +387,7 @@
             <p class="page-subtitle">{{ $enrollment->student->name }} — {{ $enrollment->course->title ?? 'N/A' }}</p>
         </div>
         <a href="{{ school_route('instructor.theoretical.index') }}" class="back-link">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 16px; height: 16px;">
+            <svg class="icon-size-16" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
             Back to Theoretical
@@ -404,7 +414,7 @@
             <!-- Student Info -->
             <div class="info-card">
                 <h5 class="card-title">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="{{ $primaryColor }}" style="width: 18px; height: 18px;">
+                    <svg class="icon-size-18" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="{{ $primaryColor }}">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                     Student Information
@@ -438,7 +448,7 @@
             <!-- Course Info -->
             <div class="info-card">
                 <h5 class="card-title">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="{{ $primaryColor }}" style="width: 18px; height: 18px;">
+                    <svg class="icon-size-18" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="{{ $primaryColor }}">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                     </svg>
                     Course Details
@@ -471,7 +481,7 @@
             <!-- Progress -->
             <div class="info-card">
                 <h5 class="card-title">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="{{ $primaryColor }}" style="width: 18px; height: 18px;">
+                    <svg class="icon-size-18" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="{{ $primaryColor }}">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                     </svg>
                     Training Progress
@@ -491,7 +501,7 @@
                     </div>
                 </div>
                 <div class="progress-bar-container">
-                    <div class="progress-bar-fill {{ $progressClass }}" style="width: {{ max($progress, 5) }}%;">
+                    <div class="progress-bar-fill {{ $progressClass }}" data-progress="{{ max($progress, 5) }}">
                         {{ $progress }}%
                     </div>
                 </div>
@@ -500,7 +510,7 @@
             <!-- Session History -->
             <div class="info-card">
                 <h5 class="card-title">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="{{ $primaryColor }}" style="width: 18px; height: 18px;">
+                    <svg class="icon-size-18" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="{{ $primaryColor }}">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     Session History
@@ -539,11 +549,11 @@
             <div class="info-card">
                 <h5 class="card-title">
                     @if($validation['allowed'])
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#10b981" style="width: 18px; height: 18px;">
+                        <svg class="icon-size-18" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#10b981">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     @else
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#f59e0b" style="width: 18px; height: 18px;">
+                        <svg class="icon-size-18" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#f59e0b">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.832c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
                         </svg>
                     @endif
@@ -551,7 +561,7 @@
                 </h5>
                 @if($validation['allowed'])
                     <div class="alert-box success">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 18px; height: 18px;">
+                        <svg class="icon-size-18" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         <span>{{ $validation['message'] }}</span>
@@ -568,7 +578,7 @@
                         </div>
 
                         <button type="button" class="btn-submit success" onclick="showConfirm({title:'Confirm Action',message:'Are you sure you want to mark this student as passed theoretical training?',type:'success',onConfirm:()=>this.closest('form').submit()})">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 18px; height: 18px;">
+                            <svg class="icon-size-18" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                             Mark as Passed Theoretical
@@ -576,7 +586,7 @@
                     </form>
                 @else
                     <div class="alert-box warning">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 18px; height: 18px;">
+                        <svg class="icon-size-18" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.832c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
                         </svg>
                         <span>{{ $validation['message'] }}</span>
@@ -586,5 +596,15 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.progress-bar-fill[data-progress]').forEach(function (bar) {
+            const value = parseFloat(bar.getAttribute('data-progress'));
+            const width = Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : 0;
+            bar.style.width = width + '%';
+        });
+    });
+</script>
 
 @endsection

@@ -67,42 +67,6 @@
         box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
     }
 
-    /* Alert Messages */
-    .alert {
-        padding: 15px 20px;
-        margin-bottom: 20px;
-        border-radius: 10px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        animation: slideIn 0.3s ease;
-    }
-
-    .alert-success {
-        background: #d4edda;
-        color: #155724;
-        border-left: 4px solid #28a745;
-    }
-
-    .alert-error {
-        background: #f8d7da;
-        color: #721c24;
-        border-left: 4px solid #dc3545;
-    }
-
-    .close-btn {
-        background: none;
-        border: none;
-        font-size: 1.5rem;
-        cursor: pointer;
-        color: inherit;
-        opacity: 0.6;
-    }
-
-    .close-btn:hover {
-        opacity: 1;
-    }
-
     /* Courses Grid */
     .courses-grid {
         display: none;
@@ -385,6 +349,389 @@
         font-size: 0.85rem;
     }
 
+    .header-actions {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .course-banner-wrap {
+        position: relative;
+    }
+
+    .course-type-vehicle {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .course-feature-more {
+        color: {{ $settings->primary_color ?? '#667eea' }};
+        font-weight: 600;
+    }
+
+    .package-tag {
+        font-size: 0.8rem;
+        padding: 2px 8px;
+        color: white;
+        border-radius: 10px;
+        margin-left: 5px;
+    }
+
+    .package-tag-vehicle {
+        background: {{ $settings->accent_color ?? '#8b5cf6' }};
+    }
+
+    .package-tag-transmission-manual {
+        background: #fbbf24;
+    }
+
+    .package-tag-transmission-auto {
+        background: #3b82f6;
+    }
+
+    .package-tag-popular {
+        font-size: 0.75rem;
+        background: #f59e0b;
+    }
+
+    .package-actions {
+        display: flex;
+        gap: 5px;
+    }
+
+    .btn-add-package-full {
+        width: 100%;
+    }
+
+    .course-title-list {
+        margin-bottom: 10px;
+    }
+
+    .course-list-meta {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .status-badge-static {
+        position: static;
+    }
+
+    .featured-badge-static {
+        position: static;
+    }
+
+    .featured-icon-sm {
+        width: 16px;
+        height: 16px;
+        margin-right: 4px;
+    }
+
+    .course-description-list {
+        -webkit-line-clamp: 3;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .course-features-grid {
+        margin-top: 15px;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+
+    .course-list-fill {
+        flex: 1;
+    }
+
+    .course-list-packages-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .package-inline-tag {
+        font-size: 0.75rem;
+        padding: 2px 6px;
+        color: white;
+        border-radius: 8px;
+        margin-left: 4px;
+    }
+
+    .package-inline-tag-vehicle {
+        background: {{ $settings->accent_color ?? '#8b5cf6' }};
+    }
+
+    .package-inline-tag-transmission-manual {
+        background: #fbbf24;
+    }
+
+    .package-inline-tag-transmission-auto {
+        background: #3b82f6;
+    }
+
+    .package-inline-actions {
+        display: flex;
+        gap: 5px;
+        margin-top: 8px;
+    }
+
+    .banner-help-text {
+        color: #64748b;
+        display: block;
+        margin-top: 5px;
+    }
+
+    .form-grid-two {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .form-label-inline {
+        margin-bottom: 0;
+    }
+
+    .preview-modal-content {
+        max-width: 900px;
+    }
+
+    .preview-modal-header {
+        background: {{ $settings->modal_header_bg ?? $settings->primary_color ?? '#667eea' }};
+    }
+
+    .preview-modal-body {
+        padding: 0;
+    }
+
+    .preview-modal-footer {
+        background: #f8fafc;
+    }
+
+    .package-help-text {
+        color: #666;
+        font-size: 12px;
+        margin-top: 4px;
+        display: block;
+    }
+
+    .preview-guest-hero {
+        background: {{ $settings?->use_gradient_header ? 'linear-gradient(135deg, ' . $settings->primary_color . ' 0%, ' . $settings->secondary_color . ' 100%)' : ($settings->primary_color ?? '#667eea') }};
+        padding: 40px;
+        color: white;
+        text-align: center;
+    }
+
+    .preview-guest-banner-img {
+        max-width: 600px;
+        width: 100%;
+        border-radius: 12px;
+        margin-bottom: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .preview-guest-banner-icon {
+        font-size: 5rem;
+        opacity: 0.8;
+        display: block;
+        margin-bottom: 20px;
+    }
+
+    .preview-guest-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 15px;
+    }
+
+    .preview-guest-meta {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-bottom: 15px;
+    }
+
+    .preview-guest-pill {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 8px 20px;
+        border-radius: 20px;
+        font-weight: 600;
+    }
+
+    .preview-guest-featured-pill {
+        background: #f59e0b;
+        padding: 8px 20px;
+        border-radius: 20px;
+        font-weight: 600;
+    }
+
+    .preview-guest-featured-icon {
+        width: 16px;
+        height: 16px;
+        margin-right: 4px;
+    }
+
+    .preview-guest-description {
+        font-size: 1.1rem;
+        max-width: 700px;
+        margin: 0 auto;
+        opacity: 0.95;
+    }
+
+    .preview-guest-body {
+        padding: 40px;
+    }
+
+    .preview-guest-section {
+        margin-bottom: 40px;
+    }
+
+    .preview-guest-section-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #2d3748;
+        margin-bottom: 25px;
+        text-align: center;
+    }
+
+    .preview-guest-features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 15px;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .preview-guest-feature-item {
+        background: #f8fafc;
+        padding: 15px 20px;
+        border-radius: 10px;
+        border-left: 4px solid {{ $settings->primary_color ?? '#667eea' }};
+    }
+
+    .preview-guest-feature-icon {
+        color: #10b981;
+        margin-right: 10px;
+    }
+
+    .preview-guest-packages-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 25px;
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+
+    .preview-guest-package-card {
+        background: white;
+        border: 3px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 25px;
+        position: relative;
+        transition: all 0.3s;
+    }
+
+    .preview-guest-package-card.popular {
+        border-color: #f59e0b;
+        box-shadow: 0 8px 25px rgba(245, 158, 11, 0.3);
+    }
+
+    .preview-guest-popular-ribbon {
+        position: absolute;
+        top: -12px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #f59e0b;
+        color: white;
+        padding: 5px 20px;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 0.85rem;
+    }
+
+    .preview-guest-package-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #2d3748;
+        margin-bottom: 10px;
+    }
+
+    .preview-guest-package-title.popular {
+        margin-top: 10px;
+    }
+
+    .preview-guest-package-meta {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+    }
+
+    .preview-guest-package-tag {
+        color: white;
+        padding: 5px 12px;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+
+    .preview-guest-package-tag.vehicle {
+        background: {{ $settings->accent_color ?? '#8b5cf6' }};
+    }
+
+    .preview-guest-package-tag.manual {
+        background: #fbbf24;
+    }
+
+    .preview-guest-package-tag.automatic {
+        background: #3b82f6;
+    }
+
+    .preview-guest-package-hours {
+        color: #64748b;
+        font-weight: 600;
+    }
+
+    .preview-guest-package-description {
+        color: #64748b;
+        margin-bottom: 20px;
+        line-height: 1.6;
+    }
+
+    .preview-guest-package-features {
+        list-style: none;
+        padding: 0;
+        margin: 20px 0;
+    }
+
+    .preview-guest-package-feature-item {
+        padding: 5px 0;
+        color: #475569;
+    }
+
+    .preview-guest-package-divider {
+        margin-top: 25px;
+        padding-top: 20px;
+        border-top: 2px solid #e2e8f0;
+    }
+
+    .preview-guest-package-price {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: {{ $settings->primary_color ?? '#667eea' }};
+    }
+
+    .preview-guest-empty {
+        text-align: center;
+        color: #64748b;
+        font-size: 1.1rem;
+    }
+
     /* Modal Styles */
     .modal {
         display: none;
@@ -549,39 +896,10 @@
         gap: 15px;
     }
 
-    .btn-secondary {
+    .course-modal-btn {
         padding: 12px 24px;
-        background: #64748b;
-        color: white;
-        border: none;
-        border-radius: 8px;
         font-weight: 600;
-        cursor: pointer;
-        transition: background 0.2s;
-    }
-
-    .btn-secondary:hover {
-        background: #475569;
-    }
-
-    .btn-primary {
-        padding: 12px 24px;
-        @if($settings?->use_gradient_header)
-            background: linear-gradient(135deg, {{ $settings->primary_color }} 0%, {{ $settings->secondary_color }} 100%);
-        @else
-            background: {{ $settings->primary_color ?? '#667eea' }};
-        @endif
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-
-    .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        min-width: 140px;
     }
 
     .empty-state {
@@ -980,7 +1298,7 @@
             </h1>
             <p class="page-subtitle">Manage courses, packages, and pricing for {{ $schoolName }}</p>
         </div>
-        <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+        <div class="header-actions">
             <div class="export-buttons">
                 <a href="{{ $schoolRoute('admin.exports.courses.pdf') }}" class="btn-export btn-export-pdf">
                     Export PDF
@@ -1036,7 +1354,7 @@
         <div class="courses-grid active">
             @foreach($courses as $course)
                 <div class="course-card">
-                    <div style="position: relative;">
+                    <div class="course-banner-wrap">
                         @if($course->banner_image && file_exists(public_path($course->banner_image)))
                             <img src="{{ asset($course->banner_image) }}" alt="{{ $course->title }}" class="course-banner">
                         @else
@@ -1060,7 +1378,7 @@
                                 <h3 class="course-title">{{ $course->title }}</h3>
                                 <span class="course-type">{{ $course->type }}</span>
                                 @if($course->vehicle_type)
-                                    <span class="course-type" style="background: #dbeafe; color: #1e40af;">{{ $course->vehicle_type }}</span>
+                                    <span class="course-type course-type-vehicle">{{ $course->vehicle_type }}</span>
                                 @endif
                             </div>
                         </div>
@@ -1075,7 +1393,7 @@
                                     <li>{{ $feature }}</li>
                                 @endforeach
                                 @if(count($course->features) > 3)
-                                    <li style="color: {{ $settings->primary_color ?? '#667eea' }}; font-weight: 600;">+{{ count($course->features) - 3 }} more features</li>
+                                    <li class="course-feature-more">+{{ count($course->features) - 3 }} more features</li>
                                 @endif
                             </ul>
                         @endif
@@ -1095,15 +1413,15 @@
                                             <div class="package-name">
                                                 {{ $package->name }}
                                                 @if($package->vehicle_type)
-                                                    <span style="font-size: 0.8rem; padding: 2px 8px; background: {{ $settings->accent_color ?? '#8b5cf6' }}; color: white; border-radius: 10px; margin-left: 5px;">
+                                                    <span class="package-tag package-tag-vehicle">
                                                         {{ $package->vehicle_type }}
                                                     </span>
                                                 @endif
-                                                <span style="font-size: 0.8rem; padding: 2px 8px; background: {{ $package->transmission_type == 'manual' ? '#fbbf24' : '#3b82f6' }}; color: white; border-radius: 10px; margin-left: 5px;">
+                                                <span class="package-tag {{ $package->transmission_type == 'manual' ? 'package-tag-transmission-manual' : 'package-tag-transmission-auto' }}">
                                                     {{ strtoupper($package->transmission_type) }}
                                                 </span>
                                                 @if($package->is_popular)
-                                                    <span style="font-size: 0.75rem; padding: 2px 8px; background: #f59e0b; color: white; border-radius: 10px; margin-left: 5px;">POPULAR</span>
+                                                    <span class="package-tag package-tag-popular">POPULAR</span>
                                                 @endif
                                             </div>
                                             <div class="package-details">
@@ -1112,7 +1430,7 @@
                                             </div>
                                         </div>
                                         <span class="package-price">₱{{ number_format($package->price, 2) }}</span>
-                                        <div style="display: flex; gap: 5px;">
+                                        <div class="package-actions">
                                             <button class="btn-package-edit" onclick="openPackageModal({{ $course->id }}, {{ $package->id }})">Edit</button>
                                             <button class="btn-package-delete" onclick="deletePackage({{ $course->id }}, {{ $package->id }})">Delete</button>
                                         </div>
@@ -1121,7 +1439,7 @@
                             </div>
                         @else
                             <div class="packages-section">
-                                <button class="btn-add-package" style="width: 100%;" onclick="openPackageModal({{ $course->id }}, null)">
+                                <button class="btn-add-package btn-add-package-full" onclick="openPackageModal({{ $course->id }}, null)">
                                     <i class="bi bi-plus-circle"></i> Add First Package
                                 </button>
                             </div>
@@ -1158,25 +1476,25 @@
                     <div class="course-list-content">
                         <div class="course-list-header">
                             <div class="course-list-title-section">
-                                <h3 class="course-title" style="margin-bottom: 10px;">{{ $course->title }}</h3>
-                                <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
+                                <h3 class="course-title course-title-list">{{ $course->title }}</h3>
+                                <div class="course-list-meta">
                                     <span class="course-type">{{ $course->type }}</span>
                                     @if($course->vehicle_type)
-                                        <span class="course-type" style="background: #dbeafe; color: #1e40af;">{{ $course->vehicle_type }}</span>
+                                        <span class="course-type course-type-vehicle">{{ $course->vehicle_type }}</span>
                                     @endif
-                                    <span class="status-badge status-{{ $course->status }}" style="position: static;">
+                                    <span class="status-badge status-{{ $course->status }} status-badge-static">
                                         {{ ucfirst($course->status) }}
                                     </span>
                                     @if($course->is_featured)
-                                        <span class="featured-badge" style="position: static;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width: 16px; height: 16px; margin-right: 4px;"><path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z" clip-rule="evenodd" /></svg>Featured</span>
+                                        <span class="featured-badge featured-badge-static"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="featured-icon-sm"><path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z" clip-rule="evenodd" /></svg>Featured</span>
                                     @endif
                                 </div>
                                 @if($course->description)
-                                    <p class="course-description" style="-webkit-line-clamp: 3; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden;">{{ $course->description }}</p>
+                                    <p class="course-description course-description-list">{{ $course->description }}</p>
                                 @endif
                                 
                                 @if($course->features && count($course->features) > 0)
-                                    <ul class="course-features" style="margin-top: 15px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
+                                    <ul class="course-features course-features-grid">
                                         @foreach($course->features as $feature)
                                             <li>{{ $feature }}</li>
                                         @endforeach
@@ -1209,8 +1527,8 @@
                                         ₱{{ number_format($course->packages->min('price'), 0) }} - ₱{{ number_format($course->packages->max('price'), 0) }}
                                     </span>
                                 </div>
-                                <div style="flex: 1;">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <div class="course-list-fill">
+                                    <div class="course-list-packages-header">
                                         <span class="info-label">Available Packages</span>
                                         <button class="btn-add-package" onclick="openPackageModal({{ $course->id }}, null)">
                                             <i class="bi bi-plus"></i> Add
@@ -1222,16 +1540,16 @@
                                                 <div class="package-inline-name">
                                                     {{ $package->name }}
                                                     @if($package->vehicle_type)
-                                                        <span style="font-size: 0.75rem; padding: 2px 6px; background: {{ $settings->accent_color ?? '#8b5cf6' }}; color: white; border-radius: 8px; margin-left: 4px;">
+                                                        <span class="package-inline-tag package-inline-tag-vehicle">
                                                             {{ $package->vehicle_type }}
                                                         </span>
                                                     @endif
-                                                    <span style="font-size: 0.75rem; padding: 2px 6px; background: {{ $package->transmission_type == 'manual' ? '#fbbf24' : '#3b82f6' }}; color: white; border-radius: 8px; margin-left: 4px;">
+                                                    <span class="package-inline-tag {{ $package->transmission_type == 'manual' ? 'package-inline-tag-transmission-manual' : 'package-inline-tag-transmission-auto' }}">
                                                         {{ strtoupper($package->transmission_type) }}
                                                     </span>
                                                 </div>
                                                 <div class="package-inline-price">₱{{ number_format($package->price, 2) }}</div>
-                                                <div style="display: flex; gap: 5px; margin-top: 8px;">
+                                                <div class="package-inline-actions">
                                                     <button class="btn-package-edit" onclick="openPackageModal({{ $course->id }}, {{ $package->id }})">Edit</button>
                                                     <button class="btn-package-delete" onclick="deletePackage({{ $course->id }}, {{ $package->id }})">Delete</button>
                                                 </div>
@@ -1242,7 +1560,7 @@
                             </div>
                         @else
                             <div class="course-list-info">
-                                <button class="btn-add-package" style="width: 100%;" onclick="openPackageModal({{ $course->id }}, null)">
+                                <button class="btn-add-package btn-add-package-full" onclick="openPackageModal({{ $course->id }}, null)">
                                     <i class="bi bi-plus-circle"></i> Add First Package
                                 </button>
                             </div>
@@ -1282,7 +1600,7 @@
                     <label class="form-label">Banner Image (Max 2MB)</label>
                     <input type="file" name="banner_image" id="courseBanner" class="form-control" accept="image/*" onchange="previewImage(this)">
                     <img id="imagePreview" class="image-preview">
-                    <small style="color: #64748b; display: block; margin-top: 5px;">Recommended size: 1200x400px for best results</small>
+                    <small class="banner-help-text">Recommended size: 1200x400px for best results</small>
                 </div>
 
                 <div class="form-group">
@@ -1319,7 +1637,7 @@
                     <button type="button" class="btn-add-feature" onclick="addFeature()">+ Add Feature</button>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div class="form-grid-two">
                     <div class="form-group">
                         <label class="form-label">Course Category</label>
                         <select name="course_type" id="courseCourseType" class="form-control">
@@ -1354,13 +1672,13 @@
 
                 <div class="form-check">
                     <input type="checkbox" name="is_featured" id="courseFeatured">
-                    <label for="courseFeatured" class="form-label" style="margin-bottom: 0;">Mark as Featured Course</label>
+                    <label for="courseFeatured" class="form-label form-label-inline">Mark as Featured Course</label>
                 </div>
             </div>
 
             <div class="modal-footer">
-                <button type="button" class="btn-secondary" onclick="closeCourseModal()">Cancel</button>
-                <button type="submit" class="btn-primary">Save Course</button>
+                <button type="button" class="btn btn-secondary course-modal-btn" onclick="closeCourseModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary course-modal-btn">Save Course</button>
             </div>
         </form>
     </div>
@@ -1368,17 +1686,17 @@
 
 <!-- Preview Modal (Guest View) -->
 <div class="modal" id="previewModal">
-    <div class="modal-content" style="max-width: 900px;">
-        <div class="modal-header" style="background: {{ $settings->modal_header_bg ?? $settings->primary_color ?? '#667eea' }};">
+    <div class="modal-content preview-modal-content">
+        <div class="modal-header preview-modal-header">
             <h5><i class="bi bi-eye-fill"></i> Course Preview (Guest View)</h5>
             <button class="btn-close" onclick="closePreviewModal()">&times;</button>
         </div>
-        <div class="modal-body" id="previewContent" style="padding: 0;">
+        <div class="modal-body preview-modal-body" id="previewContent">
             <!-- Preview content will be injected here -->
         </div>
-        <div class="modal-footer" style="background: #f8fafc;">
-            <button type="button" class="btn-secondary" onclick="closePreviewModal()">Close</button>
-            <button type="button" class="btn-primary" onclick="closePreviewAndEdit()">
+        <div class="modal-footer preview-modal-footer">
+            <button type="button" class="btn btn-secondary course-modal-btn" onclick="closePreviewModal()">Close</button>
+            <button type="button" class="btn btn-primary course-modal-btn" onclick="closePreviewAndEdit()">
                 <i class="bi bi-pencil-fill"></i> Edit Course
             </button>
         </div>
@@ -1405,7 +1723,7 @@
                 <div class="form-group">
                     <label class="form-label">Vehicle Type</label>
                     <input type="text" name="vehicle_type" id="packageVehicleType" class="form-control" placeholder="e.g., Sedan, SUV, Motorcycle, Truck">
-                    <small style="color: #666; font-size: 12px; margin-top: 4px; display: block;">Optional - Specify if this package is for a specific vehicle type</small>
+                    <small class="package-help-text">Optional - Specify if this package is for a specific vehicle type</small>
                 </div>
 
                 <div class="form-group">
@@ -1444,13 +1762,13 @@
 
                 <div class="form-check">
                     <input type="checkbox" name="is_popular" id="packagePopular">
-                    <label for="packagePopular" class="form-label" style="margin-bottom: 0;">Mark as Popular Package</label>
+                    <label for="packagePopular" class="form-label form-label-inline">Mark as Popular Package</label>
                 </div>
             </div>
 
             <div class="modal-footer">
-                <button type="button" class="btn-secondary" onclick="closePackageModal()">Cancel</button>
-                <button type="submit" class="btn-primary">Save Package</button>
+                <button type="button" class="btn btn-secondary course-modal-btn" onclick="closePackageModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary course-modal-btn">Save Package</button>
             </div>
         </form>
     </div>
@@ -1697,28 +2015,28 @@
 
         // Build guest-view HTML
         const previewHTML = `
-            <div style="background: {{ $settings?->use_gradient_header ? 'linear-gradient(135deg, ' . $settings->primary_color . ' 0%, ' . $settings->secondary_color . ' 100%)' : ($settings->primary_color ?? '#667eea') }}; padding: 40px; color: white; text-align: center;">
+            <div class="preview-guest-hero">
                 ${course.banner_image ? 
-                    `<img src="{{ asset('') }}${course.banner_image}" style="max-width: 600px; width: 100%; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">` : 
-                    `<i class="bi bi-car-front-fill" style="font-size: 5rem; opacity: 0.8; display: block; margin-bottom: 20px;"></i>`
+                    `<img src="{{ asset('') }}${course.banner_image}" class="preview-guest-banner-img">` : 
+                    `<i class="bi bi-car-front-fill preview-guest-banner-icon"></i>`
                 }
-                <h2 style="font-size: 2.5rem; font-weight: 700; margin-bottom: 15px;">${course.title}</h2>
-                <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin-bottom: 15px;">
-                    <span style="background: rgba(255,255,255,0.2); padding: 8px 20px; border-radius: 20px; font-weight: 600;">${course.type}</span>
-                    ${course.vehicle_type ? `<span style="background: rgba(255,255,255,0.2); padding: 8px 20px; border-radius: 20px; font-weight: 600;">${course.vehicle_type}</span>` : ''}
-                    ${course.is_featured ? `<span style="background: #f59e0b; padding: 8px 20px; border-radius: 20px; font-weight: 600;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width: 16px; height: 16px; margin-right: 4px;"><path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z" clip-rule="evenodd" /></svg>Featured</span>` : ''}
+                <h2 class="preview-guest-title">${course.title}</h2>
+                <div class="preview-guest-meta">
+                    <span class="preview-guest-pill">${course.type}</span>
+                    ${course.vehicle_type ? `<span class="preview-guest-pill">${course.vehicle_type}</span>` : ''}
+                    ${course.is_featured ? `<span class="preview-guest-featured-pill"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="preview-guest-featured-icon"><path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z" clip-rule="evenodd" /></svg>Featured</span>` : ''}
                 </div>
-                ${course.description ? `<p style="font-size: 1.1rem; max-width: 700px; margin: 0 auto; opacity: 0.95;">${course.description}</p>` : ''}
+                ${course.description ? `<p class="preview-guest-description">${course.description}</p>` : ''}
             </div>
 
-            <div style="padding: 40px;">
+            <div class="preview-guest-body">
                 ${course.features && course.features.length > 0 ? `
-                    <div style="margin-bottom: 40px;">
-                        <h3 style="font-size: 1.8rem; font-weight: 700; color: #2d3748; margin-bottom: 25px; text-align: center;">✨ What's Included</h3>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; max-width: 800px; margin: 0 auto;">
+                    <div class="preview-guest-section">
+                        <h3 class="preview-guest-section-title">✨ What's Included</h3>
+                        <div class="preview-guest-features-grid">
                             ${course.features.map(feature => `
-                                <div style="background: #f8fafc; padding: 15px 20px; border-radius: 10px; border-left: 4px solid {{ $settings->primary_color ?? '#667eea' }};">
-                                    <i class="bi bi-check-circle-fill" style="color: #10b981; margin-right: 10px;"></i>
+                                <div class="preview-guest-feature-item">
+                                    <i class="bi bi-check-circle-fill preview-guest-feature-icon"></i>
                                     ${feature}
                                 </div>
                             `).join('')}
@@ -1728,33 +2046,33 @@
 
                 ${course.packages && course.packages.length > 0 ? `
                     <div>
-                        <h3 style="font-size: 1.8rem; font-weight: 700; color: #2d3748; margin-bottom: 25px; text-align: center;">Choose Your Package</h3>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; max-width: 1000px; margin: 0 auto;">
+                        <h3 class="preview-guest-section-title">Choose Your Package</h3>
+                        <div class="preview-guest-packages-grid">
                             ${course.packages.map(pkg => `
-                                <div style="background: white; border: 3px solid ${pkg.is_popular ? '#f59e0b' : '#e2e8f0'}; border-radius: 12px; padding: 25px; position: relative; transition: all 0.3s; ${pkg.is_popular ? 'box-shadow: 0 8px 25px rgba(245, 158, 11, 0.3);' : ''}">
-                                    ${pkg.is_popular ? `<div style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: #f59e0b; color: white; padding: 5px 20px; border-radius: 20px; font-weight: 700; font-size: 0.85rem;">MOST POPULAR</div>` : ''}
-                                    <h4 style="font-size: 1.5rem; font-weight: 700; color: #2d3748; margin-bottom: 10px; ${pkg.is_popular ? 'margin-top: 10px;' : ''}">${pkg.name}</h4>
-                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
-                                        ${pkg.vehicle_type ? `<span style="background: {{ $settings->accent_color ?? '#8b5cf6' }}; color: white; padding: 5px 12px; border-radius: 6px; font-weight: 600; font-size: 0.85rem;">${pkg.vehicle_type}</span>` : ''}
-                                        <span style="background: ${pkg.transmission_type === 'manual' ? '#fbbf24' : '#3b82f6'}; color: white; padding: 5px 12px; border-radius: 6px; font-weight: 600; font-size: 0.85rem;">
+                                <div class="preview-guest-package-card ${pkg.is_popular ? 'popular' : ''}">
+                                    ${pkg.is_popular ? `<div class="preview-guest-popular-ribbon">MOST POPULAR</div>` : ''}
+                                    <h4 class="preview-guest-package-title ${pkg.is_popular ? 'popular' : ''}">${pkg.name}</h4>
+                                    <div class="preview-guest-package-meta">
+                                        ${pkg.vehicle_type ? `<span class="preview-guest-package-tag vehicle">${pkg.vehicle_type}</span>` : ''}
+                                        <span class="preview-guest-package-tag ${pkg.transmission_type === 'manual' ? 'manual' : 'automatic'}">
                                             ${pkg.transmission_type.toUpperCase()}
                                         </span>
-                                        ${pkg.training_hours ? `<span style="color: #64748b; font-weight: 600;"><i class="bi bi-clock"></i> ${pkg.training_hours} hours</span>` : ''}
+                                        ${pkg.training_hours ? `<span class="preview-guest-package-hours"><i class="bi bi-clock"></i> ${pkg.training_hours} hours</span>` : ''}
                                     </div>
-                                    ${pkg.description ? `<p style="color: #64748b; margin-bottom: 20px; line-height: 1.6;">${pkg.description}</p>` : ''}
+                                    ${pkg.description ? `<p class="preview-guest-package-description">${pkg.description}</p>` : ''}
                                     ${pkg.features && pkg.features.length > 0 ? `
-                                        <ul style="list-style: none; padding: 0; margin: 20px 0;">
-                                            ${pkg.features.map(f => `<li style="padding: 5px 0; color: #475569;"><i class="bi bi-check-circle-fill" style="color: #10b981; margin-right: 8px;"></i>${f}</li>`).join('')}
+                                        <ul class="preview-guest-package-features">
+                                            ${pkg.features.map(f => `<li class="preview-guest-package-feature-item"><i class="bi bi-check-circle-fill preview-guest-feature-icon"></i>${f}</li>`).join('')}
                                         </ul>
                                     ` : ''}
-                                    <div style="margin-top: 25px; padding-top: 20px; border-top: 2px solid #e2e8f0;">
-                                        <div style="font-size: 2.5rem; font-weight: 700; color: {{ $settings->primary_color ?? '#667eea' }};">₱${new Intl.NumberFormat().format(pkg.price)}</div>
+                                    <div class="preview-guest-package-divider">
+                                        <div class="preview-guest-package-price">₱${new Intl.NumberFormat().format(pkg.price)}</div>
                                     </div>
                                 </div>
                             `).join('')}
                         </div>
                     </div>
-                ` : '<p style="text-align: center; color: #64748b; font-size: 1.1rem;">No packages available yet.</p>'}
+                ` : '<p class="preview-guest-empty">No packages available yet.</p>'}
             </div>
         `;
 

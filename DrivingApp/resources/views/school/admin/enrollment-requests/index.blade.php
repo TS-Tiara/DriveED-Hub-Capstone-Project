@@ -41,6 +41,16 @@
         font-size: 0.9rem;
         margin-top: 5px;
     }
+
+    .icon-24 {
+        width: 24px;
+        height: 24px;
+    }
+
+    .icon-14 {
+        width: 14px;
+        height: 14px;
+    }
     
     .stats-grid {
         display: grid;
@@ -316,12 +326,251 @@
         font-size: 0.9rem;
         color: #6b7280;
     }
-    
-    .alert {
-        padding: 15px 20px;
-        border-radius: 10px;
-        margin-bottom: 25px;
+
+    .inline-form {
+        display: inline;
+    }
+
+    .contents-form {
+        display: contents;
+    }
+
+    .status-muted {
+        color: #9ca3af;
+        font-size: 0.9rem;
+    }
+
+    .mobile-learner-name {
+        font-size: 1rem;
+    }
+
+    .mobile-learner-email {
+        color: #6b7280;
+        font-size: 0.8rem;
+    }
+
+    .license-badge-inline {
+        margin-top: 4px;
+        display: inline-block;
+    }
+
+    .branch-scope-banner {
+        padding: 12px 18px;
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .branch-scope-icon {
+        width: 20px;
+        height: 20px;
+        flex-shrink: 0;
+    }
+
+    .branch-scope-text {
+        color: #1e40af;
+        font-size: 0.9rem;
         font-weight: 500;
+    }
+
+    .branch-filter-wrap {
+        margin-bottom: 16px;
+    }
+
+    .branch-filter-select {
+        max-width: 300px;
+        display: inline-block;
+        padding: 8px 12px;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 0.9rem;
+    }
+
+    .action-bar-wrapper {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding: 15px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        gap: 10px;
+    }
+
+    .bulk-actions-bar {
+        display: none;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .bulk-actions-count {
+        font-weight: 600;
+        color: #374151;
+    }
+
+    .bulk-action-btn {
+        padding: 8px 16px;
+    }
+
+    .btn-icon-sm {
+        width: 16px;
+        height: 16px;
+        display: inline;
+    }
+
+    .export-actions {
+        display: flex;
+        gap: 10px;
+        margin-left: auto;
+    }
+
+    .export-menu-wrap {
+        position: relative;
+    }
+
+    .export-btn {
+        padding: 8px 16px;
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .export-menu {
+        display: none;
+        position: absolute;
+        top: 100%;
+        right: 0;
+        margin-top: 5px;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        min-width: 180px;
+        z-index: 10;
+    }
+
+    .export-menu-link {
+        display: block;
+        padding: 10px 15px;
+        text-decoration: none;
+        color: #374151;
+        transition: background 0.2s;
+    }
+
+    .export-menu-link:hover {
+        background: #f3f4f6;
+    }
+
+    .export-menu-link.with-border {
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .checkbox-col {
+        width: 40px;
+    }
+
+    .row-checkbox {
+        cursor: pointer;
+        width: 18px;
+        height: 18px;
+    }
+
+    .empty-state-icon {
+        width: 48px;
+        height: 48px;
+        color: #9ca3af;
+    }
+
+    .action-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .action-modal-card {
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        max-width: 500px;
+        width: 90%;
+    }
+
+    .action-modal-title {
+        margin: 0 0 20px 0;
+        color: #333;
+    }
+
+    .action-modal-title-tight {
+        margin: 0 0 8px 0;
+        color: #333;
+    }
+
+    .action-modal-subtitle {
+        margin: 0 0 20px 0;
+        color: #6b7280;
+        font-size: 0.9rem;
+    }
+
+    .action-modal-field {
+        margin-bottom: 20px;
+    }
+
+    .action-modal-label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #333;
+    }
+
+    .action-modal-input {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 14px;
+        font-family: inherit;
+    }
+
+    .action-modal-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+    }
+
+    .action-modal-btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .action-modal-btn-secondary {
+        background: #e5e7eb;
+        color: #333;
+    }
+
+    .action-modal-btn-danger {
+        background: #ef4444;
+        color: white;
+    }
+
+    .action-modal-btn-neutral {
+        background: #6b7280;
+        color: white;
     }
     
     /* Mobile card layout */
@@ -472,15 +721,15 @@
     </div>
 
     @if($admin->isBranchSecretary() && $admin->branch)
-    <div style="padding: 12px 18px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#2563eb" style="width: 20px; height: 20px; flex-shrink: 0;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" /></svg>
-        <span style="color: #1e40af; font-size: 0.9rem; font-weight: 500;">Showing enrollments for your branch: <strong>{{ $admin->branch->name }}</strong></span>
+    <div class="branch-scope-banner">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#2563eb" class="branch-scope-icon"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" /></svg>
+        <span class="branch-scope-text">Showing enrollments for your branch: <strong>{{ $admin->branch->name }}</strong></span>
     </div>
     @endif
 
     @if($branches->count() > 0)
-    <div class="mb-3" style="margin-bottom: 16px;">
-        <select id="branchFilter" class="form-select" style="max-width: 300px; display: inline-block; padding: 8px 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 0.9rem;">
+    <div class="mb-3 branch-filter-wrap">
+        <select id="branchFilter" class="form-select branch-filter-select">
             <option value="">All Branches</option>
             @foreach($branches as $branch)
                 <option value="{{ $branch->name }}">{{ $branch->name }}</option>
@@ -521,7 +770,7 @@
                         <div class="stat-value">{{ $allRequestsCount }}</div>
                     </div>
                     <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                         </svg>
                     </div>
@@ -536,7 +785,7 @@
                         <div class="stat-value">{{ $pendingRequestsCount }}</div>
                     </div>
                     <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
@@ -551,7 +800,7 @@
                         <div class="stat-value">{{ $approvedRequestsCount }}</div>
                     </div>
                     <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                         </svg>
                     </div>
@@ -566,7 +815,7 @@
                         <div class="stat-value">{{ $completedRequestsCount }}</div>
                     </div>
                     <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
@@ -581,7 +830,7 @@
                         <div class="stat-value">{{ $cancelledRequestsCount }}</div>
                     </div>
                     <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
                         </svg>
                     </div>
@@ -596,7 +845,7 @@
                         <div class="stat-value">{{ $rejectedRequestsCount }}</div>
                     </div>
                     <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
@@ -606,18 +855,18 @@
     </div>
     
     <!-- Action Bar with Export and Bulk Operations -->
-    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 15px; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); gap: 10px;">
+    <div class="action-bar-wrapper">
         <!-- Bulk Operations (Left Side) -->
-        <div id="bulkActionsBar" style="display: none; gap: 10px; align-items: center;">
-            <span id="selectedCount" style="font-weight: 600; color: #374151;">0 selected</span>
-            <button type="button" class="btn btn-approve" onclick="bulkApprove()" style="padding: 8px 16px;">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 16px; height: 16px; display: inline;">
+        <div id="bulkActionsBar" class="bulk-actions-bar">
+            <span id="selectedCount" class="bulk-actions-count">0 selected</span>
+            <button type="button" class="btn btn-approve bulk-action-btn" onclick="bulkApprove()">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="btn-icon-sm">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                 </svg>
                 Approve Selected
             </button>
-            <button type="button" class="btn btn-reject" onclick="bulkReject()" style="padding: 8px 16px;">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 16px; height: 16px; display: inline;">
+            <button type="button" class="btn btn-reject bulk-action-btn" onclick="bulkReject()">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="btn-icon-sm">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
                 Reject Selected
@@ -625,28 +874,28 @@
         </div>
         
         <!-- Export Buttons (Right Side) -->
-        <div style="display: flex; gap: 10px; margin-left: auto;">
-            <div style="position: relative;">
-                <button type="button" class="btn btn-primary" onclick="toggleExportMenu()" style="padding: 8px 16px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); display: flex; align-items: center; gap: 8px;">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 16px; height: 16px;">
+        <div class="export-actions">
+            <div class="export-menu-wrap">
+                <button type="button" class="btn btn-primary export-btn" onclick="toggleExportMenu()">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="btn-icon-sm">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
                     </svg>
                     Export PDF
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 14px; height: 14px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="14" height="14">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                     </svg>
                 </button>
-                <div id="exportMenu" style="display: none; position: absolute; top: 100%; right: 0; margin-top: 5px; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 180px; z-index: 10;">
-                    <a href="{{ route('schools.admin.exports.enrollments.pdf', ['school' => $school->slug]) }}" style="display: block; padding: 10px 15px; text-decoration: none; color: #374151; transition: background 0.2s;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='white'">
+                <div id="exportMenu" class="export-menu">
+                    <a href="{{ route('schools.admin.exports.enrollments.pdf', ['school' => $school->slug]) }}" class="export-menu-link">
                         All Enrollments
                     </a>
-                    <a href="{{ route('schools.admin.exports.enrollments.pdf', ['school' => $school->slug, 'status' => 'pending']) }}" style="display: block; padding: 10px 15px; text-decoration: none; color: #374151; transition: background 0.2s; border-top: 1px solid #e5e7eb;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='white'">
+                    <a href="{{ route('schools.admin.exports.enrollments.pdf', ['school' => $school->slug, 'status' => 'pending']) }}" class="export-menu-link with-border">
                         Pending Only
                     </a>
-                    <a href="{{ route('schools.admin.exports.enrollments.pdf', ['school' => $school->slug, 'status' => 'approved']) }}" style="display: block; padding: 10px 15px; text-decoration: none; color: #374151; transition: background 0.2s; border-top: 1px solid #e5e7eb;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='white'">
+                    <a href="{{ route('schools.admin.exports.enrollments.pdf', ['school' => $school->slug, 'status' => 'approved']) }}" class="export-menu-link with-border">
                         Active Only
                     </a>
-                    <a href="{{ route('schools.admin.exports.enrollments.pdf', ['school' => $school->slug, 'status' => 'completed']) }}" style="display: block; padding: 10px 15px; text-decoration: none; color: #374151; transition: background 0.2s; border-top: 1px solid #e5e7eb;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='white'">
+                    <a href="{{ route('schools.admin.exports.enrollments.pdf', ['school' => $school->slug, 'status' => 'completed']) }}" class="export-menu-link with-border">
                         Completed Only
                     </a>
                 </div>
@@ -659,8 +908,8 @@
         <table class="requests-table">
             <thead>
                 <tr>
-                    <th style="width: 40px;">
-                        <input type="checkbox" id="selectAll" onchange="toggleSelectAll()" style="cursor: pointer; width: 18px; height: 18px;">
+                    <th class="checkbox-col">
+                        <input type="checkbox" id="selectAll" onchange="toggleSelectAll()" class="row-checkbox">
                     </th>
                     <th>Learner</th>
                     <th>Course</th>
@@ -677,7 +926,7 @@
                     <tr data-status="{{ $request->status }}" data-request-id="{{ $request->id }}" data-branch="{{ $request->branchRelation?->name ?? '' }}">
                         <td>
                             @if($request->status === 'pending')
-                                <input type="checkbox" class="request-checkbox" value="{{ $request->id }}" onchange="updateBulkActions()" style="cursor: pointer; width: 18px; height: 18px;">
+                                <input type="checkbox" class="request-checkbox row-checkbox" value="{{ $request->id }}" onchange="updateBulkActions()">
                             @endif
                         </td>
                         <td>
@@ -692,12 +941,21 @@
                                 </div>
                                 @if($licenseStatus === 'pending')
                                     <div class="license-actions">
+<<<<<<< HEAD
                                         <button type="button" class="btn-license-view" onclick="showLicensePreviewModal('{{ route('schools.admin.enrollments.viewLicense', ['school' => $school, 'student' => $request->learner->id]) }}', '{{ addslashes($request->learner->name) }}')">View</button>
                                         <form method="POST" action="{{ route('schools.admin.enrollments.verifyLicense', ['school' => $school, 'student' => $request->learner->id]) }}" style="display:inline;">
                                             @csrf
                                             <button type="button" class="btn-license-verify" onclick="showConfirm({title:'Verify License',message:'Verify this student\'s license?',type:'success',onConfirm:()=>this.closest('form').submit()})">✓ Verify</button>
                                         </form>
                                         <button type="button" class="btn-license-reject" onclick="showLicenseRejectModal({{ $request->learner->id }}, '{{ addslashes($request->learner->name) }}')">✗ Reject</button>
+=======
+                                        <a href="{{ Storage::url($request->learner->student_license_path) }}" target="_blank" class="btn-license-view">View</a>
+                                        <form method="POST" action="{{ route('schools.admin.enrollments.verifyLicense', ['school' => $school, 'student' => $request->learner->id]) }}" class="inline-form">
+                                            @csrf
+                                            <button type="button" class="btn-license-verify" onclick="showConfirm({title:'Verify License',message:'Verify this student\'s license?',type:'success',onConfirm:()=>this.closest('form').submit()})">✓ Verify</button>
+                                        </form>
+                                        <button type="button" class="btn-license-reject" onclick="showLicenseRejectModal({{ $request->learner->id }}, '{{ addslashes($request->learner->name) }}')"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg> Reject</button>
+>>>>>>> deploy-testing
                                     </div>
                                 @elseif($licenseStatus === 'verified')
                                     @if($request->learner->student_license_path || $request->learner->student_license_data)
@@ -737,30 +995,38 @@
                         <td>
                             @if($request->status === 'pending')
                                 <div class="action-buttons">
-                                    <form method="POST" action="{{ route('schools.admin.enrollments.approve', ['school' => $school, 'enrollmentRequest' => $request->id]) }}" style="display: inline;" id="approveForm{{ $request->id }}">
+                                    <form method="POST" action="{{ route('schools.admin.enrollments.approve', ['school' => $school, 'enrollmentRequest' => $request->id]) }}" class="inline-form" id="approveForm{{ $request->id }}">
                                         @csrf
                                         <button type="button" class="btn btn-approve" onclick="approveRequest({{ $request->id }})">
                                             ✓ Approve
                                         </button>
                                     </form>
                                     <button class="btn btn-reject" onclick="showRejectModal({{ $request->id }})">
+<<<<<<< HEAD
                                         ✗ Reject
+=======
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg> Reject
+>>>>>>> deploy-testing
                                     </button>
                                 </div>
                             @elseif($request->status === 'approved')
                                 <div class="action-buttons">
-                                    <form method="POST" action="{{ route('schools.admin.enrollments.complete', ['school' => $school, 'enrollmentRequest' => $request->id]) }}" style="display: inline;" id="completeForm{{ $request->id }}">
+                                    <form method="POST" action="{{ route('schools.admin.enrollments.complete', ['school' => $school, 'enrollmentRequest' => $request->id]) }}" class="inline-form" id="completeForm{{ $request->id }}">
                                         @csrf
                                         <button type="button" class="btn btn-approve" onclick="completeEnrollment({{ $request->id }})">
                                             ✓ Complete
                                         </button>
                                     </form>
                                     <button class="btn btn-reject" onclick="showCancelModal({{ $request->id }})">
+<<<<<<< HEAD
                                         ✗ Cancel
+=======
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg> Cancel
+>>>>>>> deploy-testing
                                     </button>
                                 </div>
                             @else
-                                <span style="color: #9ca3af; font-size: 0.9rem;">
+                                <span class="status-muted">
                                     {{ ucfirst($request->status) }}
                                     @if($request->approved_at)
                                         <br><small>{{ $request->approved_at->format('M d, Y') }}</small>
@@ -785,10 +1051,10 @@
         <div class="mobile-card" data-status="{{ $request->status }}" data-request-id="{{ $request->id }}" data-branch="{{ $request->branchRelation?->name ?? '' }}">
             <div class="mobile-card-header">
                 <div>
-                    <strong style="font-size: 1rem;">{{ $request->learner->name }}</strong>
-                    <div style="color: #6b7280; font-size: 0.8rem;">{{ $request->learner->email }}</div>
+                    <strong class="mobile-learner-name">{{ $request->learner->name }}</strong>
+                    <div class="mobile-learner-email">{{ $request->learner->email }}</div>
                     @php $licenseStatus = $request->learner->student_license_status ?? 'none'; @endphp
-                    <span class="license-badge license-{{ $licenseStatus }}" style="margin-top: 4px; display: inline-block;">
+                    <span class="license-badge license-{{ $licenseStatus }} license-badge-inline">
                         🪪 {{ $licenseStatus === 'none' ? 'No License' : ucfirst($licenseStatus) }}
                     </span>
                 </div>
@@ -816,19 +1082,27 @@
             </div>
             @if($request->status === 'pending')
                 <div class="mobile-card-actions">
-                    <form method="POST" action="{{ route('schools.admin.enrollments.approve', ['school' => $school, 'enrollmentRequest' => $request->id]) }}" style="display: contents;" id="mobileApproveForm{{ $request->id }}">
+                    <form method="POST" action="{{ route('schools.admin.enrollments.approve', ['school' => $school, 'enrollmentRequest' => $request->id]) }}" class="contents-form" id="mobileApproveForm{{ $request->id }}">
                         @csrf
                         <button type="button" class="btn btn-approve" onclick="document.getElementById('approveForm{{ $request->id }}').submit()">✓ Approve</button>
                     </form>
+<<<<<<< HEAD
                     <button class="btn btn-reject" onclick="showRejectModal({{ $request->id }})">✗ Reject</button>
+=======
+                    <button class="btn btn-reject" onclick="showRejectModal({{ $request->id }})"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg> Reject</button>
+>>>>>>> deploy-testing
                 </div>
             @elseif($request->status === 'approved')
                 <div class="mobile-card-actions">
-                    <form method="POST" action="{{ route('schools.admin.enrollments.complete', ['school' => $school, 'enrollmentRequest' => $request->id]) }}" style="display: contents;" id="mobileCompleteForm{{ $request->id }}">
+                    <form method="POST" action="{{ route('schools.admin.enrollments.complete', ['school' => $school, 'enrollmentRequest' => $request->id]) }}" class="contents-form" id="mobileCompleteForm{{ $request->id }}">
                         @csrf
                         <button type="button" class="btn btn-approve" onclick="completeEnrollment({{ $request->id }})">✓ Complete</button>
                     </form>
+<<<<<<< HEAD
                     <button class="btn btn-reject" onclick="showCancelModal({{ $request->id }})">✗ Cancel</button>
+=======
+                    <button class="btn btn-reject" onclick="showCancelModal({{ $request->id }})"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg> Cancel</button>
+>>>>>>> deploy-testing
                 </div>
             @endif
         </div>
@@ -862,7 +1136,7 @@
     @else
         <div class="no-requests">
             <div class="no-requests-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 48px; height: 48px; color: #9ca3af;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="empty-state-icon">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
             </div>
@@ -872,26 +1146,24 @@
 </div>
 
 <!-- Reject Modal -->
-<div id="rejectModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
-    <div style="background: white; border-radius: 15px; padding: 30px; max-width: 500px; width: 90%;">
-        <h3 style="margin: 0 0 20px 0; color: #333;">Reject Enrollment Request</h3>
+<div id="rejectModal" class="action-modal">
+    <div class="action-modal-card">
+        <h3 class="action-modal-title">Reject Enrollment Request</h3>
         <form id="rejectForm" method="POST">
             @csrf
-            <div style="margin-bottom: 20px;">
-                <label for="remarks" style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
+            <div class="action-modal-field">
+                <label for="remarks" class="action-modal-label">
                     Reason for Rejection *
                 </label>
-                <textarea id="remarks" name="remarks" rows="4" required 
-                    style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; font-family: inherit;"
+                <textarea id="remarks" name="remarks" rows="4" required
+                    class="action-modal-input"
                     placeholder="Provide a reason for rejecting this enrollment request..."></textarea>
             </div>
-            <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                <button type="button" onclick="closeRejectModal()" 
-                    style="padding: 10px 20px; background: #e5e7eb; color: #333; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+            <div class="action-modal-actions">
+                <button type="button" onclick="closeRejectModal()" class="action-modal-btn action-modal-btn-secondary">
                     Cancel
                 </button>
-                <button type="submit" 
-                    style="padding: 10px 20px; background: #ef4444; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                <button type="submit" class="action-modal-btn action-modal-btn-danger">
                     Reject Request
                 </button>
             </div>
@@ -900,26 +1172,24 @@
 </div>
 
 <!-- Cancel Modal -->
-<div id="cancelModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
-    <div style="background: white; border-radius: 15px; padding: 30px; max-width: 500px; width: 90%;">
-        <h3 style="margin: 0 0 20px 0; color: #333;">Cancel Enrollment</h3>
+<div id="cancelModal" class="action-modal">
+    <div class="action-modal-card">
+        <h3 class="action-modal-title">Cancel Enrollment</h3>
         <form id="cancelForm" method="POST">
             @csrf
-            <div style="margin-bottom: 20px;">
-                <label for="cancel_remarks" style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
+            <div class="action-modal-field">
+                <label for="cancel_remarks" class="action-modal-label">
                     Reason for Cancellation (optional)
                 </label>
-                <textarea id="cancel_remarks" name="remarks" rows="4" 
-                    style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; font-family: inherit;"
+                <textarea id="cancel_remarks" name="remarks" rows="4"
+                    class="action-modal-input"
                     placeholder="Provide a reason for cancelling this enrollment..."></textarea>
             </div>
-            <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                <button type="button" onclick="closeCancelModal()" 
-                    style="padding: 10px 20px; background: #e5e7eb; color: #333; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+            <div class="action-modal-actions">
+                <button type="button" onclick="closeCancelModal()" class="action-modal-btn action-modal-btn-secondary">
                     Cancel
                 </button>
-                <button type="submit" 
-                    style="padding: 10px 20px; background: #6b7280; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                <button type="submit" class="action-modal-btn action-modal-btn-neutral">
                     Cancel Enrollment
                 </button>
             </div>
@@ -928,27 +1198,25 @@
 </div>
 
 <!-- License Reject Modal -->
-<div id="licenseRejectModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
-    <div style="background: white; border-radius: 15px; padding: 30px; max-width: 500px; width: 90%;">
-        <h3 style="margin: 0 0 8px 0; color: #333;">Reject Student License</h3>
-        <p id="licenseRejectStudentName" style="margin: 0 0 20px 0; color: #6b7280; font-size: 0.9rem;"></p>
+<div id="licenseRejectModal" class="action-modal">
+    <div class="action-modal-card">
+        <h3 class="action-modal-title-tight">Reject Student License</h3>
+        <p id="licenseRejectStudentName" class="action-modal-subtitle"></p>
         <form id="licenseRejectForm" method="POST">
             @csrf
-            <div style="margin-bottom: 20px;">
-                <label for="rejection_reason" style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
+            <div class="action-modal-field">
+                <label for="rejection_reason" class="action-modal-label">
                     Reason for Rejection *
                 </label>
-                <textarea id="rejection_reason" name="rejection_reason" rows="4" required 
-                    style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; font-family: inherit;"
+                <textarea id="rejection_reason" name="rejection_reason" rows="4" required
+                    class="action-modal-input"
                     placeholder="Explain why this license is being rejected (e.g., expired, unreadable, wrong document)..."></textarea>
             </div>
-            <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                <button type="button" onclick="closeLicenseRejectModal()" 
-                    style="padding: 10px 20px; background: #e5e7eb; color: #333; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+            <div class="action-modal-actions">
+                <button type="button" onclick="closeLicenseRejectModal()" class="action-modal-btn action-modal-btn-secondary">
                     Cancel
                 </button>
-                <button type="submit" 
-                    style="padding: 10px 20px; background: #ef4444; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                <button type="submit" class="action-modal-btn action-modal-btn-danger">
                     Reject License
                 </button>
             </div>

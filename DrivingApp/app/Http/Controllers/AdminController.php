@@ -1286,41 +1286,6 @@ class AdminController extends Controller
         return redirect()->back()->with('success', 'Package deleted successfully!');
     }
 
-    // ============================================
-    // SYSTEM ADMIN ONLY METHODS
-    // ============================================
-
-    /**
-     * System logs - track all admin actions
-     * Accessible only by system_admin role
-     */
-    public function systemLogs(School $school)
-    {
-        $logs = \App\Models\Log::where('school_id', $school->id)
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
-
-        return view($school->resolveView('admin.system-logs'), compact('school', 'logs'));
-    }
-
-    /**
-     * System monitoring - uptime, performance metrics
-     * Accessible only by system_admin role
-     */
-    public function systemMonitoring(School $school)
-    {
-        $metrics = [
-            'uptime' => 'Operational',
-            'active_users' => \App\Models\Admin::where('school_id', $school->id)->count() +
-            \App\Models\Instructor::where('school_id', $school->id)->where('status', 'active')->count() +
-            \App\Models\Student::where('school_id', $school->id)->where('status', 'active')->count(),
-            'database_size' => 'N/A',
-            'last_backup' => 'N/A',
-        ];
-
-        return view($school->resolveView('admin.system-monitoring'), compact('school', 'metrics'));
-    }
-
     /**
      * Permanently delete a student (System Admin only)
      * School admins can only deactivate

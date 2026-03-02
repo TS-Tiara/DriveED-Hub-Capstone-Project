@@ -59,6 +59,14 @@
 
     .progress-visual { margin: 20px 0; }
 
+    .progress-visual-label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #374151;
+        font-size: 0.88rem;
+    }
+
     .progress-bar-container {
         background: #e5e7eb;
         border-radius: 8px;
@@ -121,6 +129,8 @@
     }
 
     .btn-danger:hover { background: #dc2626; color: white; }
+
+    .inline-delete-form { display: inline; }
 </style>
 
 <div class="admin-container">
@@ -158,9 +168,9 @@
             </div>
             
             <div class="progress-visual">
-                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151; font-size: 0.88rem;">Completion Progress</label>
+                <label class="progress-visual-label">Completion Progress</label>
                 <div class="progress-bar-container">
-                    <div class="progress-bar-fill" style="width: {{ $progress->completion_percent ?? 0 }}%;">
+                    <div class="progress-bar-fill" data-progress="{{ $progress->completion_percent ?? 0 }}">
                         {{ number_format($progress->completion_percent ?? 0, 1) }}%
                     </div>
                 </div>
@@ -177,7 +187,7 @@
                 <a href="{{ $schoolRoute('instructor.progress.edit', ['progress' => $progress->id]) }}" class="btn btn-primary-action" onclick="loadContent(this.href); return false;">
                     Edit Progress
                 </a>
-                <form action="{{ $schoolRoute('instructor.progress.destroy', ['progress' => $progress->id]) }}" method="POST" style="display: inline;">
+                <form action="{{ $schoolRoute('instructor.progress.destroy', ['progress' => $progress->id]) }}" method="POST" class="inline-delete-form">
                     @csrf
                     @method('DELETE')
                     <button type="button" class="btn btn-danger" onclick="showConfirm({title:'Delete Progress',message:'Are you sure you want to delete this progress record?',type:'danger',onConfirm:()=>this.closest('form').submit()})">Delete</button>
@@ -187,4 +197,13 @@
     </div>
 </div>
 </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.progress-bar-fill[data-progress]').forEach(function (bar) {
+            const value = parseFloat(bar.getAttribute('data-progress'));
+            const width = Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : 0;
+            bar.style.width = width + '%';
+        });
+    });
+</script>
 @endsection

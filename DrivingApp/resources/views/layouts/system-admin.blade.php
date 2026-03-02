@@ -30,6 +30,32 @@
             margin: 0;
             padding: 0;
         }
+
+        .skip-link {
+            position: absolute;
+            left: -9999px;
+            top: 0;
+            background: #111827;
+            color: #fff;
+            padding: 10px 14px;
+            border-radius: 0 0 8px 0;
+            z-index: 3000;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .skip-link:focus {
+            left: 0;
+        }
+
+        a:focus-visible,
+        button:focus-visible,
+        input:focus-visible,
+        select:focus-visible,
+        textarea:focus-visible {
+            outline: 3px solid rgba(5, 61, 134, 0.4);
+            outline-offset: 2px;
+        }
         
         .app-container {
             display: flex;
@@ -187,6 +213,24 @@
         
         .btn-logout:hover {
             background: var(--accent-color);
+        }
+
+        .inline-form {
+            display: inline;
+        }
+
+        .form-group-actions {
+            display: flex;
+            align-items: flex-end;
+        }
+
+        .btn-full-width {
+            width: 100%;
+        }
+
+        .stats-grid-two {
+            grid-template-columns: repeat(2, 1fr);
+            margin-bottom: 24px;
         }
         
         /* Content Area */
@@ -597,6 +641,7 @@
     @yield('styles')
 </head>
 <body>
+    <a href="#mainContent" class="skip-link">Skip to main content</a>
     <div class="app-container">
         <!-- Sidebar Overlay -->
         <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()" role="presentation" aria-hidden="true"></div>
@@ -642,7 +687,7 @@
         </aside>
 
         <!-- Main Content -->
-        <main class="main-content">
+        <main id="mainContent" class="main-content" tabindex="-1">
             <header class="header">
                 <div class="header-left">
                     <button class="burger-menu" onclick="toggleSidebar()" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="sidebar">
@@ -654,7 +699,7 @@
                 </div>
                 <div class="user-menu">
                     <span class="user-name">{{ Auth::guard('admin')->user()->name }}</span>
-                    <form action="{{ route('system-admin.logout') }}" method="POST" style="display: inline;">
+                    <form action="{{ route('system-admin.logout') }}" method="POST" class="inline-form">
                         @csrf
                         <button type="submit" class="btn-logout">Logout</button>
                     </form>

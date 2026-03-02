@@ -314,6 +314,43 @@
         color: #6b7280;
     }
 
+    .text-muted-dash {
+        color: #9ca3af;
+    }
+
+    .icon-add-green {
+        color: #065f46;
+    }
+
+    .icon-remove-red {
+        color: #991b1b;
+    }
+
+    .icon-approve-green {
+        color: #065f46;
+    }
+
+    .icon-deny-red {
+        color: #991b1b;
+    }
+
+    .required-asterisk {
+        color: #dc3545;
+    }
+
+    .modal-confirm-text {
+        color: #374151;
+        margin-bottom: 20px;
+    }
+
+    .text-approve-strong {
+        color: #065f46;
+    }
+
+    .text-deny-strong {
+        color: #991b1b;
+    }
+
     /* Modal */
     .modal-overlay {
         display: none;
@@ -639,7 +676,7 @@
                         @if($request->branch)
                             {{ $request->branch->name }}
                         @else
-                            <span style="color: #9ca3af;">—</span>
+                            <span class="text-muted-dash">—</span>
                         @endif
                     </td>
 
@@ -648,7 +685,7 @@
                         @if($request->requestedBy)
                             {{ $request->requestedBy->name }}
                         @else
-                            <span style="color: #9ca3af;">—</span>
+                            <span class="text-muted-dash">—</span>
                         @endif
                     </td>
 
@@ -706,7 +743,7 @@
                                 @endif
                             </div>
                         @else
-                            <span style="color: #9ca3af;">—</span>
+                            <span class="text-muted-dash">—</span>
                         @endif
                     </td>
                 </tr>
@@ -734,19 +771,19 @@
 <div class="modal-overlay" id="addStudentModal">
     <div class="modal-content">
         <div class="modal-header">
-            <h5><i class="bi bi-person-plus-fill" style="color: #065f46;"></i> Request Add Student</h5>
+            <h5><i class="bi bi-person-plus-fill icon-add-green"></i> Request Add Student</h5>
             <button class="btn-close-modal" onclick="closeModal('addStudentModal')">&times;</button>
         </div>
         <form action="{{ route('schools.admin.student-action-requests.add', $school) }}" method="POST">
             @csrf
             <div class="modal-body">
                 <div class="form-group">
-                    <label for="add_student_name">Student Full Name <span style="color:#dc3545;">*</span></label>
+                    <label for="add_student_name">Student Full Name <span class="required-asterisk">*</span></label>
                     <input type="text" id="add_student_name" name="student_name" required
                            placeholder="Enter student's full name" value="{{ old('student_name') }}">
                 </div>
                 <div class="form-group">
-                    <label for="add_student_email">Student Email <span style="color:#dc3545;">*</span></label>
+                    <label for="add_student_email">Student Email <span class="required-asterisk">*</span></label>
                     <input type="email" id="add_student_email" name="student_email" required
                            placeholder="Enter student's email" value="{{ old('student_email') }}">
                 </div>
@@ -757,7 +794,7 @@
                     <div class="form-hint">Optional but recommended.</div>
                 </div>
                 <div class="form-group">
-                    <label for="add_reason">Reason <span style="color:#dc3545;">*</span></label>
+                    <label for="add_reason">Reason <span class="required-asterisk">*</span></label>
                     <textarea id="add_reason" name="reason" required
                               placeholder="Explain why this student should be added...">{{ old('reason') }}</textarea>
                 </div>
@@ -776,20 +813,20 @@
 <div class="modal-overlay" id="removeStudentModal">
     <div class="modal-content">
         <div class="modal-header">
-            <h5><i class="bi bi-person-dash-fill" style="color: #991b1b;"></i> Request Remove Student</h5>
+            <h5><i class="bi bi-person-dash-fill icon-remove-red"></i> Request Remove Student</h5>
             <button class="btn-close-modal" onclick="closeModal('removeStudentModal')">&times;</button>
         </div>
         <form action="{{ route('schools.admin.student-action-requests.remove', $school) }}" method="POST">
             @csrf
             <div class="modal-body">
                 <div class="form-group">
-                    <label for="remove_student_id">Student ID <span style="color:#dc3545;">*</span></label>
+                    <label for="remove_student_id">Student ID <span class="required-asterisk">*</span></label>
                     <input type="number" id="remove_student_id" name="student_id" required
                            placeholder="Enter the student's ID number" value="{{ old('student_id') }}">
                     <div class="form-hint">Enter the ID of the student to be removed from your branch.</div>
                 </div>
                 <div class="form-group">
-                    <label for="remove_reason">Reason <span style="color:#dc3545;">*</span></label>
+                    <label for="remove_reason">Reason <span class="required-asterisk">*</span></label>
                     <textarea id="remove_reason" name="reason" required
                               placeholder="Explain why this student should be removed...">{{ old('reason') }}</textarea>
                 </div>
@@ -810,14 +847,14 @@
 <div class="modal-overlay" id="approveModal">
     <div class="modal-content">
         <div class="modal-header">
-            <h5><i class="bi bi-check-circle-fill" style="color: #065f46;"></i> Approve Request</h5>
+            <h5><i class="bi bi-check-circle-fill icon-approve-green"></i> Approve Request</h5>
             <button class="btn-close-modal" onclick="closeModal('approveModal')">&times;</button>
         </div>
         <form id="approveForm" method="POST">
             @csrf
             <div class="modal-body">
-                <p style="color: #374151; margin-bottom: 20px;">
-                    Are you sure you want to <strong style="color: #065f46;">approve</strong> this student action request?
+                <p class="modal-confirm-text">
+                    Are you sure you want to <strong class="text-approve-strong">approve</strong> this student action request?
                     This will execute the requested action.
                 </p>
                 <div class="form-group">
@@ -840,17 +877,17 @@
 <div class="modal-overlay" id="denyModal">
     <div class="modal-content">
         <div class="modal-header">
-            <h5><i class="bi bi-x-circle-fill" style="color: #991b1b;"></i> Deny Request</h5>
+            <h5><i class="bi bi-x-circle-fill icon-deny-red"></i> Deny Request</h5>
             <button class="btn-close-modal" onclick="closeModal('denyModal')">&times;</button>
         </div>
         <form id="denyForm" method="POST">
             @csrf
             <div class="modal-body">
-                <p style="color: #374151; margin-bottom: 20px;">
-                    Are you sure you want to <strong style="color: #991b1b;">deny</strong> this student action request?
+                <p class="modal-confirm-text">
+                    Are you sure you want to <strong class="text-deny-strong">deny</strong> this student action request?
                 </p>
                 <div class="form-group">
-                    <label for="deny_review_notes">Review Notes <span style="color:#dc3545;">*</span></label>
+                    <label for="deny_review_notes">Review Notes <span class="required-asterisk">*</span></label>
                     <textarea id="deny_review_notes" name="review_notes" required
                               placeholder="Explain why this request is being denied..."></textarea>
                     <div class="form-hint">You must provide a reason for denying the request.</div>

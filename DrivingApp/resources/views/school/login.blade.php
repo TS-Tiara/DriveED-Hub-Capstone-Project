@@ -289,6 +289,14 @@
             text-align: left;
         }
 
+        .form-label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #374151;
+        }
+
         input[type="email"],
         input[type="password"] {
             width: 100%;
@@ -527,19 +535,39 @@
             }
 
             /* Register link section for mobile */
-            .login-container > div[style*="text-align: center"] {
+            .register-link-wrap {
                 margin-top: 14px !important;
                 padding-top: 14px !important;
             }
 
-            .login-container > div[style*="text-align: center"] p {
+            .register-link-text {
                 font-size: 10px !important;
                 margin-bottom: 8px !important;
             }
 
-            .login-container > div[style*="text-align: center"] a {
+            .register-link-anchor {
                 font-size: 11px !important;
             }
+        }
+
+        .register-link-wrap {
+            text-align: center;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .register-link-text {
+            color: #666;
+            margin-bottom: 6px;
+            font-size: 12px;
+        }
+
+        .register-link-anchor {
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 12px;
         }
 
         @media (max-width: 360px) {
@@ -690,7 +718,11 @@
             <form method="POST" action="{{ route('schools.login.submit', $school) }}">
                 @csrf
                 <div class="form-group">
+<<<<<<< HEAD
                     <label for="email" style="display: block; font-size: 0.9rem; font-weight: 600; color: #374151; margin-bottom: 6px;">Email Address</label>
+=======
+                    <label for="email" class="form-label">Email Address</label>
+>>>>>>> deploy-testing
                     <input 
                         id="email"
                         type="email" 
@@ -703,7 +735,11 @@
                     @enderror
                 </div>
                 <div class="form-group">
+<<<<<<< HEAD
                     <label for="password" style="display: block; font-size: 0.9rem; font-weight: 600; color: #374151; margin-bottom: 6px;">Password</label>
+=======
+                    <label for="password" class="form-label">Password</label>
+>>>>>>> deploy-testing
                     <input 
                         id="password"
                         type="password" 
@@ -724,9 +760,9 @@
                 <button type="submit" class="login-button">Log In</button>
             </form>
             
-            <div style="text-align: center; margin-top: 15px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
-                <p style="color: #666; margin-bottom: 6px; font-size: 12px;">Don't have an account?</p>
-                <a href="{{ route('schools.registration.form', $school) }}" style="color: #2563eb; text-decoration: none; font-weight: 600; font-size: 12px;">
+            <div class="register-link-wrap">
+                <p class="register-link-text">Don't have an account?</p>
+                <a href="{{ route('schools.registration.form', $school) }}" class="register-link-anchor">
                     Register for Student Account →
                 </a>
             </div>

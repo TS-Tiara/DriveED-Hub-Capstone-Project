@@ -73,14 +73,6 @@ class CourseController extends Controller
     }
 
     /**
-     * Show the form for creating a new course.
-     */
-    public function create(School $school)
-    {
-        return view($school->resolveView('admin.course-create'), compact('school'));
-    }
-
-    /**
      * Store a newly created course.
      */
     public function store(Request $request, School $school)
@@ -169,15 +161,6 @@ class CourseController extends Controller
         $view = $guard === 'admin' ? 'admin.course-show' : ($guard === 'student' ? 'student.course-show' : 'instructor.course-show');
 
         return view($school->resolveView($view), compact('school', 'course', 'canEnroll', 'enrollmentValidation'));
-    }
-
-    /**
-     * Show the form for editing the specified course.
-     */
-    public function edit(School $school, Course $course)
-    {
-        // Authorization check can be added here if needed
-        return view($school->resolveView('admin.course-edit'), compact('school', 'course'));
     }
 
     /**

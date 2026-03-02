@@ -1724,10 +1724,10 @@
                         <span class="nav-category-arrow">&#9660;</span>
                     </div>
                     <div class="nav-category-items">
-                        <a href="{{ school_route('admin.schedules', [], $currentSchool) }}" class="nav-item" data-page="schedules">Schedules</a>
-                        <a href="{{ school_route('admin.bookings.index', [], $currentSchool) }}" class="nav-item" data-page="bookings">Student Sessions</a>
-                        <a href="{{ school_route('admin.sessions.index', [], $currentSchool) }}" class="nav-item" data-page="session-completions">Session Completions</a>
-                        <a href="{{ school_route('admin.phase-progressions.index', [], $currentSchool) }}" class="nav-item" data-page="phase-progressions">Phase Progressions</a>
+                        <a href="{{ school_route('admin.schedules', [], $currentSchool) }}" class="nav-item" data-page="schedules">Schedules (Slot Setup)</a>
+                        <a href="{{ school_route('admin.bookings.index', [], $currentSchool) }}" class="nav-item" data-page="bookings">Student Schedules (Requests)</a>
+                        <a href="{{ school_route('admin.sessions.index', [], $currentSchool) }}" class="nav-item" data-page="session-completions">Session Completions (Logged)</a>
+                        <a href="{{ school_route('admin.phase-progressions.index', [], $currentSchool) }}" class="nav-item" data-page="phase-progressions">Phase Progressions (Advancement)</a>
                     </div>
                 </div>
 

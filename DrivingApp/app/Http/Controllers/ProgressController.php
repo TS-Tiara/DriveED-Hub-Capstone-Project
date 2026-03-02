@@ -219,32 +219,4 @@ class ProgressController extends Controller
             ->with('success', 'Progress deleted successfully');
     }
 
-    /**
-     * Get student progress summary.
-     */
-    public function studentSummary(School $school, Student $student)
-    {
-        $progresses = Progress::where('school_id', $school->id)
-            ->where('student_id', $student->id)
-            ->with('course')
-            ->get();
-
-        $summary = [
-            'total_courses' => $progresses->count(),
-            'completed_courses' => $progresses->where('completion_percent', '>=', 100)->count(),
-            'in_progress_courses' => $progresses->where('completion_percent', '>', 0)
-            ->where('completion_percent', '<', 100)->count(),
-            'average_completion' => $progresses->avg('completion_percent'),
-            'progresses' => $progresses,
-        ];
-
-        if (request()->expectsJson()) {
-            return response()->json([
-                'success' => true,
-                'summary' => $summary
-            ]);
-        }
-
-        return view($school->resolveView('student.progress-summary'), compact('school', 'student', 'summary'));
-    }
 }

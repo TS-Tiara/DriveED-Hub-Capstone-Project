@@ -1,15 +1,21 @@
 @extends('layouts.system-admin')
 @section('title', 'Payments')
 @section('page-title', 'All Payments')
+@section('styles')
+<style>
+    .payments-value-paid { color: #059669; }
+    .payments-value-pending { color: #f59e0b; }
+</style>
+@endsection
 @section('content')
-<div class="stats-grid" style="grid-template-columns: repeat(2, 1fr); margin-bottom: 24px;">
+<div class="stats-grid stats-grid-two">
     <div class="stat-card">
         <h3>Total Paid</h3>
-        <div class="value" style="color: #059669;">₱{{ number_format($totalPaid, 2) }}</div>
+        <div class="value payments-value-paid">₱{{ number_format($totalPaid, 2) }}</div>
     </div>
     <div class="stat-card">
         <h3>Pending Payments</h3>
-        <div class="value" style="color: #f59e0b;">₱{{ number_format($totalPending, 2) }}</div>
+        <div class="value payments-value-pending">₱{{ number_format($totalPending, 2) }}</div>
     </div>
 </div>
 <div class="card">

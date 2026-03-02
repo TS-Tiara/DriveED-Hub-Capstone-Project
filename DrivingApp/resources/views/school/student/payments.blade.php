@@ -126,6 +126,21 @@ td {
     font-weight: 700;
 }
 
+.total-spent-label {
+    font-size: 1.2rem;
+    opacity: 0.9;
+}
+
+.amount-emphasis {
+    color: #10b981;
+}
+
+.payments-pagination {
+    padding: 15px 20px;
+    display: flex;
+    justify-content: center;
+}
+
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
     .payments-container {
@@ -190,6 +205,7 @@ td {
     }
 }
 
+<<<<<<< HEAD
 /* ── Compact Pagination Styling ── */
 nav[role="navigation"] {
     display: flex;
@@ -278,6 +294,9 @@ nav[role="navigation"] span:not([aria-current]):not([aria-disabled]) {
         margin-right: 16px;
     }
 }
+=======
+/* Pagination is rendered and styled by global vendor pagination templates (resources/views/vendor/pagination/*) */
+>>>>>>> deploy-testing
 </style>
 
 <div class="payments-container">
@@ -286,7 +305,7 @@ nav[role="navigation"] span:not([aria-current]):not([aria-disabled]) {
     </div>
 
     <div class="total-spent">
-        <p style="font-size: 1.2rem; opacity: 0.9;">Total Amount Paid</p>
+        <p class="total-spent-label">Total Amount Paid</p>
         <h2>₱{{ number_format($totalPaid ?? $payments->where('status', 'completed')->sum('amount'), 2) }}</h2>
     </div>
 
@@ -306,7 +325,7 @@ nav[role="navigation"] span:not([aria-current]):not([aria-disabled]) {
                 <tr>
                     <td>{{ $payment->paid_on ? $payment->paid_on->format('M d, Y') : 'N/A' }}</td>
                     <td><strong>{{ $payment->booking?->course?->title ?? 'N/A' }}</strong></td>
-                    <td><strong style="color: #10b981;">₱{{ number_format($payment->amount, 2) }}</strong></td>
+                    <td><strong class="amount-emphasis">₱{{ number_format($payment->amount, 2) }}</strong></td>
                     <td>{{ ucfirst($payment->method ?? 'N/A') }}</td>
                     <td><span class="badge badge-{{ $payment->status }}">{{ ucfirst($payment->status) }}</span></td>
                 </tr>
@@ -357,7 +376,7 @@ nav[role="navigation"] span:not([aria-current]):not([aria-disabled]) {
         @endforelse
 
         @if($payments->hasPages())
-        <div style="padding: 15px 20px; display: flex; justify-content: center;">
+        <div class="payments-pagination">
             {{ $payments->links() }}
         </div>
         @endif

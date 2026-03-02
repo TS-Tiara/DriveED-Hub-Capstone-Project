@@ -22,7 +22,7 @@ class PhaseProgressionController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        $progressions = PhaseProgression::with(['enrollment.student', 'enrollment.course', 'reviewedBy'])
+        $query = PhaseProgression::with(['enrollment.student', 'enrollment.course', 'reviewedBy'])
             ->forSchool($school->id)
             ->when($request->status, function ($query, $status) {
             $query->where('status', $status);
@@ -30,12 +30,29 @@ class PhaseProgressionController extends Controller
             ->when($request->from_phase, function ($query, $phase) {
             $query->where('from_phase', $phase);
         })
-            ->latest('requested_at')
-            ->paginate(20);
+            ->latest('requested_at');
 
-        $pendingCount = PhaseProgression::forSchool($school->id)->pending()->count();
+        // Branch secretary scope: filter by their branch
+        if ($admin->isBranchSecretary() && $admin->branch_id) {
+            $query->whereHas('enrollment', function ($q) use ($admin) {
+                $q->where('branch_id', $admin->branch_id);
+            });
+        }
 
-        return view($school->resolveView('admin.phase_progressions.index'), compact('school', 'progressions', 'pendingCount'));
+        $progressions = $query->paginate(20);
+
+        // Pending count should also be scoped for branch secretaries
+        $pendingQuery = PhaseProgression::forSchool($school->id)->pending();
+        if ($admin->isBranchSecretary() && $admin->branch_id) {
+            $pendingQuery->whereHas('enrollment', function ($q) use ($admin) {
+                $q->where('branch_id', $admin->branch_id);
+            });
+        }
+        $pendingCount = $pendingQuery->count();
+
+        $isAjax = request()->ajax() || request()->header('X-Requested-With') === 'XMLHttpRequest';
+
+        return view($school->resolveView('admin.phase_progressions.index'), compact('school', 'progressions', 'pendingCount', 'isAjax'));
     }
 
     /**
@@ -49,6 +66,11 @@ class PhaseProgressionController extends Controller
         $admin = Auth::guard('admin')->user();
         if (!$admin || $admin->school_id !== $school->id) {
             abort(403, 'Unauthorized action.');
+        }
+
+        // Branch secretary access check
+        if ($admin->isBranchSecretary() && !$admin->canAccessBranch($phaseProgression->enrollment?->branch_id)) {
+            abort(403, 'You do not have access to this progression request.');
         }
 
         // Cannot approve if not pending
@@ -126,6 +148,11 @@ class PhaseProgressionController extends Controller
         $admin = Auth::guard('admin')->user();
         if (!$admin || $admin->school_id !== $school->id) {
             abort(403, 'Unauthorized action.');
+        }
+
+        // Branch secretary access check
+        if ($admin->isBranchSecretary() && !$admin->canAccessBranch($phaseProgression->enrollment?->branch_id)) {
+            abort(403, 'You do not have access to this progression request.');
         }
 
         // Cannot reject if not pending

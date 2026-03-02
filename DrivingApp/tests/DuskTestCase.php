@@ -6,6 +6,8 @@ use Facebook\WebDriver\Chrome\ChromeOptions;
 use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
+use Laravel\Dusk\Browser;
 use Laravel\Dusk\TestCase as BaseTestCase;
 use PHPUnit\Framework\Attributes\BeforeClass;
 
@@ -17,9 +19,34 @@ abstract class DuskTestCase extends BaseTestCase
     #[BeforeClass]
     public static function prepare(): void
     {
+        foreach (['admin', 'instructor', 'student', 'guest', 'branch'] as $roleFolder) {
+            $path = base_path('tests/screenshots/' . $roleFolder);
+
+            if (!is_dir($path)) {
+                mkdir($path, 0777, true);
+            }
+        }
+
         if (! static::runningInSail()) {
             static::startChromeDriver(['--port=9515']);
         }
+    }
+
+    protected function captureRoleScreenshot(Browser $browser, string $role, string $scenario, string $stepName): void
+    {
+        $roleFolder = match (strtolower(trim($role))) {
+            'admin' => 'admin',
+            'instructor' => 'instructor',
+            'student' => 'student',
+            'guest' => 'guest',
+            'branch', 'branch_secretary', 'branch secretary' => 'branch',
+            default => 'guest',
+        };
+
+        $scenarioSlug = Str::slug($scenario ?: 'scenario');
+        $stepSlug = Str::slug($stepName ?: 'step');
+
+        $browser->screenshot("../../screenshots/{$roleFolder}/{$scenarioSlug}/{$stepSlug}");
     }
 
     /**

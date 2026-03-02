@@ -372,6 +372,26 @@
         transition: width 0.6s ease;
     }
 
+    .progress-0 {
+        width: 0%;
+    }
+
+    .progress-25 {
+        width: 25%;
+    }
+
+    .progress-50 {
+        width: 50%;
+    }
+
+    .progress-75 {
+        width: 75%;
+    }
+
+    .progress-100 {
+        width: 100%;
+    }
+
     .onboarding-progress-text {
         font-size: 0.85rem;
         font-weight: 600;
@@ -541,6 +561,103 @@
         background: #10b981;
     }
 
+    .upgrade-guidance {
+        background: #eff6ff;
+        border: 2px solid #3b82f6;
+        border-radius: 10px;
+        padding: 20px;
+        margin-top: 16px;
+        text-align: center;
+    }
+
+    .upgrade-guidance-icon {
+        font-size: 1.5rem;
+        margin-bottom: 8px;
+    }
+
+    .upgrade-guidance-icon svg {
+        width: 32px;
+        height: 32px;
+    }
+
+    .upgrade-guidance-title {
+        margin: 0 0 8px 0;
+        color: #1e40af;
+        font-size: 1rem;
+    }
+
+    .upgrade-guidance-text {
+        margin: 0 0 16px 0;
+        color: #374151;
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+
+    .inline-logout-form {
+        display: inline;
+    }
+
+    .upgrade-guidance-btn {
+        background: #3b82f6;
+        color: white;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .icon-12 {
+        width: 12px;
+        height: 12px;
+    }
+
+    .icon-14 {
+        width: 14px;
+        height: 14px;
+    }
+
+    .icon-18 {
+        width: 18px;
+        height: 18px;
+    }
+
+    .icon-20 {
+        width: 20px;
+        height: 20px;
+    }
+
+    .icon-24 {
+        width: 24px;
+        height: 24px;
+    }
+
+    .icon-28 {
+        width: 28px;
+        height: 28px;
+    }
+
+    .icon-32 {
+        width: 32px;
+        height: 32px;
+    }
+
+    .icon-shrink {
+        flex-shrink: 0;
+    }
+
+    .icon-inline-leading {
+        vertical-align: middle;
+        margin-right: 8px;
+    }
+
+    .license-status-note {
+        font-size: 0.85rem;
+        margin-top: 2px;
+    }
+
     @media (max-width: 640px) {
         .onboarding-section {
             padding: 20px;
@@ -598,7 +715,7 @@
     @if(!$step4Done)
     <div class="onboarding-section">
         <div class="onboarding-header">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="{{ $primaryColor }}" style="width: 28px; height: 28px;">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="{{ $primaryColor }}" class="icon-28">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
             </svg>
             <h2>Getting Started</h2>
@@ -607,7 +724,7 @@
 
         <div class="onboarding-progress">
             <div class="onboarding-progress-bar">
-                <div class="onboarding-progress-fill" style="width: {{ $progressPercent }}%"></div>
+                <div class="onboarding-progress-fill progress-{{ $progressPercent }}"></div>
             </div>
             <span class="onboarding-progress-text">{{ $completedSteps }} of 4 complete</span>
         </div>
@@ -616,7 +733,7 @@
             <!-- Step 1: Create Account -->
             <div class="onboarding-step step-completed">
                 <div class="step-indicator completed">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 18px; height: 18px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-18"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                 </div>
                 <div class="step-content">
                     <div class="step-title completed">Create Your Account</div>
@@ -624,7 +741,7 @@
                 </div>
                 <div class="step-action">
                     <span class="step-badge done">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 12px; height: 12px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-12"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                         Done
                     </span>
                 </div>
@@ -634,7 +751,7 @@
             <div class="onboarding-step {{ $step2Done ? 'step-completed' : '' }}">
                 @if($step2Done)
                     <div class="step-indicator completed">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 18px; height: 18px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-18"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                     </div>
                 @elseif($currentStep == 2)
                     <div class="step-indicator current">2</div>
@@ -656,7 +773,7 @@
                 <div class="step-action">
                     @if($step2Done && $pendingRequest)
                         <span class="step-badge waiting">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 12px; height: 12px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-12"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                             Under Review
                         </span>
                     @elseif($step2Done && $rejectedRequest && !$pendingRequest)
@@ -664,11 +781,11 @@
                     @elseif($currentStep == 2)
                         <a href="{{ route('schools.guest.courses', $school) }}" class="btn-step primary">
                             Browse Courses
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 14px; height: 14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                         </a>
                     @else
                         <span class="step-badge done">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 12px; height: 12px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-12"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                             Done
                         </span>
                     @endif
@@ -679,7 +796,7 @@
             <div class="onboarding-step {{ $step3Done ? 'step-completed' : '' }}">
                 @if($step3Done)
                     <div class="step-indicator completed">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 18px; height: 18px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-18"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                     </div>
                 @elseif($currentStep == 3)
                     <div class="step-indicator current">3</div>
@@ -703,12 +820,12 @@
                 <div class="step-action">
                     @if($guest->hasVerifiedLicense())
                         <span class="step-badge done">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 12px; height: 12px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-12"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                             Verified
                         </span>
                     @elseif($guest->isLicensePending())
                         <span class="step-badge waiting">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 12px; height: 12px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-12"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                             Pending
                         </span>
                     @elseif($guest->isLicenseRejected())
@@ -723,7 +840,7 @@
             <div class="onboarding-step">
                 @if($step4Done)
                     <div class="step-indicator completed">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 18px; height: 18px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-18"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                     </div>
                 @elseif($currentStep == 4)
                     <div class="step-indicator current">4</div>
@@ -743,7 +860,7 @@
                 <div class="step-action">
                     @if($pendingRequest && $currentStep == 4)
                         <span class="step-badge waiting">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 12px; height: 12px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-12"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                             Awaiting Approval
                         </span>
                     @endif
@@ -756,7 +873,7 @@
     <div class="enrollment-status">
         <div class="status-message enrolled">
             <div class="status-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 32px; height: 32px;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-32">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
             </div>
@@ -765,15 +882,15 @@
             </div>
         </div>
         <!-- Transition guidance -->
-        <div style="background: #eff6ff; border: 2px solid #3b82f6; border-radius: 10px; padding: 20px; margin-top: 16px; text-align: center;">
-            <div style="font-size: 1.5rem; margin-bottom: 8px;"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#3b82f6" style="width:32px;height:32px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg></div>
-            <h4 style="margin: 0 0 8px 0; color: #1e40af; font-size: 1rem;">Your Account Has Been Upgraded to Student!</h4>
-            <p style="margin: 0 0 16px 0; color: #374151; font-size: 0.9rem; line-height: 1.5;">
+        <div class="upgrade-guidance">
+            <div class="upgrade-guidance-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#3b82f6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg></div>
+            <h4 class="upgrade-guidance-title">Your Account Has Been Upgraded to Student!</h4>
+            <p class="upgrade-guidance-text">
                 Please log out and log back in to access your full student dashboard with schedules, progress tracking, and more.
             </p>
-            <form method="POST" action="{{ $schoolRoute('logout') }}" style="display: inline;">
+            <form method="POST" action="{{ $schoolRoute('logout') }}" class="inline-logout-form">
                 @csrf
-                <button type="submit" style="background: #3b82f6; color: white; border: none; padding: 10px 24px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: background 0.2s;">
+                <button type="submit" class="upgrade-guidance-btn">
                     Log Out & Re-login as Student
                 </button>
             </form>
@@ -784,7 +901,7 @@
     <!-- Student Driver's License Section -->
     <div class="license-section" id="license-section">
         <h3>
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px; vertical-align: middle; margin-right: 8px;">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-24 icon-inline-leading">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0" />
             </svg>
             Student Driver's License
@@ -793,32 +910,32 @@
 
         @if($guest->hasVerifiedLicense())
             <div class="license-status license-verified">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 28px; height: 28px; flex-shrink: 0;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-28 icon-shrink">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
                 <div>
                     <strong>License Verified</strong>
-                    <div style="font-size: 0.85rem; margin-top: 2px;">Your student driver's license has been verified. You are eligible for practical courses.</div>
+                    <div class="license-status-note">Your student driver's license has been verified. You are eligible for practical courses.</div>
                 </div>
             </div>
         @elseif($guest->isLicensePending())
             <div class="license-status license-pending">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 28px; height: 28px; flex-shrink: 0;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-28 icon-shrink">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <div>
                     <strong>Pending Verification</strong>
-                    <div style="font-size: 0.85rem; margin-top: 2px;">Your license has been submitted and is awaiting admin verification.</div>
+                    <div class="license-status-note">Your license has been submitted and is awaiting admin verification.</div>
                 </div>
             </div>
         @elseif($guest->isLicenseRejected())
             <div class="license-status license-rejected">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 28px; height: 28px; flex-shrink: 0;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-28 icon-shrink">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
                 </svg>
                 <div>
                     <strong>License Rejected</strong>
-                    <div style="font-size: 0.85rem; margin-top: 2px;">Your license submission was not approved. Please re-upload a valid license.</div>
+                    <div class="license-status-note">Your license submission was not approved. Please re-upload a valid license.</div>
                 </div>
             </div>
             @if($guest->student_license_rejection_reason)
@@ -839,12 +956,12 @@
             </div>
         @else
             <div class="license-status license-none">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 28px; height: 28px; flex-shrink: 0;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-28 icon-shrink">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
                 <div>
                     <strong>No License Uploaded</strong>
-                    <div style="font-size: 0.85rem; margin-top: 2px;">Upload your student driver's license to become eligible for practical courses.</div>
+                    <div class="license-status-note">Upload your student driver's license to become eligible for practical courses.</div>
                 </div>
             </div>
             <div class="license-upload-form">
@@ -869,13 +986,13 @@
         </p>
         <div class="action-buttons">
             <a href="{{ route('schools.guest.courses', $school) }}" class="btn btn-primary">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 20px; height: 20px;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-20">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                 </svg>
                 Browse All Courses
             </a>
             <a href="{{ route('schools.guest.enrollmentRequests', $school) }}" class="btn btn-outline">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 20px; height: 20px;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-20">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
                 My Requests
@@ -893,7 +1010,7 @@
         <div class="about-grid">
             <div class="about-item">
                 <div class="about-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
                     </svg>
                 </div>
@@ -905,7 +1022,7 @@
             
             <div class="about-item">
                 <div class="about-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                 </div>
@@ -917,7 +1034,7 @@
             
             <div class="about-item">
                 <div class="about-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                     </svg>
                 </div>
@@ -929,7 +1046,7 @@
             
             <div class="about-item">
                 <div class="about-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                 </div>
@@ -944,70 +1061,70 @@
 
 @if(session('test_credentials') && config('app.env') === 'local')
 <!-- Test Credentials Popup Modal (Development Only) -->
-<div id="testCredentialsModal" style="display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
-    <div style="background: white; border-radius: 20px; max-width: 500px; width: 90%; box-shadow: 0 25px 50px rgba(0,0,0,0.5); overflow: hidden; animation: slideIn 0.3s ease;">
+<div id="testCredentialsModal" class="tc-modal-overlay">
+    <div class="tc-modal-card">
         <!-- Header -->
-        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 25px; text-align: center; color: white;">
-            <div style="font-size: 48px; margin-bottom: 10px;">ðŸŽ‰</div>
-            <h2 style="margin: 0; font-size: 1.8rem;">Welcome to {{ $school->name }}!</h2>
-            <p style="margin: 10px 0 0 0; opacity: 0.95; font-size: 0.95rem;">Registration Successful - Save Your Credentials</p>
+        <div class="tc-header">
+            <div class="tc-header-icon">🎉</div>
+            <h2 class="tc-header-title">Welcome to {{ $school->name }}!</h2>
+            <p class="tc-header-subtitle">Registration Successful - Save Your Credentials</p>
         </div>
         
         <!-- Warning Banner -->
-        <div style="background: #fbbf24; color: #78350f; padding: 12px 20px; display: flex; align-items: center; gap: 10px; font-size: 0.85rem; font-weight: 600;">
-            <span style="font-size: 1.2rem;">âš ï¸</span>
+        <div class="tc-warning-banner">
+            <span class="tc-warning-icon">⚠️</span>
             <span>DEVELOPMENT MODE ONLY - This popup won't appear in production</span>
         </div>
         
         <!-- Content -->
-        <div style="padding: 30px;">
-            <p style="margin-bottom: 25px; color: #4b5563; text-align: center; font-size: 0.95rem;">
+        <div class="tc-content">
+            <p class="tc-content-intro">
                 Save these credentials for testing. You can copy them with one click:
             </p>
             
             <!-- Name -->
-            <div style="margin-bottom: 20px;">
-                <label style="display: block; font-size: 0.75rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; font-weight: 600;">Your Name</label>
-                <div style="display: flex; align-items: center; gap: 10px; background: #f9fafb; padding: 14px 16px; border-radius: 10px; border: 2px solid #e5e7eb;">
-                    <input type="text" value="{{ session('test_credentials')['name'] }}" readonly style="flex: 1; background: transparent; border: none; font-family: 'Segoe UI', sans-serif; font-size: 1rem; color: #1f2937; outline: none;">
+            <div class="tc-field-group">
+                <label class="tc-field-label">Your Name</label>
+                <div class="tc-field-row">
+                    <input type="text" value="{{ session('test_credentials')['name'] }}" readonly class="tc-input tc-input-default">
                 </div>
             </div>
             
             <!-- Email -->
-            <div style="margin-bottom: 20px;">
-                <label style="display: block; font-size: 0.75rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; font-weight: 600;">Email Address (Login Username)</label>
-                <div style="display: flex; align-items: center; gap: 10px; background: #f9fafb; padding: 14px 16px; border-radius: 10px; border: 2px solid #e5e7eb;">
-                    <input type="text" value="{{ session('test_credentials')['email'] }}" readonly style="flex: 1; background: transparent; border: none; font-family: 'Courier New', monospace; font-size: 1rem; color: #1f2937; outline: none;">
-                    <button onclick="copyText('{{ session('test_credentials')['email'] }}', this)" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; transition: all 0.2s;">
+            <div class="tc-field-group">
+                <label class="tc-field-label">Email Address (Login Username)</label>
+                <div class="tc-field-row">
+                    <input type="text" value="{{ session('test_credentials')['email'] }}" readonly class="tc-input tc-input-mono">
+                    <button onclick="copyText('{{ session('test_credentials')['email'] }}', this)" class="tc-copy-btn">
                         Copy
                     </button>
                 </div>
             </div>
             
             <!-- Password -->
-            <div style="margin-bottom: 25px;">
-                <label style="display: block; font-size: 0.75rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; font-weight: 600;">Password</label>
-                <div style="display: flex; align-items: center; gap: 10px; background: #f9fafb; padding: 14px 16px; border-radius: 10px; border: 2px solid #e5e7eb;">
-                    <input type="text" value="{{ session('test_credentials')['password'] }}" readonly style="flex: 1; background: transparent; border: none; font-family: 'Courier New', monospace; font-size: 1rem; color: #1f2937; outline: none;">
-                    <button onclick="copyText('{{ session('test_credentials')['password'] }}', this)" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; transition: all 0.2s;">
+            <div class="tc-field-group tc-field-group-last">
+                <label class="tc-field-label">Password</label>
+                <div class="tc-field-row">
+                    <input type="text" value="{{ session('test_credentials')['password'] }}" readonly class="tc-input tc-input-mono">
+                    <button onclick="copyText('{{ session('test_credentials')['password'] }}', this)" class="tc-copy-btn">
                         Copy
                     </button>
                 </div>
             </div>
             
             <!-- Info Box -->
-            <div style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #3b82f6;">
-                <div style="display: flex; gap: 10px; align-items: start;">
-                    <span style="font-size: 1.2rem; flex-shrink: 0;">ðŸ’¡</span>
-                    <div style="font-size: 0.85rem; color: #1e40af; line-height: 1.5;">
-                        <p style="margin: 0 0 8px 0;"><strong>You're now logged in as a Guest!</strong></p>
-                        <p style="margin: 0;">You can now browse courses and submit enrollment requests. Once approved by an admin, you'll become a full student with access to all features.</p>
+            <div class="tc-info-box">
+                <div class="tc-info-row">
+                    <span class="tc-info-icon">💡</span>
+                    <div class="tc-info-text">
+                        <p class="tc-info-title"><strong>You're now logged in as a Guest!</strong></p>
+                        <p class="tc-info-desc">You can now browse courses and submit enrollment requests. Once approved by an admin, you'll become a full student with access to all features.</p>
                     </div>
                 </div>
             </div>
             
             <!-- Close Button -->
-            <button onclick="closeModal()" style="width: 100%; padding: 14px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; font-size: 1.05rem; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
+            <button onclick="closeModal()" class="tc-close-btn">
                 Got it! Let's Get Started
             </button>
         </div>
@@ -1015,6 +1132,187 @@
 </div>
 
 <style>
+    .tc-modal-overlay {
+        display: flex;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.8);
+        z-index: 10000;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(5px);
+    }
+
+    .tc-modal-card {
+        background: white;
+        border-radius: 20px;
+        max-width: 500px;
+        width: 90%;
+        box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+        overflow: hidden;
+        animation: slideIn 0.3s ease;
+    }
+
+    .tc-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 25px;
+        text-align: center;
+        color: white;
+    }
+
+    .tc-header-icon {
+        font-size: 48px;
+        margin-bottom: 10px;
+    }
+
+    .tc-header-title {
+        margin: 0;
+        font-size: 1.8rem;
+    }
+
+    .tc-header-subtitle {
+        margin: 10px 0 0 0;
+        opacity: 0.95;
+        font-size: 0.95rem;
+    }
+
+    .tc-warning-banner {
+        background: #fbbf24;
+        color: #78350f;
+        padding: 12px 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .tc-warning-icon {
+        font-size: 1.2rem;
+    }
+
+    .tc-content {
+        padding: 30px;
+    }
+
+    .tc-content-intro {
+        margin-bottom: 25px;
+        color: #4b5563;
+        text-align: center;
+        font-size: 0.95rem;
+    }
+
+    .tc-field-group {
+        margin-bottom: 20px;
+    }
+
+    .tc-field-group-last {
+        margin-bottom: 25px;
+    }
+
+    .tc-field-label {
+        display: block;
+        font-size: 0.75rem;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+        font-weight: 600;
+    }
+
+    .tc-field-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: #f9fafb;
+        padding: 14px 16px;
+        border-radius: 10px;
+        border: 2px solid #e5e7eb;
+    }
+
+    .tc-input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        font-size: 1rem;
+        color: #1f2937;
+        outline: none;
+    }
+
+    .tc-input-default {
+        font-family: 'Segoe UI', sans-serif;
+    }
+
+    .tc-input-mono {
+        font-family: 'Courier New', monospace;
+    }
+
+    .tc-copy-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+    }
+
+    .tc-copy-btn-copied {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+
+    .tc-info-box {
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        border-left: 4px solid #3b82f6;
+    }
+
+    .tc-info-row {
+        display: flex;
+        gap: 10px;
+        align-items: start;
+    }
+
+    .tc-info-icon {
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+
+    .tc-info-text {
+        font-size: 0.85rem;
+        color: #1e40af;
+        line-height: 1.5;
+    }
+
+    .tc-info-title {
+        margin: 0 0 8px 0;
+    }
+
+    .tc-info-desc {
+        margin: 0;
+    }
+
+    .tc-close-btn {
+        width: 100%;
+        padding: 14px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 1.05rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
     @keyframes slideIn {
         from {
             opacity: 0;
@@ -1031,12 +1329,12 @@
     function copyText(text, button) {
         navigator.clipboard.writeText(text).then(() => {
             const originalText = button.textContent;
-            button.textContent = 'âœ“ Copied!';
-            button.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+            button.textContent = '✓ Copied!';
+            button.classList.add('tc-copy-btn-copied');
             
             setTimeout(() => {
                 button.textContent = originalText;
-                button.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                button.classList.remove('tc-copy-btn-copied');
             }, 2000);
         }).catch(err => {
             console.error('Failed to copy:', err);

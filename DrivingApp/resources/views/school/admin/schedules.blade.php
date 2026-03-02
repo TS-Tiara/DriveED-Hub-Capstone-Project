@@ -222,6 +222,10 @@
     .text-center {
         text-align: center;
     }
+
+    .text-danger {
+        color: #ef4444;
+    }
     
     /* Container Styles */
     .timeslots-container {
@@ -250,6 +254,269 @@
         color: #6b7280;
         font-size: 0.9rem;
         margin-top: 5px;
+    }
+
+    .icon-20 {
+        width: 20px;
+        height: 20px;
+    }
+
+    .center-toggle-wrap {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 30px;
+    }
+
+    .cursor-pointer {
+        cursor: pointer;
+    }
+
+    .chevron-icon {
+        margin-left: 10px;
+        transition: transform 0.3s;
+    }
+
+    .course-badge {
+        margin-bottom: 12px;
+        padding: 8px 12px;
+        background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
+        color: white;
+        border-radius: 8px;
+        display: inline-block;
+        font-weight: 500;
+        box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+    }
+
+    .course-type {
+        opacity: 0.9;
+        font-size: 0.85em;
+        margin-left: 5px;
+    }
+
+    .count-admin {
+        color: #3b82f6;
+    }
+
+    .count-self {
+        color: #10b981;
+    }
+
+    .mt-12 {
+        margin-top: 12px;
+    }
+
+    .timeslot-notes {
+        margin-top: 12px;
+        padding: 10px;
+        background: #f9fafb;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        color: #666;
+    }
+
+    .mr-8 {
+        margin-right: 8px;
+    }
+
+    .hidden-form {
+        display: none;
+    }
+
+    .slot-badge-more {
+        background: #6b7280;
+        color: white;
+    }
+
+    .calendar-legend {
+        margin-top: 20px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        color: #666;
+    }
+
+    .legend-indicator {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+    }
+
+    .legend-indicator-open {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        margin: 0 5px;
+    }
+
+    .legend-indicator-assigned {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        margin: 0 5px 0 15px;
+    }
+
+    .legend-help {
+        margin-top: 8px;
+        display: block;
+    }
+
+    .info-panel {
+        padding: 15px;
+        background: #f0f9ff;
+        border-left: 4px solid #3b82f6;
+        border-radius: 6px;
+        margin-bottom: 20px;
+    }
+
+    .info-panel-list {
+        margin: 10px 0 0 0;
+        padding-left: 20px;
+        font-size: 0.9rem;
+    }
+
+    .info-panel-toggle {
+        display: none;
+        width: 100%;
+        border: 1px solid #bfdbfe;
+        background: #ffffff;
+        color: #1d4ed8;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        padding: 8px 10px;
+        margin-top: 10px;
+        cursor: pointer;
+        text-align: left;
+    }
+
+    .no-courses-msg {
+        padding: 20px;
+        background: #fef2f2;
+        border: 1px solid #fca5a5;
+        border-radius: 8px;
+    }
+
+    .instructors-count {
+        color: #888;
+    }
+
+    .no-instructors-msg {
+        padding: 20px;
+        background: #f9fafb;
+        border-radius: 8px;
+    }
+
+    .loading-center {
+        text-align: center;
+        padding: 40px;
+    }
+
+    .day-modal-content {
+        max-width: 800px;
+    }
+
+    .day-modal-title {
+        margin: 0;
+    }
+
+    .day-modal-date {
+        color: rgba(255,255,255,0.9);
+        display: block;
+        margin-top: 5px;
+    }
+
+    .details-wrap {
+        padding: 10px;
+    }
+
+    .details-section {
+        margin-bottom: 20px;
+    }
+
+    .details-label {
+        color: #666;
+        display: block;
+        margin-bottom: 8px;
+    }
+
+    .details-time {
+        font-size: 1.1rem;
+    }
+
+    .details-notes {
+        background: #f9fafb;
+        padding: 12px;
+        border-radius: 6px;
+        min-height: 40px;
+    }
+
+    .day-empty {
+        text-align: center;
+        padding: 40px;
+        color: #999;
+    }
+
+    .day-empty-icon {
+        font-size: 3rem;
+        margin-bottom: 15px;
+    }
+
+    .day-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .day-card {
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 15px;
+        background: #f9fafb;
+        transition: all 0.2s;
+    }
+
+    .day-card-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 10px;
+    }
+
+    .day-card-time {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 5px;
+    }
+
+    .day-card-meta {
+        margin-top: 5px;
+        font-size: 0.9rem;
+        color: #666;
+    }
+
+    .day-counts {
+        font-size: 0.85rem;
+        color: #999;
+    }
+
+    .day-instructors {
+        margin-bottom: 8px;
+    }
+
+    .day-instructors-label {
+        color: #666;
+    }
+
+    .day-notes {
+        margin-top: 10px;
+        padding: 10px;
+        background: white;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        color: #666;
+    }
+
+    .multi-select-auto {
+        height: auto;
     }
     
     /* View Toggle Styles */
@@ -1003,6 +1270,24 @@
             font-size: 0.65rem;
             padding: 3px 5px;
         }
+
+        .info-panel {
+            margin-bottom: 12px;
+            padding: 12px;
+        }
+
+        .info-panel-list {
+            display: none;
+            margin-top: 8px;
+        }
+
+        .info-panel.expanded .info-panel-list {
+            display: block;
+        }
+
+        .info-panel-toggle {
+            display: block;
+        }
         
         .modal-content {
             width: 95%;
@@ -1139,7 +1424,7 @@
 
     @if(session('success'))
     <div class="flash-message success">
-        <div class="flash-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 20px; height: 20px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg></div>
+        <div class="flash-icon"><svg class="icon-20" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg></div>
         <div class="flash-content">
             <div class="flash-title">Success!</div>
             <div class="flash-text">{{ session('success') }}</div>
@@ -1160,7 +1445,7 @@
     @endif
 
     <!-- View Toggle -->
-    <div style="display: flex; justify-content: center; margin-bottom: 30px;">
+    <div class="center-toggle-wrap">
         <div class="view-toggle">
             <button class="view-btn active" onclick="switchView('list')">List View</button>
             <button class="view-btn" onclick="switchView('calendar')">Calendar View</button>
@@ -1177,14 +1462,14 @@
     @else
         @foreach($timeslots as $date => $dateTimeslots)
             <div class="timeslot-card">
-                <div class="date-header" onclick="toggleDate(this)" style="cursor: pointer;">
+                <div class="date-header cursor-pointer" onclick="toggleDate(this)">
                     <span>
                         <i class="bi bi-calendar3"></i> 
                         {{ \Carbon\Carbon::parse($date)->format('F j, Y') }}
                     </span>
                     <span>
                         <span class="badge badge-light">{{ \Carbon\Carbon::parse($date)->format('l') }}</span>
-                        <i class="bi bi-chevron-down" style="margin-left: 10px; transition: transform 0.3s;"></i>
+                        <i class="bi bi-chevron-down chevron-icon"></i>
                     </span>
                 </div>
                 <div class="card-body">
@@ -1221,9 +1506,9 @@
                                 </div>
                                 <div class="timeslot-details">
                                     @if($timeslot->course)
-                                        <div class="course-badge" style="margin-bottom: 12px; padding: 8px 12px; background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%); color: white; border-radius: 8px; display: inline-block; font-weight: 500; box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);">
+                                        <div class="course-badge">
                                             <i class="bi bi-book"></i> {{ $timeslot->course->title }}
-                                            <span style="opacity: 0.9; font-size: 0.85em; margin-left: 5px;">({{ ucfirst($timeslot->course->type) }})</span>
+                                            <span class="course-type">({{ ucfirst($timeslot->course->type) }})</span>
                                         </div>
                                     @endif
                                     <div class="instructor-info">
@@ -1234,11 +1519,11 @@
                                                 <small class="text-muted">
                                                     (
                                                     @if($adminCount > 0)
-                                                        <span style="color: #3b82f6;">{{ $adminCount }} admin</span>
+                                                        <span class="count-admin">{{ $adminCount }} admin</span>
                                                     @endif
                                                     @if($adminCount > 0 && $selfCount > 0), @endif
                                                     @if($selfCount > 0)
-                                                        <span style="color: #10b981;">{{ $selfCount }} self</span>
+                                                        <span class="count-self">{{ $selfCount }} self</span>
                                                     @endif
                                                     )
                                                 </small>
@@ -1250,7 +1535,7 @@
                                         </div>
                                     </div>
                                     @if($timeslot->instructors->isNotEmpty())
-                                        <div style="margin-top: 12px;">
+                                        <div class="mt-12">
                                             @foreach($timeslot->instructors as $instructor)
                                                 @php
                                                     $assignmentType = $instructor->pivot->assignment_type ?? 'admin_assigned';
@@ -1264,20 +1549,20 @@
                                         </div>
                                     @endif
                                     @if($timeslot->notes)
-                                        <div class="timeslot-notes" style="margin-top: 12px; padding: 10px; background: #f9fafb; border-radius: 6px; font-size: 0.9rem; color: #666;">
+                                        <div class="timeslot-notes">
                                             <i class="bi bi-sticky"></i> {{ $timeslot->notes }}
                                         </div>
                                     @endif
                                 </div>
                                 <div class="timeslot-actions">
                                     <div class="action-buttons">
-                                        <button type="button" class="btn btn-sm btn-primary btn-sm-custom" onclick="showSlotDetails({{ $timeslot->id }})" style="margin-right: 8px;">
+                                        <button type="button" class="btn btn-sm btn-primary btn-sm-custom mr-8" onclick="showSlotDetails({{ $timeslot->id }})">
                                             <i class="bi bi-eye"></i> View/Edit
                                         </button>
                                         <button type="button" class="btn btn-sm btn-danger btn-sm-custom" onclick="confirmDeleteSchedule({{ $timeslot->id }})">
                                             <i class="bi bi-trash"></i> Delete
                                         </button>
-                                        <form id="deleteScheduleForm{{ $timeslot->id }}" method="POST" action="{{ route('schools.admin.schedules.delete', [$school, $timeslot->id]) }}" style="display: none;">
+                                        <form id="deleteScheduleForm{{ $timeslot->id }}" method="POST" action="{{ route('schools.admin.schedules.delete', [$school, $timeslot->id]) }}" class="hidden-form">
                                             @csrf
                                             @method('DELETE')
                                         </form>
@@ -1344,11 +1629,10 @@
                     $hasSchedule = $daySlots->isNotEmpty();
                 @endphp
 
-                <div class="calendar-day {{ $isOtherMonth ? 'other-month' : '' }} {{ $isToday ? 'today' : '' }} {{ $hasSchedule && !$isOtherMonth ? 'has-schedule clickable' : '' }}"
+                 <div class="calendar-day {{ $isOtherMonth ? 'other-month' : '' }} {{ $isToday ? 'today' : '' }} {{ $hasSchedule && !$isOtherMonth ? 'has-schedule clickable cursor-pointer' : '' }}"
                      data-date="{{ $dateStr }}"
                      @if($hasSchedule && !$isOtherMonth)
                      onclick="showDayModal('{{ $dateStr }}', '{{ $currentDate->format('l, F j, Y') }}')"
-                     style="cursor: pointer;"
                      @endif>
                     <div class="day-number">{{ $currentDate->day }}</div>
                     
@@ -1370,7 +1654,7 @@
                             @endforeach
                             
                             @if($daySlots->count() > 3)
-                                <div class="slot-badge" style="background: #6b7280; color: white;" title="Click day to see all {{ $daySlots->count() }} schedules">
+                                <div class="slot-badge slot-badge-more" title="Click day to see all {{ $daySlots->count() }} schedules">
                                     +{{ $daySlots->count() - 3 }} more
                                 </div>
                             @endif
@@ -1384,11 +1668,11 @@
             @endwhile
         </div>
 
-        <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; font-size: 0.9rem; color: #666;">
+        <div class="calendar-legend">
             <strong>Legend:</strong> 
-            <span style="display: inline-block; width: 12px; height: 12px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 3px; margin: 0 5px;"></span> Has Available Spots
-            <span style="display: inline-block; width: 12px; height: 12px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border-radius: 3px; margin: 0 5px 0 15px;"></span> Fully Assigned
-            <br><small style="margin-top: 8px; display: block;">Click on a time slot to view details</small>
+            <span class="legend-indicator legend-indicator-open"></span> Has Available Spots
+            <span class="legend-indicator legend-indicator-assigned"></span> Fully Assigned
+            <br><small class="legend-help">Click on a time slot to view details</small>
         </div>
     </div>
     <!-- End Calendar View -->
@@ -1417,7 +1701,7 @@
                 
                 <div class="form-group">
                     <label class="form-label">
-                        <i class="bi bi-book"></i> Course <span style="color: #ef4444;">*</span>
+                        <i class="bi bi-book"></i> Course <span class="text-danger">*</span>
                     </label>
                     @if(isset($courses) && $courses->isNotEmpty())
                         <select name="course_id" id="createCourseSelect" class="form-control" required>
@@ -1429,7 +1713,7 @@
                             @endforeach
                         </select>
                     @else
-                        <p class="text-muted text-center" style="padding: 20px; background: #fef2f2; border: 1px solid #fca5a5; border-radius: 8px;">
+                        <p class="text-muted text-center no-courses-msg">
                             <i class="bi bi-exclamation-triangle"></i> No active courses available. Please create a course first.
                         </p>
                     @endif
@@ -1460,10 +1744,10 @@
                 <div class="form-group">
                     <label class="form-label">
                         <i class="bi bi-people"></i> Pre-Assign Instructors (Optional)
-                        <small style="color: #888;">({{ $instructors->count() }} available)</small>
+                        <small class="instructors-count">({{ $instructors->count() }} available)</small>
                     </label>
                     @if($instructors->isEmpty())
-                        <p class="text-muted text-center" style="padding: 20px; background: #f9fafb; border-radius: 8px;">
+                        <p class="text-muted text-center no-instructors-msg">
                             <i class="bi bi-info-circle"></i> No active instructors available.
                         </p>
                     @else
@@ -1506,7 +1790,7 @@
         </div>
         <div class="modal-body" id="detailsModalContent">
             <!-- Content will be populated by JavaScript -->
-            <div style="text-align: center; padding: 40px;">
+            <div class="loading-center">
                 <div class="spinner-border" role="status">
                     <span class="sr-only">Loading...</span>
                 </div>
@@ -1546,11 +1830,11 @@
 
 <!-- Day Schedule Modal (shows all schedules for clicked day) -->
 <div class="modal" id="dayModal">
-    <div class="modal-content" style="max-width: 800px;">
+    <div class="modal-content day-modal-content">
         <div class="modal-header modal-success">
             <div>
-                <h5 style="margin: 0;"><i class="bi bi-calendar-day"></i> <span id="modalDayTitle">Schedule Details</span></h5>
-                <small id="modalDayDate" style="color: rgba(255,255,255,0.9); display: block; margin-top: 5px;"></small>
+                <h5 class="day-modal-title"><i class="bi bi-calendar-day"></i> <span id="modalDayTitle">Schedule Details</span></h5>
+                <small id="modalDayDate" class="day-modal-date"></small>
             </div>
             <button type="button" class="btn-close" onclick="closeDayModal()">&times;</button>
         </div>
@@ -1820,25 +2104,25 @@
             }
             
             document.getElementById('detailsModalContent').innerHTML = `
-                <div style="padding: 10px;">
-                    <div style="margin-bottom: 20px;">
-                        <strong style="color: #666; display: block; margin-bottom: 8px;">Time:</strong>
-                        <div style="font-size: 1.1rem;">${timeText}</div>
+                <div class="details-wrap">
+                    <div class="details-section">
+                        <strong class="details-label">Time:</strong>
+                        <div class="details-time">${timeText}</div>
                     </div>
                     
-                    <div style="margin-bottom: 20px;">
-                        <strong style="color: #666; display: block; margin-bottom: 8px;">Instructors:</strong>
+                    <div class="details-section">
+                        <strong class="details-label">Instructors:</strong>
                         <div>${instructorsHtml}</div>
                     </div>
                     
-                    <div style="margin-bottom: 20px;">
-                        <strong style="color: #666; display: block; margin-bottom: 8px;">Availability:</strong>
+                    <div class="details-section">
+                        <strong class="details-label">Availability:</strong>
                         <div>${availableText}</div>
                     </div>
                     
                     <div>
-                        <strong style="color: #666; display: block; margin-bottom: 8px;">Notes:</strong>
-                        <div style="background: #f9fafb; padding: 12px; border-radius: 6px; min-height: 40px;">
+                        <strong class="details-label">Notes:</strong>
+                        <div class="details-notes">
                             ${notes}
                         </div>
                     </div>
@@ -1877,13 +2161,13 @@
         
         if (daySchedules.length === 0) {
             document.getElementById('modalDayBody').innerHTML = `
-                <div style="text-align: center; padding: 40px; color: #999;">
-                    <i class="bi bi-calendar-x" style="font-size: 3rem; margin-bottom: 15px;"></i>
+                <div class="day-empty">
+                    <i class="bi bi-calendar-x day-empty-icon"></i>
                     <p>No schedules found for this date.</p>
                 </div>
             `;
         } else {
-            let modalContent = '<div style="display: flex; flex-direction: column; gap: 15px;">';
+            let modalContent = '<div class="day-list">';
             
             daySchedules.forEach(schedule => {
                 // Build instructors HTML
@@ -1896,7 +2180,7 @@
                         instructorsHtml += `<span class="badge ${badgeClass}" title="${title}">${icon} ${instructor.name}</span> `;
                     });
                 } else {
-                    instructorsHtml = '<span style="color: #999;">No instructors assigned</span>';
+                    instructorsHtml = '<span class="text-muted">No instructors assigned</span>';
                 }
                 
                 // Build availability badge
@@ -1908,18 +2192,18 @@
                 }
                 
                 modalContent += `
-                    <div style="border: 2px solid #e5e7eb; border-radius: 8px; padding: 15px; background: #f9fafb; transition: all 0.2s;">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                    <div class="day-card">
+                        <div class="day-card-head">
                             <div>
-                                <div style="font-size: 1.1rem; font-weight: 600; color: #333; margin-bottom: 5px;">
+                                <div class="day-card-time">
                                     <i class="bi bi-clock"></i> ${formatTime(schedule.startTime)} - ${formatTime(schedule.endTime)}
                                 </div>
                                 ${availableHtml}
-                                <div style="margin-top: 5px; font-size: 0.9rem; color: #666;">
+                                <div class="day-card-meta">
                                     <i class="bi bi-people-fill"></i> ${schedule.totalCount}/${schedule.maxInstructors} Instructors
                                     ${schedule.adminCount > 0 || schedule.selfCount > 0 ? 
-                                        `<span style="font-size: 0.85rem; color: #999;">
-                                            (${schedule.adminCount > 0 ? `<span style="color: #3b82f6;">${schedule.adminCount} admin</span>` : ''}${schedule.adminCount > 0 && schedule.selfCount > 0 ? ', ' : ''}${schedule.selfCount > 0 ? `<span style="color: #10b981;">${schedule.selfCount} self</span>` : ''})
+                                        `<span class="day-counts">
+                                            (${schedule.adminCount > 0 ? `<span class="count-admin">${schedule.adminCount} admin</span>` : ''}${schedule.adminCount > 0 && schedule.selfCount > 0 ? ', ' : ''}${schedule.selfCount > 0 ? `<span class="count-self">${schedule.selfCount} self</span>` : ''})
                                         </span>` 
                                         : ''}
                                 </div>
@@ -1928,12 +2212,12 @@
                                 <i class="bi bi-eye"></i> View/Edit
                             </button>
                         </div>
-                        <div style="margin-bottom: 8px;">
-                            <strong style="color: #666;">Instructors:</strong><br>
+                        <div class="day-instructors">
+                            <strong class="day-instructors-label">Instructors:</strong><br>
                             ${instructorsHtml}
                         </div>
                         ${schedule.notes ? `
-                        <div style="margin-top: 10px; padding: 10px; background: white; border-radius: 4px; font-size: 0.9rem; color: #666;">
+                        <div class="day-notes">
                             <i class="bi bi-sticky"></i> ${schedule.notes}
                         </div>
                         ` : ''}
@@ -1981,7 +2265,7 @@
                 <label class="form-label">
                     <i class="bi bi-people"></i> Assigned Instructors
                 </label>
-                <select name="instructor_ids[]" class="form-control" multiple size="6" style="height: auto;">
+                <select name="instructor_ids[]" class="form-control multi-select-auto" multiple size="6">
                     ${instructorOptions}
                 </select>
                 <small class="text-muted">

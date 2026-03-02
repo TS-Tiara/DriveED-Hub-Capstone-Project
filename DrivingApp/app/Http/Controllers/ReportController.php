@@ -140,6 +140,7 @@ class ReportController extends Controller
             ->orderByDesc('completed_lessons')
             ->limit(10)
             ->get()
+<<<<<<< HEAD
             ->map(fn($b) => (object)[
                 'name' => $b->instructor->name ?? 'N/A',
                 'total_sessions' => $b->total_lessons,
@@ -150,6 +151,78 @@ class ReportController extends Controller
         
         // ── 6. Lessons by instructor - already efficient (single GROUP BY) ──
         $lessonsByInstructor = Booking::where('school_id', $schoolId)
+=======
+            ->map(function ($booking) {
+            $completionRate = $booking->total_lessons > 0
+                ? round(($booking->completed_lessons / $booking->total_lessons) * 100, 1)
+                : 0;
+
+            return (object)[
+            'name' => $booking->instructor->name ?? 'N/A',
+            'total_sessions' => $booking->total_lessons,
+            'completed_sessions' => $booking->completed_lessons,
+            'average_rating' => null, // TODO: Implement actual rating system
+            'completion_rate' => $completionRate,
+            ];
+        }),
+
+            // Optimized Course Stats & Revenue (Combined to prevent N+1)
+            'course_stats' => Course::where('courses.school_id', $school->id)
+            ->leftJoin('bookings', 'courses.id', '=', 'bookings.course_id')
+            ->leftJoin('payments', 'bookings.id', '=', 'payments.booking_id')
+            ->select(
+            'courses.*',
+            DB::raw('COUNT(DISTINCT bookings.student_id) as unique_enrolled'),
+            DB::raw('COUNT(bookings.id) as total_bookings'),
+            DB::raw('SUM(CASE WHEN bookings.status = "completed" THEN 1 ELSE 0 END) as completed_lessons'),
+            DB::raw('SUM(CASE WHEN payments.status = "completed" THEN payments.amount ELSE 0 END) as total_revenue')
+        )
+            ->when($startDate, function ($q) use ($startDate, $endDate) {
+            $q->whereBetween('bookings.scheduled_at', [$startDate, $endDate]);
+        })
+            ->groupBy('courses.id') // Grouping by ID is sufficient in modern MySQL/Postgres for functional dependence
+            ->get()
+            ->map(fn($course) => (object)[
+        'title' => $course->title,
+        'name' => $course->title,
+        'price' => $course->price,
+        'total_enrolled' => $course->unique_enrolled,
+        'completion_rate' => $course->total_bookings > 0 ? round(($course->completed_lessons / $course->total_bookings) * 100, 1) : 0,
+        'average_rating' => null,
+        'total_revenue' => $course->total_revenue ?? 0,
+        ])
+            ->sortByDesc('total_enrolled')
+            ->take(10),
+
+            // Attendance metrics - filtered by scheduled_at
+            'attendance' => [
+                'attended' => Booking::where('school_id', $school->id)
+                ->where('status', 'completed')
+                ->when($startDate, function ($query) use ($startDate, $endDate) {
+            $query->whereBetween('scheduled_at', [$startDate, $endDate]);
+        })
+                ->count(),
+                'missed' => Booking::where('school_id', $school->id)
+                ->whereIn('status', ['cancelled', 'no_show'])
+                ->when($startDate, function ($query) use ($startDate, $endDate) {
+            $query->whereBetween('scheduled_at', [$startDate, $endDate]);
+        })
+                ->count(),
+            ],
+
+
+            // Lessons breakdown (driving + practical merged)
+            'lessons_by_status' => Booking::where('school_id', $school->id)
+            ->when($startDate, function ($query) use ($startDate, $endDate) {
+            $query->whereBetween('scheduled_at', [$startDate, $endDate]);
+        })
+            ->selectRaw('status, COUNT(*) as count')
+            ->groupBy('status')
+            ->get(),
+
+            // Bookings by instructor (for lessons report)
+            'lessons_by_instructor' => Booking::where('school_id', $school->id)
+>>>>>>> deploy-testing
             ->with('instructor')
             ->when($startDate, fn($q) => $q->whereBetween('scheduled_at', [$startDate, $endDate]))
             ->whereNotNull('instructor_id')

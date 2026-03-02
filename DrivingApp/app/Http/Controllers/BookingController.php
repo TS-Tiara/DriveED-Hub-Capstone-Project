@@ -22,7 +22,7 @@ class BookingController extends Controller
         // Optimize query with selective column loading
         $query = Booking::where('school_id', $school->id)
             ->with([
-                'student:id,name,email,contact',
+                'student:id,name,email,contact,branch_id',
                 'instructor:id,name,email',
                 'course:id,title,duration_hours,price',
                 'package:id,course_id,name,price',
@@ -38,7 +38,18 @@ class BookingController extends Controller
             $statsQuery->where('student_id', Auth::guard('student')->id());
         } elseif (Auth::guard('instructor')->check()) {
             $query->where('instructor_id', Auth::guard('instructor')->id());
+<<<<<<< HEAD
             $statsQuery->where('instructor_id', Auth::guard('instructor')->id());
+=======
+        } elseif (Auth::guard('admin')->check()) {
+            // Branch secretary scope: filter by their branch
+            $admin = Auth::guard('admin')->user();
+            if ($admin->isBranchSecretary() && $admin->branch_id) {
+                $query->whereHas('student', function ($q) use ($admin) {
+                    $q->where('branch_id', $admin->branch_id);
+                });
+            }
+>>>>>>> deploy-testing
         }
 
         // Additional filters
@@ -52,6 +63,7 @@ class BookingController extends Controller
             $query->past();
         }
 
+<<<<<<< HEAD
         $bookings = $query
             ->latest('booking_date')
             ->paginate(15)
@@ -64,6 +76,19 @@ class BookingController extends Controller
             'cancelled' => (clone $statsQuery)->whereIn('status', ['cancelled', 'no_show', 'no-show'])->count(),
             'pending' => (clone $statsQuery)->where('status', 'pending')->count(),
         ];
+=======
+        $statsQuery = clone $query;
+
+        $stats = [
+            'total' => (clone $statsQuery)->count(),
+            'scheduled' => (clone $statsQuery)->where('status', 'scheduled')->count(),
+            'completed' => (clone $statsQuery)->where('status', 'completed')->count(),
+            'cancelled' => (clone $statsQuery)->where('status', 'cancelled')->count(),
+            'pending' => (clone $statsQuery)->where('status', 'pending')->count(),
+        ];
+
+        $bookings = $query->latest('booking_date')->paginate(10)->withQueryString();
+>>>>>>> deploy-testing
 
         // Only return JSON if explicitly requested via Accept header
         if (request()->expectsJson()) {
@@ -75,7 +100,13 @@ class BookingController extends Controller
 
         // Only admin has bookings list view
         $view = 'admin.bookings';
+<<<<<<< HEAD
         return view($school->resolveView($view), compact('school', 'bookings', 'stats'));
+=======
+        $isAjax = request()->ajax() || request()->header('X-Requested-With') === 'XMLHttpRequest';
+        
+        return view($school->resolveView($view), compact('school', 'bookings', 'stats', 'isAjax'));
+>>>>>>> deploy-testing
     }
 
     /**

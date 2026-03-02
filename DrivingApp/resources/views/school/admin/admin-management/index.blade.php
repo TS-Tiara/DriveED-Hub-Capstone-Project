@@ -190,6 +190,18 @@
         color: #1f2937;
     }
 
+    .muted-dash {
+        color: #9ca3af;
+    }
+
+    .inline-form {
+        display: inline;
+    }
+
+    .branch-group-hidden {
+        display: none;
+    }
+
     /* Badges */
     .status-badge {
         display: inline-flex;
@@ -540,7 +552,7 @@
                         @if($adminRow->role === 'branch_secretary' && $adminRow->branch)
                             {{ $adminRow->branch->name }}
                         @else
-                            <span style="color: #9ca3af;">—</span>
+                            <span class="muted-dash">—</span>
                         @endif
                     </td>
                     <td>
@@ -571,7 +583,7 @@
                                     data-update-url="{{ route('schools.admin.admin-management.update', [$school, $adminRow]) }}">
                                     <i class="bi bi-pencil-square"></i> Edit
                                 </button>
-                                <form action="{{ route('schools.admin.admin-management.toggleStatus', [$school, $adminRow]) }}" method="POST" style="display:inline;">
+                                <form action="{{ route('schools.admin.admin-management.toggleStatus', [$school, $adminRow]) }}" method="POST" class="inline-form">
                                     @csrf
                                     @method('PATCH')
                                     <button type="submit" class="btn-action btn-toggle" title="{{ $adminRow->is_active ? 'Deactivate' : 'Activate' }}">
@@ -579,7 +591,7 @@
                                         {{ $adminRow->is_active ? 'Deactivate' : 'Activate' }}
                                     </button>
                                 </form>
-                                <form action="{{ route('schools.admin.admin-management.destroy', [$school, $adminRow]) }}" method="POST" style="display:inline;" onsubmit="return confirmDelete(event, '{{ $adminRow->name }}')">
+                                <form action="{{ route('schools.admin.admin-management.destroy', [$school, $adminRow]) }}" method="POST" class="inline-form" onsubmit="return confirmDelete(event, '{{ $adminRow->name }}')">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="btn-action btn-delete">
@@ -640,7 +652,7 @@
                         <option value="branch_secretary" {{ old('role') === 'branch_secretary' ? 'selected' : '' }}>Branch Secretary</option>
                     </select>
                 </div>
-                <div class="form-group" id="create_branch_group" style="display: none;">
+                <div class="form-group branch-group-hidden" id="create_branch_group">
                     <label for="create_branch_id">Assign to Branch</label>
                     <select id="create_branch_id" name="branch_id">
                         <option value="">— Select Branch —</option>
@@ -705,7 +717,7 @@
                         <option value="branch_secretary">Branch Secretary</option>
                     </select>
                 </div>
-                <div class="form-group" id="edit_branch_group" style="display: none;">
+                <div class="form-group branch-group-hidden" id="edit_branch_group">
                     <label for="edit_branch_id">Assign to Branch</label>
                     <select id="edit_branch_id" name="branch_id">
                         <option value="">— Select Branch —</option>

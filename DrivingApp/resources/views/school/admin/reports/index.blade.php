@@ -37,6 +37,15 @@
         margin: 0;
         font-weight: 600;
     }
+
+    .icon-inline-middle {
+        vertical-align: middle;
+    }
+
+    .icon-24 {
+        width: 24px;
+        height: 24px;
+    }
     
     .metrics-grid { 
         display: grid; 
@@ -164,6 +173,22 @@
         background: <?php echo $primaryColor; ?>;
         transition: width 0.5s ease;
     }
+
+    .progress-fill-dynamic {
+        width: 0;
+    }
+
+    .progress-fill-success {
+        background: #10b981;
+    }
+
+    .progress-fill-warning {
+        background: #f59e0b;
+    }
+
+    .progress-bar-tight {
+        margin-bottom: 2px;
+    }
     
     /* Time Period Filter */
     .period-filter {
@@ -243,6 +268,10 @@
         padding-right: 8px;
         min-width: fit-content;
     }
+
+    .bar-fill-dynamic {
+        width: 0;
+    }
     
     .bar-value {
         font-size: 0.75rem;
@@ -285,6 +314,81 @@
         color: #2c3e50;
         font-size: 1.5rem;
         font-weight: bold;
+    }
+
+    .value-success {
+        color: #10b981 !important;
+    }
+
+    .value-danger {
+        color: #ef4444 !important;
+    }
+
+    .value-warning {
+        color: #f59e0b !important;
+    }
+
+    .value-positive {
+        color: #10b981 !important;
+    }
+
+    .value-negative {
+        color: #ef4444 !important;
+    }
+
+    .value-primary {
+        color: <?php echo $primaryColor; ?> !important;
+    }
+
+    .text-warning {
+        color: #f59e0b;
+    }
+
+    .text-muted {
+        color: #9ca3af;
+    }
+
+    .text-success {
+        color: #10b981;
+    }
+
+    .text-danger {
+        color: #ef4444;
+    }
+
+    .text-strong-success {
+        font-weight: 600;
+        color: #059669;
+    }
+
+    .text-percentage {
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .text-percentage-success {
+        color: #10b981;
+    }
+
+    .text-percentage-warning {
+        color: #f59e0b;
+    }
+
+    .section-subtitle {
+        margin-top: 25px;
+        margin-bottom: 15px;
+    }
+
+    .section-subtitle-compact {
+        margin-bottom: 15px;
+        font-size: 1rem;
+        color: #555;
+    }
+
+    .section-divider {
+        margin: 25px 0;
+        border: none;
+        border-top: 1px solid #e5e7eb;
     }
     
     /* Improved Table Styling */
@@ -493,7 +597,7 @@
         <h1>Reports & Analytics</h1>
         <div class="export-dropdown">
             <button class="export-btn" onclick="toggleExportMenu(event)">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="vertical-align: middle;">
+                <svg class="icon-inline-middle" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                     <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
                     <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
                 </svg>
@@ -550,7 +654,7 @@
                         <div class="subtitle">{{ $analytics['active_students'] }} active</div>
                     </div>
                     <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                        <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                         </svg>
                     </div>
@@ -565,7 +669,7 @@
                         <div class="stat-value">{{ $analytics['total_instructors'] }}</div>
                     </div>
                     <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                        <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                         </svg>
                     </div>
@@ -580,7 +684,7 @@
                         <div class="stat-value">{{ $analytics['total_bookings_this_month'] }}</div>
                     </div>
                     <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                        <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                     </div>
@@ -595,7 +699,7 @@
                         <div class="stat-value">{{ $analytics['completed_lessons_this_month'] }}</div>
                     </div>
                     <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                        <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
@@ -610,7 +714,7 @@
                         <div class="stat-value">{{ number_format($analytics['completion_rate'], 1) }}%</div>
                     </div>
                     <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                        <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                         </svg>
                     </div>
@@ -633,12 +737,21 @@
                 </div>
                 <div class="stat-box">
                     <div class="label">Active</div>
-                    <div class="value" style="color: #10b981;">{{ $analytics['active_students'] }}</div>
+                    <div class="value value-success">{{ $analytics['active_students'] }}</div>
                 </div>
                 <div class="stat-box">
                     <div class="label">{{ $periodLabel }}</div>
                     <div class="value">{{ $analytics['enrollments_this_month'] }}</div>
                 </div>
+<<<<<<< HEAD
+=======
+                <div class="stat-box">
+                    <div class="label">Growth</div>
+                    <div class="value {{ $analytics['enrollment_growth'] >= 0 ? 'value-positive' : 'value-negative' }}">
+                        {{ $analytics['enrollment_growth'] >= 0 ? '+' : '' }}{{ $analytics['enrollment_growth'] }}%
+                    </div>
+                </div>
+>>>>>>> deploy-testing
             </div>
                         <div class="stat-label">{{ $periodLabel }} Schedules</div>
             <table class="reports-table">
@@ -668,7 +781,7 @@
                             <td>{{ $statusData->count }}</td>
                             <td>
                                 <div class="progress-bar">
-                                    <div class="progress-fill" style="width: {{ $percentage }}%"></div>
+                                    <div class="progress-fill progress-fill-dynamic" data-width="{{ $percentage }}"></div>
                                 </div>
                                 {{ number_format($percentage, 1) }}%
                             </td>
@@ -701,7 +814,7 @@
                 </div>
                 <div class="stat-box">
                     <div class="label">Completed</div>
-                    <div class="value" style="color: #10b981;">{{ $analytics['completed_lessons_this_month'] }}</div>
+                    <div class="value value-success">{{ $analytics['completed_lessons_this_month'] }}</div>
                 </div>
                 <div class="stat-box">
                     <div class="label">Success Rate</div>
@@ -737,7 +850,7 @@
                             <td>{{ $statusData->count }}</td>
                             <td>
                                 <div class="progress-bar">
-                                    <div class="progress-fill" style="width: {{ $percentage }}%"></div>
+                                    <div class="progress-fill progress-fill-dynamic" data-width="{{ $percentage }}"></div>
                                 </div>
                                 {{ number_format($percentage, 1) }}%
                             </td>
@@ -754,9 +867,7 @@
 
     <!-- Course Performance Section (Merged Analytics & Performance) -->
     <div class="collapsible-section">
-        <div class="section-header" 
-             style="<?php echo $useGradient ? "background: linear-gradient(135deg, {$primaryColor} 0%, {$secondaryColor} 100%);" : "background: {$primaryColor};"; ?>"
-             onclick="toggleSection(this)">
+        <div class="section-header" onclick="toggleSection(this)">
             <h2>Course Performance & Analytics</h2>
             <span class="collapse-icon">▼</span>
         </div>
@@ -767,13 +878,13 @@
             
             <!-- Visual Enrollment Chart -->
             @if(count($analytics['course_stats'] ?? []) > 0)
-                <h3 style="margin-bottom: 15px; font-size: 1rem; color: #555;">Enrollment by Course</h3>
+                <h3 class="section-subtitle-compact">Enrollment by Course</h3>
                 <div class="bar-chart">
                     @foreach($analytics['course_stats'] ?? [] as $course)
                         <div class="bar-row">
                             <span class="bar-label">{{ Str::limit($course->title, 20) }}</span>
                             <div class="bar-track">
-                                <div class="bar-fill" style="width: {{ ($course->total_enrolled / $maxEnrolled) * 100 }}%">
+                                <div class="bar-fill bar-fill-dynamic" data-width="{{ ($course->total_enrolled / $maxEnrolled) * 100 }}">
                                     @if($course->total_enrolled > 0)
                                         <span class="bar-value">{{ $course->total_enrolled }}</span>
                                     @endif
@@ -783,7 +894,7 @@
                         </div>
                     @endforeach
                 </div>
-                <hr style="margin: 25px 0; border: none; border-top: 1px solid #e5e7eb;">
+                <hr class="section-divider">
             @endif
 
             <table class="reports-table">
@@ -804,21 +915,21 @@
                             <td><span class="badge badge-info">{{ $course->total_enrolled }}</span></td>
                             <td>₱{{ number_format($course->price ?? 0, 2) }}</td>
                             <td>
-                                <div class="progress-bar" style="margin-bottom: 2px;">
-                                    <div class="progress-fill" style="width: {{ $course->completion_rate }}%; background: {{ $course->completion_rate >= 70 ? '#10b981' : '#f59e0b' }};"></div>
+                                <div class="progress-bar progress-bar-tight">
+                                    <div class="progress-fill progress-fill-dynamic {{ $course->completion_rate >= 70 ? 'progress-fill-success' : 'progress-fill-warning' }}" data-width="{{ $course->completion_rate }}"></div>
                                 </div>
-                                <span style="font-size: 0.8rem; color: {{ $course->completion_rate >= 70 ? '#10b981' : '#f59e0b' }}; font-weight: 600;">
+                                <span class="text-percentage {{ $course->completion_rate >= 70 ? 'text-percentage-success' : 'text-percentage-warning' }}">
                                     {{ number_format($course->completion_rate, 1) }}%
                                 </span>
                             </td>
                             <td>
                                 @if($course->average_rating)
-                                    <span style="color: #f59e0b;">★</span> {{ number_format($course->average_rating, 1) }}
+                                    <span class="text-warning">★</span> {{ number_format($course->average_rating, 1) }}
                                 @else
-                                    <span style="color: #9ca3af;">--</span>
+                                    <span class="text-muted">--</span>
                                 @endif
                             </td>
-                            <td style="font-weight: 600; color: #059669;">₱{{ number_format($course->total_revenue, 2) }}</td>
+                            <td class="text-strong-success">₱{{ number_format($course->total_revenue, 2) }}</td>
                         </tr>
                     @empty
                         <tr>
@@ -855,16 +966,16 @@
                             <td>{{ $instructor->completed_sessions }}</td>
                             <td>
                                 @if($instructor->average_rating)
-                                    <span style="color: #f59e0b;">★</span> {{ number_format($instructor->average_rating, 1) }}
+                                    <span class="text-warning">★</span> {{ number_format($instructor->average_rating, 1) }}
                                 @else
-                                    <span style="color: #9ca3af;">No ratings yet</span>
+                                    <span class="text-muted">No ratings yet</span>
                                 @endif
                             </td>
                             <td>
-                                <div class="progress-bar" style="margin-bottom: 2px;">
-                                    <div class="progress-fill" style="width: {{ $instructor->completion_rate }}%; background: {{ $instructor->completion_rate >= 80 ? '#10b981' : '#f59e0b' }};"></div>
+                                <div class="progress-bar progress-bar-tight">
+                                    <div class="progress-fill progress-fill-dynamic {{ $instructor->completion_rate >= 80 ? 'progress-fill-success' : 'progress-fill-warning' }}" data-width="{{ $instructor->completion_rate }}"></div>
                                 </div>
-                                <span style="font-size: 0.8rem; color: {{ $instructor->completion_rate >= 80 ? '#10b981' : '#f59e0b' }}; font-weight: 600;">
+                                <span class="text-percentage {{ $instructor->completion_rate >= 80 ? 'text-percentage-success' : 'text-percentage-warning' }}">
                                     {{ number_format($instructor->completion_rate, 1) }}%
                                 </span>
                             </td>
@@ -889,7 +1000,7 @@
             <div class="stats-summary">
                 <div class="stat-box">
                     <div class="label">Attendance Rate</div>
-                    <div class="value" style="color: #10b981;">{{ number_format($analytics['attendance']['rate'] ?? 0, 1) }}%</div>
+                    <div class="value value-success">{{ number_format($analytics['attendance']['rate'] ?? 0, 1) }}%</div>
                 </div>
                 <div class="stat-box">
                     <div class="label">Attended</div>
@@ -897,15 +1008,15 @@
                 </div>
                 <div class="stat-box">
                     <div class="label">Missed</div>
-                    <div class="value" style="color: #ef4444;">{{ $analytics['attendance']['missed'] ?? 0 }}</div>
+                    <div class="value value-danger">{{ $analytics['attendance']['missed'] ?? 0 }}</div>
                 </div>
                 <div class="stat-box">
                     <div class="label">Cancellations</div>
-                    <div class="value" style="color: #f59e0b;">{{ $analytics['cancellations']['total'] ?? 0 }}</div>
+                    <div class="value value-warning">{{ $analytics['cancellations']['total'] ?? 0 }}</div>
                 </div>
                 <div class="stat-box">
                     <div class="label">No-Shows</div>
-                    <div class="value" style="color: #ef4444;">{{ $analytics['cancellations']['no_show'] }}</div>
+                    <div class="value value-danger">{{ $analytics['cancellations']['no_show'] }}</div>
                 </div>
             </div>
         </div>
@@ -913,9 +1024,7 @@
 
     <!-- Lessons Report Section (Driving + Practical Merged) -->
     <div class="collapsible-section">
-        <div class="section-header" 
-             style="<?php echo $useGradient ? "background: linear-gradient(135deg, {$primaryColor} 0%, {$secondaryColor} 100%);" : "background: {$primaryColor};"; ?>"
-             onclick="toggleSection(this)">
+        <div class="section-header" onclick="toggleSection(this)">
             <h2>Lessons Report</h2>
             <span class="collapse-icon">▼</span>
         </div>
@@ -927,15 +1036,15 @@
                 </div>
                 <div class="stat-box">
                     <div class="label">Completed</div>
-                    <div class="value" style="color: #10b981;">{{ $analytics['completed_lessons_this_month'] }}</div>
+                    <div class="value value-success">{{ $analytics['completed_lessons_this_month'] }}</div>
                 </div>
                 <div class="stat-box">
                     <div class="label">Completion Rate</div>
-                    <div class="value" style="color: {{ $settings->primary_color ?? '#667eea' }};">{{ number_format($analytics['completion_rate'], 1) }}%</div>
+                    <div class="value value-primary">{{ number_format($analytics['completion_rate'], 1) }}%</div>
                 </div>
             </div>
 
-            <h3 style="margin-top: 25px; margin-bottom: 15px;">Lessons by Status</h3>
+            <h3 class="section-subtitle">Lessons by Status</h3>
             <table class="reports-table">
                 <thead>
                     <tr>
@@ -965,7 +1074,7 @@
                 </tbody>
             </table>
 
-            <h3 style="margin-top: 25px; margin-bottom: 15px;">Lessons by Instructor</h3>
+            <h3 class="section-subtitle">Lessons by Instructor</h3>
             <table class="reports-table">
                 <thead>
                     <tr>
@@ -982,7 +1091,7 @@
                             <td>{{ $instructor->total_lessons }}</td>
                             <td>{{ $instructor->completed_lessons }}</td>
                             <td>
-                                <span style="color: {{ $instructor->completion_rate >= 70 ? '#10b981' : '#f59e0b' }};">
+                                <span class="{{ $instructor->completion_rate >= 70 ? 'text-success' : 'text-warning' }}">
                                     {{ number_format($instructor->completion_rate, 1) }}%
                                 </span>
                             </td>
@@ -999,9 +1108,7 @@
 
     <!-- Schedules & Cancellations Report (Merged) -->
     <div class="collapsible-section">
-        <div class="section-header" 
-             style="<?php echo $useGradient ? "background: linear-gradient(135deg, {$primaryColor} 0%, {$secondaryColor} 100%);" : "background: {$primaryColor};"; ?>"
-             onclick="toggleSection(this)">
+        <div class="section-header" onclick="toggleSection(this)">
             <h2>Schedules & Cancellations</h2>
             <span class="collapse-icon">▼</span>
         </div>
@@ -1009,19 +1116,19 @@
             <div class="stats-summary">
                 <div class="stat-box">
                     <div class="label">Total Cancellations</div>
-                    <div class="value" style="color: #f59e0b;">{{ $analytics['cancellations']['total'] }}</div>
+                    <div class="value value-warning">{{ $analytics['cancellations']['total'] }}</div>
                 </div>
                 <div class="stat-box">
                     <div class="label">No-Shows</div>
-                    <div class="value" style="color: #ef4444;">{{ $analytics['cancellations']['no_show'] }}</div>
+                    <div class="value value-danger">{{ $analytics['cancellations']['no_show'] }}</div>
                 </div>
                 <div class="stat-box">
                     <div class="label">Total Issues</div>
-                    <div class="value" style="color: #ef4444;">{{ $analytics['cancellations']['total'] + $analytics['cancellations']['no_show'] }}</div>
+                    <div class="value value-danger">{{ $analytics['cancellations']['total'] + $analytics['cancellations']['no_show'] }}</div>
                 </div>
             </div>
 
-            <h3 style="margin-top: 25px; margin-bottom: 15px;">Recent Cancellations & No-Shows</h3>
+            <h3 class="section-subtitle">Recent Cancellations & No-Shows</h3>
             <table class="reports-table">
                 <thead>
                     <tr>
@@ -1057,9 +1164,7 @@
 
     <!-- Financial Report Section -->
     <div class="collapsible-section">
-        <div class="section-header" 
-             style="<?php echo $useGradient ? "background: linear-gradient(135deg, {$primaryColor} 0%, {$secondaryColor} 100%);" : "background: {$primaryColor};"; ?>"
-             onclick="toggleSection(this)">
+        <div class="section-header" onclick="toggleSection(this)">
             <h2>Financial Report</h2>
             <span class="collapse-icon">▼</span>
         </div>
@@ -1067,19 +1172,19 @@
             <div class="stats-summary">
                 <div class="stat-box">
                     <div class="label">Total Revenue</div>
-                    <div class="value" style="color: #10b981;">₱{{ number_format($analytics['financial']['total_revenue'], 2) }}</div>
+                    <div class="value value-success">₱{{ number_format($analytics['financial']['total_revenue'], 2) }}</div>
                 </div>
                 <div class="stat-box">
                     <div class="label">Pending Payments</div>
-                    <div class="value" style="color: #f59e0b;">₱{{ number_format($analytics['financial']['pending_payments'], 2) }}</div>
+                    <div class="value value-warning">₱{{ number_format($analytics['financial']['pending_payments'], 2) }}</div>
                 </div>
                 <div class="stat-box">
                     <div class="label">Total Expected</div>
-                    <div class="value" style="color: {{ $settings->primary_color ?? '#667eea' }};">₱{{ number_format($analytics['financial']['total_revenue'] + $analytics['financial']['pending_payments'], 2) }}</div>
+                    <div class="value value-primary">₱{{ number_format($analytics['financial']['total_revenue'] + $analytics['financial']['pending_payments'], 2) }}</div>
                 </div>
             </div>
 
-            <h3 style="margin-top: 25px; margin-bottom: 15px;">Payments by Method</h3>
+            <h3 class="section-subtitle">Payments by Method</h3>
             <table class="reports-table">
                 <thead>
                     <tr>
@@ -1107,9 +1212,7 @@
 
     <!-- Student Progress Report Section -->
     <div class="collapsible-section">
-        <div class="section-header" 
-             style="<?php echo $useGradient ? "background: linear-gradient(135deg, {$primaryColor} 0%, {$secondaryColor} 100%);" : "background: {$primaryColor};"; ?>"
-             onclick="toggleSection(this)">
+        <div class="section-header" onclick="toggleSection(this)">
             <h2>Student Progress Report</h2>
             <span class="collapse-icon">▼</span>
         </div>
@@ -1141,10 +1244,10 @@
                             <td>{{ $student->total_lessons }}</td>
                             <td>{{ $student->completed_lessons }}</td>
                             <td>
-                                <div class="progress-bar" style="margin-bottom: 2px;">
-                                    <div class="progress-fill" style="width: {{ $student->progress_rate }}%; background: {{ $student->progress_rate >= 70 ? '#10b981' : '#f59e0b' }};"></div>
+                                <div class="progress-bar progress-bar-tight">
+                                    <div class="progress-fill progress-fill-dynamic {{ $student->progress_rate >= 70 ? 'progress-fill-success' : 'progress-fill-warning' }}" data-width="{{ $student->progress_rate }}"></div>
                                 </div>
-                                <span style="font-size: 0.8rem; color: {{ $student->progress_rate >= 70 ? '#10b981' : '#f59e0b' }}; font-weight: 600;">
+                                <span class="text-percentage {{ $student->progress_rate >= 70 ? 'text-percentage-success' : 'text-percentage-warning' }}">
                                     {{ number_format($student->progress_rate, 1) }}%
                                 </span>
                             </td>
@@ -1175,6 +1278,15 @@ function toggleExportMenu(event) {
     menu.classList.toggle('show');
 }
 
+function applyDynamicWidths() {
+    document.querySelectorAll('.progress-fill-dynamic, .bar-fill-dynamic').forEach(element => {
+        const width = element.getAttribute('data-width');
+        if (width !== null) {
+            element.style.width = `${Math.max(0, Math.min(100, parseFloat(width) || 0))}%`;
+        }
+    });
+}
+
 function filterPeriod(period) {
     const url = new URL(window.location.href);
     url.searchParams.set('period', period);
@@ -1195,6 +1307,12 @@ document.addEventListener('click', function(event) {
         menu.classList.remove('show');
     }
 });
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', applyDynamicWidths);
+} else {
+    applyDynamicWidths();
+}
 </script>
 
 @endsection

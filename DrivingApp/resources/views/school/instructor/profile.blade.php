@@ -168,6 +168,27 @@
     .alert-success { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
     .alert-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
 
+    .error-list-compact { margin: 0; padding-left: 20px; }
+    .hidden-file-input { display: none; }
+    .password-section { margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb; }
+    .password-section-title { margin: 0 0 15px 0; font-size: 0.95rem; color: #374151; font-weight: 600; }
+    .password-section-note { font-weight: 400; color: #9ca3af; font-size: 0.8rem; }
+    .password-error-box {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #dc2626;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        margin-bottom: 12px;
+    }
+    .password-error-text {
+        color: #dc2626;
+        font-size: 0.8rem;
+        margin-top: 4px;
+        display: block;
+    }
+
     @media (max-width: 768px) {
         .profile-avatar-circle { width: 120px; height: 120px; }
         .profile-avatar-letter { font-size: 50px; }
@@ -197,7 +218,7 @@
 
     @if($errors->any())
         <div class="alert alert-error">
-            <ul style="margin: 0; padding-left: 20px;">
+            <ul class="error-list-compact">
                 @foreach($errors->all() as $error)
                     <li>{{ $error }}</li>
                 @endforeach
@@ -220,7 +241,7 @@
                         <span>Change Photo</span>
                     </div>
                 </div>
-                <input type="file" id="profilePictureInput" accept="image/png,image/jpg,image/jpeg,image/webp" style="display: none;" onchange="uploadProfilePicture(this)">
+                <input type="file" id="profilePictureInput" accept="image/png,image/jpg,image/jpeg,image/webp" class="hidden-file-input" onchange="uploadProfilePicture(this)">
                 <div class="profile-name">{{ $instructor->name ?? "Instructor's Name" }}</div>
             </div>
 
@@ -295,11 +316,11 @@
                     <input type="text" id="license_number" name="license_number" value="{{ old('license_number', $instructor->license_number) }}">
                 </div>
 
-                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-                    <h4 style="margin: 0 0 15px 0; font-size: 0.95rem; color: #374151; font-weight: 600;">Change Password <span style="font-weight: 400; color: #9ca3af; font-size: 0.8rem;">(optional)</span></h4>
+                <div class="password-section">
+                    <h4 class="password-section-title">Change Password <span class="password-section-note">(optional)</span></h4>
                     
                     @error('current_password')
-                        <div style="background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; margin-bottom: 12px;">{{ $message }}</div>
+                        <div class="password-error-box">{{ $message }}</div>
                     @enderror
 
                     <div class="form-field">
@@ -311,7 +332,7 @@
                         <label for="new_password">New Password</label>
                         <input type="password" id="new_password" name="new_password" placeholder="Min 8 chars, uppercase, lowercase, number">
                         @error('new_password')
-                            <span style="color: #dc2626; font-size: 0.8rem; margin-top: 4px; display: block;">{{ $message }}</span>
+                            <span class="password-error-text">{{ $message }}</span>
                         @enderror
                     </div>
 

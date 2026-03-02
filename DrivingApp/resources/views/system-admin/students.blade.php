@@ -25,8 +25,8 @@
             <label>Search</label>
             <input type="text" name="search" value="{{ request('search') }}" placeholder="Name or email" class="form-control">
         </div>
-        <div class="form-group" style="display: flex; align-items: flex-end;">
-            <button type="submit" class="btn btn-primary" style="width: 100%;">Filter</button>
+        <div class="form-group form-group-actions">
+            <button type="submit" class="btn btn-primary btn-full-width">Filter</button>
         </div>
     </form>
 </div>

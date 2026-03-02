@@ -111,7 +111,7 @@
                 </div>
                 
                 <div class="progress-bar-container">
-                    <div class="progress-bar" style="width: {{ $progress->completion_percent }}%"></div>
+                    <div class="progress-bar" data-progress="{{ $progress->completion_percent }}"></div>
                 </div>
                 
                 <div class="progress-details">
@@ -138,4 +138,13 @@
         @endforelse
     </div>
 </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.progress-bar[data-progress]').forEach(function (bar) {
+            const value = parseFloat(bar.getAttribute('data-progress'));
+            const width = Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : 0;
+            bar.style.width = width + '%';
+        });
+    });
+</script>
 @endsection
