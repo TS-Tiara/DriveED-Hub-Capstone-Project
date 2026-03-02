@@ -189,6 +189,95 @@ td {
         font-size: 0.7rem;
     }
 }
+
+/* ── Compact Pagination Styling ── */
+nav[role="navigation"] {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+nav[role="navigation"] > div {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+nav[role="navigation"] > div:first-child {
+    display: none;
+}
+
+nav[role="navigation"] span[aria-current="page"] span,
+nav[role="navigation"] a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border-radius: 6px;
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+nav[role="navigation"] span[aria-current="page"] span {
+    background: {{ $primaryColor }};
+    color: white;
+}
+
+nav[role="navigation"] a {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+nav[role="navigation"] a:hover {
+    background: #e5e7eb;
+    color: #1f2937;
+}
+
+nav[role="navigation"] svg {
+    width: 14px !important;
+    height: 14px !important;
+}
+
+nav[role="navigation"] span[aria-disabled="true"] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    background: #f9fafb;
+    color: #d1d5db;
+    border-radius: 6px;
+    cursor: not-allowed;
+}
+
+nav[role="navigation"] span[aria-disabled="true"] svg {
+    width: 14px !important;
+    height: 14px !important;
+}
+
+nav[role="navigation"] span:not([aria-current]):not([aria-disabled]) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    font-size: 0.85rem;
+    color: #6b7280;
+}
+
+@media (min-width: 640px) {
+    nav[role="navigation"] > div:first-child {
+        display: block;
+        font-size: 0.82rem;
+        color: #6b7280;
+        margin-right: 16px;
+    }
+}
 </style>
 
 <div class="payments-container">

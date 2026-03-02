@@ -440,6 +440,9 @@ class BookingController extends Controller
     {
         abort_if($booking->school_id !== $school->id, 404);
 
+        $studentId = Auth::guard('student')->id();
+        abort_if(!$studentId || (int) $booking->student_id !== (int) $studentId, 403);
+
         // Only allow pending bookings to be confirmed
         if ($booking->status !== 'pending') {
             return back()->withErrors(['booking' => 'Only pending schedules can be confirmed.']);
@@ -477,6 +480,9 @@ class BookingController extends Controller
     public function removeFromQueue(Request $request, School $school, Booking $booking)
     {
         abort_if($booking->school_id !== $school->id, 404);
+
+        $studentId = Auth::guard('student')->id();
+        abort_if(!$studentId || (int) $booking->student_id !== (int) $studentId, 403);
 
         // Only allow pending bookings to be removed from queue
         if ($booking->status !== 'pending') {

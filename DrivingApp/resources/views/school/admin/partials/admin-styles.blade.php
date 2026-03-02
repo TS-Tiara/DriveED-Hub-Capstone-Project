@@ -1410,4 +1410,281 @@ document.getElementById('confirmModal')?.addEventListener('click', function(e) {
         closeConfirmModal();
     }
 });
+
+// ── Custom Select Dropdown ──
+// Converts native selects with .filter-select class to custom dropdowns with max-height
+document.addEventListener('DOMContentLoaded', function() {
+    const selects = document.querySelectorAll('select.filter-select');
+    
+    selects.forEach(function(select) {
+        // Skip if already converted or has few options
+        if (select.dataset.customized === 'true' || select.options.length <= 6) return;
+        
+        // Create wrapper
+        const wrapper = document.createElement('div');
+        wrapper.className = 'custom-select-wrapper';
+        
+        // Create trigger button
+        const trigger = document.createElement('div');
+        trigger.className = 'custom-select-trigger';
+        trigger.textContent = select.options[select.selectedIndex]?.text || 'Select...';
+        
+        // Create dropdown
+        const dropdown = document.createElement('div');
+        dropdown.className = 'custom-select-dropdown';
+        
+        // Populate options
+        Array.from(select.options).forEach(function(option, index) {
+            const optionEl = document.createElement('div');
+            optionEl.className = 'custom-select-option' + (index === select.selectedIndex ? ' selected' : '');
+            optionEl.textContent = option.text;
+            optionEl.dataset.value = option.value;
+            
+            optionEl.addEventListener('click', function() {
+                // Update native select
+                select.value = option.value;
+                select.dispatchEvent(new Event('change', { bubbles: true }));
+                
+                // Update UI
+                trigger.textContent = option.text;
+                dropdown.querySelectorAll('.custom-select-option').forEach(function(o) { 
+                    o.classList.remove('selected'); 
+                });
+                optionEl.classList.add('selected');
+                wrapper.classList.remove('open');
+            });
+            
+            dropdown.appendChild(optionEl);
+        });
+        
+        // Toggle dropdown
+        trigger.addEventListener('click', function(e) {
+            e.stopPropagation();
+            // Close other dropdowns first
+            document.querySelectorAll('.custom-select-wrapper.open').forEach(function(w) {
+                if (w !== wrapper) w.classList.remove('open');
+            });
+            wrapper.classList.toggle('open');
+        });
+        
+        // Assemble
+        wrapper.appendChild(trigger);
+        wrapper.appendChild(dropdown);
+        
+        // Hide original select and insert custom dropdown
+        select.style.display = 'none';
+        select.dataset.customized = 'true';
+        select.parentNode.insertBefore(wrapper, select);
+    });
+    
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function() {
+        document.querySelectorAll('.custom-select-wrapper.open').forEach(function(w) {
+            w.classList.remove('open');
+        });
+    });
+});
 </script>
+
+<style>
+/* ── Filter Bar & Custom Select Dropdown ── */
+.filter-bar {
+    background: white;
+    border-radius: 12px;
+    padding: 14px 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.filter-bar label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.filter-select {
+    padding: 8px 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    color: #374151;
+    background: white;
+    cursor: pointer;
+    min-width: 150px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.filter-select:focus { border-color: {{ $primaryColor }}; }
+
+/* Custom Select Wrapper */
+.custom-select-wrapper {
+    position: relative;
+    display: inline-block;
+    min-width: 150px;
+}
+
+.custom-select-trigger {
+    padding: 8px 32px 8px 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    color: #374151;
+    background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E") no-repeat right 10px center;
+    background-size: 14px;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.custom-select-trigger:hover { border-color: #d1d5db; }
+.custom-select-wrapper.open .custom-select-trigger { 
+    border-color: {{ $primaryColor }}; 
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.custom-select-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+    max-height: 250px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+}
+
+.custom-select-wrapper.open .custom-select-dropdown { display: block; }
+
+.custom-select-option {
+    padding: 10px 14px;
+    font-size: 0.875rem;
+    color: #374151;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.custom-select-option:hover { background: #f3f4f6; }
+.custom-select-option.selected { 
+    background: {{ $primaryColor }}15; 
+    color: {{ $primaryColor }}; 
+    font-weight: 500;
+}
+
+.custom-select-option:first-child { border-radius: 8px 8px 0 0; }
+.custom-select-option:last-child { border-radius: 0 0 8px 8px; }
+
+/* Scrollbar styling for dropdown */
+.custom-select-dropdown::-webkit-scrollbar { width: 6px; }
+.custom-select-dropdown::-webkit-scrollbar-track { background: #f3f4f6; border-radius: 3px; }
+.custom-select-dropdown::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+.custom-select-dropdown::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+@media (max-width: 768px) {
+    .filter-bar { 
+        flex-direction: column; 
+        align-items: stretch; 
+    }
+    .custom-select-wrapper { width: 100%; }
+    .custom-select-trigger { width: 100%; }
+}
+
+/* ── Compact Pagination Styling ── */
+nav[role="navigation"] {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+nav[role="navigation"] > div {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+nav[role="navigation"] > div:first-child {
+    display: none;
+}
+
+nav[role="navigation"] span[aria-current="page"] span,
+nav[role="navigation"] a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border-radius: 6px;
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+nav[role="navigation"] span[aria-current="page"] span {
+    background: {{ $primaryColor }};
+    color: white;
+}
+
+nav[role="navigation"] a {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+nav[role="navigation"] a:hover {
+    background: #e5e7eb;
+    color: #1f2937;
+}
+
+nav[role="navigation"] svg {
+    width: 14px !important;
+    height: 14px !important;
+}
+
+nav[role="navigation"] span[aria-disabled="true"] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    background: #f9fafb;
+    color: #d1d5db;
+    border-radius: 6px;
+    cursor: not-allowed;
+}
+
+nav[role="navigation"] span[aria-disabled="true"] svg {
+    width: 14px !important;
+    height: 14px !important;
+}
+
+nav[role="navigation"] span:not([aria-current]):not([aria-disabled]) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    font-size: 0.85rem;
+    color: #6b7280;
+}
+
+@media (min-width: 640px) {
+    nav[role="navigation"] > div:first-child {
+        display: block;
+        font-size: 0.82rem;
+        color: #6b7280;
+        margin-right: 16px;
+    }
+}
+</style>

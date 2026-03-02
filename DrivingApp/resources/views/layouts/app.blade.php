@@ -1633,14 +1633,14 @@
                     @endif
                     <div class="dropdown-divider"></div>
                     @if(Auth::guard('admin')->check())
-                        <form method="POST" action="{{ $schoolRoute('admin.logout') }}" style="margin: 0;">
+                        <form method="POST" action="{{ $schoolRoute('logout') }}" style="margin: 0;">
                             @csrf
                             <button type="submit" class="dropdown-item">
                                 Logout
                             </button>
                         </form>
                     @elseif(Auth::guard('instructor')->check())
-                        <form method="POST" action="{{ $schoolRoute('instructor.logout') }}" style="margin: 0;">
+                        <form method="POST" action="{{ $schoolRoute('logout') }}" style="margin: 0;">
                             @csrf
                             <button type="submit" class="dropdown-item">
                                 Logout
@@ -1655,7 +1655,7 @@
                                 </button>
                             </form>
                         @else
-                            <form method="POST" action="{{ $schoolRoute('student.logout') }}" style="margin: 0;">
+                            <form method="POST" action="{{ $schoolRoute('logout') }}" style="margin: 0;">
                                 @csrf
                                 <button type="submit" class="dropdown-item">
                                     Logout
@@ -2113,8 +2113,12 @@
             'admin/theoretical': 'Theoretical Training',
             'admin/schedules': 'Schedules',
             'admin/bookings': 'Student Sessions',
+            'admin/phase-progressions': 'Phase Progressions',
             'admin/payments': 'Payments',
             'admin/reports': 'Reports & Analytics',
+            'admin/student-action-requests': 'Student Requests',
+            'admin/admin-management': 'Admin Management',
+            'admin/branches': 'Branches',
             'admin/settings': 'Settings',
             // Instructor pages
             'instructor': 'Dashboard',
@@ -2205,9 +2209,13 @@
             const keys = Object.keys(breadcrumbMap).sort((a, b) => b.length - a.length);
             for (const key of keys) {
                 if (rolePath === key || rolePath.startsWith(key + '/')) {
-                    html += '<span class="breadcrumb-separator">›</span>';
-                    
                     const parentLabel = breadcrumbMap[key] || key.split('/').pop().replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+                    if (rolePath !== key && parentLabel === 'Dashboard') {
+                        continue;
+                    }
+
+                    html += '<span class="breadcrumb-separator">›</span>';
                     
                     // If there's a deeper path, make the parent clickable
                     if (rolePath !== key && rolePath.startsWith(key + '/')) {
@@ -3044,15 +3052,36 @@
         }
         
         function updateActiveNavItem(url) {
+            const normalizePath = function(value) {
+                try {
+                    const parsedUrl = new URL(value, window.location.origin);
+                    return parsedUrl.pathname.replace(/\/+$/, '') || '/';
+                } catch (e) {
+                    return String(value || '').replace(/\/+$/, '') || '/';
+                }
+            };
+
+            const currentPath = normalizePath(url || window.location.pathname);
+
             // Remove active class from all nav items
             document.querySelectorAll('.nav-item').forEach(item => {
                 item.classList.remove('active');
+                item.removeAttribute('aria-current');
             });
             
             // Add active class to current nav item
             document.querySelectorAll('.nav-item').forEach(item => {
-                if (item.getAttribute('href') === url) {
+                const href = item.getAttribute('href');
+                if (!href) {
+                    return;
+                }
+
+                const navPath = normalizePath(href);
+                const isCurrent = navPath === currentPath || (currentPath.startsWith(navPath + '/') && navPath !== '/');
+
+                if (isCurrent) {
                     item.classList.add('active');
+                    item.setAttribute('aria-current', 'page');
                 }
             });
         }

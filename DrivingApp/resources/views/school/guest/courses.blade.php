@@ -488,10 +488,6 @@
         background: rgba(255,255,255,0.1);
     }
     
-    .btn-close::before {
-        content: 'Ã—';
-    }
-    
     .modal-body {
         padding: 25px;
         overflow-y: auto;
@@ -831,7 +827,7 @@
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title" id="enrollModalLabel{{ $course->id }}">Enroll in {{ $course->title }}</h5>
-                    <button type="button" class="btn-close" onclick="closeEnrollModal({{ $course->id }})" aria-label="Close"></button>
+                    <button type="button" class="btn-close" onclick="closeEnrollModal({{ $course->id }})" aria-label="Close">×</button>
                 </div>
                 <div class="modal-body">
                     <!-- Course Type Badge -->
@@ -1021,6 +1017,18 @@ window.onclick = function(event) {
         event.target.style.display = 'none';
     }
 }
+
+document.addEventListener('keydown', function(event) {
+    if (event.key !== 'Escape') {
+        return;
+    }
+
+    document.querySelectorAll('.modal').forEach(function(modal) {
+        if (modal.style.display === 'flex') {
+            modal.style.display = 'none';
+        }
+    });
+});
 </script>
 
 @endsection

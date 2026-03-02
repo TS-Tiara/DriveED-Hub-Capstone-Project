@@ -399,10 +399,11 @@
 
     @if(session('test_credentials') && app()->environment('local', 'development', 'testing'))
     <!-- Test Credentials Popup Modal (Development Only) -->
-    <div id="testCredentialsModal" style="display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
-        <div style="background: white; border-radius: 20px; max-width: 500px; width: 90%; box-shadow: 0 25px 50px rgba(0,0,0,0.5); overflow: hidden; animation: slideIn 0.3s ease;">
+    <div id="testCredentialsModal" style="display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(5px); padding: 12px;">
+        <div style="background: white; border-radius: 20px; max-width: 500px; width: 100%; max-height: 92vh; display: flex; flex-direction: column; box-shadow: 0 25px 50px rgba(0,0,0,0.5); overflow: hidden; animation: slideIn 0.3s ease;">
             <!-- Header -->
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 25px; text-align: center; color: white;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 25px; text-align: center; color: white; position: relative;">
+                <button type="button" onclick="closeModal()" aria-label="Close test credentials modal" style="position: absolute; top: 12px; right: 12px; border: none; background: rgba(255,255,255,0.2); color: white; width: 34px; height: 34px; border-radius: 999px; cursor: pointer; font-size: 1.25rem; line-height: 1;">×</button>
                 <div style="font-size: 48px; margin-bottom: 10px;"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 48px; height: 48px;">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg></div>
@@ -416,7 +417,7 @@
             </div>
             
             <!-- Content -->
-            <div style="padding: 30px;">
+            <div style="padding: 30px; overflow-y: auto;">
                 <p style="margin-bottom: 25px; color: #4b5563; text-align: center; font-size: 0.95rem;">
                     Save these credentials for testing. You can copy them with one click:
                 </p>
@@ -511,6 +512,15 @@
         document.getElementById('testCredentialsModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 closeModal();
+            }
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const modal = document.getElementById('testCredentialsModal');
+                if (modal && modal.style.display !== 'none') {
+                    closeModal();
+                }
             }
         });
     </script>

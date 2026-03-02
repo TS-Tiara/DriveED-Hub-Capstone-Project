@@ -741,6 +741,9 @@
                 <p style="color: #666; margin-bottom: 15px;">
                     Please provide a reason for requesting removal from this admin-assigned time slot.
                 </p>
+                <p style="color: #666; margin-bottom: 15px;">
+                    This sends a request to admin for review and does not remove you instantly.
+                </p>
                 <label style="display: block; font-weight: 600; margin-bottom: 8px;">
                     Reason: <span style="color: #dc3545;">*</span>
                 </label>
@@ -996,15 +999,31 @@
     
     // Removal request modal
     function showRemovalModal(slotId) {
-        var modal = document.getElementById('removalModal');
-        var form = document.getElementById('removalForm');
-        form.action = '{{ url($school->slug) }}/instructor/timeslots/' + slotId + '/request-removal';
-        modal.style.display = 'flex';
+        showConfirm({
+            title: 'Request Removal',
+            message: 'Do you want to submit a removal request for this slot?',
+            type: 'warning',
+            onConfirm: function() {
+                var modal = document.getElementById('removalModal');
+                var form = document.getElementById('removalForm');
+                form.action = '{{ url($school->slug) }}/instructor/timeslots/' + slotId + '/request-removal';
+                modal.style.display = 'flex';
+            }
+        });
     }
     
     function closeRemovalModal() {
         document.getElementById('removalModal').style.display = 'none';
     }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            var removalModal = document.getElementById('removalModal');
+            if (removalModal && removalModal.style.display === 'flex') {
+                closeRemovalModal();
+            }
+        }
+    });
     
     // Mobile sidebar toggle
     function toggleMobileSidebar() {

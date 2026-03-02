@@ -340,6 +340,35 @@
         color: #333;
         font-size: 14px;
     }
+
+    .info-panel {
+        padding: 15px;
+        background: #f0f9ff;
+        border-left: 4px solid #3b82f6;
+        border-radius: 6px;
+        margin-bottom: 20px;
+    }
+
+    .info-panel-list {
+        margin: 10px 0 0 0;
+        padding-left: 20px;
+        font-size: 0.9rem;
+    }
+
+    .info-panel-toggle {
+        display: none;
+        width: 100%;
+        border: 1px solid #bfdbfe;
+        background: #ffffff;
+        color: #1d4ed8;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        padding: 8px 10px;
+        margin-top: 10px;
+        cursor: pointer;
+        text-align: left;
+    }
     
     .btn-create {
         padding: 10px 20px;
@@ -951,6 +980,24 @@
             padding: 10px 8px;
             font-size: 0.85rem;
         }
+
+        .info-panel {
+            margin-bottom: 12px;
+            padding: 12px;
+        }
+
+        .info-panel-list {
+            display: none;
+            margin-top: 8px;
+        }
+
+        .info-panel.expanded .info-panel-list {
+            display: block;
+        }
+
+        .info-panel-toggle {
+            display: block;
+        }
         
         .slot-badge {
             font-size: 0.65rem;
@@ -1357,9 +1404,10 @@
         <form method="POST" action="{{ route('schools.admin.schedules.create', $school) }}">
             @csrf
             <div class="modal-body">
-                <div style="padding: 15px; background: #f0f9ff; border-left: 4px solid #3b82f6; border-radius: 6px; margin-bottom: 20px;">
+                <div class="info-panel">
                     <strong>How it works:</strong>
-                    <ul style="margin: 10px 0 0 0; padding-left: 20px; font-size: 0.9rem;">
+                    <button type="button" class="info-panel-toggle" onclick="toggleInfoPanel(this)">Show details</button>
+                    <ul class="info-panel-list">
                         <li>Select the course for this schedule</li>
                         <li>Set the max capacity for this schedule</li>
                         <li>Optionally pre-assign instructors (they'll be marked as "Admin Assigned")</li>
@@ -1604,6 +1652,36 @@
             closeDayModal();
         }
     }
+
+    document.addEventListener('keydown', function(event) {
+        if (event.key !== 'Escape') {
+            return;
+        }
+
+        const createModal = document.getElementById('createModal');
+        const detailsModal = document.getElementById('detailsModal');
+        const editModal = document.getElementById('editModal');
+        const dayModal = document.getElementById('dayModal');
+
+        if (createModal && createModal.style.display === 'flex') {
+            closeCreateModal();
+            return;
+        }
+
+        if (editModal && editModal.style.display === 'flex') {
+            closeEditModal();
+            return;
+        }
+
+        if (detailsModal && detailsModal.style.display === 'flex') {
+            closeDetailsModal();
+            return;
+        }
+
+        if (dayModal && dayModal.style.display === 'flex') {
+            closeDayModal();
+        }
+    });
     
     // View Toggle Functions with State Persistence
     function switchView(view) {
@@ -1647,6 +1725,16 @@
         const cardBody = dateHeader.closest('.timeslot-card').querySelector('.card-body');
         cardBody.classList.toggle('collapsed');
         dateHeader.classList.toggle('collapsed');
+    }
+
+    function toggleInfoPanel(button) {
+        const panel = button.closest('.info-panel');
+        if (!panel) {
+            return;
+        }
+
+        const expanded = panel.classList.toggle('expanded');
+        button.textContent = expanded ? 'Hide details' : 'Show details';
     }
     
     // Calendar Navigation - Preserves view state

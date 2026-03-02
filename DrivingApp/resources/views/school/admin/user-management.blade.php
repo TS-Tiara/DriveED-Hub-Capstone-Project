@@ -86,6 +86,14 @@
         flex: 1;
         max-width: 400px;
     }
+
+    .control-label {
+        display: block;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #4b5563;
+        margin-bottom: 6px;
+    }
     
     .search-box input {
         width: 100%;
@@ -139,12 +147,15 @@
     .table-container {
         background: white;
         border-radius: 12px;
-        overflow: hidden;
+        overflow-x: auto;
+        overflow-y: visible;
+        -webkit-overflow-scrolling: touch;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     
     table {
         width: 100%;
+        min-width: 900px;
         border-collapse: collapse;
     }
     
@@ -574,10 +585,12 @@
         
         table {
             font-size: 0.85rem;
+            min-width: 780px;
         }
         
         th, td {
             padding: 10px 8px;
+            white-space: nowrap;
         }
         
         .btn-action {
@@ -663,7 +676,11 @@
         }
         
         .btn-action {
-            padding: 4px 6px;\n            font-size: 0.75rem;\n        }\n        \n        .form-group label {
+            padding: 4px 6px;
+            font-size: 0.75rem;
+        }
+
+        .form-group label {
             font-size: 0.9rem;
         }
         
@@ -798,10 +815,12 @@
     <div id="usersSection" class="user-section">
         <div class="action-bar">
             <div class="search-box">
+                <label for="userSearch" class="control-label">Search Users</label>
                 <input type="text" id="userSearch" placeholder="Search users by name, email, or role..." onkeyup="filterTable('userSearch', 'usersTable')">
             </div>
             <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                 @if(isset($branches) && $branches->count() > 0)
+                <label for="branchFilter" class="control-label">Branch Filter</label>
                 <select id="branchFilter" onchange="filterByBranch()" style="padding: 10px 14px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 0.9rem; background: white; cursor: pointer;">
                     <option value="">All Branches</option>
                     <option value="unassigned">Unassigned</option>
@@ -945,14 +964,14 @@
             @if($students->hasPages())
                 <div>
                     <h4 style="font-size: 0.9rem; margin-bottom: 5px; color: #6b7280;">Student Pages:</h4>
-                    {{ $students->appends(['instructors_page' => request('instructors_page')])->links() }}
+                    {{ $students->appends(['instructors_page' => request('instructors_page')])->links('vendor.pagination.drivingapp') }}
                 </div>
             @endif
             
             @if($instructors->hasPages())
                 <div>
                     <h4 style="font-size: 0.9rem; margin-bottom: 5px; color: #6b7280;">Instructor Pages:</h4>
-                    {{ $instructors->appends(['students_page' => request('students_page')])->links() }}
+                    {{ $instructors->appends(['students_page' => request('students_page')])->links('vendor.pagination.drivingapp') }}
                 </div>
             @endif
         </div>

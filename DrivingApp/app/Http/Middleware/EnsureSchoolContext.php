@@ -7,6 +7,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
 
 class EnsureSchoolContext
@@ -24,8 +25,9 @@ class EnsureSchoolContext
             abort(403, 'This school portal is currently unavailable.');
         }
 
-        // Skip school validation for logout route to prevent conflicts
-        if ($request->route()->getName() === 'schools.logout') {
+        // Skip school validation for logout routes to prevent conflicts
+        $routeName = $request->route()?->getName();
+        if ($routeName && Str::endsWith($routeName, '.logout')) {
             return $next($request);
         }
 

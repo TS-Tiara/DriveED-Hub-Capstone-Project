@@ -690,7 +690,9 @@
             <form method="POST" action="{{ route('schools.login.submit', $school) }}">
                 @csrf
                 <div class="form-group">
+                    <label for="email" style="display: block; font-size: 0.9rem; font-weight: 600; color: #374151; margin-bottom: 6px;">Email Address</label>
                     <input 
+                        id="email"
                         type="email" 
                         name="email" 
                         placeholder="Email Address" 
@@ -701,7 +703,9 @@
                     @enderror
                 </div>
                 <div class="form-group">
+                    <label for="password" style="display: block; font-size: 0.9rem; font-weight: 600; color: #374151; margin-bottom: 6px;">Password</label>
                     <input 
+                        id="password"
                         type="password" 
                         name="password" 
                         placeholder="Password" 
