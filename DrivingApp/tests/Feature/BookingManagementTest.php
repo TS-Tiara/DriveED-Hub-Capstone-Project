@@ -401,6 +401,71 @@ describe('Instructor Booking Actions', function () {
         expect($booking->instructor_feedback)->toBe('Great progress on parallel parking!');
     });
 
+    test('instructor can update grade only for a completed booking', function () {
+        $school = School::factory()->create();
+        $course = Course::factory()->create(['school_id' => $school->id]);
+        $instructor = Instructor::factory()->create([
+            'school_id' => $school->id,
+            'status' => 'active',
+        ]);
+        $student = Student::factory()->create(['school_id' => $school->id]);
+        $timeSlot = TimeSlot::factory()->create([
+            'school_id' => $school->id,
+            'course_id' => $course->id,
+        ]);
+        $booking = Booking::factory()->create([
+            'school_id' => $school->id,
+            'student_id' => $student->id,
+            'instructor_id' => $instructor->id,
+            'course_id' => $course->id,
+            'time_slot_id' => $timeSlot->id,
+            'status' => 'completed',
+        ]);
+
+        $response = $this->actingAs($instructor, 'instructor')
+            ->withHeader('X-Requested-With', 'XMLHttpRequest')
+            ->post(route('schools.instructor.lessons.update', [$school, $booking->id]), [
+                'session_grade' => 89.5,
+            ]);
+
+        $response->assertStatus(200);
+        $booking->refresh();
+        expect((float) $booking->session_grade)->toBe(89.5);
+    });
+
+    test('instructor cannot provide feedback for a non-completed booking', function () {
+        $school = School::factory()->create();
+        $course = Course::factory()->create(['school_id' => $school->id]);
+        $instructor = Instructor::factory()->create([
+            'school_id' => $school->id,
+            'status' => 'active',
+        ]);
+        $student = Student::factory()->create(['school_id' => $school->id]);
+        $timeSlot = TimeSlot::factory()->create([
+            'school_id' => $school->id,
+            'course_id' => $course->id,
+        ]);
+        $booking = Booking::factory()->create([
+            'school_id' => $school->id,
+            'student_id' => $student->id,
+            'instructor_id' => $instructor->id,
+            'course_id' => $course->id,
+            'time_slot_id' => $timeSlot->id,
+            'status' => 'confirmed',
+            'instructor_feedback' => null,
+        ]);
+
+        $response = $this->actingAs($instructor, 'instructor')
+            ->withHeader('X-Requested-With', 'XMLHttpRequest')
+            ->post(route('schools.instructor.bookings.feedback', [$school, $booking->id]), [
+                'instructor_feedback' => 'Trying to comment too early',
+            ]);
+
+        $response->assertStatus(422);
+        $booking->refresh();
+        expect($booking->instructor_feedback)->toBeNull();
+    });
+
     test('instructor can view their students', function () {
         $school = School::factory()->create();
         $instructor = Instructor::factory()->create([

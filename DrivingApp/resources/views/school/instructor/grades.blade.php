@@ -207,6 +207,11 @@
 
     .grade-input:focus { border-color: {{ $primaryColor }}; }
     .grade-input.changed { border-color: #f59e0b; background: #fffbeb; }
+    .comment-input {
+        width: 220px;
+        text-align: left;
+        font-weight: 500;
+    }
 
     .grade-badge {
         padding: 4px 10px;
@@ -388,6 +393,7 @@
                         <th>Last Session</th>
                         <th>Last Grade</th>
                         <th>Quick Grade</th>
+                        <th>Quick Comment</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -396,7 +402,7 @@
                         @php
                             $completedSessions = $student->bookings->where('status', 'completed')->count();
                             $avgGrade = $student->bookings->whereNotNull('session_grade')->avg('session_grade');
-                            $lastSession = $student->bookings->sortByDesc('scheduled_at')->first();
+                            $lastCompletedSession = $student->bookings->where('status', 'completed')->sortByDesc('scheduled_at')->first();
                             $enrollmentTimestamp = $student->enrollment_date ? strtotime($student->enrollment_date) : 0;
                             $gradeCategory = $avgGrade >= 90 ? 'excellent' : ($avgGrade >= 75 ? 'good' : ($avgGrade >= 60 ? 'average' : ($avgGrade ? 'poor' : 'none')));
                         @endphp
@@ -430,15 +436,15 @@
                                 @endif
                             </td>
                             <td>
-                                @if($lastSession && ($lastSession->scheduled_at || $lastSession->booking_date))
-                                    {{ ($lastSession->scheduled_at ?? $lastSession->booking_date)?->format('M d, Y') ?? 'N/A' }}
+                                @if($lastCompletedSession && ($lastCompletedSession->scheduled_at || $lastCompletedSession->booking_date))
+                                    {{ ($lastCompletedSession->scheduled_at ?? $lastCompletedSession->booking_date)?->format('M d, Y') ?? 'N/A' }}
                                 @else
-                                    <span style="color: #9ca3af;">No sessions</span>
+                                    <span style="color: #9ca3af;">No completed sessions</span>
                                 @endif
                             </td>
                             <td>
-                                @if($lastSession && $lastSession->session_grade)
-                                    <strong>{{ $lastSession->session_grade }}</strong>
+                                @if($lastCompletedSession && $lastCompletedSession->session_grade)
+                                    <strong>{{ $lastCompletedSession->session_grade }}</strong>
                                 @else
                                     <span style="color: #9ca3af;">-</span>
                                 @endif
@@ -450,9 +456,18 @@
                                        max="100" 
                                        step="0.1"
                                        data-student-id="{{ $student->id }}"
-                                       data-last-booking-id="{{ $lastSession ? $lastSession->id : '' }}"
+                                       data-last-booking-id="{{ $lastCompletedSession ? $lastCompletedSession->id : '' }}"
                                        placeholder="0-100"
                                        onchange="markChanged(this)">
+                            </td>
+                            <td>
+                                <input type="text"
+                                       class="grade-input comment-input"
+                                       data-comment-student-id="{{ $student->id }}"
+                                       data-last-booking-id="{{ $lastCompletedSession ? $lastCompletedSession->id : '' }}"
+                                       value="{{ $lastCompletedSession->instructor_feedback ?? '' }}"
+                                       placeholder="Leave comment"
+                                       onchange="markCommentChanged(this)">
                             </td>
                             <td>
                                 <div class="action-cell">
@@ -464,7 +479,12 @@
                                     <button class="btn-icon btn-save" 
                                             onclick="saveGrade({{ $student->id }})"
                                             title="Save Grade">
-                                        Save
+                                        Save Grade
+                                    </button>
+                                    <button class="btn-icon btn-save"
+                                            onclick="saveComment({{ $student->id }})"
+                                            title="Save Comment">
+                                        Save Comment
                                     </button>
                                 </div>
                             </td>
@@ -514,6 +534,7 @@
     }
 
     function markChanged(input) { input.classList.add('changed'); }
+    function markCommentChanged(input) { input.classList.add('changed'); }
 
     let sortDirection = {};
     function sortTable(column) {
@@ -535,11 +556,11 @@
     }
 
     function saveGrade(studentId) {
-        const input = document.querySelector(`input[data-student-id="${studentId}"]`);
+        const input = document.querySelector(`.grade-input[data-student-id="${studentId}"]`);
         const grade = parseFloat(input.value);
         const bookingId = input.dataset.lastBookingId;
-        if (!grade || grade < 0 || grade > 100) { showToast('Please enter a valid grade between 0 and 100', 'error'); return; }
-        if (!bookingId) { showToast('This student has no sessions to grade', 'warning'); return; }
+        if (Number.isNaN(grade) || grade < 0 || grade > 100) { showToast('Please enter a valid grade between 0 and 100', 'error'); return; }
+        if (!bookingId) { showToast('This student has no completed sessions to grade', 'warning'); return; }
         fetch(`/{{ $school->slug }}/instructor/lessons/${bookingId}/update`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
@@ -553,15 +574,48 @@
         .catch(error => { console.error('Error:', error); showToast('An error occurred while saving the grade', 'error'); });
     }
 
+    function saveComment(studentId) {
+        const input = document.querySelector(`.comment-input[data-comment-student-id="${studentId}"]`);
+        const bookingId = input.dataset.lastBookingId;
+
+        if (!bookingId) { showToast('This student has no completed sessions for comments', 'warning'); return; }
+
+        fetch(`/{{ $school->slug }}/instructor/bookings/${bookingId}/feedback`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+            body: JSON.stringify({ instructor_feedback: input.value })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                input.classList.remove('changed');
+                showToast('Comment saved successfully!', 'success');
+            } else {
+                showToast(data.message || 'Failed to save comment', 'error');
+            }
+        })
+        .catch(error => { console.error('Error:', error); showToast('An error occurred while saving the comment', 'error'); });
+    }
+
     function saveAllChanges() {
-        const changedInputs = document.querySelectorAll('.grade-input.changed');
-        if (changedInputs.length === 0) { showToast('No changes to save', 'warning'); return; }
-        let savedCount = 0;
-        const totalChanges = changedInputs.length;
-        changedInputs.forEach(input => {
+        const changedGradeInputs = document.querySelectorAll('.grade-input[data-student-id].changed');
+        const changedCommentInputs = document.querySelectorAll('.comment-input.changed');
+        if ((changedGradeInputs.length + changedCommentInputs.length) === 0) {
+            showToast('No changes to save', 'warning');
+            return;
+        }
+
+        const requests = [];
+
+        changedGradeInputs.forEach(input => {
             const grade = parseFloat(input.value);
             const bookingId = input.dataset.lastBookingId;
-            if (grade && grade >= 0 && grade <= 100 && bookingId) {
+
+            if (Number.isNaN(grade) || grade < 0 || grade > 100 || !bookingId) {
+                return;
+            }
+
+            requests.push(
                 fetch(`/{{ $school->slug }}/instructor/lessons/${bookingId}/update`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
@@ -570,11 +624,53 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        savedCount++;
                         input.classList.remove('changed');
-                        if (savedCount === totalChanges) { showToast(`Successfully saved ${savedCount} grade(s)!`, 'success'); setTimeout(() => location.reload(), 1000); }
+                        return true;
                     }
-                });
+                    return false;
+                })
+                .catch(() => false)
+            );
+        });
+
+        changedCommentInputs.forEach(input => {
+            const bookingId = input.dataset.lastBookingId;
+
+            if (!bookingId) {
+                return;
+            }
+
+            requests.push(
+                fetch(`/{{ $school->slug }}/instructor/bookings/${bookingId}/feedback`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+                    body: JSON.stringify({ instructor_feedback: input.value })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        input.classList.remove('changed');
+                        return true;
+                    }
+                    return false;
+                })
+                .catch(() => false)
+            );
+        });
+
+        if (requests.length === 0) {
+            showToast('No valid changes to save', 'warning');
+            return;
+        }
+
+        Promise.all(requests).then(results => {
+            const savedCount = results.filter(Boolean).length;
+
+            if (savedCount > 0) {
+                showToast(`Successfully saved ${savedCount} update(s)!`, 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast('No updates were saved', 'error');
             }
         });
     }

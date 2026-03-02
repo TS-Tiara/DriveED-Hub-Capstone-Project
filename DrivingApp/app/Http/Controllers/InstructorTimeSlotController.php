@@ -421,6 +421,14 @@ class InstructorTimeSlotController extends Controller
         $instructor = Auth::guard('instructor')->user();
         abort_unless($instructor && $instructor->school_id === $school->id, 403);
         abort_unless($booking->school_id === $school->id, 403);
+        abort_unless($booking->instructor_id === $instructor->id, 403, 'This lesson is not assigned to you');
+
+        if ($booking->status !== 'completed' && $booking->session_status !== 'completed') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Feedback can only be added after a completed schedule.'
+            ], 422);
+        }
 
         $request->validate([
             'instructor_feedback' => 'nullable|string|max:1000'
@@ -459,27 +467,65 @@ class InstructorTimeSlotController extends Controller
         abort_unless($booking->instructor_id === $instructor->id, 403, 'This lesson is not assigned to you');
 
         $validated = $request->validate([
-            'attendance_status' => 'required|in:attended,late,absent',
-            'session_status' => 'required|in:completed,cancelled,rescheduled,no-show',
-            'session_grade' => 'nullable|numeric|min:0|max:100',
-            'instructor_feedback' => 'nullable|string|max:1000',
-            'student_feedback' => 'nullable|string|max:1000',
-            'skills_practiced' => 'nullable|array',
-            'cancellation_reason' => 'nullable|string|max:500'
+            'attendance_status' => 'sometimes|required|in:attended,late,absent',
+            'session_status' => 'sometimes|required|in:completed,cancelled,rescheduled,no-show',
+            'session_grade' => 'sometimes|nullable|numeric|min:0|max:100',
+            'instructor_feedback' => 'sometimes|nullable|string|max:1000',
+            'student_feedback' => 'sometimes|nullable|string|max:1000',
+            'skills_practiced' => 'sometimes|nullable|array',
+            'cancellation_reason' => 'sometimes|nullable|string|max:500'
         ]);
 
-        $updateData = [
-            'attendance_status' => $validated['attendance_status'],
-            'session_status' => $validated['session_status'],
-            'session_grade' => $validated['session_grade'],
-            'instructor_feedback' => $validated['instructor_feedback'],
-            'student_feedback' => $validated['student_feedback'],
-            'skills_practiced' => $validated['skills_practiced'] ?? [],
-            'attendance_marked_at' => now()
-        ];
+        $willBeCompleted = ($validated['session_status'] ?? null) === 'completed'
+            || $booking->status === 'completed'
+            || $booking->session_status === 'completed';
+
+        $isUpdatingGrade = array_key_exists('session_grade', $validated);
+        $isUpdatingFeedback = array_key_exists('instructor_feedback', $validated);
+
+        if (($isUpdatingGrade || $isUpdatingFeedback) && !$willBeCompleted) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Grades and comments can only be updated after a completed schedule.'
+            ], 422);
+        }
+
+        $updateData = [];
+
+        if (array_key_exists('attendance_status', $validated)) {
+            $updateData['attendance_status'] = $validated['attendance_status'];
+            $updateData['attendance_marked_at'] = now();
+        }
+
+        if (array_key_exists('session_status', $validated)) {
+            $updateData['session_status'] = $validated['session_status'];
+        }
+
+        if (array_key_exists('session_grade', $validated)) {
+            $updateData['session_grade'] = $validated['session_grade'];
+        }
+
+        if (array_key_exists('instructor_feedback', $validated)) {
+            $updateData['instructor_feedback'] = $validated['instructor_feedback'];
+        }
+
+        if (array_key_exists('student_feedback', $validated)) {
+            $updateData['student_feedback'] = $validated['student_feedback'];
+        }
+
+        if (array_key_exists('skills_practiced', $validated)) {
+            $updateData['skills_practiced'] = $validated['skills_practiced'] ?? [];
+        }
+
+        if (empty($updateData)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No valid fields were provided to update.'
+            ], 422);
+        }
 
         // If session is being marked as cancelled, update the main booking status too
-        if ($validated['session_status'] === 'cancelled' && $booking->status !== 'cancelled') {
+        if (($validated['session_status'] ?? null) === 'cancelled' && $booking->status !== 'cancelled') {
             $updateData['status'] = 'cancelled';
             $updateData['cancelled_by'] = 'instructor';
             $updateData['cancelled_at'] = now();
