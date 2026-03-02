@@ -766,7 +766,7 @@
         </div>
         <!-- Transition guidance -->
         <div style="background: #eff6ff; border: 2px solid #3b82f6; border-radius: 10px; padding: 20px; margin-top: 16px; text-align: center;">
-            <div style="font-size: 1.5rem; margin-bottom: 8px;">🎉</div>
+            <div style="font-size: 1.5rem; margin-bottom: 8px;"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#3b82f6" style="width:32px;height:32px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg></div>
             <h4 style="margin: 0 0 8px 0; color: #1e40af; font-size: 1rem;">Your Account Has Been Upgraded to Student!</h4>
             <p style="margin: 0 0 16px 0; color: #374151; font-size: 0.9rem; line-height: 1.5;">
                 Please log out and log back in to access your full student dashboard with schedules, progress tracking, and more.

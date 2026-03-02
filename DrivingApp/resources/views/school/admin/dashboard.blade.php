@@ -140,7 +140,7 @@
 
     @if(session('success'))
     <div class="flash-message success">
-        <div class="flash-icon">✓</div>
+        <div class="flash-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 20px; height: 20px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg></div>
         <div class="flash-content">
             <div class="flash-title">Success!</div>
             <div class="flash-text">{{ session('success') }}</div>
@@ -151,7 +151,7 @@
 
     <!-- Key Statistics -->
     <div class="stats-grid">
-        <a href="{{ $schoolRoute('admin.userManagement') }}" class="stat-card students" onclick="loadContent(this.href); return false;" style="text-decoration: none; cursor: pointer;">
+        <a href="{{ school_route('admin.userManagement') }}" class="stat-card students" onclick="loadContent(this.href); return false;" style="text-decoration: none; cursor: pointer;">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -176,7 +176,7 @@
             </div>
         </a>
         
-        <a href="{{ $schoolRoute('admin.userManagement') }}" class="stat-card instructors" onclick="loadContent(this.href); return false;" style="text-decoration: none; cursor: pointer;">
+        <a href="{{ school_route('admin.userManagement') }}" class="stat-card instructors" onclick="loadContent(this.href); return false;" style="text-decoration: none; cursor: pointer;">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -242,19 +242,19 @@
         <div class="content-card-body">
             <div class="quick-actions">
                 <a href="{{ $schoolRoute('admin.enrollments.index') }}" class="quick-action-btn" onclick="loadContent(this.href); return false;">
-                    📋 Enrollments
+                    Enrollments
                     @if(($pendingEnrollments ?? 0) > 0)
                         <span style="display: inline-block; background: #ef4444; color: white; border-radius: 50%; width: 22px; height: 22px; line-height: 22px; font-size: 12px; margin-left: 6px;">{{ $pendingEnrollments }}</span>
                     @endif
                 </a>
                 <a href="{{ $schoolRoute('admin.schedules') }}" class="quick-action-btn" onclick="loadContent(this.href); return false;">
-                    📅 Schedules
+                    Schedules
                 </a>
                 <a href="{{ $schoolRoute('admin.payments.index') }}" class="quick-action-btn" onclick="loadContent(this.href); return false;">
-                    💰 Payments
+                    Payments
                 </a>
                 <a href="{{ $schoolRoute('admin.phase-progressions.index') }}" class="quick-action-btn" onclick="loadContent(this.href); return false;">
-                    🎓 Phase Progressions
+                    Phase Progressions
                     @if(($pendingProgressions ?? 0) > 0)
                         <span style="display: inline-block; background: #ef4444; color: white; border-radius: 50%; width: 22px; height: 22px; line-height: 22px; font-size: 12px; margin-left: 6px;">{{ $pendingProgressions }}</span>
                     @endif

@@ -15,6 +15,7 @@ class PhaseProgression extends Model
     protected $fillable = [
         'enrollment_id',
         'school_id',
+        'branch_id',
         'from_phase',
         'to_phase',
         'requested_at',
@@ -38,7 +39,7 @@ class PhaseProgression extends Model
      */
     public function enrollment(): BelongsTo
     {
-        return $this->belongsTo(EnrollmentRequest::class, 'enrollment_id');
+        return $this->belongsTo(EnrollmentRequest::class , 'enrollment_id');
     }
 
     /**
@@ -50,11 +51,19 @@ class PhaseProgression extends Model
     }
 
     /**
+     * Get the branch
+     */
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
+    /**
      * Get the admin who reviewed this request
      */
     public function reviewedBy(): BelongsTo
     {
-        return $this->belongsTo(Admin::class, 'reviewed_by');
+        return $this->belongsTo(Admin::class , 'reviewed_by');
     }
 
     // ──────────────────────────────────────────────

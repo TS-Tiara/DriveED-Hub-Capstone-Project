@@ -24,7 +24,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1 style="margin: 0;">🚗 Session Reminder</h1>
+            <h1 style="margin: 0;">Session Reminder</h1>
             <p style="margin: 8px 0 0; opacity: 0.9; font-size: 16px;">You have an upcoming driving session!</p>
         </div>
         <div class="content">
@@ -37,14 +37,14 @@
 
             <div class="session-card">
                 <div class="session-detail">
-                    <span class="session-icon">📅</span>
+                    <span class="session-icon"></span>
                     <div>
                         <div class="session-label">Date</div>
                         <div class="session-value">{{ $booking->scheduled_at->format('l, F d, Y') }}</div>
                     </div>
                 </div>
                 <div class="session-detail">
-                    <span class="session-icon">🕐</span>
+                    <span class="session-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#667eea" style="width:20px;height:20px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></span>
                     <div>
                         <div class="session-label">Time</div>
                         <div class="session-value">
@@ -65,7 +65,7 @@
                 </div>
                 @if($booking->instructor)
                 <div class="session-detail">
-                    <span class="session-icon">👨‍🏫</span>
+                    <span class="session-icon"></span>
                     <div>
                         <div class="session-label">Instructor</div>
                         <div class="session-value">{{ $booking->instructor->name }}</div>

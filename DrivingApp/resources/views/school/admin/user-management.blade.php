@@ -8,15 +8,7 @@
     $settings = $school?->schoolSetting;
     $schoolName = $school->name ?? 'Driving School';
     
-    // Calculate statistics
-    $totalStudents = $students->count();
-    $activeStudents = $students->where('status', 'active')->count();
-    $inactiveStudents = $students->where('status', 'inactive')->count();
-    
-    $totalInstructors = $instructors->count();
-    $activeInstructors = $instructors->where('status', 'active')->count();
-    $inactiveInstructors = $instructors->where('status', 'inactive')->count();
-    
+    // Statistics are now passed from the controller to ensure accuracy with pagination
     $totalUsers = $totalStudents + $totalInstructors;
     $totalActive = $activeStudents + $activeInstructors;
     $totalInactive = $inactiveStudents + $inactiveInstructors;
@@ -826,18 +818,18 @@
                     </button>
                     <div class="export-dropdown-menu">
                         <div class="dropdown-header">Students</div>
-                        <a href="{{ $schoolRoute('admin.exports.students.pdf') }}">
+                        <a href="{{ school_route('admin.exports.students.pdf') }}">
                             <span class="dot pdf"></span> Students (PDF)
                         </a>
-                        <a href="{{ $schoolRoute('admin.exports.students.excel') }}">
+                        <a href="{{ school_route('admin.exports.students.excel') }}">
                             <span class="dot excel"></span> Students (Excel)
                         </a>
                         <div class="dropdown-divider"></div>
                         <div class="dropdown-header">Instructors</div>
-                        <a href="{{ $schoolRoute('admin.exports.instructors.pdf') }}">
+                        <a href="{{ school_route('admin.exports.instructors.pdf') }}">
                             <span class="dot pdf"></span> Instructors (PDF)
                         </a>
-                        <a href="{{ $schoolRoute('admin.exports.instructors.excel') }}">
+                        <a href="{{ school_route('admin.exports.instructors.excel') }}">
                             <span class="dot excel"></span> Instructors (Excel)
                         </a>
                     </div>
@@ -948,6 +940,22 @@
                 </div>
             @endif
         </div>
+        
+        <div class="mt-4" style="display: flex; flex-direction: column; gap: 15px;">
+            @if($students->hasPages())
+                <div>
+                    <h4 style="font-size: 0.9rem; margin-bottom: 5px; color: #6b7280;">Student Pages:</h4>
+                    {{ $students->appends(['instructors_page' => request('instructors_page')])->links() }}
+                </div>
+            @endif
+            
+            @if($instructors->hasPages())
+                <div>
+                    <h4 style="font-size: 0.9rem; margin-bottom: 5px; color: #6b7280;">Instructor Pages:</h4>
+                    {{ $instructors->appends(['students_page' => request('students_page')])->links() }}
+                </div>
+            @endif
+        </div>
     </div>
 </div>
 
@@ -955,7 +963,7 @@
 <div id="createStudentModal" class="modal">
     <div class="modal-content">
         <h3>Create New Student</h3>
-        <form method="POST" action="{{ $schoolRoute('admin.storeAccount') }}">
+        <form method="POST" action="{{ school_route('admin.storeAccount') }}">
             @csrf
             <div class="form-group">
                 <label>Name:</label>
@@ -1043,7 +1051,7 @@
 <div id="createInstructorModal" class="modal">
     <div class="modal-content">
         <h3>Create New Instructor</h3>
-        <form method="POST" action="{{ $schoolRoute('admin.storeAccount') }}">
+        <form method="POST" action="{{ school_route('admin.storeAccount') }}">
             @csrf
             <div class="form-group">
                 <label>Name:</label>

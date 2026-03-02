@@ -26,55 +26,73 @@ class SessionCompletionController extends Controller
         // Instructor view
         if (Auth::guard('instructor')->check()) {
             $instructor = Auth::guard('instructor')->user();
-            
-            $sessions = SessionCompletion::with(['enrollment.student', 'enrollment.course'])
+
+            $sessionsQuery = SessionCompletion::with(['enrollment.student', 'enrollment.course'])
                 ->where('instructor_id', $instructor->id)
-                ->whereHas('enrollment.course', function($query) use ($school) {
-                    $query->where('school_id', $school->id);
-                })
-                ->when($request->session_type, function($query, $type) {
-                    $query->where('session_type', $type);
-                })
-                ->when($request->date_from, function($query, $date) {
-                    $query->whereDate('session_date', '>=', $date);
-                })
-                ->when($request->date_to, function($query, $date) {
-                    $query->whereDate('session_date', '<=', $date);
-                })
+                ->whereHas('enrollment.course', function ($query) use ($school) {
+                $query->where('school_id', $school->id);
+            })
+                ->when($request->session_type, function ($query, $type) {
+                $query->where('session_type', $type);
+            })
+                ->when($request->date_from, function ($query, $date) {
+                $query->whereDate('session_date', '>=', $date);
+            })
+                ->when($request->date_to, function ($query, $date) {
+                $query->whereDate('session_date', '<=', $date);
+            })
                 ->latest('session_date')
-                ->latest('session_time')
-                ->paginate(20);
-            
-            return view('school.instructor.sessions.index', compact('school', 'sessions'));
+                ->latest('session_time');
+
+            // Pre-compute statistics before pagination
+            $stats = [
+                'total_sessions' => (clone $sessionsQuery)->count(),
+                'total_hours' => (clone $sessionsQuery)->sum('hours_completed'),
+                'theoretical_count' => (clone $sessionsQuery)->where('session_type', 'theoretical')->count(),
+                'practical_count' => (clone $sessionsQuery)->where('session_type', 'practical')->count(),
+            ];
+
+            $sessions = $sessionsQuery->paginate(10);
+
+            return view('school.instructor.sessions.index', compact('school', 'sessions', 'stats'));
         }
-        
+
         // Admin view
         if (Auth::guard('admin')->check()) {
-            $sessions = SessionCompletion::with(['enrollment.student', 'enrollment.course', 'instructor'])
-                ->whereHas('enrollment.course', function($query) use ($school) {
-                    $query->where('school_id', $school->id);
-                })
-                ->when($request->session_type, function($query, $type) {
-                    $query->where('session_type', $type);
-                })
-                ->when($request->instructor_id, function($query, $instructorId) {
-                    $query->where('instructor_id', $instructorId);
-                })
-                ->when($request->date_from, function($query, $date) {
-                    $query->whereDate('session_date', '>=', $date);
-                })
-                ->when($request->date_to, function($query, $date) {
-                    $query->whereDate('session_date', '<=', $date);
-                })
+            $sessionsQuery = SessionCompletion::with(['enrollment.student', 'enrollment.course', 'instructor'])
+                ->whereHas('enrollment.course', function ($query) use ($school) {
+                $query->where('school_id', $school->id);
+            })
+                ->when($request->session_type, function ($query, $type) {
+                $query->where('session_type', $type);
+            })
+                ->when($request->instructor_id, function ($query, $instructorId) {
+                $query->where('instructor_id', $instructorId);
+            })
+                ->when($request->date_from, function ($query, $date) {
+                $query->whereDate('session_date', '>=', $date);
+            })
+                ->when($request->date_to, function ($query, $date) {
+                $query->whereDate('session_date', '<=', $date);
+            })
                 ->latest('session_date')
-                ->latest('session_time')
-                ->paginate(20);
-            
+                ->latest('session_time');
+
+            // Pre-compute statistics before pagination
+            $stats = [
+                'total_sessions' => (clone $sessionsQuery)->count(),
+                'total_hours' => (clone $sessionsQuery)->sum('hours_completed'),
+                'theoretical_count' => (clone $sessionsQuery)->where('session_type', 'theoretical')->count(),
+                'practical_count' => (clone $sessionsQuery)->where('session_type', 'practical')->count(),
+            ];
+
+            $sessions = $sessionsQuery->paginate(10);
+
             $instructors = Instructor::where('school_id', $school->id)->get();
-            
-            return view('school.admin.sessions.index', compact('school', 'sessions', 'instructors'));
+
+            return view('school.admin.sessions.index', compact('school', 'sessions', 'instructors', 'stats'));
         }
-        
+
         abort(403);
     }
 
@@ -86,14 +104,14 @@ class SessionCompletionController extends Controller
         if (!Auth::guard('instructor')->check()) {
             abort(403);
         }
-        
+
         $instructor = Auth::guard('instructor')->user();
-        
+
         // Get active enrollments for this school
         $enrollments = EnrollmentRequest::with(['learner', 'course', 'sessionCompletions'])
-            ->whereHas('course', function($query) use ($school) {
-                $query->where('school_id', $school->id);
-            })
+            ->whereHas('course', function ($query) use ($school) {
+            $query->where('school_id', $school->id);
+        })
             ->where('status', 'approved')
             ->get();
 
@@ -101,12 +119,12 @@ class SessionCompletionController extends Controller
         $enrollments->each(function ($enrollment) {
             $enrollment->total_hours = $enrollment->sessionCompletions->sum('hours_completed');
         });
-        
+
         // Pre-select enrollment if provided
-        $selectedEnrollment = $request->enrollment_id 
-            ? EnrollmentRequest::find($request->enrollment_id) 
+        $selectedEnrollment = $request->enrollment_id
+            ?EnrollmentRequest::find($request->enrollment_id)
             : null;
-        
+
         return view('school.instructor.sessions.create', compact('school', 'enrollments', 'selectedEnrollment'));
     }
 
@@ -118,24 +136,24 @@ class SessionCompletionController extends Controller
         if (!Auth::guard('instructor')->check()) {
             abort(403);
         }
-        
+
         $instructor = Auth::guard('instructor')->user();
-        
+
         // Verify enrollment belongs to this school
         $enrollment = EnrollmentRequest::findOrFail($request->enrollment_id);
         if ($enrollment->course->school_id !== $school->id) {
             abort(404);
         }
-        
+
         // Calculate start and end times if provided, or use session_time and hours_completed
         $startTime = $request->start_time ?? $request->session_time;
         $endTime = $request->end_time;
-        
+
         if (!$endTime && $request->hours_completed) {
             // Calculate end time based on hours_completed
             $endTime = Carbon::parse($startTime)->addHours($request->hours_completed)->format('H:i');
         }
-        
+
         // Check for scheduling conflicts if we have start and end times
         if ($startTime && $endTime) {
             $conflictService = new SchedulingConflictService();
@@ -145,7 +163,7 @@ class SessionCompletionController extends Controller
                 $startTime,
                 $endTime
             );
-            
+
             if (!$check['available']) {
                 return back()
                     ->withInput()
@@ -153,7 +171,7 @@ class SessionCompletionController extends Controller
                     ->with('conflicts', $check['conflicts']);
             }
         }
-        
+
         DB::beginTransaction();
         try {
             $sessionCompletion = SessionCompletion::create([
@@ -185,18 +203,20 @@ class SessionCompletionController extends Controller
                         'session',
                         "/{$school->slug}/student/my-course"
                     );
-                } catch (\Exception $e) {
+                }
+                catch (\Exception $e) {
                     Log::warning('Failed to send session completion notification: ' . $e->getMessage());
                 }
             }
-            
+
             DB::commit();
-            
+
             return redirect()
                 ->route('schools.instructor.sessions.index', ['school' => $school->slug])
                 ->with('success', 'Session logged successfully.');
-            
-        } catch (\Exception $e) {
+
+        }
+        catch (\Exception $e) {
             DB::rollBack();
             return back()
                 ->withInput()
@@ -211,16 +231,16 @@ class SessionCompletionController extends Controller
     {
         // Fetch session manually
         $sessionCompletion = SessionCompletion::with([
-            'enrollment.student', 
+            'enrollment.student',
             'enrollment.course',
             'instructor'
         ])->findOrFail($sessionCompletion);
-        
+
         // Verify belongs to school
         if ($sessionCompletion->enrollment->course->school_id !== $school->id) {
             abort(404);
         }
-        
+
         // Instructor view - only their sessions
         if (Auth::guard('instructor')->check()) {
             $instructor = Auth::guard('instructor')->user();
@@ -229,12 +249,12 @@ class SessionCompletionController extends Controller
             }
             return view('school.instructor.sessions.show', compact('school', 'sessionCompletion'));
         }
-        
+
         // Admin view
         if (Auth::guard('admin')->check()) {
             return view('school.admin.sessions.show', compact('school', 'sessionCompletion'));
         }
-        
+
         abort(403);
     }
 
@@ -246,23 +266,23 @@ class SessionCompletionController extends Controller
         if (!Auth::guard('instructor')->check()) {
             abort(403);
         }
-        
+
         $instructor = Auth::guard('instructor')->user();
-        
+
         // Fetch session manually
         $sessionCompletion = SessionCompletion::with(['enrollment.student', 'enrollment.course'])
             ->findOrFail($sessionCompletion);
-        
+
         // Verify belongs to school
         if ($sessionCompletion->enrollment->course->school_id !== $school->id) {
             abort(404);
         }
-        
+
         // Only the instructor who logged the session can edit it
         if ($sessionCompletion->instructor_id !== $instructor->id) {
             abort(403);
         }
-        
+
         return view('school.instructor.sessions.edit', compact('school', 'sessionCompletion'));
     }
 
@@ -274,31 +294,31 @@ class SessionCompletionController extends Controller
         if (!Auth::guard('instructor')->check()) {
             abort(403);
         }
-        
+
         $instructor = Auth::guard('instructor')->user();
-        
+
         // Fetch session manually
         $sessionCompletion = SessionCompletion::findOrFail($sessionCompletion);
-        
+
         // Verify belongs to school
         if ($sessionCompletion->enrollment->course->school_id !== $school->id) {
             abort(404);
         }
-        
+
         // Only the instructor who logged the session can edit it
         if ($sessionCompletion->instructor_id !== $instructor->id) {
             abort(403);
         }
-        
+
         // Calculate start and end times if provided, or use session_time and hours_completed
         $startTime = $request->start_time ?? $request->session_time;
         $endTime = $request->end_time;
-        
+
         if (!$endTime && $request->hours_completed) {
             // Calculate end time based on hours_completed
             $endTime = Carbon::parse($startTime)->addHours($request->hours_completed)->format('H:i');
         }
-        
+
         // Check for scheduling conflicts if we have start and end times
         if ($startTime && $endTime) {
             $conflictService = new SchedulingConflictService();
@@ -309,7 +329,7 @@ class SessionCompletionController extends Controller
                 $endTime,
                 $sessionCompletion->id // Exclude current session from conflict check
             );
-            
+
             if (!$check['available']) {
                 return back()
                     ->withInput()
@@ -317,7 +337,7 @@ class SessionCompletionController extends Controller
                     ->with('conflicts', $check['conflicts']);
             }
         }
-        
+
         $sessionCompletion->update([
             'hours_completed' => $request->hours_completed,
             'session_date' => $request->session_date,
@@ -327,7 +347,7 @@ class SessionCompletionController extends Controller
             'status' => $request->status ?? $sessionCompletion->status ?? 'completed',
             'notes' => $request->notes,
         ]);
-        
+
         return redirect()
             ->route('schools.instructor.sessions.show', ['school' => $school->slug, 'sessionCompletion' => $sessionCompletion->id])
             ->with('success', 'Session updated successfully.');
@@ -340,12 +360,12 @@ class SessionCompletionController extends Controller
     {
         // Fetch session manually
         $sessionCompletion = SessionCompletion::findOrFail($sessionCompletion);
-        
+
         // Verify belongs to school
         if ($sessionCompletion->enrollment->course->school_id !== $school->id) {
             abort(404);
         }
-        
+
         // Admin can delete any session
         if (Auth::guard('admin')->check()) {
             $sessionCompletion->delete();
@@ -353,7 +373,7 @@ class SessionCompletionController extends Controller
                 ->route('schools.admin.sessions.index', ['school' => $school->slug])
                 ->with('success', 'Session deleted successfully.');
         }
-        
+
         // Instructor can delete their own sessions
         if (Auth::guard('instructor')->check()) {
             $instructor = Auth::guard('instructor')->user();
@@ -365,7 +385,7 @@ class SessionCompletionController extends Controller
                 ->route('schools.instructor.sessions.index', ['school' => $school->slug])
                 ->with('success', 'Session deleted successfully.');
         }
-        
+
         abort(403);
     }
 
@@ -386,12 +406,12 @@ class SessionCompletionController extends Controller
             'total_sessions' => $enrollment->sessionCompletions()->count(),
             'total_hours' => $enrollment->sessionCompletions()->sum('hours_completed'),
             'recent_sessions' => $enrollment->sessionCompletions()
-                ->with(['instructor'])
-                ->latest('session_date')
-                ->take(5)
-                ->get(),
+            ->with(['instructor'])
+            ->latest('session_date')
+            ->take(5)
+            ->get(),
         ];
-        
+
         return response()->json($stats);
     }
 
@@ -451,7 +471,8 @@ class SessionCompletionController extends Controller
                     'enrollment',
                     "/{$school->slug}/admin/phase-progressions"
                 );
-            } catch (\Exception $e) {
+            }
+            catch (\Exception $e) {
                 Log::warning('Failed to send progression notification to admin: ' . $e->getMessage());
             }
         }

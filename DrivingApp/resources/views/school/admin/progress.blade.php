@@ -477,7 +477,7 @@
                                 <!-- Recent Bookings -->
                                 @if($progress->bookingsList->count() > 0)
                                 <div class="detail-section" style="grid-column: 1 / -1; margin-top: 10px;">
-                                    <h4 class="detail-section-title">📅 Recent Schedules</h4>
+                                    <h4 class="detail-section-title">Recent Schedules</h4>
                                     <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
                                     <table style="width: 100%; margin-top: 10px;">
                                         <thead style="background: #f3f4f6;">
@@ -510,6 +510,9 @@
                 @endforeach
             </tbody>
         </table>
+    </div>
+    <div class="mt-4">
+        {{ $progresses->links() }}
     </div>
     @else
         <div class="empty-state" style="background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">

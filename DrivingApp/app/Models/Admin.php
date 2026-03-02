@@ -60,12 +60,12 @@ class Admin extends Authenticatable
 
     public function studentActionRequests()
     {
-        return $this->hasMany(StudentActionRequest::class, 'requested_by');
+        return $this->hasMany(StudentActionRequest::class , 'requested_by');
     }
 
     public function reviewedActionRequests()
     {
-        return $this->hasMany(StudentActionRequest::class, 'reviewed_by');
+        return $this->hasMany(StudentActionRequest::class , 'reviewed_by');
     }
 
     // ──────────────────────────────────────
@@ -175,10 +175,14 @@ class Admin extends Authenticatable
     public function scopeToBranch($query, string $branchColumn = 'branch_id')
     {
         if ($this->isBranchSecretary() && $this->branch_id) {
-            return $query->where($branchColumn, $this->branch_id);
+            // Only apply the filter if the column actually exists in the table
+            $table = $query->getModel()->getTable();
+            if (\Illuminate\Support\Facades\Schema::hasColumn($table, $branchColumn)) {
+                return $query->where($table . '.' . $branchColumn, $this->branch_id);
+            }
         }
 
-        return $query; // School admin sees all
+        return $query; // School admin or missing column (safety)
     }
 
     // ──────────────────────────────────────

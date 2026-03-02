@@ -14,13 +14,17 @@ class BranchController extends Controller
      */
     public function index(Request $request, School $school)
     {
-        $branches = Branch::where('school_id', $school->id)
+        $query = Branch::where('school_id', $school->id)
             ->withCount(['students', 'instructors'])
             ->orderBy('sort_order')
-            ->orderBy('name')
-            ->get();
+            ->orderBy('name');
 
-        if ($request->ajax() || $request->wantsJson()) {
+        $totalBranchesCount = (clone $query)->count();
+        $activeBranchesCount = (clone $query)->where('is_active', true)->count();
+
+        $branches = $query->paginate(10);
+
+        if ($request->expectsJson()) {
             return response()->json([
                 'success' => true,
                 'branches' => $branches,
@@ -29,7 +33,7 @@ class BranchController extends Controller
 
         $settings = $school->schoolSetting;
 
-        return view('school.admin.branches', compact('school', 'branches', 'settings'));
+        return view('school.admin.branches', compact('school', 'branches', 'settings', 'totalBranchesCount', 'activeBranchesCount'));
     }
 
     /**

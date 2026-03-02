@@ -9,9 +9,7 @@
     $primaryColor = $settings->primary_color ?? '#667eea';
     $secondaryColor = $settings->secondary_color ?? '#764ba2';
 
-    $schoolRoute = function($routeName, $params = []) use ($school) {
-        return route('schools.' . $routeName, array_merge(['school' => $school->slug], $params));
-    };
+    // ...existing code...
     
     $totalHours = $enrollment->sessionCompletions->sum('hours_completed');
     $requiredHours = $enrollment->course->theoretical_hours ?? 15;
@@ -378,7 +376,7 @@
             <h1 class="page-title">Review Theoretical Completion</h1>
             <p class="page-subtitle">{{ $enrollment->student->name }} — {{ $enrollment->course->title ?? 'N/A' }}</p>
         </div>
-        <a href="{{ $schoolRoute('admin.theoretical.index') }}" class="back-link">
+        <a href="{{ school_route('admin.theoretical.index') }}" class="back-link">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 16px; height: 16px;">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
@@ -558,7 +556,7 @@
                         </svg>
                         <span>{{ $validation['message'] }}</span>
                     </div>
-                    <form action="{{ $schoolRoute('admin.theoretical.markAsPassed') }}"
+                    <form action="{{ school_route('admin.theoretical.markAsPassed') }}"
                           method="POST">
                         @csrf
                         <input type="hidden" name="enrollment_id" value="{{ $enrollment->id }}">

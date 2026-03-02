@@ -8,6 +8,8 @@ use App\Models\Branch;
 use App\Models\EnrollmentRequest;
 use App\Models\Instructor;
 use App\Models\InstructorRemovalRequest;
+use App\Models\Log;
+use App\Models\RegistrationRequest;
 use App\Models\School;
 use App\Models\SchoolSetting;
 use App\Models\Student;
@@ -36,71 +38,78 @@ class AdminController extends Controller
             $totalStudents = $admin->scopeToBranch(Student::where('school_id', $school->id))->count();
             $activeStudents = $admin->scopeToBranch(Student::where('school_id', $school->id))->where('status', 'active')->count();
             $inactiveStudents = $totalStudents - $activeStudents;
-            
+
             $totalInstructors = $admin->scopeToBranch(Instructor::where('school_id', $school->id))->count();
             $activeInstructors = $admin->scopeToBranch(Instructor::where('school_id', $school->id))->where('status', 'active')->count();
             $availableInstructors = $admin->scopeToBranch(Instructor::where('school_id', $school->id))
                 ->where('status', 'active')
                 ->where('availability', 'available')
                 ->count();
-            
+
             // Get recent activities (last 5) - Optimized with select to reduce data transfer
             $recentStudents = $admin->scopeToBranch(Student::where('school_id', $school->id))
                 ->select('id', 'school_id', 'branch_id', 'name', 'email', 'status', 'created_at')
                 ->orderBy('created_at', 'desc')
                 ->limit(5)
                 ->get();
-                
+
             $recentInstructors = $admin->scopeToBranch(Instructor::where('school_id', $school->id))
                 ->select('id', 'school_id', 'branch_id', 'name', 'email', 'status', 'availability', 'created_at')
                 ->orderBy('created_at', 'desc')
                 ->limit(5)
                 ->get();
-            
+
             // Get today's date for filtering
             $today = Carbon::today();
-            
-            // Calculate enrollment trend (last 30 days)
+
+            // Calculate enrollment trend (last 30 days) - Optimized with single query
+            $enrollmentCounts = $admin->scopeToBranch(Student::where('school_id', $school->id))
+                ->where('created_at', '>=', Carbon::today()->subDays(30))
+                ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
+                ->groupBy('date')
+                ->orderBy('date', 'asc')
+                ->get()
+                ->pluck('count', 'date');
+
             $enrollmentData = [];
             for ($i = 29; $i >= 0; $i--) {
-                $date = Carbon::today()->subDays($i);
-                $count = $admin->scopeToBranch(Student::where('school_id', $school->id))
-                    ->whereDate('created_at', $date)
-                    ->count();
+                $date = Carbon::today()->subDays($i)->format('Y-m-d');
+                $displayDate = Carbon::today()->subDays($i)->format('M d');
                 $enrollmentData[] = [
-                    'date' => $date->format('M d'),
-                    'count' => $count
+                    'date' => $displayDate,
+                    'count' => $enrollmentCounts[$date] ?? 0
                 ];
             }
-            
+
+
             // Calculate growth indicators
             $currentMonth = Carbon::now()->month;
             $lastMonth = Carbon::now()->subMonth()->month;
-            
+
             $studentsThisMonth = $admin->scopeToBranch(Student::where('school_id', $school->id))
                 ->whereMonth('created_at', $currentMonth)
                 ->count();
-                
+
             $studentsLastMonth = $admin->scopeToBranch(Student::where('school_id', $school->id))
                 ->whereMonth('created_at', $lastMonth)
                 ->count();
-                
-            $studentGrowth = $studentsLastMonth > 0 
+
+            $studentGrowth = $studentsLastMonth > 0
                 ? round((($studentsThisMonth - $studentsLastMonth) / $studentsLastMonth) * 100, 1)
                 : ($studentsThisMonth > 0 ? 100 : 0);
-                
+
             $instructorsThisMonth = $admin->scopeToBranch(Instructor::where('school_id', $school->id))
                 ->whereMonth('created_at', $currentMonth)
                 ->count();
-                
+
             $instructorsLastMonth = $admin->scopeToBranch(Instructor::where('school_id', $school->id))
                 ->whereMonth('created_at', $lastMonth)
                 ->count();
-                
+
             $instructorGrowth = $instructorsLastMonth > 0
                 ? round((($instructorsThisMonth - $instructorsLastMonth) / $instructorsLastMonth) * 100, 1)
                 : ($instructorsThisMonth > 0 ? 100 : 0);
-            
+
             // Pending action counts for dashboard
             $pendingEnrollments = $admin->scopeToBranch(EnrollmentRequest::where('school_id', $school->id))->where('status', 'pending')->count();
             $pendingProgressions = $admin->scopeToBranch(PhaseProgression::where('school_id', $school->id))->where('status', 'pending')->count();
@@ -124,16 +133,17 @@ class AdminController extends Controller
                 'pendingEnrollments' => $pendingEnrollments,
                 'pendingProgressions' => $pendingProgressions,
             ]);
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             SystemLog::logError(
                 'Failed to load admin dashboard',
                 'database',
                 $e,
-                ['school_id' => $school->id],
+            ['school_id' => $school->id],
                 $school->id,
                 'view_dashboard'
             );
-            
+
             return back()->with('error', 'Unable to load dashboard. The system administrator has been notified.');
         }
     }
@@ -146,15 +156,27 @@ class AdminController extends Controller
         try {
             $admin = Auth::guard('admin')->user();
 
-            // Select only needed columns to reduce memory footprint
-            $students = $admin->scopeToBranch(Student::where('school_id', $school->id))
+            $studentQuery = $admin->scopeToBranch(Student::where('school_id', $school->id));
+            $instructorQuery = $admin->scopeToBranch(Instructor::where('school_id', $school->id));
+
+            // Calculate stats for view
+            $totalStudents = (clone $studentQuery)->count();
+            $activeStudents = (clone $studentQuery)->where('status', 'active')->count();
+            $inactiveStudents = $totalStudents - $activeStudents;
+
+            $totalInstructors = (clone $instructorQuery)->count();
+            $activeInstructors = (clone $instructorQuery)->where('status', 'active')->count();
+            $inactiveInstructors = $totalInstructors - $activeInstructors;
+
+            // Paginated results
+            $students = $studentQuery
                 ->select('id', 'school_id', 'branch_id', 'name', 'email', 'contact', 'address', 'status', 'role', 'created_at')
                 ->orderBy('name')
-                ->get();
-            $instructors = $admin->scopeToBranch(Instructor::where('school_id', $school->id))
+                ->paginate(10, ['*'], 'students_page');
+            $instructors = $instructorQuery
                 ->select('id', 'school_id', 'branch_id', 'name', 'email', 'contact', 'license_number', 'status', 'availability', 'created_at')
                 ->orderBy('name')
-                ->get();
+                ->paginate(10, ['*'], 'instructors_page');
 
             $branches = Branch::where('school_id', $school->id)
                 ->where('is_active', true)
@@ -171,17 +193,24 @@ class AdminController extends Controller
                 'instructors' => $instructors,
                 'branches' => $branches,
                 'isAjax' => $isAjax,
+                'totalStudents' => $totalStudents,
+                'activeStudents' => $activeStudents,
+                'inactiveStudents' => $inactiveStudents,
+                'totalInstructors' => $totalInstructors,
+                'activeInstructors' => $activeInstructors,
+                'inactiveInstructors' => $inactiveInstructors,
             ]);
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             SystemLog::logError(
                 'Failed to load user management page',
                 'database',
                 $e,
-                ['school_id' => $school->id],
+            ['school_id' => $school->id],
                 $school->id,
                 'view_user_management'
             );
-            
+
             return back()->with('error', 'Unable to load user management. The system administrator has been notified.');
         }
     }
@@ -210,7 +239,7 @@ class AdminController extends Controller
             'school_id' => $school->id,
             'name' => trim($request->name),
             'email' => trim($request->email),
-            'contact' => trim((string) $request->contact),
+            'contact' => trim((string)$request->contact),
             'password' => Hash::make($request->password),
         ];
 
@@ -221,29 +250,31 @@ class AdminController extends Controller
                 'branch_id' => $request->branch_id,
             ]));
             $successMessage = 'Student created successfully!';
-            
+
             // Log student creation
             SystemLog::logInfo(
                 "New student created: {$user->name}",
                 'database',
-                ['student_id' => $user->id, 'email' => $user->email, 'created_by' => Auth::guard('admin')->user()->name],
+            ['student_id' => $user->id, 'email' => $user->email, 'created_by' => Auth::guard('admin')->user()->name],
                 $school->id,
                 'create_student'
             );
-        } else {
+        }
+        else {
             $user = Instructor::create(array_merge($data, [
                 'license_number' => $request->license_number ?? null,
                 'status' => 'active',
                 'availability' => 'available',
                 'branch_id' => $request->branch_id,
+                'address' => $request->address ?? null, // Restored address field
             ]));
             $successMessage = 'Instructor created successfully!';
-            
+
             // Log instructor creation
             SystemLog::logInfo(
                 "New instructor created: {$user->name}",
                 'database',
-                ['instructor_id' => $user->id, 'email' => $user->email, 'created_by' => Auth::guard('admin')->user()->name],
+            ['instructor_id' => $user->id, 'email' => $user->email, 'created_by' => Auth::guard('admin')->user()->name],
                 $school->id,
                 'create_instructor'
             );
@@ -277,8 +308,8 @@ class AdminController extends Controller
                     'required',
                     'email',
                     Rule::unique('students', 'email')
-                        ->where('school_id', $school->id)
-                        ->ignore($student->id),
+                    ->where('school_id', $school->id)
+                    ->ignore($student->id),
                     'regex:/@(gmail\.com|yahoo\.com)$/i',
                 ],
                 'contact' => ['nullable', 'string', 'max:13', 'regex:/^(09\d{9}|\+639\d{9})$/'],
@@ -302,24 +333,26 @@ class AdminController extends Controller
             SystemLog::logInfo(
                 "Student profile updated: {$student->name}",
                 'database',
-                ['student_id' => $student->id, 'updated_fields' => array_keys($data)],
+            ['student_id' => $student->id, 'updated_fields' => array_keys($data)],
                 $school->id,
                 'update_student'
             );
 
             return redirect()->route('schools.admin.userManagement', $school)
                 ->with('success', 'Student updated successfully!');
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        }
+        catch (\Illuminate\Validation\ValidationException $e) {
             DB::rollBack();
             throw $e;
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             DB::rollBack();
-            
+
             SystemLog::logError(
                 'Failed to update student profile',
                 'database',
                 $e,
-                ['student_id' => $id, 'school_id' => $school->id],
+            ['student_id' => $id, 'school_id' => $school->id],
                 $school->id,
                 'update_student'
             );
@@ -356,8 +389,8 @@ class AdminController extends Controller
                 'required',
                 'email',
                 Rule::unique('instructors', 'email')
-                    ->where('school_id', $school->id)
-                    ->ignore($instructor->id),
+                ->where('school_id', $school->id)
+                ->ignore($instructor->id),
                 'regex:/@(gmail\.com|yahoo\.com)$/i',
             ],
             'contact' => ['nullable', 'string', 'max:13', 'regex:/^(09\d{9}|\+639\d{9})$/'],
@@ -410,7 +443,7 @@ class AdminController extends Controller
     public function profile(School $school)
     {
         $admin = Auth::guard('admin')->user();
-        
+
         return view($school->resolveView('admin.profile'), [
             'school' => $school,
             'admin' => $admin,
@@ -427,8 +460,8 @@ class AdminController extends Controller
                 'required',
                 'email',
                 Rule::unique('admins', 'email')
-                    ->where('school_id', $school->id)
-                    ->ignore($admin->id),
+                ->where('school_id', $school->id)
+                ->ignore($admin->id),
                 'regex:/@(gmail\.com|yahoo\.com)$/i',
             ],
             'contact' => ['nullable', 'string', 'max:20', 'regex:/^(09\d{9}|\+639\d{9})$/'],
@@ -483,11 +516,11 @@ class AdminController extends Controller
     // ==========================
     // INSTRUCTOR REMOVAL REQUESTS
     // ==========================
-    
+
     public function removalRequests(School $school)
     {
         $admin = Auth::guard('admin')->user();
-        
+
         abort_unless($admin && $admin->school_id === $school->id, 403);
 
         // Get all removal requests for this school
@@ -495,26 +528,35 @@ class AdminController extends Controller
             ->where('school_id', $school->id)
             ->where('status', 'pending')
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->paginate(10, ['*'], 'pending_page');
 
         $processedRequests = InstructorRemovalRequest::with(['instructor', 'timeSlot', 'processedBy'])
             ->where('school_id', $school->id)
             ->whereIn('status', ['approved', 'rejected'])
             ->orderBy('processed_at', 'desc')
-            ->limit(20)
-            ->get();
+            ->paginate(10, ['*'], 'processed_page');
+
+        $pendingCount = InstructorRemovalRequest::where('school_id', $school->id)
+            ->where('status', 'pending')
+            ->count();
+
+        $processedCount = InstructorRemovalRequest::where('school_id', $school->id)
+            ->whereIn('status', ['approved', 'rejected'])
+            ->count();
 
         return view($school->resolveView('admin.removal-requests'), [
             'school' => $school,
             'pendingRequests' => $pendingRequests,
             'processedRequests' => $processedRequests,
+            'pendingCount' => $pendingCount,
+            'processedCount' => $processedCount,
         ]);
     }
 
     public function approveRemovalRequest(Request $request, School $school, $id)
     {
         $admin = Auth::guard('admin')->user();
-        
+
         abort_unless($admin && $admin->school_id === $school->id, 403);
 
         $removalRequest = InstructorRemovalRequest::where('school_id', $school->id)
@@ -546,7 +588,8 @@ class AdminController extends Controller
 
             return redirect()->back()
                 ->with('success', 'Removal request approved. Instructor has been removed from the time slot.');
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()
                 ->with('error', 'Failed to approve removal request: ' . $e->getMessage());
@@ -556,7 +599,7 @@ class AdminController extends Controller
     public function rejectRemovalRequest(Request $request, School $school, $id)
     {
         $admin = Auth::guard('admin')->user();
-        
+
         abort_unless($admin && $admin->school_id === $school->id, 403);
 
         $removalRequest = InstructorRemovalRequest::where('school_id', $school->id)
@@ -588,7 +631,8 @@ class AdminController extends Controller
 
             return redirect()->back()
                 ->with('success', 'Removal request rejected.');
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()
                 ->with('error', 'Failed to reject removal request: ' . $e->getMessage());
@@ -601,7 +645,7 @@ class AdminController extends Controller
     public function settings(School $school)
     {
         $admin = Auth::guard('admin')->user();
-        
+
         abort_unless($admin && $admin->school_id === $school->id, 403);
 
         return view($school->resolveView('admin.settings'), [
@@ -613,7 +657,7 @@ class AdminController extends Controller
     {
         try {
             $admin = Auth::guard('admin')->user();
-            
+
             abort_unless($admin && $admin->school_id === $school->id, 403);
 
             $request->validate([
@@ -702,7 +746,7 @@ class AdminController extends Controller
 
             // Update or create color settings
             $schoolSetting = $school->schoolSetting;
-            
+
             if (!$schoolSetting) {
                 $schoolSetting = new SchoolSetting(['school_id' => $school->id]);
             }
@@ -714,7 +758,7 @@ class AdminController extends Controller
                 if ($backgroundImagePath) {
                     Storage::disk('public')->delete($backgroundImagePath);
                 }
-                
+
                 $backgroundImagePath = $request->file('background_image')->store('backgrounds/' . $school->slug, 'public');
             }
 
@@ -725,7 +769,7 @@ class AdminController extends Controller
                 if ($loginBgImagePath) {
                     Storage::disk('public')->delete($loginBgImagePath);
                 }
-                
+
                 $loginBgImagePath = $request->file('login_page_bg_image')->store('backgrounds/' . $school->slug . '/login', 'public');
             }
 
@@ -805,21 +849,23 @@ class AdminController extends Controller
 
             return redirect()->back()
                 ->with('success', 'Settings updated successfully. Refresh the page to see changes.');
-                
-        } catch (\Illuminate\Validation\ValidationException $e) {
+
+        }
+        catch (\Illuminate\Validation\ValidationException $e) {
             DB::rollBack();
             return redirect()->back()
                 ->withErrors($e->validator)
                 ->withInput()
                 ->with('error', 'Please correct the errors below.');
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             DB::rollBack();
             LogFacade::error('Settings update failed: ' . $e->getMessage(), [
                 'school_id' => $school->id,
                 'admin_id' => Auth::guard('admin')->id(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Failed to update settings. Please try again or contact support if the problem persists.');
@@ -837,23 +883,36 @@ class AdminController extends Controller
     {
         $admin = Auth::guard('admin')->user();
 
+        // Date filter: next 30 days by default
+        $startDate = $request->input('start_date', now()->toDateString());
+        $endDate = $request->input('end_date', now()->addDays(30)->toDateString());
+
         $timeslots = $admin->scopeToBranch(TimeSlot::with(['instructors', 'course'])
-            ->where('school_id', $school->id))
+            ->where('school_id', $school->id)
+            ->whereBetween('date', [$startDate, $endDate]))
             ->orderBy('date')
             ->orderBy('start_time')
             ->get()
             ->groupBy('date');
-        
+
         $instructors = $admin->scopeToBranch(Instructor::where('school_id', $school->id))
             ->where('status', 'active')
             ->get();
-        
+
         $courses = \App\Models\Course::where('school_id', $school->id)
             ->where('status', 'active')
             ->orderBy('title')
             ->get();
-        
-        return view($school->resolveView('admin.schedules'), compact('school', 'timeslots', 'instructors', 'courses'));
+
+        return view($school->resolveView('admin.schedules'), [
+            'school' => $school,
+            'currentSchool' => $school,
+            'timeslots' => $timeslots,
+            'instructors' => $instructors,
+            'courses' => $courses,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+        ]);
     }
 
     /**
@@ -873,12 +932,12 @@ class AdminController extends Controller
             'instructor_ids.*' => 'exists:instructors,id',
             'notes' => 'nullable|string|max:500',
         ]);
-        
+
         // Verify course belongs to this school
         $course = \App\Models\Course::where('id', $validated['course_id'])
             ->where('school_id', $school->id)
             ->firstOrFail();
-        
+
         // Create the timeslot
         $timeslot = TimeSlot::create([
             'school_id' => $school->id,
@@ -890,7 +949,7 @@ class AdminController extends Controller
             'max_instructors' => $validated['max_instructors'],
             'notes' => $validated['notes'] ?? null,
         ]);
-        
+
         // If admin selected instructors to assign
         if (!empty($validated['instructor_ids'])) {
             // Verify all instructors belong to this school
@@ -898,18 +957,18 @@ class AdminController extends Controller
                 ->where('school_id', $school->id)
                 ->where('status', 'active')
                 ->get();
-            
+
             if ($instructors->count() !== count($validated['instructor_ids'])) {
                 $timeslot->delete();
                 return redirect()->back()->with('error', 'Some instructors are invalid or inactive.');
             }
-            
+
             // Check if not exceeding max capacity
             if ($instructors->count() > $validated['max_instructors']) {
                 $timeslot->delete();
                 return redirect()->back()->with('error', 'Cannot assign more instructors than max capacity.');
             }
-            
+
             // Assign instructors with admin_assigned type
             foreach ($instructors as $instructor) {
                 $timeslot->instructors()->attach($instructor->id, [
@@ -917,17 +976,17 @@ class AdminController extends Controller
                     'assignment_type' => 'admin_assigned',
                 ]);
             }
-            
+
             $availableSpots = $validated['max_instructors'] - $instructors->count();
             $message = 'Schedule created with ' . $instructors->count() . ' instructor(s) assigned.';
-            
+
             if ($availableSpots > 0) {
                 $message .= ' ' . $availableSpots . ' spot(s) available for self-selection.';
             }
-            
+
             return redirect()->back()->with('success', $message);
         }
-        
+
         // No instructors assigned - all spots available
         return redirect()->back()->with('success', 'Schedule created! ' . $validated['max_instructors'] . ' spot(s) available for instructor self-selection.');
     }
@@ -938,18 +997,18 @@ class AdminController extends Controller
     public function updateSchedule(Request $request, School $school, $id)
     {
         $timeslot = TimeSlot::where('school_id', $school->id)->findOrFail($id);
-        
+
         $validated = $request->validate([
             'notes' => 'nullable|string|max:500',
             'instructor_ids' => 'nullable|array',
             'instructor_ids.*' => 'exists:instructors,id',
         ]);
-        
+
         // Update notes
         $timeslot->update([
             'notes' => $validated['notes'] ?? null,
         ]);
-        
+
         // Update admin-assigned instructors only (preserve self-selected ones)
         if (isset($validated['instructor_ids'])) {
             // Get current self-selected instructors
@@ -957,7 +1016,7 @@ class AdminController extends Controller
                 ->wherePivot('assignment_type', 'self_selected')
                 ->pluck('instructors.id')
                 ->toArray();
-            
+
             // Validate new admin assignments don't exceed capacity
             $totalInstructors = count($selfSelected) + count($validated['instructor_ids']);
             if ($totalInstructors > $timeslot->max_instructors) {
@@ -966,24 +1025,24 @@ class AdminController extends Controller
                     ->withErrors(['instructor_ids' => "Cannot assign {$totalInstructors} instructors. Maximum capacity is {$timeslot->max_instructors}. Currently {$selfSelectedCount} instructors are self-selected."])
                     ->withInput();
             }
-            
+
             // Validate instructors belong to school and are active
             $instructors = Instructor::where('school_id', $school->id)
                 ->where('status', 'active')
                 ->whereIn('id', $validated['instructor_ids'])
                 ->get();
-            
+
             if ($instructors->count() !== count($validated['instructor_ids'])) {
                 return redirect()->back()
                     ->withErrors(['instructor_ids' => 'One or more selected instructors are invalid or inactive.'])
                     ->withInput();
             }
-            
+
             // Remove all admin-assigned instructors
             $timeslot->instructors()
                 ->wherePivot('assignment_type', 'admin_assigned')
                 ->detach();
-            
+
             // Add new admin-assigned instructors
             foreach ($instructors as $instructor) {
                 $timeslot->instructors()->attach($instructor->id, [
@@ -992,10 +1051,10 @@ class AdminController extends Controller
                 ]);
             }
         }
-        
+
         $adminCount = $timeslot->getAdminAssignedCount();
         $selfCount = $timeslot->getSelfSelectedCount();
-        
+
         return redirect()->back()->with('success', "Schedule updated successfully! Instructors: {$adminCount} admin-assigned, {$selfCount} self-selected.");
     }
 
@@ -1005,11 +1064,11 @@ class AdminController extends Controller
     public function deleteSchedule(School $school, $id)
     {
         $timeslot = TimeSlot::where('school_id', $school->id)->findOrFail($id);
-        
+
         // Detach instructors and delete
         $timeslot->instructors()->detach();
         $timeslot->delete();
-        
+
         return redirect()->back()->with('success', 'Schedule deleted successfully.');
     }
 
@@ -1026,7 +1085,7 @@ class AdminController extends Controller
             ->where('school_id', $school->id)
             ->orderBy('sort_order')
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->paginate(10);
 
         return view($school->resolveView('admin.courses'), compact('school', 'courses'));
     }
@@ -1239,7 +1298,7 @@ class AdminController extends Controller
     {
         $logs = \App\Models\Log::where('school_id', $school->id)
             ->orderBy('created_at', 'desc')
-            ->paginate(50);
+            ->paginate(10);
 
         return view($school->resolveView('admin.system-logs'), compact('school', 'logs'));
     }
@@ -1253,8 +1312,8 @@ class AdminController extends Controller
         $metrics = [
             'uptime' => 'Operational',
             'active_users' => \App\Models\Admin::where('school_id', $school->id)->count() +
-                            \App\Models\Instructor::where('school_id', $school->id)->where('status', 'active')->count() +
-                            \App\Models\Student::where('school_id', $school->id)->where('status', 'active')->count(),
+            \App\Models\Instructor::where('school_id', $school->id)->where('status', 'active')->count() +
+            \App\Models\Student::where('school_id', $school->id)->where('status', 'active')->count(),
             'database_size' => 'N/A',
             'last_backup' => 'N/A',
         ];
@@ -1269,20 +1328,20 @@ class AdminController extends Controller
     public function deleteStudent(School $school, $id)
     {
         $student = \App\Models\Student::where('school_id', $school->id)->findOrFail($id);
-        
+
         // Log the deletion to SystemLog
         SystemLog::logWarning(
             "Student permanently deleted: {$student->name} ({$student->email})",
             'database',
-            [
-                'student_id' => $student->id, 
-                'email' => $student->email,
-                'deleted_by' => Auth::guard('admin')->user()->name
-            ],
+        [
+            'student_id' => $student->id,
+            'email' => $student->email,
+            'deleted_by' => Auth::guard('admin')->user()->name
+        ],
             $school->id,
             'delete_student'
         );
-        
+
         // Also log to school-level Log table
         \App\Models\Log::create([
             'school_id' => $school->id,
@@ -1304,20 +1363,20 @@ class AdminController extends Controller
     public function deleteInstructor(School $school, $id)
     {
         $instructor = \App\Models\Instructor::where('school_id', $school->id)->findOrFail($id);
-        
+
         // Log the deletion to SystemLog
         SystemLog::logWarning(
             "Instructor permanently deleted: {$instructor->name} ({$instructor->email})",
             'database',
-            [
-                'instructor_id' => $instructor->id, 
-                'email' => $instructor->email,
-                'deleted_by' => Auth::guard('admin')->user()->name
-            ],
+        [
+            'instructor_id' => $instructor->id,
+            'email' => $instructor->email,
+            'deleted_by' => Auth::guard('admin')->user()->name
+        ],
             $school->id,
             'delete_instructor'
         );
-        
+
         // Also log to school-level Log table
         \App\Models\Log::create([
             'school_id' => $school->id,

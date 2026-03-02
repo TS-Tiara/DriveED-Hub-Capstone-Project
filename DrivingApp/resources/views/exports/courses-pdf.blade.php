@@ -66,7 +66,7 @@
                     <div class="detail-label">Total Hours</div>
                 </div>
                 <div class="detail-item">
-                    <div class="detail-value">{{ $course->is_active ? '✓ Active' : '✗ Inactive' }}</div>
+                    <div class="detail-value">{{ $course->is_active ? '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 14px; height: 14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> Active' : '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 14px; height: 14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg> Inactive' }}</div>
                     <div class="detail-label">Status</div>
                 </div>
             </div>

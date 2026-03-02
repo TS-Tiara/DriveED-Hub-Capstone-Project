@@ -669,16 +669,6 @@
                 <div class="success">{{ session('success') }}</div>
             @endif
 
-            @if ($errors->any())
-                <div class="error" style="background: #f8d7da; border: 1px solid #f5c6cb; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
-                    <ul style="margin: 0; padding-left: 20px;">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
-
             <form method="POST" action="{{ route('schools.registration.submit', $school) }}">
                 @csrf
 
@@ -717,10 +707,14 @@
                 <div class="form-group">
                     <label for="password">Password *</label>
                     <input type="password" id="password" name="password" required>
+                    <div style="font-size: 10px; color: #6b7280; margin-top: 5px;">
+                        Must be at least 8 characters with at least one uppercase letter, one number, and one special character.
+                    </div>
                     @error('password')
-                        <div class="error">{{ $message }}</div>
+                        <div class="error" style="margin-top: 5px;">{{ $message }}</div>
                     @enderror
                 </div>
+
 
                 <div class="form-group">
                     <label for="password_confirmation">Confirm Password *</label>

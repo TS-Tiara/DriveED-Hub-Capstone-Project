@@ -1083,7 +1083,7 @@
                 <i class="bi bi-calendar-plus"></i> Create Schedule
             </button>
             <div class="export-buttons">
-                <a href="{{ $schoolRoute('admin.exports.schedules.pdf') }}" class="btn-export btn-export-pdf">
+                <a href="{{ school_route('admin.exports.schedules.pdf') }}" class="btn-export btn-export-pdf">
                     Export PDF
                 </a>
             </div>
@@ -1092,7 +1092,7 @@
 
     @if(session('success'))
     <div class="flash-message success">
-        <div class="flash-icon">✓</div>
+        <div class="flash-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 20px; height: 20px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg></div>
         <div class="flash-content">
             <div class="flash-title">Success!</div>
             <div class="flash-text">{{ session('success') }}</div>
@@ -1734,7 +1734,7 @@
             document.getElementById('detailsModalContent').innerHTML = `
                 <div style="padding: 10px;">
                     <div style="margin-bottom: 20px;">
-                        <strong style="color: #666; display: block; margin-bottom: 8px;">⏰ Time:</strong>
+                        <strong style="color: #666; display: block; margin-bottom: 8px;">Time:</strong>
                         <div style="font-size: 1.1rem;">${timeText}</div>
                     </div>
                     
@@ -1814,7 +1814,7 @@
                 // Build availability badge
                 let availableHtml = '';
                 if (schedule.availableSpots > 0) {
-                    availableHtml = `<span class="badge badge-success">🔓 ${schedule.availableSpots} Spot${schedule.availableSpots > 1 ? 's' : ''} Available</span>`;
+                    availableHtml = `<span class="badge badge-success">${schedule.availableSpots} Spot${schedule.availableSpots > 1 ? 's' : ''} Available</span>`;
                 } else {
                     availableHtml = '<span class="badge badge-secondary">✓ Full</span>';
                 }

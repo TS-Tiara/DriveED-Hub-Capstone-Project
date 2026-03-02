@@ -236,6 +236,11 @@
             background-color: rgba(255,255,255,0.1);
         }
         
+        .notification-icon-emoji {
+            font-size: 20px;
+            line-height: 1;
+        }
+        
         /* Profile Dropdown Menu Styles */
         .profile-dropdown {
             position: relative;
@@ -1562,7 +1567,7 @@
         <div class="topbar-right">
             
             <div class="notification-icon" onclick="toggleNotificationDropdown(event)" role="button" aria-label="Notifications" aria-expanded="false" aria-haspopup="true" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleNotificationDropdown(event)}">
-                🔔
+                <span class="notification-icon-emoji">🔔</span>
                 <span class="notification-badge" id="notificationBadge"></span>
                 
                 <div class="notification-dropdown" id="notificationDropdown">
@@ -1572,7 +1577,7 @@
                     </div>
                     <div class="notification-dropdown-body" id="notificationList">
                         <div class="notification-empty">
-                            <div class="notification-empty-icon">🔔</div>
+                            <div class="notification-empty-icon"></div>
                             <div class="notification-empty-text">No notifications yet</div>
                         </div>
                     </div>
@@ -1682,7 +1687,7 @@
         <nav class="sidebar-nav" role="menubar">
             @if(Auth::guard('admin')->check())
                 {{-- Dashboard (standalone) --}}
-                <a href="{{ $schoolRoute('admin.dashboard') }}" class="nav-item" data-page="dashboard">Dashboard</a>
+                <a href="{{ school_route('admin.dashboard', [], $currentSchool) }}" class="nav-item" data-page="dashboard">Dashboard</a>
 
                 <div class="nav-divider"></div>
 
@@ -1693,8 +1698,9 @@
                         <span class="nav-category-arrow">&#9660;</span>
                     </div>
                     <div class="nav-category-items">
-                        <a href="{{ $schoolRoute('admin.userManagement') }}" class="nav-item" data-page="user-management">User Management</a>
-                        <a href="{{ $schoolRoute('admin.removalRequests') }}" class="nav-item" data-page="removal-requests">Removal Requests</a>
+                        <a href="{{ school_route('admin.userManagement', [], $currentSchool) }}" class="nav-item" data-page="user-management">User Management</a>
+                        <a href="{{ school_route('admin.removalRequests', [], $currentSchool) }}" class="nav-item" data-page="removal-requests">Removal Requests</a>
+                        <a href="{{ school_route('admin.student-action-requests.index', [], $currentSchool) }}" class="nav-item" data-page="student-action-requests">Student Requests</a>
                     </div>
                 </div>
 
@@ -1705,9 +1711,9 @@
                         <span class="nav-category-arrow">&#9660;</span>
                     </div>
                     <div class="nav-category-items">
-                        <a href="{{ $schoolRoute('admin.courses') }}" class="nav-item" data-page="courses">Courses</a>
-                        <a href="{{ $schoolRoute('admin.enrollments.index') }}" class="nav-item" data-page="enrollments">Enrollments</a>
-                        <a href="{{ $schoolRoute('admin.theoretical.index') }}" class="nav-item" data-page="theoretical">Theoretical Training</a>
+                        <a href="{{ school_route('admin.courses', [], $currentSchool) }}" class="nav-item" data-page="courses">Courses</a>
+                        <a href="{{ school_route('admin.enrollments.index', [], $currentSchool) }}" class="nav-item" data-page="enrollments">Enrollments</a>
+                        <a href="{{ school_route('admin.theoretical.index', [], $currentSchool) }}" class="nav-item" data-page="theoretical">Theoretical Training</a>
                     </div>
                 </div>
 
@@ -1718,10 +1724,10 @@
                         <span class="nav-category-arrow">&#9660;</span>
                     </div>
                     <div class="nav-category-items">
-                        <a href="{{ $schoolRoute('admin.schedules') }}" class="nav-item" data-page="schedules">Schedules</a>
-                        <a href="{{ $schoolRoute('admin.bookings.index') }}" class="nav-item" data-page="bookings">Student Sessions</a>
-                        <a href="{{ $schoolRoute('admin.sessions.index') }}" class="nav-item" data-page="session-completions">Session Completions</a>
-                        <a href="{{ $schoolRoute('admin.phase-progressions.index') }}" class="nav-item" data-page="phase-progressions">Phase Progressions</a>
+                        <a href="{{ school_route('admin.schedules', [], $currentSchool) }}" class="nav-item" data-page="schedules">Schedules</a>
+                        <a href="{{ school_route('admin.bookings.index', [], $currentSchool) }}" class="nav-item" data-page="bookings">Student Sessions</a>
+                        <a href="{{ school_route('admin.sessions.index', [], $currentSchool) }}" class="nav-item" data-page="session-completions">Session Completions</a>
+                        <a href="{{ school_route('admin.phase-progressions.index', [], $currentSchool) }}" class="nav-item" data-page="phase-progressions">Phase Progressions</a>
                     </div>
                 </div>
 
@@ -1732,23 +1738,28 @@
                         <span class="nav-category-arrow">&#9660;</span>
                     </div>
                     <div class="nav-category-items">
-                        <a href="{{ $schoolRoute('admin.payments.index') }}" class="nav-item" data-page="payments">Payments</a>
+                        <a href="{{ school_route('admin.payments.index', [], $currentSchool) }}" class="nav-item" data-page="payments">Payments</a>
                         @if(Auth::guard('admin')->user()?->isSchoolAdmin())
-                        <a href="{{ $schoolRoute('admin.reports.index') }}" class="nav-item" data-page="reports">Reports & Analytics</a>
+                        <a href="{{ school_route('admin.reports.index', [], $currentSchool) }}" class="nav-item" data-page="reports">Reports & Analytics</a>
                         @endif
                     </div>
                 </div>
 
                 <div class="nav-divider"></div>
 
-                {{-- Student Action Requests (visible to all admins) --}}
-                <a href="{{ $schoolRoute('admin.student-action-requests.index') }}" class="nav-item" data-page="student-action-requests">Student Requests</a>
-
-                {{-- Settings & Branch Management (school_admin only) --}}
+                {{-- Internal Management (school_admin only) --}}
                 @if(Auth::guard('admin')->user()?->isSchoolAdmin())
-                <a href="{{ $schoolRoute('admin.admin-management.index') }}" class="nav-item" data-page="admin-management">Admin Management</a>
-                <a href="{{ $schoolRoute('admin.branches.index') }}" class="nav-item" data-page="branches">Branches</a>
-                <a href="{{ $schoolRoute('admin.settings') }}" class="nav-item" data-page="settings">Settings</a>
+                <div class="nav-category" data-category="admin-internal-management">
+                    <div class="nav-category-header" onclick="toggleCategory(this)" role="button" aria-expanded="false" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleCategory(this)}">
+                        <span>Internal Management</span>
+                        <span class="nav-category-arrow">&#9660;</span>
+                    </div>
+                    <div class="nav-category-items">
+                        <a href="{{ school_route('admin.admin-management.index', [], $currentSchool) }}" class="nav-item" data-page="admin-management">Admin Management</a>
+                        <a href="{{ school_route('admin.branches.index', [], $currentSchool) }}" class="nav-item" data-page="branches">Branches</a>
+                        <a href="{{ school_route('admin.settings', [], $currentSchool) }}" class="nav-item" data-page="settings">Settings</a>
+                    </div>
+                </div>
                 @endif
             @elseif(Auth::guard('instructor')->check())
                 <a href="{{ $schoolRoute('instructor.dashboard') }}" class="nav-item" data-page="dashboard">Dashboard</a>
@@ -1975,7 +1986,9 @@
             if (!notifications || notifications.length === 0) {
                 list.innerHTML = `
                     <div class="notification-empty">
-                        <div class="notification-empty-icon">🔔</div>
+                        <div class="notification-empty-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 48px; height: 48px;">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                            </svg></div>
                         <div class="notification-empty-text">No notifications yet</div>
                     </div>`;
                 return;
@@ -2194,16 +2207,18 @@
                 if (rolePath === key || rolePath.startsWith(key + '/')) {
                     html += '<span class="breadcrumb-separator">›</span>';
                     
+                    const parentLabel = breadcrumbMap[key] || key.split('/').pop().replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    
                     // If there's a deeper path, make the parent clickable
                     if (rolePath !== key && rolePath.startsWith(key + '/')) {
-                        html += '<a href="#" onclick="loadContent(\'/' + schoolSlug + '/' + key + '\'); return false;">' + breadcrumbMap[key] + '</a>';
+                        html += '<a href="#" onclick="loadContent(\'/' + schoolSlug + '/' + key + '\'); return false;">' + parentLabel + '</a>';
                         // Add the subpage
                         const subPath = rolePath.slice(key.length + 1);
                         const subLabel = subPath.split('/').map(s => s.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())).join(' > ');
                         html += '<span class="breadcrumb-separator">›</span>';
                         html += '<span class="breadcrumb-current">' + subLabel + '</span>';
                     } else {
-                        html += '<span class="breadcrumb-current">' + breadcrumbMap[key] + '</span>';
+                        html += '<span class="breadcrumb-current">' + parentLabel + '</span>';
                     }
                     matched = true;
                     break;
@@ -2423,6 +2438,12 @@
             const action = form.action || '';
             const formHTML = form.outerHTML;
             
+            // Exclude login and registration forms from AJAX handling
+            // These forms should submit normally to trigger full page redirects after session establishment
+            if (action.includes('login') || action.includes('register')) {
+                return true;
+            }
+            
             // Exclude logout forms
             if (action.includes('logout') || formHTML.includes('logout')) {
                 return true;
@@ -2443,7 +2464,6 @@
                 return true;
             }
             
-            // Exclude protected forms (timeslot forms)
             if (form.hasAttribute('data-protected')) {
                 return true;
             }
@@ -2685,7 +2705,17 @@
         // Helper function to reload current page content
         function reloadCurrentPage() {
             setTimeout(() => {
-                loadContent(window.location.pathname);
+                const path = window.location.pathname;
+                
+                // Safety check: If we are on login/register pages but somehow got here,
+                // it usually means a success event happened (like guest login).
+                // Instead of reloading the login page via AJAX, redirect to dashboard.
+                if (path.endsWith('/login') || path.endsWith('/register') || path === '/') {
+                    window.location.href = getDashboardUrl();
+                    return;
+                }
+                
+                loadContent(path);
             }, 500); // Small delay to show notification
         }
         
@@ -2702,9 +2732,9 @@
             // Set styles based on type
             const colors = {
                 success: { bg: '#4CAF50', icon: '✓' },
-                error: { bg: '#f44336', icon: '✗' },
-                warning: { bg: '#ff9800', icon: '⚠' },
-                info: { bg: '#2196F3', icon: 'ℹ' }
+                error: { bg: '#f44336', icon: '' },
+                warning: { bg: '#ff9800', icon: '' },
+                info: { bg: '#2196F3', icon: '' }
             };
             
             const color = colors[type] || colors.info;
@@ -2929,7 +2959,17 @@
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }
-                return response.text();
+                return response.text().then(text => {
+                    // Safety check: if the response contains a login form (indicated by specific input names),
+                    // it means we've likely been redirected to login due to session expiry or role change.
+                    // In this case, do NOT inject the HTML, instead do a full browser redirect.
+                    if (text.includes('name="email"') && text.includes('name="password"') && text.includes('type="password"')) {
+                        console.warn('Login page detected in AJAX response. Redirecting to login.');
+                        window.location.href = url;
+                        return;
+                    }
+                    return text;
+                });
             })
             .then(html => {
                 // Update main content
@@ -2957,6 +2997,26 @@
                 
                 // Re-initialize forms for AJAX handling (respects data-no-ajax)
                 initializeForms();
+                
+                // Update document title safely based on the breadcrumb text or URL path
+                let newTitle = 'Driving School Management System';
+                const mainTitleEl = mainContent.querySelector('h1, h2, .page-title');
+                if (mainTitleEl && mainTitleEl.innerText.trim()) {
+                    newTitle = mainTitleEl.innerText.trim() + ' - ' + newTitle;
+                } else {
+                    const parts = url.replace(/^\//, '').split('/');
+                    if (parts.length > 1) {
+                        const rolePath = parts.slice(1).join('/');
+                        const mappedTitle = breadcrumbMap[rolePath];
+                        if (mappedTitle) {
+                            newTitle = mappedTitle + ' - DSMS';
+                        } else {
+                            const fallbackTitle = parts[parts.length - 1].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                            newTitle = fallbackTitle + ' - DSMS';
+                        }
+                    }
+                }
+                document.title = newTitle;
                 
                 // Update browser URL if requested
                 if (pushState) {

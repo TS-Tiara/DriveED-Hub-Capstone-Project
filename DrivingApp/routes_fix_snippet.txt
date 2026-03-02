@@ -1,0 +1,122 @@
+<?php
+
+// Replace the entire Route::prefix('admin') block (around line 144 to 266) 
+// inside your routes/web.php with this complete snippet.
+
+            Route::prefix('admin')->name('admin.')->middleware(['auth:admin', 'redirect.system.admin', 'branch.access'])->group(function (): void {
+            // Routes that need ajax middleware (existing modal-based pages)
+            Route::middleware(['ajax'])->group(function () {
+                    Route::get('/', [AdminController::class , 'dashboard'])->name('dashboard');
+
+                    Route::get('/user-management', [AdminController::class , 'userManagement'])->name('userManagement');
+
+                    Route::post('/store-account', [AdminController::class , 'storeAccount'])->name('storeAccount');
+
+                    Route::put('/students/{id}', [AdminController::class , 'updateStudent'])->name('students.update');
+                    Route::patch('/students/{id}/toggle-status', [AdminController::class , 'toggleStudentStatus'])->name('students.toggleStatus');
+
+                    Route::post('/instructors', [AdminController::class , 'storeAccount'])->name('instructors.store');
+                    Route::put('/instructors/{id}', [AdminController::class , 'updateInstructor'])->name('instructors.update');
+                    Route::patch('/instructors/{id}/toggle-status', [AdminController::class , 'toggleInstructorStatus'])->name('instructors.toggleStatus');
+                    Route::patch('/instructors/{id}/availability', [AdminController::class , 'toggleAvailability'])->name('instructors.availability');
+
+                    // Schedule management (unified system: admin creates, can pre-assign, instructors self-select remaining spots)
+                    Route::get('/schedules', [AdminController::class , 'schedules'])->name('schedules');
+                    Route::post('/schedules/create', [AdminController::class , 'createSchedule'])->name('schedules.create');
+                    Route::put('/schedules/{id}', [AdminController::class , 'updateSchedule'])->name('schedules.update');
+                    Route::delete('/schedules/{id}', [AdminController::class , 'deleteSchedule'])->name('schedules.delete');
+
+                    // Instructor removal requests
+                    Route::get('/removal-requests', [AdminController::class , 'removalRequests'])->name('removalRequests');
+                    Route::post('/removal-requests/{id}/approve', [AdminController::class , 'approveRemovalRequest'])->name('removalRequests.approve');
+                    Route::post('/removal-requests/{id}/reject', [AdminController::class , 'rejectRemovalRequest'])->name('removalRequests.reject');
+
+                    // Course management with packages
+                    Route::get('/courses', [AdminController::class , 'courses'])->name('courses');
+                    Route::post('/courses', [AdminController::class , 'storeCourse'])->name('courses.store');
+                    Route::put('/courses/{id}', [AdminController::class , 'updateCourse'])->name('courses.update');
+                    Route::delete('/courses/{id}', [AdminController::class , 'deleteCourse'])->name('courses.delete');
+
+                    Route::post('/courses/{courseId}/packages', [AdminController::class , 'storePackage'])->name('courses.packages.store');
+                    Route::put('/courses/{courseId}/packages/{packageId}', [AdminController::class , 'updatePackage'])->name('courses.packages.update');
+                    Route::delete('/courses/{courseId}/packages/{packageId}', [AdminController::class , 'deletePackage'])->name('courses.packages.delete');
+
+                    // School settings
+                    Route::get('/settings', [AdminController::class , 'settings'])->name('settings');
+                    Route::post('/settings', [AdminController::class , 'updateSettings'])->name('settings.update');
+
+                    // Branch management
+                    Route::get('/branches', [BranchController::class , 'index'])->name('branches.index');
+                    Route::post('/branches', [BranchController::class , 'store'])->name('branches.store');
+                    Route::put('/branches/{id}', [BranchController::class , 'update'])->name('branches.update');
+                    Route::patch('/branches/{id}/toggle', [BranchController::class , 'toggleActive'])->name('branches.toggle');
+                    Route::delete('/branches/{id}', [BranchController::class , 'destroy'])->name('branches.destroy');
+
+                    // Reports & Analytics - Grouped for clarity and robust naming
+                    Route::prefix('reports')->group(function () {
+                        Route::get('/', [ReportController::class, 'index'])->name('reports.index');
+                        Route::get('/students', [AdminController::class, 'studentReports'])->name('reports.students');
+                        Route::get('/instructors', [AdminController::class, 'instructorReports'])->name('reports.instructors');
+                        Route::get('/logs', [AdminController::class, 'logs'])->name('reports.logs');
+
+                        // Report exports
+                        Route::prefix('export')->name('reports.export.')->group(function () {
+                            Route::get('/students', [ReportController::class, 'exportStudents'])->name('students');
+                            Route::get('/instructors', [ReportController::class, 'exportInstructors'])->name('instructors');
+                            Route::get('/bookings', [ReportController::class, 'exportBookings'])->name('bookings');
+                            Route::get('/payments', [ReportController::class, 'exportPayments'])->name('payments');
+                            Route::get('/courses', [ReportController::class, 'exportCourses'])->name('courses');
+                        });
+                    });
+
+                    Route::get('/profile', [AdminController::class , 'profile'])->name('profile');
+                    Route::put('/profile', [AdminController::class , 'updateProfile'])->name('profile.update');
+                    Route::post('/profile/picture', [AdminController::class , 'updateProfilePicture'])->name('profile.picture');
+
+                    // Export routes
+                    Route::prefix('exports')->name('exports.')->group(function () {
+                        Route::get('/students/pdf', [ExportController::class , 'studentsPdf'])->name('students.pdf');
+                        Route::get('/students/excel', [ExportController::class , 'studentsExcel'])->name('students.excel');
+                        Route::get('/enrollments/pdf', [ExportController::class , 'enrollmentsPdf'])->name('enrollments.pdf');
+                        Route::get('/student/{student}/progress/pdf', [ExportController::class , 'studentProgressPdf'])->name('student.progress.pdf');
+                        Route::get('/instructors/pdf', [ExportController::class , 'instructorsPdf'])->name('instructors.pdf');
+                        Route::get('/instructors/excel', [ExportController::class , 'instructorsExcel'])->name('instructors.excel');
+                        Route::get('/schedules/pdf', [ExportController::class , 'schedulesPdf'])->name('schedules.pdf');
+                        Route::get('/payments/pdf', [ExportController::class , 'paymentsPdf'])->name('payments.pdf');
+                        Route::get('/payments/excel', [ExportController::class , 'paymentsExcel'])->name('payments.excel');
+                        Route::get('/courses/pdf', [ExportController::class , 'coursesPdf'])->name('courses.pdf');
+                    });
+
+                    // Bookings management (no separate create/edit views - handled via modals)
+                    Route::resource('bookings', BookingController::class)->except(['create', 'edit']);
+                    Route::patch('/bookings/{booking}/status', [BookingController::class , 'updateStatus'])->name('bookings.updateStatus');
+
+                    // Payments management (no separate create/edit views - handled via modals)
+                    // Statistics route MUST be before the resource to avoid conflict with payments/{payment}
+                    Route::get('/payments/statistics', [PaymentController::class , 'statistics'])->name('payments.statistics');
+                    Route::resource('payments', PaymentController::class)->except(['create', 'edit']);
+
+                    // Admin/Secretary management (school_admin only)
+                    Route::middleware(['school.admin.only'])->group(function () {
+                        Route::prefix('admin-management')->name('admin-management.')->group(function () {
+                            Route::get('/', [AdminManagementController::class , 'index'])->name('index');
+                            Route::post('/', [AdminManagementController::class , 'store'])->name('store');
+                            Route::put('/{targetAdmin}', [AdminManagementController::class , 'update'])->name('update');
+                            Route::patch('/{targetAdmin}/toggle-status', [AdminManagementController::class , 'toggleStatus'])->name('toggleStatus');
+                            Route::delete('/{targetAdmin}', [AdminManagementController::class , 'destroy'])->name('destroy');
+                        });
+
+                        // School-admin-only routes: settings, financial reports
+                        // (Reports route handled in the main reports group to avoid URI collision)
+                    });
+
+                    // Student action requests (secretaries create, school admins approve/deny)
+                    Route::prefix('student-action-requests')->name('student-action-requests.')->group(function () {
+                        Route::get('/', [StudentActionRequestController::class , 'index'])->name('index');
+                        Route::post('/add', [StudentActionRequestController::class , 'storeAddRequest'])->name('add');
+                        Route::post('/remove', [StudentActionRequestController::class , 'storeRemoveRequest'])->name('remove');
+                        Route::post('/{actionRequest}/approve', [StudentActionRequestController::class , 'approve'])->name('approve');
+                        Route::post('/{actionRequest}/deny', [StudentActionRequestController::class , 'deny'])->name('deny');
+                    });
+                });
+            });

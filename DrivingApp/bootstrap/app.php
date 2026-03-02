@@ -25,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'redirect.system.admin' => \App\Http\Middleware\RedirectSystemAdmin::class,
             'school.admin.only' => \App\Http\Middleware\EnsureSchoolAdminOnly::class,
             'branch.access' => \App\Http\Middleware\EnsureBranchAccess::class,
+            'nocache' => \App\Http\Middleware\NoCache::class,
         ]);
         
         // Handle guest redirects for multi-tenant authentication

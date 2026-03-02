@@ -391,7 +391,7 @@
             </div>
         @empty
             <div class="no-students">
-                <div class="no-students-icon">👥</div>
+                <div class="no-students-icon"></div>
                 <div class="no-students-text">No students found</div>
             </div>
         @endforelse

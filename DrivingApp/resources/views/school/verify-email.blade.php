@@ -323,7 +323,7 @@
     <div class="verify-wrapper">
         <div class="verify-container">
         <div class="verify-header">
-            <div class="verify-icon">✉️</div>
+            <div class="verify-icon"></div>
             <h1>Verify Your Email</h1>
             <p class="subtitle">We sent a 6-digit code to:</p>
         </div>
@@ -333,7 +333,7 @@
         @if(app()->environment('local', 'development', 'testing') && (session('dev_verification_code') || session('_flash.dev_verification_code')))
             <div style="background: #fef3c7; border: 2px dashed #f59e0b; border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; text-align: center;">
                 <div style="font-size: 0.8rem; color: #92400e; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">
-                    ⚠️ DEV MODE — Verification Code
+                    DEV MODE — Verification Code
                 </div>
                 <div style="font-size: 2rem; font-weight: 700; color: #78350f; letter-spacing: 8px; font-family: monospace;">
                     {{ session('dev_verification_code') }}
@@ -346,13 +346,13 @@
 
         @if(session('success'))
             <div class="success" style="text-align: center; margin-bottom: 20px;">
-                ✓ {{ session('success') }}
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 16px; height: 16px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> {{ session('success') }}
             </div>
         @endif
 
         @if(session('info'))
             <div class="info" style="text-align: center; margin-bottom: 20px;">
-                ℹ️ {{ session('info') }}
+                {{ session('info') }}
             </div>
         @endif
 
@@ -397,20 +397,21 @@
     </div>
     </div>
 
-    @if(session('test_credentials') && config('app.env') === 'local')
+    @if(session('test_credentials') && app()->environment('local', 'development', 'testing'))
     <!-- Test Credentials Popup Modal (Development Only) -->
     <div id="testCredentialsModal" style="display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
         <div style="background: white; border-radius: 20px; max-width: 500px; width: 90%; box-shadow: 0 25px 50px rgba(0,0,0,0.5); overflow: hidden; animation: slideIn 0.3s ease;">
             <!-- Header -->
             <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 25px; text-align: center; color: white;">
-                <div style="font-size: 48px; margin-bottom: 10px;">🎉</div>
+                <div style="font-size: 48px; margin-bottom: 10px;"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 48px; height: 48px;">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg></div>
                 <h2 style="margin: 0; font-size: 1.8rem;">Registration Successful!</h2>
                 <p style="margin: 10px 0 0 0; opacity: 0.95; font-size: 0.95rem;">Testing Credentials</p>
             </div>
             
             <!-- Warning Banner -->
             <div style="background: #fbbf24; color: #78350f; padding: 12px 20px; display: flex; align-items: center; gap: 10px; font-size: 0.85rem; font-weight: 600;">
-                <span style="font-size: 1.2rem;">⚠️</span>
                 <span>DEVELOPMENT MODE ONLY - This popup won't appear in production</span>
             </div>
             
@@ -456,7 +457,6 @@
                 <!-- Info Box -->
                 <div style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #3b82f6;">
                     <div style="display: flex; gap: 10px; align-items: start;">
-                        <span style="font-size: 1.2rem; flex-shrink: 0;">💡</span>
                         <p style="margin: 0; font-size: 0.85rem; color: #1e40af; line-height: 1.5;">
                             <strong>Quick Tip:</strong> The verification code is already displayed above and in your email. Just copy and paste it into the form below!
                         </p>
@@ -488,7 +488,7 @@
         function copyText(text, button) {
             navigator.clipboard.writeText(text).then(() => {
                 const originalText = button.textContent;
-                button.textContent = '✓ Copied!';
+                button.textContent = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 14px; height: 14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> Copied!';
                 button.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
                 
                 setTimeout(() => {
@@ -524,12 +524,6 @@
             this.value = this.value.replace(/[^0-9]/g, '');
         });
 
-        // Auto-submit when 6 digits entered
-        codeInput.addEventListener('input', function(e) {
-            if (this.value.length === 6) {
-                this.form.submit();
-            }
-        });
     </script>
 </body>
 </html>
