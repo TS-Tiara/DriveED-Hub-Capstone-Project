@@ -94,6 +94,7 @@ class AuthController extends Controller
                     'last_login_at' => now(),
                 ]);
 
+                $this->clearOtherAuthGuards('admin');
                 Auth::guard('admin')->login($admin, $remember);
                 $request->session()->regenerate();
 
@@ -202,6 +203,7 @@ class AuthController extends Controller
                 'last_login_at' => now(),
             ]);
 
+            $this->clearOtherAuthGuards('instructor');
             Auth::guard('instructor')->login($instructor, $remember);
             $request->session()->regenerate();
 
@@ -318,6 +320,7 @@ class AuthController extends Controller
                 'last_login_at' => now(),
             ]);
 
+            $this->clearOtherAuthGuards('student');
             Auth::guard('student')->login($student, $remember);
             $request->session()->regenerate();
 
@@ -398,5 +401,14 @@ class AuthController extends Controller
 
         return redirect()->route('schools.login', $school)
             ->with('success', 'You have been logged out successfully.');
+    }
+
+    private function clearOtherAuthGuards(string $keepGuard): void
+    {
+        foreach (['admin', 'instructor', 'student'] as $guard) {
+            if ($guard !== $keepGuard) {
+                Auth::guard($guard)->logout();
+            }
+        }
     }
 }

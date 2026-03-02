@@ -37,6 +37,12 @@ class GuestController extends Controller
      */
     public function register(Request $request, School $school)
     {
+        Auth::guard('admin')->logout();
+        Auth::guard('instructor')->logout();
+        Auth::guard('student')->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:students,email'],
@@ -244,15 +250,23 @@ class GuestController extends Controller
             }
 
             $enrollmentRequest = EnrollmentRequest::create($data);
+        } catch (\Exception $e) {
+            Log::error('Failed to create enrollment request', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return redirect()->back()->with('error', 'Failed to submit enrollment request. Please try again.');
+        }
 
+        try {
             // Send confirmation email
-            try {
-                Mail::to($guest->email)
-                    ->send(new EnrollmentRequestReceived($enrollmentRequest, $school));
-            } catch (\Exception $e) {
-                Log::warning('Failed to send enrollment received email: ' . $e->getMessage());
-            }
+            Mail::to($guest->email)
+                ->send(new EnrollmentRequestReceived($enrollmentRequest, $school));
+        } catch (\Exception $e) {
+            Log::warning('Failed to send enrollment received email: ' . $e->getMessage());
+        }
 
+        try {
             // Create in-app notification for the guest
             Notification::send(
                 $guest,
@@ -275,19 +289,15 @@ class GuestController extends Controller
                     "/{$school->slug}/admin/enrollments"
                 );
             }
-
-            Log::info('Enrollment request created successfully', [
-                'student_id' => $guest->id,
-                'course_id' => $course->id,
-                'experience_level' => $request->experience_level
-            ]);
         } catch (\Exception $e) {
-            Log::error('Failed to create enrollment request', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            return redirect()->back()->with('error', 'Failed to submit enrollment request. Please try again.');
+            Log::warning('Enrollment created but notification dispatch failed: ' . $e->getMessage());
         }
+
+        Log::info('Enrollment request created successfully', [
+            'student_id' => $guest->id,
+            'course_id' => $course->id,
+            'experience_level' => $request->experience_level
+        ]);
 
         return redirect()
             ->route('schools.guest.dashboard', ['school' => $school->slug])
@@ -459,6 +469,9 @@ class GuestController extends Controller
         session()->forget(['verification_email', 'school_slug']);
 
         // Auto login
+        Auth::guard('admin')->logout();
+        Auth::guard('instructor')->logout();
+        Auth::guard('student')->logout();
         Auth::guard('student')->login($student);
         $request->session()->regenerate();
         if ($student->role === 'guest') {

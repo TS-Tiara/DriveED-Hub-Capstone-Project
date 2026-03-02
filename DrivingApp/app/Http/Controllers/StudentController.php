@@ -25,6 +25,7 @@ class StudentController extends Controller
         
         // Get active enrollments with course and session data
         $activeEnrollments = EnrollmentRequest::where('learner_id', $student->id)
+            ->where('school_id', $school->id)
             ->with(['course', 'sessionCompletions'])
             ->where('status', 'approved')
             ->get();

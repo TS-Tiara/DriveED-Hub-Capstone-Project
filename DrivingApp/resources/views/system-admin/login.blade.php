@@ -251,7 +251,10 @@
             </form>
 
             <div class="login-footer">
-                <a href="{{ route('welcome') }}">← Back to Home</a>
+                <a href="{{ route('welcome') }}" style="display:inline-flex; align-items:center; justify-content:center; gap:4px;">
+                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                    Back to Home
+                </a>
             </div>
         </div>
 </body>

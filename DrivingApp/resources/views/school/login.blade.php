@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     @php
         $school = $school ?? $currentSchool ?? null;
         $slug = $school?->slug ?? 'default';
@@ -718,11 +719,7 @@
             <form method="POST" action="{{ route('schools.login.submit', $school) }}">
                 @csrf
                 <div class="form-group">
-<<<<<<< HEAD
                     <label for="email" style="display: block; font-size: 0.9rem; font-weight: 600; color: #374151; margin-bottom: 6px;">Email Address</label>
-=======
-                    <label for="email" class="form-label">Email Address</label>
->>>>>>> deploy-testing
                     <input 
                         id="email"
                         type="email" 
@@ -735,11 +732,7 @@
                     @enderror
                 </div>
                 <div class="form-group">
-<<<<<<< HEAD
                     <label for="password" style="display: block; font-size: 0.9rem; font-weight: 600; color: #374151; margin-bottom: 6px;">Password</label>
-=======
-                    <label for="password" class="form-label">Password</label>
->>>>>>> deploy-testing
                     <input 
                         id="password"
                         type="password" 
@@ -762,8 +755,9 @@
             
             <div class="register-link-wrap">
                 <p class="register-link-text">Don't have an account?</p>
-                <a href="{{ route('schools.registration.form', $school) }}" class="register-link-anchor">
-                    Register for Student Account →
+                <a href="{{ route('schools.registration.form', $school) }}" class="register-link-anchor" style="display:inline-flex; align-items:center; justify-content:center; gap:4px;">
+                    Register for Student Account 
+                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                 </a>
             </div>
         </div>

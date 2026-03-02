@@ -1,4 +1,4 @@
-﻿@extends($isAjax ?? false ? 'layouts.ajax' : 'layouts.app')
+@extends($isAjax ?? false ? 'layouts.ajax' : 'layouts.app')
 
 @section('title', 'Browse Courses')
 
@@ -515,17 +515,6 @@
         background: rgba(255,255,255,0.1);
     }
     
-<<<<<<< HEAD
-=======
-    @media (max-width: 768px) {
-        .btn-close {
-            width: 44px;
-            height: 44px;
-            font-size: 1.9rem;
-        }
-    }
-    
->>>>>>> deploy-testing
     .modal-body {
         padding: 25px;
         overflow-y: auto;
@@ -865,11 +854,7 @@
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title" id="enrollModalLabel{{ $course->id }}">Enroll in {{ $course->title }}</h5>
-<<<<<<< HEAD
                     <button type="button" class="btn-close" onclick="closeEnrollModal({{ $course->id }})" aria-label="Close">×</button>
-=======
-                    <button type="button" class="btn-close" onclick="closeEnrollModal({{ $course->id }})" aria-label="Close enrollment form">×</button>
->>>>>>> deploy-testing
                 </div>
                 <div class="modal-body">
                     <!-- Course Type Badge -->

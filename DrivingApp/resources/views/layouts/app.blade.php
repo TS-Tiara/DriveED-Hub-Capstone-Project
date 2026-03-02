@@ -1549,6 +1549,11 @@
     </style>
 </head>
 <body>
+    @php
+        $currentSchool = $currentSchool ?? current_school();
+        $schoolRoute = fn (string $name, array $parameters = []) => school_route($name, $parameters, $currentSchool);
+    @endphp
+
     <!-- Floating Sidebar Toggle Tab -->
     <button class="sidebar-toggle-tab" id="sidebarToggleTab" onclick="toggleSidebar()" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="sidebar">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -2916,7 +2921,6 @@
             const modals = document.querySelectorAll('.modal, [id*="Modal"], [id*="modal"]');
             modals.forEach(modal => {
                 modal.style.display = 'none';
-                modal.style.visibility = 'hidden';
                 // Remove any inline styles that might force display
                 if (modal.style.display !== 'none') {
                     modal.style.setProperty('display', 'none', 'important');

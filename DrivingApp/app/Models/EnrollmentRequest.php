@@ -36,6 +36,7 @@ class EnrollmentRequest extends Model
         'theoretical_passed_at',
         'theoretical_passed_by',
         'theoretical_pass_notes',
+        'package_id',
     ];
 
     protected $casts = [
@@ -56,12 +57,12 @@ class EnrollmentRequest extends Model
 
     public function branchRelation()
     {
-        return $this->belongsTo(\App\Models\Branch::class, 'branch_id');
+        return $this->belongsTo(\App\Models\Branch::class , 'branch_id');
     }
 
     public function learner()
     {
-        return $this->belongsTo(Student::class, 'learner_id');
+        return $this->belongsTo(Student::class , 'learner_id');
     }
 
     // Alias for backward compatibility
@@ -75,40 +76,45 @@ class EnrollmentRequest extends Model
         return $this->belongsTo(Course::class);
     }
 
+    public function package()
+    {
+        return $this->belongsTo(CoursePackage::class , 'package_id');
+    }
+
     public function approvedBy()
     {
-        return $this->belongsTo(Admin::class, 'approved_by');
+        return $this->belongsTo(Admin::class , 'approved_by');
     }
 
     public function theoreticalPassedBy()
     {
-        return $this->belongsTo(Admin::class, 'theoretical_passed_by');
+        return $this->belongsTo(Admin::class , 'theoretical_passed_by');
     }
 
     public function paymentConfirmedBy()
     {
-        return $this->belongsTo(Admin::class, 'payment_confirmed_by');
+        return $this->belongsTo(Admin::class , 'payment_confirmed_by');
     }
 
     // New relationships (replacing old enrollments table)
     public function progress()
     {
-        return $this->hasMany(Progress::class, 'enrollment_request_id');
+        return $this->hasMany(Progress::class , 'enrollment_request_id');
     }
 
     public function bookings()
     {
-        return $this->hasMany(Booking::class, 'enrollment_request_id');
+        return $this->hasMany(Booking::class , 'enrollment_request_id');
     }
 
     public function sessionCompletions()
     {
-        return $this->hasMany(SessionCompletion::class, 'enrollment_id');
+        return $this->hasMany(SessionCompletion::class , 'enrollment_id');
     }
 
     public function payments()
     {
-        return $this->hasMany(Payment::class, 'enrollment_request_id');
+        return $this->hasMany(Payment::class , 'enrollment_request_id');
     }
 
     // Helper methods
@@ -263,4 +269,3 @@ class EnrollmentRequest extends Model
             ->get();
     }
 }
-
