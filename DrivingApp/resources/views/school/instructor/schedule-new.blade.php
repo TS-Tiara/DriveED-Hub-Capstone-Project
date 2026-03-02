@@ -577,7 +577,7 @@
                     <div class="schedule-item {{ $isPast ? 'is-hidden' : '' }}" data-is-past="{{ $isPast ? 'true' : 'false' }}">
                         <div class="schedule-date-header" onclick="toggleDate(this)">
                             <span class="date-text">{{ \Carbon\Carbon::parse($date)->format('l, F d, Y') }}</span>
-                            <span class="toggle-icon">▼</span>
+                            <span class="toggle-icon">&#x25BC;</span>
                         </div>
                         <div class="schedule-slots">
                             @foreach($dateSlots as $slot)
@@ -603,12 +603,12 @@
                                             @endif
                                         </div>
                                         <div class="slot-info">
-                                            {{ $slot->course->title ?? 'General' }} • {{ $slot->instructors->count() }}/{{ $slot->max_instructors ?? 1 }} instructors
+                                            {{ $slot->course->title ?? 'General' }} &bull; {{ $slot->instructors->count() }}/{{ $slot->max_instructors ?? 1 }} instructors
                                             @if($slotBookings->count() > 0)
-                                                • {{ $slotBookings->count() }} student(s) scheduled
+                                                &bull; {{ $slotBookings->count() }} student(s) scheduled
                                             @endif
                                             @if($slot->branch_id && $slot->branch)
-                                                • <span class="branch-text">{{ $slot->branch->name }}</span>
+                                                &bull; <span class="branch-text">{{ $slot->branch->name }}</span>
                                             @endif
                                         </div>
                                         @if($slot->notes)
@@ -718,7 +718,7 @@
                     <div class="schedule-item {{ $isPast || !$hasVisibleSlots ? 'is-hidden' : '' }}" data-is-past="{{ $isPast ? 'true' : 'false' }}" data-has-visible="{{ $hasVisibleSlots ? 'true' : 'false' }}">
                         <div class="schedule-date-header" onclick="toggleDate(this)">
                             <span class="date-text">{{ \Carbon\Carbon::parse($date)->format('l, F d, Y') }}</span>
-                            <span class="toggle-icon">▼</span>
+                            <span class="toggle-icon">&#x25BC;</span>
                         </div>
                         <div class="schedule-slots">
                             @foreach($dateSlots as $slot)
@@ -733,15 +733,15 @@
                                             {{ \Carbon\Carbon::parse($slot->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($slot->end_time)->format('g:i A') }}
                                             <span class="slot-badge badge-available">Available</span>
                                             @if($isQualified)
-                                                <span class="slot-badge badge-qualified">{{ $slot->course->title ?? 'General' }} ✓</span>
+                                                <span class="slot-badge badge-qualified">{{ $slot->course->title ?? 'General' }} &#10003;</span>
                                             @else
                                                 <span class="slot-badge badge-not-qualified">{{ $slot->course->title ?? 'General' }}</span>
                                             @endif
                                         </div>
                                         <div class="slot-info">
-                                            {{ $slot->instructors->count() }}/{{ $slot->max_instructors ?? 1 }} instructors • {{ $spotsLeft }} spot(s) left
+                                            {{ $slot->instructors->count() }}/{{ $slot->max_instructors ?? 1 }} instructors &bull; {{ $spotsLeft }} spot(s) left
                                             @if(!$isQualified)
-                                                • <span class="not-specialty-text">Not your specialty</span>
+                                                &bull; <span class="not-specialty-text">Not your specialty</span>
                                             @endif
                                         </div>
                                         @if($slot->notes)
@@ -823,19 +823,11 @@
                 <p class="modal-help-text">
                     Please provide a reason for requesting removal from this admin-assigned time slot.
                 </p>
-<<<<<<< HEAD
                 <p style="color: #666; margin-bottom: 15px;">
                     This sends a request to admin for review and does not remove you instantly.
                 </p>
                 <label style="display: block; font-weight: 600; margin-bottom: 8px;">
                     Reason: <span style="color: #dc3545;">*</span>
-=======
-                <p class="modal-help-text">
-                    This sends a request to admin for review and does not remove you instantly.
-                </p>
-                <label class="modal-reason-label">
-                    Reason: <span class="modal-required">*</span>
->>>>>>> deploy-testing
                 </label>
                 <textarea name="reason" required maxlength="500" class="modal-reason-input" placeholder="E.g., conflicting appointment, personal emergency..."></textarea>
                 <div class="modal-actions">

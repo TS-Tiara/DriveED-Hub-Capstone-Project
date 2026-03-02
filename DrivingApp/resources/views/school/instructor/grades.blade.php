@@ -13,7 +13,7 @@
 @include('school.admin.partials.admin-styles')
 
 <style>
-    /* ── Controls Bar ── */
+    /* â”€â”€ Controls Bar â”€â”€ */
     .controls-bar {
         background: white;
         padding: 16px 20px;
@@ -58,7 +58,7 @@
 
     .action-buttons { display: flex; gap: 8px; }
 
-    /* ── Export Dropdown ── */
+    /* â”€â”€ Export Dropdown â”€â”€ */
     .export-dropdown { position: relative; display: inline-block; }
 
     .btn-export {
@@ -125,7 +125,7 @@
 
     .btn-save-all:hover { background: {{ $secondaryColor }}; transform: translateY(-1px); }
 
-    /* ── Grades Table ── */
+    /* â”€â”€ Grades Table â”€â”€ */
     .grades-table-container {
         background: white;
         border-radius: 12px;
@@ -477,11 +477,7 @@
                                 @if($lastCompletedSession && ($lastCompletedSession->scheduled_at || $lastCompletedSession->booking_date))
                                     {{ ($lastCompletedSession->scheduled_at ?? $lastCompletedSession->booking_date)?->format('M d, Y') ?? 'N/A' }}
                                 @else
-<<<<<<< HEAD
                                     <span style="color: #9ca3af;">No completed sessions</span>
-=======
-                                    <span class="text-muted">No sessions</span>
->>>>>>> deploy-testing
                                 @endif
                             </td>
                             <td>

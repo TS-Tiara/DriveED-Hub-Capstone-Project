@@ -1380,7 +1380,7 @@
                 <div class="schedule-item {{ $isPast ? 'is-hidden' : '' }}" data-is-past="{{ $isPast ? 'true' : 'false' }}">
                     <div class="schedule-date-header" onclick="toggleDate(this)">
                         <span class="date-text">{{ \Carbon\Carbon::parse($date)->format('l, F d, Y') }}</span>
-                        <span class="toggle-icon">▼</span>
+                        <span class="toggle-icon">&#x25BC;</span>
                     </div>
                     <div class="schedule-bookings schedule-bookings-expanded">
                         @foreach($dateBookings as $booking)
@@ -1406,7 +1406,7 @@
                                     <div class="booking-status">
                                         @if($booking->status === 'completed')
                                             <span class="booking-status-pill booking-status-completed">
-                                                ✓ Completed
+                                                &#10003; Completed
                                             </span>
                                         @else
                                             Status: {{ ucfirst($booking->status ?? 'Scheduled') }}
@@ -1431,7 +1431,7 @@
                 <div class="schedule-item {{ $isPast ? 'is-hidden' : '' }}" data-is-past="{{ $isPast ? 'true' : 'false' }}">
                     <div class="schedule-date-header cancelled-header" onclick="toggleDate(this)">
                         <span class="date-text">{{ \Carbon\Carbon::parse($date)->format('l, F d, Y') }}</span>
-                        <span class="toggle-icon">▼</span>
+                        <span class="toggle-icon">&#x25BC;</span>
                     </div>
                     <div class="schedule-bookings schedule-bookings-expanded">
                         @foreach($dateCancelledBookings as $booking)
@@ -1523,25 +1523,15 @@
                         <div class="queue-action-row">
                             <form method="POST" action="{{ route('schools.student.bookings.confirm', [$school->slug, $booking->id]) }}" class="queue-action-form">
                                 @csrf
-<<<<<<< HEAD
                                 <button type="button" style="width: 100%; background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer;" onclick="showConfirmDialog('Confirm this booking now?',()=>this.closest('form').submit())">
                                     Confirm
-=======
-                                <button type="button" class="queue-action-btn queue-action-confirm" onclick="showConfirm({title:'Confirm Schedule',message:'Confirm this queued schedule now?',type:'success',onConfirm:()=>this.closest('form').submit()})">
-                                    Confirm Now
->>>>>>> deploy-testing
                                 </button>
                             </form>
                             <form method="POST" action="{{ route('schools.student.bookings.removeQueue', [$school->slug, $booking->id]) }}" class="queue-action-form">
                                 @csrf
                                 @method('DELETE')
-<<<<<<< HEAD
                                 <button type="button" style="width: 100%; background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer;" onclick="showConfirmDialog('Cancel this booking?',()=>this.closest('form').submit())">
                                     Cancel
-=======
-                                <button type="button" class="queue-action-btn queue-action-remove" onclick="showConfirm({title:'Remove Schedule',message:'Remove this schedule from your queue?',type:'danger',onConfirm:()=>this.closest('form').submit()})">
-                                    Remove
->>>>>>> deploy-testing
                                 </button>
                             </form>
                         </div>
@@ -1631,7 +1621,7 @@
                 <div class="schedule-item {{ $isPast || !$hasVisibleSlots ? 'is-hidden' : '' }}" data-is-past="{{ $isPast ? 'true' : 'false' }}" data-has-visible="{{ $hasVisibleSlots ? 'true' : 'false' }}">
                     <div class="schedule-date-header" onclick="toggleDate(this)">
                         <span class="date-text">{{ \Carbon\Carbon::parse($date)->format('l, F d, Y') }}</span>
-                        <span class="toggle-icon">▼</span>
+                        <span class="toggle-icon">&#x25BC;</span>
                     </div>
                     <div class="schedule-bookings schedule-bookings-expanded">
                         @foreach($dateSchedules as $timeSlot)
@@ -1761,25 +1751,15 @@
                         <div class="queue-action-row">
                             <form method="POST" action="{{ route('schools.student.bookings.confirm', [$school->slug, $booking->id]) }}" class="queue-action-form">
                                 @csrf
-<<<<<<< HEAD
                                 <button type="button" style="width: 100%; background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer;" onclick="showConfirmDialog('Confirm this booking now?',()=>this.closest('form').submit())">
                                     Confirm
-=======
-                                <button type="button" class="queue-action-btn queue-action-confirm" onclick="showConfirm({title:'Confirm Schedule',message:'Confirm this queued schedule now?',type:'success',onConfirm:()=>this.closest('form').submit()})">
-                                    Confirm Now
->>>>>>> deploy-testing
                                 </button>
                             </form>
                             <form method="POST" action="{{ route('schools.student.bookings.removeQueue', [$school->slug, $booking->id]) }}" class="queue-action-form">
                                 @csrf
                                 @method('DELETE')
-<<<<<<< HEAD
                                 <button type="button" style="width: 100%; background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer;" onclick="showConfirmDialog('Cancel this booking?',()=>this.closest('form').submit())">
                                     Cancel
-=======
-                                <button type="button" class="queue-action-btn queue-action-remove" onclick="showConfirm({title:'Remove Schedule',message:'Remove this schedule from your queue?',type:'danger',onConfirm:()=>this.closest('form').submit()})">
-                                    Remove
->>>>>>> deploy-testing
                                 </button>
                             </form>
                         </div>
@@ -1861,25 +1841,15 @@
                         <div class="queue-action-row">
                             <form method="POST" action="{{ route('schools.student.bookings.confirm', [$school->slug, $booking->id]) }}" class="queue-action-form">
                                 @csrf
-<<<<<<< HEAD
                                 <button type="button" style="width: 100%; background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer;" onclick="showConfirmDialog('Confirm this booking now?',()=>this.closest('form').submit())">
                                     Confirm
-=======
-                                <button type="button" class="queue-action-btn queue-action-confirm" onclick="showConfirm({title:'Confirm Schedule',message:'Confirm this queued schedule now?',type:'success',onConfirm:()=>this.closest('form').submit()})">
-                                    Confirm Now
->>>>>>> deploy-testing
                                 </button>
                             </form>
                             <form method="POST" action="{{ route('schools.student.bookings.removeQueue', [$school->slug, $booking->id]) }}" class="queue-action-form">
                                 @csrf
                                 @method('DELETE')
-<<<<<<< HEAD
                                 <button type="button" style="width: 100%; background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer;" onclick="showConfirmDialog('Cancel this booking?',()=>this.closest('form').submit())">
                                     Cancel
-=======
-                                <button type="button" class="queue-action-btn queue-action-remove" onclick="showConfirm({title:'Remove Schedule',message:'Remove this schedule from your queue?',type:'danger',onConfirm:()=>this.closest('form').submit()})">
-                                    Remove
->>>>>>> deploy-testing
                                 </button>
                             </form>
                         </div>

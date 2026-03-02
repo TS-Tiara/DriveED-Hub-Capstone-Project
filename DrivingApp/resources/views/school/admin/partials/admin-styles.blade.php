@@ -1255,7 +1255,7 @@
         }
     }
 
-    /* ── Filter Bar & Custom Select Dropdown ── */
+    /* â”€â”€ Filter Bar & Custom Select Dropdown â”€â”€ */
     .filter-bar {
         background: white;
         border-radius: 12px;
@@ -1419,7 +1419,7 @@ const Toast = {
                 <div class="toast-title">${title}</div>
                 <div class="toast-message">${message}</div>
             </div>
-            <button class="toast-close" onclick="this.parentElement.remove()">×</button>
+            <button class="toast-close" onclick="this.parentElement.remove()">Ã—</button>
             <div class="toast-progress"></div>
         `;
         
@@ -1524,7 +1524,7 @@ document.getElementById('confirmModal')?.addEventListener('click', function(e) {
     }
 });
 
-// ── Custom Select Dropdown ──
+// â”€â”€ Custom Select Dropdown â”€â”€
 // Converts native selects with .filter-select class to custom dropdowns with max-height
 document.addEventListener('DOMContentLoaded', function() {
     const selects = document.querySelectorAll('select.filter-select');
@@ -1600,8 +1600,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <style>
-<<<<<<< HEAD
-/* ── Filter Bar & Custom Select Dropdown ── */
+/* â”€â”€ Filter Bar & Custom Select Dropdown â”€â”€ */
 .filter-bar {
     background: white;
     border-radius: 12px;
@@ -1713,7 +1712,7 @@ document.addEventListener('DOMContentLoaded', function() {
     .custom-select-trigger { width: 100%; }
 }
 
-/* ── Compact Pagination Styling ── */
+/* â”€â”€ Compact Pagination Styling â”€â”€ */
 nav[role="navigation"] {
     display: flex;
     justify-content: flex-end;
@@ -1801,7 +1800,4 @@ nav[role="navigation"] span:not([aria-current]):not([aria-disabled]) {
         margin-right: 16px;
     }
 }
-=======
-/* Pagination is rendered and styled by global vendor pagination templates (resources/views/vendor/pagination/*) */
->>>>>>> deploy-testing
 </style>

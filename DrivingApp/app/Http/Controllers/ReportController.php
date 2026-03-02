@@ -42,7 +42,7 @@ class ReportController extends Controller
                 $startDate = null; // All time
         }
         
-        // ── 1. Student metrics (2 queries) ──
+        // â”€â”€ 1. Student metrics (2 queries) â”€â”€
         $studentCounts = Student::where('school_id', $schoolId)
             ->when($startDate, fn($q) => $q->whereBetween('enrollment_date', [$startDate, $endDate]))
             ->selectRaw("COUNT(*) as total, SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active")
@@ -54,7 +54,7 @@ class ReportController extends Controller
             ->groupBy('status')
             ->get();
         
-        // ── 2. Enrollment trends (1 query) ──
+        // â”€â”€ 2. Enrollment trends (1 query) â”€â”€
         $enrollmentsThisMonth = Student::where('school_id', $schoolId)
             ->when($startDate, fn($q) => $q->whereBetween('enrollment_date', [$startDate, $endDate]),
                 fn($q) => $q->whereMonth('enrollment_date', now()->month)->whereYear('enrollment_date', now()->year))
@@ -62,7 +62,7 @@ class ReportController extends Controller
         
 
         
-        // ── 3. ALL booking stats in ONE query using conditional aggregation ──
+        // â”€â”€ 3. ALL booking stats in ONE query using conditional aggregation â”€â”€
         $bookingStats = Booking::where('school_id', $schoolId)
             ->when($startDate, fn($q) => $q->whereBetween('scheduled_at', [$startDate, $endDate]))
             ->selectRaw("
@@ -86,7 +86,7 @@ class ReportController extends Controller
             }
         }
         
-        // ── 4. Course stats - ONE bulk query instead of per-course loops ──
+        // â”€â”€ 4. Course stats - ONE bulk query instead of per-course loops â”€â”€
         $courses = Course::where('school_id', $schoolId)->get();
         
         $courseBookingStats = Booking::where('school_id', $schoolId)
@@ -127,7 +127,7 @@ class ReportController extends Controller
             ];
         })->sortByDesc('total_enrolled')->take(10);
         
-        // ── 5. Top instructors - already efficient (single GROUP BY query) ──
+        // â”€â”€ 5. Top instructors - already efficient (single GROUP BY query) â”€â”€
         $topInstructors = Booking::where('school_id', $schoolId)
             ->when($startDate, fn($q) => $q->whereBetween('scheduled_at', [$startDate, $endDate]))
             ->with('instructor')
@@ -140,7 +140,6 @@ class ReportController extends Controller
             ->orderByDesc('completed_lessons')
             ->limit(10)
             ->get()
-<<<<<<< HEAD
             ->map(fn($b) => (object)[
                 'name' => $b->instructor->name ?? 'N/A',
                 'total_sessions' => $b->total_lessons,
@@ -149,80 +148,8 @@ class ReportController extends Controller
                 'completion_rate' => $b->total_lessons > 0 ? round(($b->completed_lessons / $b->total_lessons) * 100, 1) : 0,
             ]);
         
-        // ── 6. Lessons by instructor - already efficient (single GROUP BY) ──
+        // â”€â”€ 6. Lessons by instructor - already efficient (single GROUP BY) â”€â”€
         $lessonsByInstructor = Booking::where('school_id', $schoolId)
-=======
-            ->map(function ($booking) {
-            $completionRate = $booking->total_lessons > 0
-                ? round(($booking->completed_lessons / $booking->total_lessons) * 100, 1)
-                : 0;
-
-            return (object)[
-            'name' => $booking->instructor->name ?? 'N/A',
-            'total_sessions' => $booking->total_lessons,
-            'completed_sessions' => $booking->completed_lessons,
-            'average_rating' => null, // TODO: Implement actual rating system
-            'completion_rate' => $completionRate,
-            ];
-        }),
-
-            // Optimized Course Stats & Revenue (Combined to prevent N+1)
-            'course_stats' => Course::where('courses.school_id', $school->id)
-            ->leftJoin('bookings', 'courses.id', '=', 'bookings.course_id')
-            ->leftJoin('payments', 'bookings.id', '=', 'payments.booking_id')
-            ->select(
-            'courses.*',
-            DB::raw('COUNT(DISTINCT bookings.student_id) as unique_enrolled'),
-            DB::raw('COUNT(bookings.id) as total_bookings'),
-            DB::raw('SUM(CASE WHEN bookings.status = "completed" THEN 1 ELSE 0 END) as completed_lessons'),
-            DB::raw('SUM(CASE WHEN payments.status = "completed" THEN payments.amount ELSE 0 END) as total_revenue')
-        )
-            ->when($startDate, function ($q) use ($startDate, $endDate) {
-            $q->whereBetween('bookings.scheduled_at', [$startDate, $endDate]);
-        })
-            ->groupBy('courses.id') // Grouping by ID is sufficient in modern MySQL/Postgres for functional dependence
-            ->get()
-            ->map(fn($course) => (object)[
-        'title' => $course->title,
-        'name' => $course->title,
-        'price' => $course->price,
-        'total_enrolled' => $course->unique_enrolled,
-        'completion_rate' => $course->total_bookings > 0 ? round(($course->completed_lessons / $course->total_bookings) * 100, 1) : 0,
-        'average_rating' => null,
-        'total_revenue' => $course->total_revenue ?? 0,
-        ])
-            ->sortByDesc('total_enrolled')
-            ->take(10),
-
-            // Attendance metrics - filtered by scheduled_at
-            'attendance' => [
-                'attended' => Booking::where('school_id', $school->id)
-                ->where('status', 'completed')
-                ->when($startDate, function ($query) use ($startDate, $endDate) {
-            $query->whereBetween('scheduled_at', [$startDate, $endDate]);
-        })
-                ->count(),
-                'missed' => Booking::where('school_id', $school->id)
-                ->whereIn('status', ['cancelled', 'no_show'])
-                ->when($startDate, function ($query) use ($startDate, $endDate) {
-            $query->whereBetween('scheduled_at', [$startDate, $endDate]);
-        })
-                ->count(),
-            ],
-
-
-            // Lessons breakdown (driving + practical merged)
-            'lessons_by_status' => Booking::where('school_id', $school->id)
-            ->when($startDate, function ($query) use ($startDate, $endDate) {
-            $query->whereBetween('scheduled_at', [$startDate, $endDate]);
-        })
-            ->selectRaw('status, COUNT(*) as count')
-            ->groupBy('status')
-            ->get(),
-
-            // Bookings by instructor (for lessons report)
-            'lessons_by_instructor' => Booking::where('school_id', $school->id)
->>>>>>> deploy-testing
             ->with('instructor')
             ->when($startDate, fn($q) => $q->whereBetween('scheduled_at', [$startDate, $endDate]))
             ->whereNotNull('instructor_id')
@@ -236,7 +163,7 @@ class ReportController extends Controller
                 'completion_rate' => $b->total_lessons > 0 ? round(($b->completed_lessons / $b->total_lessons) * 100, 1) : 0,
             ]);
         
-        // ── 7. Cancellation details (1 query with eager loading) ──
+        // â”€â”€ 7. Cancellation details (1 query with eager loading) â”€â”€
         $cancellationDetails = Booking::where('school_id', $schoolId)
             ->whereIn('status', ['cancelled', 'no_show', 'no-show'])
             ->when($startDate, fn($q) => $q->whereBetween('scheduled_at', [$startDate, $endDate]))
@@ -245,7 +172,7 @@ class ReportController extends Controller
             ->limit(20)
             ->get();
         
-        // ── 8. Financial data - 3 queries (already efficient, no loops) ──
+        // â”€â”€ 8. Financial data - 3 queries (already efficient, no loops) â”€â”€
         $financialBaseQuery = fn() => Payment::whereHas('booking', fn($q) => $q->where('school_id', $schoolId));
         
         $totalRevenue = $financialBaseQuery()
@@ -265,7 +192,7 @@ class ReportController extends Controller
             ->groupBy('method')
             ->get();
         
-        // ── 9. Student progress - ONE bulk query instead of loading ALL students + ALL bookings ──
+        // â”€â”€ 9. Student progress - ONE bulk query instead of loading ALL students + ALL bookings â”€â”€
         $studentProgress = DB::table('bookings')
             ->join('students', 'bookings.student_id', '=', 'students.id')
             ->where('bookings.school_id', $schoolId)
@@ -289,7 +216,7 @@ class ReportController extends Controller
                 'progress_rate' => $s->total_lessons > 0 ? round(($s->completed_lessons / $s->total_lessons) * 100, 1) : 0,
             ]);
         
-        // ── Build analytics array ──
+        // â”€â”€ Build analytics array â”€â”€
         $totalAllBookings = (int) $bookingStats->total;
         $completedCount = (int) $bookingStats->completed;
         $cancelledCount = (int) $bookingStats->cancelled;

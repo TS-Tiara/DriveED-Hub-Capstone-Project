@@ -205,8 +205,7 @@ td {
     }
 }
 
-<<<<<<< HEAD
-/* ── Compact Pagination Styling ── */
+/* Compact Pagination Styling */
 nav[role="navigation"] {
     display: flex;
     justify-content: flex-end;
@@ -294,9 +293,6 @@ nav[role="navigation"] span:not([aria-current]):not([aria-disabled]) {
         margin-right: 16px;
     }
 }
-=======
-/* Pagination is rendered and styled by global vendor pagination templates (resources/views/vendor/pagination/*) */
->>>>>>> deploy-testing
 </style>
 
 <div class="payments-container">
@@ -306,7 +302,7 @@ nav[role="navigation"] span:not([aria-current]):not([aria-disabled]) {
 
     <div class="total-spent">
         <p class="total-spent-label">Total Amount Paid</p>
-        <h2>₱{{ number_format($totalPaid ?? $payments->where('status', 'completed')->sum('amount'), 2) }}</h2>
+        <h2>&#8369;{{ number_format($totalPaid ?? $payments->where('status', 'completed')->sum('amount'), 2) }}</h2>
     </div>
 
     <div class="payments-table">
@@ -325,7 +321,7 @@ nav[role="navigation"] span:not([aria-current]):not([aria-disabled]) {
                 <tr>
                     <td>{{ $payment->paid_on ? $payment->paid_on->format('M d, Y') : 'N/A' }}</td>
                     <td><strong>{{ $payment->booking?->course?->title ?? 'N/A' }}</strong></td>
-                    <td><strong class="amount-emphasis">₱{{ number_format($payment->amount, 2) }}</strong></td>
+                    <td><strong class="amount-emphasis">&#8369;{{ number_format($payment->amount, 2) }}</strong></td>
                     <td>{{ ucfirst($payment->method ?? 'N/A') }}</td>
                     <td><span class="badge badge-{{ $payment->status }}">{{ ucfirst($payment->status) }}</span></td>
                 </tr>
@@ -356,7 +352,7 @@ nav[role="navigation"] span:not([aria-current]):not([aria-disabled]) {
             </div>
             <div class="payment-card-row">
                 <span class="payment-card-label">Amount</span>
-                <span class="payment-card-amount">₱{{ number_format($payment->amount, 2) }}</span>
+                <span class="payment-card-amount">&#8369;{{ number_format($payment->amount, 2) }}</span>
             </div>
             <div class="payment-card-row">
                 <span class="payment-card-label">Method</span>

@@ -727,7 +727,7 @@
     <div class="collapsible-section">
         <div class="section-header" onclick="toggleSection(this)">
             <h2>Student Enrollment Overview</h2>
-            <span class="collapse-icon">▼</span>
+            <span class="collapse-icon">&#x25BC;</span>
         </div>
         <div class="section-content">
             <div class="stats-summary">
@@ -743,15 +743,6 @@
                     <div class="label">{{ $periodLabel }}</div>
                     <div class="value">{{ $analytics['enrollments_this_month'] }}</div>
                 </div>
-<<<<<<< HEAD
-=======
-                <div class="stat-box">
-                    <div class="label">Growth</div>
-                    <div class="value {{ $analytics['enrollment_growth'] >= 0 ? 'value-positive' : 'value-negative' }}">
-                        {{ $analytics['enrollment_growth'] >= 0 ? '+' : '' }}{{ $analytics['enrollment_growth'] }}%
-                    </div>
-                </div>
->>>>>>> deploy-testing
             </div>
                         <div class="stat-label">{{ $periodLabel }} Schedules</div>
             <table class="reports-table">
@@ -800,7 +791,7 @@
     <div class="collapsible-section">
         <div class="section-header" onclick="toggleSection(this)">
             <h2>Schedule Analytics</h2>
-            <span class="collapse-icon">▼</span>
+            <span class="collapse-icon">&#x25BC;</span>
         </div>
         <div class="section-content">
             <div class="stats-summary">
@@ -869,7 +860,7 @@
     <div class="collapsible-section">
         <div class="section-header" onclick="toggleSection(this)">
             <h2>Course Performance & Analytics</h2>
-            <span class="collapse-icon">▼</span>
+            <span class="collapse-icon">&#x25BC;</span>
         </div>
         <div class="section-content collapsed">
             @php
@@ -913,7 +904,7 @@
                         <tr>
                             <td><strong>{{ $course->title }}</strong></td>
                             <td><span class="badge badge-info">{{ $course->total_enrolled }}</span></td>
-                            <td>₱{{ number_format($course->price ?? 0, 2) }}</td>
+                            <td>&#8369;{{ number_format($course->price ?? 0, 2) }}</td>
                             <td>
                                 <div class="progress-bar progress-bar-tight">
                                     <div class="progress-fill progress-fill-dynamic {{ $course->completion_rate >= 70 ? 'progress-fill-success' : 'progress-fill-warning' }}" data-width="{{ $course->completion_rate }}"></div>
@@ -924,12 +915,12 @@
                             </td>
                             <td>
                                 @if($course->average_rating)
-                                    <span class="text-warning">★</span> {{ number_format($course->average_rating, 1) }}
+                                    <span class="text-warning">&#9733;</span> {{ number_format($course->average_rating, 1) }}
                                 @else
                                     <span class="text-muted">--</span>
                                 @endif
                             </td>
-                            <td class="text-strong-success">₱{{ number_format($course->total_revenue, 2) }}</td>
+                            <td class="text-strong-success">&#8369;{{ number_format($course->total_revenue, 2) }}</td>
                         </tr>
                     @empty
                         <tr>
@@ -945,7 +936,7 @@
     <div class="collapsible-section">
         <div class="section-header" onclick="toggleSection(this)">
             <h2>Instructor Performance</h2>
-            <span class="collapse-icon collapsed">▼</span>
+            <span class="collapse-icon collapsed">&#x25BC;</span>
         </div>
         <div class="section-content collapsed">
             <table class="reports-table">
@@ -966,7 +957,7 @@
                             <td>{{ $instructor->completed_sessions }}</td>
                             <td>
                                 @if($instructor->average_rating)
-                                    <span class="text-warning">★</span> {{ number_format($instructor->average_rating, 1) }}
+                                    <span class="text-warning">&#9733;</span> {{ number_format($instructor->average_rating, 1) }}
                                 @else
                                     <span class="text-muted">No ratings yet</span>
                                 @endif
@@ -994,7 +985,7 @@
     <div class="collapsible-section">
         <div class="section-header" onclick="toggleSection(this)">
             <h2>Attendance & Performance</h2>
-            <span class="collapse-icon collapsed">▼</span>
+            <span class="collapse-icon collapsed">&#x25BC;</span>
         </div>
         <div class="section-content collapsed">
             <div class="stats-summary">
@@ -1026,7 +1017,7 @@
     <div class="collapsible-section">
         <div class="section-header" onclick="toggleSection(this)">
             <h2>Lessons Report</h2>
-            <span class="collapse-icon">▼</span>
+            <span class="collapse-icon">&#x25BC;</span>
         </div>
         <div class="section-content collapsed">
             <div class="stats-summary">
@@ -1110,7 +1101,7 @@
     <div class="collapsible-section">
         <div class="section-header" onclick="toggleSection(this)">
             <h2>Schedules & Cancellations</h2>
-            <span class="collapse-icon">▼</span>
+            <span class="collapse-icon">&#x25BC;</span>
         </div>
         <div class="section-content collapsed">
             <div class="stats-summary">
@@ -1166,21 +1157,21 @@
     <div class="collapsible-section">
         <div class="section-header" onclick="toggleSection(this)">
             <h2>Financial Report</h2>
-            <span class="collapse-icon">▼</span>
+            <span class="collapse-icon">&#x25BC;</span>
         </div>
         <div class="section-content collapsed">
             <div class="stats-summary">
                 <div class="stat-box">
                     <div class="label">Total Revenue</div>
-                    <div class="value value-success">₱{{ number_format($analytics['financial']['total_revenue'], 2) }}</div>
+                    <div class="value value-success">&#8369;{{ number_format($analytics['financial']['total_revenue'], 2) }}</div>
                 </div>
                 <div class="stat-box">
                     <div class="label">Pending Payments</div>
-                    <div class="value value-warning">₱{{ number_format($analytics['financial']['pending_payments'], 2) }}</div>
+                    <div class="value value-warning">&#8369;{{ number_format($analytics['financial']['pending_payments'], 2) }}</div>
                 </div>
                 <div class="stat-box">
                     <div class="label">Total Expected</div>
-                    <div class="value value-primary">₱{{ number_format($analytics['financial']['total_revenue'] + $analytics['financial']['pending_payments'], 2) }}</div>
+                    <div class="value value-primary">&#8369;{{ number_format($analytics['financial']['total_revenue'] + $analytics['financial']['pending_payments'], 2) }}</div>
                 </div>
             </div>
 
@@ -1197,7 +1188,7 @@
                     @forelse($analytics['financial']['payments_by_method'] as $payment)
                         <tr>
                             <td><strong>{{ ucfirst($payment->method ?? 'N/A') }}</strong></td>
-                            <td>₱{{ number_format($payment->total, 2) }}</td>
+                            <td>&#8369;{{ number_format($payment->total, 2) }}</td>
                             <td>{{ $payment->count }}</td>
                         </tr>
                     @empty
@@ -1214,7 +1205,7 @@
     <div class="collapsible-section">
         <div class="section-header" onclick="toggleSection(this)">
             <h2>Student Progress Report</h2>
-            <span class="collapse-icon">▼</span>
+            <span class="collapse-icon">&#x25BC;</span>
         </div>
         <div class="section-content collapsed">
             <table class="reports-table">

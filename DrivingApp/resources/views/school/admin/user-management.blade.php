@@ -100,33 +100,6 @@
         color: #4b5563;
         margin-bottom: 6px;
     }
-<<<<<<< HEAD
-=======
-
-    .action-controls {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-        flex-wrap: wrap;
-    }
-
-    .branch-filter-select {
-        padding: 10px 14px;
-        border: 2px solid #e5e7eb;
-        border-radius: 8px;
-        font-size: 0.9rem;
-        background: white;
-        cursor: pointer;
-    }
-
-    .branch-modal-select {
-        width: 100%;
-        padding: 10px 14px;
-        border: 2px solid #e5e7eb;
-        border-radius: 8px;
-        font-size: 0.95rem;
-    }
->>>>>>> deploy-testing
     
     .search-box input {
         width: 100%;
@@ -809,7 +782,7 @@
                         </svg>
                     </div>
                 </div>
-                <div class="stat-detail"><strong>{{ $totalStudents }}</strong> Students · <strong>{{ $totalInstructors }}</strong> Instructors</div>
+                <div class="stat-detail"><strong>{{ $totalStudents }}</strong> Students &middot; <strong>{{ $totalInstructors }}</strong> Instructors</div>
             </div>
         </div>
         
@@ -826,7 +799,7 @@
                         </svg>
                     </div>
                 </div>
-                <div class="stat-detail"><strong>{{ $activeStudents }}</strong> Students · <strong>{{ $activeInstructors }}</strong> Instructors</div>
+                <div class="stat-detail"><strong>{{ $activeStudents }}</strong> Students &middot; <strong>{{ $activeInstructors }}</strong> Instructors</div>
             </div>
         </div>
         
@@ -843,7 +816,7 @@
                         </svg>
                     </div>
                 </div>
-                <div class="stat-detail"><strong>{{ $inactiveStudents }}</strong> Students · <strong>{{ $inactiveInstructors }}</strong> Instructors</div>
+                <div class="stat-detail"><strong>{{ $inactiveStudents }}</strong> Students &middot; <strong>{{ $inactiveInstructors }}</strong> Instructors</div>
             </div>
         </div>
         
@@ -860,7 +833,7 @@
                         </svg>
                     </div>
                 </div>
-                <div class="stat-detail"><strong>{{ $activeStudents }}</strong> Active · <strong>{{ $inactiveStudents }}</strong> Inactive</div>
+                <div class="stat-detail"><strong>{{ $activeStudents }}</strong> Active &middot; <strong>{{ $inactiveStudents }}</strong> Inactive</div>
             </div>
         </div>
         
@@ -877,30 +850,30 @@
                         </svg>
                     </div>
                 </div>
-                <div class="stat-detail"><strong>{{ $activeInstructors }}</strong> Active · <strong>{{ $inactiveInstructors }}</strong> Inactive</div>
+                <div class="stat-detail"><strong>{{ $activeInstructors }}</strong> Active &middot; <strong>{{ $inactiveInstructors }}</strong> Inactive</div>
             </div>
         </div>
     </div>
     
     @if(session('success'))
     <div class="flash-message success">
-        <div class="flash-icon">✓</div>
+        <div class="flash-icon">&#10003;</div>
         <div class="flash-content">
             <div class="flash-title">Success!</div>
             <div class="flash-text">{{ session('success') }}</div>
         </div>
-        <button class="flash-close" onclick="this.parentElement.remove()">×</button>
+        <button class="flash-close" onclick="this.parentElement.remove()">&times;</button>
     </div>
     @endif
     
     @if(session('error'))
     <div class="flash-message error">
-        <div class="flash-icon">✕</div>
+        <div class="flash-icon">&#10005;</div>
         <div class="flash-content">
             <div class="flash-title">Error!</div>
             <div class="flash-text">{{ session('error') }}</div>
         </div>
-        <button class="flash-close" onclick="this.parentElement.remove()">×</button>
+        <button class="flash-close" onclick="this.parentElement.remove()">&times;</button>
     </div>
     @endif
     
@@ -909,20 +882,12 @@
         <div class="action-bar">
             <div class="search-box">
                 <label for="userSearch" class="control-label">Search Users</label>
-<<<<<<< HEAD
                 <input type="text" id="userSearch" placeholder="Search users by name, email, or role..." onkeyup="filterTable('userSearch', 'usersTable')">
-=======
-                <input type="text" id="userSearch" placeholder="Search users by name, email, or role..." onkeyup="filterTable('userSearch', 'usersTable')" aria-label="Search users by name, email, or role">
->>>>>>> deploy-testing
             </div>
             <div class="action-controls">
                 @if(isset($branches) && $branches->count() > 0)
                 <label for="branchFilter" class="control-label">Branch Filter</label>
-<<<<<<< HEAD
                 <select id="branchFilter" onchange="filterByBranch()" style="padding: 10px 14px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 0.9rem; background: white; cursor: pointer;">
-=======
-                <select id="branchFilter" class="branch-filter-select" onchange="filterByBranch()">
->>>>>>> deploy-testing
                     <option value="">All Branches</option>
                     <option value="unassigned">Unassigned</option>
                     @foreach($branches as $branch)
@@ -1062,27 +1027,26 @@
         </div>
         
         <div class="mt-4 pagination-groups">
-            @if($students->hasPages())
+            @php
+                $studentLinks = $students->hasPages()
+                    ? $students->appends(['instructors_page' => request('instructors_page')])->links('vendor.pagination.drivingapp')->toHtml()
+                    : '';
+                $instructorLinks = $instructors->hasPages()
+                    ? $instructors->appends(['students_page' => request('students_page')])->links('vendor.pagination.drivingapp')->toHtml()
+                    : '';
+            @endphp
+
+            @if(trim(strip_tags($studentLinks)) !== '')
                 <div>
-<<<<<<< HEAD
                     <h4 style="font-size: 0.9rem; margin-bottom: 5px; color: #6b7280;">Student Pages:</h4>
-                    {{ $students->appends(['instructors_page' => request('instructors_page')])->links('vendor.pagination.drivingapp') }}
-=======
-                    <h4 class="pagination-title">Student Pages:</h4>
-                    {{ $students->appends(['instructors_page' => request('instructors_page')])->links() }}
->>>>>>> deploy-testing
+                    {!! $studentLinks !!}
                 </div>
             @endif
-            
-            @if($instructors->hasPages())
+
+            @if(trim(strip_tags($instructorLinks)) !== '')
                 <div>
-<<<<<<< HEAD
                     <h4 style="font-size: 0.9rem; margin-bottom: 5px; color: #6b7280;">Instructor Pages:</h4>
-                    {{ $instructors->appends(['students_page' => request('students_page')])->links('vendor.pagination.drivingapp') }}
-=======
-                    <h4 class="pagination-title">Instructor Pages:</h4>
-                    {{ $instructors->appends(['students_page' => request('students_page')])->links() }}
->>>>>>> deploy-testing
+                    {!! $instructorLinks !!}
                 </div>
             @endif
         </div>
@@ -1293,7 +1257,7 @@
             else if (type === 'instructors') show = (role === 'instructor');
             else if (type === 'active') show = (status === 'active');
             else if (type === 'inactive') show = (status === 'inactive');
-            // 'all' → show everything
+            // 'all' -> show everything
 
             row.style.display = show ? '' : 'none';
         });

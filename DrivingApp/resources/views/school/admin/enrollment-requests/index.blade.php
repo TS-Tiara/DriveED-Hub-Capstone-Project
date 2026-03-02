@@ -741,23 +741,23 @@
     <!-- Alert Messages -->
     @if(session('success'))
     <div class="flash-message success">
-        <div class="flash-icon">✓</div>
+        <div class="flash-icon">&#10003;</div>
         <div class="flash-content">
             <div class="flash-title">Success!</div>
             <div class="flash-text">{{ session('success') }}</div>
         </div>
-        <button class="flash-close" onclick="this.parentElement.remove()">×</button>
+        <button class="flash-close" onclick="this.parentElement.remove()">&times;</button>
     </div>
     @endif
 
     @if(session('error'))
     <div class="flash-message error">
-        <div class="flash-icon">✕</div>
+        <div class="flash-icon">&#10005;</div>
         <div class="flash-content">
             <div class="flash-title">Error!</div>
             <div class="flash-text">{{ session('error') }}</div>
         </div>
-        <button class="flash-close" onclick="this.parentElement.remove()">×</button>
+        <button class="flash-close" onclick="this.parentElement.remove()">&times;</button>
     </div>
     @endif
     
@@ -936,26 +936,17 @@
                                 @php $licenseStatus = $request->learner->student_license_status ?? 'none'; @endphp
                                 <div>
                                     <span class="license-badge license-{{ $licenseStatus }}">
-                                        🪪 {{ $licenseStatus === 'none' ? 'No License' : ucfirst($licenseStatus) }}
+                                        License: {{ $licenseStatus === 'none' ? 'No License' : ucfirst($licenseStatus) }}
                                     </span>
                                 </div>
                                 @if($licenseStatus === 'pending')
                                     <div class="license-actions">
-<<<<<<< HEAD
                                         <button type="button" class="btn-license-view" onclick="showLicensePreviewModal('{{ route('schools.admin.enrollments.viewLicense', ['school' => $school, 'student' => $request->learner->id]) }}', '{{ addslashes($request->learner->name) }}')">View</button>
                                         <form method="POST" action="{{ route('schools.admin.enrollments.verifyLicense', ['school' => $school, 'student' => $request->learner->id]) }}" style="display:inline;">
                                             @csrf
-                                            <button type="button" class="btn-license-verify" onclick="showConfirm({title:'Verify License',message:'Verify this student\'s license?',type:'success',onConfirm:()=>this.closest('form').submit()})">✓ Verify</button>
+                                            <button type="button" class="btn-license-verify" onclick="showConfirm({title:'Verify License',message:'Verify this student\'s license?',type:'success',onConfirm:()=>this.closest('form').submit()})">&#10003; Verify</button>
                                         </form>
-                                        <button type="button" class="btn-license-reject" onclick="showLicenseRejectModal({{ $request->learner->id }}, '{{ addslashes($request->learner->name) }}')">✗ Reject</button>
-=======
-                                        <a href="{{ Storage::url($request->learner->student_license_path) }}" target="_blank" class="btn-license-view">View</a>
-                                        <form method="POST" action="{{ route('schools.admin.enrollments.verifyLicense', ['school' => $school, 'student' => $request->learner->id]) }}" class="inline-form">
-                                            @csrf
-                                            <button type="button" class="btn-license-verify" onclick="showConfirm({title:'Verify License',message:'Verify this student\'s license?',type:'success',onConfirm:()=>this.closest('form').submit()})">✓ Verify</button>
-                                        </form>
-                                        <button type="button" class="btn-license-reject" onclick="showLicenseRejectModal({{ $request->learner->id }}, '{{ addslashes($request->learner->name) }}')"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg> Reject</button>
->>>>>>> deploy-testing
+                                        <button type="button" class="btn-license-reject" onclick="showLicenseRejectModal({{ $request->learner->id }}, '{{ addslashes($request->learner->name) }}')">&#10005; Reject</button>
                                     </div>
                                 @elseif($licenseStatus === 'verified')
                                     @if($request->learner->student_license_path || $request->learner->student_license_data)
@@ -974,7 +965,7 @@
                         </td>
                         <td>{{ $request->branchRelation?->name ?? '—' }}</td>
                         <td>
-                            <strong>₱{{ number_format($request->course->price ?? 0, 2) }}</strong>
+                            <strong>&#8369;{{ number_format($request->course->price ?? 0, 2) }}</strong>
                         </td>
                         <td>
                             <span class="status-badge status-{{ $request->status }}">
@@ -998,15 +989,11 @@
                                     <form method="POST" action="{{ route('schools.admin.enrollments.approve', ['school' => $school, 'enrollmentRequest' => $request->id]) }}" class="inline-form" id="approveForm{{ $request->id }}">
                                         @csrf
                                         <button type="button" class="btn btn-approve" onclick="approveRequest({{ $request->id }})">
-                                            ✓ Approve
+                                            &#10003; Approve
                                         </button>
                                     </form>
                                     <button class="btn btn-reject" onclick="showRejectModal({{ $request->id }})">
-<<<<<<< HEAD
-                                        ✗ Reject
-=======
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg> Reject
->>>>>>> deploy-testing
+                                        &#10005; Reject
                                     </button>
                                 </div>
                             @elseif($request->status === 'approved')
@@ -1014,15 +1001,11 @@
                                     <form method="POST" action="{{ route('schools.admin.enrollments.complete', ['school' => $school, 'enrollmentRequest' => $request->id]) }}" class="inline-form" id="completeForm{{ $request->id }}">
                                         @csrf
                                         <button type="button" class="btn btn-approve" onclick="completeEnrollment({{ $request->id }})">
-                                            ✓ Complete
+                                            &#10003; Complete
                                         </button>
                                     </form>
                                     <button class="btn btn-reject" onclick="showCancelModal({{ $request->id }})">
-<<<<<<< HEAD
-                                        ✗ Cancel
-=======
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg> Cancel
->>>>>>> deploy-testing
+                                        &#10005; Cancel
                                     </button>
                                 </div>
                             @else
@@ -1055,7 +1038,7 @@
                     <div class="mobile-learner-email">{{ $request->learner->email }}</div>
                     @php $licenseStatus = $request->learner->student_license_status ?? 'none'; @endphp
                     <span class="license-badge license-{{ $licenseStatus }} license-badge-inline">
-                        🪪 {{ $licenseStatus === 'none' ? 'No License' : ucfirst($licenseStatus) }}
+                        License: {{ $licenseStatus === 'none' ? 'No License' : ucfirst($licenseStatus) }}
                     </span>
                 </div>
                 <span class="status-badge status-{{ $request->status }}">{{ ucfirst($request->status) }}</span>
@@ -1070,7 +1053,7 @@
             </div>
             <div class="mobile-card-row">
                 <span class="mobile-card-label">Fee</span>
-                <span class="mobile-card-value">₱{{ number_format($request->course->price ?? 0, 2) }}</span>
+                <span class="mobile-card-value">&#8369;{{ number_format($request->course->price ?? 0, 2) }}</span>
             </div>
             <div class="mobile-card-row">
                 <span class="mobile-card-label">Payment</span>
@@ -1084,25 +1067,17 @@
                 <div class="mobile-card-actions">
                     <form method="POST" action="{{ route('schools.admin.enrollments.approve', ['school' => $school, 'enrollmentRequest' => $request->id]) }}" class="contents-form" id="mobileApproveForm{{ $request->id }}">
                         @csrf
-                        <button type="button" class="btn btn-approve" onclick="document.getElementById('approveForm{{ $request->id }}').submit()">✓ Approve</button>
+                        <button type="button" class="btn btn-approve" onclick="document.getElementById('approveForm{{ $request->id }}').submit()">&#10003; Approve</button>
                     </form>
-<<<<<<< HEAD
-                    <button class="btn btn-reject" onclick="showRejectModal({{ $request->id }})">✗ Reject</button>
-=======
-                    <button class="btn btn-reject" onclick="showRejectModal({{ $request->id }})"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg> Reject</button>
->>>>>>> deploy-testing
+                    <button class="btn btn-reject" onclick="showRejectModal({{ $request->id }})">&#10005; Reject</button>
                 </div>
             @elseif($request->status === 'approved')
                 <div class="mobile-card-actions">
                     <form method="POST" action="{{ route('schools.admin.enrollments.complete', ['school' => $school, 'enrollmentRequest' => $request->id]) }}" class="contents-form" id="mobileCompleteForm{{ $request->id }}">
                         @csrf
-                        <button type="button" class="btn btn-approve" onclick="completeEnrollment({{ $request->id }})">✓ Complete</button>
+                        <button type="button" class="btn btn-approve" onclick="completeEnrollment({{ $request->id }})">&#10003; Complete</button>
                     </form>
-<<<<<<< HEAD
-                    <button class="btn btn-reject" onclick="showCancelModal({{ $request->id }})">✗ Cancel</button>
-=======
-                    <button class="btn btn-reject" onclick="showCancelModal({{ $request->id }})"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg> Cancel</button>
->>>>>>> deploy-testing
+                    <button class="btn btn-reject" onclick="showCancelModal({{ $request->id }})">&#10005; Cancel</button>
                 </div>
             @endif
         </div>
@@ -1232,7 +1207,7 @@
                 <h3 style="margin: 0; color: #111827; font-size: 1rem;">Student License Preview</h3>
                 <p id="licensePreviewStudent" style="margin: 2px 0 0 0; color: #6b7280; font-size: 0.85rem;"></p>
             </div>
-            <button type="button" onclick="closeLicensePreviewModal()" style="border: none; background: transparent; font-size: 1.5rem; line-height: 1; color: #6b7280; cursor: pointer;">×</button>
+            <button type="button" onclick="closeLicensePreviewModal()" style="border: none; background: transparent; font-size: 1.5rem; line-height: 1; color: #6b7280; cursor: pointer;">&times;</button>
         </div>
         <div style="flex: 1; background: #f3f4f6;">
             <iframe id="licensePreviewFrame" src="" title="License Preview" style="width: 100%; height: 100%; border: 0;"></iframe>
