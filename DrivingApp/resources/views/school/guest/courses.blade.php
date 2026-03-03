@@ -818,17 +818,13 @@
                 @else
                     @if($course->course_type === 'practical' && (!$guest || !$guest->hasVerifiedLicense()))
                         <div class="license-required-note">
-                            <i class="fas fa-exclamation-triangle me-1"></i>
-                            Student Driver's License required for PDC
+                            <i class="fas fa-info-circle me-1"></i>
+                            Student Permit/License is recommended for PDC. You can provide it later.
                         </div>
-                        <button class="btn-enroll" disabled title="You need a verified student driver's license to enroll in practical driving courses (PDC)">
-                            License Required
-                        </button>
-                    @else
-                        <button type="button" class="btn-enroll" onclick="openEnrollModal({{ $course->id }})">
-                            Enroll
-                        </button>
                     @endif
+                    <button type="button" class="btn-enroll" onclick="openEnrollModal({{ $course->id }})">
+                        Enroll
+                    </button>
                 @endif
             </div>
         </div>
@@ -868,10 +864,10 @@
                     </div>
 
                     @if($course->course_type === 'practical')
-                    <!-- PDC License Requirement Notice -->
-                    <div class="alert alert-warning alert-warning-compact mb-3">
+                    <!-- PDC License Recommendation Notice -->
+                    <div class="alert alert-info alert-warning-compact mb-3">
                         <i class="fas fa-id-card me-1"></i>
-                        <strong>PDC Requirement:</strong> Practical Driving Courses require a verified Student Driver's License. Only experienced drivers with valid credentials can enroll.
+                        <strong>PDC Recommendation:</strong> While enrollment is open, note that Practical Driving Courses will ultimately require a verified Student Driver's License before driving sessions can be booked.
                     </div>
                     @endif
 
@@ -934,7 +930,7 @@
                                 <span class="text-danger">*</span>
                             @endif
                         </label>
-                        <input type="file" name="credential_file" id="credential_file{{ $course->id }}" class="form-control @error('credential_file') is-invalid @enderror" accept=".pdf,.jpg,.jpeg,.png" {{ $course->course_type === 'practical' ? 'required' : '' }}>
+                        <input type="file" name="credential_file" id="credential_file{{ $course->id }}" class="form-control @error('credential_file') is-invalid @enderror" accept=".pdf,.jpg,.jpeg,.png">
                         @error('credential_file')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror

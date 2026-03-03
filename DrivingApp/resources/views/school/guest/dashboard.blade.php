@@ -697,14 +697,21 @@
         $step2Done = $hasSubmittedRequest ?? false;
         $step3Done = $hasUploadedLicense ?? false;
         $step4Done = ($approvedEnrollment ?? false) ? true : false;
+        
+        // Determine if license is optional for this student
+        $latestRequest = $pendingRequest ?? $approvedEnrollment ?? $rejectedRequest;
+        $isTheoreticalOnly = $latestRequest && $latestRequest->course && $latestRequest->course->course_type === 'theoretical';
+        $isNewDriver = ($latestRequest && $latestRequest->experience_level === 'new_driver') || ($guest && $guest->experience_level === 'new_driver');
+        $licenseOptional = $isTheoreticalOnly || $isNewDriver;
+
         $completedSteps = ($step1Done ? 1 : 0) + ($step2Done ? 1 : 0) + ($step3Done ? 1 : 0) + ($step4Done ? 1 : 0);
         $progressPercent = round(($completedSteps / 4) * 100);
         
-        // Determine current step
-        if (!$step2Done && !$step3Done) {
+        // Determine current step - Skip 3 if optional and not done
+        if (!$step2Done) {
             $currentStep = 2; // Browse & enroll
-        } elseif ($step2Done && !$step3Done) {
-            $currentStep = 3; // Upload license
+        } elseif (!$step3Done && !$licenseOptional) {
+            $currentStep = 3; // Upload license (Required)
         } elseif (!$step4Done) {
             $currentStep = 4; // Waiting for approval
         } else {
@@ -726,7 +733,12 @@
             <div class="onboarding-progress-bar">
                 <div class="onboarding-progress-fill progress-{{ $progressPercent }}"></div>
             </div>
-            <span class="onboarding-progress-text">{{ $completedSteps }} of 4 complete</span>
+            <span class="onboarding-progress-text">
+                {{ $completedSteps }} of 4 complete 
+                @if($licenseOptional && !$step3Done)
+                    <small style="opacity: 0.8; font-weight: normal;">(Step 3 is optional for you)</small>
+                @endif
+            </span>
         </div>
 
         <div class="onboarding-steps">
@@ -804,7 +816,12 @@
                     <div class="step-indicator upcoming">3</div>
                 @endif
                 <div class="step-content">
-                    <div class="step-title {{ $step3Done ? 'completed' : ($currentStep == 3 ? 'current' : 'upcoming') }}">Upload Student Driver's License</div>
+                    <div class="step-title {{ $step3Done ? 'completed' : ($currentStep == 3 ? 'current' : 'upcoming') }}">
+                        Upload Student Driver's License 
+                        @if($licenseOptional)
+                            <span style="font-size: 0.75em; opacity: 0.7; font-weight: normal;">(Optional)</span>
+                        @endif
+                    </div>
                     <div class="step-description">
                         @if($guest->hasVerifiedLicense())
                             Your license has been verified. You're eligible for PDC courses!
@@ -813,7 +830,11 @@
                         @elseif($guest->isLicenseRejected())
                             Your license was rejected. Please re-upload a valid license.
                         @else
-                            Required for Practical Driving Courses (PDC). Optional if you're only taking TDC.
+                            @if($licenseOptional)
+                                Optional for New Drivers or TDC students. You can do this later.
+                            @else
+                                Required for Practical Driving Courses (PDC).
+                            @endif
                         @endif
                     </div>
                 </div>
@@ -830,7 +851,7 @@
                         </span>
                     @elseif($guest->isLicenseRejected())
                         <span class="step-badge rejected-badge">Rejected</span>
-                    @elseif($currentStep == 3)
+                    @elseif($currentStep == 3 || ($licenseOptional && !$step3Done))
                         <a href="#license-section" class="btn-step outline">Upload License</a>
                     @endif
                 </div>

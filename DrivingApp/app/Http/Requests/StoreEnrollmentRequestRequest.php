@@ -80,19 +80,22 @@ class StoreEnrollmentRequestRequest extends FormRequest
             // If file is present, validate it
             if ($this->hasFile('credential_file')) {
                 $fileValidation = EnrollmentValidator::validateCredentialFile($this->file('credential_file'));
-                
+
                 if (!$fileValidation['valid']) {
                     $validator->errors()->add('credential_file', $fileValidation['message']);
                 }
             }
 
-            // Require credentials for experienced drivers applying to practical courses
-            if ($this->experience_level === 'experienced_driver' && !$this->hasFile('credential_file')) {
-                $courseModel = $course instanceof \App\Models\Course ? $course : \App\Models\Course::find($courseId);
-                if ($courseModel && $courseModel->isPractical()) {
-                    $validator->errors()->add('credential_file', 'Experienced drivers must upload proof of theoretical completion when applying for practical courses.');
-                }
-            }
+        // Credentials are now optional for all enrollment requests.
+        // Even experienced drivers on practical courses can enroll first and provide proof later.
+        /* 
+         if ($this->experience_level === 'experienced_driver' && !$this->hasFile('credential_file')) {
+         $courseModel = $course instanceof \App\Models\Course ? $course : \App\Models\Course::find($courseId);
+         if ($courseModel && $courseModel->isPractical()) {
+         $validator->errors()->add('credential_file', 'Experienced drivers must upload proof of theoretical completion when applying for practical courses.');
+         }
+         }
+         */
         });
     }
 }

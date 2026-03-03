@@ -44,14 +44,14 @@ class TimeSlot extends Model
 
     public function instructors()
     {
-        return $this->belongsToMany(Instructor::class, 'schedule_instructors')
+        return $this->belongsToMany(Instructor::class , 'schedule_instructors')
             ->withTimestamps()
             ->withPivot(['school_id', 'assignment_type']);
     }
 
     public function bookings()
     {
-        return $this->hasMany(Booking::class, 'time_slot_id');
+        return $this->hasMany(Booking::class , 'time_slot_id');
     }
 
     public function hasInstructor(int $instructorId): bool
@@ -61,35 +61,35 @@ class TimeSlot extends Model
 
     public function isFull(): bool
     {
-        return $this->instructors()->count() >= ($this->max_instructors ?? 1);
+        return $this->instructors->count() >= ($this->max_instructors ?? 1);
     }
 
     // Check if instructors can self-select this slot (has available spots)
     public function isOpenForSelection(): bool
     {
         return $this->status === 'open' &&
-               $this->instructors()->count() < $this->max_instructors;
+            $this->instructors->count() < $this->max_instructors;
     }
 
     // Get available spots for instructors
     public function getAvailableSpots(): int
     {
-        return max(0, $this->max_instructors - $this->instructors()->count());
+        return max(0, ($this->max_instructors ?? 0) - $this->instructors->count());
     }
 
     // Get count of admin-assigned instructors
     public function getAdminAssignedCount(): int
     {
-        return $this->instructors()
-            ->wherePivot('assignment_type', 'admin_assigned')
+        return $this->instructors
+            ->where('pivot.assignment_type', 'admin_assigned')
             ->count();
     }
 
     // Get count of self-selected instructors
     public function getSelfSelectedCount(): int
     {
-        return $this->instructors()
-            ->wherePivot('assignment_type', 'self_selected')
+        return $this->instructors
+            ->where('pivot.assignment_type', 'self_selected')
             ->count();
     }
 
@@ -111,7 +111,7 @@ class TimeSlot extends Model
     // Check if a specific instructor can select this slot
     public function canInstructorSelect(int $instructorId): bool
     {
-        return $this->isOpenForSelection() && 
-               !$this->hasInstructor($instructorId);
+        return $this->isOpenForSelection() &&
+            !$this->hasInstructor($instructorId);
     }
 }

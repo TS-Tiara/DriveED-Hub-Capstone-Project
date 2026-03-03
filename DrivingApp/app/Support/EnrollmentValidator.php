@@ -34,16 +34,18 @@ class EnrollmentValidator
                 ];
             }
 
-            if (!$student->hasVerifiedLicense()) {
-                return [
-                    'allowed' => false,
-                    'message' => 'You must have a verified student driver\'s license to enroll in practical courses. Please upload your license from your dashboard.'
-                ];
-            }
-            
+            /* 
+             if (!$student->hasVerifiedLicense()) {
+             return [
+             'allowed' => false,
+             'message' => 'You must have a verified student driver\'s license to enroll in practical courses. Please upload your license from your dashboard.'
+             ];
+             }
+             */
+
             return [
                 'allowed' => true,
-                'message' => 'You can enroll in this practical course.'
+                'message' => 'You can proceed with enrollment. Note: A verified license will be required before you can book driving sessions.'
             ];
         }
 
@@ -80,15 +82,17 @@ class EnrollmentValidator
                 ];
             }
 
-            // Experienced drivers must upload credentials
-            if ($data['experience_level'] === 'experienced_driver') {
-                if (empty($data['credentials_file_path'])) {
-                    return [
-                        'valid' => false,
-                        'message' => 'Please upload proof of your theoretical completion certificate.'
-                    ];
-                }
-            }
+        // Experienced drivers on practical courses - credential upload is now optional
+        /* 
+         if ($data['experience_level'] === 'experienced_driver') {
+         if (empty($data['credentials_file_path'])) {
+         return [
+         'valid' => false,
+         'message' => 'Please upload proof of your theoretical completion certificate.'
+         ];
+         }
+         }
+         */
         }
 
         return [

@@ -1851,88 +1851,145 @@
     var currentSlotId = null;
     var currentSlotData = null;
     
-    // Store all schedule data for calendar modal access
-    var allSchedulesData = {
-        @foreach($timeslots as $date => $dateTimeslots)
-            @php
-                // Ensure consistent date format (Y-m-d)
-                $formattedDate = \Carbon\Carbon::parse($date)->format('Y-m-d');
-            @endphp
-            '{{ $formattedDate }}': [
-                @foreach($dateTimeslots as $timeslot)
-                    @php
-                        $adminCount = $timeslot->getAdminAssignedCount();
-                        $selfCount = $timeslot->getSelfSelectedCount();
-                        $totalCount = $timeslot->instructors->count();
-                        $availableSpots = $timeslot->getAvailableSpots();
-                    @endphp
-                    {
-                        id: {{ $timeslot->id }},
-                        startTime: '{{ $timeslot->start_time }}',
-                        endTime: '{{ $timeslot->end_time }}',
-                        maxInstructors: {{ $timeslot->max_instructors }},
-                        totalCount: {{ $totalCount }},
-                        availableSpots: {{ $availableSpots }},
-                        adminCount: {{ $adminCount }},
-                        selfCount: {{ $selfCount }},
-                        status: '{{ $timeslot->status }}',
-                        notes: {!! json_encode($timeslot->notes ?? '') !!},
-                        instructors: [
-                            @foreach($timeslot->instructors as $instructor)
-                                {
-                                    name: {!! json_encode($instructor->name) !!},
-                                    type: '{{ $instructor->pivot->assignment_type ?? "admin_assigned" }}'
-                                },
-                            @endforeach
-                        ]
-                    },
-                @endforeach
-            ],
-        @endforeach
-    };
-
-    function openCreateModal() {
+    // Define global functions first for reliable access
+    window.openCreateModal = function() {
         var modal = document.getElementById('createModal');
         if (modal) {
             modal.style.visibility = 'visible';
             modal.style.display = 'flex';
         }
-    }
-    
-    function closeCreateModal() {
+    };
+
+    window.closeCreateModal = function() {
         var createModal = document.getElementById('createModal');
         if(createModal) createModal.style.display = 'none';
-    }
-    
-    function openDetailsModal() {
+    };
+
+    window.openDetailsModal = function() {
         var detailsModal = document.getElementById('detailsModal');
         if(detailsModal) {
             detailsModal.style.visibility = 'visible';
             detailsModal.style.display = 'flex';
         }
-    }
-    
-    function closeDetailsModal() {
+    };
+
+    window.closeDetailsModal = function() {
         var detailsModal = document.getElementById('detailsModal');
         if(detailsModal) detailsModal.style.display = 'none';
-    }
-    
-    function openEditModal() {
-        closeDetailsModal();
-        if (currentSlotData) {
-            populateEditModal(currentSlotData);
+    };
+
+    window.openEditModal = function() {
+        window.closeDetailsModal();
+        if (window.currentSlotData) {
+            populateEditModal(window.currentSlotData);
             var editModal = document.getElementById('editModal');
             if(editModal) {
                 editModal.style.visibility = 'visible';
                 editModal.style.display = 'flex';
             }
         }
-    }
-    
-    function closeEditModal() {
+    };
+
+    window.closeEditModal = function() {
         var editModal = document.getElementById('editModal');
         if(editModal) editModal.style.display = 'none';
-    }
+    };
+
+    window.switchView = function(view) {
+        const listView = document.getElementById('list-view');
+        const calendarView = document.getElementById('calendar-view');
+        const viewBtns = document.querySelectorAll('.view-btn');
+
+        if (!listView || !calendarView || viewBtns.length === 0) return;
+        
+        viewBtns.forEach(btn => btn.classList.remove('active'));
+        
+        if (view === 'list') {
+            listView.classList.add('active');
+            calendarView.classList.remove('active');
+            const listBtn = document.querySelector('.view-btn[data-view-toggle="list"]');
+            if (listBtn) listBtn.classList.add('active');
+            localStorage.setItem('adminTimeslotsView', 'list');
+        } else {
+            listView.classList.remove('active');
+            calendarView.classList.add('active');
+            const calendarBtn = document.querySelector('.view-btn[data-view-toggle="calendar"]');
+            if (calendarBtn) calendarBtn.classList.add('active');
+            localStorage.setItem('adminTimeslotsView', 'calendar');
+        }
+    };
+
+    window.initSchedules = function() {
+        console.log('Initializing schedules...');
+        const createBtn = document.getElementById('createScheduleBtn');
+        if (createBtn) {
+            // Remove existing listener if any to avoid double triggers
+            const newBtn = createBtn.cloneNode(true);
+            createBtn.parentNode.replaceChild(newBtn, createBtn);
+            newBtn.addEventListener('click', function(event) {
+                event.preventDefault();
+                window.openCreateModal();
+            });
+        }
+
+        document.querySelectorAll('.view-btn[data-view-toggle]').forEach(function(button) {
+            button.addEventListener('click', function(event) {
+                event.preventDefault();
+                const view = this.getAttribute('data-view-toggle');
+                if (view) window.switchView(view);
+            });
+        });
+
+        document.querySelectorAll('.btn-view-edit[data-slot-id]').forEach(function(button) {
+            button.addEventListener('click', function(event) {
+                event.preventDefault();
+                const slotId = this.getAttribute('data-slot-id');
+                if (slotId) window.showSlotDetails(slotId);
+            });
+        });
+
+        const savedView = localStorage.getItem('adminTimeslotsView');
+        if (savedView === 'calendar') window.switchView('calendar');
+    };
+
+    console.log('Schedules script starting execution...');
+    
+    // Store all schedule data for calendar modal access
+    var allSchedulesData = {
+        @foreach($timeslots as $date => $dateTimeslots)
+            @php
+                $formattedDate = \Carbon\Carbon::parse($date)->format('Y-m-d');
+            @endphp
+            {!! json_encode($formattedDate) !!}: [
+                @foreach($dateTimeslots as $timeslot)
+                    @php
+                        $availableSpots = $timeslot->getAvailableSpots();
+                    @endphp
+                    {
+                        id: {!! json_encode($timeslot->id) !!},
+                        time: {!! json_encode(\Carbon\Carbon::parse($timeslot->start_time)->format('h:i A') . ' - ' . \Carbon\Carbon::parse($timeslot->end_time)->format('h:i A')) !!},
+                        instructors: [
+                            @foreach($timeslot->instructors as $instructor)
+                            { 
+                                name: {!! json_encode($instructor->name) !!}, 
+                                type: {!! json_encode($instructor->pivot->assignment_type ?? "admin_assigned") !!} 
+                            },
+                            @endforeach
+                        ],
+                        notes: {!! json_encode($timeslot->notes ?? "No notes") !!},
+                        status: {!! json_encode($timeslot->status) !!},
+                        available: {!! json_encode((string)$availableSpots) !!},
+                        max: {!! json_encode($timeslot->max_instructors) !!}
+                    },
+                @endforeach
+            ],
+        @endforeach
+    };
+
+    console.log('Schedules data loaded. Count:', Object.keys(allSchedulesData).length || 0);
+
+    // Initialize on load
+    window.initSchedules();
     
     // Close modal when clicking outside of it
     window.onclick = function(event) {
@@ -1942,13 +1999,13 @@
         const dayModal = document.getElementById('dayModal');
         
         if (event.target == createModal) {
-            closeCreateModal();
+            window.closeCreateModal();
         } else if (event.target == detailsModal) {
-            closeDetailsModal();
+            window.closeDetailsModal();
         } else if (event.target == editModal) {
-            closeEditModal();
+            window.closeEditModal();
         } else if (event.target == dayModal) {
-            closeDayModal();
+            window.closeDayModal();
         }
     }
 
@@ -1963,121 +2020,42 @@
         const dayModal = document.getElementById('dayModal');
 
         if (createModal && createModal.style.display === 'flex') {
-            closeCreateModal();
+            window.closeCreateModal();
             return;
         }
 
         if (editModal && editModal.style.display === 'flex') {
-            closeEditModal();
+            window.closeEditModal();
             return;
         }
 
         if (detailsModal && detailsModal.style.display === 'flex') {
-            closeDetailsModal();
+            window.closeDetailsModal();
             return;
         }
 
         if (dayModal && dayModal.style.display === 'flex') {
-            closeDayModal();
+            window.closeDayModal();
         }
     });
     
-    // View Toggle Functions with State Persistence
-    function switchView(view) {
-        const listView = document.getElementById('list-view');
-        const calendarView = document.getElementById('calendar-view');
-        const viewBtns = document.querySelectorAll('.view-btn');
-
-        if (!listView || !calendarView || viewBtns.length === 0) {
-            return;
-        }
-        
-        viewBtns.forEach(btn => btn.classList.remove('active'));
-        
-        if (view === 'list') {
-            listView.classList.add('active');
-            calendarView.classList.remove('active');
-            const listBtn = document.querySelector('.view-btn[data-view-toggle="list"]');
-            if (listBtn) {
-                listBtn.classList.add('active');
-            }
-            localStorage.setItem('adminTimeslotsView', 'list');
-        } else {
-            listView.classList.remove('active');
-            calendarView.classList.add('active');
-            const calendarBtn = document.querySelector('.view-btn[data-view-toggle="calendar"]');
-            if (calendarBtn) {
-                calendarBtn.classList.add('active');
-            }
-            localStorage.setItem('adminTimeslotsView', 'calendar');
-        }
-    }
-    
-    // Initialize
-    function initSchedules() {
-        const createBtn = document.getElementById('createScheduleBtn');
-        if (createBtn) {
-            createBtn.addEventListener('click', function(event) {
-                event.preventDefault();
-                openCreateModal();
-            });
-        }
-
-        document.querySelectorAll('.view-btn[data-view-toggle]').forEach(function(button) {
-            button.addEventListener('click', function(event) {
-                event.preventDefault();
-                const view = this.getAttribute('data-view-toggle');
-                if (view) {
-                    switchView(view);
-                }
-            });
-        });
-
-        document.querySelectorAll('.btn-view-edit[data-slot-id]').forEach(function(button) {
-            button.addEventListener('click', function(event) {
-                event.preventDefault();
-                const slotId = this.getAttribute('data-slot-id');
-                if (slotId) {
-                    showSlotDetails(slotId);
-                }
-            });
-        });
-
-        const savedView = localStorage.getItem('adminTimeslotsView');
-        if (savedView === 'calendar') {
-            switchView('calendar');
-        }
-        
-        // Debug: Check if instructor select exists
-        const instructorSelect = document.querySelector('select[name="instructor_ids[]"]');
-        if (instructorSelect) {
-            console.log('Instructor select found with', instructorSelect.options.length, 'options');
-        } else {
-            console.warn('Instructor select not found in modal');
-        }
-    }
-    
-    initSchedules();
-    
     // Collapsible Date Sections
-    function toggleDate(dateHeader) {
+    window.toggleDate = function(dateHeader) {
         const cardBody = dateHeader.closest('.timeslot-card').querySelector('.card-body');
         cardBody.classList.toggle('collapsed');
         dateHeader.classList.toggle('collapsed');
-    }
+    };
 
-    function toggleInfoPanel(button) {
+    window.toggleInfoPanel = function(button) {
         const panel = button.closest('.info-panel');
-        if (!panel) {
-            return;
-        }
+        if (!panel) return;
 
         const expanded = panel.classList.toggle('expanded');
         button.textContent = expanded ? 'Hide details' : 'Show details';
     }
     
     // Calendar Navigation - Preserves view state
-    function changeMonth(delta) {
+    window.changeMonth = function(delta) {
         const currentMonthEl = document.getElementById('currentMonth');
         const monthText = currentMonthEl.textContent.trim();
         const currentDate = new Date(monthText + ' 1');
@@ -2093,7 +2071,7 @@
     }
     
     // Show Slot Details Modal
-    function showSlotDetails(slotId) {
+    window.showSlotDetails = function(slotId) {
         console.log('showSlotDetails called with ID:', slotId);
         currentSlotId = slotId;
         
@@ -2120,7 +2098,7 @@
         
         // Format time
         const timeText = startTime && endTime ? 
-            `${formatTime(startTime)} - ${formatTime(endTime)}` : 
+            `${window.formatTime(startTime)} - ${window.formatTime(endTime)}` : 
             'Time not available';
         
         // Get instructors from the DOM
@@ -2188,13 +2166,13 @@
                 </div>
             `;
             
-            openDetailsModal();
+            window.openDetailsModal();
         
         console.log('Modal opened successfully');
     }
     
     // Helper function to format time (HH:MM:SS to HH:MM AM/PM)
-    function formatTime(timeStr) {
+    window.formatTime = function(timeStr) {
         if (!timeStr) return '';
         const [hours, minutes] = timeStr.split(':');
         const hour = parseInt(hours);
@@ -2204,7 +2182,7 @@
     }
     
     // Show all schedules for a specific day in modal
-    function showDayModal(dateStr, formattedDate) {
+    window.showDayModal = function(dateStr, formattedDate) {
         console.log('Showing day modal for:', dateStr);
         console.log('All available dates in allSchedulesData:', Object.keys(allSchedulesData));
         console.log('Full allSchedulesData object:', allSchedulesData);
@@ -2255,7 +2233,7 @@
                         <div class="day-card-head">
                             <div>
                                 <div class="day-card-time">
-                                    <i class="bi bi-clock"></i> ${formatTime(schedule.startTime)} - ${formatTime(schedule.endTime)}
+                                    <i class="bi bi-clock"></i> ${window.formatTime(schedule.startTime)} - ${window.formatTime(schedule.endTime)}
                                 </div>
                                 ${availableHtml}
                                 <div class="day-card-meta">
@@ -2267,7 +2245,7 @@
                                         : ''}
                                 </div>
                             </div>
-                            <button type="button" class="btn btn-sm btn-primary" onclick="closeDayModal(); showSlotDetails(${schedule.id})">
+                            <button type="button" class="btn btn-sm btn-primary" onclick="window.closeDayModal(); window.showSlotDetails(${schedule.id})">
                                 <i class="bi bi-eye"></i> View/Edit
                             </button>
                         </div>
@@ -2295,12 +2273,20 @@
         }
     }
     
-    function closeDayModal() {
+    window.openDayModal = function() {
+        var dayModal = document.getElementById('dayModal');
+        if(dayModal) {
+            dayModal.style.visibility = 'visible';
+            dayModal.style.display = 'flex';
+        }
+    };
+
+    window.closeDayModal = function() {
         document.getElementById('dayModal').style.display = 'none';
     }
     
     // Populate Edit Modal
-    function populateEditModal(slotData) {
+    window.populateEditModal = function(slotData) {
         const schoolSlug = '{{ $school->slug }}';
         const actionUrl = `/${schoolSlug}/admin/schedules/${slotData.id}`;
         document.getElementById('editScheduleForm').action = actionUrl;
@@ -2345,7 +2331,7 @@
     }
     
     // Confirm Delete Schedule
-    function confirmDeleteSchedule(scheduleId) {
+    window.confirmDeleteSchedule = function(scheduleId) {
         showConfirm({
             type: 'danger',
             title: 'Delete Schedule',
@@ -2355,7 +2341,7 @@
                 document.getElementById('deleteScheduleForm' + scheduleId).submit();
             }
         });
-    }
+    };
 </script>
 
 @endsection
