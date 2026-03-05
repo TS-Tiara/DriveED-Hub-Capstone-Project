@@ -740,5 +740,67 @@
             if (burger) burger.setAttribute('aria-expanded', 'false');
         }
     </script>
+
+    {{-- Global: Prevent double form submissions --}}
+    <style>
+        .btn-submitting {
+            opacity: 0.65;
+            pointer-events: none;
+            position: relative;
+        }
+        .btn-submitting::after {
+            content: '';
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            margin-left: 8px;
+            border: 2px solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: btn-spin 0.6s linear infinite;
+            vertical-align: middle;
+        }
+        @keyframes btn-spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+    <script>
+    (function() {
+        document.addEventListener('submit', function(e) {
+            var form = e.target;
+            var method = (form.method || 'GET').toUpperCase();
+            if (method === 'GET') return;
+            if (form.dataset.noSubmitGuard) return;
+
+            if (form.dataset.submitting === 'true') {
+                e.preventDefault();
+                return;
+            }
+
+            form.dataset.submitting = 'true';
+
+            var buttons = form.querySelectorAll('button[type="submit"], input[type="submit"], button:not([type])');
+            buttons.forEach(function(btn) {
+                btn.classList.add('btn-submitting');
+                btn.disabled = true;
+                if (btn.tagName === 'BUTTON') {
+                    btn.dataset.originalText = btn.innerHTML;
+                    btn.innerHTML = btn.textContent.trim() + ' <span style="display:inline-block;width:14px;height:14px;margin-left:6px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:btn-spin .6s linear infinite;vertical-align:middle"></span>';
+                }
+            });
+
+            setTimeout(function() {
+                form.dataset.submitting = 'false';
+                buttons.forEach(function(btn) {
+                    btn.classList.remove('btn-submitting');
+                    btn.disabled = false;
+                    if (btn.tagName === 'BUTTON' && btn.dataset.originalText) {
+                        btn.innerHTML = btn.dataset.originalText;
+                    }
+                });
+            }, 8000);
+        }, true);
+    })();
+    </script>
 </body>
 </html>

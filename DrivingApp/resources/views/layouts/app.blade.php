@@ -1721,17 +1721,17 @@
                     </div>
                 </div>
 
-                {{-- Sessions --}}
+                {{-- Scheduling & Sessions --}}
                 <div class="nav-category" data-category="admin-sessions">
                     <div class="nav-category-header" onclick="toggleCategory(this)" role="button" aria-expanded="false" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleCategory(this)}">
-                        <span>Sessions</span>
+                        <span>Scheduling &amp; Sessions</span>
                         <span class="nav-category-arrow">&#9660;</span>
                     </div>
                     <div class="nav-category-items">
-                        <a href="{{ school_route('admin.schedules', [], $currentSchool) }}" class="nav-item" data-page="schedules">Schedules (Slot Setup)</a>
-                        <a href="{{ school_route('admin.bookings.index', [], $currentSchool) }}" class="nav-item" data-page="bookings">Student Schedules (Requests)</a>
-                        <a href="{{ school_route('admin.sessions.index', [], $currentSchool) }}" class="nav-item" data-page="session-completions">Session Completions (Logged)</a>
-                        <a href="{{ school_route('admin.phase-progressions.index', [], $currentSchool) }}" class="nav-item" data-page="phase-progressions">Phase Progressions (Advancement)</a>
+                        <a href="{{ school_route('admin.schedules', [], $currentSchool) }}" class="nav-item" data-page="schedules">Time Slots</a>
+                        <a href="{{ school_route('admin.bookings.index', [], $currentSchool) }}" class="nav-item" data-page="bookings">Manage Schedules</a>
+                        <a href="{{ school_route('admin.sessions.index', [], $currentSchool) }}" class="nav-item" data-page="session-completions">Session Logs</a>
+                        <a href="{{ school_route('admin.phase-progressions.index', [], $currentSchool) }}" class="nav-item" data-page="phase-progressions">Phase Progressions</a>
                     </div>
                 </div>
 
@@ -3143,6 +3143,76 @@
         });
     </script>
     
+    {{-- Global: Prevent double form submissions --}}
+    <style>
+        .btn-submitting {
+            opacity: 0.65;
+            pointer-events: none;
+            position: relative;
+        }
+        .btn-submitting::after {
+            content: '';
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            margin-left: 8px;
+            border: 2px solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: btn-spin 0.6s linear infinite;
+            vertical-align: middle;
+        }
+        @keyframes btn-spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+    <script>
+    (function() {
+        document.addEventListener('submit', function(e) {
+            var form = e.target;
+            // Only protect POST/PUT/PATCH/DELETE forms (not GET search/filter forms)
+            var method = (form.method || 'GET').toUpperCase();
+            if (method === 'GET') return;
+
+            // Skip forms explicitly marked as no-guard
+            if (form.dataset.noSubmitGuard) return;
+
+            // Check if already submitting
+            if (form.dataset.submitting === 'true') {
+                e.preventDefault();
+                return;
+            }
+
+            // Mark as submitting
+            form.dataset.submitting = 'true';
+
+            // Disable all submit buttons within this form
+            var buttons = form.querySelectorAll('button[type="submit"], input[type="submit"], button:not([type])');
+            buttons.forEach(function(btn) {
+                btn.classList.add('btn-submitting');
+                btn.disabled = true;
+                // Store original text for restoration
+                if (btn.tagName === 'BUTTON') {
+                    btn.dataset.originalText = btn.innerHTML;
+                    btn.innerHTML = btn.textContent.trim() + ' <span style="display:inline-block;width:14px;height:14px;margin-left:6px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:btn-spin .6s linear infinite;vertical-align:middle"></span>';
+                }
+            });
+
+            // Safety fallback: re-enable after 8 seconds in case of network issues
+            setTimeout(function() {
+                form.dataset.submitting = 'false';
+                buttons.forEach(function(btn) {
+                    btn.classList.remove('btn-submitting');
+                    btn.disabled = false;
+                    if (btn.tagName === 'BUTTON' && btn.dataset.originalText) {
+                        btn.innerHTML = btn.dataset.originalText;
+                    }
+                });
+            }, 8000);
+        }, true); // Capture phase to run before other handlers
+    })();
+    </script>
+
     @stack('scripts')
 </body>
 </html>

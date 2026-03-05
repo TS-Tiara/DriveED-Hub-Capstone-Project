@@ -77,7 +77,7 @@ Route::prefix('system-admin')->name('system-admin.')->group(function () {
 
             // Users management
             Route::get('/users', [SystemAdminController::class , 'users'])->name('users');
-            Route::patch('/users/{type}/{id}/toggle-status', [SystemAdminController::class , 'toggleUserStatus'])->name('users.toggle-status')->where('type', 'student|instructor');
+            Route::patch('/users/{type}/{id}/toggle-status', [SystemAdminController::class , 'toggleUserStatus'])->name('users.toggle-status')->whereIn('type', ['student', 'instructor', 'admin']);
             Route::delete('/users/{type}/{id}', [SystemAdminController::class , 'deleteUser'])->name('users.delete')->where('type', 'student|instructor');
 
             // Logs

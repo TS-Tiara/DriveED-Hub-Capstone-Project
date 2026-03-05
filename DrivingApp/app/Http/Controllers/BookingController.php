@@ -343,7 +343,7 @@ class BookingController extends Controller
                     'booking_id' => $booking->id,
                     'student_name' => $booking->student->name,
                     'reason' => $validated['cancellation_reason'],
-                    'cancelled_by' => Auth::guard('admin')->user()->name ?? 'Admin'
+                    'cancelled_by' => Auth::guard('admin')->user()?->name ?? 'Admin'
                 ],
                 $school->id,
                 'cancel_booking'
@@ -380,7 +380,7 @@ class BookingController extends Controller
                 'booking_id' => $booking->id,
                 'student_name' => $booking->student->name ?? 'Unknown',
                 'course' => $booking->course->title ?? 'N/A',
-                'deleted_by' => Auth::guard('admin')->user()->name ?? 'Admin'
+                'deleted_by' => Auth::guard('admin')->user()?->name ?? 'Admin'
             ],
             $school->id,
             'delete_booking'

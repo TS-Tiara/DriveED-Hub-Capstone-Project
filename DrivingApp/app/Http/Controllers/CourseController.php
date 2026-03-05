@@ -77,7 +77,7 @@ class CourseController extends Controller
      */
     public function store(Request $request, School $school)
     {
-        if (!Auth::guard('admin')->check() || !Auth::guard('admin')->user()->isSchoolAdmin()) {
+        if (!Auth::guard('admin')->check() || !Auth::guard('admin')->user()?->isSchoolAdmin()) {
             abort(403, 'Only school administrators can create courses.');
         }
 
@@ -138,7 +138,7 @@ class CourseController extends Controller
     {
         // Authorization check 
         if (Auth::guard('admin')->check()) {
-            if (!Auth::guard('admin')->user()->canManageCourses()) {
+            if (!Auth::guard('admin')->user()?->canManageCourses()) {
                 abort(403, 'You do not have permission to view courses in the admin dashboard.');
             }
         }
@@ -184,7 +184,7 @@ class CourseController extends Controller
      */
     public function update(Request $request, School $school, Course $course)
     {
-        if (!Auth::guard('admin')->check() || !Auth::guard('admin')->user()->canManageCourses()) {
+        if (!Auth::guard('admin')->check() || !Auth::guard('admin')->user()?->canManageCourses()) {
             abort(403, 'Only authorized school administrators can update courses.');
         }
 
@@ -238,7 +238,7 @@ class CourseController extends Controller
      */
     public function destroy(Request $request, School $school, Course $course)
     {
-        if (!Auth::guard('admin')->check() || !Auth::guard('admin')->user()->canManageCourses()) {
+        if (!Auth::guard('admin')->check() || !Auth::guard('admin')->user()?->canManageCourses()) {
             abort(403, 'Only authorized school administrators can delete courses.');
         }
 

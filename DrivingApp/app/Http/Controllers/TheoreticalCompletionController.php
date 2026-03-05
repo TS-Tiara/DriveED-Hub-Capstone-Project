@@ -304,7 +304,7 @@ class TheoreticalCompletionController extends Controller
             abort(403);
         }
 
-        $school = Auth::guard('admin')->user()->school;
+        $school = Auth::guard('admin')->user()?->school;
 
         $passed = Student::where('school_id', $school->id)
             ->where('has_passed_theoretical', true)

@@ -42,18 +42,18 @@ class NotificationController extends Controller
             ->limit(20)
             ->get()
             ->map(function ($notification) {
-                return [
-                    'id' => $notification->id,
-                    'type' => $notification->type,
-                    'title' => $notification->title,
-                    'message' => $notification->message,
-                    'icon' => $notification->getIconEmoji(),
-                    'action_url' => $notification->action_url,
-                    'is_read' => $notification->isRead(),
-                    'time_ago' => $notification->getTimeAgo(),
-                    'created_at' => $notification->created_at->toISOString(),
-                ];
-            });
+            return [
+            'id' => $notification->id,
+            'type' => $notification->type,
+            'title' => $notification->title,
+            'message' => $notification->message,
+            'icon' => $notification->getIconEmoji(),
+            'action_url' => $notification->action_url,
+            'is_read' => $notification->isRead(),
+            'time_ago' => $notification->getTimeAgo(),
+            'created_at' => $notification->created_at->toISOString(),
+            ];
+        });
 
         $unreadCount = Notification::forSchool($school->id)
             ->forNotifiable($user)
@@ -81,9 +81,18 @@ class NotificationController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $notification->markAsRead();
-
-        return response()->json(['success' => true]);
+        try {
+            $notification->markAsRead();
+            return response()->json(['success' => true]);
+        }
+        catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to mark notification as read', [
+                'notification_id' => $notification->id,
+                'user_id' => $user->id,
+                'error' => $e->getMessage()
+            ]);
+            return response()->json(['error' => 'Failed to process request'], 500);
+        }
     }
 
     /**
@@ -96,11 +105,20 @@ class NotificationController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        Notification::forSchool($school->id)
-            ->forNotifiable($user)
-            ->unread()
-            ->update(['read_at' => now()]);
+        try {
+            Notification::forSchool($school->id)
+                ->forNotifiable($user)
+                ->unread()
+                ->update(['read_at' => now()]);
 
-        return response()->json(['success' => true]);
+            return response()->json(['success' => true]);
+        }
+        catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to mark all notifications as read', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage()
+            ]);
+            return response()->json(['error' => 'Failed to process request'], 500);
+        }
     }
 }

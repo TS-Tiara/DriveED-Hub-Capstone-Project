@@ -24,7 +24,7 @@ class SystemAdminController extends Controller
     public function showLogin()
     {
         // If already logged in as system admin, redirect to dashboard
-        if (Auth::guard('admin')->check() && Auth::guard('admin')->user()->role === 'system_admin') {
+        if (Auth::guard('admin')->check() && Auth::guard('admin')->user()?->role === 'system_admin') {
             return redirect()->route('system-admin.dashboard');
         }
 
@@ -350,7 +350,7 @@ class SystemAdminController extends Controller
             SystemLog::logWarning(
                 "School permanently deleted: {$schoolName}",
                 'system',
-            ['school_id' => $schoolId, 'school_name' => $schoolName, 'deleted_by' => Auth::guard('admin')->user()->name ?? 'System'],
+            ['school_id' => $schoolId, 'school_name' => $schoolName, 'deleted_by' => Auth::guard('admin')->user()?->name ?? 'System'],
                 null,
                 'delete_school'
             );
@@ -520,7 +520,7 @@ class SystemAdminController extends Controller
             SystemLog::logWarning(
                 "School admin deleted: {$adminName} from {$schoolName}",
                 'system',
-            ['admin_id' => $admin->id, 'email' => $admin->email, 'deleted_by' => Auth::guard('admin')->user()->name ?? 'System'],
+            ['admin_id' => $admin->id, 'email' => $admin->email, 'deleted_by' => Auth::guard('admin')->user()?->name ?? 'System'],
                 $schoolId,
                 'delete_school_admin'
             );
@@ -674,7 +674,7 @@ class SystemAdminController extends Controller
             SystemLog::logWarning(
                 "{$type} permanently deleted: {$userName} ({$userEmail})",
                 'database',
-            ['user_id' => $id, 'type' => $type, 'email' => $userEmail, 'deleted_by' => Auth::guard('admin')->user()->name ?? 'System'],
+            ['user_id' => $id, 'type' => $type, 'email' => $userEmail, 'deleted_by' => Auth::guard('admin')->user()?->name ?? 'System'],
                 $schoolId,
                 'delete_user'
             );

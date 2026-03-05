@@ -92,12 +92,21 @@ class InstructorTimeSlotController extends Controller
                 return redirect()->back()->with('error', 'You cannot leave this slot as it was assigned by an admin.');
             }
 
-            $timeSlot->instructors()->detach($instructor->id);
+            try {
+                $timeSlot->instructors()->detach($instructor->id);
 
-            if ($isAjax) {
-                return response()->json(['success' => true, 'message' => 'You have left this time slot.', 'action' => 'left']);
+                if ($isAjax) {
+                    return response()->json(['success' => true, 'message' => 'You have left this time slot.', 'action' => 'left']);
+                }
+                return redirect()->back()->with('success', 'You have left this time slot.');
             }
-            return redirect()->back()->with('success', 'You have left this time slot.');
+            catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Failed to leave time slot', ['error' => $e->getMessage()]);
+                if ($isAjax) {
+                    return response()->json(['success' => false, 'message' => 'An error occurred while leaving the slot.'], 500);
+                }
+                return redirect()->back()->with('error', 'An error occurred while leaving the slot.');
+            }
         }
 
         if ($timeSlot->isFull()) {
@@ -150,15 +159,24 @@ class InstructorTimeSlotController extends Controller
             return redirect()->back()->with('error', 'You already have a time slot that conflicts with this one.');
         }
 
-        $timeSlot->instructors()->attach($instructor->id, [
-            'school_id' => $school->id,
-            'assignment_type' => 'self_selected',
-        ]);
+        try {
+            $timeSlot->instructors()->attach($instructor->id, [
+                'school_id' => $school->id,
+                'assignment_type' => 'self_selected',
+            ]);
 
-        if ($isAjax) {
-            return response()->json(['success' => true, 'message' => 'You have successfully selected this time slot!', 'action' => 'selected']);
+            if ($isAjax) {
+                return response()->json(['success' => true, 'message' => 'You have successfully selected this time slot!', 'action' => 'selected']);
+            }
+            return redirect()->back()->with('success', 'You have successfully selected this time slot!');
         }
-        return redirect()->back()->with('success', 'You have successfully selected this time slot!');
+        catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to select time slot', ['error' => $e->getMessage()]);
+            if ($isAjax) {
+                return response()->json(['success' => false, 'message' => 'An error occurred.'], 500);
+            }
+            return redirect()->back()->with('error', 'An error occurred.');
+        }
     }
 
     // View instructor's schedule/calendar
@@ -297,11 +315,17 @@ class InstructorTimeSlotController extends Controller
             $data['password'] = $request->new_password;
         }
         //False positive
-        $instructor->update($data);
+        try {
+            $instructor->update($data);
 
-        return redirect()
-            ->route('schools.instructor.profile', $school)
-            ->with('success', 'Profile updated successfully!');
+            return redirect()
+                ->route('schools.instructor.profile', $school)
+                ->with('success', 'Profile updated successfully!');
+        }
+        catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to update profile', ['error' => $e->getMessage()]);
+            return back()->with('error', 'An error occurred while updating profile.');
+        }
     }
 
     public function updateProfilePicture(Request $request, School $school)
@@ -313,22 +337,23 @@ class InstructorTimeSlotController extends Controller
         ]);
 
         // Delete old profile picture if exists
-        if ($instructor->profile_picture) {
-            Storage::disk('public')->delete($instructor->profile_picture);
+        try {
+            if ($instructor->profile_picture) {
+                Storage::disk('public')->delete($instructor->profile_picture);
+            }
+            $path = $request->file('profile_picture')->store('profile_pictures', 'public');
+            $instructor->update(['profile_picture' => $path]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Profile picture updated successfully!',
+                'path' => $path,
+            ]);
         }
-
-        // Store new profile picture
-        $path = $request->file('profile_picture')->store('profile_pictures', 'public');
-
-        $instructor->update([
-            'profile_picture' => $path,
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Profile picture updated successfully!',
-            'path' => $path,
-        ]);
+        catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to update profile picture', ['error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'An error occurred.'], 500);
+        }
     }
 
     // Request removal from an admin-assigned time slot
@@ -379,23 +404,27 @@ class InstructorTimeSlotController extends Controller
                 ->with('error', 'You already have a pending removal request for this time slot.');
         }
 
-        // Create the removal request
-        InstructorRemovalRequest::create([
-            'school_id' => $school->id,
-            'time_slot_id' => $timeSlot->id,
-            'instructor_id' => $instructor->id,
-            'schedule_instructor_id' => $pivot->id,
-            'status' => 'pending',
-            'reason' => $request->reason,
-        ]);
+        try {
+            InstructorRemovalRequest::create([
+                'school_id' => $school->id,
+                'time_slot_id' => $timeSlot->id,
+                'instructor_id' => $instructor->id,
+                'schedule_instructor_id' => $pivot->id,
+                'status' => 'pending',
+                'reason' => $request->reason,
+            ]);
 
-        // Update the pivot to mark it has a pending request
-        DB::table('schedule_instructors')
-            ->where('id', $pivot->id)
-            ->update(['has_pending_removal_request' => true]);
+            DB::table('schedule_instructors')
+                ->where('id', $pivot->id)
+                ->update(['has_pending_removal_request' => true]);
 
-        return redirect()->back()
-            ->with('success', 'Your removal request has been submitted to the admin for review.');
+            return redirect()->back()
+                ->with('success', 'Your removal request has been submitted to the admin for review.');
+        }
+        catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to request removal', ['error' => $e->getMessage()]);
+            return redirect()->back()->with('error', 'An error occurred while processing your request.');
+        }
     }
 
     public function updateAttendance(School $school, Booking $booking, Request $request)
@@ -409,15 +438,21 @@ class InstructorTimeSlotController extends Controller
             'attendance_status' => 'nullable|in:attended,late,absent'
         ]);
 
-        $booking->update([
-            'attendance_status' => $request->attendance_status,
-            'attendance_marked_at' => now()
-        ]);
+        try {
+            $booking->update([
+                'attendance_status' => $request->attendance_status,
+                'attendance_marked_at' => now()
+            ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Attendance updated successfully'
-        ]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Attendance updated successfully'
+            ]);
+        }
+        catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to update attendance', ['error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'An error occurred updating attendance.'], 500);
+        }
     }
 
     public function updateFeedback(School $school, Booking $booking, Request $request)
@@ -438,14 +473,18 @@ class InstructorTimeSlotController extends Controller
             'instructor_feedback' => 'nullable|string|max:1000'
         ]);
 
-        $booking->update([
-            'instructor_feedback' => $request->instructor_feedback
-        ]);
+        try {
+            $booking->update(['instructor_feedback' => $request->instructor_feedback]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Feedback updated successfully'
-        ]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Feedback updated successfully'
+            ]);
+        }
+        catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to update feedback', ['error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'An error occurred updating feedback.'], 500);
+        }
     }
 
     public function getLessonDetails(School $school, Booking $booking)
@@ -536,11 +575,17 @@ class InstructorTimeSlotController extends Controller
             $updateData['cancellation_reason'] = $validated['cancellation_reason'] ?? 'Session cancelled by instructor';
         }
 
-        $booking->update($updateData);
+        try {
+            $booking->update($updateData);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Lesson details updated successfully'
-        ]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Lesson details updated successfully'
+            ]);
+        }
+        catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to update lesson details', ['error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'An error occurred updating lesson details.'], 500);
+        }
     }
 }

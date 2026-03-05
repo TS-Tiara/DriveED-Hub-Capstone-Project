@@ -56,17 +56,32 @@ class BranchController extends Controller
             $validated['is_active'] = true;
         }
 
-        $branch = Branch::create($validated);
+        try {
+            $branch = Branch::create($validated);
 
-        if ($request->ajax() || $request->wantsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Branch created successfully!',
-                'branch' => $branch,
-            ], 201);
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Branch created successfully!',
+                    'branch' => $branch,
+                ], 201);
+            }
+
+            return redirect()->back()->with('success', 'Branch created successfully!');
         }
-
-        return redirect()->back()->with('success', 'Branch created successfully!');
+        catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to create branch', [
+                'error' => $e->getMessage(),
+                'school_id' => $school->id
+            ]);
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to create branch. The system administrator has been notified.',
+                ], 500);
+            }
+            return back()->with('error', 'An error occurred while creating the branch. The system administrator has been notified.');
+        }
     }
 
     /**
@@ -85,17 +100,32 @@ class BranchController extends Controller
             'sort_order' => 'sometimes|integer|min:0',
         ]);
 
-        $branch->update($validated);
+        try {
+            $branch->update($validated);
 
-        if ($request->ajax() || $request->wantsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Branch updated successfully!',
-                'branch' => $branch->fresh(),
-            ]);
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Branch updated successfully!',
+                    'branch' => $branch->fresh(),
+                ]);
+            }
+
+            return redirect()->back()->with('success', 'Branch updated successfully!');
         }
-
-        return redirect()->back()->with('success', 'Branch updated successfully!');
+        catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to update branch', [
+                'branch_id' => $branch->id,
+                'error' => $e->getMessage()
+            ]);
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to update branch. The system administrator has been notified.',
+                ], 500);
+            }
+            return back()->with('error', 'An error occurred while updating the branch. The system administrator has been notified.');
+        }
     }
 
     /**
@@ -105,17 +135,29 @@ class BranchController extends Controller
     {
         $branch = Branch::where('school_id', $school->id)->findOrFail($id);
 
-        $branch->update(['is_active' => !$branch->is_active]);
+        try {
+            $branch->update(['is_active' => !$branch->is_active]);
 
-        if ($request->ajax() || $request->wantsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => $branch->is_active ? 'Branch activated.' : 'Branch deactivated.',
-                'branch' => $branch->fresh(),
-            ]);
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $branch->is_active ? 'Branch activated.' : 'Branch deactivated.',
+                    'branch' => $branch->fresh(),
+                ]);
+            }
+
+            return redirect()->back()->with('success', 'Branch status updated.');
         }
-
-        return redirect()->back()->with('success', 'Branch status updated.');
+        catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to toggle branch status', [
+                'branch_id' => $branch->id,
+                'error' => $e->getMessage()
+            ]);
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Failed to toggle status.'], 500);
+            }
+            return back()->with('error', 'An error occurred. The system administrator has been notified.');
+        }
     }
 
     /**
@@ -150,15 +192,27 @@ class BranchController extends Controller
             return redirect()->back()->with('error', $msg);
         }
 
-        $branch->delete();
+        try {
+            $branch->delete();
 
-        if ($request->ajax() || $request->wantsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Branch deleted successfully!',
-            ]);
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Branch deleted successfully!',
+                ]);
+            }
+
+            return redirect()->back()->with('success', 'Branch deleted successfully!');
         }
-
-        return redirect()->back()->with('success', 'Branch deleted successfully!');
+        catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to delete branch', [
+                'branch_id' => $branch->id,
+                'error' => $e->getMessage()
+            ]);
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Failed to delete branch.'], 500);
+            }
+            return back()->with('error', 'An error occurred while deleting the branch.');
+        }
     }
 }
