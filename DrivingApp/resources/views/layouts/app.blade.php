@@ -1705,7 +1705,6 @@
                     <div class="nav-category-items">
                         <a href="{{ school_route('admin.userManagement', [], $currentSchool) }}" class="nav-item" data-page="user-management">User Management</a>
                         <a href="{{ school_route('admin.removalRequests', [], $currentSchool) }}" class="nav-item" data-page="removal-requests">Removal Requests</a>
-                        <a href="{{ school_route('admin.student-action-requests.index', [], $currentSchool) }}" class="nav-item" data-page="student-action-requests">Student Requests</a>
                     </div>
                 </div>
 
@@ -2121,7 +2120,6 @@
             'admin/phase-progressions': 'Phase Progressions',
             'admin/payments': 'Payments',
             'admin/reports': 'Reports & Analytics',
-            'admin/student-action-requests': 'Student Requests',
             'admin/admin-management': 'Admin Management',
             'admin/branches': 'Branches',
             'admin/settings': 'Settings',
