@@ -22,10 +22,24 @@ class StoreEnrollmentRequestRequest extends FormRequest
      */
     public function rules(): array
     {
+        $school = $this->route('school');
+        $schoolId = $school instanceof \App\Models\School ? $school->id : $school;
+        $course = $this->route('course');
+        $courseId = $course instanceof \App\Models\Course ? $course->id : $course;
+
         return [
             'experience_level' => ['required', 'in:new_driver,experienced_driver'],
-            'package_id' => ['nullable', 'exists:course_packages,id'],
-            'branch_id' => ['nullable', 'integer', 'exists:branches,id'],
+            'package_id' => [
+                'nullable',
+                \Illuminate\Validation\Rule::exists('course_packages', 'id')
+                ->where('school_id', $schoolId)
+                ->where('course_id', $courseId)
+            ],
+            'branch_id' => [
+                'nullable',
+                'integer',
+                \Illuminate\Validation\Rule::exists('branches', 'id')->where('school_id', $schoolId)
+            ],
             'credential_file' => [
                 'nullable',
                 'file',

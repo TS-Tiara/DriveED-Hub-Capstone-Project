@@ -33,6 +33,10 @@ class EnsureSystemAdmin
                 ], 403);
             }
 
+            if ($request->header('referer') === $request->fullUrl()) {
+                return redirect()->route('welcome')->with('error', 'Access denied. System Administrator privileges required.');
+            }
+
             return redirect()->back()->with('error', 'Access denied. System Administrator privileges required.');
         }
 

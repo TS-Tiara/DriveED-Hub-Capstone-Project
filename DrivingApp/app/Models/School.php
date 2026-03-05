@@ -78,6 +78,46 @@ class School extends Model
         return $this->hasMany(Progress::class);
     }
 
+    public function phaseProgressions()
+    {
+        return $this->hasMany(PhaseProgression::class);
+    }
+
+    public function instructorRemovalRequests()
+    {
+        return $this->hasMany(InstructorRemovalRequest::class);
+    }
+
+    public function registrationRequests()
+    {
+        return $this->hasMany(RegistrationRequest::class);
+    }
+
+    public function studentActionRequests()
+    {
+        return $this->hasMany(StudentActionRequest::class);
+    }
+
+    public function reports()
+    {
+        return $this->hasMany(Report::class);
+    }
+
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    public function systemLogs()
+    {
+        return $this->hasMany(SystemLog::class);
+    }
+
+    public function sessionCompletions()
+    {
+        return $this->hasMany(SessionCompletion::class);
+    }
+
     public function schoolSetting()
     {
         return $this->hasOne(SchoolSetting::class);

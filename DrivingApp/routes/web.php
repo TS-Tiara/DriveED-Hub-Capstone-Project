@@ -77,8 +77,8 @@ Route::prefix('system-admin')->name('system-admin.')->group(function () {
 
             // Users management
             Route::get('/users', [SystemAdminController::class , 'users'])->name('users');
-            Route::patch('/users/{type}/{id}/toggle-status', [SystemAdminController::class , 'toggleUserStatus'])->name('users.toggle-status');
-            Route::delete('/users/{type}/{id}', [SystemAdminController::class , 'deleteUser'])->name('users.delete');
+            Route::patch('/users/{type}/{id}/toggle-status', [SystemAdminController::class , 'toggleUserStatus'])->name('users.toggle-status')->where('type', 'student|instructor');
+            Route::delete('/users/{type}/{id}', [SystemAdminController::class , 'deleteUser'])->name('users.delete')->where('type', 'student|instructor');
 
             // Logs
             Route::get('/logs', [SystemAdminController::class , 'logs'])->name('logs');
@@ -253,12 +253,12 @@ Route::prefix('{school:slug}')
                             );
 
 
-                    }
-                    );
+                        }
+                        );
 
-                    // New LMS routes WITH ajax middleware for layout consistency
-                    // Enrollment management (combining enrollment requests and enrollments)
-                    Route::middleware(['ajax'])->group(function () {
+                        // New LMS routes WITH ajax middleware for layout consistency
+                        // Enrollment management (combining enrollment requests and enrollments)
+                        Route::middleware(['ajax'])->group(function () {
                     Route::prefix('enrollments')->name('enrollments.')->group(function () {
                             Route::get('/', [EnrollmentRequestController::class , 'index'])->name('index');
                             Route::get('/{enrollmentRequest}', [EnrollmentRequestController::class , 'show'])->name('show');

@@ -34,13 +34,16 @@ class Course extends Model
         'hours_required',
     ];
 
-    protected $casts = [
-        'price' => 'decimal:2',
-        'duration_hours' => 'decimal:1',
-        'hours_required' => 'decimal:2',
-        'features' => 'array',
-        'is_featured' => 'boolean',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'price' => 'decimal:2',
+            'duration_hours' => 'decimal:1',
+            'hours_required' => 'decimal:2',
+            'features' => 'array',
+            'is_featured' => 'boolean',
+        ];
+    }
 
     /**
      * Get the school that owns the course.
@@ -149,11 +152,11 @@ class Course extends Model
      */
     public function getLicenseTypeDisplayAttribute(): string
     {
-        return match($this->license_type) {
-            'non_professional' => 'Non-Professional',
-            'professional' => 'Professional',
-            default => $this->license_type,
-        };
+        return match ($this->license_type) {
+                'non_professional' => 'Non-Professional',
+                'professional' => 'Professional',
+                default => $this->license_type,
+            };
     }
 
     /**
@@ -161,11 +164,11 @@ class Course extends Model
      */
     public function getCourseTypeDisplayAttribute(): string
     {
-        return match($this->course_type) {
-            'theoretical' => 'Theoretical',
-            'practical' => 'Practical',
-            default => $this->course_type,
-        };
+        return match ($this->course_type) {
+                'theoretical' => 'Theoretical',
+                'practical' => 'Practical',
+                default => $this->course_type,
+            };
     }
 
     /**

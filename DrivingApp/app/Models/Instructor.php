@@ -61,4 +61,21 @@ class Instructor extends Authenticatable
     {
         return $this->hasMany(Booking::class);
     }
+
+    public function timeSlots()
+    {
+        return $this->belongsToMany(TimeSlot::class , 'schedule_instructors')
+            ->withTimestamps()
+            ->withPivot(['school_id', 'assignment_type']);
+    }
+
+    public function sessionCompletions()
+    {
+        return $this->hasMany(SessionCompletion::class);
+    }
+
+    public function removalRequests()
+    {
+        return $this->hasMany(InstructorRemovalRequest::class);
+    }
 }

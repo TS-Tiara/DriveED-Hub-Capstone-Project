@@ -49,7 +49,7 @@ class SessionCompletion extends Model
      */
     public function enrollment(): BelongsTo
     {
-        return $this->belongsTo(EnrollmentRequest::class, 'enrollment_id');
+        return $this->belongsTo(EnrollmentRequest::class , 'enrollment_id');
     }
 
     /**
@@ -58,7 +58,7 @@ class SessionCompletion extends Model
      */
     public function enrollmentRequest(): BelongsTo
     {
-        return $this->belongsTo(EnrollmentRequest::class, 'enrollment_id');
+        return $this->belongsTo(EnrollmentRequest::class , 'enrollment_id');
     }
 
     /**
@@ -74,23 +74,37 @@ class SessionCompletion extends Model
      */
     public function loggedBy(): BelongsTo
     {
-        return $this->belongsTo(Admin::class, 'logged_by');
+        return $this->belongsTo(Admin::class , 'logged_by');
     }
 
     /**
      * Get the student (learner) through enrollment request
      */
-    public function student()
+    public function student(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
     {
-        return $this->enrollment ? $this->enrollment->learner : null;
+        return $this->hasOneThrough(
+            Student::class ,
+            EnrollmentRequest::class ,
+            'id', // Foreign key on enrollment_requests table
+            'id', // Foreign key on students table
+            'enrollment_id', // Local key on session_completions table
+            'learner_id' // Local key on enrollment_requests table
+        );
     }
 
     /**
      * Get the course through enrollment request
      */
-    public function course()
+    public function course(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
     {
-        return $this->enrollment ? $this->enrollment->course : null;
+        return $this->hasOneThrough(
+            Course::class ,
+            EnrollmentRequest::class ,
+            'id', // Foreign key on enrollment_requests table
+            'id', // Foreign key on courses table
+            'enrollment_id', // Local key on session_completions table
+            'course_id' // Local key on enrollment_requests table
+        );
     }
 
     /**

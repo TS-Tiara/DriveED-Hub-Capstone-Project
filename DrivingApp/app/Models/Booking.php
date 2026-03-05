@@ -21,6 +21,7 @@ class Booking extends Model
         'instructor_id',
         'course_id',
         'package_id',
+        'enrollment_request_id',
         'time_slot_id',
         'scheduled_at',
         'booking_date',
@@ -93,7 +94,7 @@ class Booking extends Model
      */
     public function package(): BelongsTo
     {
-        return $this->belongsTo(CoursePackage::class, 'package_id');
+        return $this->belongsTo(CoursePackage::class , 'package_id');
     }
 
     /**
@@ -101,7 +102,15 @@ class Booking extends Model
      */
     public function timeSlot(): BelongsTo
     {
-        return $this->belongsTo(TimeSlot::class, 'time_slot_id');
+        return $this->belongsTo(TimeSlot::class , 'time_slot_id');
+    }
+
+    /**
+     * Get the enrollment request for the booking.
+     */
+    public function enrollmentRequest(): BelongsTo
+    {
+        return $this->belongsTo(EnrollmentRequest::class , 'enrollment_request_id');
     }
 
     /**
@@ -142,7 +151,7 @@ class Booking extends Model
     public function scopeUpcoming($query)
     {
         return $query->where('scheduled_at', '>', now())
-                     ->orderBy('scheduled_at', 'asc');
+            ->orderBy('scheduled_at', 'asc');
     }
 
     /**
@@ -151,6 +160,6 @@ class Booking extends Model
     public function scopePast($query)
     {
         return $query->where('scheduled_at', '<=', now())
-                     ->orderBy('scheduled_at', 'desc');
+            ->orderBy('scheduled_at', 'desc');
     }
 }

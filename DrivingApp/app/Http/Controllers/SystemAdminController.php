@@ -102,13 +102,15 @@ class SystemAdminController extends Controller
         try {
             $admin = Auth::guard('admin')->user();
 
-            SystemLog::logInfo(
-                "System admin logged out: {$admin->name}",
-                'authentication',
-            ['admin_id' => $admin->id],
-                null,
-                'system_admin_logout'
-            );
+            if ($admin) {
+                SystemLog::logInfo(
+                    "System admin logged out: {$admin->name}",
+                    'authentication',
+                ['admin_id' => $admin->id],
+                    null,
+                    'system_admin_logout'
+                );
+            }
 
             Auth::guard('admin')->logout();
             Auth::guard('instructor')->logout();
@@ -244,7 +246,8 @@ class SystemAdminController extends Controller
             Admin::create([
                 'name' => $request->admin_name,
                 'email' => $request->admin_email,
-                'password' => bcrypt($request->admin_password),
+                'password' => $request->admin_password,
+                'must_reset_password' => true, // Force reset on first login
                 'role' => 'school_admin',
                 'school_id' => $school->id,
             ]);
@@ -273,7 +276,7 @@ class SystemAdminController extends Controller
                 'create_school'
             );
 
-            return back()->with('error', 'Failed to create school: ' . $e->getMessage())->withInput();
+            return back()->with('error', 'Unable to create driving school at this time. Please try again later.')->withInput();
         }
     }
 
@@ -321,14 +324,25 @@ class SystemAdminController extends Controller
 
             DB::beginTransaction();
 
-            // Delete related data (cascade should handle most, but let's be explicit)
+            // Delete related data (cascade should handle most, but let's be explicit and thorough)
             $school->students()->delete();
             $school->instructors()->delete();
             $school->admins()->delete();
             $school->courses()->delete();
             $school->bookings()->delete();
             $school->timeSlots()->delete();
+            $school->payments()->delete();
+            $school->enrollmentRequests()->delete();
+            $school->sessionCompletions()->delete();
+            $school->phaseProgressions()->delete();
+            $school->instructorRemovalRequests()->delete();
+            $school->registrationRequests()->delete();
+            $school->studentActionRequests()->delete();
+            $school->reports()->delete();
+            $school->notifications()->delete();
+            $school->systemLogs()->delete();
             $school->schoolSetting()->delete();
+            $school->branches()->delete();
             $school->delete();
 
             DB::commit();
@@ -336,7 +350,7 @@ class SystemAdminController extends Controller
             SystemLog::logWarning(
                 "School permanently deleted: {$schoolName}",
                 'system',
-            ['school_id' => $schoolId, 'school_name' => $schoolName, 'deleted_by' => Auth::guard('admin')->user()->name],
+            ['school_id' => $schoolId, 'school_name' => $schoolName, 'deleted_by' => Auth::guard('admin')->user()->name ?? 'System'],
                 null,
                 'delete_school'
             );
@@ -355,7 +369,7 @@ class SystemAdminController extends Controller
                 'delete_school'
             );
 
-            return back()->with('error', 'Failed to delete school: ' . $e->getMessage());
+            return back()->with('error', 'Unable to delete school at this time. Please try again later.');
         }
     }
 
@@ -417,7 +431,8 @@ class SystemAdminController extends Controller
             $admin = Admin::create([
                 'name' => $request->name,
                 'email' => $request->email,
-                'password' => bcrypt($request->password),
+                'password' => $request->password,
+                'must_reset_password' => true, // Force reset on first login
                 'role' => 'school_admin',
                 'school_id' => $school->id,
             ]);
@@ -442,7 +457,7 @@ class SystemAdminController extends Controller
                 'create_school_admin'
             );
 
-            return back()->with('error', 'Failed to create admin: ' . $e->getMessage())->withInput();
+            return back()->with('error', 'Unable to create school admin at this time. Please try again later.')->withInput();
         }
     }
 
@@ -505,7 +520,7 @@ class SystemAdminController extends Controller
             SystemLog::logWarning(
                 "School admin deleted: {$adminName} from {$schoolName}",
                 'system',
-            ['admin_id' => $admin->id, 'email' => $admin->email, 'deleted_by' => Auth::guard('admin')->user()->name],
+            ['admin_id' => $admin->id, 'email' => $admin->email, 'deleted_by' => Auth::guard('admin')->user()->name ?? 'System'],
                 $schoolId,
                 'delete_school_admin'
             );
@@ -657,9 +672,9 @@ class SystemAdminController extends Controller
             $schoolId = $user->school_id;
 
             SystemLog::logWarning(
-                ucfirst($type) . " permanently deleted: {$userName} ({$userEmail})",
+                "{$type} permanently deleted: {$userName} ({$userEmail})",
                 'database',
-            ['user_id' => $id, 'type' => $type, 'email' => $userEmail, 'deleted_by' => Auth::guard('admin')->user()->name],
+            ['user_id' => $id, 'type' => $type, 'email' => $userEmail, 'deleted_by' => Auth::guard('admin')->user()->name ?? 'System'],
                 $schoolId,
                 'delete_user'
             );

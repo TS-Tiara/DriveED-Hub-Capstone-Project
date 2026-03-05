@@ -37,8 +37,8 @@ class InstructorTimeSlotController extends Controller
         $mySlots = TimeSlot::with(['instructors', 'course', 'branch'])
             ->where('school_id', $school->id)
             ->whereHas('instructors', function ($query) use ($instructor): void {
-                $query->where('instructor_id', $instructor->id);
-            })
+            $query->where('instructor_id', $instructor->id);
+        })
             ->where('date', '>=', now()->toDateString())
             ->orderBy('date')
             ->orderBy('start_time')
@@ -118,26 +118,29 @@ class InstructorTimeSlotController extends Controller
             return redirect()->back()->with('error', 'You are not qualified for this course. Please contact your admin for course assignment approval.');
         }
 
-        $hasConflict = TimeSlot::where('school_id', $school->id)
+        $hasConflict = TimeSlot::where('school_id', '=', $school->id)
             ->where('id', '!=', $timeSlot->id)
-            ->where('date', $timeSlot->date)
+            ->where('date', '=', $timeSlot->date)
             ->whereHas('instructors', function ($query) use ($instructor): void {
-                $query->where('instructor_id', $instructor->id);
-            })
+            $query->where('instructor_id', $instructor->id);
+        })
             ->where(function ($query) use ($timeSlot): void {
-                $query->where(function ($q) use ($timeSlot): void {
+            $query->where(function ($q) use ($timeSlot): void {
                     $q->where('start_time', '<=', $timeSlot->start_time)
                         ->where('end_time', '>', $timeSlot->start_time);
-                })
+                }
+                )
+                    ->orWhere(function ($q) use ($timeSlot): void {
+                $q->where('start_time', '<', $timeSlot->end_time)
+                    ->where('end_time', '>=', $timeSlot->end_time);
+            }
+            )
                 ->orWhere(function ($q) use ($timeSlot): void {
-                    $q->where('start_time', '<', $timeSlot->end_time)
-                        ->where('end_time', '>=', $timeSlot->end_time);
-                })
-                ->orWhere(function ($q) use ($timeSlot): void {
-                    $q->where('start_time', '>=', $timeSlot->start_time)
-                        ->where('end_time', '<=', $timeSlot->end_time);
-                });
-            })
+                $q->where('start_time', '>=', $timeSlot->start_time)
+                    ->where('end_time', '<=', $timeSlot->end_time);
+            }
+            );
+        })
             ->exists();
 
         if ($hasConflict) {
@@ -168,60 +171,60 @@ class InstructorTimeSlotController extends Controller
         $todayDate = now()->toDateString();
         $endOfWeek = now()->endOfWeek()->toDateString();
         $minimumNoticeDays = $school->instructor_removal_notice_days ?? 7;
-        
+
         // Get instructor's qualified courses
         $qualifiedCourseIds = $instructor->course_specializations ?? [];
-        
+
         // Get pending removal requests
-        $pendingRemovalRequests = InstructorRemovalRequest::where('instructor_id', $instructorId)
-            ->where('school_id', $school->id)
-            ->where('status', 'pending')
-            ->pluck('time_slot_id')
+        $pendingRemovalRequests = InstructorRemovalRequest::where('instructor_id', '=', $instructorId)
+            ->where('school_id', '=', $school->id)
+            ->where('status', '=', 'pending')
+            ->pluck('time_slot_id', 'id')
             ->toArray();
-        
+
         // My slots (instructor's selected and admin-assigned slots)
         $mySlots = TimeSlot::with(['instructors', 'course', 'branch', 'bookings.student', 'bookings.course'])
             ->where('school_id', $school->id)
             ->whereHas('instructors', function ($query) use ($instructorId) {
-                $query->where('instructor_id', $instructorId);
-            })
+            $query->where('instructor_id', $instructorId);
+        })
             ->orderBy('date')
             ->orderBy('start_time')
             ->get();
-        
+
         // Group my slots by date
         $groupedMySlots = $mySlots->groupBy(function ($slot) {
             return $slot->date->format('Y-m-d');
         });
-        
+
         // Today's slots
         $todaySlots = $mySlots->filter(function ($slot) use ($todayDate) {
             return $slot->date->format('Y-m-d') === $todayDate;
         });
-        
+
         // Upcoming slots this week (excluding today)
         $upcomingSlots = $mySlots->filter(function ($slot) use ($todayDate, $endOfWeek) {
             $slotDate = $slot->date->format('Y-m-d');
             return $slotDate > $todayDate && $slotDate <= $endOfWeek;
         })->take(5);
-        
+
         // Available slots (not taken by this instructor)
         $availableSlots = TimeSlot::with(['instructors', 'course', 'branch'])
             ->where('school_id', $school->id)
             ->where('status', 'open')
             ->whereDoesntHave('instructors', function ($query) use ($instructorId) {
-                $query->where('instructor_id', $instructorId);
-            })
+            $query->where('instructor_id', $instructorId);
+        })
             ->whereRaw('(SELECT COUNT(*) FROM schedule_instructors WHERE schedule_instructors.time_slot_id = time_slots.id) < COALESCE(time_slots.max_instructors, 1)')
             ->orderBy('date')
             ->orderBy('start_time')
             ->get();
-        
+
         // Group available slots by date
         $groupedAvailableSlots = $availableSlots->groupBy(function ($slot) {
             return $slot->date->format('Y-m-d');
         });
-        
+
         // Instructor's schedule for conflict checking (slot IDs by date and time)
         $instructorSchedule = [];
         foreach ($mySlots as $slot) {
@@ -274,8 +277,8 @@ class InstructorTimeSlotController extends Controller
                 'required',
                 'email',
                 Rule::unique('instructors', 'email')
-                    ->where('school_id', $school->id)
-                    ->ignore($instructor->id),
+                ->where('school_id', $school->id)
+                ->ignore($instructor->id),
                 'regex:/@(gmail\.com|yahoo\.com)$/i',
             ],
             'contact' => ['nullable', 'string', 'max:20', 'regex:/^(09\d{9}|\+639\d{9})$/'],
@@ -291,7 +294,7 @@ class InstructorTimeSlotController extends Controller
             if (!$request->filled('current_password') || !Hash::check($request->current_password, $instructor->password)) {
                 return back()->withErrors(['current_password' => 'Current password is incorrect.']);
             }
-            $data['password'] = Hash::make($request->new_password);
+            $data['password'] = $request->new_password;
         }
         //False positive
         $instructor->update($data);
@@ -346,7 +349,7 @@ class InstructorTimeSlotController extends Controller
         // Check minimum notice period
         $minimumNoticeDays = $school->instructor_removal_notice_days ?? 7;
         $daysUntilSlot = now()->startOfDay()->diffInDays($timeSlot->date->startOfDay(), false);
-        
+
         if ($daysUntilSlot < $minimumNoticeDays) {
             return redirect()->back()
                 ->with('error', "You must request removal at least {$minimumNoticeDays} days before the scheduled time slot. This slot is in {$daysUntilSlot} day(s).");
@@ -400,6 +403,7 @@ class InstructorTimeSlotController extends Controller
         $instructor = Auth::guard('instructor')->user();
         abort_unless($instructor && $instructor->school_id === $school->id, 403);
         abort_unless($booking->school_id === $school->id, 403);
+        abort_unless($booking->instructor_id === $instructor->id, 403, 'You can only mark attendance for your own assigned lessons.');
 
         $request->validate([
             'attendance_status' => 'nullable|in:attended,late,absent'
@@ -540,5 +544,3 @@ class InstructorTimeSlotController extends Controller
         ]);
     }
 }
-
-

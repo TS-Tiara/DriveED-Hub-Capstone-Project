@@ -23,6 +23,7 @@ class ReportController extends Controller
             if (!$admin || $admin->school_id !== $school->id) {
                 abort(403);
             }
+            set_time_limit(180);
             $schoolId = $school->id;
 
             // Get time period filter (default: all time)
@@ -297,28 +298,35 @@ class ReportController extends Controller
      */
     public function exportStudents(School $school)
     {
-        $admin = auth()->guard('admin')->user();
-        if (!$admin || $admin->school_id !== $school->id) {
-            abort(403);
-        }
-        $filename = $school->slug . '_students_' . now()->format('Y-m-d') . '.xls';
-        $students = Student::where('school_id', $school->id)->orderBy('name')->get();
+        try {
+            $admin = auth()->guard('admin')->user();
+            if (!$admin || $admin->school_id !== $school->id) {
+                abort(403);
+            }
+            set_time_limit(120);
+            $filename = $school->slug . '_students_' . now()->format('Y-m-d') . '.xls';
+            $students = Student::where('school_id', $school->id)->orderBy('name')->limit(500)->get();
 
-        $html = $this->buildExcelHtml(
-            $school->name . ' - Student List',
-        ['Name', 'Email', 'Contact', 'Enrollment Date', 'Status'],
-            $students->map(fn($s) => [
+            $html = $this->buildExcelHtml(
+                $school->name . ' - Student List',
+            ['Name', 'Email', 'Contact', 'Enrollment Date', 'Status'],
+                $students->map(fn($s) => [
             $s->name,
             $s->email,
             $s->contact ?? 'N/A',
             $s->enrollment_date ?Carbon::parse($s->enrollment_date)->format('M d, Y') : 'N/A',
             ucfirst($s->status),
             ])->toArray()
-        );
+            );
 
-        return response($html)
-            ->header('Content-Type', 'application/vnd.ms-excel')
-            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+            return response($html)
+                ->header('Content-Type', 'application/vnd.ms-excel')
+                ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+        }
+        catch (\Exception $e) {
+            \App\Models\SystemLog::logError('Student Export Error', 'database', $e, ['school_id' => $school->id], $school->id);
+            return back()->with('error', 'Unable to export students at this time.');
+        }
     }
 
     /**
@@ -326,51 +334,58 @@ class ReportController extends Controller
      */
     public function exportInstructors(School $school)
     {
-        $admin = auth()->guard('admin')->user();
-        if (!$admin || $admin->school_id !== $school->id) {
-            abort(403);
+        try {
+            $admin = auth()->guard('admin')->user();
+            if (!$admin || $admin->school_id !== $school->id) {
+                abort(403);
+            }
+            set_time_limit(120);
+            $filename = $school->slug . '_instructors_' . now()->format('Y-m-d') . '.xls';
+            $instructors = Instructor::where('school_id', $school->id)->orderBy('name')->limit(500)->get();
+
+            $instructorStats = Booking::where('school_id', $school->id)
+                ->whereNotNull('instructor_id')
+                ->selectRaw('instructor_id, COUNT(*) as total_lessons, SUM(CASE WHEN status = "completed" THEN 1 ELSE 0 END) as completed_lessons')
+                ->groupBy('instructor_id')
+                ->get()
+                ->keyBy('instructor_id');
+
+            $studentCountsByInstructor = Booking::where('school_id', $school->id)
+                ->whereNotNull('instructor_id')
+                ->selectRaw('instructor_id, COUNT(DISTINCT student_id) as total_students')
+                ->groupBy('instructor_id')
+                ->pluck('total_students', 'instructor_id');
+
+            $rows = [];
+            foreach ($instructors as $instructor) {
+                $stats = $instructorStats->get($instructor->id);
+                $totalLessons = (int)($stats->total_lessons ?? 0);
+                $completedLessons = (int)($stats->completed_lessons ?? 0);
+                $totalStudentsTaught = (int)($studentCountsByInstructor[$instructor->id] ?? 0);
+                $rows[] = [
+                    $instructor->name,
+                    $instructor->email,
+                    $instructor->contact ?? 'N/A',
+                    ucfirst($instructor->status ?? 'active'),
+                    $totalStudentsTaught,
+                    $completedLessons,
+                ];
+            }
+
+            $html = $this->buildExcelHtml(
+                $school->name . ' - Instructor List',
+            ['Name', 'Email', 'Contact', 'Status', 'Total Students', 'Completed Lessons'],
+                $rows
+            );
+
+            return response($html)
+                ->header('Content-Type', 'application/vnd.ms-excel')
+                ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
         }
-        $filename = $school->slug . '_instructors_' . now()->format('Y-m-d') . '.xls';
-        $instructors = Instructor::where('school_id', $school->id)->orderBy('name')->get();
-
-        $instructorStats = Booking::where('school_id', $school->id)
-            ->whereNotNull('instructor_id')
-            ->selectRaw('instructor_id, COUNT(*) as total_lessons, SUM(CASE WHEN status = "completed" THEN 1 ELSE 0 END) as completed_lessons')
-            ->groupBy('instructor_id')
-            ->get()
-            ->keyBy('instructor_id');
-
-        $studentCountsByInstructor = Booking::where('school_id', $school->id)
-            ->whereNotNull('instructor_id')
-            ->selectRaw('instructor_id, COUNT(DISTINCT student_id) as total_students')
-            ->groupBy('instructor_id')
-            ->pluck('total_students', 'instructor_id');
-
-        $rows = [];
-        foreach ($instructors as $instructor) {
-            $stats = $instructorStats->get($instructor->id);
-            $totalLessons = (int)($stats->total_lessons ?? 0);
-            $completedLessons = (int)($stats->completed_lessons ?? 0);
-            $totalStudentsTaught = (int)($studentCountsByInstructor[$instructor->id] ?? 0);
-            $rows[] = [
-                $instructor->name,
-                $instructor->email,
-                $instructor->contact ?? 'N/A',
-                ucfirst($instructor->status ?? 'active'),
-                $totalStudentsTaught,
-                $completedLessons,
-            ];
+        catch (\Exception $e) {
+            \App\Models\SystemLog::logError('Instructor Export Error', 'database', $e, ['school_id' => $school->id], $school->id);
+            return back()->with('error', 'Unable to export instructors at this time.');
         }
-
-        $html = $this->buildExcelHtml(
-            $school->name . ' - Instructor List',
-        ['Name', 'Email', 'Contact', 'Status', 'Total Students', 'Completed Lessons'],
-            $rows
-        );
-
-        return response($html)
-            ->header('Content-Type', 'application/vnd.ms-excel')
-            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
     }
 
     /**
@@ -378,21 +393,24 @@ class ReportController extends Controller
      */
     public function exportBookings(School $school)
     {
-        $admin = auth()->guard('admin')->user();
-        if (!$admin || $admin->school_id !== $school->id) {
-            abort(403);
-        }
-        $filename = $school->slug . '_bookings_' . now()->format('Y-m-d') . '.xls';
+        try {
+            $admin = auth()->guard('admin')->user();
+            if (!$admin || $admin->school_id !== $school->id) {
+                abort(403);
+            }
+            set_time_limit(120);
+            $filename = $school->slug . '_bookings_' . now()->format('Y-m-d') . '.xls';
 
-        $bookings = Booking::where('school_id', $school->id)
-            ->with(['student', 'instructor', 'course'])
-            ->orderBy('scheduled_at', 'desc')
-            ->get();
+            $bookings = Booking::where('school_id', $school->id)
+                ->with(['student', 'instructor', 'course'])
+                ->orderBy('scheduled_at', 'desc')
+                ->limit(500)
+                ->get();
 
-        $html = $this->buildExcelHtml(
-            $school->name . ' - Booking List',
-        ['Student', 'Instructor', 'Course', 'Scheduled At', 'Status', 'Session Grade'],
-            $bookings->map(fn($b) => [
+            $html = $this->buildExcelHtml(
+                $school->name . ' - Booking List',
+            ['Student', 'Instructor', 'Course', 'Scheduled At', 'Status', 'Session Grade'],
+                $bookings->map(fn($b) => [
             $b->student->name ?? 'N/A',
             $b->instructor->name ?? 'Unassigned',
             $b->course->title ?? 'N/A',
@@ -400,11 +418,16 @@ class ReportController extends Controller
             ucfirst($b->status),
             $b->session_grade ?? 'Not Graded',
             ])->toArray()
-        );
+            );
 
-        return response($html)
-            ->header('Content-Type', 'application/vnd.ms-excel')
-            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+            return response($html)
+                ->header('Content-Type', 'application/vnd.ms-excel')
+                ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+        }
+        catch (\Exception $e) {
+            \App\Models\SystemLog::logError('Booking Export Error', 'database', $e, ['school_id' => $school->id], $school->id);
+            return back()->with('error', 'Unable to export bookings at this time.');
+        }
     }
 
     /**
@@ -412,21 +435,24 @@ class ReportController extends Controller
      */
     public function exportPayments(School $school)
     {
-        $admin = auth()->guard('admin')->user();
-        if (!$admin || $admin->school_id !== $school->id) {
-            abort(403);
-        }
-        $filename = $school->slug . '_payments_' . now()->format('Y-m-d') . '.xls';
+        try {
+            $admin = auth()->guard('admin')->user();
+            if (!$admin || $admin->school_id !== $school->id) {
+                abort(403);
+            }
+            set_time_limit(120);
+            $filename = $school->slug . '_payments_' . now()->format('Y-m-d') . '.xls';
 
-        $payments = Payment::whereHas('booking', fn($q) => $q->where('school_id', $school->id))
-            ->with(['booking.student', 'booking.course'])
-            ->orderBy('paid_on', 'desc')
-            ->get();
+            $payments = Payment::whereHas('booking', fn($q) => $q->where('school_id', $school->id))
+                ->with(['booking.student', 'booking.course'])
+                ->orderBy('paid_on', 'desc')
+                ->limit(500)
+                ->get();
 
-        $html = $this->buildExcelHtml(
-            $school->name . ' - Payment List',
-        ['Payment ID', 'Student', 'Course', 'Amount (PHP)', 'Method', 'Status', 'Paid On'],
-            $payments->map(fn($p) => [
+            $html = $this->buildExcelHtml(
+                $school->name . ' - Payment List',
+            ['Payment ID', 'Student', 'Course', 'Amount (PHP)', 'Method', 'Status', 'Paid On'],
+                $payments->map(fn($p) => [
             $p->id,
             $p->booking->student->name ?? 'N/A',
             $p->booking->course->title ?? 'N/A',
@@ -435,11 +461,16 @@ class ReportController extends Controller
             ucfirst($p->status),
             $p->paid_on ?Carbon::parse($p->paid_on)->format('M d, Y') : 'N/A',
             ])->toArray()
-        );
+            );
 
-        return response($html)
-            ->header('Content-Type', 'application/vnd.ms-excel')
-            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+            return response($html)
+                ->header('Content-Type', 'application/vnd.ms-excel')
+                ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+        }
+        catch (\Exception $e) {
+            \App\Models\SystemLog::logError('Payment Export Error', 'database', $e, ['school_id' => $school->id], $school->id);
+            return back()->with('error', 'Unable to export payments at this time.');
+        }
     }
 
     /**
@@ -447,44 +478,50 @@ class ReportController extends Controller
      */
     public function exportCourses(School $school)
     {
-        $admin = auth()->guard('admin')->user();
-        if (!$admin || $admin->school_id !== $school->id) {
-            abort(403);
+        try {
+            $admin = auth()->guard('admin')->user();
+            if (!$admin || $admin->school_id !== $school->id) {
+                abort(403);
+            }
+            $filename = $school->slug . '_courses_' . now()->format('Y-m-d') . '.xls';
+            $courses = Course::where('school_id', $school->id)->orderBy('title')->get();
+
+            $courseStats = Booking::where('school_id', $school->id)
+                ->selectRaw('course_id, COUNT(*) as enrollments, SUM(CASE WHEN status = "completed" THEN 1 ELSE 0 END) as completed')
+                ->groupBy('course_id')
+                ->get()
+                ->keyBy('course_id');
+
+            $rows = [];
+            foreach ($courses as $course) {
+                $stats = $courseStats->get($course->id);
+                $enrollments = (int)($stats->enrollments ?? 0);
+                $completed = (int)($stats->completed ?? 0);
+                $rate = $enrollments > 0 ? round(($completed / $enrollments) * 100, 1) . '%' : '0%';
+                $rows[] = [
+                    $course->title,
+                    'PHP ' . number_format($course->price, 2),
+                    $course->duration_hours ?? 'N/A',
+                    $enrollments,
+                    $completed,
+                    $rate,
+                ];
+            }
+
+            $html = $this->buildExcelHtml(
+                $school->name . ' - Course List',
+            ['Title', 'Price', 'Duration (Hours)', 'Enrollments', 'Completed', 'Completion Rate'],
+                $rows
+            );
+
+            return response($html)
+                ->header('Content-Type', 'application/vnd.ms-excel')
+                ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
         }
-        $filename = $school->slug . '_courses_' . now()->format('Y-m-d') . '.xls';
-        $courses = Course::where('school_id', $school->id)->orderBy('title')->get();
-
-        $courseStats = Booking::where('school_id', $school->id)
-            ->selectRaw('course_id, COUNT(*) as enrollments, SUM(CASE WHEN status = "completed" THEN 1 ELSE 0 END) as completed')
-            ->groupBy('course_id')
-            ->get()
-            ->keyBy('course_id');
-
-        $rows = [];
-        foreach ($courses as $course) {
-            $stats = $courseStats->get($course->id);
-            $enrollments = (int)($stats->enrollments ?? 0);
-            $completed = (int)($stats->completed ?? 0);
-            $rate = $enrollments > 0 ? round(($completed / $enrollments) * 100, 1) . '%' : '0%';
-            $rows[] = [
-                $course->title,
-                'PHP ' . number_format($course->price, 2),
-                $course->duration_hours ?? 'N/A',
-                $enrollments,
-                $completed,
-                $rate,
-            ];
+        catch (\Exception $e) {
+            \App\Models\SystemLog::logError('Course Export Error', 'database', $e, ['school_id' => $school->id], $school->id);
+            return back()->with('error', 'Unable to export courses at this time.');
         }
-
-        $html = $this->buildExcelHtml(
-            $school->name . ' - Course List',
-        ['Title', 'Price', 'Duration (Hours)', 'Enrollments', 'Completed', 'Completion Rate'],
-            $rows
-        );
-
-        return response($html)
-            ->header('Content-Type', 'application/vnd.ms-excel')
-            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
     }
 
     /**

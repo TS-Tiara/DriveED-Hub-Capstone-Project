@@ -166,7 +166,7 @@ class ModuleLessonController extends Controller
 
             return back()
                 ->withInput()
-                ->with('error', 'Failed to create lesson: ' . $e->getMessage());
+                ->with('error', 'Unable to create lesson at this time. Please try again later.');
         }
     }
 
@@ -271,11 +271,17 @@ class ModuleLessonController extends Controller
 
             // Remove selected attachments
             if ($request->remove_attachments) {
-                foreach ($request->remove_attachments as $index) {
-                    if (isset($attachments[$index])) {
-                        // Delete file from storage
-                        Storage::disk('public')->delete($attachments[$index]['path']);
-                        unset($attachments[$index]);
+                // Sort indices descending to remove safely if processed differently
+                // but since we collect all and re-index at end, just filter
+                $removeIndices = array_unique($request->remove_attachments);
+
+                foreach ($removeIndices as $index) {
+                    // Range validation: ensure index is within current collection
+                    if (is_numeric($index) && $index >= 0 && $index < count($attachments)) {
+                        if (isset($attachments[$index])) {
+                            Storage::disk('public')->delete($attachments[$index]['path']);
+                            unset($attachments[$index]);
+                        }
                     }
                 }
                 $attachments = array_values($attachments); // Re-index array
@@ -329,7 +335,7 @@ class ModuleLessonController extends Controller
 
             return back()
                 ->withInput()
-                ->with('error', 'Failed to update lesson: ' . $e->getMessage());
+                ->with('error', 'Unable to update lesson at this time. Please try again later.');
         }
     }
 
@@ -372,7 +378,7 @@ class ModuleLessonController extends Controller
         }
         catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Failed to delete lesson: ' . $e->getMessage());
+            return back()->with('error', 'Unable to delete lesson at this time. Please try again later.');
         }
     }
 

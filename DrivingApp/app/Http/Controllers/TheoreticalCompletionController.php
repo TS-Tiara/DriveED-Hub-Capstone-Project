@@ -9,6 +9,7 @@ use App\Models\SessionCompletion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log as LogFacade;
 
 class TheoreticalCompletionController extends Controller
 {
@@ -36,7 +37,8 @@ class TheoreticalCompletionController extends Controller
                 'routePrefix' => 'schools.instructor.theoretical',
             ];
         }
-        abort(403, 'Unauthorized');
+
+        throw new \Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException('Unauthorized');
     }
 
     /**
@@ -221,8 +223,12 @@ class TheoreticalCompletionController extends Controller
         }
         catch (\Exception $e) {
             DB::rollBack();
+            LogFacade::error('Failed to mark student as passed theoretical: ' . $e->getMessage(), [
+                'enrollment_id' => $request->enrollment_id,
+                'exception' => $e
+            ]);
             return back()
-                ->with('error', 'Failed to mark as passed: ' . $e->getMessage());
+                ->with('error', 'Unable to mark student as passed at this time. Please try again later.');
         }
     }
 
@@ -280,7 +286,12 @@ class TheoreticalCompletionController extends Controller
         }
         catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Failed to revoke status: ' . $e->getMessage());
+            LogFacade::error('Failed to revoke theoretical status: ' . $e->getMessage(), [
+                'enrollment_id' => $enrollment->id,
+                'school_id' => $school->id,
+                'exception' => $e
+            ]);
+            return back()->with('error', 'Unable to revoke status at this time. Please try again later.');
         }
     }
 
@@ -295,11 +306,12 @@ class TheoreticalCompletionController extends Controller
 
         $school = Auth::guard('admin')->user()->school;
 
-        $stats = [
-            'total_passed' => Student::where('school_id', $school->id)
+        $passed = Student::where('school_id', $school->id)
             ->where('has_passed_theoretical', true)
-            ->count(),
-            'pending_completion' => EnrollmentRequest::whereHas('course', function ($query) use ($school) {
+            ->orderBy('updated_at', 'desc')
+            ->paginate(15, ['*'], 'passed_page');
+
+        $pending = EnrollmentRequest::whereHas('course', function ($query) use ($school) {
             $query->where('school_id', $school->id)
                 ->where('course_type', 'theoretical');
         })
@@ -307,12 +319,18 @@ class TheoreticalCompletionController extends Controller
             $query->where('has_passed_theoretical', false);
         })
             ->where('status', 'approved')
-            ->count(),
-            'passed_this_month' => Student::where('school_id', $school->id)
+            ->count();
+
+        $passedThisMonth = Student::where('school_id', $school->id)
             ->where('has_passed_theoretical', true)
             ->whereMonth('updated_at', now()->month)
             ->whereYear('updated_at', now()->year)
-            ->count(),
+            ->count();
+
+        $stats = [
+            'total_passed' => $passed,
+            'pending_completion' => $pending,
+            'passed_this_month' => $passedThisMonth,
         ];
 
         return response()->json($stats);

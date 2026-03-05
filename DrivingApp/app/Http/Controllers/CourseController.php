@@ -143,7 +143,14 @@ class CourseController extends Controller
             }
         }
 
-        $course->load(['bookings.student', 'bookings.instructor', 'modules.lessons']);
+        // Paginate bookings to avoid memory issues with many students
+        $bookings = $course->bookings()
+            ->with(['student', 'instructor'])
+            ->latest()
+            ->paginate(10);
+
+        $course->setRelation('bookings', $bookings);
+        $course->load(['modules.lessons']);
 
         // Check if student can enroll (for student view)
         $canEnroll = null;
@@ -274,7 +281,7 @@ class CourseController extends Controller
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Error deleting course: ' . $e->getMessage()
+                    'message' => 'Unable to delete course at this time.'
                 ], 500);
             }
 

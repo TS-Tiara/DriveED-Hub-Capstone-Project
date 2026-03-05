@@ -89,6 +89,7 @@ class AdminManagementController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => $validated['password'], // Will be hashed by model cast
+            'must_reset_password' => true, // Force reset on first login
             'role' => $validated['role'],
             'contact' => $validated['contact'] ?? null,
             'is_active' => true,
@@ -99,12 +100,12 @@ class AdminManagementController extends Controller
         SystemLog::logInfo(
             "New {$roleLabel} '{$newAdmin->name}' created by {$admin->name}",
             'admin',
-            [
-                'new_admin_id' => $newAdmin->id,
-                'role' => $newAdmin->role,
-                'branch_id' => $newAdmin->branch_id,
-                'created_by' => $admin->id,
-            ],
+        [
+            'new_admin_id' => $newAdmin->id,
+            'role' => $newAdmin->role,
+            'branch_id' => $newAdmin->branch_id,
+            'created_by' => $admin->id,
+        ],
             $school->id,
             'admin_created'
         );
@@ -178,12 +179,12 @@ class AdminManagementController extends Controller
         SystemLog::logInfo(
             "Admin '{$targetAdmin->name}' updated by {$admin->name}",
             'admin',
-            [
-                'admin_id' => $targetAdmin->id,
-                'new_role' => $targetAdmin->role,
-                'branch_id' => $targetAdmin->branch_id,
-                'updated_by' => $admin->id,
-            ],
+        [
+            'admin_id' => $targetAdmin->id,
+            'new_role' => $targetAdmin->role,
+            'branch_id' => $targetAdmin->branch_id,
+            'updated_by' => $admin->id,
+        ],
             $school->id,
             'admin_updated'
         );
@@ -223,11 +224,11 @@ class AdminManagementController extends Controller
         SystemLog::logInfo(
             "Admin '{$targetAdmin->name}' {$statusLabel} by {$admin->name}",
             'admin',
-            [
-                'admin_id' => $targetAdmin->id,
-                'new_status' => $targetAdmin->is_active,
-                'toggled_by' => $admin->id,
-            ],
+        [
+            'admin_id' => $targetAdmin->id,
+            'new_status' => $targetAdmin->is_active,
+            'toggled_by' => $admin->id,
+        ],
             $school->id,
             'admin_status_toggled'
         );
@@ -265,11 +266,11 @@ class AdminManagementController extends Controller
         SystemLog::logInfo(
             "Admin '{$name}' (role: {$role}) deleted by {$admin->name}",
             'admin',
-            [
-                'deleted_admin_name' => $name,
-                'deleted_role' => $role,
-                'deleted_by' => $admin->id,
-            ],
+        [
+            'deleted_admin_name' => $name,
+            'deleted_role' => $role,
+            'deleted_by' => $admin->id,
+        ],
             $school->id,
             'admin_deleted'
         );

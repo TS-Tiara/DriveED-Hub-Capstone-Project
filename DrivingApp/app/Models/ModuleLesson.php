@@ -41,15 +41,22 @@ class ModuleLesson extends Model
      */
     public function module(): BelongsTo
     {
-        return $this->belongsTo(CourseModule::class, 'module_id');
+        return $this->belongsTo(CourseModule::class , 'module_id');
     }
 
     /**
      * Get the course through the module
      */
-    public function course()
+    public function course(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
     {
-        return $this->module->course();
+        return $this->hasOneThrough(
+            Course::class ,
+            CourseModule::class ,
+            'id', // Foreign key on course_modules table
+            'id', // Foreign key on courses table
+            'module_id', // Local key on module_lessons table
+            'course_id' // Local key on course_modules table
+        );
     }
 
     /**

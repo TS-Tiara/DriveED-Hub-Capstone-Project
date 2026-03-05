@@ -43,15 +43,18 @@ class EnrollmentRequest extends Model
         'package_id',
     ];
 
-    protected $casts = [
-        'approved_at' => 'datetime',
-        'enrolled_at' => 'datetime',
-        'completed_at' => 'datetime',
-        'cancelled_at' => 'datetime',
-        'theoretical_passed' => 'boolean',
-        'theoretical_passed_at' => 'datetime',
-        'payment_confirmed_at' => 'datetime',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'approved_at' => 'datetime',
+            'enrolled_at' => 'datetime',
+            'completed_at' => 'datetime',
+            'cancelled_at' => 'datetime',
+            'theoretical_passed' => 'boolean',
+            'theoretical_passed_at' => 'datetime',
+            'payment_confirmed_at' => 'datetime',
+        ];
+    }
 
     // Relationships
     public function school()
