@@ -631,22 +631,19 @@ class EnrollmentRequestController extends Controller
             foreach ($request->enrollment_ids as $id) {
                 $enrollment = EnrollmentRequest::find($id);
 
-                if (!$enrollment) {
-                    continue;
-                }
-
                 // Skip if not belonging to this school
-                if ((int)$enrollment->school_id !== (int)$school->id) {
+                if ($enrollment->school_id !== $school->id) {
                     continue;
                 }
 
                 // Skip if already rejected or approved
-                if (in_array((string)$enrollment->status, ['rejected', 'approved'])) {
+                if (in_array($enrollment->status, ['rejected', 'approved'])) {
                     continue;
                 }
 
                 $enrollment->update([
                     'status' => 'rejected',
+                    'rejected_at' => now(),
                     'remarks' => $request->remarks,
                 ]);
 

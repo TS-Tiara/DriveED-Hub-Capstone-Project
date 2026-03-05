@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\HasSchoolScope;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class EnrollmentRequest extends Model
 {
+    use HasSchoolScope;
     use HasFactory;
 
     protected $fillable = [
@@ -22,20 +25,21 @@ class EnrollmentRequest extends Model
         'remarks',
         'branch',
         'location',
-        'approved_by',
-        'approved_at',
         'requested_license_type',
         'experience_level',
         'credentials_file_path',
         'verification_notes',
-        // New enrollment fields
+        'approved_by',
+        'approved_at',
         'enrolled_at',
         'completed_at',
         'cancelled_at',
+        'rejected_at',
         'theoretical_passed',
         'theoretical_passed_at',
         'theoretical_passed_by',
         'theoretical_pass_notes',
+        // New enrollment fields
         'package_id',
     ];
 

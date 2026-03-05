@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Traits\HasSchoolScope;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CourseModule extends Model
 {
+    use HasSchoolScope;
     use HasFactory;
 
     protected $fillable = [

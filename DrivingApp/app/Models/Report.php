@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\HasSchoolScope;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Report extends Model
 {
+    use HasSchoolScope;
     use HasFactory;
 
     protected $fillable = [
@@ -64,14 +67,6 @@ class Report extends Model
     public function scopeOfType($query, $type)
     {
         return $query->where('report_type', $type);
-    }
-
-    /**
-     * Scope a query to only include reports for a specific school.
-     */
-    public function scopeForSchool($query, $schoolId)
-    {
-        return $query->where('school_id', $schoolId);
     }
 
     /**

@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\HasSchoolScope;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Payment extends Model
 {
+    use HasSchoolScope;
     use HasFactory;
 
     protected $fillable = [
@@ -17,7 +20,6 @@ class Payment extends Model
         'paid_on',
         'method',
         'reference',
-        'status',
     ];
 
     protected $casts = [
@@ -39,14 +41,6 @@ class Payment extends Model
     public function booking(): BelongsTo
     {
         return $this->belongsTo(Booking::class);
-    }
-
-    /**
-     * Scope a query to only include payments for a specific school.
-     */
-    public function scopeForSchool($query, $schoolId)
-    {
-        return $query->where('school_id', $schoolId);
     }
 
     /**

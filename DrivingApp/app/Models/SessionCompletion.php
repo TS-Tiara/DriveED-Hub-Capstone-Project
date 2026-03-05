@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\HasSchoolScope;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SessionCompletion extends Model
 {
+    use HasSchoolScope;
     use HasFactory;
 
     protected $fillable = [
@@ -71,7 +74,7 @@ class SessionCompletion extends Model
      */
     public function loggedBy(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'logged_by');
+        return $this->belongsTo(Admin::class, 'logged_by');
     }
 
     /**

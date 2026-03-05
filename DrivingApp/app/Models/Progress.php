@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\HasSchoolScope;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Progress extends Model
 {
+    use HasSchoolScope;
     use HasFactory;
 
     protected $table = 'progresses';
@@ -48,14 +51,6 @@ class Progress extends Model
     public function course(): BelongsTo
     {
         return $this->belongsTo(Course::class);
-    }
-
-    /**
-     * Scope a query to only include progress for a specific school.
-     */
-    public function scopeForSchool($query, $schoolId)
-    {
-        return $query->where('school_id', $schoolId);
     }
 
     /**

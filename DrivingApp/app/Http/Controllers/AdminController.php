@@ -14,6 +14,7 @@ use App\Models\School;
 use App\Models\SchoolSetting;
 use App\Models\Student;
 use App\Models\SystemLog;
+use App\Http\Controllers\ReportController;
 use App\Models\TimeSlot;
 use App\Models\PhaseProgression;
 use Illuminate\Support\Facades\Auth;
@@ -22,6 +23,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log as LogFacade;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Carbon;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Validation\Rule;
 
 class AdminController extends Controller
@@ -168,15 +170,63 @@ class AdminController extends Controller
             $activeInstructors = (clone $instructorQuery)->where('status', 'active')->count();
             $inactiveInstructors = $totalInstructors - $activeInstructors;
 
-            // Paginated results
-            $students = $studentQuery
-                ->select('id', 'school_id', 'branch_id', 'name', 'email', 'contact', 'address', 'status', 'role', 'created_at')
+            $studentItems = $studentQuery
+                ->select('id', 'branch_id', 'name', 'email', 'contact', 'address', 'status')
                 ->orderBy('name')
-                ->paginate(10, ['*'], 'students_page');
-            $instructors = $instructorQuery
-                ->select('id', 'school_id', 'branch_id', 'name', 'email', 'contact', 'license_number', 'status', 'availability', 'created_at')
+                ->get()
+                ->map(function ($student) {
+                    return (object) [
+                        'id' => $student->id,
+                        'name' => $student->name,
+                        'email' => $student->email,
+                        'contact' => $student->contact,
+                        'status' => $student->status,
+                        'role' => 'student',
+                        'address' => $student->address,
+                        'license_number' => null,
+                        'availability' => null,
+                        'branch_id' => $student->branch_id,
+                    ];
+                });
+
+            $instructorItems = $instructorQuery
+                ->select('id', 'branch_id', 'name', 'email', 'contact', 'license_number', 'status', 'availability')
                 ->orderBy('name')
-                ->paginate(10, ['*'], 'instructors_page');
+                ->get()
+                ->map(function ($instructor) {
+                    return (object) [
+                        'id' => $instructor->id,
+                        'name' => $instructor->name,
+                        'email' => $instructor->email,
+                        'contact' => $instructor->contact,
+                        'status' => $instructor->status,
+                        'role' => 'instructor',
+                        'address' => null,
+                        'license_number' => $instructor->license_number,
+                        'availability' => $instructor->availability,
+                        'branch_id' => $instructor->branch_id,
+                    ];
+                });
+
+            $allUsers = $studentItems
+                ->concat($instructorItems)
+                ->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE)
+                ->values();
+
+            $perPage = 20;
+            $currentPage = LengthAwarePaginator::resolveCurrentPage('page');
+            $currentItems = $allUsers->forPage($currentPage, $perPage)->values();
+
+            $users = new LengthAwarePaginator(
+                $currentItems,
+                $allUsers->count(),
+                $perPage,
+                $currentPage,
+                [
+                    'path' => request()->url(),
+                    'query' => request()->query(),
+                ]
+            );
 
             $branches = Branch::where('school_id', $school->id)
                 ->where('is_active', true)
@@ -189,8 +239,7 @@ class AdminController extends Controller
             return view($school->resolveView('admin.user-management'), [
                 'school' => $school,
                 'admin' => $admin,
-                'students' => $students,
-                'instructors' => $instructors,
+                'users' => $users,
                 'branches' => $branches,
                 'isAjax' => $isAjax,
                 'totalStudents' => $totalStudents,
@@ -220,6 +269,11 @@ class AdminController extends Controller
     // ==========================
     public function storeAccount(Request $request, School $school)
     {
+        $admin = Auth::guard('admin')->user();
+        if (!$admin) {
+            abort(403);
+        }
+
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => [
@@ -255,7 +309,7 @@ class AdminController extends Controller
             SystemLog::logInfo(
                 "New student created: {$user->name}",
                 'database',
-            ['student_id' => $user->id, 'email' => $user->email, 'created_by' => Auth::guard('admin')->user()->name],
+            ['student_id' => $user->id, 'email' => $user->email, 'created_by' => $admin->name ?? 'System'],
                 $school->id,
                 'create_student'
             );
@@ -274,7 +328,7 @@ class AdminController extends Controller
             SystemLog::logInfo(
                 "New instructor created: {$user->name}",
                 'database',
-            ['instructor_id' => $user->id, 'email' => $user->email, 'created_by' => Auth::guard('admin')->user()->name],
+            ['instructor_id' => $user->id, 'email' => $user->email, 'created_by' => $admin->name ?? 'System'],
                 $school->id,
                 'create_instructor'
             );
@@ -363,15 +417,16 @@ class AdminController extends Controller
 
     public function toggleStudentStatus(School $school, $id)
     {
-        $student = Student::where('school_id', $school->id)
-            ->where('id', $id)
-            ->firstOrFail();
+        $admin = Auth::guard('admin')->user();
+        $student = \App\Models\Student::where('school_id', $school->id)->findOrFail($id);
 
-        $student->status = $student->status === 'active' ? 'inactive' : 'active';
-        $student->save();
+        if ($admin->isBranchSecretary() && $student->branch_id !== $admin->branch_id) {
+            abort(403, 'You do not have permission to manage students in this branch.');
+        }
 
-        return redirect()->route('schools.admin.userManagement', $school)
-            ->with('success', 'Student status updated successfully!');
+        $student->update(['status' => $student->status === 'active' ? 'inactive' : 'active']);
+
+        return redirect()->back()->with('success', 'Student status updated successfully!');
     }
 
     // ==========================
@@ -413,33 +468,60 @@ class AdminController extends Controller
 
     public function toggleInstructorStatus(School $school, $id)
     {
-        $instructor = Instructor::where('school_id', $school->id)
-            ->where('id', $id)
-            ->firstOrFail();
+        $admin = Auth::guard('admin')->user();
+        $instructor = \App\Models\Instructor::where('school_id', $school->id)->findOrFail($id);
 
-        $instructor->status = $instructor->status === 'active' ? 'inactive' : 'active';
-        $instructor->save();
+        if ($admin->isBranchSecretary() && $instructor->branch_id !== $admin->branch_id) {
+            abort(403, 'You do not have permission to manage instructors in this branch.');
+        }
 
-        return redirect()->route('schools.admin.userManagement', $school)
-            ->with('success', 'Instructor status updated successfully!');
+        $instructor->update(['status' => $instructor->status === 'active' ? 'inactive' : 'active']);
+
+        return redirect()->back()->with('success', 'Instructor status updated successfully!');
     }
 
     public function toggleAvailability(School $school, $id)
     {
-        $instructor = Instructor::where('school_id', $school->id)
-            ->where('id', $id)
-            ->firstOrFail();
+        $admin = Auth::guard('admin')->user();
+        $instructor = \App\Models\Instructor::where('school_id', $school->id)->findOrFail($id);
 
-        $instructor->availability = $instructor->availability === 'available' ? 'unavailable' : 'available';
-        $instructor->save();
+        if ($admin->isBranchSecretary() && $instructor->branch_id !== $admin->branch_id) {
+            abort(403, 'You do not have permission to manage instructors in this branch.');
+        }
 
-        return redirect()->route('schools.admin.userManagement', $school)
-            ->with('success', 'Instructor availability updated successfully!');
+        $instructor->update(['availability' => $instructor->availability === 'available' ? 'unavailable' : 'available']);
+
+        return redirect()->back()->with('success', 'Instructor availability updated successfully!');
     }
 
     // ==========================
     // REPORTS & PROFILE
     // ==========================
+
+    /**
+     * Student reports - delegates to unified analytics dashboard
+     */
+    public function studentReports(School $school)
+    {
+        return app(ReportController::class)->index($school);
+    }
+
+    /**
+     * Instructor reports - delegates to unified analytics dashboard
+     */
+    public function instructorReports(School $school)
+    {
+        return app(ReportController::class)->index($school);
+    }
+
+    /**
+     * Logs/system reports - delegates to unified analytics dashboard
+     */
+    public function logs(School $school)
+    {
+        return app(ReportController::class)->index($school);
+    }
+
     public function profile(School $school)
     {
         $admin = Auth::guard('admin')->user();
@@ -642,6 +724,26 @@ class AdminController extends Controller
     // ==========================
     // SCHOOL SETTINGS
     // ==========================
+    public function canManageSchedules(): bool
+    {
+        return $this->isSchoolAdmin() || $this->isBranchSecretary();
+    }
+
+    /**
+     * Check if admin can manage courses (only school_admin).
+     */
+    public function canManageCourses(): bool
+    {
+        return $this->isSchoolAdmin();
+    }
+
+    /**
+     * Check if admin can manage students (school_admin + branch_secretary for own branch).
+     */
+    public function canManageStudents(): bool
+    {
+        return $this->isSchoolAdmin() || $this->isBranchSecretary();
+    }
     public function settings(School $school)
     {
         $admin = Auth::guard('admin')->user();
@@ -922,32 +1024,41 @@ class AdminController extends Controller
      */
     public function createSchedule(Request $request, School $school)
     {
+        $admin = Auth::guard('admin')->user();
+
+        // General schedule management check
+        if (!$admin || !$admin->canManageSchedules()) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $validated = $request->validate([
-            'course_id' => 'required|exists:courses,id',
             'date' => 'required|date|after_or_equal:today',
-            'start_time' => 'required|date_format:H:i',
-            'end_time' => 'required|date_format:H:i|after:start_time',
-            'max_instructors' => 'required|integer|min:1|max:10',
+            'start_time' => 'required',
+            'end_time' => 'required|after:start_time',
+            'course_id' => 'required|exists:courses,id',
+            'branch_id' => 'nullable|exists:branches,id',
             'instructor_ids' => 'nullable|array',
             'instructor_ids.*' => 'exists:instructors,id',
-            'notes' => 'nullable|string|max:500',
+            'max_instructors' => 'nullable|integer|min:1',
+            'notes' => 'nullable|string',
         ]);
 
-        // Verify course belongs to this school
-        $course = \App\Models\Course::where('id', $validated['course_id'])
-            ->where('school_id', $school->id)
-            ->firstOrFail();
+        // Branch-level authorization
+        $branchId = $validated['branch_id'] ?? $admin->branch_id;
+        if (!$admin->canAccessBranch($branchId)) {
+            abort(403, 'You do not have permission to create schedules for this branch.');
+        }
 
-        // Create the timeslot
-        $timeslot = TimeSlot::create([
+        $schedule = \App\Models\TimeSlot::create([
             'school_id' => $school->id,
+            'branch_id' => $branchId,
             'course_id' => $validated['course_id'],
             'date' => $validated['date'],
             'start_time' => $validated['start_time'],
             'end_time' => $validated['end_time'],
-            'status' => 'open',
-            'max_instructors' => $validated['max_instructors'],
+            'max_instructors' => $validated['max_instructors'] ?? 1,
             'notes' => $validated['notes'] ?? null,
+            'status' => 'open',
         ]);
 
         // If admin selected instructors to assign
@@ -959,19 +1070,19 @@ class AdminController extends Controller
                 ->get();
 
             if ($instructors->count() !== count($validated['instructor_ids'])) {
-                $timeslot->delete();
+                $schedule->delete(); // Changed $timeslot to $schedule
                 return redirect()->back()->with('error', 'Some instructors are invalid or inactive.');
             }
 
             // Check if not exceeding max capacity
             if ($instructors->count() > $validated['max_instructors']) {
-                $timeslot->delete();
+                $schedule->delete(); // Changed $timeslot to $schedule
                 return redirect()->back()->with('error', 'Cannot assign more instructors than max capacity.');
             }
 
             // Assign instructors with admin_assigned type
             foreach ($instructors as $instructor) {
-                $timeslot->instructors()->attach($instructor->id, [
+                $schedule->instructors()->attach($instructor->id, [ // Changed $timeslot to $schedule
                     'school_id' => $school->id,
                     'assignment_type' => 'admin_assigned',
                 ]);
@@ -996,7 +1107,17 @@ class AdminController extends Controller
      */
     public function updateSchedule(Request $request, School $school, $id)
     {
+        $admin = Auth::guard('admin')->user();
+        if (!$admin || !$admin->canManageSchedules()) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $timeslot = TimeSlot::where('school_id', $school->id)->findOrFail($id);
+
+        // Branch level check
+        if (!$admin->canAccessBranch($timeslot->branch_id)) {
+            abort(403, 'You do not have permission to update schedules for this branch.');
+        }
 
         $validated = $request->validate([
             'notes' => 'nullable|string|max:500',
@@ -1063,7 +1184,17 @@ class AdminController extends Controller
      */
     public function deleteSchedule(School $school, $id)
     {
+        $admin = Auth::guard('admin')->user();
+        if (!$admin || !$admin->canManageSchedules()) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $timeslot = TimeSlot::where('school_id', $school->id)->findOrFail($id);
+
+        // Branch level check
+        if (!$admin->canAccessBranch($timeslot->branch_id)) {
+            abort(403, 'You do not have permission to delete schedules for this branch.');
+        }
 
         // Detach instructors and delete
         $timeslot->instructors()->detach();
@@ -1199,6 +1330,13 @@ class AdminController extends Controller
      */
     public function deleteCourse(School $school, $id)
     {
+        $admin = Auth::guard('admin')->user();
+
+        // Only central school admins can delete courses
+        if (!$admin || !$admin->canManageCourses()) {
+            abort(403, 'Only school administrators can delete courses.');
+        }
+
         $course = \App\Models\Course::where('school_id', $school->id)->findOrFail($id);
 
         // Delete banner image if exists
@@ -1292,6 +1430,13 @@ class AdminController extends Controller
      */
     public function deleteStudent(School $school, $id)
     {
+        $admin = Auth::guard('admin')->user();
+
+        // Authorization: Only system admins can permanently delete
+        if (!$admin || !$admin->isSystemAdmin()) {
+            abort(403, 'Only system administrators can permanently delete records.');
+        }
+
         $student = \App\Models\Student::where('school_id', $school->id)->findOrFail($id);
 
         // Log the deletion to SystemLog
@@ -1301,7 +1446,7 @@ class AdminController extends Controller
         [
             'student_id' => $student->id,
             'email' => $student->email,
-            'deleted_by' => Auth::guard('admin')->user()->name
+            'deleted_by' => $admin->name
         ],
             $school->id,
             'delete_student'
@@ -1327,6 +1472,13 @@ class AdminController extends Controller
      */
     public function deleteInstructor(School $school, $id)
     {
+        $admin = Auth::guard('admin')->user();
+
+        // Authorization: Only system admins can permanently delete
+        if (!$admin || !$admin->isSystemAdmin()) {
+            abort(403, 'Only system administrators can permanently delete records.');
+        }
+
         $instructor = \App\Models\Instructor::where('school_id', $school->id)->findOrFail($id);
 
         // Log the deletion to SystemLog
@@ -1336,7 +1488,7 @@ class AdminController extends Controller
         [
             'instructor_id' => $instructor->id,
             'email' => $instructor->email,
-            'deleted_by' => Auth::guard('admin')->user()->name
+            'deleted_by' => $admin->name
         ],
             $school->id,
             'delete_instructor'

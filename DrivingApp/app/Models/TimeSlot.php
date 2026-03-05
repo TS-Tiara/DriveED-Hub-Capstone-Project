@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\HasSchoolScope;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class TimeSlot extends Model
 {
+    use HasSchoolScope;
     use HasFactory;
 
     protected $fillable = [

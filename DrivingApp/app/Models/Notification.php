@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Traits\HasSchoolScope;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Notification extends Model
 {
+    use HasSchoolScope;
     use HasFactory;
 
     protected $fillable = [
@@ -76,14 +79,6 @@ class Notification extends Model
     {
         return $query->where('notifiable_type', get_class($notifiable))
                      ->where('notifiable_id', $notifiable->id);
-    }
-
-    /**
-     * Scope: for a specific school.
-     */
-    public function scopeForSchool($query, $schoolId)
-    {
-        return $query->where('school_id', $schoolId);
     }
 
     /**

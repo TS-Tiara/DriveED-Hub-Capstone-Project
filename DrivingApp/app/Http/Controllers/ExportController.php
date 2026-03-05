@@ -14,6 +14,7 @@ use App\Models\Booking;
 use App\Models\SessionCompletion;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class ExportController extends Controller
@@ -34,13 +35,19 @@ class ExportController extends Controller
             ->orderBy('name')
             ->get();
 
-        $pdf = Pdf::loadView('exports.students-pdf', [
-            'school' => $school,
-            'students' => $students,
-            'generatedAt' => now(),
-        ]);
+        try {
+            $pdf = Pdf::loadView('exports.students-pdf', [
+                'school' => $school,
+                'students' => $students,
+                'generatedAt' => now(),
+            ]);
 
-        return $pdf->download('students-list-' . date('Y-m-d') . '.pdf');
+            return $pdf->download('students-list-' . date('Y-m-d') . '.pdf');
+        }
+        catch (\Exception $e) {
+            Log::error('PDF Generation Error (studentsPdf): ' . $e->getMessage());
+            return back()->with('error', 'Failed to generate PDF. Please try again later.');
+        }
     }
 
     /**
@@ -63,14 +70,20 @@ class ExportController extends Controller
 
         $enrollments = $query->orderBy('created_at', 'desc')->get();
 
-        $pdf = Pdf::loadView('exports.enrollments-pdf', [
-            'school' => $school,
-            'enrollments' => $enrollments,
-            'status' => $request->status ?? 'all',
-            'generatedAt' => now(),
-        ]);
+        try {
+            $pdf = Pdf::loadView('exports.enrollments-pdf', [
+                'school' => $school,
+                'enrollments' => $enrollments,
+                'status' => $request->status ?? 'all',
+                'generatedAt' => now(),
+            ]);
 
-        return $pdf->download('enrollment-requests-' . date('Y-m-d') . '.pdf');
+            return $pdf->download('enrollment-requests-' . date('Y-m-d') . '.pdf');
+        }
+        catch (\Exception $e) {
+            Log::error('PDF Generation Error (enrollmentsPdf): ' . $e->getMessage());
+            return back()->with('error', 'Failed to generate PDF. Please try again later.');
+        }
     }
 
     /**
@@ -99,16 +112,22 @@ class ExportController extends Controller
             $query->where('learner_id', $student->id);
         })->sum('hours_completed');
 
-        $pdf = Pdf::loadView('exports.student-progress-pdf', [
-            'school' => $school,
-            'student' => $student,
-            'enrollments' => $enrollments,
-            'totalSessions' => $totalSessions,
-            'totalHours' => $totalHours,
-            'generatedAt' => now(),
-        ]);
+        try {
+            $pdf = Pdf::loadView('exports.student-progress-pdf', [
+                'school' => $school,
+                'student' => $student,
+                'enrollments' => $enrollments,
+                'totalSessions' => $totalSessions,
+                'totalHours' => $totalHours,
+                'generatedAt' => now(),
+            ]);
 
-        return $pdf->download('progress-' . $student->name . '-' . date('Y-m-d') . '.pdf');
+            return $pdf->download('progress-' . $student->name . '-' . date('Y-m-d') . '.pdf');
+        }
+        catch (\Exception $e) {
+            Log::error('PDF Generation Error (studentProgressPdf): ' . $e->getMessage());
+            return back()->with('error', 'Failed to generate progress report PDF.');
+        }
     }
 
     /**
@@ -137,14 +156,14 @@ class ExportController extends Controller
                 $student->contact ?? 'N/A',
                 ucfirst($status),
                 $activeEnrollments,
-                $student->enrollment_date ? Carbon::parse($student->enrollment_date)->format('M d, Y') : 'N/A',
+                $student->enrollment_date ?Carbon::parse($student->enrollment_date)->format('M d, Y') : 'N/A',
                 $student->created_at->format('M d, Y'),
             ];
         }
 
         $html = $this->buildExcelHtml(
             $school->name . ' - Student List',
-            ['Name', 'Email', 'Phone', 'Status', 'Active Enrollments', 'Enrollment Date', 'Registration Date'],
+        ['Name', 'Email', 'Phone', 'Status', 'Active Enrollments', 'Enrollment Date', 'Registration Date'],
             $rows
         );
 
@@ -165,13 +184,19 @@ class ExportController extends Controller
             ->orderBy('name')
             ->get();
 
-        $pdf = Pdf::loadView('exports.instructors-pdf', [
-            'school' => $school,
-            'instructors' => $instructors,
-            'generatedAt' => now(),
-        ]);
+        try {
+            $pdf = Pdf::loadView('exports.instructors-pdf', [
+                'school' => $school,
+                'instructors' => $instructors,
+                'generatedAt' => now(),
+            ]);
 
-        return $pdf->download('instructors-list-' . date('Y-m-d') . '.pdf');
+            return $pdf->download('instructors-list-' . date('Y-m-d') . '.pdf');
+        }
+        catch (\Exception $e) {
+            Log::error('PDF Generation Error (instructorsPdf): ' . $e->getMessage());
+            return back()->with('error', 'Failed to generate PDF. Please try again later.');
+        }
     }
 
     /**
@@ -185,13 +210,17 @@ class ExportController extends Controller
         }
 
         $instructors = Instructor::where('school_id', $school->id)
+            ->withCount([
+            'bookings',
+            'bookings as completed_lessons_count' => function ($query) {
+            $query->where('status', 'completed');
+        }
+        ])
             ->orderBy('name')
             ->get();
 
         $rows = [];
         foreach ($instructors as $instructor) {
-            $totalLessons = Booking::where('instructor_id', $instructor->id)->where('school_id', $school->id)->count();
-            $completedLessons = Booking::where('instructor_id', $instructor->id)->where('school_id', $school->id)->where('status', 'completed')->count();
             $rows[] = [
                 $instructor->name,
                 $instructor->email,
@@ -199,15 +228,15 @@ class ExportController extends Controller
                 $instructor->license_number ?? 'N/A',
                 ucfirst($instructor->status ?? 'active'),
                 $instructor->availability ?? 'N/A',
-                $totalLessons,
-                $completedLessons,
+                $instructor->bookings_count,
+                $instructor->completed_lessons_count,
                 $instructor->created_at->format('M d, Y'),
             ];
         }
 
         $html = $this->buildExcelHtml(
             $school->name . ' - Instructor List',
-            ['Name', 'Email', 'Phone', 'License #', 'Status', 'Availability', 'Total Lessons', 'Completed', 'Registered'],
+        ['Name', 'Email', 'Phone', 'License #', 'Status', 'Availability', 'Total Lessons', 'Completed', 'Registered'],
             $rows
         );
 
@@ -230,13 +259,19 @@ class ExportController extends Controller
             ->orderBy('start_time')
             ->get();
 
-        $pdf = Pdf::loadView('exports.schedules-pdf', [
-            'school' => $school,
-            'schedules' => $schedules,
-            'generatedAt' => now(),
-        ]);
+        try {
+            $pdf = Pdf::loadView('exports.schedules-pdf', [
+                'school' => $school,
+                'schedules' => $schedules,
+                'generatedAt' => now(),
+            ]);
 
-        return $pdf->download('schedules-' . date('Y-m-d') . '.pdf');
+            return $pdf->download('schedules-' . date('Y-m-d') . '.pdf');
+        }
+        catch (\Exception $e) {
+            Log::error('PDF Generation Error (schedulesPdf): ' . $e->getMessage());
+            return back()->with('error', 'Failed to generate PDF. Please try again later.');
+        }
     }
 
     /**
@@ -259,14 +294,20 @@ class ExportController extends Controller
 
         $payments = $query->orderBy('created_at', 'desc')->get();
 
-        $pdf = Pdf::loadView('exports.payments-pdf', [
-            'school' => $school,
-            'payments' => $payments,
-            'status' => $request->status ?? 'all',
-            'generatedAt' => now(),
-        ]);
+        try {
+            $pdf = Pdf::loadView('exports.payments-pdf', [
+                'school' => $school,
+                'payments' => $payments,
+                'status' => $request->status ?? 'all',
+                'generatedAt' => now(),
+            ]);
 
-        return $pdf->download('payments-' . date('Y-m-d') . '.pdf');
+            return $pdf->download('payments-' . date('Y-m-d') . '.pdf');
+        }
+        catch (\Exception $e) {
+            Log::error('PDF Generation Error (paymentsPdf): ' . $e->getMessage());
+            return back()->with('error', 'Failed to generate PDF. Please try again later.');
+        }
     }
 
     /**
@@ -282,8 +323,8 @@ class ExportController extends Controller
         $payments = Payment::whereHas('booking', function ($q) use ($school) {
             $q->where('school_id', $school->id);
         })->with(['booking.student', 'booking.course'])
-          ->orderBy('created_at', 'desc')
-          ->get();
+            ->orderBy('created_at', 'desc')
+            ->get();
 
         $rows = [];
         foreach ($payments as $payment) {
@@ -300,7 +341,7 @@ class ExportController extends Controller
 
         $html = $this->buildExcelHtml(
             $school->name . ' - Payment List',
-            ['Date', 'Student', 'Course', 'Amount', 'Method', 'Reference', 'Status'],
+        ['Date', 'Student', 'Course', 'Amount', 'Method', 'Reference', 'Status'],
             $rows
         );
 
@@ -322,13 +363,19 @@ class ExportController extends Controller
             ->orderBy('title')
             ->get();
 
-        $pdf = Pdf::loadView('exports.courses-pdf', [
-            'school' => $school,
-            'courses' => $courses,
-            'generatedAt' => now(),
-        ]);
+        try {
+            $pdf = Pdf::loadView('exports.courses-pdf', [
+                'school' => $school,
+                'courses' => $courses,
+                'generatedAt' => now(),
+            ]);
 
-        return $pdf->download('courses-' . date('Y-m-d') . '.pdf');
+            return $pdf->download('courses-' . date('Y-m-d') . '.pdf');
+        }
+        catch (\Exception $e) {
+            Log::error('PDF Generation Error (coursesPdf): ' . $e->getMessage());
+            return back()->with('error', 'Failed to generate PDF. Please try again later.');
+        }
     }
 
     // ============================================================
@@ -454,13 +501,13 @@ class ExportController extends Controller
 
         $students = Student::where('school_id', $school->id)
             ->whereIn('id', $assignedStudentIds)
-            ->with(['bookings' => function($query) use ($instructor) {
-                $query->where('instructor_id', $instructor->id);
-            }])
+            ->with(['bookings' => function ($query) use ($instructor) {
+            $query->where('instructor_id', $instructor->id);
+        }])
             ->orderBy('name')
             ->get();
 
-        $students->each(function($student) use ($instructor) {
+        $students->each(function ($student) use ($instructor) {
             $student->completed_sessions = $student->bookings->where('status', 'completed')->count();
             $student->upcoming_sessions = $student->bookings->where('status', 'scheduled')
                 ->where('scheduled_at', '>', now())->count();
@@ -492,9 +539,9 @@ class ExportController extends Controller
 
         $students = Student::where('school_id', $school->id)
             ->whereIn('id', $assignedStudentIds)
-            ->with(['bookings' => function($query) use ($instructor) {
-                $query->where('instructor_id', $instructor->id);
-            }])
+            ->with(['bookings' => function ($query) use ($instructor) {
+            $query->where('instructor_id', $instructor->id);
+        }])
             ->orderBy('name')
             ->get();
 
@@ -517,7 +564,7 @@ class ExportController extends Controller
 
         $html = $this->buildExcelHtml(
             $school->name . ' - My Students',
-            ['Name', 'Phone', 'Status', 'Completed Sessions', 'Upcoming', 'Avg Grade'],
+        ['Name', 'Phone', 'Status', 'Completed Sessions', 'Upcoming', 'Avg Grade'],
             $rows,
             'Instructor: ' . $instructor->name
         );
@@ -572,7 +619,7 @@ class ExportController extends Controller
         foreach ($sessions as $session) {
             $rows[] = [
                 $session->session_date ? $session->session_date->format('M d, Y') : 'N/A',
-                $session->session_time ? Carbon::parse($session->session_time)->format('h:i A') : 'N/A',
+                $session->session_time ?Carbon::parse($session->session_time)->format('h:i A') : 'N/A',
                 $session->enrollment->student->name ?? $session->enrollment->learner->name ?? 'N/A',
                 $session->enrollment->course->title ?? 'N/A',
                 ucfirst($session->session_type),
@@ -584,7 +631,7 @@ class ExportController extends Controller
 
         $html = $this->buildExcelHtml(
             $school->name . ' - Session Logs',
-            ['Date', 'Time', 'Student', 'Course', 'Type', 'Hours', 'Status', 'Notes'],
+        ['Date', 'Time', 'Student', 'Course', 'Type', 'Hours', 'Status', 'Notes'],
             $rows,
             'Instructor: ' . $instructor->name
         );
@@ -605,10 +652,10 @@ class ExportController extends Controller
             ->pluck('student_id');
 
         $students = Student::whereIn('id', $studentIds)
-            ->with(['bookings' => function($query) use ($instructor) {
-                $query->where('instructor_id', $instructor->id)
-                      ->orderBy('scheduled_at', 'desc');
-            }])
+            ->with(['bookings' => function ($query) use ($instructor) {
+            $query->where('instructor_id', $instructor->id)
+                ->orderBy('scheduled_at', 'desc');
+        }])
             ->orderBy('name')
             ->get();
 
@@ -647,10 +694,10 @@ class ExportController extends Controller
             ->pluck('student_id');
 
         $students = Student::whereIn('id', $studentIds)
-            ->with(['bookings' => function($query) use ($instructor) {
-                $query->where('instructor_id', $instructor->id)
-                      ->orderBy('scheduled_at', 'desc');
-            }])
+            ->with(['bookings' => function ($query) use ($instructor) {
+            $query->where('instructor_id', $instructor->id)
+                ->orderBy('scheduled_at', 'desc');
+        }])
             ->orderBy('name')
             ->get();
 
@@ -676,7 +723,7 @@ class ExportController extends Controller
 
         $html = $this->buildExcelHtml(
             $school->name . ' - Grades Report',
-            ['Student Name', 'Email', 'Total Sessions', 'Graded', 'Avg Grade', 'Last Session', 'Last Grade'],
+        ['Student Name', 'Email', 'Total Sessions', 'Graded', 'Avg Grade', 'Last Session', 'Last Grade'],
             $rows,
             'Instructor: ' . $instructor->name
         );

@@ -17,7 +17,7 @@ class ProgressController extends Controller
      */
     public function index(School $school)
     {
-        $query = Progress::where('school_id', $school->id)
+        $query = Progress::where('school_id', '=', $school->id)
             ->with(['student', 'course']);
 
         // Filter by role
@@ -27,19 +27,27 @@ class ProgressController extends Controller
         elseif (Auth::guard('instructor')->check()) {
             // Instructors see progress for students they have bookings with
             $instructorId = Auth::guard('instructor')->id();
-            $studentIds = \App\Models\Booking::where('school_id', $school->id)
-                ->where('instructor_id', $instructorId)
+            $studentIds = \App\Models\Booking::where('school_id', '=', $school->id)
+                ->where('instructor_id', '=', $instructorId)
                 ->distinct()
-                ->pluck('student_id');
-            $query->whereIn('student_id', $studentIds);
+                ->pluck('student_id', 'id');
+            $query->whereIn('student_id', $studentIds, 'and', false);
+        }
+        elseif (Auth::guard('admin')->check()) {
+            $admin = Auth::guard('admin')->user();
+            if ($admin->isBranchSecretary() && $admin->branch_id) {
+                $query->whereHas('student', function ($q) use ($admin) {
+                    $q->where('branch_id', $admin->branch_id);
+                });
+            }
         }
 
         if (request('student_id')) {
-            $query->where('student_id', request('student_id'));
+            $query->where('student_id', '=', request('student_id'));
         }
 
         if (request('course_id')) {
-            $query->where('course_id', request('course_id'));
+            $query->where('course_id', '=', request('course_id'));
         }
 
         $progresses = $query->latest('last_updated')->paginate(10);
@@ -48,12 +56,12 @@ class ProgressController extends Controller
         $allStudentIds = $progresses->pluck('student_id')->unique()->toArray();
         $allCourseIds = $progresses->pluck('course_id')->unique()->toArray();
 
-        $allBookings = Booking::where('school_id', $school->id)
-            ->whereIn('student_id', $allStudentIds)
-            ->whereIn('course_id', $allCourseIds)
+        $allBookings = Booking::where('school_id', '=', $school->id)
+            ->whereIn('student_id', $allStudentIds, 'and', false)
+            ->whereIn('course_id', $allCourseIds, 'and', false)
             ->with(['instructor', 'course'])
             ->orderBy('scheduled_at', 'desc')
-            ->get();
+            ->get(['*']);
 
         // Attach computed booking data to each progress record
         foreach ($progresses as $progress) {
@@ -102,11 +110,39 @@ class ProgressController extends Controller
     public function store(Request $request, School $school)
     {
         $validated = $request->validate([
-            'student_id' => 'required|exists:students,id',
-            'course_id' => 'required|exists:courses,id',
+            'student_id' => [
+                'required',
+                \Illuminate\Validation\Rule::exists('students', 'id')->where('school_id', $school->id)
+            ],
+            'course_id' => [
+                'required',
+                \Illuminate\Validation\Rule::exists('courses', 'id')->where('school_id', $school->id)
+            ],
             'completion_percent' => 'required|numeric|min:0|max:100',
             'notes' => 'nullable|string',
         ]);
+
+        // Authorization check
+        if (Auth::guard('instructor')->check()) {
+            $isAssigned = \App\Models\Booking::where('school_id', $school->id)
+                ->where('instructor_id', Auth::guard('instructor')->id())
+                ->where('student_id', $validated['student_id'])
+                ->exists();
+            if (!$isAssigned) {
+                abort(403, 'You can only update progress for students assigned to you.');
+            }
+        }
+        elseif (Auth::guard('admin')->check()) {
+            $admin = Auth::guard('admin')->user();
+            $student = Student::where('id', $validated['student_id'])->where('school_id', $school->id)->firstOrFail();
+
+            if ($admin->isBranchSecretary() && $admin->branch_id && (int)$student->branch_id !== (int)$admin->branch_id) {
+                abort(403, 'You can only update progress for students in your branch.');
+            }
+        }
+        else {
+            abort(403, 'Only administrators or assigned instructors can create progress.');
+        }
 
         $validated['school_id'] = $school->id;
         $validated['last_updated'] = now();
@@ -142,6 +178,34 @@ class ProgressController extends Controller
     {
         abort_if($progress->school_id !== $school->id, 404);
 
+        // Authorization check
+        if (Auth::guard('student')->check()) {
+            if ($progress->student_id !== Auth::guard('student')->id()) {
+                abort(403, 'You can only view your own progress.');
+            }
+        }
+        elseif (Auth::guard('instructor')->check()) {
+            $isAssigned = \App\Models\Booking::where('school_id', $school->id)
+                ->where('instructor_id', Auth::guard('instructor')->id())
+                ->where('student_id', $progress->student_id)
+                ->exists();
+            if (!$isAssigned) {
+                abort(403, 'You can only view progress for students assigned to you.');
+            }
+        }
+        elseif (Auth::guard('admin')->check()) {
+            $admin = Auth::guard('admin')->user();
+            if ($admin->isBranchSecretary() && $admin->branch_id) {
+                $student = $progress->student;
+                if ($student && (int)$student->branch_id !== (int)$admin->branch_id) {
+                    abort(403, 'You do not have access to students in other branches.');
+                }
+            }
+        }
+        else {
+            abort(403);
+        }
+
         $progress->load(['student', 'course']);
 
         if (request()->expectsJson()) {
@@ -163,6 +227,20 @@ class ProgressController extends Controller
     {
         abort_if($progress->school_id !== $school->id, 404);
 
+        // Authorization check
+        if (Auth::guard('instructor')->check()) {
+            $isAssigned = \App\Models\Booking::where('school_id', $school->id)
+                ->where('instructor_id', Auth::guard('instructor')->id())
+                ->where('student_id', $progress->student_id)
+                ->exists();
+            if (!$isAssigned) {
+                abort(403, 'You can only edit progress for students assigned to you.');
+            }
+        }
+        elseif (!Auth::guard('admin')->check()) {
+            abort(403, 'Only administrators or assigned instructors can edit progress.');
+        }
+
         $students = Student::where('school_id', $school->id)->where('status', 'active')->get();
         $courses = Course::where('school_id', $school->id)->where('status', 'active')->get();
 
@@ -177,6 +255,20 @@ class ProgressController extends Controller
     public function update(Request $request, School $school, Progress $progress)
     {
         abort_if($progress->school_id !== $school->id, 404);
+
+        // Authorization check
+        if (Auth::guard('instructor')->check()) {
+            $isAssigned = \App\Models\Booking::where('school_id', $school->id)
+                ->where('instructor_id', Auth::guard('instructor')->id())
+                ->where('student_id', $progress->student_id)
+                ->exists();
+            if (!$isAssigned) {
+                abort(403, 'You can only update progress for students assigned to you.');
+            }
+        }
+        elseif (!Auth::guard('admin')->check()) {
+            abort(403, 'Only administrators or assigned instructors can update progress.');
+        }
 
         $validated = $request->validate([
             'completion_percent' => 'required|numeric|min:0|max:100',
@@ -205,6 +297,20 @@ class ProgressController extends Controller
     public function destroy(Request $request, School $school, Progress $progress)
     {
         abort_if($progress->school_id !== $school->id, 404);
+
+        // Only admins or assigned instructors can delete progress records
+        if (Auth::guard('instructor')->check()) {
+            $isAssigned = \App\Models\Booking::where('school_id', $school->id)
+                ->where('instructor_id', Auth::guard('instructor')->id())
+                ->where('student_id', $progress->student_id)
+                ->exists();
+            if (!$isAssigned) {
+                abort(403, 'You can only delete progress for students assigned to you.');
+            }
+        }
+        elseif (!Auth::guard('admin')->check()) {
+            abort(403, 'Only administrators or assigned instructors can delete progress records.');
+        }
 
         $progress->delete();
 

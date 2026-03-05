@@ -17,17 +17,20 @@ class TheoreticalCompletionController extends Controller
      */
     private function getSchoolAndGuard(): array
     {
-        if (Auth::guard('admin')->check()) {
+        $admin = Auth::guard('admin')->user();
+        if ($admin) {
             return [
-                'school' => Auth::guard('admin')->user()->school,
+                'school' => $admin->school,
                 'guard' => 'admin',
                 'viewPrefix' => 'school.admin.theoretical',
                 'routePrefix' => 'schools.admin.theoretical',
             ];
         }
-        elseif (Auth::guard('instructor')->check()) {
+
+        $instructor = Auth::guard('instructor')->user();
+        if ($instructor) {
             return [
-                'school' => Auth::guard('instructor')->user()->school,
+                'school' => $instructor->school,
                 'guard' => 'instructor',
                 'viewPrefix' => 'school.instructor.theoretical',
                 'routePrefix' => 'schools.instructor.theoretical',
@@ -172,6 +175,11 @@ class TheoreticalCompletionController extends Controller
     {
         $ctx = $this->getSchoolAndGuard();
         $user = Auth::guard($ctx['guard'])->user();
+
+        if (!$user) {
+            abort(403);
+        }
+
         $redirectRoute = $ctx['routePrefix'] . '.index';
 
         $request->validate([

@@ -100,6 +100,13 @@
         color: #4b5563;
         margin-bottom: 6px;
     }
+
+    .action-controls {
+        display: flex;
+        align-items: flex-end;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
     
     .search-box input {
         width: 100%;
@@ -269,12 +276,28 @@
 
     .btn-action {
         padding: 6px 12px;
-        margin: 0 3px;
+        margin: 0;
         border: none;
         border-radius: 6px;
         cursor: pointer;
         font-size: 0.9rem;
         transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1.2;
+        white-space: nowrap;
+    }
+
+    .actions-cell {
+        min-width: 220px;
+    }
+
+    .actions-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: center;
     }
     
     .btn-edit {
@@ -622,8 +645,15 @@
         }
         
         .action-bar > div:last-child {
-            flex-direction: column;
+            flex-direction: row;
+            width: auto;
+        }
+
+        .action-controls {
             width: 100%;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 8px;
         }
         
         .search-box {
@@ -637,7 +667,7 @@
         }
         
         .btn-create {
-            width: 100%;
+            width: auto;
             justify-content: center;
         }
         
@@ -658,7 +688,11 @@
         .btn-action {
             padding: 5px 8px;
             font-size: 0.8rem;
-            margin: 2px;
+            margin: 0;
+        }
+
+        .actions-group {
+            gap: 4px;
         }
         
         .status-badge {
@@ -931,42 +965,7 @@
         </div>
         
         <div class="table-container">
-            @php
-                $allUsers = collect();
-                foreach($students as $s) {
-                    $allUsers->push((object)[
-                        'id' => $s->id,
-                        'name' => $s->name,
-                        'email' => $s->email,
-                        'contact' => $s->contact,
-                        'status' => $s->status,
-                        'role' => 'student',
-                        'address' => $s->address ?? null,
-                        'license_number' => null,
-                        'availability' => null,
-                        'branch_id' => $s->branch_id,
-                        'branch_name' => $s->branch_id ? ($branches->firstWhere('id', $s->branch_id)?->name ?? 'Unknown') : null,
-                    ]);
-                }
-                foreach($instructors as $i) {
-                    $allUsers->push((object)[
-                        'id' => $i->id,
-                        'name' => $i->name,
-                        'email' => $i->email,
-                        'contact' => $i->contact,
-                        'status' => $i->status,
-                        'role' => 'instructor',
-                        'address' => null,
-                        'license_number' => $i->license_number ?? null,
-                        'availability' => $i->availability ?? null,
-                        'branch_id' => $i->branch_id,
-                        'branch_name' => $i->branch_id ? ($branches->firstWhere('id', $i->branch_id)?->name ?? 'Unknown') : null,
-                    ]);
-                }
-                $allUsers = $allUsers->sortBy('name');
-            @endphp
-
-            @if($allUsers->count() > 0)
+            @if($users->count() > 0)
                 <table id="usersTable">
                     <thead>
                         <tr>
@@ -980,7 +979,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($allUsers as $user)
+                        @foreach($users as $user)
                         <tr data-role="{{ $user->role }}" data-status="{{ $user->status }}" data-branch="{{ $user->branch_id ?? 'unassigned' }}">
                             <td><strong>{{ $user->name }}</strong></td>
                             <td>{{ $user->email }}</td>
@@ -991,14 +990,18 @@
                                 </span>
                             </td>
                             <td>
-                                <span class="branch-label {{ $user->branch_name ? 'branch-assigned' : 'branch-unassigned' }}">{{ $user->branch_name ?? 'Unassigned' }}</span>
+                                @php
+                                    $branchName = $user->branch_id ? ($branches->firstWhere('id', $user->branch_id)?->name ?? 'Unknown') : null;
+                                @endphp
+                                <span class="branch-label {{ $branchName ? 'branch-assigned' : 'branch-unassigned' }}">{{ $branchName ?? 'Unassigned' }}</span>
                             </td>
                             <td>
                                 <span class="status-badge status-{{ $user->status }}">
                                     {{ ucfirst($user->status) }}
                                 </span>
                             </td>
-                            <td>
+                            <td class="actions-cell">
+                                <div class="actions-group">
                                 @if($user->role === 'student')
                                     <button class="btn-action btn-edit" data-action="edit-student" data-id="{{ $user->id }}" data-name="{{ $user->name }}" data-email="{{ $user->email }}" data-contact="{{ $user->contact }}" data-address="{{ $user->address }}" data-branch="{{ $user->branch_id }}">Edit</button>
                                     <button class="btn-action btn-toggle" data-action="toggle-student-status" data-id="{{ $user->id }}" data-status="{{ $user->status }}">
@@ -1013,6 +1016,7 @@
                                         {{ $user->availability === 'available' ? 'Mark Unavailable' : 'Mark Available' }}
                                     </button>
                                 @endif
+                                </div>
                             </td>
                         </tr>
                         @endforeach
@@ -1026,30 +1030,18 @@
             @endif
         </div>
         
-        <div class="mt-4 pagination-groups">
-            @php
-                $studentLinks = $students->hasPages()
-                    ? $students->appends(['instructors_page' => request('instructors_page')])->links('vendor.pagination.drivingapp')->toHtml()
-                    : '';
-                $instructorLinks = $instructors->hasPages()
-                    ? $instructors->appends(['students_page' => request('students_page')])->links('vendor.pagination.drivingapp')->toHtml()
-                    : '';
-            @endphp
-
-            @if(trim(strip_tags($studentLinks)) !== '')
+        @if($users->count() > 0)
+            <div class="mt-4 pagination-groups">
                 <div>
-                    <h4 style="font-size: 0.9rem; margin-bottom: 5px; color: #6b7280;">Student Pages:</h4>
-                    {!! $studentLinks !!}
+                    <h4 style="font-size: 0.9rem; margin-bottom: 5px; color: #6b7280;">
+                        Showing {{ $users->firstItem() ?? 0 }}-{{ $users->lastItem() ?? 0 }} of {{ $users->total() }} users
+                    </h4>
+                    @if($users->hasPages())
+                        {!! $users->links('vendor.pagination.drivingapp') !!}
+                    @endif
                 </div>
-            @endif
-
-            @if(trim(strip_tags($instructorLinks)) !== '')
-                <div>
-                    <h4 style="font-size: 0.9rem; margin-bottom: 5px; color: #6b7280;">Instructor Pages:</h4>
-                    {!! $instructorLinks !!}
-                </div>
-            @endif
-        </div>
+            </div>
+        @endif
     </div>
 </div>
 

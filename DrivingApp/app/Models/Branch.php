@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\HasSchoolScope;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
 class Branch extends Model
 {
+    use HasSchoolScope;
     use HasFactory;
 
     protected $fillable = [

@@ -13,9 +13,8 @@ class MarkTheoreticalPassedRequest extends FormRequest
     public function authorize(): bool
     {
         // Only instructors and admins can mark theoretical as passed
-        $user = $this->user();
-        
-        return $user && ($user->role === 'instructor' || $user->role === 'admin' || $user->role === 'superadmin');
+        return \Illuminate\Support\Facades\Auth::guard('instructor')->check() ||
+            \Illuminate\Support\Facades\Auth::guard('admin')->check();
     }
 
     /**
@@ -25,8 +24,14 @@ class MarkTheoreticalPassedRequest extends FormRequest
      */
     public function rules(): array
     {
+        $school = $this->route('school');
+        $schoolId = $school instanceof \App\Models\School ? $school->id : null;
+
         return [
-            'enrollment_id' => ['required', 'exists:enrollments,id'],
+            'enrollment_id' => [
+                'required',
+                \Illuminate\Validation\Rule::exists('enrollment_requests', 'id')->where('school_id', $schoolId)
+            ],
             'notes' => ['nullable', 'string', 'max:1000'],
         ];
     }

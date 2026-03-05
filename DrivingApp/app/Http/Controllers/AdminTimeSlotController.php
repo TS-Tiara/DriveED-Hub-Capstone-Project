@@ -6,22 +6,36 @@ use Illuminate\Http\Request;
 use App\Models\Instructor;
 use App\Models\School;
 use App\Models\TimeSlot;
+use Illuminate\Support\Facades\Auth;
 
 class AdminTimeSlotController extends Controller
 {
     // Display all time slots
     public function index(School $school)
     {
-        $timeSlots = TimeSlot::with('instructors')
-            ->where('school_id', $school->id)
-            ->orderBy('date')
+        $admin = Auth::guard('admin')->user();
+        abort_unless($admin, 403);
+
+        $query = TimeSlot::with(['instructors', 'branch'])
+            ->where('school_id', '=', $school->id);
+
+        if ($admin->isBranchSecretary() && $admin->branch_id) {
+            $query->where('branch_id', '=', $admin->branch_id);
+        }
+
+        $timeSlots = $query->orderBy('date')
             ->orderBy('start_time')
             ->get();
 
-        $instructors = Instructor::where('school_id', $school->id)
-            ->where('status', 'active')
-            ->orderBy('name')
-            ->get();
+        $instructorsQuery = Instructor::where('school_id', '=', $school->id)
+            ->where('status', '=', 'active');
+
+        if ($admin->isBranchSecretary() && $admin->branch_id) {
+            $instructorsQuery->where('branch_id', '=', $admin->branch_id);
+        }
+
+        $instructors = $instructorsQuery->orderBy('name')
+            ->get(['*']);
 
         return view($school->resolveView('admin.timeslots'), [
             'school' => $school,
@@ -36,7 +50,7 @@ class AdminTimeSlotController extends Controller
         // Check if it's bulk creation
         if ($request->has('timeslots') && $request->timeslots) {
             $timeslots = json_decode($request->timeslots, true);
-            
+
             if (!is_array($timeslots) || empty($timeslots)) {
                 return redirect()->back()->with('error', 'Invalid timeslots data');
             }

@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\HasSchoolScope;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class Student extends Authenticatable
 {
+    use HasSchoolScope;
     use HasFactory, Notifiable;
 
     protected $fillable = [
@@ -18,8 +21,6 @@ class Student extends Authenticatable
         'password',
         'contact',
         'address',
-        'status',
-        'role',
         'branch',
         'location',
         'enrollment_date',
@@ -28,21 +29,18 @@ class Student extends Authenticatable
         'student_license_data',
         'student_license_mime_type',
         'student_license_filename',
-        'student_license_status',
-        'student_license_verified_at',
         'student_license_verified_by',
         'student_license_rejection_reason',
         'experience_level',
         'has_passed_theoretical',
         'theoretical_passed_at',
-        'email_verified_at',
-        'verification_code',
         'verification_code_expires_at',
-        'active_enrollment_id',
-        'is_course_locked',
         'failed_login_attempts',
         'locked_until',
         'last_login_at',
+        'status',
+        'is_active',
+        'role',
     ];
 
     protected $hidden = [
@@ -73,7 +71,7 @@ class Student extends Authenticatable
 
     public function branchRelation()
     {
-        return $this->belongsTo(Branch::class, 'branch_id');
+        return $this->belongsTo(Branch::class , 'branch_id');
     }
 
     public function bookings()
@@ -86,7 +84,7 @@ class Student extends Authenticatable
      */
     public function activeEnrollment()
     {
-        return $this->belongsTo(EnrollmentRequest::class, 'active_enrollment_id');
+        return $this->belongsTo(EnrollmentRequest::class , 'active_enrollment_id');
     }
 
     /**
@@ -94,7 +92,7 @@ class Student extends Authenticatable
      */
     public function enrollmentRecords()
     {
-        return $this->hasMany(EnrollmentRequest::class, 'learner_id');
+        return $this->hasMany(EnrollmentRequest::class , 'learner_id');
     }
 
     /**
@@ -142,7 +140,7 @@ class Student extends Authenticatable
 
     public function enrollmentRequests()
     {
-        return $this->hasMany(EnrollmentRequest::class, 'learner_id');
+        return $this->hasMany(EnrollmentRequest::class , 'learner_id');
     }
 
     /**
@@ -151,8 +149,8 @@ class Student extends Authenticatable
     public function enrolledCourses()
     {
         return $this->hasManyThrough(
-            Course::class,
-            Booking::class,
+            Course::class ,
+            Booking::class ,
             'student_id', // Foreign key on bookings table
             'id', // Foreign key on courses table
             'id', // Local key on students table
@@ -181,8 +179,8 @@ class Student extends Authenticatable
      */
     public function enrollments()
     {
-        return $this->hasMany(EnrollmentRequest::class, 'learner_id')
-                    ->whereIn('status', ['approved', 'completed', 'cancelled']);
+        return $this->hasMany(EnrollmentRequest::class , 'learner_id')
+            ->whereIn('status', ['approved', 'completed', 'cancelled']);
     }
 
     /**
@@ -190,8 +188,8 @@ class Student extends Authenticatable
      */
     public function activeEnrollments()
     {
-        return $this->hasMany(EnrollmentRequest::class, 'learner_id')
-                    ->where('status', 'approved');
+        return $this->hasMany(EnrollmentRequest::class , 'learner_id')
+            ->where('status', 'approved');
     }
 
     /**
@@ -263,7 +261,7 @@ class Student extends Authenticatable
      */
     public function licenseVerifiedBy()
     {
-        return $this->belongsTo(Admin::class, 'student_license_verified_by');
+        return $this->belongsTo(Admin::class , 'student_license_verified_by');
     }
 
     /**
@@ -308,7 +306,7 @@ class Student extends Authenticatable
         $this->verification_code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
         $this->verification_code_expires_at = now()->addMinutes(15);
         $this->save();
-        
+
         return $this->verification_code;
     }
 
@@ -317,8 +315,8 @@ class Student extends Authenticatable
      */
     public function isVerificationCodeValid($code)
     {
-        return $this->verification_code === $code 
-            && $this->verification_code_expires_at 
+        return $this->verification_code === $code
+            && $this->verification_code_expires_at
             && $this->verification_code_expires_at->isFuture();
     }
 

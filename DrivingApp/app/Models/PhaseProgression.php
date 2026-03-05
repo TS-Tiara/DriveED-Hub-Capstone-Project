@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\HasSchoolScope;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PhaseProgression extends Model
 {
+    use HasSchoolScope;
     use HasFactory;
 
     protected $table = 'phase_progression_requests';
@@ -125,14 +128,6 @@ class PhaseProgression extends Model
     public function scopePending($query)
     {
         return $query->where('status', 'pending');
-    }
-
-    /**
-     * Scope to a specific school
-     */
-    public function scopeForSchool($query, $schoolId)
-    {
-        return $query->where('school_id', $schoolId);
     }
 
     /**

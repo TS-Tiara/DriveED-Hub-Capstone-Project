@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\HasSchoolScope;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class StudentActionRequest extends Model
 {
+    use HasSchoolScope;
     use HasFactory;
 
     const ACTION_ADD = 'add';
@@ -127,11 +130,6 @@ class StudentActionRequest extends Model
     public function scopePending($query)
     {
         return $query->where('status', self::STATUS_PENDING);
-    }
-
-    public function scopeForSchool($query, int $schoolId)
-    {
-        return $query->where('school_id', $schoolId);
     }
 
     public function scopeForBranch($query, int $branchId)

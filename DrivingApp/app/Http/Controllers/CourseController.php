@@ -77,9 +77,13 @@ class CourseController extends Controller
      */
     public function store(Request $request, School $school)
     {
+        if (!Auth::guard('admin')->check() || !Auth::guard('admin')->user()->isSchoolAdmin()) {
+            abort(403, 'Only school administrators can create courses.');
+        }
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
+            'description' => 'nullable|string|max:5000',
             'banner_image' => 'nullable|image|max:2048',
             'price' => 'nullable|numeric|min:0',
             'duration_hours' => 'nullable|numeric|min:0',
@@ -96,7 +100,7 @@ class CourseController extends Controller
             'schedules.*.end_time' => 'required_with:schedules',
             'schedules.*.max_students' => 'nullable|integer|min:1',
             'schedules.*.instructor_id' => 'nullable|exists:instructors,id',
-            'schedules.*.notes' => 'nullable|string',
+            'schedules.*.notes' => 'nullable|string|max:1000',
         ]);
 
         // Handle banner image upload
@@ -132,7 +136,12 @@ class CourseController extends Controller
      */
     public function show(School $school, Course $course)
     {
-        // Authorization check can be added here if needed
+        // Authorization check 
+        if (Auth::guard('admin')->check()) {
+            if (!Auth::guard('admin')->user()->canManageCourses()) {
+                abort(403, 'You do not have permission to view courses in the admin dashboard.');
+            }
+        }
 
         $course->load(['bookings.student', 'bookings.instructor', 'modules.lessons']);
 
@@ -168,11 +177,13 @@ class CourseController extends Controller
      */
     public function update(Request $request, School $school, Course $course)
     {
-        // Authorization check can be added here if needed
+        if (!Auth::guard('admin')->check() || !Auth::guard('admin')->user()->canManageCourses()) {
+            abort(403, 'Only authorized school administrators can update courses.');
+        }
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
+            'description' => 'nullable|string|max:5000',
             'banner_image' => 'nullable|image|max:2048',
             'price' => 'nullable|numeric|min:0',
             'duration_hours' => 'nullable|numeric|min:0',
@@ -220,7 +231,9 @@ class CourseController extends Controller
      */
     public function destroy(Request $request, School $school, Course $course)
     {
-        // Authorization check can be added here if needed
+        if (!Auth::guard('admin')->check() || !Auth::guard('admin')->user()->canManageCourses()) {
+            abort(403, 'Only authorized school administrators can delete courses.');
+        }
 
         try {
             // Check if course has bookings

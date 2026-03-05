@@ -94,12 +94,4 @@ class InstructorRemovalRequest extends Model
     {
         return $query->where('status', 'pending');
     }
-
-    /**
-     * Scope to get requests for a specific school
-     */
-    public function scopeForSchool($query, $schoolId)
-    {
-        return $query->where('school_id', $schoolId);
-    }
 }

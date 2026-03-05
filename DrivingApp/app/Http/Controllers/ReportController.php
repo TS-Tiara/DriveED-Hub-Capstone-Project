@@ -7,6 +7,7 @@ use App\Models\Instructor;
 use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\Course;
+use App\Models\School;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
@@ -15,57 +16,61 @@ class ReportController extends Controller
     /**
      * Display unified analytics dashboard
      */
-    public function index()
+    public function index(School $school)
     {
-        $school = auth()->guard('admin')->user()->school;
-        $schoolId = $school->id;
-        
-        // Get time period filter (default: all time)
-        $period = request('period', 'all');
-        $startDate = null;
-        $endDate = now();
-        
-        switch($period) {
-            case 'today':
-                $startDate = now()->startOfDay();
-                break;
-            case 'week':
-                $startDate = now()->startOfWeek();
-                break;
-            case 'month':
-                $startDate = now()->startOfMonth();
-                break;
-            case 'year':
-                $startDate = now()->startOfYear();
-                break;
-            default:
-                $startDate = null; // All time
-        }
-        
-        // â”€â”€ 1. Student metrics (2 queries) â”€â”€
-        $studentCounts = Student::where('school_id', $schoolId)
-            ->when($startDate, fn($q) => $q->whereBetween('enrollment_date', [$startDate, $endDate]))
-            ->selectRaw("COUNT(*) as total, SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active")
-            ->first();
-        
-        $studentsByStatus = Student::where('school_id', $schoolId)
-            ->when($startDate, fn($q) => $q->whereBetween('enrollment_date', [$startDate, $endDate]))
-            ->selectRaw('status, COUNT(*) as count')
-            ->groupBy('status')
-            ->get();
-        
-        // â”€â”€ 2. Enrollment trends (1 query) â”€â”€
-        $enrollmentsThisMonth = Student::where('school_id', $schoolId)
-            ->when($startDate, fn($q) => $q->whereBetween('enrollment_date', [$startDate, $endDate]),
-                fn($q) => $q->whereMonth('enrollment_date', now()->month)->whereYear('enrollment_date', now()->year))
-            ->count();
-        
+        try {
+            $admin = auth()->guard('admin')->user();
+            if (!$admin || $admin->school_id !== $school->id) {
+                abort(403);
+            }
+            $schoolId = $school->id;
 
-        
-        // â”€â”€ 3. ALL booking stats in ONE query using conditional aggregation â”€â”€
-        $bookingStats = Booking::where('school_id', $schoolId)
-            ->when($startDate, fn($q) => $q->whereBetween('scheduled_at', [$startDate, $endDate]))
-            ->selectRaw("
+            // Get time period filter (default: all time)
+            $period = request('period', 'all');
+            $startDate = null;
+            $endDate = now();
+
+            switch ($period) {
+                case 'today':
+                    $startDate = now()->startOfDay();
+                    break;
+                case 'week':
+                    $startDate = now()->startOfWeek();
+                    break;
+                case 'month':
+                    $startDate = now()->startOfMonth();
+                    break;
+                case 'year':
+                    $startDate = now()->startOfYear();
+                    break;
+                default:
+                    $startDate = null; // All time
+            }
+
+            // â”€â”€ 1. Student metrics (2 queries) â”€â”€
+            $studentCounts = Student::where('school_id', $schoolId)
+                ->when($startDate, fn($q) => $q->whereBetween('enrollment_date', [$startDate, $endDate]))
+                ->selectRaw("COUNT(*) as total, SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active")
+                ->first();
+
+            $studentsByStatus = Student::where('school_id', $schoolId)
+                ->when($startDate, fn($q) => $q->whereBetween('enrollment_date', [$startDate, $endDate]))
+                ->selectRaw('status, COUNT(*) as count')
+                ->groupBy('status')
+                ->get();
+
+            // â”€â”€ 2. Enrollment trends (1 query) â”€â”€
+            $enrollmentsThisMonth = Student::where('school_id', $schoolId)
+                ->when($startDate, fn($q) => $q->whereBetween('enrollment_date', [$startDate, $endDate]),
+            fn($q) => $q->whereMonth('enrollment_date', now()->month)->whereYear('enrollment_date', now()->year))
+                ->count();
+
+
+
+            // â”€â”€ 3. ALL booking stats in ONE query using conditional aggregation â”€â”€
+            $bookingStats = Booking::where('school_id', $schoolId)
+                ->when($startDate, fn($q) => $q->whereBetween('scheduled_at', [$startDate, $endDate]))
+                ->selectRaw("
                 COUNT(*) as total,
                 SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
                 SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled,
@@ -75,48 +80,48 @@ class ReportController extends Controller
                 SUM(CASE WHEN status = 'confirmed' THEN 1 ELSE 0 END) as confirmed,
                 SUM(CASE WHEN status IN ('cancelled', 'no_show', 'no-show') THEN 1 ELSE 0 END) as missed
             ")
-            ->first();
-        
-        // Bookings by status (for charts) - reuse the aggregated data
-        $bookingsByStatus = collect();
-        foreach (['completed', 'cancelled', 'no_show', 'pending', 'scheduled', 'confirmed'] as $status) {
-            $val = (int) ($bookingStats->$status ?? 0);
-            if ($val > 0) {
-                $bookingsByStatus->push((object)['status' => $status, 'count' => $val]);
+                ->first();
+
+            // Bookings by status (for charts) - reuse the aggregated data
+            $bookingsByStatus = collect();
+            foreach (['completed', 'cancelled', 'no_show', 'pending', 'scheduled', 'confirmed'] as $status) {
+                $val = (int)($bookingStats->$status ?? 0);
+                if ($val > 0) {
+                    $bookingsByStatus->push((object)['status' => $status, 'count' => $val]);
+                }
             }
-        }
-        
-        // â”€â”€ 4. Course stats - ONE bulk query instead of per-course loops â”€â”€
-        $courses = Course::where('school_id', $schoolId)->get();
-        
-        $courseBookingStats = Booking::where('school_id', $schoolId)
-            ->when($startDate, fn($q) => $q->whereBetween('scheduled_at', [$startDate, $endDate]))
-            ->selectRaw("
+
+            // â”€â”€ 4. Course stats - ONE bulk query instead of per-course loops â”€â”€
+            $courses = Course::where('school_id', $schoolId)->get();
+
+            $courseBookingStats = Booking::where('school_id', $schoolId)
+                ->when($startDate, fn($q) => $q->whereBetween('scheduled_at', [$startDate, $endDate]))
+                ->selectRaw("
                 course_id,
                 COUNT(*) as total_bookings,
                 COUNT(DISTINCT student_id) as total_enrolled,
                 SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed
             ")
-            ->groupBy('course_id')
-            ->get()
-            ->keyBy('course_id');
-        
-        // Course revenue - ONE bulk query
-        $courseRevenue = DB::table('payments')
-            ->join('bookings', 'payments.booking_id', '=', 'bookings.id')
-            ->where('bookings.school_id', $schoolId)
-            ->where('payments.status', 'completed')
-            ->when($startDate, fn($q) => $q->whereBetween('bookings.scheduled_at', [$startDate, $endDate]))
-            ->selectRaw('bookings.course_id, SUM(payments.amount) as total_revenue')
-            ->groupBy('bookings.course_id')
-            ->pluck('total_revenue', 'course_id');
-        
-        $courseStats = $courses->map(function($course) use ($courseBookingStats, $courseRevenue) {
-            $stats = $courseBookingStats->get($course->id);
-            $totalBookings = $stats->total_bookings ?? 0;
-            $completedLessons = $stats->completed ?? 0;
-            $totalEnrolled = $stats->total_enrolled ?? 0;
-            return (object)[
+                ->groupBy('course_id')
+                ->get()
+                ->keyBy('course_id');
+
+            // Course revenue - ONE bulk query
+            $courseRevenue = DB::table('payments')
+                ->join('bookings', 'payments.booking_id', '=', 'bookings.id')
+                ->where('bookings.school_id', $schoolId)
+                ->where('payments.status', 'completed')
+                ->when($startDate, fn($q) => $q->whereBetween('bookings.scheduled_at', [$startDate, $endDate]))
+                ->selectRaw('bookings.course_id, SUM(payments.amount) as total_revenue')
+                ->groupBy('bookings.course_id')
+                ->pluck('total_revenue', 'course_id');
+
+            $courseStats = $courses->map(function ($course) use ($courseBookingStats, $courseRevenue) {
+                $stats = $courseBookingStats->get($course->id);
+                $totalBookings = $stats->total_bookings ?? 0;
+                $completedLessons = $stats->completed ?? 0;
+                $totalEnrolled = $stats->total_enrolled ?? 0;
+                return (object)[
                 'title' => $course->title,
                 'name' => $course->title,
                 'price' => $course->price,
@@ -124,175 +129,190 @@ class ReportController extends Controller
                 'completion_rate' => $totalBookings > 0 ? round(($completedLessons / $totalBookings) * 100, 1) : 0,
                 'average_rating' => null,
                 'total_revenue' => $courseRevenue->get($course->id, 0),
-            ];
-        })->sortByDesc('total_enrolled')->take(10);
-        
-        // â”€â”€ 5. Top instructors - already efficient (single GROUP BY query) â”€â”€
-        $topInstructors = Booking::where('school_id', $schoolId)
-            ->when($startDate, fn($q) => $q->whereBetween('scheduled_at', [$startDate, $endDate]))
-            ->with('instructor')
-            ->selectRaw('instructor_id, 
+                ];
+            })->sortByDesc('total_enrolled')->take(10);
+
+            // â”€â”€ 5. Top instructors - already efficient (single GROUP BY query) â”€â”€
+            $topInstructors = Booking::where('school_id', $schoolId)
+                ->when($startDate, fn($q) => $q->whereBetween('scheduled_at', [$startDate, $endDate]))
+                ->with('instructor')
+                ->selectRaw('instructor_id, 
                         COUNT(*) as total_lessons, 
                         SUM(CASE WHEN status = "completed" THEN 1 ELSE 0 END) as completed_lessons,
                         COUNT(DISTINCT student_id) as unique_students')
-            ->whereNotNull('instructor_id')
-            ->groupBy('instructor_id')
-            ->orderByDesc('completed_lessons')
-            ->limit(10)
-            ->get()
-            ->map(fn($b) => (object)[
-                'name' => $b->instructor->name ?? 'N/A',
-                'total_sessions' => $b->total_lessons,
-                'completed_sessions' => $b->completed_lessons,
-                'average_rating' => null,
-                'completion_rate' => $b->total_lessons > 0 ? round(($b->completed_lessons / $b->total_lessons) * 100, 1) : 0,
+                ->whereNotNull('instructor_id')
+                ->groupBy('instructor_id')
+                ->orderByDesc('completed_lessons')
+                ->limit(10)
+                ->get()
+                ->map(fn($b) => (object)[
+            'name' => $b->instructor->name ?? 'N/A',
+            'total_sessions' => $b->total_lessons,
+            'completed_sessions' => $b->completed_lessons,
+            'average_rating' => null,
+            'completion_rate' => $b->total_lessons > 0 ? round(($b->completed_lessons / $b->total_lessons) * 100, 1) : 0,
             ]);
-        
-        // â”€â”€ 6. Lessons by instructor - already efficient (single GROUP BY) â”€â”€
-        $lessonsByInstructor = Booking::where('school_id', $schoolId)
-            ->with('instructor')
-            ->when($startDate, fn($q) => $q->whereBetween('scheduled_at', [$startDate, $endDate]))
-            ->whereNotNull('instructor_id')
-            ->selectRaw('instructor_id, COUNT(*) as total_lessons, SUM(CASE WHEN status = "completed" THEN 1 ELSE 0 END) as completed_lessons')
-            ->groupBy('instructor_id')
-            ->get()
-            ->map(fn($b) => (object)[
-                'instructor_name' => $b->instructor->name ?? 'Unassigned',
-                'total_lessons' => $b->total_lessons,
-                'completed_lessons' => $b->completed_lessons,
-                'completion_rate' => $b->total_lessons > 0 ? round(($b->completed_lessons / $b->total_lessons) * 100, 1) : 0,
+
+            // â”€â”€ 6. Lessons by instructor - already efficient (single GROUP BY) â”€â”€
+            $lessonsByInstructor = Booking::where('school_id', $schoolId)
+                ->with('instructor')
+                ->when($startDate, fn($q) => $q->whereBetween('scheduled_at', [$startDate, $endDate]))
+                ->whereNotNull('instructor_id')
+                ->selectRaw('instructor_id, COUNT(*) as total_lessons, SUM(CASE WHEN status = "completed" THEN 1 ELSE 0 END) as completed_lessons')
+                ->groupBy('instructor_id')
+                ->get()
+                ->map(fn($b) => (object)[
+            'instructor_name' => $b->instructor->name ?? 'Unassigned',
+            'total_lessons' => $b->total_lessons,
+            'completed_lessons' => $b->completed_lessons,
+            'completion_rate' => $b->total_lessons > 0 ? round(($b->completed_lessons / $b->total_lessons) * 100, 1) : 0,
             ]);
-        
-        // â”€â”€ 7. Cancellation details (1 query with eager loading) â”€â”€
-        $cancellationDetails = Booking::where('school_id', $schoolId)
-            ->whereIn('status', ['cancelled', 'no_show', 'no-show'])
-            ->when($startDate, fn($q) => $q->whereBetween('scheduled_at', [$startDate, $endDate]))
-            ->with(['student', 'instructor', 'course'])
-            ->orderBy('updated_at', 'desc')
-            ->limit(20)
-            ->get();
-        
-        // â”€â”€ 8. Financial data - 3 queries (already efficient, no loops) â”€â”€
-        $financialBaseQuery = fn() => Payment::whereHas('booking', fn($q) => $q->where('school_id', $schoolId));
-        
-        $totalRevenue = $financialBaseQuery()
-            ->where('status', 'completed')
-            ->when($startDate, fn($q) => $q->whereBetween('created_at', [$startDate, $endDate]))
-            ->sum('amount');
-        
-        $pendingPayments = $financialBaseQuery()
-            ->where('status', 'pending')
-            ->when($startDate, fn($q) => $q->whereBetween('created_at', [$startDate, $endDate]))
-            ->sum('amount');
-        
-        $paymentsByMethod = $financialBaseQuery()
-            ->where('status', 'completed')
-            ->when($startDate, fn($q) => $q->whereBetween('paid_on', [$startDate, $endDate]))
-            ->selectRaw('method, SUM(amount) as total, COUNT(*) as count')
-            ->groupBy('method')
-            ->get();
-        
-        // â”€â”€ 9. Student progress - ONE bulk query instead of loading ALL students + ALL bookings â”€â”€
-        $studentProgress = DB::table('bookings')
-            ->join('students', 'bookings.student_id', '=', 'students.id')
-            ->where('bookings.school_id', $schoolId)
-            ->when($startDate, fn($q) => $q->whereBetween('bookings.scheduled_at', [$startDate, $endDate]))
-            ->selectRaw("
+
+            // â”€â”€ 7. Cancellation details (1 query with eager loading) â”€â”€
+            $cancellationDetails = Booking::where('school_id', $schoolId)
+                ->whereIn('status', ['cancelled', 'no_show', 'no-show'])
+                ->when($startDate, fn($q) => $q->whereBetween('scheduled_at', [$startDate, $endDate]))
+                ->with(['student', 'instructor', 'course'])
+                ->orderBy('updated_at', 'desc')
+                ->limit(20)
+                ->get();
+
+            // â”€â”€ 8. Financial data - 3 queries (already efficient, no loops) â”€â”€
+            $financialBaseQuery = fn() => Payment::whereHas('booking', fn($q) => $q->where('school_id', $schoolId));
+
+            $totalRevenue = $financialBaseQuery()
+                ->where('status', 'completed')
+                ->when($startDate, fn($q) => $q->whereBetween('created_at', [$startDate, $endDate]))
+                ->sum('amount');
+
+            $pendingPayments = $financialBaseQuery()
+                ->where('status', 'pending')
+                ->when($startDate, fn($q) => $q->whereBetween('created_at', [$startDate, $endDate]))
+                ->sum('amount');
+
+            $paymentsByMethod = $financialBaseQuery()
+                ->where('status', 'completed')
+                ->when($startDate, fn($q) => $q->whereBetween('paid_on', [$startDate, $endDate]))
+                ->selectRaw('method, SUM(amount) as total, COUNT(*) as count')
+                ->groupBy('method')
+                ->get();
+
+            // â”€â”€ 9. Student progress - ONE bulk query instead of loading ALL students + ALL bookings â”€â”€
+            $studentProgress = DB::table('bookings')
+                ->join('students', 'bookings.student_id', '=', 'students.id')
+                ->where('bookings.school_id', $schoolId)
+                ->when($startDate, fn($q) => $q->whereBetween('bookings.scheduled_at', [$startDate, $endDate]))
+                ->selectRaw("
                 students.id, students.name, students.email, students.enrollment_date, students.status,
                 COUNT(*) as total_lessons,
                 SUM(CASE WHEN bookings.status = 'completed' THEN 1 ELSE 0 END) as completed_lessons
             ")
-            ->groupBy('students.id', 'students.name', 'students.email', 'students.enrollment_date', 'students.status')
-            ->orderByDesc('completed_lessons')
-            ->limit(20)
-            ->get()
-            ->map(fn($s) => (object)[
-                'name' => $s->name,
-                'email' => $s->email,
-                'enrollment_date' => $s->enrollment_date,
-                'status' => $s->status,
-                'total_lessons' => $s->total_lessons,
-                'completed_lessons' => $s->completed_lessons,
-                'progress_rate' => $s->total_lessons > 0 ? round(($s->completed_lessons / $s->total_lessons) * 100, 1) : 0,
+                ->groupBy('students.id', 'students.name', 'students.email', 'students.enrollment_date', 'students.status')
+                ->orderByDesc('completed_lessons')
+                ->limit(20)
+                ->get()
+                ->map(fn($s) => (object)[
+            'name' => $s->name,
+            'email' => $s->email,
+            'enrollment_date' => $s->enrollment_date,
+            'status' => $s->status,
+            'total_lessons' => $s->total_lessons,
+            'completed_lessons' => $s->completed_lessons,
+            'progress_rate' => $s->total_lessons > 0 ? round(($s->completed_lessons / $s->total_lessons) * 100, 1) : 0,
             ]);
-        
-        // â”€â”€ Build analytics array â”€â”€
-        $totalAllBookings = (int) $bookingStats->total;
-        $completedCount = (int) $bookingStats->completed;
-        $cancelledCount = (int) $bookingStats->cancelled;
-        $noShowCount = (int) $bookingStats->no_show;
-        $missedCount = (int) $bookingStats->missed;
-        
-        $completionRate = $totalAllBookings > 0 ? round(($completedCount / $totalAllBookings) * 100, 2) : 0;
-        $attendanceRate = $totalAllBookings > 0 ? round(($completedCount / $totalAllBookings) * 100, 2) : 0;
-        $totalCancellations = $cancelledCount + $noShowCount;
-        $cancellationRate = $totalAllBookings > 0 ? round(($totalCancellations / $totalAllBookings) * 100, 2) : 0;
-        
 
-        
-        $analytics = [
-            'current_period' => $period,
-            'total_students' => (int) $studentCounts->total,
-            'active_students' => (int) $studentCounts->active,
-            'total_instructors' => Instructor::where('school_id', $schoolId)->count(),
-            'total_bookings_this_month' => $totalAllBookings,
-            'completed_lessons_this_month' => $completedCount,
-            'students_by_status' => $studentsByStatus,
-            'enrollments_this_month' => $enrollmentsThisMonth,
-            'bookings_by_status' => $bookingsByStatus,
-            'total_all_bookings' => $totalAllBookings,
-            'completion_rate' => $completionRate,
-            'course_stats' => $courseStats,
-            'top_instructors' => $topInstructors,
-            'attendance' => [
-                'attended' => $completedCount,
-                'missed' => $missedCount,
-                'rate' => $attendanceRate,
-            ],
-            'cancellations' => [
-                'total' => $cancelledCount,
-                'no_show' => $noShowCount,
-                'rate' => $cancellationRate,
-            ],
-            'lessons_by_status' => $bookingsByStatus,
-            'lessons_by_instructor' => $lessonsByInstructor,
-            'cancellation_details' => $cancellationDetails,
-            'financial' => [
-                'total_revenue' => $totalRevenue,
-                'pending_payments' => $pendingPayments,
-                'payments_by_method' => $paymentsByMethod,
-            ],
-            'student_progress' => $studentProgress,
-        ];
+            // â”€â”€ Build analytics array â”€â”€
+            $totalAllBookings = (int)$bookingStats->total;
+            $completedCount = (int)$bookingStats->completed;
+            $cancelledCount = (int)$bookingStats->cancelled;
+            $noShowCount = (int)$bookingStats->no_show;
+            $missedCount = (int)$bookingStats->missed;
 
-        // Make sure $school and helper functions are available
-        view()->share('school', $school);
-        view()->share('schoolRoute', static function (string $name, array $parameters = []) use ($school) {
-            $routeName = str_starts_with($name, 'schools.') ? $name : 'schools.' . $name;
-            return route($routeName, array_merge(['school' => $school], $parameters));
-        });
-        
-        return view($school->resolveView('admin.reports.index'), compact('analytics', 'school'));
+            $completionRate = $totalAllBookings > 0 ? round(($completedCount / $totalAllBookings) * 100, 2) : 0;
+            $attendanceRate = $totalAllBookings > 0 ? round(($completedCount / $totalAllBookings) * 100, 2) : 0;
+            $totalCancellations = $cancelledCount + $noShowCount;
+            $cancellationRate = $totalAllBookings > 0 ? round(($totalCancellations / $totalAllBookings) * 100, 2) : 0;
+
+
+
+            $analytics = [
+                'current_period' => $period,
+                'total_students' => (int)$studentCounts->total,
+                'active_students' => (int)$studentCounts->active,
+                'total_instructors' => Instructor::where('school_id', $schoolId)->count(),
+                'total_bookings_this_month' => $totalAllBookings,
+                'completed_lessons_this_month' => $completedCount,
+                'students_by_status' => $studentsByStatus,
+                'enrollments_this_month' => $enrollmentsThisMonth,
+                'bookings_by_status' => $bookingsByStatus,
+                'total_all_bookings' => $totalAllBookings,
+                'completion_rate' => $completionRate,
+                'course_stats' => $courseStats,
+                'top_instructors' => $topInstructors,
+                'attendance' => [
+                    'attended' => $completedCount,
+                    'missed' => $missedCount,
+                    'rate' => $attendanceRate,
+                ],
+                'cancellations' => [
+                    'total' => $cancelledCount,
+                    'no_show' => $noShowCount,
+                    'rate' => $cancellationRate,
+                ],
+                'lessons_by_status' => $bookingsByStatus,
+                'lessons_by_instructor' => $lessonsByInstructor,
+                'cancellation_details' => $cancellationDetails,
+                'financial' => [
+                    'total_revenue' => $totalRevenue,
+                    'pending_payments' => $pendingPayments,
+                    'payments_by_method' => $paymentsByMethod,
+                ],
+                'student_progress' => $studentProgress,
+            ];
+
+            // Make sure $school and helper functions are available
+            view()->share('school', $school);
+            view()->share('schoolRoute', static function (string $name, array $parameters = []) use ($school) {
+                $routeName = str_starts_with($name, 'schools.') ? $name : 'schools.' . $name;
+                return route($routeName, array_merge(['school' => $school], $parameters));
+            });
+
+            return view($school->resolveView('admin.reports.index'), compact('analytics', 'school'));
+        }
+        catch (\Exception $e) {
+            \App\Models\SystemLog::logError(
+                'Reports Dashboard Generation Error',
+                'database',
+                $e,
+            ['school_id' => $school->id],
+                $school->id,
+                'generate_reports'
+            );
+            return back()->with('error', 'Unable to generate analytics report at this time. Our team has been notified.');
+        }
     }
 
     /**
      * Export Students to Excel (HTML format)
      */
-    public function exportStudents()
+    public function exportStudents(School $school)
     {
-        $school = auth()->guard('admin')->user()->school;
+        $admin = auth()->guard('admin')->user();
+        if (!$admin || $admin->school_id !== $school->id) {
+            abort(403);
+        }
         $filename = $school->slug . '_students_' . now()->format('Y-m-d') . '.xls';
         $students = Student::where('school_id', $school->id)->orderBy('name')->get();
 
         $html = $this->buildExcelHtml(
             $school->name . ' - Student List',
-            ['Name', 'Email', 'Contact', 'Enrollment Date', 'Status'],
+        ['Name', 'Email', 'Contact', 'Enrollment Date', 'Status'],
             $students->map(fn($s) => [
-                $s->name,
-                $s->email,
-                $s->contact ?? 'N/A',
-                $s->enrollment_date ? Carbon::parse($s->enrollment_date)->format('M d, Y') : 'N/A',
-                ucfirst($s->status),
+            $s->name,
+            $s->email,
+            $s->contact ?? 'N/A',
+            $s->enrollment_date ?Carbon::parse($s->enrollment_date)->format('M d, Y') : 'N/A',
+            ucfirst($s->status),
             ])->toArray()
         );
 
@@ -304,9 +324,12 @@ class ReportController extends Controller
     /**
      * Export Instructors to Excel (HTML format)
      */
-    public function exportInstructors()
+    public function exportInstructors(School $school)
     {
-        $school = auth()->guard('admin')->user()->school;
+        $admin = auth()->guard('admin')->user();
+        if (!$admin || $admin->school_id !== $school->id) {
+            abort(403);
+        }
         $filename = $school->slug . '_instructors_' . now()->format('Y-m-d') . '.xls';
         $instructors = Instructor::where('school_id', $school->id)->orderBy('name')->get();
 
@@ -326,9 +349,9 @@ class ReportController extends Controller
         $rows = [];
         foreach ($instructors as $instructor) {
             $stats = $instructorStats->get($instructor->id);
-            $totalLessons = (int) ($stats->total_lessons ?? 0);
-            $completedLessons = (int) ($stats->completed_lessons ?? 0);
-            $totalStudentsTaught = (int) ($studentCountsByInstructor[$instructor->id] ?? 0);
+            $totalLessons = (int)($stats->total_lessons ?? 0);
+            $completedLessons = (int)($stats->completed_lessons ?? 0);
+            $totalStudentsTaught = (int)($studentCountsByInstructor[$instructor->id] ?? 0);
             $rows[] = [
                 $instructor->name,
                 $instructor->email,
@@ -341,7 +364,7 @@ class ReportController extends Controller
 
         $html = $this->buildExcelHtml(
             $school->name . ' - Instructor List',
-            ['Name', 'Email', 'Contact', 'Status', 'Total Students', 'Completed Lessons'],
+        ['Name', 'Email', 'Contact', 'Status', 'Total Students', 'Completed Lessons'],
             $rows
         );
 
@@ -353,11 +376,14 @@ class ReportController extends Controller
     /**
      * Export Bookings to Excel (HTML format)
      */
-    public function exportBookings()
+    public function exportBookings(School $school)
     {
-        $school = auth()->guard('admin')->user()->school;
+        $admin = auth()->guard('admin')->user();
+        if (!$admin || $admin->school_id !== $school->id) {
+            abort(403);
+        }
         $filename = $school->slug . '_bookings_' . now()->format('Y-m-d') . '.xls';
-        
+
         $bookings = Booking::where('school_id', $school->id)
             ->with(['student', 'instructor', 'course'])
             ->orderBy('scheduled_at', 'desc')
@@ -365,14 +391,14 @@ class ReportController extends Controller
 
         $html = $this->buildExcelHtml(
             $school->name . ' - Booking List',
-            ['Student', 'Instructor', 'Course', 'Scheduled At', 'Status', 'Session Grade'],
+        ['Student', 'Instructor', 'Course', 'Scheduled At', 'Status', 'Session Grade'],
             $bookings->map(fn($b) => [
-                $b->student->name ?? 'N/A',
-                $b->instructor->name ?? 'Unassigned',
-                $b->course->title ?? 'N/A',
-                $b->scheduled_at ? Carbon::parse($b->scheduled_at)->format('M d, Y h:i A') : 'N/A',
-                ucfirst($b->status),
-                $b->session_grade ?? 'Not Graded',
+            $b->student->name ?? 'N/A',
+            $b->instructor->name ?? 'Unassigned',
+            $b->course->title ?? 'N/A',
+            $b->scheduled_at ?Carbon::parse($b->scheduled_at)->format('M d, Y h:i A') : 'N/A',
+            ucfirst($b->status),
+            $b->session_grade ?? 'Not Graded',
             ])->toArray()
         );
 
@@ -384,9 +410,12 @@ class ReportController extends Controller
     /**
      * Export Payments to Excel (HTML format)
      */
-    public function exportPayments()
+    public function exportPayments(School $school)
     {
-        $school = auth()->guard('admin')->user()->school;
+        $admin = auth()->guard('admin')->user();
+        if (!$admin || $admin->school_id !== $school->id) {
+            abort(403);
+        }
         $filename = $school->slug . '_payments_' . now()->format('Y-m-d') . '.xls';
 
         $payments = Payment::whereHas('booking', fn($q) => $q->where('school_id', $school->id))
@@ -396,15 +425,15 @@ class ReportController extends Controller
 
         $html = $this->buildExcelHtml(
             $school->name . ' - Payment List',
-            ['Payment ID', 'Student', 'Course', 'Amount (PHP)', 'Method', 'Status', 'Paid On'],
+        ['Payment ID', 'Student', 'Course', 'Amount (PHP)', 'Method', 'Status', 'Paid On'],
             $payments->map(fn($p) => [
-                $p->id,
-                $p->booking->student->name ?? 'N/A',
-                $p->booking->course->title ?? 'N/A',
-                number_format($p->amount, 2),
-                ucfirst($p->method ?? 'N/A'),
-                ucfirst($p->status),
-                $p->paid_on ? Carbon::parse($p->paid_on)->format('M d, Y') : 'N/A',
+            $p->id,
+            $p->booking->student->name ?? 'N/A',
+            $p->booking->course->title ?? 'N/A',
+            number_format($p->amount, 2),
+            ucfirst($p->method ?? 'N/A'),
+            ucfirst($p->status),
+            $p->paid_on ?Carbon::parse($p->paid_on)->format('M d, Y') : 'N/A',
             ])->toArray()
         );
 
@@ -416,9 +445,12 @@ class ReportController extends Controller
     /**
      * Export Courses to Excel (HTML format)
      */
-    public function exportCourses()
+    public function exportCourses(School $school)
     {
-        $school = auth()->guard('admin')->user()->school;
+        $admin = auth()->guard('admin')->user();
+        if (!$admin || $admin->school_id !== $school->id) {
+            abort(403);
+        }
         $filename = $school->slug . '_courses_' . now()->format('Y-m-d') . '.xls';
         $courses = Course::where('school_id', $school->id)->orderBy('title')->get();
 
@@ -431,8 +463,8 @@ class ReportController extends Controller
         $rows = [];
         foreach ($courses as $course) {
             $stats = $courseStats->get($course->id);
-            $enrollments = (int) ($stats->enrollments ?? 0);
-            $completed = (int) ($stats->completed ?? 0);
+            $enrollments = (int)($stats->enrollments ?? 0);
+            $completed = (int)($stats->completed ?? 0);
             $rate = $enrollments > 0 ? round(($completed / $enrollments) * 100, 1) . '%' : '0%';
             $rows[] = [
                 $course->title,
@@ -446,7 +478,7 @@ class ReportController extends Controller
 
         $html = $this->buildExcelHtml(
             $school->name . ' - Course List',
-            ['Title', 'Price', 'Duration (Hours)', 'Enrollments', 'Completed', 'Completion Rate'],
+        ['Title', 'Price', 'Duration (Hours)', 'Enrollments', 'Completed', 'Completion Rate'],
             $rows
         );
 
@@ -461,7 +493,7 @@ class ReportController extends Controller
     private function buildExcelHtml(string $title, array $headers, array $rows): string
     {
         $date = now()->format('F d, Y');
-        
+
         $html = '
 <!DOCTYPE html>
 <html>
@@ -497,16 +529,16 @@ class ReportController extends Controller
     <table>
         <thead>
             <tr>';
-        
+
         foreach ($headers as $header) {
             $html .= '<th>' . htmlspecialchars($header) . '</th>';
         }
-        
+
         $html .= '
             </tr>
         </thead>
         <tbody>';
-        
+
         foreach ($rows as $row) {
             $html .= '<tr>';
             foreach ($row as $cell) {
@@ -514,7 +546,7 @@ class ReportController extends Controller
             }
             $html .= '</tr>';
         }
-        
+
         $html .= '
         </tbody>
     </table>

@@ -141,7 +141,7 @@ Route::prefix('{school:slug}')
             }
             );
 
-            Route::prefix('admin')->name('admin.')->middleware(['auth:admin', 'redirect.system.admin', 'branch.access', 'nocache'])->group(function (): void {
+            Route::prefix('admin')->name('admin.')->middleware(['school.context', 'auth:admin', 'redirect.system.admin', 'branch.access', 'nocache'])->group(function (): void {
             // Routes that need ajax middleware (existing modal-based pages)
             Route::middleware(['ajax'])->group(function () {
                     Route::get('/', [AdminController::class , 'dashboard'])->name('dashboard');
@@ -253,15 +253,7 @@ Route::prefix('{school:slug}')
                             }
                             );
 
-                            // Student action requests (secretaries create, school admins approve/deny)
-                            Route::prefix('student-action-requests')->name('student-action-requests.')->group(function () {
-                            Route::get('/', [StudentActionRequestController::class , 'index'])->name('index');
-                            Route::post('/add', [StudentActionRequestController::class , 'storeAddRequest'])->name('add');
-                            Route::post('/remove', [StudentActionRequestController::class , 'storeRemoveRequest'])->name('remove');
-                            Route::post('/{actionRequest}/approve', [StudentActionRequestController::class , 'approve'])->name('approve');
-                            Route::post('/{actionRequest}/deny', [StudentActionRequestController::class , 'deny'])->name('deny');
-                        }
-                        );
+
                     }
                     );
 

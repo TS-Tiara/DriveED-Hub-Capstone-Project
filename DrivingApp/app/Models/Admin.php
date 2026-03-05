@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\HasSchoolScope;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class Admin extends Authenticatable
 {
+    use HasSchoolScope;
     use HasFactory, Notifiable;
 
     // Role constants
@@ -21,7 +24,6 @@ class Admin extends Authenticatable
         'name',
         'email',
         'password',
-        'role',
         'is_active',
         'contact',
         'profile_picture',
@@ -135,6 +137,14 @@ class Admin extends Authenticatable
         return $this->isSchoolAdmin() || $this->isBranchSecretary();
     }
 
+    /**
+     * Check if admin can manage courses (only school_admin).
+     */
+    public function canManageCourses(): bool
+    {
+        return $this->isSchoolAdmin();
+    }
+
     // ──────────────────────────────────────
     // Branch scoping helpers
     // ──────────────────────────────────────
@@ -197,10 +207,5 @@ class Admin extends Authenticatable
     public function scopeBranchSecretaries($query)
     {
         return $query->where('role', self::ROLE_BRANCH_SECRETARY);
-    }
-
-    public function scopeForSchool($query, int $schoolId)
-    {
-        return $query->where('school_id', $schoolId);
     }
 }

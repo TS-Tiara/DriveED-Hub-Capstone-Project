@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Traits\HasSchoolScope;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 
 class Course extends Model
 {
+    use HasSchoolScope;
     use HasFactory;
 
     protected $fillable = [
@@ -85,14 +88,6 @@ class Course extends Model
     public function enrollments(): HasMany
     {
         return $this->hasMany(EnrollmentRequest::class);
-    }
-
-    /**
-     * Scope a query to only include courses for a specific school.
-     */
-    public function scopeForSchool($query, $schoolId)
-    {
-        return $query->where('school_id', $schoolId);
     }
 
     /**
