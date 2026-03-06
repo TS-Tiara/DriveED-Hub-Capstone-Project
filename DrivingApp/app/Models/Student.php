@@ -21,7 +21,6 @@ class Student extends Authenticatable
         'password',
         'contact',
         'address',
-        'branch',
         'location',
         'enrollment_date',
         'profile_picture',
