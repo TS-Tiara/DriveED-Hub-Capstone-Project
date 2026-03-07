@@ -199,6 +199,11 @@ class GuestController extends Controller
 
         $guest = Auth::guard('student')->user();
 
+        // Ensure the course belongs to this school
+        if ($course->school_id !== $school->id) {
+            abort(403, 'This course does not belong to this school.');
+        }
+
         // Ensure user is logged in and is a guest
         if (!$guest || !$guest->isGuest()) {
             Log::warning('User is not a guest', ['user' => $guest?->id, 'role' => $guest?->role]);
@@ -234,8 +239,8 @@ class GuestController extends Controller
                 'payment_status' => 'pending',
                 'requested_license_type' => $course->license_type ?? 'non_professional',
                 'experience_level' => $request->experience_level,
+                'package_id' => $request->input('package_id'),
                 'remarks' => $request->notes,
-                'branch' => $request->input('branch'),
                 'location' => $request->location ?? $guest->location,
                 'branch_id' => $request->input('branch_id'),
             ];

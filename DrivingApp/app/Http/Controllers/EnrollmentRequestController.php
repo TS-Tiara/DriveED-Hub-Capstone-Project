@@ -201,9 +201,10 @@ class EnrollmentRequestController extends Controller
                 
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('Failed to approve enrollment: ' . $e->getMessage());
             return redirect()
                 ->back()
-                ->with('error', 'Failed to approve enrollment: ' . $e->getMessage());
+                ->with('error', 'An unexpected error occurred while approving the enrollment. Please try again.');
         }
     }
 
@@ -253,6 +254,7 @@ class EnrollmentRequestController extends Controller
         $enrollmentRequest->update([
             'status' => 'rejected',
             'remarks' => $validated['remarks'],
+            'rejected_at' => now(),
         ]);
 
         // Send rejection email
@@ -602,9 +604,10 @@ class EnrollmentRequestController extends Controller
                 
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('Bulk approval failed: ' . $e->getMessage());
             return redirect()
                 ->back()
-                ->with('error', 'Bulk approval failed: ' . $e->getMessage());
+                ->with('error', 'An unexpected error occurred during bulk approval. Please try again.');
         }
     }
 
@@ -679,9 +682,10 @@ class EnrollmentRequestController extends Controller
                 
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('Bulk rejection failed: ' . $e->getMessage());
             return redirect()
                 ->back()
-                ->with('error', 'Bulk rejection failed: ' . $e->getMessage());
+                ->with('error', 'An unexpected error occurred during bulk rejection. Please try again.');
         }
     }
 

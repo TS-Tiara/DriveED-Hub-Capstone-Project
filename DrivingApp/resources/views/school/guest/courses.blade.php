@@ -846,7 +846,7 @@
 <div class="modal fade" id="enrollModal{{ $course->id }}" tabindex="-1" aria-labelledby="enrollModalLabel{{ $course->id }}" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form method="POST" action="{{ route('schools.guest.enroll', ['school' => $school, 'course' => $course->id]) }}" enctype="multipart/form-data">
+            <form method="POST" action="{{ route('schools.guest.enroll', ['school' => $school, 'course' => $course->id]) }}" enctype="multipart/form-data" data-no-ajax>
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title" id="enrollModalLabel{{ $course->id }}">Enroll in {{ $course->title }}</h5>
@@ -902,12 +902,12 @@
                                 <option value="new_driver" {{ old('experience_level') == 'new_driver' ? 'selected' : '' }}>
                                     New Driver (No license, learning from scratch)
                                 </option>
-                                <option value="experienced_driver" {{ old('experience_level') == 'experienced_driver' ? 'selected' : '' }}>
+                                <option value="experienced" {{ old('experience_level') == 'experienced' ? 'selected' : '' }}>
                                     Experienced Driver (Have license or experience)
                                 </option>
                             @else
                                 {{-- PDC: Only experienced drivers allowed --}}
-                                <option value="experienced_driver" {{ old('experience_level') == 'experienced_driver' ? 'selected' : '' }}>
+                                <option value="experienced" {{ old('experience_level') == 'experienced' ? 'selected' : '' }}>
                                     Experienced Driver (Have Student Driver's License)
                                 </option>
                             @endif
@@ -1002,7 +1002,7 @@ function handleExperienceChange{{ $course->id }}() {
     const credentialSection = document.getElementById('credentialSection{{ $course->id }}');
     const courseType = '{{ $course->course_type }}';
     
-    if (select.value === 'experienced_driver') {
+    if (select.value === 'experienced') {
         credentialSection.style.display = 'block';
     } else {
         credentialSection.style.display = 'none';
@@ -1023,6 +1023,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function openEnrollModal(courseId) {
     const modal = document.getElementById('enrollModal' + courseId);
     if (modal) {
+        document.body.style.overflow = 'hidden';
         modal.style.display = 'flex';
     }
 }
@@ -1031,13 +1032,20 @@ function closeEnrollModal(courseId) {
     const modal = document.getElementById('enrollModal' + courseId);
     if (modal) {
         modal.style.display = 'none';
+        document.body.style.overflow = '';
     }
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Defensive reset in case a previous page left body scroll locked.
+    document.body.style.overflow = '';
+});
 
 // Close modal when clicking outside
 window.onclick = function(event) {
     if (event.target.classList.contains('modal')) {
         event.target.style.display = 'none';
+        document.body.style.overflow = '';
     }
 }
 
@@ -1049,6 +1057,7 @@ document.addEventListener('keydown', function(event) {
     document.querySelectorAll('.modal').forEach(function(modal) {
         if (modal.style.display === 'flex') {
             modal.style.display = 'none';
+            document.body.style.overflow = '';
         }
     });
 });

@@ -682,7 +682,7 @@
                 </div>
                 <div class="info-row">
                     <span class="info-label">Branch:</span>
-                    <span class="info-value">{{ $student->branchRelation->name ?? 'Not Assigned' }}</span>
+                    <span class="info-value">{{ $student->branchRelation?->name ?? 'Not Assigned' }}</span>
                 </div>
             </div>
             

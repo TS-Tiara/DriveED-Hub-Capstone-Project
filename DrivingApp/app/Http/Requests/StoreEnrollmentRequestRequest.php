@@ -28,11 +28,10 @@ class StoreEnrollmentRequestRequest extends FormRequest
         $courseId = $course instanceof \App\Models\Course ? $course->id : $course;
 
         return [
-            'experience_level' => ['required', 'in:new_driver,experienced_driver'],
+            'experience_level' => ['required', 'in:new_driver,experienced'],
             'package_id' => [
                 'nullable',
                 \Illuminate\Validation\Rule::exists('course_packages', 'id')
-                ->where('school_id', $schoolId)
                 ->where('course_id', $courseId)
             ],
             'branch_id' => [

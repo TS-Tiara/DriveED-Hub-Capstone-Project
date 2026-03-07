@@ -88,19 +88,13 @@ class PhaseProgressionController extends Controller
             // Update the enrollment if needed (e.g., mark theoretical → practical transition)
             $enrollment = $phaseProgression->enrollment;
             if ($enrollment && $phaseProgression->to_phase === 'practical') {
-                // Student is moving to practical phase
-                $enrollment->update(['theoretical_passed' => true, 'theoretical_passed_at' => now()]);
+                // Student is moving to practical phase — use model method to propagate to student
+                $enrollment->markTheoreticalPassed($admin->id);
             }
 
             // If completing final phase, mark enrollment as completed
             if ($enrollment && $phaseProgression->to_phase === 'completed') {
                 $enrollment->markAsCompleted();
-
-                // Unlock student from course
-                $student = $enrollment->student;
-                if ($student) {
-                    $student->unlockFromCourse();
-                }
             }
 
             // Send notification to student

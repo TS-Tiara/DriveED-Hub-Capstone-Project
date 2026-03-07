@@ -572,10 +572,10 @@
                             </div>
                         @endif
 
-                        @if($request->notes)
+                        @if($request->remarks)
                             <div class="request-note-box">
                                 <strong class="request-note-title">Your Notes:</strong>
-                                <p class="request-note-text">{{ $request->notes }}</p>
+                                <p class="request-note-text">{{ $request->remarks }}</p>
                             </div>
                         @endif
                     </div>

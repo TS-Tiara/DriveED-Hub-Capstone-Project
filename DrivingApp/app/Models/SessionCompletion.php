@@ -31,7 +31,7 @@ class SessionCompletion extends Model
     protected $casts = [
         'hours_completed' => 'decimal:2',
         'session_date' => 'date',
-        'session_time' => 'datetime:H:i',
+        'session_time' => 'string',
     ];
 
     /**
@@ -74,7 +74,7 @@ class SessionCompletion extends Model
      */
     public function loggedBy(): BelongsTo
     {
-        return $this->belongsTo(Admin::class , 'logged_by');
+        return $this->belongsTo(Instructor::class , 'logged_by');
     }
 
     /**

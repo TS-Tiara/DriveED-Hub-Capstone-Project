@@ -12,9 +12,7 @@ class StoreSessionCompletionRequest extends FormRequest
     public function authorize(): bool
     {
         // Only instructors can log sessions
-        $user = $this->user();
-        
-        return $user && $user->role === 'instructor';
+        return \Illuminate\Support\Facades\Auth::guard('instructor')->check();
     }
 
     /**

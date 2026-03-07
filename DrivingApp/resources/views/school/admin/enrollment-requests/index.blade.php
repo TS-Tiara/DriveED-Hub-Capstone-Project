@@ -1278,6 +1278,12 @@ function approveRequest(requestId) {
         message: 'Are you sure you want to approve this enrollment request? This will promote the guest to a student.',
         confirmText: 'Approve',
         onConfirm: function() {
+            Swal.fire({
+                title: 'Processing...',
+                html: 'Please wait while we approve this request.',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
             document.getElementById('approveForm' + requestId).submit();
         }
     });
@@ -1290,6 +1296,12 @@ function completeEnrollment(requestId) {
         message: 'Are you sure you want to mark this enrollment as completed? The student has finished the course.',
         confirmText: 'Complete',
         onConfirm: function() {
+            Swal.fire({
+                title: 'Processing...',
+                html: 'Please wait while we complete this enrollment.',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
             document.getElementById('completeForm' + requestId).submit();
         }
     });
@@ -1426,6 +1438,12 @@ function bulkApprove() {
                 form.appendChild(input);
             });
             
+            Swal.fire({
+                title: 'Processing...',
+                html: 'Please wait while we approve the selected requests.',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
             document.body.appendChild(form);
             form.submit();
         }
@@ -1473,9 +1491,34 @@ function bulkReject() {
         form.appendChild(input);
     });
     
+    Swal.fire({
+        title: 'Processing...',
+        html: 'Please wait while we reject the selected requests.',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+    });
+    
     document.body.appendChild(form);
     form.submit();
 }
+
+// Prevent double-submit on modal forms (reject, cancel, license reject)
+['rejectForm', 'cancelForm', 'licenseRejectForm'].forEach(function(formId) {
+    var formEl = document.getElementById(formId);
+    if (formEl) {
+        formEl.addEventListener('submit', function(e) {
+            var submitBtn = formEl.querySelector('button[type="submit"]');
+            if (submitBtn.disabled) { e.preventDefault(); return; }
+            submitBtn.disabled = true;
+            Swal.fire({
+                title: 'Processing...',
+                html: 'Please wait while we process your request.',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+        });
+    }
+});
 
 // Export Menu Toggle
 function toggleExportMenu() {

@@ -289,6 +289,64 @@
             font-size: 13px;
         }
 
+        .password-input-wrap {
+            position: relative;
+        }
+
+        .password-input-wrap input {
+            padding-right: 44px;
+        }
+
+        .password-toggle-btn {
+            position: absolute;
+            top: 50%;
+            right: 8px;
+            transform: translateY(-50%);
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            color: #6b7280;
+            width: 28px;
+            height: 28px;
+            padding: 0;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .password-toggle-btn:hover {
+            color: #1f2937;
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .password-toggle-btn:focus-visible {
+            outline: 2px solid {{ $primaryColor }};
+            outline-offset: 2px;
+        }
+
+        .password-toggle-btn svg {
+            width: 16px;
+            height: 16px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .password-toggle-btn .icon-eye-off {
+            display: none;
+        }
+
+        .password-toggle-btn[aria-pressed="true"] .icon-eye {
+            display: none;
+        }
+
+        .password-toggle-btn[aria-pressed="true"] .icon-eye-off {
+            display: block;
+        }
+
         textarea {
             min-height: 60px;
             resize: vertical;
@@ -372,6 +430,100 @@
             outline: 2px solid {{ $primaryColor }};
             outline-offset: 2px;
             border-radius: 6px;
+        }
+
+        .consent-group {
+            margin-top: 24px;
+        }
+
+        .consent-label {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            cursor: pointer;
+            font-weight: normal;
+        }
+
+        .consent-checkbox {
+            margin-top: 4px;
+        }
+
+        .consent-text {
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .policy-link {
+            color: {{ $primaryColor }};
+            text-decoration: underline;
+        }
+
+        .policy-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            overflow-y: auto;
+        }
+
+        .policy-modal-card {
+            background: white;
+            max-width: 600px;
+            margin: 50px auto;
+            border-radius: 8px;
+            padding: 24px;
+            position: relative;
+        }
+
+        .policy-modal-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .policy-modal-title {
+            margin-bottom: 16px;
+            color: {{ $primaryColor }};
+        }
+
+        .policy-modal-content {
+            line-height: 1.6;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .policy-section-title {
+            margin-top: 16px;
+            margin-bottom: 8px;
+        }
+
+        .policy-list {
+            margin-left: 20px;
+            margin-top: 8px;
+        }
+
+        .policy-contact-email {
+            margin-top: 8px;
+        }
+
+        .policy-modal-btn {
+            margin-top: 20px;
+            background: {{ $primaryColor }};
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
         }
 
         @media (max-width: 768px) {
@@ -539,107 +691,6 @@
                 margin-top: 5px;
             }
 
-            .consent-group {
-                margin-top: 24px;
-            }
-
-            .consent-label {
-                display: flex;
-                align-items: flex-start;
-                gap: 8px;
-                cursor: pointer;
-                font-weight: normal;
-            }
-
-            .consent-checkbox {
-                margin-top: 4px;
-            }
-
-            .consent-text {
-                font-size: 13px;
-                line-height: 1.4;
-            }
-
-            .policy-link {
-                color: {{ $primaryColor }};
-                text-decoration: underline;
-            }
-
-            .policy-modal {
-                display: none;
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0,0,0,0.5);
-                z-index: 9999;
-                overflow-y: auto;
-            }
-
-            .policy-modal-card {
-                background: white;
-                max-width: 600px;
-                margin: 50px auto;
-                border-radius: 8px;
-                padding: 24px;
-                position: relative;
-            }
-
-            .policy-modal-close {
-                position: absolute;
-                top: 16px;
-                right: 16px;
-                background: none;
-                border: none;
-                font-size: 24px;
-                cursor: pointer;
-                color: #666;
-            }
-
-            .policy-modal-title {
-                margin-bottom: 16px;
-                color: {{ $primaryColor }};
-            }
-
-            .policy-modal-content {
-                line-height: 1.6;
-                font-size: 14px;
-                color: #333;
-            }
-
-            .policy-section-title {
-                margin-top: 16px;
-                margin-bottom: 8px;
-            }
-
-            .policy-list {
-                margin-left: 20px;
-                margin-top: 8px;
-            }
-
-            .policy-contact-email {
-                margin-top: 8px;
-            }
-
-            .policy-modal-btn {
-                margin-top: 20px;
-                background: {{ $primaryColor }};
-                color: white;
-                border: none;
-                padding: 10px 24px;
-                border-radius: 6px;
-                cursor: pointer;
-                width: 100%;
-            }
-        }
-                padding: 13px;
-                font-size: 16px;
-            }
-
-            .error {
-                font-size: 12px;
-            }
         }
 
         @media (max-width: 360px) {
@@ -816,7 +867,13 @@
 
                 <div class="form-group">
                     <label for="password">Password *</label>
-                    <input type="password" id="password" name="password" required>
+                    <div class="password-input-wrap">
+                        <input type="password" id="password" name="password" required>
+                        <button type="button" class="password-toggle-btn" data-password-toggle="password" aria-label="Show password" aria-pressed="false">
+                            <svg class="icon-eye" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                            <svg class="icon-eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18"></path><path d="M10.6 10.6a2 2 0 0 0 2.8 2.8"></path><path d="M9.9 4.2A11 11 0 0 1 12 4c6.5 0 10 6 10 6a18.7 18.7 0 0 1-4 4.9"></path><path d="M6.1 6.1A18.9 18.9 0 0 0 2 12s3.5 6 10 6c1.5 0 2.9-.3 4.1-.8"></path></svg>
+                        </button>
+                    </div>
                     <div class="password-help">
                         Must be at least 8 characters with at least one uppercase letter, one number, and one special character.
                     </div>
@@ -828,7 +885,13 @@
 
                 <div class="form-group">
                     <label for="password_confirmation">Confirm Password *</label>
-                    <input type="password" id="password_confirmation" name="password_confirmation" required>
+                    <div class="password-input-wrap">
+                        <input type="password" id="password_confirmation" name="password_confirmation" required>
+                        <button type="button" class="password-toggle-btn" data-password-toggle="password_confirmation" aria-label="Show password" aria-pressed="false">
+                            <svg class="icon-eye" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                            <svg class="icon-eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18"></path><path d="M10.6 10.6a2 2 0 0 0 2.8 2.8"></path><path d="M9.9 4.2A11 11 0 0 1 12 4c6.5 0 10 6 10 6a18.7 18.7 0 0 1-4 4.9"></path><path d="M6.1 6.1A18.9 18.9 0 0 0 2 12s3.5 6 10 6c1.5 0 2.9-.3 4.1-.8"></path></svg>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Data Privacy and Terms -->
@@ -989,7 +1052,9 @@
 
     <script>
         function showPrivacy(e) {
-            e.preventDefault();
+            if (e && typeof e.preventDefault === 'function') {
+                e.preventDefault();
+            }
             document.getElementById('privacyModal').style.display = 'block';
             document.body.style.overflow = 'hidden';
         }
@@ -1000,7 +1065,9 @@
         }
 
         function showTerms(e) {
-            e.preventDefault();
+            if (e && typeof e.preventDefault === 'function') {
+                e.preventDefault();
+            }
             document.getElementById('termsModal').style.display = 'block';
             document.body.style.overflow = 'hidden';
         }
@@ -1017,6 +1084,24 @@
 
         document.getElementById('termsModal')?.addEventListener('click', function(e) {
             if (e.target === this) closeTerms();
+        });
+
+        function togglePasswordVisibility(inputId, trigger) {
+            const input = document.getElementById(inputId);
+            if (!input) {
+                return;
+            }
+
+            const isHidden = input.type === 'password';
+            input.type = isHidden ? 'text' : 'password';
+            trigger.setAttribute('aria-pressed', isHidden ? 'true' : 'false');
+            trigger.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+        }
+
+        document.querySelectorAll('[data-password-toggle]').forEach(function(trigger) {
+            trigger.addEventListener('click', function() {
+                togglePasswordVisibility(trigger.getAttribute('data-password-toggle'), trigger);
+            });
         });
     </script>
 </body>

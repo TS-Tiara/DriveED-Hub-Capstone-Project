@@ -23,7 +23,6 @@ class EnrollmentRequest extends Model
         'payment_confirmed_at',
         'payment_confirmation_notes',
         'remarks',
-        'branch',
         'location',
         'requested_license_type',
         'experience_level',
@@ -50,6 +49,7 @@ class EnrollmentRequest extends Model
             'enrolled_at' => 'datetime',
             'completed_at' => 'datetime',
             'cancelled_at' => 'datetime',
+            'rejected_at' => 'datetime',
             'theoretical_passed' => 'boolean',
             'theoretical_passed_at' => 'datetime',
             'payment_confirmed_at' => 'datetime',
@@ -174,6 +174,7 @@ class EnrollmentRequest extends Model
         $this->update([
             'status' => 'rejected',
             'remarks' => $remarks,
+            'rejected_at' => now(),
         ]);
     }
 
@@ -221,6 +222,10 @@ class EnrollmentRequest extends Model
             'theoretical_passed_by' => $adminId,
             'theoretical_pass_notes' => $notes,
         ]);
+
+        if ($this->learner && !$this->learner->hasPassedTheoretical()) {
+            $this->learner->markTheoreticalPassed();
+        }
     }
 
     /**

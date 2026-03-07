@@ -423,7 +423,7 @@
                     <label class="form-label">Experience Level</label>
                     <select name="experience_level" class="form-select" required id="exp_level">
                         <option value="new_driver">New Driver</option>
-                        <option value="experienced_driver">Experienced Driver</option>
+                        <option value="experienced">Experienced Driver</option>
                     </select>
                 </div>
 
@@ -453,7 +453,7 @@
     }
 
     document.getElementById('exp_level').addEventListener('change', function() {
-        document.getElementById('license_upload').style.display = this.value === 'experienced_driver' ? 'block' : 'none';
+        document.getElementById('license_upload').style.display = this.value === 'experienced' ? 'block' : 'none';
     });
 
     window.onclick = function(event) {

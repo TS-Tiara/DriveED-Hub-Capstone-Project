@@ -783,10 +783,6 @@
             buttons.forEach(function(btn) {
                 btn.classList.add('btn-submitting');
                 btn.disabled = true;
-                if (btn.tagName === 'BUTTON') {
-                    btn.dataset.originalText = btn.innerHTML;
-                    btn.innerHTML = btn.textContent.trim() + ' <span style="display:inline-block;width:14px;height:14px;margin-left:6px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:btn-spin .6s linear infinite;vertical-align:middle"></span>';
-                }
             });
 
             setTimeout(function() {
@@ -794,9 +790,6 @@
                 buttons.forEach(function(btn) {
                     btn.classList.remove('btn-submitting');
                     btn.disabled = false;
-                    if (btn.tagName === 'BUTTON' && btn.dataset.originalText) {
-                        btn.innerHTML = btn.dataset.originalText;
-                    }
                 });
             }, 8000);
         }, true);

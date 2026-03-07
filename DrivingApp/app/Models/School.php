@@ -12,6 +12,7 @@ class School extends Model
     protected $fillable = [
         'name',
         'slug',
+        'status',
         'timezone',
         'branding',
         'settings',
