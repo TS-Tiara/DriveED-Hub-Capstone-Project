@@ -57,7 +57,7 @@ class SystemLog extends Model
 
     public function resolvedBy()
     {
-        return $this->belongsTo(User::class, 'resolved_by');
+        return $this->belongsTo(User::class , 'resolved_by');
     }
 
     /**
@@ -78,11 +78,6 @@ class SystemLog extends Model
         return $query->whereIn('level', ['emergency', 'alert', 'critical', 'error']);
     }
 
-    public function scopeForSchool($query, $schoolId)
-    {
-        return $query->where('school_id', $schoolId);
-    }
-
     public function scopeRecent($query, $days = 7)
     {
         return $query->where('created_at', '>=', now()->subDays($days));
@@ -98,7 +93,8 @@ class SystemLog extends Model
         array $context = [],
         ?int $schoolId = null,
         string $action = null
-    ): self {
+        ): self
+    {
         return self::createLog('error', $message, $category, $exception, $context, $schoolId, $action);
     }
 
@@ -109,7 +105,8 @@ class SystemLog extends Model
         array $context = [],
         ?int $schoolId = null,
         string $action = null
-    ): self {
+        ): self
+    {
         return self::createLog('critical', $message, $category, $exception, $context, $schoolId, $action);
     }
 
@@ -119,7 +116,8 @@ class SystemLog extends Model
         array $context = [],
         ?int $schoolId = null,
         string $action = null
-    ): self {
+        ): self
+    {
         return self::createLog('warning', $message, $category, null, $context, $schoolId, $action);
     }
 
@@ -129,7 +127,8 @@ class SystemLog extends Model
         array $context = [],
         ?int $schoolId = null,
         string $action = null
-    ): self {
+        ): self
+    {
         return self::createLog('info', $message, $category, null, $context, $schoolId, $action);
     }
 
@@ -141,7 +140,8 @@ class SystemLog extends Model
         array $context,
         ?int $schoolId,
         ?string $action
-    ): self {
+        ): self
+    {
         $guardName = self::getCurrentGuardName();
         $user = Auth::guard($guardName)->user();
 
@@ -164,10 +164,10 @@ class SystemLog extends Model
             'level' => $level,
             'category' => $category,
             'action' => $action,
-            'message' => $message,
+            'message' => self::maskPii($message),
             'exception_class' => $exception ? get_class($exception) : null,
             'stack_trace' => $exception ? $exception->getTraceAsString() : null,
-            'context' => $context,
+            'context' => self::maskContextPii($context),
             'ip_address' => Request::ip(),
             'user_agent' => Request::userAgent(),
             'url' => Request::fullUrl(),
@@ -190,6 +190,31 @@ class SystemLog extends Model
             }
         }
         return null;
+    }
+
+    /**
+     * Mask PII (Personally Identifiable Information) in a string
+     */
+    private static function maskPii(string $string): string
+    {
+        // Mask emails
+        $string = preg_replace('/([a-zA-Z0-9._%+-]+)@([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/', '***@$2', $string);
+        // Mask phone numbers (basic pattern)
+        $string = preg_replace('/(\+?\d{1,3}[\s-]?)?\(?\d{3}\)?[\s-]?\d{3}[\s-]?\d{4}/', '***-***-****', $string);
+        return $string;
+    }
+
+    /**
+     * Mask PII in context array
+     */
+    private static function maskContextPii(array $context): array
+    {
+        array_walk_recursive($context, function (&$item) {
+            if (is_string($item)) {
+                $item = self::maskPii($item);
+            }
+        });
+        return $context;
     }
 
     /**
@@ -236,28 +261,28 @@ class SystemLog extends Model
         $details = [];
         $details[] = "Level: " . strtoupper($this->level);
         $details[] = "Category: " . ucfirst($this->category);
-        
+
         if ($this->action) {
             $details[] = "Action: " . $this->action;
         }
-        
+
         if ($this->school) {
             $details[] = "School: " . $this->school->name;
         }
-        
+
         if ($this->user) {
             $details[] = "User: " . $this->user->name . " ({$this->user_type})";
         }
-        
+
         $details[] = "Message: " . $this->message;
-        
+
         if ($this->exception_class) {
             $details[] = "Exception: " . $this->exception_class;
         }
-        
+
         $details[] = "Time: " . $this->created_at->format('Y-m-d H:i:s');
         $details[] = "URL: " . $this->url;
-        
+
         return implode("\n", $details);
     }
 }

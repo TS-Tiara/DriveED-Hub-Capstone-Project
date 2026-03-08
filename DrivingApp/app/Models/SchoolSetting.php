@@ -2,11 +2,17 @@
 
 namespace App\Models;
 
+use App\Traits\HasSchoolScope;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SchoolSetting extends Model
 {
+    use HasSchoolScope;
+    use HasFactory;
+
     protected $fillable = [
         'school_id',
         'primary_color',
@@ -53,6 +59,7 @@ class SchoolSetting extends Model
         'enable_booking_queue',
         'booking_queue_days',
         'advance_booking_days',
+        'enable_branches',
         // Login/Signup Header Customization
         'login_header_layout',
         'login_logo_image',
@@ -84,6 +91,7 @@ class SchoolSetting extends Model
     protected $casts = [
         'use_gradient_header' => 'boolean',
         'enable_booking_queue' => 'boolean',
+        'enable_branches' => 'boolean',
         'login_show_school_name' => 'boolean',
         'login_show_welcome_text' => 'boolean',
         'login_header_shadow' => 'boolean',

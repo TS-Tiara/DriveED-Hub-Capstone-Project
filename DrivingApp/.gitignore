@@ -29,3 +29,15 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Test-result screenshots
+/tests/screenshots/**/*.png
+/tests/screenshots/**/*.jpg
+/tests/screenshots/**/*.jpeg
+/tests/screenshots/**/*.webp
+!/tests/screenshots/**/.gitkeep
+
+/tests/Browser/screenshots/**/*.png
+/tests/Browser/screenshots/**/*.jpg
+/tests/Browser/screenshots/**/*.jpeg
+/tests/Browser/screenshots/**/*.webp

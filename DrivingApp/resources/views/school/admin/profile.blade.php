@@ -254,6 +254,15 @@
         color: #721c24;
         border: 1px solid #f5c6cb;
     }
+
+    .error-list {
+        margin: 0;
+        padding-left: 20px;
+    }
+
+    .hidden-file-input {
+        display: none;
+    }
 </style>
 
 <div class="profile-page">
@@ -278,7 +287,7 @@
         <div class="flash-content">
             <div class="flash-title">Error!</div>
             <div class="flash-text">
-                <ul style="margin: 0; padding-left: 20px;">
+                <ul class="error-list">
                     @foreach($errors->all() as $error)
                         <li>{{ $error }}</li>
                     @endforeach
@@ -302,7 +311,7 @@
                         <span>Change Photo</span>
                     </div>
                 </div>
-                <input type="file" id="profilePictureInput" accept="image/png,image/jpg,image/jpeg,image/webp" style="display: none;" onchange="uploadProfilePicture(this)">
+                <input type="file" id="profilePictureInput" accept="image/png,image/jpg,image/jpeg,image/webp" class="hidden-file-input" onchange="uploadProfilePicture(this)">
                 <div class="profile-name">{{ $admin->name ?? "Admin's Name" }}</div>
             </div>
 
@@ -329,7 +338,7 @@
         </div>
 
         <div id="editForm" class="edit-form">
-            <form method="POST" action="{{ $schoolRoute('admin.profile.update') }}">
+            <form method="POST" action="{{ school_route('admin.profile.update') }}">
                 @csrf
                 @method('PUT')
 
@@ -394,7 +403,7 @@
             const originalText = overlay.textContent;
             overlay.textContent = 'Uploading...';
             
-            fetch('{{ $schoolRoute("admin.profile.picture") }}', {
+            fetch('{{ school_route("admin.profile.picture") }}', {
                 method: 'POST',
                 body: formData
             })

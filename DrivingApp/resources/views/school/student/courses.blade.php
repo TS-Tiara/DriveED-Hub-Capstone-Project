@@ -1,16 +1,16 @@
-@extends('layouts.app')
+@extends($isAjax ?? false ? 'layouts.ajax' : 'layouts.app')
 
 @section('title', 'Browse Courses')
 
 @section('content')
-<?php
+@php
     $school = $school ?? $currentSchool ?? null;
     $settings = $school?->schoolSetting;
-    
-    $primaryColor = $settings?->primary_color ?? '#0d6efd';
-    $secondaryColor = $settings?->secondary_color ?? '#6c757d';
+
+    $primaryColor = $settings?->primary_color ?? '#667eea';
+    $secondaryColor = $settings?->secondary_color ?? '#764ba2';
     $accentColor = $settings?->accent_color ?? '#8b5cf6';
-?>
+@endphp
 
 <style>
     .courses-container {
@@ -21,7 +21,7 @@
     
     .courses-header {
         margin-bottom: 20px;
-        border-bottom: 4px solid <?php echo $primaryColor; ?>;
+        border-bottom: 4px solid {{ $primaryColor }};
         padding-bottom: 15px;
     }
     
@@ -56,7 +56,7 @@
     
     .course-banner {
         height: 160px;
-        background: linear-gradient(135deg, <?php echo $primaryColor; ?> 0%, <?php echo $secondaryColor; ?> 100%);
+        background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -84,6 +84,30 @@
         border-radius: 20px;
         font-size: 0.75rem;
         font-weight: 600;
+    }
+
+    .enrollment-status-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        color: white;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+
+    .enrollment-status-badge.status-pending {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    }
+
+    .enrollment-status-badge.status-approved {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+
+    .enrollment-status-badge.status-completed {
+        background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
     }
     
     .course-body {
@@ -153,7 +177,7 @@
         transform: translateY(-50%);
         width: 14px;
         height: 14px;
-        background: <?php echo $primaryColor; ?>;
+        background: {{ $primaryColor }};
         border-radius: 50%;
     }
     
@@ -256,13 +280,13 @@
     
     .package-price {
         font-weight: 700;
-        color: <?php echo $primaryColor; ?>;
+        color: {{ $primaryColor }};
         font-size: 1rem;
     }
     
     .more-packages {
         text-align: center;
-        color: <?php echo $primaryColor; ?>;
+        color: {{ $primaryColor }};
         font-weight: 600;
         font-size: 0.8rem;
         padding-top: 6px;
@@ -282,7 +306,7 @@
     .btn-enroll {
         width: 100%;
         padding: 12px;
-        background: <?php echo $primaryColor; ?>;
+        background: {{ $primaryColor }};
         color: white;
         border: none;
         border-radius: 8px;
@@ -300,6 +324,29 @@
     .btn-enroll:disabled {
         background: #9ca3af;
         cursor: not-allowed;
+    }
+
+    .feature-more-primary {
+        color: {{ $primaryColor }};
+        font-weight: 600;
+    }
+
+    .btn-enroll-approved {
+        background: #10b981;
+        cursor: default;
+    }
+
+    .btn-enroll-pending {
+        background: #f59e0b;
+        cursor: default;
+    }
+
+    .empty-state-title {
+        font-size: 1.1rem;
+    }
+
+    .empty-state-subtitle {
+        font-size: 0.9rem;
     }
     
     .empty-state {
@@ -357,7 +404,7 @@
     </div>
 
     <div class="courses-grid">
-        <?php $activeCourses = $courses->where('status', 'active'); ?>
+        @php $activeCourses = $courses->where('status', 'active'); @endphp
         
         @forelse($activeCourses as $course)
         <div class="course-card">
@@ -372,6 +419,12 @@
                 
                 @if($course->is_featured)
                     <span class="featured-badge">Featured</span>
+                @endif
+                @if(isset($enrollmentStatuses[$course->id]))
+                    @php $enrollStatus = $enrollmentStatuses[$course->id]; @endphp
+                    <span class="enrollment-status-badge status-{{ $enrollStatus }}">
+                        {{ $enrollStatus === 'pending' ? 'Pending Request' : ($enrollStatus === 'approved' ? 'Currently Enrolled' : 'Completed') }}
+                    </span>
                 @endif
             </div>
             
@@ -389,14 +442,14 @@
                     <p class="course-description">{{ Str::limit($course->description, 120) }}</p>
                 @endif
                 
-                <?php $features = $course->features; ?>
+                @php $features = $course->features; @endphp
                 @if($features && is_array($features) && count($features) > 0)
                     <ul class="course-features">
                         @foreach(array_slice($features, 0, 3) as $feature)
                             <li>{{ $feature }}</li>
                         @endforeach
                         @if(count($features) > 3)
-                            <li style="color: <?php echo $primaryColor; ?>; font-weight: 600;">+{{ count($features) - 3 }} more</li>
+                            <li class="feature-more-primary">+{{ count($features) - 3 }} more</li>
                         @endif
                     </ul>
                 @endif
@@ -440,7 +493,13 @@
                     </div>
                 @endif
 
-                @if($course->isFull())
+                @if(isset($enrollmentStatuses[$course->id]) && $enrollmentStatuses[$course->id] === 'approved')
+                    <button class="btn-enroll btn-enroll-approved" disabled>Currently Enrolled</button>
+                @elseif(isset($enrollmentStatuses[$course->id]) && $enrollmentStatuses[$course->id] === 'pending')
+                    <button class="btn-enroll btn-enroll-pending" disabled>Enrollment Pending</button>
+                @elseif(isset($enrollmentStatuses[$course->id]) && $enrollmentStatuses[$course->id] === 'completed')
+                    <button class="btn-enroll" onclick="bookCourse({{ $course->id }})">View Course</button>
+                @elseif($course->isFull())
                     <div class="course-warning">Course is currently full</div>
                     <button class="btn-enroll" disabled>Course Full</button>
                 @elseif($course->max_students && $course->availableSlots() <= 3 && $course->availableSlots() > 0)
@@ -457,8 +516,8 @@
                 <path d="M8.211 2.047a.5.5 0 0 0-.422 0l-7.5 3.5a.5.5 0 0 0 .025.917l7.5 3a.5.5 0 0 0 .372 0L14 7.14V13a1 1 0 0 0-1 1v2h3v-2a1 1 0 0 0-1-1V6.739l.686-.275a.5.5 0 0 0 .025-.917l-7.5-3.5Z"/>
                 <path d="M4.176 9.032a.5.5 0 0 0-.656.327l-.5 1.7a.5.5 0 0 0 .294.605l4.5 1.8a.5.5 0 0 0 .372 0l4.5-1.8a.5.5 0 0 0 .294-.605l-.5-1.7a.5.5 0 0 0-.656-.327L8 10.466 4.176 9.032Z"/>
             </svg>
-            <p style="font-size: 1.1rem;">No courses available at the moment</p>
-            <p style="font-size: 0.9rem;">Please check back later for new courses.</p>
+            <p class="empty-state-title">No courses available at the moment</p>
+            <p class="empty-state-subtitle">Please check back later for new courses.</p>
         </div>
         @endforelse
     </div>
@@ -466,8 +525,8 @@
 
 <script>
 function bookCourse(courseId) {
-    const schoolSlug = '<?php echo $school->slug; ?>';
-    window.location.href = '/' + schoolSlug + '/student/bookings/create?course_id=' + courseId;
+    const schoolSlug = '{{ $school->slug }}';
+    window.location.href = '/' + schoolSlug + '/student/courses/' + courseId;
 }
 </script>
 @endsection

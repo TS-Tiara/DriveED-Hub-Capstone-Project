@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Mail;
 use App\Models\School;
@@ -75,20 +76,25 @@ class PasswordResetController extends Controller
             Mail::raw(
                 "Hello {$user->name},\n\nYou are receiving this email because we received a password reset request for your account.\n\nClick the link below to reset your password:\n{$resetUrl}\n\nThis link will expire in 60 minutes.\n\nIf you did not request a password reset, no further action is required.\n\nRegards,\n{$school->name}",
                 function ($message) use ($email, $school) {
-                    $message->to($email)
-                        ->subject("{$school->name} - Password Reset Request");
-                }
+                $message->to($email)
+                    ->subject("{$school->name} - Password Reset Request");
+            }
             );
-        } catch (\Exception $e) {
-            \Log::error('Failed to send password reset email: ' . $e->getMessage());
-        }
 
-        $message = 'Password reset link has been sent to your email!';
-        if (config('app.env') === 'local') {
-            $message .= " (Dev Mode - Link: {$resetUrl})";
+            return back()->with('success', 'Password reset link has been sent to your email!');
         }
+        catch (\Exception $e) {
+            Log::error('Failed to send password reset email: ' . $e->getMessage(), [
+                'email' => $email,
+                'school_id' => $school->id,
+                'user_type' => $userType
+            ]);
 
-        return back()->with('success', $message);
+            // In local development, we might want to see the link if mailing is not configured, 
+            // but the audit specifically flagged this as a leak risk.
+            // So we stay generic.
+            return back()->with('error', 'Unable to send password reset email. Please try again later.');
+        }
     }
 
     /**
@@ -97,7 +103,7 @@ class PasswordResetController extends Controller
     public function showResetForm(Request $request, School $school, $token)
     {
         $school->load('schoolSetting');
-        
+
         return view($school->resolveView('password.reset'), [
             'school' => $school,
             'token' => $token,
@@ -146,7 +152,8 @@ class PasswordResetController extends Controller
             return back()->withErrors(['email' => 'User not found.']);
         }
 
-        $user->password = Hash::make($request->password);
+        $user->password = $request->password; // Cast handles hashing
+        $user->must_reset_password = false;
         $user->save();
 
         // Delete token
@@ -167,11 +174,11 @@ class PasswordResetController extends Controller
     {
         switch ($type) {
             case 'student':
-                return Student::where('email', $email)->where('school_id', $schoolId)->first();
+                return Student::where('email', '=', $email, 'and')->where('school_id', '=', $schoolId, 'and')->first();
             case 'admin':
-                return Admin::where('email', $email)->where('school_id', $schoolId)->first();
+                return Admin::where('email', '=', $email, 'and')->where('school_id', '=', $schoolId, 'and')->first();
             case 'instructor':
-                return Instructor::where('email', $email)->where('school_id', $schoolId)->first();
+                return Instructor::where('email', '=', $email, 'and')->where('school_id', '=', $schoolId, 'and')->first();
             default:
                 return null;
         }

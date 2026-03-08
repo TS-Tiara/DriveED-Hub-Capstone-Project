@@ -25,14 +25,15 @@
             <label>Search</label>
             <input type="text" name="search" value="{{ request('search') }}" placeholder="Name or email" class="form-control">
         </div>
-        <div class="form-group" style="display: flex; align-items: flex-end;">
-            <button type="submit" class="btn btn-primary" style="width: 100%;">Filter</button>
+        <div class="form-group form-group-actions">
+            <button type="submit" class="btn btn-primary btn-full-width">Filter</button>
         </div>
     </form>
 </div>
 <div class="card">
     <div class="card-header"><h3>Instructors ({{ $instructors->total() }})</h3></div>
     <div class="card-body">
+        <div class="table-container">
         <table>
             <thead>
                 <tr>
@@ -57,6 +58,7 @@
                 @endforeach
             </tbody>
         </table>
+        </div>
         {{ $instructors->appends(request()->query())->links() }}
     </div>
 </div>

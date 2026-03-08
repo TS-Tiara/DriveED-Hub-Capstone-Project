@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     @php
         $school = $school ?? $currentSchool ?? null;
         $slug = $school?->slug ?? 'default';
@@ -289,8 +290,17 @@
             text-align: left;
         }
 
+        .form-label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #374151;
+        }
+
         input[type="email"],
-        input[type="password"] {
+        input[type="password"],
+        .password-input-wrap input {
             width: 100%;
             padding: 10px;
             border: 2px solid #e5e7eb;
@@ -299,8 +309,67 @@
             background: rgba(255, 255, 255, 0.9);
         }
 
+        .password-input-wrap {
+            position: relative;
+        }
+
+        .password-input-wrap input {
+            padding-right: 44px;
+        }
+
+        .password-toggle-btn {
+            position: absolute;
+            top: 50%;
+            right: 8px;
+            transform: translateY(-50%);
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            color: #6b7280;
+            width: 28px;
+            height: 28px;
+            padding: 0;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .password-toggle-btn:hover {
+            color: #1f2937;
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .password-toggle-btn:focus-visible {
+            outline: 2px solid {{ $primaryColor }};
+            outline-offset: 2px;
+        }
+
+        .password-toggle-btn svg {
+            width: 16px;
+            height: 16px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .password-toggle-btn .icon-eye-off {
+            display: none;
+        }
+
+        .password-toggle-btn[aria-pressed="true"] .icon-eye {
+            display: none;
+        }
+
+        .password-toggle-btn[aria-pressed="true"] .icon-eye-off {
+            display: block;
+        }
+
         input[type="email"]:focus,
-        input[type="password"]:focus {
+        input[type="password"]:focus,
+        .password-input-wrap input:focus {
             outline: none;
             border-color: #2563eb;
             box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
@@ -412,7 +481,8 @@
             }
 
             input[type="email"],
-            input[type="password"] {
+            input[type="password"],
+            .password-input-wrap input {
                 padding: 14px;
                 font-size: 16px;
             }
@@ -484,7 +554,8 @@
             }
 
             input[type="email"],
-            input[type="password"] {
+            input[type="password"],
+            .password-input-wrap input {
                 padding: 7px 9px;
                 font-size: 12px;
                 border: 1px solid #d1d5db;
@@ -527,19 +598,39 @@
             }
 
             /* Register link section for mobile */
-            .login-container > div[style*="text-align: center"] {
+            .register-link-wrap {
                 margin-top: 14px !important;
                 padding-top: 14px !important;
             }
 
-            .login-container > div[style*="text-align: center"] p {
+            .register-link-text {
                 font-size: 10px !important;
                 margin-bottom: 8px !important;
             }
 
-            .login-container > div[style*="text-align: center"] a {
+            .register-link-anchor {
                 font-size: 11px !important;
             }
+        }
+
+        .register-link-wrap {
+            text-align: center;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .register-link-text {
+            color: #666;
+            margin-bottom: 6px;
+            font-size: 12px;
+        }
+
+        .register-link-anchor {
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 12px;
         }
 
         @media (max-width: 360px) {
@@ -690,7 +781,9 @@
             <form method="POST" action="{{ route('schools.login.submit', $school) }}">
                 @csrf
                 <div class="form-group">
+                    <label for="email" style="display: block; font-size: 0.9rem; font-weight: 600; color: #374151; margin-bottom: 6px;">Email Address</label>
                     <input 
+                        id="email"
                         type="email" 
                         name="email" 
                         placeholder="Email Address" 
@@ -701,11 +794,19 @@
                     @enderror
                 </div>
                 <div class="form-group">
-                    <input 
-                        type="password" 
-                        name="password" 
-                        placeholder="Password" 
-                        required>
+                    <label for="password" style="display: block; font-size: 0.9rem; font-weight: 600; color: #374151; margin-bottom: 6px;">Password</label>
+                    <div class="password-input-wrap">
+                        <input 
+                            id="password"
+                            type="password" 
+                            name="password" 
+                            placeholder="Password" 
+                            required>
+                        <button type="button" class="password-toggle-btn" data-password-toggle="password" aria-label="Show password" aria-pressed="false">
+                            <svg class="icon-eye" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                            <svg class="icon-eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18"></path><path d="M10.6 10.6a2 2 0 0 0 2.8 2.8"></path><path d="M9.9 4.2A11 11 0 0 1 12 4c6.5 0 10 6 10 6a18.7 18.7 0 0 1-4 4.9"></path><path d="M6.1 6.1A18.9 18.9 0 0 0 2 12s3.5 6 10 6c1.5 0 2.9-.3 4.1-.8"></path></svg>
+                        </button>
+                    </div>
                     @error('password')
                         <span class="error-message">{{ $message }}</span>
                     @enderror
@@ -720,13 +821,34 @@
                 <button type="submit" class="login-button">Log In</button>
             </form>
             
-            <div style="text-align: center; margin-top: 15px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
-                <p style="color: #666; margin-bottom: 6px; font-size: 12px;">Don't have an account?</p>
-                <a href="{{ route('schools.registration.form', $school) }}" style="color: #2563eb; text-decoration: none; font-weight: 600; font-size: 12px;">
-                    Register for Student Account →
+            <div class="register-link-wrap">
+                <p class="register-link-text">Don't have an account?</p>
+                <a href="{{ route('schools.registration.form', $school) }}" class="register-link-anchor" style="display:inline-flex; align-items:center; justify-content:center; gap:4px;">
+                    Register for Student Account 
+                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                 </a>
             </div>
         </div>
     </div>
+
+    <script>
+        function togglePasswordVisibility(inputId, trigger) {
+            const input = document.getElementById(inputId);
+            if (!input) {
+                return;
+            }
+
+            const isHidden = input.type === 'password';
+            input.type = isHidden ? 'text' : 'password';
+            trigger.setAttribute('aria-pressed', isHidden ? 'true' : 'false');
+            trigger.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+        }
+
+        document.querySelectorAll('[data-password-toggle]').forEach(function(trigger) {
+            trigger.addEventListener('click', function() {
+                togglePasswordVisibility(trigger.getAttribute('data-password-toggle'), trigger);
+            });
+        });
+    </script>
 </body>
 </html>

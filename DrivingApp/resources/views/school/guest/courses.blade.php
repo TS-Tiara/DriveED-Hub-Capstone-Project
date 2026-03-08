@@ -3,40 +3,28 @@
 @section('title', 'Browse Courses')
 
 @section('content')
-<?php
+@php
     $school = $school ?? $currentSchool ?? null;
     $settings = $school?->schoolSetting;
-    
-    $primaryColor = $settings?->primary_color ?? '#0d6efd';
-    $secondaryColor = $settings?->secondary_color ?? '#6c757d';
+
+    $primaryColor = $settings?->primary_color ?? '#667eea';
+    $secondaryColor = $settings?->secondary_color ?? '#764ba2';
     $accentColor = $settings?->accent_color ?? '#8b5cf6';
-    
+
     // Calculate RGB values for transparency effects
     $primaryRgb = sscanf($primaryColor, "#%02x%02x%02x");
-    
-    // Get enrolled course IDs for this guest
-    $enrolledCourseIds = [];
-    $enrollmentStatuses = [];
-    if (auth()->guard('student')->check()) {
-        $enrollments = auth()->guard('student')->user()
-            ->enrollmentRequests()
-            ->whereIn('status', ['pending', 'approved'])
-            ->get();
-        $enrolledCourseIds = $enrollments->pluck('course_id')->toArray();
-        $enrollmentStatuses = $enrollments->pluck('status', 'course_id')->toArray();
-    }
-?>
+@endphp
 
 <style>
     .courses-container {
         padding: 20px;
-        max-width: 1200px;
+        max-width: 1400px;
         margin: 0 auto;
     }
     
     .courses-header {
         margin-bottom: 20px;
-        border-bottom: 4px solid <?php echo $primaryColor; ?>;
+        border-bottom: 4px solid {{ $primaryColor }};
         padding-bottom: 15px;
     }
     
@@ -97,6 +85,13 @@
     .alert-close:hover {
         opacity: 1;
     }
+
+    .alert-close:focus-visible,
+    .btn-close:focus-visible {
+        outline: 2px solid currentColor;
+        outline-offset: 2px;
+        border-radius: 6px;
+    }
     
     .courses-grid {
         display: grid;
@@ -122,7 +117,7 @@
     
     .course-banner {
         height: 160px;
-        background: linear-gradient(135deg, <?php echo $primaryColor; ?> 0%, <?php echo $secondaryColor; ?> 100%);
+        background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -219,8 +214,13 @@
         transform: translateY(-50%);
         width: 14px;
         height: 14px;
-        background: <?php echo $primaryColor; ?>;
+        background: {{ $primaryColor }};
         border-radius: 50%;
+    }
+
+    .feature-more-primary {
+        color: {{ $primaryColor }};
+        font-weight: 600;
     }
     
     .course-info {
@@ -322,13 +322,13 @@
     
     .package-price {
         font-weight: 700;
-        color: <?php echo $primaryColor; ?>;
+        color: {{ $primaryColor }};
         font-size: 1rem;
     }
     
     .more-packages {
         text-align: center;
-        color: <?php echo $primaryColor; ?>;
+        color: {{ $primaryColor }};
         font-weight: 600;
         font-size: 0.8rem;
         padding-top: 6px;
@@ -337,7 +337,7 @@
     .btn-enroll {
         width: 100%;
         padding: 12px;
-        background: <?php echo $primaryColor; ?>;
+        background: {{ $primaryColor }};
         color: white;
         border: none;
         border-radius: 8px;
@@ -399,6 +399,20 @@
     .empty-state p {
         margin: 5px 0;
     }
+
+    .empty-state-title { font-size: 1.1rem; }
+    .empty-state-subtitle { font-size: 0.9rem; }
+    .license-required-note {
+        text-align: center;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        background: #fef3c7;
+        color: #92400e;
+        margin-bottom: 8px;
+    }
+    .alert-warning-compact { font-size: 0.9rem; }
+    .credential-section-hidden { display: none; }
     
     @media (max-width: 768px) {
         .courses-container {
@@ -464,7 +478,7 @@
     .modal-header {
         padding: 20px 25px;
         border-bottom: 2px solid #e5e7eb;
-        background: <?php echo $primaryColor; ?>;
+        background: {{ $primaryColor }};
         color: white;
         border-radius: 12px 12px 0 0;
         display: flex;
@@ -482,12 +496,13 @@
         background: none;
         border: none;
         color: white;
-        font-size: 1.5rem;
+        font-size: 1.75rem;
+        line-height: 1;
         cursor: pointer;
         opacity: 0.8;
         padding: 0;
-        width: 30px;
-        height: 30px;
+        width: 40px;
+        height: 40px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -498,10 +513,6 @@
     .btn-close:hover {
         opacity: 1;
         background: rgba(255,255,255,0.1);
-    }
-    
-    .btn-close::before {
-        content: '×';
     }
     
     .modal-body {
@@ -564,8 +575,8 @@
     .form-select:focus,
     .form-control:focus {
         outline: none;
-        border-color: <?php echo $primaryColor; ?>;
-        box-shadow: 0 0 0 3px rgba(<?php echo implode(',', $primaryRgb); ?>, 0.1);
+        border-color: {{ $primaryColor }};
+        box-shadow: 0 0 0 3px rgba({{ implode(',', $primaryRgb) }}, 0.1);
     }
     
     .form-control[type="file"] {
@@ -614,7 +625,7 @@
     }
     
     .bg-primary {
-        background: <?php echo $primaryColor; ?>;
+        background: {{ $primaryColor }};
         color: white;
     }
     
@@ -651,14 +662,14 @@
     }
     
     .btn-primary {
-        background: <?php echo $primaryColor; ?>;
+        background: {{ $primaryColor }};
         color: white;
     }
     
     .btn-primary:hover {
         opacity: 0.9;
         transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(<?php echo implode(',', $primaryRgb); ?>, 0.3);
+        box-shadow: 0 4px 12px rgba({{ implode(',', $primaryRgb) }}, 0.3);
     }
     
     .btn-secondary {
@@ -680,38 +691,37 @@
     @if(session('success'))
         <div class="alert alert-success">
             <span>✓ {{ session('success') }}</span>
-            <button class="alert-close" onclick="this.parentElement.remove()">&times;</button>
+            <button type="button" class="alert-close" aria-label="Dismiss success message" onclick="this.parentElement.remove()">&times;</button>
         </div>
     @endif
     
     @if(session('error'))
         <div class="alert alert-error">
             <span>✕ {{ session('error') }}</span>
-            <button class="alert-close" onclick="this.parentElement.remove()">&times;</button>
+            <button type="button" class="alert-close" aria-label="Dismiss error message" onclick="this.parentElement.remove()">&times;</button>
         </div>
     @endif
     
     @if(session('warning'))
         <div class="alert alert-warning">
             <span>⚠ {{ session('warning') }}</span>
-            <button class="alert-close" onclick="this.parentElement.remove()">&times;</button>
+            <button type="button" class="alert-close" aria-label="Dismiss warning message" onclick="this.parentElement.remove()">&times;</button>
         </div>
     @endif
     
     @if(session('info'))
         <div class="alert alert-info">
             <span>ℹ {{ session('info') }}</span>
-            <button class="alert-close" onclick="this.parentElement.remove()">&times;</button>
+            <button type="button" class="alert-close" aria-label="Dismiss information message" onclick="this.parentElement.remove()">&times;</button>
         </div>
     @endif
 
     <div class="courses-grid">
-        <?php $activeCourses = $courses->where('status', 'active'); ?>
         
-        @forelse($activeCourses as $course)
+        @forelse($courses as $course)
         <div class="course-card">
             <div class="course-banner">
-                @if($course->banner_image && file_exists(public_path($course->banner_image)))
+                @if($course->hasBannerImage)
                     <img src="{{ asset($course->banner_image) }}" alt="{{ $course->title }}">
                 @else
                     <svg class="course-banner-icon" xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" viewBox="0 0 16 16">
@@ -738,14 +748,14 @@
                     <p class="course-description">{{ Str::limit($course->description, 120) }}</p>
                 @endif
                 
-                <?php $features = $course->features; ?>
+                @php $features = $course->features; @endphp
                 @if($features && is_array($features) && count($features) > 0)
                     <ul class="course-features">
                         @foreach(array_slice($features, 0, 3) as $feature)
                             <li>{{ $feature }}</li>
                         @endforeach
                         @if(count($features) > 3)
-                            <li style="color: <?php echo $primaryColor; ?>; font-weight: 600;">+{{ count($features) - 3 }} more</li>
+                            <li class="feature-more-primary">+{{ count($features) - 3 }} more</li>
                         @endif
                     </ul>
                 @endif
@@ -769,7 +779,7 @@
                                         @if($package->training_hours){{ $package->training_hours }} hours @endif
                                     </div>
                                 </div>
-                                <span class="package-price">₱{{ number_format($package->price, 2) }}</span>
+                                <span class="package-price">P{{ number_format($package->price, 2) }}</span>
                             </div>
                         @endforeach
                         @if($course->packages->count() > 2)
@@ -787,25 +797,31 @@
                         @if($course->price > 0)
                         <div class="info-row">
                             <span class="info-label">Price</span>
-                            <span class="info-value">₱{{ number_format($course->price, 2) }}</span>
+                            <span class="info-value">P{{ number_format($course->price, 2) }}</span>
                         </div>
                         @endif
                     </div>
                 @endif
 
                 @if(in_array($course->id, $enrolledCourseIds))
-                    <?php $status = $enrollmentStatuses[$course->id] ?? 'pending'; ?>
+                    @php $status = $enrollmentStatuses[$course->id] ?? 'pending'; @endphp
                     <div class="enrollment-status status-{{ $status }}">
                         @if($status === 'approved')
-                            ✓ Enrollment Approved
+                            Enrollment Approved
                         @else
-                            ⏳ Enrollment Request Pending
+                            Enrollment Request Pending
                         @endif
                     </div>
                     <button class="btn-enroll btn-{{ $status === 'approved' ? 'enrolled' : 'pending' }}" disabled>
                         {{ $status === 'approved' ? 'Already Enrolled' : 'Request Pending' }}
                     </button>
                 @else
+                    @if($course->course_type === 'practical' && (!$guest || !$guest->hasVerifiedLicense()))
+                        <div class="license-required-note">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Student Permit/License is recommended for PDC. You can provide it later.
+                        </div>
+                    @endif
                     <button type="button" class="btn-enroll" onclick="openEnrollModal({{ $course->id }})">
                         Enroll
                     </button>
@@ -818,65 +834,113 @@
                 <path d="M8.211 2.047a.5.5 0 0 0-.422 0l-7.5 3.5a.5.5 0 0 0 .025.917l7.5 3a.5.5 0 0 0 .372 0L14 7.14V13a1 1 0 0 0-1 1v2h3v-2a1 1 0 0 0-1-1V6.739l.686-.275a.5.5 0 0 0 .025-.917l-7.5-3.5Z"/>
                 <path d="M4.176 9.032a.5.5 0 0 0-.656.327l-.5 1.7a.5.5 0 0 0 .294.605l4.5 1.8a.5.5 0 0 0 .372 0l4.5-1.8a.5.5 0 0 0 .294-.605l-.5-1.7a.5.5 0 0 0-.656-.327L8 10.466 4.176 9.032Z"/>
             </svg>
-            <p style="font-size: 1.1rem;">No courses available at the moment</p>
-            <p style="font-size: 0.9rem;">Please check back later for new courses.</p>
+            <p class="empty-state-title">No courses available at the moment</p>
+            <p class="empty-state-subtitle">Please check back later for new courses.</p>
         </div>
         @endforelse
     </div>
 </div>
 
 <!-- Enrollment Modals -->
-@foreach($activeCourses as $course)
+@foreach($courses as $course)
 <div class="modal fade" id="enrollModal{{ $course->id }}" tabindex="-1" aria-labelledby="enrollModalLabel{{ $course->id }}" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form method="POST" action="{{ route('schools.guest.enroll', ['school' => $school, 'course' => $course->id]) }}" enctype="multipart/form-data">
+            <form method="POST" action="{{ route('schools.guest.enroll', ['school' => $school, 'course' => $course->id]) }}" enctype="multipart/form-data" data-no-ajax>
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title" id="enrollModalLabel{{ $course->id }}">Enroll in {{ $course->title }}</h5>
-                    <button type="button" class="btn-close" onclick="closeEnrollModal({{ $course->id }})" aria-label="Close"></button>
+                    <button type="button" class="btn-close" onclick="closeEnrollModal({{ $course->id }})" aria-label="Close">×</button>
                 </div>
                 <div class="modal-body">
                     <!-- Course Type Badge -->
                     <div class="mb-3">
                         <span class="badge {{ $course->course_type == 'theoretical' ? 'bg-info' : 'bg-primary' }} me-2">
-                            {{ ucfirst($course->course_type) }} Course
+                            {{ ucfirst($course->course_type) }} Course ({{ $course->course_type == 'theoretical' ? 'TDC' : 'PDC' }})
                         </span>
                         <span class="badge bg-secondary">
                             {{ ucfirst(str_replace('_', ' ', $course->license_type)) }}
                         </span>
                     </div>
 
+                    @if($course->course_type === 'practical')
+                    <!-- PDC License Recommendation Notice -->
+                    <div class="alert alert-info alert-warning-compact mb-3">
+                        <i class="fas fa-id-card me-1"></i>
+                        <strong>PDC Recommendation:</strong> While enrollment is open, note that Practical Driving Courses will ultimately require a verified Student Driver's License before driving sessions can be booked.
+                    </div>
+                    @endif
+
+                    <!-- Branch Selection -->
+                    @if($enableBranches && $branches->count() > 0)
+                    <div class="mb-3">
+                        <label for="branch_id{{ $course->id }}" class="form-label">
+                            <strong>Preferred Branch</strong> <span class="text-danger">*</span>
+                        </label>
+                        <select name="branch_id" id="branch_id{{ $course->id }}" class="form-select @error('branch_id') is-invalid @enderror" required>
+                            <option value="">Select Branch...</option>
+                            @foreach($branches as $branch)
+                                <option value="{{ $branch->id }}" {{ old('branch_id') == $branch->id ? 'selected' : '' }}>
+                                    {{ $branch->name }}{{ $branch->address ? ' — ' . $branch->address : '' }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('branch_id')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    @endif
+
                     <!-- Experience Level Selection -->
                     <div class="mb-3">
                         <label for="experience_level{{ $course->id }}" class="form-label">
                             <strong>Driver Experience Level</strong> <span class="text-danger">*</span>
                         </label>
-                        <select name="experience_level" id="experience_level{{ $course->id }}" class="form-select @error('experience_level') is-invalid @enderror" required onchange="toggleCredentialUpload{{ $course->id }}()">
+                        <select name="experience_level" id="experience_level{{ $course->id }}" class="form-select @error('experience_level') is-invalid @enderror" required onchange="handleExperienceChange{{ $course->id }}()">
                             <option value="">Select your experience...</option>
-                            <option value="new_driver" {{ old('experience_level') == 'new_driver' ? 'selected' : '' }}>
-                                New Driver (No license, learning from scratch)
-                            </option>
-                            <option value="experienced_driver" {{ old('experience_level') == 'experienced_driver' ? 'selected' : '' }}>
-                                Experienced Driver (Have license or experience)
-                            </option>
+                            @if($course->course_type === 'theoretical')
+                                <option value="new_driver" {{ old('experience_level') == 'new_driver' ? 'selected' : '' }}>
+                                    New Driver (No license, learning from scratch)
+                                </option>
+                                <option value="experienced" {{ old('experience_level') == 'experienced' ? 'selected' : '' }}>
+                                    Experienced Driver (Have license or experience)
+                                </option>
+                            @else
+                                {{-- PDC: Only experienced drivers allowed --}}
+                                <option value="experienced" {{ old('experience_level') == 'experienced' ? 'selected' : '' }}>
+                                    Experienced Driver (Have Student Driver's License)
+                                </option>
+                            @endif
                         </select>
                         @error('experience_level')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
-                        <small class="text-muted">This helps us customize your learning path</small>
+                        @if($course->course_type === 'theoretical')
+                            <small class="text-muted">TDC is open to all drivers — this helps us customize your learning path</small>
+                        @else
+                            <small class="text-muted">PDC requires a Student Driver's License and prior theoretical completion</small>
+                        @endif
                     </div>
 
-                    <!-- Credential Upload (shown only for experienced drivers) -->
-                    <div class="mb-3" id="credentialSection{{ $course->id }}" style="display: none;">
+                    <!-- Credential Upload (shown for experienced drivers on practical courses) -->
+                    <div class="mb-3 credential-section-hidden" id="credentialSection{{ $course->id }}">
                         <label for="credential_file{{ $course->id }}" class="form-label">
-                            <strong>Driving License/Credential</strong>
+                            <strong>Student Driver's License / Credential</strong>
+                            @if($course->course_type === 'practical')
+                                <span class="text-danger">*</span>
+                            @endif
                         </label>
                         <input type="file" name="credential_file" id="credential_file{{ $course->id }}" class="form-control @error('credential_file') is-invalid @enderror" accept=".pdf,.jpg,.jpeg,.png">
                         @error('credential_file')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
-                        <small class="text-muted">Upload a copy of your existing driver's license or credential (optional, PDF/Image, max 2MB)</small>
+                        <small class="text-muted">
+                            @if($course->course_type === 'practical')
+                                Upload your Student Driver's License or TDC completion certificate (required for PDC, PDF/Image, max 5MB)
+                            @else
+                                Upload a copy of your existing driver's license or credential (optional, PDF/Image, max 5MB)
+                            @endif
+                        </small>
                     </div>
 
                     <!-- Package Selection (if available) -->
@@ -893,7 +957,7 @@
                                         @if($package->transmission_type)
                                             ({{ ucfirst($package->transmission_type) }})
                                         @endif
-                                        - ₱{{ number_format($package->price, 2) }}
+                                        - P{{ number_format($package->price, 2) }}
                                         @if($package->training_hours)
                                             ({{ $package->training_hours }} hrs)
                                         @endif
@@ -933,11 +997,12 @@
 </div>
 
 <script>
-function toggleCredentialUpload{{ $course->id }}() {
+function handleExperienceChange{{ $course->id }}() {
     const select = document.getElementById('experience_level{{ $course->id }}');
     const credentialSection = document.getElementById('credentialSection{{ $course->id }}');
+    const courseType = '{{ $course->course_type }}';
     
-    if (select.value === 'experienced_driver') {
+    if (select.value === 'experienced') {
         credentialSection.style.display = 'block';
     } else {
         credentialSection.style.display = 'none';
@@ -948,7 +1013,7 @@ function toggleCredentialUpload{{ $course->id }}() {
 
 // Initialize on page load if there's an old value
 document.addEventListener('DOMContentLoaded', function() {
-    toggleCredentialUpload{{ $course->id }}();
+    handleExperienceChange{{ $course->id }}();
 });
 </script>
 @endforeach
@@ -958,6 +1023,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function openEnrollModal(courseId) {
     const modal = document.getElementById('enrollModal' + courseId);
     if (modal) {
+        document.body.style.overflow = 'hidden';
         modal.style.display = 'flex';
     }
 }
@@ -966,15 +1032,35 @@ function closeEnrollModal(courseId) {
     const modal = document.getElementById('enrollModal' + courseId);
     if (modal) {
         modal.style.display = 'none';
+        document.body.style.overflow = '';
     }
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Defensive reset in case a previous page left body scroll locked.
+    document.body.style.overflow = '';
+});
 
 // Close modal when clicking outside
 window.onclick = function(event) {
     if (event.target.classList.contains('modal')) {
         event.target.style.display = 'none';
+        document.body.style.overflow = '';
     }
 }
+
+document.addEventListener('keydown', function(event) {
+    if (event.key !== 'Escape') {
+        return;
+    }
+
+    document.querySelectorAll('.modal').forEach(function(modal) {
+        if (modal.style.display === 'flex') {
+            modal.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+    });
+});
 </script>
 
 @endsection

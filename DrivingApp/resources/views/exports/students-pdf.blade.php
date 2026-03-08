@@ -35,25 +35,31 @@
                 <th>#</th>
                 <th>Name</th>
                 <th>Email</th>
-                <th>Contact</th>
+                <th>Phone</th>
                 <th>Status</th>
                 <th>Active Enrollments</th>
+                <th>Enrollment Date</th>
                 <th>Registered</th>
             </tr>
         </thead>
         <tbody>
             @foreach($students as $index => $student)
+            @php
+                $activeEnrollments = $student->enrollments->where('status', 'approved')->count();
+                $status = $student->status ?? ($activeEnrollments > 0 ? 'active' : 'inactive');
+            @endphp
             <tr>
                 <td>{{ $index + 1 }}</td>
                 <td>{{ $student->name }}</td>
                 <td>{{ $student->email }}</td>
-                <td>{{ $student->contact }}</td>
+                <td>{{ $student->contact ?? 'N/A' }}</td>
                 <td>
-                    <span class="status-badge status-{{ $student->status }}">
-                        {{ ucfirst($student->status) }}
+                    <span class="status-badge status-{{ $status }}">
+                        {{ ucfirst($status) }}
                     </span>
                 </td>
-                <td>{{ $student->enrollments->where('status', 'approved')->count() }}</td>
+                <td>{{ $activeEnrollments }}</td>
+                <td>{{ $student->enrollment_date ? \Carbon\Carbon::parse($student->enrollment_date)->format('M d, Y') : 'N/A' }}</td>
                 <td>{{ $student->created_at->format('M d, Y') }}</td>
             </tr>
             @endforeach

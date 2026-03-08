@@ -10,9 +10,9 @@ use App\Models\InstructorRemovalRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
-use Monolog\Handler\ElasticaHandler;
-use PhpParser\Node\Stmt\Else_;
+use App\Rules\StrongPassword;
 
 class InstructorTimeSlotController extends Controller
 {
@@ -26,7 +26,7 @@ class InstructorTimeSlotController extends Controller
         // Get instructor's course specializations
         $instructorCourses = $instructor->course_specializations ?? [];
 
-        $availableSlots = TimeSlot::with(['instructors', 'course'])
+        $availableSlots = TimeSlot::with(['instructors', 'course', 'branch'])
             ->where('school_id', $school->id)
             ->where('status', 'open')
             ->where('date', '>=', now()->toDateString())
@@ -34,11 +34,11 @@ class InstructorTimeSlotController extends Controller
             ->orderBy('start_time')
             ->get();
 
-        $mySlots = TimeSlot::with(['instructors', 'course'])
+        $mySlots = TimeSlot::with(['instructors', 'course', 'branch'])
             ->where('school_id', $school->id)
             ->whereHas('instructors', function ($query) use ($instructor): void {
-                $query->where('instructor_id', $instructor->id);
-            })
+            $query->where('instructor_id', $instructor->id);
+        })
             ->where('date', '>=', now()->toDateString())
             ->orderBy('date')
             ->orderBy('start_time')
@@ -92,12 +92,21 @@ class InstructorTimeSlotController extends Controller
                 return redirect()->back()->with('error', 'You cannot leave this slot as it was assigned by an admin.');
             }
 
-            $timeSlot->instructors()->detach($instructor->id);
+            try {
+                $timeSlot->instructors()->detach($instructor->id);
 
-            if ($isAjax) {
-                return response()->json(['success' => true, 'message' => 'You have left this time slot.', 'action' => 'left']);
+                if ($isAjax) {
+                    return response()->json(['success' => true, 'message' => 'You have left this time slot.', 'action' => 'left']);
+                }
+                return redirect()->back()->with('success', 'You have left this time slot.');
             }
-            return redirect()->back()->with('success', 'You have left this time slot.');
+            catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Failed to leave time slot', ['error' => $e->getMessage()]);
+                if ($isAjax) {
+                    return response()->json(['success' => false, 'message' => 'An error occurred while leaving the slot.'], 500);
+                }
+                return redirect()->back()->with('error', 'An error occurred while leaving the slot.');
+            }
         }
 
         if ($timeSlot->isFull()) {
@@ -118,26 +127,29 @@ class InstructorTimeSlotController extends Controller
             return redirect()->back()->with('error', 'You are not qualified for this course. Please contact your admin for course assignment approval.');
         }
 
-        $hasConflict = TimeSlot::where('school_id', $school->id)
+        $hasConflict = TimeSlot::where('school_id', '=', $school->id)
             ->where('id', '!=', $timeSlot->id)
-            ->where('date', $timeSlot->date)
+            ->where('date', '=', $timeSlot->date)
             ->whereHas('instructors', function ($query) use ($instructor): void {
-                $query->where('instructor_id', $instructor->id);
-            })
+            $query->where('instructor_id', $instructor->id);
+        })
             ->where(function ($query) use ($timeSlot): void {
-                $query->where(function ($q) use ($timeSlot): void {
+            $query->where(function ($q) use ($timeSlot): void {
                     $q->where('start_time', '<=', $timeSlot->start_time)
                         ->where('end_time', '>', $timeSlot->start_time);
-                })
+                }
+                )
+                    ->orWhere(function ($q) use ($timeSlot): void {
+                $q->where('start_time', '<', $timeSlot->end_time)
+                    ->where('end_time', '>=', $timeSlot->end_time);
+            }
+            )
                 ->orWhere(function ($q) use ($timeSlot): void {
-                    $q->where('start_time', '<', $timeSlot->end_time)
-                        ->where('end_time', '>=', $timeSlot->end_time);
-                })
-                ->orWhere(function ($q) use ($timeSlot): void {
-                    $q->where('start_time', '>=', $timeSlot->start_time)
-                        ->where('end_time', '<=', $timeSlot->end_time);
-                });
-            })
+                $q->where('start_time', '>=', $timeSlot->start_time)
+                    ->where('end_time', '<=', $timeSlot->end_time);
+            }
+            );
+        })
             ->exists();
 
         if ($hasConflict) {
@@ -147,15 +159,24 @@ class InstructorTimeSlotController extends Controller
             return redirect()->back()->with('error', 'You already have a time slot that conflicts with this one.');
         }
 
-        $timeSlot->instructors()->attach($instructor->id, [
-            'school_id' => $school->id,
-            'assignment_type' => 'self_selected',
-        ]);
+        try {
+            $timeSlot->instructors()->attach($instructor->id, [
+                'school_id' => $school->id,
+                'assignment_type' => 'self_selected',
+            ]);
 
-        if ($isAjax) {
-            return response()->json(['success' => true, 'message' => 'You have successfully selected this time slot!', 'action' => 'selected']);
+            if ($isAjax) {
+                return response()->json(['success' => true, 'message' => 'You have successfully selected this time slot!', 'action' => 'selected']);
+            }
+            return redirect()->back()->with('success', 'You have successfully selected this time slot!');
         }
-        return redirect()->back()->with('success', 'You have successfully selected this time slot!');
+        catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to select time slot', ['error' => $e->getMessage()]);
+            if ($isAjax) {
+                return response()->json(['success' => false, 'message' => 'An error occurred.'], 500);
+            }
+            return redirect()->back()->with('error', 'An error occurred.');
+        }
     }
 
     // View instructor's schedule/calendar
@@ -168,60 +189,60 @@ class InstructorTimeSlotController extends Controller
         $todayDate = now()->toDateString();
         $endOfWeek = now()->endOfWeek()->toDateString();
         $minimumNoticeDays = $school->instructor_removal_notice_days ?? 7;
-        
+
         // Get instructor's qualified courses
         $qualifiedCourseIds = $instructor->course_specializations ?? [];
-        
+
         // Get pending removal requests
-        $pendingRemovalRequests = InstructorRemovalRequest::where('instructor_id', $instructorId)
-            ->where('school_id', $school->id)
-            ->where('status', 'pending')
-            ->pluck('time_slot_id')
+        $pendingRemovalRequests = InstructorRemovalRequest::where('instructor_id', '=', $instructorId)
+            ->where('school_id', '=', $school->id)
+            ->where('status', '=', 'pending')
+            ->pluck('time_slot_id', 'id')
             ->toArray();
-        
+
         // My slots (instructor's selected and admin-assigned slots)
-        $mySlots = TimeSlot::with(['instructors', 'course', 'bookings.student', 'bookings.course'])
+        $mySlots = TimeSlot::with(['instructors', 'course', 'branch', 'bookings.student', 'bookings.course'])
             ->where('school_id', $school->id)
             ->whereHas('instructors', function ($query) use ($instructorId) {
-                $query->where('instructor_id', $instructorId);
-            })
+            $query->where('instructor_id', $instructorId);
+        })
             ->orderBy('date')
             ->orderBy('start_time')
             ->get();
-        
+
         // Group my slots by date
         $groupedMySlots = $mySlots->groupBy(function ($slot) {
             return $slot->date->format('Y-m-d');
         });
-        
+
         // Today's slots
         $todaySlots = $mySlots->filter(function ($slot) use ($todayDate) {
             return $slot->date->format('Y-m-d') === $todayDate;
         });
-        
+
         // Upcoming slots this week (excluding today)
         $upcomingSlots = $mySlots->filter(function ($slot) use ($todayDate, $endOfWeek) {
             $slotDate = $slot->date->format('Y-m-d');
             return $slotDate > $todayDate && $slotDate <= $endOfWeek;
         })->take(5);
-        
+
         // Available slots (not taken by this instructor)
-        $availableSlots = TimeSlot::with(['instructors', 'course'])
+        $availableSlots = TimeSlot::with(['instructors', 'course', 'branch'])
             ->where('school_id', $school->id)
             ->where('status', 'open')
             ->whereDoesntHave('instructors', function ($query) use ($instructorId) {
-                $query->where('instructor_id', $instructorId);
-            })
+            $query->where('instructor_id', $instructorId);
+        })
             ->whereRaw('(SELECT COUNT(*) FROM schedule_instructors WHERE schedule_instructors.time_slot_id = time_slots.id) < COALESCE(time_slots.max_instructors, 1)')
             ->orderBy('date')
             ->orderBy('start_time')
             ->get();
-        
+
         // Group available slots by date
         $groupedAvailableSlots = $availableSlots->groupBy(function ($slot) {
             return $slot->date->format('Y-m-d');
         });
-        
+
         // Instructor's schedule for conflict checking (slot IDs by date and time)
         $instructorSchedule = [];
         foreach ($mySlots as $slot) {
@@ -255,8 +276,12 @@ class InstructorTimeSlotController extends Controller
 
     public function profile(School $school)
     {
+        $instructor = Auth::guard('instructor')->user();
+        $instructor->load('branch');
+
         return view($school->resolveView('instructor.profile'), [
             'school' => $school,
+            'instructor' => $instructor,
         ]);
     }
 
@@ -270,14 +295,14 @@ class InstructorTimeSlotController extends Controller
                 'required',
                 'email',
                 Rule::unique('instructors', 'email')
-                    ->where('school_id', $school->id)
-                    ->ignore($instructor->id),
+                ->where('school_id', $school->id)
+                ->ignore($instructor->id),
                 'regex:/@(gmail\.com|yahoo\.com)$/i',
             ],
             'contact' => ['nullable', 'string', 'max:20', 'regex:/^(09\d{9}|\+639\d{9})$/'],
             'license_number' => 'nullable|string|max:50',
             'current_password' => 'nullable|string|min:6',
-            'new_password' => 'nullable|string|min:6|confirmed',
+            'new_password' => ['nullable', 'confirmed', new StrongPassword()],
         ]);
 
         $data = $request->only(['name', 'email', 'contact', 'license_number']);
@@ -287,14 +312,20 @@ class InstructorTimeSlotController extends Controller
             if (!$request->filled('current_password') || !Hash::check($request->current_password, $instructor->password)) {
                 return back()->withErrors(['current_password' => 'Current password is incorrect.']);
             }
-            $data['password'] = Hash::make($request->new_password);
+            $data['password'] = $request->new_password;
         }
         //False positive
-        $instructor->update($data);
+        try {
+            $instructor->update($data);
 
-        return redirect()
-            ->route('schools.instructor.profile', $school)
-            ->with('success', 'Profile updated successfully!');
+            return redirect()
+                ->route('schools.instructor.profile', $school)
+                ->with('success', 'Profile updated successfully!');
+        }
+        catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to update profile', ['error' => $e->getMessage()]);
+            return back()->with('error', 'An error occurred while updating profile.');
+        }
     }
 
     public function updateProfilePicture(Request $request, School $school)
@@ -306,22 +337,23 @@ class InstructorTimeSlotController extends Controller
         ]);
 
         // Delete old profile picture if exists
-        if ($instructor->profile_picture) {
-            \Storage::disk('public')->delete($instructor->profile_picture);
+        try {
+            if ($instructor->profile_picture) {
+                Storage::disk('public')->delete($instructor->profile_picture);
+            }
+            $path = $request->file('profile_picture')->store('profile_pictures', 'public');
+            $instructor->update(['profile_picture' => $path]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Profile picture updated successfully!',
+                'path' => $path,
+            ]);
         }
-
-        // Store new profile picture
-        $path = $request->file('profile_picture')->store('profile_pictures', 'public');
-
-        $instructor->update([
-            'profile_picture' => $path,
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Profile picture updated successfully!',
-            'path' => $path,
-        ]);
+        catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to update profile picture', ['error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'An error occurred.'], 500);
+        }
     }
 
     // Request removal from an admin-assigned time slot
@@ -342,7 +374,7 @@ class InstructorTimeSlotController extends Controller
         // Check minimum notice period
         $minimumNoticeDays = $school->instructor_removal_notice_days ?? 7;
         $daysUntilSlot = now()->startOfDay()->diffInDays($timeSlot->date->startOfDay(), false);
-        
+
         if ($daysUntilSlot < $minimumNoticeDays) {
             return redirect()->back()
                 ->with('error', "You must request removal at least {$minimumNoticeDays} days before the scheduled time slot. This slot is in {$daysUntilSlot} day(s).");
@@ -372,23 +404,27 @@ class InstructorTimeSlotController extends Controller
                 ->with('error', 'You already have a pending removal request for this time slot.');
         }
 
-        // Create the removal request
-        InstructorRemovalRequest::create([
-            'school_id' => $school->id,
-            'time_slot_id' => $timeSlot->id,
-            'instructor_id' => $instructor->id,
-            'schedule_instructor_id' => $pivot->id,
-            'status' => 'pending',
-            'reason' => $request->reason,
-        ]);
+        try {
+            InstructorRemovalRequest::create([
+                'school_id' => $school->id,
+                'time_slot_id' => $timeSlot->id,
+                'instructor_id' => $instructor->id,
+                'schedule_instructor_id' => $pivot->id,
+                'status' => 'pending',
+                'reason' => $request->reason,
+            ]);
 
-        // Update the pivot to mark it has a pending request
-        DB::table('schedule_instructors')
-            ->where('id', $pivot->id)
-            ->update(['has_pending_removal_request' => true]);
+            DB::table('schedule_instructors')
+                ->where('id', $pivot->id)
+                ->update(['has_pending_removal_request' => true]);
 
-        return redirect()->back()
-            ->with('success', 'Your removal request has been submitted to the admin for review.');
+            return redirect()->back()
+                ->with('success', 'Your removal request has been submitted to the admin for review.');
+        }
+        catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to request removal', ['error' => $e->getMessage()]);
+            return redirect()->back()->with('error', 'An error occurred while processing your request.');
+        }
     }
 
     public function updateAttendance(School $school, Booking $booking, Request $request)
@@ -396,20 +432,27 @@ class InstructorTimeSlotController extends Controller
         $instructor = Auth::guard('instructor')->user();
         abort_unless($instructor && $instructor->school_id === $school->id, 403);
         abort_unless($booking->school_id === $school->id, 403);
+        abort_unless($booking->instructor_id === $instructor->id, 403, 'You can only mark attendance for your own assigned lessons.');
 
         $request->validate([
             'attendance_status' => 'nullable|in:attended,late,absent'
         ]);
 
-        $booking->update([
-            'attendance_status' => $request->attendance_status,
-            'attendance_marked_at' => now()
-        ]);
+        try {
+            $booking->update([
+                'attendance_status' => $request->attendance_status,
+                'attendance_marked_at' => now()
+            ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Attendance updated successfully'
-        ]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Attendance updated successfully'
+            ]);
+        }
+        catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to update attendance', ['error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'An error occurred updating attendance.'], 500);
+        }
     }
 
     public function updateFeedback(School $school, Booking $booking, Request $request)
@@ -417,19 +460,31 @@ class InstructorTimeSlotController extends Controller
         $instructor = Auth::guard('instructor')->user();
         abort_unless($instructor && $instructor->school_id === $school->id, 403);
         abort_unless($booking->school_id === $school->id, 403);
+        abort_unless($booking->instructor_id === $instructor->id, 403, 'This lesson is not assigned to you');
+
+        if ($booking->status !== 'completed' && $booking->session_status !== 'completed') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Feedback can only be added after a completed schedule.'
+            ], 422);
+        }
 
         $request->validate([
             'instructor_feedback' => 'nullable|string|max:1000'
         ]);
 
-        $booking->update([
-            'instructor_feedback' => $request->instructor_feedback
-        ]);
+        try {
+            $booking->update(['instructor_feedback' => $request->instructor_feedback]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Feedback updated successfully'
-        ]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Feedback updated successfully'
+            ]);
+        }
+        catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to update feedback', ['error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'An error occurred updating feedback.'], 500);
+        }
     }
 
     public function getLessonDetails(School $school, Booking $booking)
@@ -455,40 +510,82 @@ class InstructorTimeSlotController extends Controller
         abort_unless($booking->instructor_id === $instructor->id, 403, 'This lesson is not assigned to you');
 
         $validated = $request->validate([
-            'attendance_status' => 'required|in:attended,late,absent',
-            'session_status' => 'required|in:completed,cancelled,rescheduled,no-show',
-            'session_grade' => 'nullable|numeric|min:0|max:100',
-            'instructor_feedback' => 'nullable|string|max:1000',
-            'student_feedback' => 'nullable|string|max:1000',
-            'skills_practiced' => 'nullable|array',
-            'cancellation_reason' => 'nullable|string|max:500'
+            'attendance_status' => 'sometimes|required|in:attended,late,absent',
+            'session_status' => 'sometimes|required|in:completed,cancelled,rescheduled,no-show',
+            'session_grade' => 'sometimes|nullable|numeric|min:0|max:100',
+            'instructor_feedback' => 'sometimes|nullable|string|max:1000',
+            'student_feedback' => 'sometimes|nullable|string|max:1000',
+            'skills_practiced' => 'sometimes|nullable|array',
+            'cancellation_reason' => 'sometimes|nullable|string|max:500'
         ]);
 
-        $updateData = [
-            'attendance_status' => $validated['attendance_status'],
-            'session_status' => $validated['session_status'],
-            'session_grade' => $validated['session_grade'],
-            'instructor_feedback' => $validated['instructor_feedback'],
-            'student_feedback' => $validated['student_feedback'],
-            'skills_practiced' => $validated['skills_practiced'] ?? [],
-            'attendance_marked_at' => now()
-        ];
+        $willBeCompleted = ($validated['session_status'] ?? null) === 'completed'
+            || $booking->status === 'completed'
+            || $booking->session_status === 'completed';
+
+        $isUpdatingGrade = array_key_exists('session_grade', $validated);
+        $isUpdatingFeedback = array_key_exists('instructor_feedback', $validated);
+
+        if (($isUpdatingGrade || $isUpdatingFeedback) && !$willBeCompleted) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Grades and comments can only be updated after a completed schedule.'
+            ], 422);
+        }
+
+        $updateData = [];
+
+        if (array_key_exists('attendance_status', $validated)) {
+            $updateData['attendance_status'] = $validated['attendance_status'];
+            $updateData['attendance_marked_at'] = now();
+        }
+
+        if (array_key_exists('session_status', $validated)) {
+            $updateData['session_status'] = $validated['session_status'];
+        }
+
+        if (array_key_exists('session_grade', $validated)) {
+            $updateData['session_grade'] = $validated['session_grade'];
+        }
+
+        if (array_key_exists('instructor_feedback', $validated)) {
+            $updateData['instructor_feedback'] = $validated['instructor_feedback'];
+        }
+
+        if (array_key_exists('student_feedback', $validated)) {
+            $updateData['student_feedback'] = $validated['student_feedback'];
+        }
+
+        if (array_key_exists('skills_practiced', $validated)) {
+            $updateData['skills_practiced'] = $validated['skills_practiced'] ?? [];
+        }
+
+        if (empty($updateData)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No valid fields were provided to update.'
+            ], 422);
+        }
 
         // If session is being marked as cancelled, update the main booking status too
-        if ($validated['session_status'] === 'cancelled' && $booking->status !== 'cancelled') {
+        if (($validated['session_status'] ?? null) === 'cancelled' && $booking->status !== 'cancelled') {
             $updateData['status'] = 'cancelled';
             $updateData['cancelled_by'] = 'instructor';
             $updateData['cancelled_at'] = now();
             $updateData['cancellation_reason'] = $validated['cancellation_reason'] ?? 'Session cancelled by instructor';
         }
 
-        $booking->update($updateData);
+        try {
+            $booking->update($updateData);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Lesson details updated successfully'
-        ]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Lesson details updated successfully'
+            ]);
+        }
+        catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to update lesson details', ['error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'An error occurred updating lesson details.'], 500);
+        }
     }
 }
-
-

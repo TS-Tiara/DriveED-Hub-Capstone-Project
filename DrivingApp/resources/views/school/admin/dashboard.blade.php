@@ -121,6 +121,49 @@
         gap: 20px;
         margin-bottom: 20px;
     }
+
+    .icon-20 {
+        width: 20px;
+        height: 20px;
+    }
+
+    .icon-24 {
+        width: 24px;
+        height: 24px;
+    }
+
+    .stat-card-link {
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .growth-indicator {
+        font-weight: 600;
+    }
+
+    .growth-positive {
+        color: #10b981;
+    }
+
+    .growth-negative {
+        color: #ef4444;
+    }
+
+    .content-card-spaced {
+        margin-bottom: 20px;
+    }
+
+    .pending-badge {
+        display: inline-block;
+        background: #ef4444;
+        color: white;
+        border-radius: 50%;
+        width: 22px;
+        height: 22px;
+        line-height: 22px;
+        font-size: 12px;
+        margin-left: 6px;
+    }
     
     @media (max-width: 860px) {
         .two-column-grid {
@@ -140,7 +183,7 @@
 
     @if(session('success'))
     <div class="flash-message success">
-        <div class="flash-icon">✓</div>
+        <div class="flash-icon"><svg class="icon-20" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg></div>
         <div class="flash-content">
             <div class="flash-title">Success!</div>
             <div class="flash-text">{{ session('success') }}</div>
@@ -151,7 +194,7 @@
 
     <!-- Key Statistics -->
     <div class="stats-grid">
-        <a href="{{ $schoolRoute('admin.userManagement') }}" class="stat-card students" onclick="loadContent(this.href); return false;" style="text-decoration: none; cursor: pointer;">
+        <a href="{{ school_route('admin.userManagement') }}" class="stat-card students stat-card-link" onclick="loadContent(this.href); return false;">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -159,7 +202,7 @@
                         <div class="stat-value">{{ $totalStudents }}</div>
                     </div>
                     <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                        <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                         </svg>
                     </div>
@@ -168,7 +211,7 @@
                     <strong>{{ $activeStudents }}</strong> Active · <strong>{{ $inactiveStudents }}</strong> Inactive
                     @if(isset($studentGrowth))
                         <br>
-                        <span style="color: {{ $studentGrowth >= 0 ? '#10b981' : '#ef4444' }}; font-weight: 600;">
+                        <span class="growth-indicator {{ $studentGrowth >= 0 ? 'growth-positive' : 'growth-negative' }}">
                             {{ $studentGrowth >= 0 ? '↑' : '↓' }} {{ abs($studentGrowth) }}% this month
                         </span>
                     @endif
@@ -176,7 +219,7 @@
             </div>
         </a>
         
-        <a href="{{ $schoolRoute('admin.userManagement') }}" class="stat-card instructors" onclick="loadContent(this.href); return false;" style="text-decoration: none; cursor: pointer;">
+        <a href="{{ school_route('admin.userManagement') }}" class="stat-card instructors stat-card-link" onclick="loadContent(this.href); return false;">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -184,7 +227,7 @@
                         <div class="stat-value">{{ $totalInstructors }}</div>
                     </div>
                     <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                        <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                         </svg>
                     </div>
@@ -193,7 +236,7 @@
                     <strong>{{ $availableInstructors }}</strong> Available · <strong>{{ $activeInstructors }}</strong> Active
                     @if(isset($instructorGrowth))
                         <br>
-                        <span style="color: {{ $instructorGrowth >= 0 ? '#10b981' : '#ef4444' }}; font-weight: 600;">
+                        <span class="growth-indicator {{ $instructorGrowth >= 0 ? 'growth-positive' : 'growth-negative' }}">
                             {{ $instructorGrowth >= 0 ? '↑' : '↓' }} {{ abs($instructorGrowth) }}% this month
                         </span>
                     @endif
@@ -201,7 +244,7 @@
             </div>
         </a>
         
-        <a href="{{ $schoolRoute('admin.userManagement') }}" class="stat-card growth" onclick="loadContent(this.href); return false;" style="text-decoration: none; cursor: pointer;">
+        <a href="{{ $schoolRoute('admin.enrollments.index') }}" class="stat-card growth stat-card-link" onclick="loadContent(this.href); return false;">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -209,7 +252,7 @@
                         <div class="stat-value">{{ $studentsThisMonth ?? 0 }}</div>
                     </div>
                     <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                        <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                         </svg>
                     </div>
@@ -218,7 +261,7 @@
             </div>
         </a>
         
-        <a href="{{ $schoolRoute('admin.userManagement') }}" class="stat-card active" onclick="loadContent(this.href); return false;" style="text-decoration: none; cursor: pointer;">
+        <a href="{{ $schoolRoute('admin.schedules') }}" class="stat-card active stat-card-link" onclick="loadContent(this.href); return false;">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -226,7 +269,7 @@
                         <div class="stat-value">{{ $activeStudents + $activeInstructors }}</div>
                     </div>
                     <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                        <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
@@ -234,6 +277,33 @@
                 <div class="stat-detail">Currently active accounts</div>
             </div>
         </a>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="content-card content-card-spaced">
+        <div class="content-card-header">Quick Actions</div>
+        <div class="content-card-body">
+            <div class="quick-actions">
+                <a href="{{ $schoolRoute('admin.enrollments.index') }}" class="quick-action-btn" onclick="loadContent(this.href); return false;">
+                    Enrollments
+                    @if(($pendingEnrollments ?? 0) > 0)
+                        <span class="pending-badge">{{ $pendingEnrollments }}</span>
+                    @endif
+                </a>
+                <a href="{{ $schoolRoute('admin.schedules') }}" class="quick-action-btn" onclick="loadContent(this.href); return false;">
+                    Schedules
+                </a>
+                <a href="{{ $schoolRoute('admin.payments.index') }}" class="quick-action-btn" onclick="loadContent(this.href); return false;">
+                    Payments
+                </a>
+                <a href="{{ $schoolRoute('admin.phase-progressions.index') }}" class="quick-action-btn" onclick="loadContent(this.href); return false;">
+                    Phase Progressions
+                    @if(($pendingProgressions ?? 0) > 0)
+                        <span class="pending-badge">{{ $pendingProgressions }}</span>
+                    @endif
+                </a>
+            </div>
+        </div>
     </div>
 
     <!-- Two Column Layout for Recent Activity -->

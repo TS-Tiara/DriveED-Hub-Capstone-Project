@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Traits\HasSchoolScope;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 
 class Course extends Model
 {
+    use HasSchoolScope;
     use HasFactory;
 
     protected $fillable = [
@@ -31,13 +34,16 @@ class Course extends Model
         'hours_required',
     ];
 
-    protected $casts = [
-        'price' => 'decimal:2',
-        'duration_hours' => 'decimal:1',
-        'hours_required' => 'decimal:2',
-        'features' => 'array',
-        'is_featured' => 'boolean',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'price' => 'decimal:2',
+            'duration_hours' => 'decimal:1',
+            'hours_required' => 'decimal:2',
+            'features' => 'array',
+            'is_featured' => 'boolean',
+        ];
+    }
 
     /**
      * Get the school that owns the course.
@@ -72,11 +78,19 @@ class Course extends Model
     }
 
     /**
-     * Scope a query to only include courses for a specific school.
+     * Get the modules for the course.
      */
-    public function scopeForSchool($query, $schoolId)
+    public function modules(): HasMany
     {
-        return $query->where('school_id', $schoolId);
+        return $this->hasMany(CourseModule::class)->orderBy('sort_order');
+    }
+
+    /**
+     * Get the enrollments for the course.
+     */
+    public function enrollments(): HasMany
+    {
+        return $this->hasMany(EnrollmentRequest::class);
     }
 
     /**
@@ -118,22 +132,6 @@ class Course extends Model
     }
 
     /**
-     * Get all modules for this course
-     */
-    public function modules(): HasMany
-    {
-        return $this->hasMany(CourseModule::class)->orderBy('sort_order');
-    }
-
-    /**
-     * Get all enrollments for this course
-     */
-    public function enrollments(): HasMany
-    {
-        return $this->hasMany(EnrollmentRequest::class);
-    }
-
-    /**
      * Check if course is theoretical
      */
     public function isTheoretical(): bool
@@ -154,11 +152,11 @@ class Course extends Model
      */
     public function getLicenseTypeDisplayAttribute(): string
     {
-        return match($this->license_type) {
-            'non_professional' => 'Non-Professional',
-            'professional' => 'Professional',
-            default => $this->license_type,
-        };
+        return match ($this->license_type) {
+                'non_professional' => 'Non-Professional',
+                'professional' => 'Professional',
+                default => $this->license_type,
+            };
     }
 
     /**
@@ -166,11 +164,11 @@ class Course extends Model
      */
     public function getCourseTypeDisplayAttribute(): string
     {
-        return match($this->course_type) {
-            'theoretical' => 'Theoretical',
-            'practical' => 'Practical',
-            default => $this->course_type,
-        };
+        return match ($this->course_type) {
+                'theoretical' => 'Theoretical',
+                'practical' => 'Practical',
+                default => $this->course_type,
+            };
     }
 
     /**

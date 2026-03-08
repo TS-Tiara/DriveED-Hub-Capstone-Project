@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\School;
 use Illuminate\Http\Request;
@@ -15,26 +14,46 @@ class PaymentController extends Controller
      */
     public function index(School $school)
     {
-        $query = Payment::where('school_id', $school->id)
+        // Require authentication
+        if (!Auth::guard('admin')->check() && !Auth::guard('student')->check()) {
+            abort(403, 'Unauthorized access.');
+        }
+
+        $query = Payment::where('school_id', '=', $school->id)
             ->with(['booking.student', 'booking.course']);
 
-        // Filter by role
+        // Filter by role - students can only see their own payments
         if (Auth::guard('student')->check()) {
             $studentId = Auth::guard('student')->id();
-            $query->whereHas('booking', function($q) use ($studentId) {
-                $q->where('student_id', $studentId);
+            $query->whereHas('booking', function ($q) use ($studentId) {
+                $q->where('student_id', '=', $studentId);
             });
+        }
+        elseif (Auth::guard('admin')->check()) {
+            $admin = Auth::guard('admin')->user();
+            if ($admin->isBranchSecretary() && $admin->branch_id) {
+                $query->whereHas('booking', function ($q) use ($admin) {
+                    $q->where('branch_id', '=', $admin->branch_id);
+                });
+            }
         }
 
         if (request('status')) {
-            $query->where('status', request('status'));
+            $query->where('status', '=', request('status'));
         }
 
         if (request('method')) {
-            $query->where('method', request('method'));
+            $query->where('method', '=', request('method'));
         }
 
-        $payments = $query->latest('paid_on')->get();
+        // Pre-compute statistics for display (before pagination)
+        $stats = [
+            'total_revenue' => (clone $query)->where('status', 'completed')->sum('amount'),
+            'completed_count' => (clone $query)->where('status', 'completed')->count(),
+            'pending_count' => (clone $query)->where('status', 'pending')->count(),
+        ];
+
+        $payments = $query->latest('paid_on')->paginate(10);
 
         // Only return JSON if explicitly requested via Accept header
         if (request()->expectsJson()) {
@@ -47,30 +66,7 @@ class PaymentController extends Controller
         // Only admin and student have payment views
         $guard = Auth::guard('admin')->check() ? 'admin' : 'student';
         $view = "{$guard}.payments";
-        return view($school->resolveView($view), compact('school', 'payments'));
-    }
-
-    /**
-     * Show the form for creating a new payment.
-     */
-    public function create(School $school, Request $request)
-    {
-        $bookingId = $request->query('booking_id');
-        $booking = null;
-
-        if ($bookingId) {
-            $booking = Booking::where('school_id', $school->id)
-                ->where('id', $bookingId)
-                ->with(['student', 'course'])
-                ->first();
-        }
-
-        $bookings = Booking::where('school_id', $school->id)
-            ->whereDoesntHave('payment')
-            ->with(['student', 'course'])
-            ->get();
-
-        return view($school->resolveView('admin.payment-create'), compact('school', 'bookings', 'booking'));
+        return view($school->resolveView($view), compact('school', 'payments', 'stats'));
     }
 
     /**
@@ -78,6 +74,14 @@ class PaymentController extends Controller
      */
     public function store(Request $request, School $school)
     {
+        // Only admins can record payments, or students recording their own
+        $isAdmin = Auth::guard('admin')->check();
+        $studentId = Auth::guard('student')->id();
+
+        if (!$isAdmin && !$studentId) {
+            abort(403, 'Unauthorized access.');
+        }
+
         $validated = $request->validate([
             'booking_id' => 'required|exists:bookings,id',
             'amount' => 'required|numeric|min:0',
@@ -87,11 +91,30 @@ class PaymentController extends Controller
             'status' => 'nullable|in:pending,completed,failed,refunded',
         ]);
 
-        $validated['school_id'] = $school->id;
-        $validated['paid_on'] = $validated['paid_on'] ?? now();
-        $validated['status'] = $validated['status'] ?? 'completed';
+        // Security: If student, ensure booking belongs to them
+        $booking = \App\Models\Booking::findOrFail($validated['booking_id']);
+        if (!$isAdmin && $booking->student_id !== $studentId) {
+            abort(403, 'You can only record payments for your own bookings.');
+        }
 
-        $payment = Payment::create($validated);
+        // Security: Only admins can mark payments as completed/failed immediately
+        // Students can only create pending payments (e.g. upload receipt)
+        $status = $validated['status'] ?? 'pending';
+        if (!$isAdmin) {
+            $status = 'pending';
+        }
+
+        $payment = new Payment([
+            'school_id' => $school->id,
+            'booking_id' => $validated['booking_id'],
+            'amount' => $validated['amount'],
+            'method' => $validated['method'] ?? 'cash',
+            'reference' => $validated['reference'] ?? null,
+            'paid_on' => $validated['paid_on'] ?? now(),
+        ]);
+        $payment->status = $status;
+        $payment->save();
+
         $payment->load(['booking.student', 'booking.course']);
 
         if ($request->ajax() || $request->wantsJson()) {
@@ -111,6 +134,28 @@ class PaymentController extends Controller
      */
     public function show(School $school, Payment $payment)
     {
+        abort_if($payment->school_id !== $school->id, 404);
+
+        // Security check
+        if (Auth::guard('student')->check()) {
+            $payment->load('booking');
+            if ($payment->booking->student_id !== Auth::guard('student')->id()) {
+                abort(403);
+            }
+        }
+        elseif (Auth::guard('admin')->check()) {
+            $admin = Auth::guard('admin')->user();
+            if ($admin->isBranchSecretary() && $admin->branch_id) {
+                $payment->load('booking');
+                if ($payment->booking->branch_id && (int)$payment->booking->branch_id !== (int)$admin->branch_id) {
+                    abort(403, 'You do not have access to payments from this branch.');
+                }
+            }
+        }
+        else {
+            abort(403);
+        }
+
         $payment->load(['booking.student', 'booking.course', 'booking.instructor']);
 
         // Always return JSON - payment details shown in modals/lists
@@ -121,18 +166,17 @@ class PaymentController extends Controller
     }
 
     /**
-     * Show the form for editing the specified payment.
-     */
-    public function edit(School $school, Payment $payment)
-    {
-        return view($school->resolveView('admin.payment-edit'), compact('school', 'payment'));
-    }
-
-    /**
      * Update the specified payment.
      */
     public function update(Request $request, School $school, Payment $payment)
     {
+        abort_if($payment->school_id !== $school->id, 404);
+
+        // Only admins can update payments
+        if (!Auth::guard('admin')->check()) {
+            abort(403, 'Only administrators can update payment records.');
+        }
+
         $validated = $request->validate([
             'amount' => 'required|numeric|min:0',
             'method' => 'nullable|in:cash,card,bank_transfer,online',
@@ -141,7 +185,12 @@ class PaymentController extends Controller
             'status' => 'nullable|in:pending,completed,failed,refunded',
         ]);
 
-        $payment->update($validated);
+        $payment->fill($validated);
+        if (isset($validated['status'])) {
+            $payment->status = $validated['status'];
+        }
+        $payment->save();
+
         $payment->load(['booking.student', 'booking.course']);
 
         if ($request->ajax() || $request->wantsJson()) {
@@ -161,6 +210,22 @@ class PaymentController extends Controller
      */
     public function destroy(Request $request, School $school, Payment $payment)
     {
+        abort_if($payment->school_id !== $school->id, 404);
+
+        // Security: Branch secretary restriction
+        $admin = Auth::guard('admin')->user();
+        if ($admin->isBranchSecretary() && $admin->branch_id) {
+            $payment->load('booking');
+            if ($payment->booking->branch_id && (int)$payment->booking->branch_id !== (int)$admin->branch_id) {
+                abort(403, 'You do not have access to payments from this branch.');
+            }
+        }
+
+        // Warning: Deleting a completed payment affects financial reports
+        if ($payment->status === 'completed' && !$admin->isSchoolAdmin()) {
+            abort(403, 'Only school administrators can delete completed payments.');
+        }
+
         $payment->delete();
 
         if ($request->ajax() || $request->wantsJson()) {
@@ -179,20 +244,25 @@ class PaymentController extends Controller
      */
     public function statistics(School $school)
     {
+        // Only admins can view general statistics
+        if (!Auth::guard('admin')->check()) {
+            abort(403);
+        }
+
         $stats = [
             'total_revenue' => Payment::where('school_id', $school->id)
-                ->where('status', 'completed')
-                ->sum('amount'),
+            ->where('status', 'completed')
+            ->sum('amount'),
             'pending_payments' => Payment::where('school_id', $school->id)
-                ->where('status', 'pending')
-                ->count(),
+            ->where('status', 'pending')
+            ->count(),
             'total_payments' => Payment::where('school_id', $school->id)
-                ->count(),
+            ->count(),
             'by_method' => Payment::where('school_id', $school->id)
-                ->where('status', 'completed')
-                ->selectRaw('method, SUM(amount) as total')
-                ->groupBy('method')
-                ->get(),
+            ->where('status', 'completed')
+            ->selectRaw('method, SUM(amount) as total')
+            ->groupBy('method')
+            ->get(),
         ];
 
         return response()->json([

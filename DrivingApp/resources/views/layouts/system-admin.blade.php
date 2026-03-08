@@ -30,6 +30,32 @@
             margin: 0;
             padding: 0;
         }
+
+        .skip-link {
+            position: absolute;
+            left: -9999px;
+            top: 0;
+            background: #111827;
+            color: #fff;
+            padding: 10px 14px;
+            border-radius: 0 0 8px 0;
+            z-index: 3000;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .skip-link:focus {
+            left: 0;
+        }
+
+        a:focus-visible,
+        button:focus-visible,
+        input:focus-visible,
+        select:focus-visible,
+        textarea:focus-visible {
+            outline: 3px solid rgba(5, 61, 134, 0.4);
+            outline-offset: 2px;
+        }
         
         .app-container {
             display: flex;
@@ -42,9 +68,30 @@
             background: var(--sidebar-bg);
             color: var(--sidebar-text);
             position: fixed;
+            left: -250px;
             height: 100vh;
             overflow-y: auto;
             z-index: 1000;
+            transition: left 0.3s ease;
+        }
+        
+        .sidebar.active {
+            left: 0;
+        }
+        
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+        
+        .sidebar-overlay.active {
+            display: block;
         }
         
         .sidebar-header {
@@ -98,7 +145,7 @@
         
         /* Main Content */
         .main-content {
-            margin-left: 250px;
+            margin-left: 0;
             flex: 1;
             min-height: 100vh;
         }
@@ -113,9 +160,33 @@
             align-items: center;
         }
         
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .burger-menu {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #374151;
+            transition: background 0.2s;
+        }
+        
+        .burger-menu:hover {
+            background: #f3f4f6;
+        }
+        
         .header h2 {
             font-size: 1.5rem;
             color: #1f2937;
+            margin: 0;
         }
         
         .user-menu {
@@ -142,6 +213,24 @@
         
         .btn-logout:hover {
             background: var(--accent-color);
+        }
+
+        .inline-form {
+            display: inline;
+        }
+
+        .form-group-actions {
+            display: flex;
+            align-items: flex-end;
+        }
+
+        .btn-full-width {
+            width: 100%;
+        }
+
+        .stats-grid-two {
+            grid-template-columns: repeat(2, 1fr);
+            margin-bottom: 24px;
         }
         
         /* Content Area */
@@ -383,18 +472,187 @@
             color: white;
             border-color: var(--primary-color);
         }
+        
+        /* Table responsive wrapper */
+        .table-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* ====== Empty State Styling ====== */
+        .empty-state {
+            text-align: center;
+            padding: 48px 24px;
+            color: #9ca3af;
+        }
+        .empty-state svg {
+            width: 56px;
+            height: 56px;
+            margin: 0 auto 16px;
+            color: #d1d5db;
+            display: block;
+        }
+        .empty-state .empty-state-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #6b7280;
+            margin-bottom: 6px;
+        }
+        .empty-state .empty-state-text {
+            font-size: 0.9rem;
+            color: #9ca3af;
+        }
+
+        /* ====== Responsive Breakpoints ====== */
+        
+        /* Tablets & smaller desktops */
+        @media (max-width: 1024px) {
+            .content {
+                padding: 16px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+                gap: 12px;
+            }
+            
+            .filter-grid {
+                grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+                gap: 12px;
+            }
+        }
+        
+        /* Tablets portrait */
+        @media (max-width: 768px) {
+            .header {
+                padding: 12px 16px;
+            }
+            
+            .header h2 {
+                font-size: 1.2rem;
+            }
+            
+            .user-name {
+                display: none;
+            }
+            
+            .content {
+                padding: 12px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+            
+            .stat-card {
+                padding: 14px;
+            }
+            
+            .stat-card .value {
+                font-size: 1.5rem;
+            }
+            
+            th, td {
+                padding: 8px 10px;
+                font-size: 0.8rem;
+            }
+            
+            .filter-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .card-header {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+            }
+            
+            /* Enlarge touch targets */
+            .btn, .btn-logout {
+                padding: 10px 16px;
+                font-size: 0.9rem;
+                min-height: 44px;
+            }
+            
+            .badge {
+                padding: 6px 12px;
+                font-size: 0.75rem;
+            }
+        }
+        
+        /* Phones */
+        @media (max-width: 480px) {
+            .header {
+                padding: 10px 12px;
+            }
+            
+            .header h2 {
+                font-size: 1rem;
+            }
+            
+            .content {
+                padding: 10px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            
+            .stat-card {
+                padding: 12px;
+            }
+            
+            .stat-card .value {
+                font-size: 1.25rem;
+            }
+            
+            .card-body {
+                padding: 12px;
+            }
+            
+            .pagination {
+                flex-wrap: wrap;
+                gap: 4px;
+            }
+            
+            .pagination a,
+            .pagination span {
+                padding: 6px 10px;
+                font-size: 0.8rem;
+            }
+        }
+        
+        /* ====== Print Styles ====== */
+        @media print {
+            .sidebar, .sidebar-overlay, .burger-menu,
+            .topbar, .btn, button, .dropdown { display: none !important; }
+            .main-content { margin-left: 0 !important; padding: 0 !important; }
+            body { background: white !important; }
+            .table-container { overflow: visible !important; }
+            table { width: 100% !important; border-collapse: collapse; }
+            th, td { border: 1px solid #ddd !important; padding: 6px 8px !important; font-size: 11pt; }
+            .badge { border: 1px solid #999 !important; background: white !important; color: #333 !important; }
+            a { text-decoration: none !important; color: #333 !important; }
+            .card { box-shadow: none !important; border: 1px solid #ddd !important; page-break-inside: avoid; }
+        }
     </style>
     @yield('styles')
 </head>
 <body>
+    <a href="#mainContent" class="skip-link">Skip to main content</a>
     <div class="app-container">
+        <!-- Sidebar Overlay -->
+        <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()" role="presentation" aria-hidden="true"></div>
+        
         <!-- Sidebar -->
-        <aside class="sidebar">
+        <aside class="sidebar" id="sidebar" role="navigation" aria-label="System admin navigation">
             <div class="sidebar-header">
                 <h1>System Admin</h1>
                 <p>Global Management Portal</p>
             </div>
-            <nav class="sidebar-menu">
+            <nav class="sidebar-menu" role="menubar">
                 <a href="{{ route('system-admin.dashboard') }}" class="menu-item {{ request()->routeIs('system-admin.dashboard') ? 'active' : '' }}">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
@@ -429,12 +687,19 @@
         </aside>
 
         <!-- Main Content -->
-        <main class="main-content">
+        <main id="mainContent" class="main-content" tabindex="-1">
             <header class="header">
-                <h2>@yield('page-title', 'Dashboard')</h2>
+                <div class="header-left">
+                    <button class="burger-menu" onclick="toggleSidebar()" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="sidebar">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+                    <h2>@yield('page-title', 'Dashboard')</h2>
+                </div>
                 <div class="user-menu">
                     <span class="user-name">{{ Auth::guard('admin')->user()->name }}</span>
-                    <form action="{{ route('system-admin.logout') }}" method="POST" style="display: inline;">
+                    <form action="{{ route('system-admin.logout') }}" method="POST" class="inline-form">
                         @csrf
                         <button type="submit" class="btn-logout">Logout</button>
                     </form>
@@ -458,5 +723,77 @@
             </div>
         </main>
     </div>
+    
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const burger = document.querySelector('.burger-menu');
+            sidebar.classList.toggle('active');
+            document.getElementById('sidebarOverlay').classList.toggle('active');
+            if (burger) burger.setAttribute('aria-expanded', sidebar.classList.contains('active'));
+        }
+        
+        function closeSidebar() {
+            const burger = document.querySelector('.burger-menu');
+            document.getElementById('sidebar').classList.remove('active');
+            document.getElementById('sidebarOverlay').classList.remove('active');
+            if (burger) burger.setAttribute('aria-expanded', 'false');
+        }
+    </script>
+
+    {{-- Global: Prevent double form submissions --}}
+    <style>
+        .btn-submitting {
+            opacity: 0.65;
+            pointer-events: none;
+            position: relative;
+        }
+        .btn-submitting::after {
+            content: '';
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            margin-left: 8px;
+            border: 2px solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: btn-spin 0.6s linear infinite;
+            vertical-align: middle;
+        }
+        @keyframes btn-spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+    <script>
+    (function() {
+        document.addEventListener('submit', function(e) {
+            var form = e.target;
+            var method = (form.method || 'GET').toUpperCase();
+            if (method === 'GET') return;
+            if (form.dataset.noSubmitGuard) return;
+
+            if (form.dataset.submitting === 'true') {
+                e.preventDefault();
+                return;
+            }
+
+            form.dataset.submitting = 'true';
+
+            var buttons = form.querySelectorAll('button[type="submit"], input[type="submit"], button:not([type])');
+            buttons.forEach(function(btn) {
+                btn.classList.add('btn-submitting');
+                btn.disabled = true;
+            });
+
+            setTimeout(function() {
+                form.dataset.submitting = 'false';
+                buttons.forEach(function(btn) {
+                    btn.classList.remove('btn-submitting');
+                    btn.disabled = false;
+                });
+            }, 8000);
+        }, true);
+    })();
+    </script>
 </body>
 </html>

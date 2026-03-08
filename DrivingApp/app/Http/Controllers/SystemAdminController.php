@@ -24,7 +24,7 @@ class SystemAdminController extends Controller
     public function showLogin()
     {
         // If already logged in as system admin, redirect to dashboard
-        if (Auth::guard('admin')->check() && Auth::guard('admin')->user()->role === 'system_admin') {
+        if (Auth::guard('admin')->check() && Auth::guard('admin')->user()?->role === 'system_admin') {
             return redirect()->route('system-admin.dashboard');
         }
 
@@ -41,24 +41,26 @@ class SystemAdminController extends Controller
             if (Auth::guard('admin')->check()) {
                 Auth::guard('admin')->logout();
             }
-            
+
             $credentials = $request->validate([
                 'email' => 'required|email',
                 'password' => 'required',
             ]);
+            $remember = $request->has('remember');
 
             // Attempt to authenticate as admin
-            if (Auth::guard('admin')->attempt($credentials)) {
+            if (Auth::guard('admin')->attempt($credentials, $remember)) {
+
                 $admin = Auth::guard('admin')->user();
 
                 // Check if the admin has system_admin role
                 if ($admin->role === 'system_admin') {
                     $request->session()->regenerate();
-                    
+
                     SystemLog::logInfo(
                         "System admin logged in: {$admin->name}",
                         'authentication',
-                        ['admin_id' => $admin->id],
+                    ['admin_id' => $admin->id],
                         null,
                         'system_admin_login'
                     );
@@ -77,12 +79,13 @@ class SystemAdminController extends Controller
                 'email' => 'The provided credentials do not match our records.',
             ])->withInput($request->only('email'));
 
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             SystemLog::logError(
                 'System admin login failed',
                 'authentication',
                 $e,
-                ['email' => $request->email],
+            ['email' => $request->email],
                 null,
                 'system_admin_login'
             );
@@ -98,26 +101,31 @@ class SystemAdminController extends Controller
     {
         try {
             $admin = Auth::guard('admin')->user();
-            
-            SystemLog::logInfo(
-                "System admin logged out: {$admin->name}",
-                'authentication',
+
+            if ($admin) {
+                SystemLog::logInfo(
+                    "System admin logged out: {$admin->name}",
+                    'authentication',
                 ['admin_id' => $admin->id],
-                null,
-                'system_admin_logout'
-            );
+                    null,
+                    'system_admin_logout'
+                );
+            }
 
             Auth::guard('admin')->logout();
+            Auth::guard('instructor')->logout();
+            Auth::guard('student')->logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
             return redirect()->route('system-admin.login')->with('success', 'Logged out successfully.');
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             SystemLog::logError(
                 'System admin logout failed',
                 'authentication',
                 $e,
-                [],
+            [],
                 null,
                 'system_admin_logout'
             );
@@ -144,8 +152,8 @@ class SystemAdminController extends Controller
             ];
 
             $schools = School::withCount([
-                'students', 
-                'instructors', 
+                'students',
+                'instructors',
                 'admins',
             ])->get();
 
@@ -155,12 +163,13 @@ class SystemAdminController extends Controller
                 ->get();
 
             return view('system-admin.dashboard', compact('stats', 'schools', 'recentActivities'));
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             SystemLog::logError(
                 'Failed to load system admin dashboard',
                 'system',
                 $e,
-                [],
+            [],
                 null,
                 'view_dashboard'
             );
@@ -176,20 +185,21 @@ class SystemAdminController extends Controller
     {
         try {
             $schools = School::withCount([
-                'students', 
-                'instructors', 
-                'admins', 
+                'students',
+                'instructors',
+                'admins',
                 'courses',
                 'bookings'
             ])->paginate(20);
 
             return view('system-admin.schools', compact('schools'));
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             SystemLog::logError(
                 'Failed to load schools overview',
                 'system',
                 $e,
-                [],
+            [],
                 null,
                 'view_schools'
             );
@@ -236,7 +246,8 @@ class SystemAdminController extends Controller
             Admin::create([
                 'name' => $request->admin_name,
                 'email' => $request->admin_email,
-                'password' => bcrypt($request->admin_password),
+                'password' => $request->admin_password,
+                'must_reset_password' => true, // Force reset on first login
                 'role' => 'school_admin',
                 'school_id' => $school->id,
             ]);
@@ -246,25 +257,26 @@ class SystemAdminController extends Controller
             SystemLog::logInfo(
                 "Created new driving school: {$school->name}",
                 'system',
-                ['school_id' => $school->id, 'admin_email' => $request->admin_email],
+            ['school_id' => $school->id, 'admin_email' => $request->admin_email],
                 null,
                 'create_school'
             );
 
             return redirect()->route('system-admin.schools')->with('success', "Driving school '{$school->name}' created successfully!");
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             DB::rollBack();
-            
+
             SystemLog::logError(
                 'Failed to create driving school',
                 'system',
                 $e,
-                ['name' => $request->name],
+            ['name' => $request->name],
                 null,
                 'create_school'
             );
 
-            return back()->with('error', 'Failed to create school: ' . $e->getMessage())->withInput();
+            return back()->with('error', 'Unable to create driving school at this time. Please try again later.')->withInput();
         }
     }
 
@@ -280,18 +292,19 @@ class SystemAdminController extends Controller
             SystemLog::logInfo(
                 "School status changed to {$newStatus}: {$school->name}",
                 'system',
-                ['school_id' => $school->id, 'new_status' => $newStatus],
+            ['school_id' => $school->id, 'new_status' => $newStatus],
                 $school->id,
                 'toggle_school_status'
             );
 
             return back()->with('success', "School '{$school->name}' is now {$newStatus}.");
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             SystemLog::logError(
                 'Failed to toggle school status',
                 'system',
                 $e,
-                ['school_id' => $school->id],
+            ['school_id' => $school->id],
                 $school->id,
                 'toggle_school_status'
             );
@@ -311,14 +324,25 @@ class SystemAdminController extends Controller
 
             DB::beginTransaction();
 
-            // Delete related data (cascade should handle most, but let's be explicit)
+            // Delete related data (cascade should handle most, but let's be explicit and thorough)
             $school->students()->delete();
             $school->instructors()->delete();
             $school->admins()->delete();
             $school->courses()->delete();
             $school->bookings()->delete();
             $school->timeSlots()->delete();
+            $school->payments()->delete();
+            $school->enrollmentRequests()->delete();
+            $school->sessionCompletions()->delete();
+            $school->phaseProgressions()->delete();
+            $school->instructorRemovalRequests()->delete();
+            $school->registrationRequests()->delete();
+            $school->studentActionRequests()->delete();
+            $school->reports()->delete();
+            $school->notifications()->delete();
+            $school->systemLogs()->delete();
             $school->schoolSetting()->delete();
+            $school->branches()->delete();
             $school->delete();
 
             DB::commit();
@@ -326,25 +350,26 @@ class SystemAdminController extends Controller
             SystemLog::logWarning(
                 "School permanently deleted: {$schoolName}",
                 'system',
-                ['school_id' => $schoolId, 'school_name' => $schoolName, 'deleted_by' => Auth::guard('admin')->user()->name],
+            ['school_id' => $schoolId, 'school_name' => $schoolName, 'deleted_by' => Auth::guard('admin')->user()?->name ?? 'System'],
                 null,
                 'delete_school'
             );
 
             return redirect()->route('system-admin.schools')->with('success', "School '{$schoolName}' and all its data has been permanently deleted.");
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             DB::rollBack();
-            
+
             SystemLog::logError(
                 'Failed to delete school',
                 'system',
                 $e,
-                ['school_id' => $school->id],
+            ['school_id' => $school->id],
                 $school->id,
                 'delete_school'
             );
 
-            return back()->with('error', 'Failed to delete school: ' . $e->getMessage());
+            return back()->with('error', 'Unable to delete school at this time. Please try again later.');
         }
     }
 
@@ -359,9 +384,9 @@ class SystemAdminController extends Controller
 
             if ($request->filled('search')) {
                 $search = $request->search;
-                $query->where(function($q) use ($search) {
+                $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
-                      ->orWhere('email', 'like', "%{$search}%");
+                        ->orWhere('email', 'like', "%{$search}%");
                 });
             }
 
@@ -373,12 +398,13 @@ class SystemAdminController extends Controller
             $schools = School::orderBy('name')->get();
 
             return view('system-admin.admins', compact('admins', 'schools'));
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             SystemLog::logError(
                 'Failed to load admins overview',
                 'system',
                 $e,
-                [],
+            [],
                 null,
                 'view_admins'
             );
@@ -405,7 +431,8 @@ class SystemAdminController extends Controller
             $admin = Admin::create([
                 'name' => $request->name,
                 'email' => $request->email,
-                'password' => bcrypt($request->password),
+                'password' => $request->password,
+                'must_reset_password' => true, // Force reset on first login
                 'role' => 'school_admin',
                 'school_id' => $school->id,
             ]);
@@ -413,23 +440,24 @@ class SystemAdminController extends Controller
             SystemLog::logInfo(
                 "Created new school admin: {$admin->name} for {$school->name}",
                 'system',
-                ['admin_id' => $admin->id, 'school_id' => $school->id, 'email' => $admin->email],
+            ['admin_id' => $admin->id, 'school_id' => $school->id, 'email' => $admin->email],
                 $school->id,
                 'create_school_admin'
             );
 
             return redirect()->route('system-admin.admins')->with('success', "School admin '{$admin->name}' created successfully for {$school->name}!");
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             SystemLog::logError(
                 'Failed to create school admin',
                 'system',
                 $e,
-                ['name' => $request->name, 'email' => $request->email],
+            ['name' => $request->name, 'email' => $request->email],
                 null,
                 'create_school_admin'
             );
 
-            return back()->with('error', 'Failed to create admin: ' . $e->getMessage())->withInput();
+            return back()->with('error', 'Unable to create school admin at this time. Please try again later.')->withInput();
         }
     }
 
@@ -453,18 +481,19 @@ class SystemAdminController extends Controller
             SystemLog::logInfo(
                 "School admin {$status}: {$admin->name} ({$schoolName})",
                 'system',
-                ['admin_id' => $admin->id, 'email' => $admin->email, 'is_active' => $admin->is_active],
+            ['admin_id' => $admin->id, 'email' => $admin->email, 'is_active' => $admin->is_active],
                 $admin->school_id,
                 'toggle_admin_status'
             );
 
             return back()->with('success', "Admin '{$admin->name}' has been {$status}.");
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             SystemLog::logError(
                 'Failed to toggle admin status',
                 'system',
                 $e,
-                ['admin_id' => $admin->id],
+            ['admin_id' => $admin->id],
                 null,
                 'toggle_admin_status'
             );
@@ -491,7 +520,7 @@ class SystemAdminController extends Controller
             SystemLog::logWarning(
                 "School admin deleted: {$adminName} from {$schoolName}",
                 'system',
-                ['admin_id' => $admin->id, 'email' => $admin->email, 'deleted_by' => Auth::guard('admin')->user()->name],
+            ['admin_id' => $admin->id, 'email' => $admin->email, 'deleted_by' => Auth::guard('admin')->user()?->name ?? 'System'],
                 $schoolId,
                 'delete_school_admin'
             );
@@ -499,12 +528,13 @@ class SystemAdminController extends Controller
             $admin->delete();
 
             return back()->with('success', "Admin '{$adminName}' has been deleted.");
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             SystemLog::logError(
                 'Failed to delete school admin',
                 'system',
                 $e,
-                ['admin_id' => $admin->id],
+            ['admin_id' => $admin->id],
                 null,
                 'delete_school_admin'
             );
@@ -519,69 +549,57 @@ class SystemAdminController extends Controller
     public function users(Request $request)
     {
         try {
-            // Get students
-            $studentsQuery = Student::with('school')->select([
-                'id', 'name', 'email', 'school_id', 'status', 'created_at',
-                \DB::raw("'student' as user_type")
-            ]);
+            $studentsBase = Student::with('school');
+            $instructorsBase = Instructor::with('school');
 
-            // Get instructors  
-            $instructorsQuery = Instructor::with('school')->select([
-                'id', 'name', 'email', 'school_id', 'status', 'created_at',
-                \DB::raw("'instructor' as user_type")
-            ]);
-
-            // Apply school filter if provided
             if ($request->filled('school_id')) {
-                $studentsQuery->where('school_id', $request->school_id);
-                $instructorsQuery->where('school_id', $request->school_id);
+                $studentsBase->where('school_id', $request->school_id);
+                $instructorsBase->where('school_id', $request->school_id);
             }
 
-            // Apply type filter if provided
-            $userType = $request->input('user_type');
-            
-            if ($userType === 'student') {
-                $users = $studentsQuery->orderBy('created_at', 'desc')->paginate(50);
-            } elseif ($userType === 'instructor') {
-                $users = $instructorsQuery->orderBy('created_at', 'desc')->paginate(50);
-            } else {
-                // Get both - we'll display them separately
-                $students = Student::with('school');
-                $instructors = Instructor::with('school');
-
-                if ($request->filled('school_id')) {
-                    $students->where('school_id', $request->school_id);
-                    $instructors->where('school_id', $request->school_id);
-                }
-
-                if ($request->filled('search')) {
-                    $search = $request->search;
-                    $students->where(function($q) use ($search) {
-                        $q->where('name', 'like', "%{$search}%")
-                          ->orWhere('email', 'like', "%{$search}%");
-                    });
-                    $instructors->where(function($q) use ($search) {
-                        $q->where('name', 'like', "%{$search}%")
-                          ->orWhere('email', 'like', "%{$search}%");
-                    });
-                }
-
-                $students = $students->orderBy('created_at', 'desc')->get();
-                $instructors = $instructors->orderBy('created_at', 'desc')->get();
-                $schools = School::orderBy('name')->get();
-
-                return view('system-admin.users', compact('students', 'instructors', 'schools'));
+            if ($request->filled('search')) {
+                $search = $request->search;
+                $studentsBase->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
+                });
+                $instructorsBase->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
+                });
             }
+
+            $totalStudents = (clone $studentsBase)->count();
+            $activeStudents = (clone $studentsBase)->where('status', 'active')->count();
+            $totalInstructors = (clone $instructorsBase)->count();
+            $activeInstructors = (clone $instructorsBase)->where('status', 'active')->count();
+
+            $students = (clone $studentsBase)
+                ->orderBy('created_at', 'desc')
+                ->paginate(20, ['*'], 'students_page');
+
+            $instructors = (clone $instructorsBase)
+                ->orderBy('created_at', 'desc')
+                ->paginate(20, ['*'], 'instructors_page');
 
             $schools = School::orderBy('name')->get();
 
-            return view('system-admin.users', compact('users', 'schools'));
-        } catch (\Exception $e) {
+            return view('system-admin.users', compact(
+                'students',
+                'instructors',
+                'schools',
+                'totalStudents',
+                'activeStudents',
+                'totalInstructors',
+                'activeInstructors'
+            ));
+        }
+        catch (\Exception $e) {
             SystemLog::logError(
                 'Failed to load users overview',
                 'system',
                 $e,
-                [],
+            [],
                 null,
                 'view_users'
             );
@@ -598,9 +616,11 @@ class SystemAdminController extends Controller
         try {
             if ($type === 'student') {
                 $user = Student::findOrFail($id);
-            } elseif ($type === 'instructor') {
+            }
+            elseif ($type === 'instructor') {
                 $user = Instructor::findOrFail($id);
-            } else {
+            }
+            else {
                 return back()->with('error', 'Invalid user type.');
             }
 
@@ -610,18 +630,19 @@ class SystemAdminController extends Controller
             SystemLog::logInfo(
                 ucfirst($type) . " status changed to {$newStatus}: {$user->name}",
                 'database',
-                ['user_id' => $user->id, 'type' => $type, 'new_status' => $newStatus],
+            ['user_id' => $user->id, 'type' => $type, 'new_status' => $newStatus],
                 $user->school_id,
                 'toggle_user_status'
             );
 
             return back()->with('success', ucfirst($type) . " '{$user->name}' is now {$newStatus}.");
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             SystemLog::logError(
                 'Failed to toggle user status',
                 'database',
                 $e,
-                ['type' => $type, 'id' => $id],
+            ['type' => $type, 'id' => $id],
                 null,
                 'toggle_user_status'
             );
@@ -638,9 +659,11 @@ class SystemAdminController extends Controller
         try {
             if ($type === 'student') {
                 $user = Student::findOrFail($id);
-            } elseif ($type === 'instructor') {
+            }
+            elseif ($type === 'instructor') {
                 $user = Instructor::findOrFail($id);
-            } else {
+            }
+            else {
                 return back()->with('error', 'Invalid user type.');
             }
 
@@ -649,9 +672,9 @@ class SystemAdminController extends Controller
             $schoolId = $user->school_id;
 
             SystemLog::logWarning(
-                ucfirst($type) . " permanently deleted: {$userName} ({$userEmail})",
+                "{$type} permanently deleted: {$userName} ({$userEmail})",
                 'database',
-                ['user_id' => $id, 'type' => $type, 'email' => $userEmail, 'deleted_by' => Auth::guard('admin')->user()->name],
+            ['user_id' => $id, 'type' => $type, 'email' => $userEmail, 'deleted_by' => Auth::guard('admin')->user()?->name ?? 'System'],
                 $schoolId,
                 'delete_user'
             );
@@ -659,12 +682,13 @@ class SystemAdminController extends Controller
             $user->delete();
 
             return back()->with('success', ucfirst($type) . " '{$userName}' has been permanently deleted.");
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             SystemLog::logError(
                 'Failed to delete user',
                 'database',
                 $e,
-                ['type' => $type, 'id' => $id],
+            ['type' => $type, 'id' => $id],
                 null,
                 'delete_user'
             );
@@ -691,9 +715,9 @@ class SystemAdminController extends Controller
 
             if ($request->filled('search')) {
                 $search = $request->search;
-                $query->where(function($q) use ($search) {
+                $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
-                      ->orWhere('email', 'like', "%{$search}%");
+                        ->orWhere('email', 'like', "%{$search}%");
                 });
             }
 
@@ -701,12 +725,13 @@ class SystemAdminController extends Controller
             $schools = School::orderBy('name')->get();
 
             return view('system-admin.students', compact('students', 'schools'));
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             SystemLog::logError(
                 'Failed to load students overview',
                 'system',
                 $e,
-                [],
+            [],
                 null,
                 'view_students'
             );
@@ -733,9 +758,9 @@ class SystemAdminController extends Controller
 
             if ($request->filled('search')) {
                 $search = $request->search;
-                $query->where(function($q) use ($search) {
+                $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
-                      ->orWhere('email', 'like', "%{$search}%");
+                        ->orWhere('email', 'like', "%{$search}%");
                 });
             }
 
@@ -743,12 +768,13 @@ class SystemAdminController extends Controller
             $schools = School::orderBy('name')->get();
 
             return view('system-admin.instructors', compact('instructors', 'schools'));
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             SystemLog::logError(
                 'Failed to load instructors overview',
                 'system',
                 $e,
-                [],
+            [],
                 null,
                 'view_instructors'
             );
@@ -778,12 +804,13 @@ class SystemAdminController extends Controller
             $schools = School::orderBy('name')->get();
 
             return view('system-admin.courses', compact('courses', 'schools'));
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             SystemLog::logError(
                 'Failed to load courses overview',
                 'system',
                 $e,
-                [],
+            [],
                 null,
                 'view_courses'
             );
@@ -820,12 +847,13 @@ class SystemAdminController extends Controller
             $schools = School::orderBy('name')->get();
 
             return view('system-admin.bookings', compact('bookings', 'schools'));
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             SystemLog::logError(
                 'Failed to load bookings overview',
                 'system',
                 $e,
-                [],
+            [],
                 null,
                 'view_bookings'
             );
@@ -865,12 +893,13 @@ class SystemAdminController extends Controller
             $totalPending = Payment::where('status', 'pending')->sum('amount');
 
             return view('system-admin.payments', compact('payments', 'schools', 'totalPaid', 'totalPending'));
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             SystemLog::logError(
                 'Failed to load payments overview',
                 'system',
                 $e,
-                [],
+            [],
                 null,
                 'view_payments'
             );
@@ -904,7 +933,8 @@ class SystemAdminController extends Controller
             if ($request->filled('resolved')) {
                 if ($request->resolved === 'yes') {
                     $query->resolved();
-                } else {
+                }
+                else {
                     $query->unresolved();
                 }
             }
@@ -936,12 +966,13 @@ class SystemAdminController extends Controller
                 'stats' => $stats,
                 'schools' => $schools,
             ]);
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             SystemLog::logCritical(
                 'Failed to load system admin logs page',
                 'system',
                 $e,
-                [],
+            [],
                 null,
                 'view_system_logs'
             );
@@ -957,16 +988,17 @@ class SystemAdminController extends Controller
     {
         try {
             $log->load(['school', 'user', 'resolvedBy']);
-            
+
             return view('system-admin.log-detail', [
                 'log' => $log,
             ]);
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             SystemLog::logError(
                 'Failed to load log detail',
                 'system',
                 $e,
-                ['log_id' => $log->id],
+            ['log_id' => $log->id],
                 null,
                 'view_log_detail'
             );
@@ -990,18 +1022,19 @@ class SystemAdminController extends Controller
             SystemLog::logInfo(
                 "System log #{$log->id} marked as resolved",
                 'system',
-                ['log_id' => $log->id],
+            ['log_id' => $log->id],
                 $log->school_id,
                 'resolve_log'
             );
 
             return back()->with('success', 'Log marked as resolved successfully.');
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             SystemLog::logError(
                 'Failed to resolve log',
                 'system',
                 $e,
-                ['log_id' => $log->id],
+            ['log_id' => $log->id],
                 $log->school_id,
                 'resolve_log'
             );
@@ -1021,7 +1054,7 @@ class SystemAdminController extends Controller
             ]);
 
             $cutoffDate = now()->subDays($request->days);
-            
+
             $count = SystemLog::resolved()
                 ->where('created_at', '<', $cutoffDate)
                 ->delete();
@@ -1029,18 +1062,19 @@ class SystemAdminController extends Controller
             SystemLog::logInfo(
                 "Cleaned up {$count} old system logs",
                 'system',
-                ['days' => $request->days, 'count' => $count],
+            ['days' => $request->days, 'count' => $count],
                 null,
                 'cleanup_logs'
             );
 
             return back()->with('success', "Successfully deleted {$count} old resolved logs.");
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             SystemLog::logError(
                 'Failed to cleanup logs',
                 'system',
                 $e,
-                ['days' => $request->days ?? null],
+            ['days' => $request->days ?? null],
                 null,
                 'cleanup_logs'
             );
@@ -1057,38 +1091,39 @@ class SystemAdminController extends Controller
         try {
             $stats = [
                 'errors_by_category' => SystemLog::unresolved()
-                    ->select('category', DB::raw('count(*) as count'))
-                    ->groupBy('category')
-                    ->get(),
-                
+                ->select('category', DB::raw('count(*) as count'))
+                ->groupBy('category')
+                ->get(),
+
                 'errors_by_school' => SystemLog::unresolved()
-                    ->select('school_id', DB::raw('count(*) as count'))
-                    ->with('school:id,name')
-                    ->groupBy('school_id')
-                    ->orderByDesc('count')
-                    ->limit(10)
-                    ->get(),
-                
+                ->select('school_id', DB::raw('count(*) as count'))
+                ->with('school:id,name')
+                ->groupBy('school_id')
+                ->orderByDesc('count')
+                ->limit(10)
+                ->get(),
+
                 'errors_by_level' => SystemLog::unresolved()
-                    ->select('level', DB::raw('count(*) as count'))
-                    ->groupBy('level')
-                    ->get(),
-                
+                ->select('level', DB::raw('count(*) as count'))
+                ->groupBy('level')
+                ->get(),
+
                 'recent_critical' => SystemLog::critical()
-                    ->unresolved()
-                    ->with(['school', 'user'])
-                    ->orderBy('created_at', 'desc')
-                    ->limit(10)
-                    ->get(),
+                ->unresolved()
+                ->with(['school', 'user'])
+                ->orderBy('created_at', 'desc')
+                ->limit(10)
+                ->get(),
             ];
 
             return response()->json($stats);
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             SystemLog::logError(
                 'Failed to get statistics',
                 'system',
                 $e,
-                [],
+            [],
                 null,
                 'get_statistics'
             );

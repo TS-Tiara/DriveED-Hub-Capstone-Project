@@ -6,6 +6,8 @@
 @php
     $schoolName = $school->name ?? 'Driving School';
     $settings = $school->schoolSetting;
+    $primaryColor = $settings->primary_color ?? '#667eea';
+    $secondaryColor = $settings->secondary_color ?? '#764ba2';
 @endphp
 
 <style>
@@ -18,7 +20,7 @@
 .page-header {
     margin-bottom: 30px;
     padding-bottom: 15px;
-    border-bottom: 4px solid {{ $settings->primary_color ?? '#667eea' }};
+    border-bottom: 4px solid {{ $primaryColor }};
 }
 
 .page-title {
@@ -55,10 +57,10 @@
 .progress-percentage {
     font-size: 3rem;
     font-weight: 700;
-    @if($settings->use_gradient_header ?? false)
-        background: linear-gradient(135deg, {{ $settings->primary_color ?? '#667eea' }}, {{ $settings->secondary_color ?? '#764ba2' }});
+    @if($settings->use_gradient_header ?? true)
+        background: linear-gradient(135deg, {{ $primaryColor }}, {{ $secondaryColor }});
     @else
-        background: {{ $settings->primary_color ?? '#667eea' }};
+        background: {{ $primaryColor }};
     @endif
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -75,10 +77,10 @@
 
 .progress-bar-fill {
     height: 100%;
-    @if($settings->use_gradient_header ?? false)
-        background: linear-gradient(135deg, {{ $settings->primary_color ?? '#667eea' }} 0%, {{ $settings->secondary_color ?? '#764ba2' }} 100%);
+    @if($settings->use_gradient_header ?? true)
+        background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
     @else
-        background: {{ $settings->primary_color ?? '#667eea' }};
+        background: {{ $primaryColor }};
     @endif
     display: flex;
     align-items: center;
@@ -91,6 +93,18 @@
     color: white;
     font-weight: 700;
     font-size: 1.1rem;
+}
+
+.progress-status-completed {
+    color: #10b981;
+}
+
+.progress-status-in-progress {
+    color: #3b82f6;
+}
+
+.progress-status-not-started {
+    color: #6b7280;
 }
 
 .progress-info {
@@ -138,12 +152,12 @@
 
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
-    .container {
+    .progress-container {
         padding: 20px 15px;
     }
     
-    .page-header h1 {
-        font-size: 24px;
+    .page-title {
+        font-size: 1.5rem;
     }
     
     .progress-grid {
@@ -163,7 +177,7 @@
         font-size: 2rem;
     }
     
-    .progress-bar {
+    .progress-bar-container {
         height: 30px;
     }
     
@@ -171,19 +185,19 @@
         font-size: 13px;
     }
     
-    .progress-details {
+    .progress-info {
         padding: 15px;
     }
     
-    .stat-item {
+    .info-item {
         padding: 10px;
     }
     
-    .stat-item .label {
+    .info-item .label {
         font-size: 13px;
     }
     
-    .stat-item .value {
+    .info-item .value {
         font-size: 20px;
     }
     
@@ -193,12 +207,12 @@
 }
 
 @media (max-width: 480px) {
-    .container {
+    .progress-container {
         padding: 15px 10px;
     }
     
-    .page-header h1 {
-        font-size: 20px;
+    .page-title {
+        font-size: 1.25rem;
     }
     
     .progress-card {
@@ -219,7 +233,7 @@
         font-size: 1.75rem;
     }
     
-    .progress-bar {
+    .progress-bar-container {
         height: 25px;
     }
     
@@ -227,21 +241,21 @@
         font-size: 12px;
     }
     
-    .progress-details {
+    .progress-info {
         grid-template-columns: 1fr;
         padding: 12px;
         gap: 8px;
     }
     
-    .stat-item {
+    .info-item {
         padding: 8px;
     }
     
-    .stat-item .label {
+    .info-item .label {
         font-size: 12px;
     }
     
-    .stat-item .value {
+    .info-item .value {
         font-size: 18px;
     }
     
@@ -273,7 +287,7 @@
             </div>
 
             <div class="progress-bar-container">
-                <div class="progress-bar-fill" style="width: {{ $progress->completion_percent }}%;">
+                <div class="progress-bar-fill progress-fill" data-progress="{{ $progress->completion_percent }}">
                     @if($progress->completion_percent > 10)
                     <span class="progress-bar-text">{{ $progress->completion_percent }}% Complete</span>
                     @endif
@@ -285,11 +299,11 @@
                     <div class="label">Status</div>
                     <div class="value">
                         @if($progress->completion_percent == 100)
-                            <span style="color: #10b981;">✓ Completed</span>
+                            <span class="progress-status-completed">✓ Completed</span>
                         @elseif($progress->completion_percent > 0)
-                            <span style="color: #3b82f6;">⏳ In Progress</span>
+                            <span class="progress-status-in-progress">● In Progress</span>
                         @else
-                            <span style="color: #6b7280;">⚪ Not Started</span>
+                            <span class="progress-status-not-started">○ Not Started</span>
                         @endif
                     </div>
                 </div>
@@ -311,13 +325,22 @@
             @endif
         </div>
         @empty
-        <div style="text-align: center; padding: 60px 20px; color: #9ca3af;">
-            <p style="font-size: 1.2rem;">No progress records found</p>
-            <p>Your instructor will update your progress after each lesson</p>
+        <div class="empty-state">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            <p class="empty-state-title">No progress records found</p>
+            <p class="empty-state-text">Your instructor will update your progress after each lesson</p>
         </div>
         @endforelse
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.progress-fill').forEach(function (bar) {
+        const value = Number(bar.dataset.progress || 0);
+        const clamped = Math.max(0, Math.min(100, value));
+        bar.style.width = clamped + '%';
+    });
+});
+</script>
 @endsection
-
-

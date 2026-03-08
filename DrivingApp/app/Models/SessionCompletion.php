@@ -2,15 +2,19 @@
 
 namespace App\Models;
 
+use App\Traits\HasSchoolScope;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SessionCompletion extends Model
 {
+    use HasSchoolScope;
     use HasFactory;
 
     protected $fillable = [
+        'school_id',
         'enrollment_id',
         'instructor_id',
         'session_type',
@@ -27,15 +31,34 @@ class SessionCompletion extends Model
     protected $casts = [
         'hours_completed' => 'decimal:2',
         'session_date' => 'date',
-        'session_time' => 'datetime:H:i',
+        'session_time' => 'string',
     ];
 
     /**
-     * Get the enrollment that owns this session
+     * Get the school
+     */
+    public function school(): BelongsTo
+    {
+        return $this->belongsTo(School::class);
+    }
+
+    /**
+     * Get the enrollment request that owns this session.
+     * Note: enrollment_id column references enrollment_requests table
+     * (system transitioned from enrollments to enrollment_requests).
      */
     public function enrollment(): BelongsTo
     {
-        return $this->belongsTo(EnrollmentRequest::class);
+        return $this->belongsTo(EnrollmentRequest::class , 'enrollment_id');
+    }
+
+    /**
+     * Alias for enrollment() — used by ExportController and other code
+     * that references the enrollmentRequest relationship name.
+     */
+    public function enrollmentRequest(): BelongsTo
+    {
+        return $this->belongsTo(EnrollmentRequest::class , 'enrollment_id');
     }
 
     /**
@@ -51,23 +74,37 @@ class SessionCompletion extends Model
      */
     public function loggedBy(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'logged_by');
+        return $this->belongsTo(Instructor::class , 'logged_by');
     }
 
     /**
-     * Get the student through enrollment
+     * Get the student (learner) through enrollment request
      */
-    public function student()
+    public function student(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
     {
-        return $this->enrollment->student();
+        return $this->hasOneThrough(
+            Student::class ,
+            EnrollmentRequest::class ,
+            'id', // Foreign key on enrollment_requests table
+            'id', // Foreign key on students table
+            'enrollment_id', // Local key on session_completions table
+            'learner_id' // Local key on enrollment_requests table
+        );
     }
 
     /**
-     * Get the course through enrollment
+     * Get the course through enrollment request
      */
-    public function course()
+    public function course(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
     {
-        return $this->enrollment->course();
+        return $this->hasOneThrough(
+            Course::class ,
+            EnrollmentRequest::class ,
+            'id', // Foreign key on enrollment_requests table
+            'id', // Foreign key on courses table
+            'enrollment_id', // Local key on session_completions table
+            'course_id' // Local key on enrollment_requests table
+        );
     }
 
     /**

@@ -47,6 +47,11 @@
             font-size: 1.8rem;
         }
 
+        .login-header-icon-svg {
+            width: 48px;
+            height: 48px;
+        }
+
         .login-header h1 {
             font-size: 1.5rem;
             color: #053d86;
@@ -79,6 +84,26 @@
 
         .form-group {
             margin-bottom: 20px;
+        }
+
+        .remember-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 25px;
+        }
+
+        .remember-checkbox {
+            width: auto;
+            cursor: pointer;
+        }
+
+        .remember-label {
+            margin-bottom: 0;
+            cursor: pointer;
+            font-weight: normal;
+            font-size: 0.85rem;
+            color: #6b7280;
         }
 
         .form-group label {
@@ -162,7 +187,7 @@
 <body>
     <div class="login-container">
         <div class="login-header">
-            <div class="icon">🔐</div>
+            <div class="icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#667eea" class="login-header-icon-svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg></div>
             <h1>System Administrator</h1>
             <p>Secure Access Portal</p>
         </div>
@@ -214,13 +239,22 @@
                     @enderror
                 </div>
 
+                <div class="form-group remember-group">
+                    <input type="checkbox" name="remember" id="remember" class="remember-checkbox">
+                    <label for="remember" class="remember-label">Remember me on this browser</label>
+                </div>
+
                 <button type="submit" class="btn">
+
                     Sign In
                 </button>
             </form>
 
             <div class="login-footer">
-                <a href="{{ route('welcome') }}">← Back to Home</a>
+                <a href="{{ route('welcome') }}" style="display:inline-flex; align-items:center; justify-content:center; gap:4px;">
+                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                    Back to Home
+                </a>
             </div>
         </div>
 </body>

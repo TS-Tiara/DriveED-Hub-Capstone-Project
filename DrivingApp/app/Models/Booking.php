@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Traits\HasSchoolScope;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,14 +11,17 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Booking extends Model
 {
+    use HasSchoolScope;
     use HasFactory;
 
     protected $fillable = [
         'school_id',
+        'branch_id',
         'student_id',
         'instructor_id',
         'course_id',
         'package_id',
+        'enrollment_request_id',
         'time_slot_id',
         'scheduled_at',
         'booking_date',
@@ -53,6 +58,14 @@ class Booking extends Model
     }
 
     /**
+     * Get the branch for the booking.
+     */
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Branch::class);
+    }
+
+    /**
      * Get the student that owns the booking.
      */
     public function student(): BelongsTo
@@ -81,7 +94,7 @@ class Booking extends Model
      */
     public function package(): BelongsTo
     {
-        return $this->belongsTo(CoursePackage::class, 'package_id');
+        return $this->belongsTo(CoursePackage::class , 'package_id');
     }
 
     /**
@@ -89,7 +102,15 @@ class Booking extends Model
      */
     public function timeSlot(): BelongsTo
     {
-        return $this->belongsTo(TimeSlot::class, 'time_slot_id');
+        return $this->belongsTo(TimeSlot::class , 'time_slot_id');
+    }
+
+    /**
+     * Get the enrollment request for the booking.
+     */
+    public function enrollmentRequest(): BelongsTo
+    {
+        return $this->belongsTo(EnrollmentRequest::class , 'enrollment_request_id');
     }
 
     /**
@@ -98,14 +119,6 @@ class Booking extends Model
     public function payment(): HasOne
     {
         return $this->hasOne(Payment::class);
-    }
-
-    /**
-     * Scope a query to only include bookings for a specific school.
-     */
-    public function scopeForSchool($query, $schoolId)
-    {
-        return $query->where('school_id', $schoolId);
     }
 
     /**
@@ -138,7 +151,7 @@ class Booking extends Model
     public function scopeUpcoming($query)
     {
         return $query->where('scheduled_at', '>', now())
-                     ->orderBy('scheduled_at', 'asc');
+            ->orderBy('scheduled_at', 'asc');
     }
 
     /**
@@ -147,6 +160,6 @@ class Booking extends Model
     public function scopePast($query)
     {
         return $query->where('scheduled_at', '<=', now())
-                     ->orderBy('scheduled_at', 'desc');
+            ->orderBy('scheduled_at', 'desc');
     }
 }

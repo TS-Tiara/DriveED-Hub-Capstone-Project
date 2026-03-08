@@ -1,233 +1,180 @@
-@extends($isAjax ?? false ? 'layouts.ajax' : 'layouts.app')
+<!DOCTYPE html>
+<html>
+<head>
+    @php
+        $school = $school ?? $currentSchool ?? null;
+        $slug = $school?->slug ?? 'default';
+        $settings = $school?->schoolSetting;
+        
+        // School branding
+        $schoolName = $school->name ?? 'DriveEd Hub';
+        
+        // Custom colors
+        $primaryColor = $settings?->primary_color ?? '#2563eb';
+        $secondaryColor = $settings?->secondary_color ?? '#f59e0b';
+        
+        // Header settings
+        $headerHeight = $settings?->login_header_height ?? 60;
+        $headerTextColor = $settings?->login_header_text_color ?? '#ffffff';
+        $headerShadow = $settings?->login_header_shadow ?? true;
+        $headerBgType = $settings?->login_header_bg_type ?? 'gradient';
+        $headerBgColor = $settings?->login_header_bg_color;
+        $headerBgImage = $settings?->login_header_bg_image;
+        $useGradient = $settings?->use_gradient_header ?? false;
 
-@section('title', 'Forgot Password')
+        if ($headerBgType === 'solid' && $headerBgColor) {
+            $headerBackground = $headerBgColor;
+        } elseif ($headerBgType === 'image' && $headerBgImage) {
+            $headerBackground = "url('" . asset('storage/' . $headerBgImage) . "')";
+        } elseif ($useGradient) {
+            $headerBackground = "linear-gradient(135deg, {$primaryColor} 0%, {$secondaryColor} 100%)";
+        } else {
+            $headerBackground = $primaryColor;
+        }
+        
+        // Page background
+        $pageBgType = $settings?->login_page_bg_type ?? 'color';
+        $pageBgColor = $settings?->login_page_bg_color ?? '#f5f5f5';
+        $pageBgImage = $settings?->login_page_bg_image;
+        $pageBgOpacity = $settings?->login_page_bg_opacity ?? 100;
+        
+        if ($pageBgType === 'image' && $pageBgImage) {
+            $pageBackground = "url('" . asset('storage/' . $pageBgImage) . "')";
+        } else {
+            $pageBackground = $pageBgColor;
+        }
+    @endphp
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{{ $schoolName }} - Forgot Password</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            @if($pageBgType === 'image' && $pageBgImage)
+            background: {{ $pageBackground }} no-repeat center center fixed;
+            background-size: cover;
+            @else
+            background: {{ $pageBackground }};
+            @endif
+            opacity: {{ $pageBgOpacity / 100 }};
+            z-index: -1;
+        }
+        .login-header {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: {{ $headerHeight }}px;
+            background: {{ $headerBackground }};
+            color: {{ $headerTextColor }};
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 25px;
+            @if($headerShadow) box-shadow: 0 3px 20px rgba(0,0,0,0.15); @endif
+        }
+        .header-school-name { font-size: 20px; font-weight: 600; text-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+        .main-content {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: calc(100vh - {{ $headerHeight }}px);
+            margin-top: {{ $headerHeight }}px;
+            padding: 15px;
+        }
+        .login-container {
+            background: rgba(255, 255, 255, 0.98);
+            padding: 35px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            width: 400px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .login-title { font-size: 22px; font-weight: bold; color: #1f2937; margin-bottom: 10px; }
+        .login-subtitle { font-size: 13px; color: #6b7280; margin-bottom: 25px; line-height: 1.5; }
+        .alert { padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; text-align: left; }
+        .alert-success { background-color: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
+        .alert-error { background-color: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+        .form-group { margin-bottom: 20px; text-align: left; }
+        .form-label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 8px; }
+        input[type="email"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            background: rgba(255, 255, 255, 0.9);
+        }
+        input[type="email"]:focus { outline: none; border-color: {{ $primaryColor }}; box-shadow: 0 0 0 3px {{ $primaryColor }}20; }
+        .login-button {
+            width: 100%;
+            padding: 14px;
+            background: {{ $primaryColor }};
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .login-button:hover { opacity: 0.9; }
+        .back-link { margin-top: 25px; padding-top: 15px; border-top: 1px solid #e5e7eb; }
+        .back-link a { color: #2563eb; text-decoration: none; font-size: 13px; font-weight: 600; }
+        .back-link a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <nav class="login-header">
+        <div class="header-school-name">{{ $schoolName }}</div>
+    </nav>
 
-@section('content')
-@php
-    $school = $school ?? $currentSchool ?? null;
-    $settings = $school?->schoolSetting;
-    $primaryColor = $settings->primary_color ?? '#667eea';
-    $secondaryColor = $settings->secondary_color ?? '#764ba2';
-@endphp
+    <div class="main-content">
+        <div class="login-container">
+            <h2 class="login-title">Forgot Password</h2>
+            <p class="login-subtitle">
+                Enter your registered email address and we'll send you a secure link to reset your password.
+            </p>
 
-<style>
-    body {
-        margin: 0;
-        padding: 0;
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    }
+            @if(session('success'))
+                <div class="alert alert-success">
+                    {{ session('success') }}
+                </div>
+            @endif
 
-    .forgot-container {
-        width: 100%;
-        max-width: 450px;
-        margin: 20px;
-    }
+            @if($errors->any())
+                <div class="alert alert-error">
+                    @foreach($errors->all() as $error)
+                        <div>{{ $error }}</div>
+                    @endforeach
+                </div>
+            @endif
 
-    .forgot-card {
-        background: white;
-        border-radius: 16px;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-        padding: 40px;
-    }
-
-    .logo-section {
-        text-align: center;
-        margin-bottom: 30px;
-    }
-
-    .logo-section h1 {
-        font-size: 28px;
-        font-weight: 700;
-        color: #1f2937;
-        margin: 15px 0 10px 0;
-    }
-
-    .logo-section p {
-        color: #6b7280;
-        font-size: 15px;
-        margin: 0;
-    }
-
-    .form-group {
-        margin-bottom: 20px;
-    }
-
-    .form-label {
-        display: block;
-        font-size: 14px;
-        font-weight: 600;
-        color: #374151;
-        margin-bottom: 8px;
-    }
-
-    .form-control {
-        width: 100%;
-        padding: 12px 16px;
-        border: 2px solid #e5e7eb;
-        border-radius: 8px;
-        font-size: 15px;
-        transition: all 0.3s ease;
-        box-sizing: border-box;
-    }
-
-    .form-control:focus {
-        outline: none;
-        border-color: {{ $primaryColor }};
-        box-shadow: 0 0 0 3px {{ $primaryColor }}20;
-    }
-
-    .form-select {
-        width: 100%;
-        padding: 12px 16px;
-        border: 2px solid #e5e7eb;
-        border-radius: 8px;
-        font-size: 15px;
-        background: white;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-sizing: border-box;
-    }
-
-    .form-select:focus {
-        outline: none;
-        border-color: {{ $primaryColor }};
-        box-shadow: 0 0 0 3px {{ $primaryColor }}20;
-    }
-
-    .btn-primary {
-        width: 100%;
-        padding: 14px;
-        background: {{ $primaryColor }};
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-size: 16px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        margin-top: 10px;
-    }
-
-    .btn-primary:hover {
-        background: {{ $secondaryColor }};
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-    }
-
-    .alert {
-        padding: 12px 16px;
-        border-radius: 8px;
-        margin-bottom: 20px;
-        font-size: 14px;
-    }
-
-    .alert-success {
-        background: #d1fae5;
-        color: #065f46;
-        border: 1px solid #6ee7b7;
-    }
-
-    .alert-danger {
-        background: #fee2e2;
-        color: #991b1b;
-        border: 1px solid #fca5a5;
-    }
-
-    .back-link {
-        text-align: center;
-        margin-top: 20px;
-    }
-
-    .back-link a {
-        color: {{ $primaryColor }};
-        text-decoration: none;
-        font-size: 14px;
-        font-weight: 500;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-    }
-
-    .back-link a:hover {
-        text-decoration: underline;
-    }
-
-    .info-box {
-        background: #f3f4f6;
-        border-left: 4px solid {{ $primaryColor }};
-        padding: 12px 16px;
-        border-radius: 6px;
-        margin-bottom: 20px;
-        font-size: 14px;
-        color: #374151;
-    }
-</style>
-
-<div class="forgot-container">
-    <div class="forgot-card">
-        <div class="logo-section">
-            <h1>🔐 Forgot Password</h1>
-            <p>{{ $school->name }}</p>
-        </div>
-
-        @if(session('success'))
-            <div class="alert alert-success">
-                {{ session('success') }}
+            <form method="POST" action="{{ route('schools.password.email', $school) }}">
+                @csrf
+                <div class="form-group">
+                    <label class="form-label" for="email">Email Address</label>
+                    <input type="email" id="email" name="email" value="{{ old('email') }}" placeholder="your@email.com" required autofocus>
+                </div>
+                <button type="submit" class="login-button">Send Reset Link</button>
+            </form>
+            
+            <div class="back-link">
+                <a href="{{ route('schools.login', $school) }}">← Back to Login</a>
             </div>
-        @endif
-
-        @if($errors->any())
-            <div class="alert alert-danger">
-                @foreach($errors->all() as $error)
-                    <div>{{ $error }}</div>
-                @endforeach
-            </div>
-        @endif
-
-        <div class="info-box">
-            Enter your email address and select your account type. We'll send you a link to reset your password.
-        </div>
-
-        <form method="POST" action="{{ route('schools.password.email', $school) }}">
-            @csrf
-
-            <div class="form-group">
-                <label class="form-label" for="email">Email Address</label>
-                <input type="email" 
-                       class="form-control" 
-                       id="email" 
-                       name="email" 
-                       value="{{ old('email') }}"
-                       placeholder="your@email.com"
-                       required 
-                       autofocus>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label" for="user_type">Account Type</label>
-                <select class="form-select" id="user_type" name="user_type" required>
-                    <option value="">Select your account type</option>
-                    <option value="student" {{ old('user_type') == 'student' ? 'selected' : '' }}>Student</option>
-                    <option value="instructor" {{ old('user_type') == 'instructor' ? 'selected' : '' }}>Instructor</option>
-                    <option value="admin" {{ old('user_type') == 'admin' ? 'selected' : '' }}>Admin</option>
-                </select>
-            </div>
-
-            <button type="submit" class="btn-primary">
-                Send Password Reset Link
-            </button>
-        </form>
-
-        <div class="back-link">
-            <a href="{{ route('schools.login', $school) }}">
-                ← Back to Login
-            </a>
         </div>
     </div>
-</div>
-@endsection
+</body>
+</html>

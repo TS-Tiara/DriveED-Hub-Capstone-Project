@@ -272,6 +272,11 @@
         color: #666;
     }
 
+    .empty-state-note {
+        color: #999;
+        margin-top: 10px;
+    }
+
     /* Modal Styles */
     .modal {
         display: none;
@@ -342,6 +347,15 @@
         justify-content: flex-end;
     }
 
+    .modal-description {
+        margin-bottom: 20px;
+        color: #666;
+    }
+
+    .required-mark {
+        color: #f44336;
+    }
+
     @media (max-width: 768px) {
         .request-header {
             flex-direction: column;
@@ -372,8 +386,8 @@
         <div>
             <h1 class="page-title">
                 Instructor Removal Requests
-                @if($pendingRequests->count() > 0)
-                    <span class="badge-count">{{ $pendingRequests->count() }}</span>
+                @if($pendingCount > 0)
+                    <span class="badge-count">{{ $pendingCount }}</span>
                 @endif
             </h1>
             <p class="page-subtitle">Review and process instructor schedule removal requests for {{ $schoolName }}</p>
@@ -404,10 +418,10 @@
 
     <div class="tabs">
         <button class="tab-btn active" data-tab="pending" onclick="switchTab('pending')">
-            Pending ({{ $pendingRequests->count() }})
+            Pending ({{ $pendingCount }})
         </button>
         <button class="tab-btn" data-tab="processed" onclick="switchTab('processed')">
-            Processed ({{ $processedRequests->count() }})
+            Processed ({{ $processedCount }})
         </button>
     </div>
 
@@ -417,7 +431,7 @@
             <div class="empty-state">
                 <div class="empty-state-icon">✓</div>
                 <div class="empty-state-text">No pending removal requests</div>
-                <p style="color: #999; margin-top: 10px;">All caught up! There are no instructor removal requests waiting for review.</p>
+                <p class="empty-state-note">All caught up! There are no instructor removal requests waiting for review.</p>
             </div>
         @else
             @foreach($pendingRequests as $request)
@@ -468,6 +482,9 @@
                     </div>
                 </div>
             @endforeach
+            <div class="mt-4">
+                {{ $pendingRequests->appends(['processed_page' => $processedRequests->currentPage()])->links() }}
+            </div>
         @endif
     </div>
 
@@ -477,7 +494,7 @@
             <div class="empty-state">
                 <div class="empty-state-icon"></div>
                 <div class="empty-state-text">No processed requests</div>
-                <p style="color: #999; margin-top: 10px;">There are no approved or rejected requests yet.</p>
+                <p class="empty-state-note">There are no approved or rejected requests yet.</p>
             </div>
         @else
             @foreach($processedRequests as $request)
@@ -528,6 +545,9 @@
                     </div>
                 </div>
             @endforeach
+            <div class="mt-4">
+                {{ $processedRequests->appends(['pending_page' => $pendingRequests->currentPage()])->links() }}
+            </div>
         @endif
     </div>
 </div>
@@ -541,7 +561,7 @@
         <div class="modal-body">
             <form id="approveForm" method="POST">
                 @csrf
-                <p style="margin-bottom: 20px; color: #666;">
+                <p class="modal-description">
                     Are you sure you want to approve this removal request for <strong id="approveInstructorName"></strong>? 
                     The instructor will be removed from the time slot.
                 </p>
@@ -567,13 +587,13 @@
         <div class="modal-body">
             <form id="rejectForm" method="POST">
                 @csrf
-                <p style="margin-bottom: 20px; color: #666;">
+                <p class="modal-description">
                     You are rejecting the removal request for <strong id="rejectInstructorName"></strong>. 
                     Please provide a reason for the rejection.
                 </p>
                 <div class="form-group">
                     <label class="form-label">
-                        Reason for Rejection <span style="color: #f44336;">*</span>
+                        Reason for Rejection <span class="required-mark">*</span>
                     </label>
                     <textarea name="admin_notes" class="form-control" rows="4" required placeholder="Explain why this request is being rejected..."></textarea>
                 </div>

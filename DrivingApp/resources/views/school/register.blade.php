@@ -289,6 +289,64 @@
             font-size: 13px;
         }
 
+        .password-input-wrap {
+            position: relative;
+        }
+
+        .password-input-wrap input {
+            padding-right: 44px;
+        }
+
+        .password-toggle-btn {
+            position: absolute;
+            top: 50%;
+            right: 8px;
+            transform: translateY(-50%);
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            color: #6b7280;
+            width: 28px;
+            height: 28px;
+            padding: 0;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .password-toggle-btn:hover {
+            color: #1f2937;
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .password-toggle-btn:focus-visible {
+            outline: 2px solid {{ $primaryColor }};
+            outline-offset: 2px;
+        }
+
+        .password-toggle-btn svg {
+            width: 16px;
+            height: 16px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .password-toggle-btn .icon-eye-off {
+            display: none;
+        }
+
+        .password-toggle-btn[aria-pressed="true"] .icon-eye {
+            display: none;
+        }
+
+        .password-toggle-btn[aria-pressed="true"] .icon-eye-off {
+            display: block;
+        }
+
         textarea {
             min-height: 60px;
             resize: vertical;
@@ -366,6 +424,106 @@
 
         .back-to-login a:hover {
             text-decoration: underline;
+        }
+
+        .modal-icon-close:focus-visible {
+            outline: 2px solid {{ $primaryColor }};
+            outline-offset: 2px;
+            border-radius: 6px;
+        }
+
+        .consent-group {
+            margin-top: 24px;
+        }
+
+        .consent-label {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            cursor: pointer;
+            font-weight: normal;
+        }
+
+        .consent-checkbox {
+            margin-top: 4px;
+        }
+
+        .consent-text {
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .policy-link {
+            color: {{ $primaryColor }};
+            text-decoration: underline;
+        }
+
+        .policy-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            overflow-y: auto;
+        }
+
+        .policy-modal-card {
+            background: white;
+            max-width: 600px;
+            margin: 50px auto;
+            border-radius: 8px;
+            padding: 24px;
+            position: relative;
+        }
+
+        .policy-modal-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .policy-modal-title {
+            margin-bottom: 16px;
+            color: {{ $primaryColor }};
+        }
+
+        .policy-modal-content {
+            line-height: 1.6;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .policy-section-title {
+            margin-top: 16px;
+            margin-bottom: 8px;
+        }
+
+        .policy-list {
+            margin-left: 20px;
+            margin-top: 8px;
+        }
+
+        .policy-contact-email {
+            margin-top: 8px;
+        }
+
+        .policy-modal-btn {
+            margin-top: 20px;
+            background: {{ $primaryColor }};
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
         }
 
         @media (max-width: 768px) {
@@ -522,14 +680,17 @@
             .back-to-login a {
                 font-size: 10px;
             }
-        }
-                padding: 13px;
-                font-size: 16px;
+
+            .password-help {
+                font-size: 10px;
+                color: #6b7280;
+                margin-top: 5px;
             }
 
-            .error {
-                font-size: 12px;
+            .error-top-space {
+                margin-top: 5px;
             }
+
         }
 
         @media (max-width: 360px) {
@@ -563,7 +724,7 @@
         }
     </style>
 </head>
-<body style="--school-bg: url('{{ $backgroundImage }}')">
+<body>
     <!-- Customizable Registration Header -->
     <nav class="login-header login-header-{{ $headerLayout }}">
         @if($headerLayout === 'horizontal')
@@ -669,16 +830,6 @@
                 <div class="success">{{ session('success') }}</div>
             @endif
 
-            @if ($errors->any())
-                <div class="error" style="background: #f8d7da; border: 1px solid #f5c6cb; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
-                    <ul style="margin: 0; padding-left: 20px;">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
-
             <form method="POST" action="{{ route('schools.registration.submit', $school) }}">
                 @csrf
 
@@ -716,23 +867,39 @@
 
                 <div class="form-group">
                     <label for="password">Password *</label>
-                    <input type="password" id="password" name="password" required>
+                    <div class="password-input-wrap">
+                        <input type="password" id="password" name="password" required>
+                        <button type="button" class="password-toggle-btn" data-password-toggle="password" aria-label="Show password" aria-pressed="false">
+                            <svg class="icon-eye" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                            <svg class="icon-eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18"></path><path d="M10.6 10.6a2 2 0 0 0 2.8 2.8"></path><path d="M9.9 4.2A11 11 0 0 1 12 4c6.5 0 10 6 10 6a18.7 18.7 0 0 1-4 4.9"></path><path d="M6.1 6.1A18.9 18.9 0 0 0 2 12s3.5 6 10 6c1.5 0 2.9-.3 4.1-.8"></path></svg>
+                        </button>
+                    </div>
+                    <div class="password-help">
+                        Must be at least 8 characters with at least one uppercase letter, one number, and one special character.
+                    </div>
                     @error('password')
-                        <div class="error">{{ $message }}</div>
+                        <div class="error error-top-space">{{ $message }}</div>
                     @enderror
                 </div>
 
+
                 <div class="form-group">
                     <label for="password_confirmation">Confirm Password *</label>
-                    <input type="password" id="password_confirmation" name="password_confirmation" required>
+                    <div class="password-input-wrap">
+                        <input type="password" id="password_confirmation" name="password_confirmation" required>
+                        <button type="button" class="password-toggle-btn" data-password-toggle="password_confirmation" aria-label="Show password" aria-pressed="false">
+                            <svg class="icon-eye" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                            <svg class="icon-eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18"></path><path d="M10.6 10.6a2 2 0 0 0 2.8 2.8"></path><path d="M9.9 4.2A11 11 0 0 1 12 4c6.5 0 10 6 10 6a18.7 18.7 0 0 1-4 4.9"></path><path d="M6.1 6.1A18.9 18.9 0 0 0 2 12s3.5 6 10 6c1.5 0 2.9-.3 4.1-.8"></path></svg>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Data Privacy and Terms -->
-                <div class="form-group" style="margin-top: 24px;">
-                    <label style="display: flex; align-items: flex-start; gap: 8px; cursor: pointer; font-weight: normal;">
-                        <input type="checkbox" id="accept_privacy" name="accept_privacy" required style="margin-top: 4px;">
-                        <span style="font-size: 13px; line-height: 1.4;">
-                            I have read and agree to the <a href="#" onclick="showPrivacy(event)" style="color: {{ $primaryColor }}; text-decoration: underline;">Data Privacy Policy</a>
+                <div class="form-group consent-group">
+                    <label class="consent-label">
+                        <input type="checkbox" id="accept_privacy" name="accept_privacy" required class="consent-checkbox">
+                        <span class="consent-text">
+                            I have read and agree to the <a href="#" onclick="showPrivacy(event)" class="policy-link">Data Privacy Policy</a>
                         </span>
                     </label>
                     @error('accept_privacy')
@@ -741,10 +908,10 @@
                 </div>
 
                 <div class="form-group">
-                    <label style="display: flex; align-items: flex-start; gap: 8px; cursor: pointer; font-weight: normal;">
-                        <input type="checkbox" id="accept_terms" name="accept_terms" required style="margin-top: 4px;">
-                        <span style="font-size: 13px; line-height: 1.4;">
-                            I agree to the <a href="#" onclick="showTerms(event)" style="color: {{ $primaryColor }}; text-decoration: underline;">Terms and Conditions</a>
+                    <label class="consent-label">
+                        <input type="checkbox" id="accept_terms" name="accept_terms" required class="consent-checkbox">
+                        <span class="consent-text">
+                            I agree to the <a href="#" onclick="showTerms(event)" class="policy-link">Terms and Conditions</a>
                         </span>
                     </label>
                     @error('accept_terms')
@@ -763,129 +930,131 @@
     </div>
 
     <!-- Data Privacy Modal -->
-    <div id="privacyModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; overflow-y: auto;">
-        <div style="background: white; max-width: 600px; margin: 50px auto; border-radius: 8px; padding: 24px; position: relative;">
-            <button onclick="closePrivacy()" style="position: absolute; top: 16px; right: 16px; background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">&times;</button>
-            <h2 style="margin-bottom: 16px; color: {{ $primaryColor }};">Data Privacy Policy</h2>
-            <div style="line-height: 1.6; font-size: 14px; color: #333;">
+    <div id="privacyModal" class="policy-modal">
+        <div class="policy-modal-card">
+            <button type="button" class="modal-icon-close policy-modal-close" aria-label="Close data privacy policy" onclick="closePrivacy()">&times;</button>
+            <h2 class="policy-modal-title">Data Privacy Policy</h2>
+            <div class="policy-modal-content">
                 <p><strong>Effective Date:</strong> {{ date('F Y') }}</p>
                 <br>
                 <p>{{ $schoolName }} ("we", "us", or "our") respects your privacy and is committed to protecting your personal information. This Data Privacy Policy explains how we collect, use, and safeguard your data.</p>
                 <br>
-                <h3 style="margin-top: 16px; margin-bottom: 8px;">1. Information We Collect</h3>
+                <h3 class="policy-section-title">1. Information We Collect</h3>
                 <p>We collect the following personal information when you register:</p>
-                <ul style="margin-left: 20px; margin-top: 8px;">
+                <ul class="policy-list">
                     <li>Full Name</li>
                     <li>Email Address</li>
                     <li>Contact Number</li>
                     <li>Home Address</li>
                 </ul>
                 <br>
-                <h3 style="margin-top: 16px; margin-bottom: 8px;">2. How We Use Your Information</h3>
+                <h3 class="policy-section-title">2. How We Use Your Information</h3>
                 <p>Your information is used to:</p>
-                <ul style="margin-left: 20px; margin-top: 8px;">
+                <ul class="policy-list">
                     <li>Process your enrollment and manage your student account</li>
                     <li>Schedule driving lessons and communicate important updates</li>
                     <li>Maintain accurate records for regulatory compliance</li>
                     <li>Improve our services and customer support</li>
                 </ul>
                 <br>
-                <h3 style="margin-top: 16px; margin-bottom: 8px;">3. Data Security</h3>
+                <h3 class="policy-section-title">3. Data Security</h3>
                 <p>We implement industry-standard security measures to protect your data from unauthorized access, alteration, or disclosure. Your password is encrypted and never stored in plain text.</p>
                 <br>
-                <h3 style="margin-top: 16px; margin-bottom: 8px;">4. Data Sharing</h3>
+                <h3 class="policy-section-title">4. Data Sharing</h3>
                 <p>We do not sell, rent, or share your personal information with third parties except:</p>
-                <ul style="margin-left: 20px; margin-top: 8px;">
+                <ul class="policy-list">
                     <li>When required by law or government authorities</li>
                     <li>With your explicit consent</li>
                     <li>To licensed instructors within our driving school for lesson coordination</li>
                 </ul>
                 <br>
-                <h3 style="margin-top: 16px; margin-bottom: 8px;">5. Your Rights</h3>
+                <h3 class="policy-section-title">5. Your Rights</h3>
                 <p>You have the right to:</p>
-                <ul style="margin-left: 20px; margin-top: 8px;">
+                <ul class="policy-list">
                     <li>Access and review your personal information</li>
                     <li>Request corrections to inaccurate data</li>
                     <li>Request deletion of your account and data</li>
                     <li>Withdraw consent at any time</li>
                 </ul>
                 <br>
-                <h3 style="margin-top: 16px; margin-bottom: 8px;">6. Contact Us</h3>
+                <h3 class="policy-section-title">6. Contact Us</h3>
                 <p>For questions or concerns about your data privacy, contact us at:</p>
-                <p style="margin-top: 8px;"><strong>Email:</strong> {{ $school->contact_email ?? 'privacy@driveedhub.com' }}</p>
+                <p class="policy-contact-email"><strong>Email:</strong> {{ $school->contact_email ?? 'privacy@driveedhub.com' }}</p>
                 <p><strong>Phone:</strong> {{ $school->contact_number ?? 'N/A' }}</p>
             </div>
-            <button onclick="closePrivacy()" style="margin-top: 20px; background: {{ $primaryColor }}; color: white; border: none; padding: 10px 24px; border-radius: 6px; cursor: pointer; width: 100%;">I Understand</button>
+            <button type="button" onclick="closePrivacy()" class="policy-modal-btn">I Understand</button>
         </div>
     </div>
 
     <!-- Terms and Conditions Modal -->
-    <div id="termsModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; overflow-y: auto;">
-        <div style="background: white; max-width: 600px; margin: 50px auto; border-radius: 8px; padding: 24px; position: relative;">
-            <button onclick="closeTerms()" style="position: absolute; top: 16px; right: 16px; background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">&times;</button>
-            <h2 style="margin-bottom: 16px; color: {{ $primaryColor }};">Terms and Conditions</h2>
-            <div style="line-height: 1.6; font-size: 14px; color: #333;">
+    <div id="termsModal" class="policy-modal">
+        <div class="policy-modal-card">
+            <button type="button" class="modal-icon-close policy-modal-close" aria-label="Close terms and conditions" onclick="closeTerms()">&times;</button>
+            <h2 class="policy-modal-title">Terms and Conditions</h2>
+            <div class="policy-modal-content">
                 <p><strong>Effective Date:</strong> {{ date('F Y') }}</p>
                 <br>
                 <p>By creating an account with {{ $schoolName }}, you agree to the following terms and conditions:</p>
                 <br>
-                <h3 style="margin-top: 16px; margin-bottom: 8px;">1. Account Registration</h3>
-                <ul style="margin-left: 20px; margin-top: 8px;">
+                <h3 class="policy-section-title">1. Account Registration</h3>
+                <ul class="policy-list">
                     <li>You must provide accurate and complete information during registration</li>
                     <li>You are responsible for maintaining the confidentiality of your account credentials</li>
                     <li>You must be at least 18 years old or have parental consent to register</li>
                     <li>One person may only maintain one active account</li>
                 </ul>
                 <br>
-                <h3 style="margin-top: 16px; margin-bottom: 8px;">2. Student Obligations</h3>
-                <ul style="margin-left: 20px; margin-top: 8px;">
+                <h3 class="policy-section-title">2. Student Obligations</h3>
+                <ul class="policy-list">
                     <li>Attend scheduled lessons on time or provide advance notice for cancellations</li>
                     <li>Follow all safety instructions provided by instructors</li>
                     <li>Treat instructors, staff, and school property with respect</li>
                     <li>Complete required theoretical and practical training hours</li>
                 </ul>
                 <br>
-                <h3 style="margin-top: 16px; margin-bottom: 8px;">3. Payment and Fees</h3>
-                <ul style="margin-left: 20px; margin-top: 8px;">
+                <h3 class="policy-section-title">3. Payment and Fees</h3>
+                <ul class="policy-list">
                     <li>All fees must be paid according to the agreed schedule</li>
                     <li>Late cancellations (less than 24 hours notice) may incur fees</li>
                     <li>No-shows may result in forfeiture of lesson fees</li>
                     <li>Refund policies vary by course and will be explained during enrollment</li>
                 </ul>
                 <br>
-                <h3 style="margin-top: 16px; margin-bottom: 8px;">4. Safety and Conduct</h3>
-                <ul style="margin-left: 20px; margin-top: 8px;">
+                <h3 class="policy-section-title">4. Safety and Conduct</h3>
+                <ul class="policy-list">
                     <li>Students must not be under the influence of alcohol or drugs during lessons</li>
                     <li>Aggressive, abusive, or inappropriate behavior will result in immediate dismissal</li>
                     <li>Follow all traffic laws and instructor directions during practical lessons</li>
                 </ul>
                 <br>
-                <h3 style="margin-top: 16px; margin-bottom: 8px;">5. Liability</h3>
-                <ul style="margin-left: 20px; margin-top: 8px;">
+                <h3 class="policy-section-title">5. Liability</h3>
+                <ul class="policy-list">
                     <li>The driving school is not liable for personal injuries except in cases of proven negligence</li>
                     <li>Students are responsible for any damage to school vehicles caused by reckless behavior</li>
                     <li>Insurance coverage details will be provided upon enrollment</li>
                 </ul>
                 <br>
-                <h3 style="margin-top: 16px; margin-bottom: 8px;">6. Termination</h3>
+                <h3 class="policy-section-title">6. Termination</h3>
                 <p>We reserve the right to terminate your account if you:</p>
-                <ul style="margin-left: 20px; margin-top: 8px;">
+                <ul class="policy-list">
                     <li>Violate these terms and conditions</li>
                     <li>Provide false information</li>
                     <li>Engage in inappropriate or illegal conduct</li>
                     <li>Fail to make required payments</li>
                 </ul>
                 <br>
-                <h3 style="margin-top: 16px; margin-bottom: 8px;">7. Changes to Terms</h3>
+                <h3 class="policy-section-title">7. Changes to Terms</h3>
                 <p>We may update these terms at any time. Continued use of our services constitutes acceptance of updated terms.</p>
             </div>
-            <button onclick="closeTerms()" style="margin-top: 20px; background: {{ $primaryColor }}; color: white; border: none; padding: 10px 24px; border-radius: 6px; cursor: pointer; width: 100%;">I Agree</button>
+            <button type="button" onclick="closeTerms()" class="policy-modal-btn">I Agree</button>
         </div>
     </div>
 
     <script>
         function showPrivacy(e) {
-            e.preventDefault();
+            if (e && typeof e.preventDefault === 'function') {
+                e.preventDefault();
+            }
             document.getElementById('privacyModal').style.display = 'block';
             document.body.style.overflow = 'hidden';
         }
@@ -896,7 +1065,9 @@
         }
 
         function showTerms(e) {
-            e.preventDefault();
+            if (e && typeof e.preventDefault === 'function') {
+                e.preventDefault();
+            }
             document.getElementById('termsModal').style.display = 'block';
             document.body.style.overflow = 'hidden';
         }
@@ -913,6 +1084,24 @@
 
         document.getElementById('termsModal')?.addEventListener('click', function(e) {
             if (e.target === this) closeTerms();
+        });
+
+        function togglePasswordVisibility(inputId, trigger) {
+            const input = document.getElementById(inputId);
+            if (!input) {
+                return;
+            }
+
+            const isHidden = input.type === 'password';
+            input.type = isHidden ? 'text' : 'password';
+            trigger.setAttribute('aria-pressed', isHidden ? 'true' : 'false');
+            trigger.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+        }
+
+        document.querySelectorAll('[data-password-toggle]').forEach(function(trigger) {
+            trigger.addEventListener('click', function() {
+                togglePasswordVisibility(trigger.getAttribute('data-password-toggle'), trigger);
+            });
         });
     </script>
 </body>

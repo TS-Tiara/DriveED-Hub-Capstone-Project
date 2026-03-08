@@ -15,6 +15,20 @@ if (! function_exists('current_school')) {
             return $school;
         }
 
+        if (is_numeric($school)) {
+            $resolvedSchool = School::find((int) $school);
+            if ($resolvedSchool instanceof School) {
+                return $resolvedSchool;
+            }
+        }
+
+        if (is_string($school) && $school !== '') {
+            $resolvedSchool = School::where('slug', $school)->first();
+            if ($resolvedSchool instanceof School) {
+                return $resolvedSchool;
+            }
+        }
+
         $sessionSchoolId = $request?->session()?->get('school_id');
         if ($sessionSchoolId) {
             return School::find($sessionSchoolId);

@@ -8,17 +8,23 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use App\Models\EnrollmentRequest;
+use App\Models\School;
 
 class EnrollmentRequestReceived extends Mailable
 {
     use Queueable, SerializesModels;
 
+    public $enrollment;
+    public $school;
+
     /**
      * Create a new message instance.
      */
-    public function __construct()
+    public function __construct(EnrollmentRequest $enrollment, School $school)
     {
-        //
+        $this->enrollment = $enrollment;
+        $this->school = $school;
     }
 
     /**
@@ -27,7 +33,7 @@ class EnrollmentRequestReceived extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Enrollment Request Received',
+            subject: $this->school->name . ' - Enrollment Request Received',
         );
     }
 
@@ -37,7 +43,7 @@ class EnrollmentRequestReceived extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'view.name',
+            view: 'emails.enrollment-request-received',
         );
     }
 

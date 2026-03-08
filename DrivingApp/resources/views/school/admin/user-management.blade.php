@@ -8,15 +8,7 @@
     $settings = $school?->schoolSetting;
     $schoolName = $school->name ?? 'Driving School';
     
-    // Calculate statistics
-    $totalStudents = $students->count();
-    $activeStudents = $students->where('status', 'active')->count();
-    $inactiveStudents = $students->where('status', 'inactive')->count();
-    
-    $totalInstructors = $instructors->count();
-    $activeInstructors = $instructors->where('status', 'active')->count();
-    $inactiveInstructors = $instructors->where('status', 'inactive')->count();
-    
+    // Statistics are now passed from the controller to ensure accuracy with pagination
     $totalUsers = $totalStudents + $totalInstructors;
     $totalActive = $activeStudents + $activeInstructors;
     $totalInactive = $inactiveStudents + $inactiveInstructors;
@@ -45,6 +37,12 @@
         font-weight: 600;
         color: #1f2937;
         margin: 0;
+    }
+
+    .page-subtitle {
+        color: #6b7280;
+        font-size: 0.9rem;
+        margin-top: 5px;
     }
     
     /* Statistics Cards - Using shared styles from admin-styles.blade.php */
@@ -78,54 +76,6 @@
         color: #b45309;
     }
     
-    /* Tabs */
-    .tabs-container {
-        margin-bottom: 25px;
-        border-bottom: 2px solid #e1e5e9;
-    }
-    
-    .tabs {
-        display: flex;
-        gap: 10px;
-    }
-    
-    .tab {
-        padding: 12px 24px;
-        background: transparent;
-        border: none;
-        border-bottom: 3px solid transparent;
-        color: #666;
-        font-size: 1rem;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-    
-    .tab:hover {
-        color: #667eea;
-        background: rgba(102, 126, 234, 0.05);
-    }
-    
-    .tab.active {
-        color: #667eea;
-        border-bottom-color: #667eea;
-        font-weight: 600;
-    }
-    
-    .tab-content {
-        display: none;
-    }
-    
-    .tab-content.active {
-        display: block;
-        animation: fadeIn 0.3s ease;
-    }
-    
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    
     /* Action Buttons */
     .action-bar {
         display: flex;
@@ -141,6 +91,21 @@
         position: relative;
         flex: 1;
         max-width: 400px;
+    }
+
+    .control-label {
+        display: block;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #4b5563;
+        margin-bottom: 6px;
+    }
+
+    .action-controls {
+        display: flex;
+        align-items: flex-end;
+        gap: 10px;
+        flex-wrap: wrap;
     }
     
     .search-box input {
@@ -158,7 +123,7 @@
     }
     
     .search-box::after {
-        content: "🔍";
+        content: "";
         position: absolute;
         right: 15px;
         top: 50%;
@@ -190,18 +155,48 @@
         transform: translateY(-2px);
         box-shadow: 0 6px 20px rgba(0,0,0,0.18);
     }
+
+    .icon-24 {
+        width: 24px;
+        height: 24px;
+    }
+
+    .icon-18 {
+        width: 18px;
+        height: 18px;
+    }
+
+    .icon-14 {
+        width: 14px;
+        height: 14px;
+    }
     
     /* Table Styles */
     .table-container {
         background: white;
         border-radius: 12px;
-        overflow: hidden;
+        overflow-x: auto;
+        overflow-y: visible;
+        -webkit-overflow-scrolling: touch;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     
     table {
         width: 100%;
+        min-width: 900px;
         border-collapse: collapse;
+    }
+
+    .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        border: 0;
+        white-space: nowrap;
     }
     
     thead {
@@ -246,15 +241,63 @@
         background: #f8d7da;
         color: #721c24;
     }
-    
+
+    .role-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+
+    .role-student {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .role-instructor {
+        background: #ede9fe;
+        color: #5b21b6;
+    }
+
+    .branch-label {
+        font-size: 0.85rem;
+    }
+
+    .branch-assigned {
+        color: #374151;
+    }
+
+    .branch-unassigned {
+        color: #9ca3af;
+    }
+
     .btn-action {
         padding: 6px 12px;
-        margin: 0 3px;
+        margin: 0;
         border: none;
         border-radius: 6px;
         cursor: pointer;
         font-size: 0.9rem;
         transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1.2;
+        white-space: nowrap;
+    }
+
+    .actions-cell {
+        min-width: 220px;
+    }
+
+    .actions-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: center;
     }
     
     .btn-edit {
@@ -441,16 +484,27 @@
         font-size: 1.2rem;
         color: #666;
     }
-    
-    /* Export Buttons */
-    .export-buttons {
+
+    .pagination-groups {
         display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .pagination-title {
+        font-size: 0.9rem;
+        margin-bottom: 5px;
+        color: #6b7280;
     }
     
-    .btn-export {
-        padding: 10px 16px;
+    /* Export Dropdown */
+    .export-dropdown {
+        position: relative;
+        display: inline-block;
+    }
+
+    .btn-export-trigger {
+        padding: 10px 18px;
         border: none;
         border-radius: 8px;
         font-size: 0.9rem;
@@ -460,30 +514,87 @@
         display: flex;
         align-items: center;
         gap: 8px;
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        color: white;
+        box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
+    }
+
+    .btn-export-trigger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+    }
+
+    .btn-export-trigger svg {
+        transition: transform 0.2s;
+    }
+
+    .export-dropdown.open .btn-export-trigger svg.chevron {
+        transform: rotate(180deg);
+    }
+
+    .export-dropdown-menu {
+        display: none;
+        position: absolute;
+        top: calc(100% + 6px);
+        right: 0;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        border: 1px solid #e5e7eb;
+        min-width: 220px;
+        z-index: 100;
+        overflow: hidden;
+        animation: dropdownFadeIn 0.15s ease;
+    }
+
+    @keyframes dropdownFadeIn {
+        from { opacity: 0; transform: translateY(-6px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .export-dropdown.open .export-dropdown-menu {
+        display: block;
+    }
+
+    .export-dropdown-menu .dropdown-header {
+        padding: 10px 16px 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #9ca3af;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .export-dropdown-menu .dropdown-divider {
+        height: 1px;
+        background: #f3f4f6;
+        margin: 4px 0;
+    }
+
+    .export-dropdown-menu a {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 16px;
+        font-size: 0.88rem;
+        color: #374151;
         text-decoration: none;
+        transition: background 0.15s;
     }
-    
-    .btn-export-pdf {
-        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-        color: white;
+
+    .export-dropdown-menu a:hover {
+        background: #f9fafb;
     }
-    
-    .btn-export-pdf:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
-        color: white;
+
+    .export-dropdown-menu a .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
     }
-    
-    .btn-export-excel {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        color: white;
-    }
-    
-    .btn-export-excel:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-        color: white;
-    }
+
+    .export-dropdown-menu a .dot.pdf  { background: #ef4444; }
+    .export-dropdown-menu a .dot.excel { background: #10b981; }
     
     /* Mobile Responsive Styles */
     @media (max-width: 768px) {
@@ -533,18 +644,30 @@
             padding: 12px;
         }
         
+        .action-bar > div:last-child {
+            flex-direction: row;
+            width: auto;
+        }
+
+        .action-controls {
+            width: 100%;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 8px;
+        }
+        
         .search-box {
             max-width: 100%;
             width: 100%;
         }
-        
-        .export-buttons {
-            width: 100%;
-            justify-content: center;
+
+        .control-label {
+            font-size: 0.8rem;
+            margin-bottom: 4px;
         }
         
         .btn-create {
-            width: 100%;
+            width: auto;
             justify-content: center;
         }
         
@@ -554,16 +677,22 @@
         
         table {
             font-size: 0.85rem;
+            min-width: 780px;
         }
         
         th, td {
             padding: 10px 8px;
+            white-space: nowrap;
         }
         
         .btn-action {
             padding: 5px 8px;
             font-size: 0.8rem;
-            margin: 2px;
+            margin: 0;
+        }
+
+        .actions-group {
+            gap: 4px;
         }
         
         .status-badge {
@@ -636,22 +765,19 @@
         
         table {
             font-size: 0.8rem;
+            min-width: 720px;
         }
         
         th, td {
             padding: 8px 6px;
+            white-space: nowrap;
         }
         
         .btn-action {
             padding: 4px 6px;
             font-size: 0.75rem;
         }
-        
-        .btn-export {
-            padding: 8px 12px;
-            font-size: 0.8rem;
-        }
-        
+
         .form-group label {
             font-size: 0.9rem;
         }
@@ -662,6 +788,8 @@
             font-size: 0.95rem;
         }
     }
+
+    /* Pagination styles are inherited from shared admin-styles */
 </style>
 
 <div class="user-management-container">
@@ -669,20 +797,13 @@
     <div class="page-header">
         <div class="page-header-left">
             <h1 class="page-title">User Management</h1>
-        </div>
-        <div class="export-buttons">
-            <a href="{{ $schoolRoute('admin.exports.students.pdf') }}" class="btn-export btn-export-pdf">
-                📄 Students PDF
-            </a>
-            <a href="{{ $schoolRoute('admin.exports.students.excel') }}" class="btn-export btn-export-excel">
-                📊 Students Excel
-            </a>
+            <p class="page-subtitle">Manage students and instructors in your driving school</p>
         </div>
     </div>
     
     <!-- Statistics Cards -->
     <div class="stats-grid">
-        <div class="stat-card total active" onclick="filterUsers('all', this)">
+        <div class="stat-card total" onclick="filterUsers('all', this)">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -690,12 +811,12 @@
                         <div class="stat-value">{{ $totalUsers }}</div>
                     </div>
                     <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                        <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                         </svg>
                     </div>
                 </div>
-                <div class="stat-detail"><strong>{{ $totalStudents }}</strong> Students · <strong>{{ $totalInstructors }}</strong> Instructors</div>
+                <div class="stat-detail"><strong>{{ $totalStudents }}</strong> Students &middot; <strong>{{ $totalInstructors }}</strong> Instructors</div>
             </div>
         </div>
         
@@ -707,12 +828,12 @@
                         <div class="stat-value">{{ $totalActive }}</div>
                     </div>
                     <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                        <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
                 </div>
-                <div class="stat-detail"><strong>{{ $activeStudents }}</strong> Students · <strong>{{ $activeInstructors }}</strong> Instructors</div>
+                <div class="stat-detail"><strong>{{ $activeStudents }}</strong> Students &middot; <strong>{{ $activeInstructors }}</strong> Instructors</div>
             </div>
         </div>
         
@@ -724,12 +845,12 @@
                         <div class="stat-value">{{ $totalInactive }}</div>
                     </div>
                     <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                        <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
                 </div>
-                <div class="stat-detail"><strong>{{ $inactiveStudents }}</strong> Students · <strong>{{ $inactiveInstructors }}</strong> Instructors</div>
+                <div class="stat-detail"><strong>{{ $inactiveStudents }}</strong> Students &middot; <strong>{{ $inactiveInstructors }}</strong> Instructors</div>
             </div>
         </div>
         
@@ -741,12 +862,12 @@
                         <div class="stat-value">{{ $totalStudents }}</div>
                     </div>
                     <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                        <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                         </svg>
                     </div>
                 </div>
-                <div class="stat-detail"><strong>{{ $activeStudents }}</strong> Active · <strong>{{ $inactiveStudents }}</strong> Inactive</div>
+                <div class="stat-detail"><strong>{{ $activeStudents }}</strong> Active &middot; <strong>{{ $inactiveStudents }}</strong> Inactive</div>
             </div>
         </div>
         
@@ -758,93 +879,144 @@
                         <div class="stat-value">{{ $totalInstructors }}</div>
                     </div>
                     <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+                        <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                         </svg>
                     </div>
                 </div>
-                <div class="stat-detail"><strong>{{ $activeInstructors }}</strong> Active · <strong>{{ $inactiveInstructors }}</strong> Inactive</div>
+                <div class="stat-detail"><strong>{{ $activeInstructors }}</strong> Active &middot; <strong>{{ $inactiveInstructors }}</strong> Inactive</div>
             </div>
         </div>
     </div>
     
     @if(session('success'))
     <div class="flash-message success">
-        <div class="flash-icon">✓</div>
+        <div class="flash-icon">&#10003;</div>
         <div class="flash-content">
             <div class="flash-title">Success!</div>
             <div class="flash-text">{{ session('success') }}</div>
         </div>
-        <button class="flash-close" onclick="this.parentElement.remove()">×</button>
+        <button class="flash-close" onclick="this.parentElement.remove()">&times;</button>
     </div>
     @endif
     
     @if(session('error'))
     <div class="flash-message error">
-        <div class="flash-icon">✕</div>
+        <div class="flash-icon">&#10005;</div>
         <div class="flash-content">
             <div class="flash-title">Error!</div>
             <div class="flash-text">{{ session('error') }}</div>
         </div>
-        <button class="flash-close" onclick="this.parentElement.remove()">×</button>
+        <button class="flash-close" onclick="this.parentElement.remove()">&times;</button>
     </div>
     @endif
     
     <!-- Students Section -->
-    <div id="students" class="user-section">
+    <div id="usersSection" class="user-section">
         <div class="action-bar">
             <div class="search-box">
-                <input type="text" id="studentSearch" placeholder="Search students by name or email..." onkeyup="filterTable('studentSearch', 'studentsTable')">
+                <label for="userSearch" class="control-label">Search Users</label>
+                <input type="text" id="userSearch" placeholder="Search users by name, email, or role..." onkeyup="filterTable('userSearch', 'usersTable')">
             </div>
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <a href="{{ route('exports.students.pdf', $school->slug) }}" class="btn-create" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); text-decoration: none;">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 20px; height: 20px;">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>
-                    Export PDF
-                </a>
-                <a href="{{ route('exports.students.excel', $school->slug) }}" class="btn-create" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); text-decoration: none;">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 20px; height: 20px;">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
-                    Export Excel
-                </a>
+            <div class="action-controls">
+                @if(isset($branches) && $branches->count() > 0)
+                <label for="branchFilter" class="control-label">Branch Filter</label>
+                <select id="branchFilter" onchange="filterByBranch()" style="padding: 10px 14px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 0.9rem; background: white; cursor: pointer;">
+                    <option value="">All Branches</option>
+                    <option value="unassigned">Unassigned</option>
+                    @foreach($branches as $branch)
+                        <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                    @endforeach
+                </select>
+                @endif
+                <div class="export-dropdown" id="exportDropdown">
+                    <button class="btn-export-trigger" onclick="toggleExportDropdown()">
+                        <svg class="icon-18" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        Export
+                        <svg class="chevron icon-14" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div class="export-dropdown-menu">
+                        <div class="dropdown-header">Students</div>
+                        <a href="{{ school_route('admin.exports.students.pdf') }}">
+                            <span class="dot pdf"></span> Students (PDF)
+                        </a>
+                        <a href="{{ school_route('admin.exports.students.excel') }}">
+                            <span class="dot excel"></span> Students (Excel)
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <div class="dropdown-header">Instructors</div>
+                        <a href="{{ school_route('admin.exports.instructors.pdf') }}">
+                            <span class="dot pdf"></span> Instructors (PDF)
+                        </a>
+                        <a href="{{ school_route('admin.exports.instructors.excel') }}">
+                            <span class="dot excel"></span> Instructors (Excel)
+                        </a>
+                    </div>
+                </div>
                 <button class="btn-create" onclick="openCreateStudentModal()">
-                    <i class="bi bi-person-plus"></i> Add New Student
+                    <svg class="icon-18" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+                    Add Student
+                </button>
+                <button class="btn-create" onclick="openCreateInstructorModal()">
+                    <svg class="icon-18" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+                    Add Instructor
                 </button>
             </div>
         </div>
         
         <div class="table-container">
-            @if($students->count() > 0)
-                <table id="studentsTable">
+            @if($users->count() > 0)
+                <table id="usersTable">
                     <thead>
                         <tr>
                             <th>Name</th>
                             <th>Email</th>
                             <th>Contact</th>
-                            <th>Address</th>
+                            <th>Role</th>
+                            <th>Branch</th>
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($students as $student)
-                        <tr>
-                            <td><strong>{{ $student->name }}</strong></td>
-                            <td>{{ $student->email }}</td>
-                            <td>{{ $student->contact_number ?? 'N/A' }}</td>
-                            <td>{{ $student->address ?? 'N/A' }}</td>
+                        @foreach($users as $user)
+                        <tr data-role="{{ $user->role }}" data-status="{{ $user->status }}" data-branch="{{ $user->branch_id ?? 'unassigned' }}">
+                            <td><strong>{{ $user->name }}</strong></td>
+                            <td>{{ $user->email }}</td>
+                            <td>{{ $user->contact ?? 'N/A' }}</td>
                             <td>
-                                <span class="status-badge status-{{ $student->status }}">
-                                    {{ ucfirst($student->status) }}
+                                <span class="role-badge role-{{ $user->role }}">
+                                    {{ ucfirst($user->role) }}
                                 </span>
                             </td>
                             <td>
-                                <button class="btn-action btn-edit" onclick="editStudent({{ $student->id }}, '{{ $student->name }}', '{{ $student->email }}', '{{ $student->contact_number }}', '{{ $student->address }}')" >Edit</button>
-                                <button class="btn-action btn-toggle" onclick="toggleStudentStatus({{ $student->id }}, '{{ $student->status }}')">
-                                    {{ $student->status === 'active' ? 'Deactivate' : 'Activate' }}
-                                </button>
+                                @php
+                                    $branchName = $user->branch_id ? ($branches->firstWhere('id', $user->branch_id)?->name ?? 'Unknown') : null;
+                                @endphp
+                                <span class="branch-label {{ $branchName ? 'branch-assigned' : 'branch-unassigned' }}">{{ $branchName ?? 'Unassigned' }}</span>
+                            </td>
+                            <td>
+                                <span class="status-badge status-{{ $user->status }}">
+                                    {{ ucfirst($user->status) }}
+                                </span>
+                            </td>
+                            <td class="actions-cell">
+                                <div class="actions-group">
+                                @if($user->role === 'student')
+                                    <button class="btn-action btn-edit" data-action="edit-student" data-id="{{ $user->id }}" data-name="{{ $user->name }}" data-email="{{ $user->email }}" data-contact="{{ $user->contact }}" data-address="{{ $user->address }}" data-branch="{{ $user->branch_id }}">Edit</button>
+                                    <button class="btn-action btn-toggle" data-action="toggle-student-status" data-id="{{ $user->id }}" data-status="{{ $user->status }}">
+                                        {{ $user->status === 'active' ? 'Deactivate' : 'Activate' }}
+                                    </button>
+                                @else
+                                    <button class="btn-action btn-edit" data-action="edit-instructor" data-id="{{ $user->id }}" data-name="{{ $user->name }}" data-email="{{ $user->email }}" data-contact="{{ $user->contact }}" data-license="{{ $user->license_number }}" data-branch="{{ $user->branch_id }}">Edit</button>
+                                    <button class="btn-action btn-toggle" data-action="toggle-instructor-status" data-id="{{ $user->id }}" data-status="{{ $user->status }}">
+                                        {{ $user->status === 'active' ? 'Deactivate' : 'Activate' }}
+                                    </button>
+                                    <button class="btn-action btn-toggle" data-action="toggle-instructor-availability" data-id="{{ $user->id }}" data-availability="{{ $user->availability }}">
+                                        {{ $user->availability === 'available' ? 'Mark Unavailable' : 'Mark Available' }}
+                                    </button>
+                                @endif
+                                </div>
                             </td>
                         </tr>
                         @endforeach
@@ -853,68 +1025,23 @@
             @else
                 <div class="empty-state">
                     <div class="empty-state-icon"></div>
-                    <div class="empty-state-text">No students found. Add your first student to get started!</div>
+                    <div class="empty-state-text">No users found. Add your first student or instructor to get started!</div>
                 </div>
             @endif
-        </div>
-    </div>
-    
-    <!-- Instructors Section -->
-    <div id="instructors" class="user-section">
-        <div class="action-bar">
-            <div class="search-box">
-                <input type="text" id="instructorSearch" placeholder="Search instructors by name or email..." onkeyup="filterTable('instructorSearch', 'instructorsTable')">
-            </div>
-            <button class="btn-create" onclick="openCreateInstructorModal()">
-                <i class="bi bi-person-plus"></i> Add New Instructor
-            </button>
         </div>
         
-        <div class="table-container">
-            @if($instructors->count() > 0)
-                <table id="instructorsTable">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Contact</th>
-                            <th>License Number</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($instructors as $instructor)
-                        <tr>
-                            <td><strong>{{ $instructor->name }}</strong></td>
-                            <td>{{ $instructor->email }}</td>
-                            <td>{{ $instructor->contact_number ?? 'N/A' }}</td>
-                            <td>{{ $instructor->license_number ?? 'N/A' }}</td>
-                            <td>
-                                <span class="status-badge status-{{ $instructor->status }}">
-                                    {{ ucfirst($instructor->status) }}
-                                </span>
-                            </td>
-                            <td>
-                                <button class="btn-action btn-edit" onclick="editInstructor({{ $instructor->id }}, '{{ $instructor->name }}', '{{ $instructor->email }}', '{{ $instructor->contact_number }}', '{{ $instructor->license_number }}')">Edit</button>
-                                <button class="btn-action btn-toggle" onclick="toggleInstructorStatus({{ $instructor->id }}, '{{ $instructor->status }}')">
-                                    {{ $instructor->status === 'active' ? 'Deactivate' : 'Activate' }}
-                                </button>
-                                <button class="btn-action btn-toggle" onclick="toggleInstructorAvailability({{ $instructor->id }}, '{{ $instructor->availability }}')">
-                                    {{ $instructor->availability === 'available' ? 'Mark Unavailable' : 'Mark Available' }}
-                                </button>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            @else
-                <div class="empty-state">
-                    <div class="empty-state-icon"></div>
-                    <div class="empty-state-text">No instructors found. Add your first instructor to get started!</div>
+        @if($users->count() > 0)
+            <div class="mt-4 pagination-groups">
+                <div>
+                    <h4 style="font-size: 0.9rem; margin-bottom: 5px; color: #6b7280;">
+                        Showing {{ $users->firstItem() ?? 0 }}-{{ $users->lastItem() ?? 0 }} of {{ $users->total() }} users
+                    </h4>
+                    @if($users->hasPages())
+                        {!! $users->links('vendor.pagination.drivingapp') !!}
+                    @endif
                 </div>
-            @endif
-        </div>
+            </div>
+        @endif
     </div>
 </div>
 
@@ -922,7 +1049,7 @@
 <div id="createStudentModal" class="modal">
     <div class="modal-content">
         <h3>Create New Student</h3>
-        <form method="POST" action="{{ $schoolRoute('admin.storeAccount') }}">
+        <form method="POST" action="{{ school_route('admin.storeAccount') }}">
             @csrf
             <div class="form-group">
                 <label>Name:</label>
@@ -944,6 +1071,17 @@
                 <label>Address:</label>
                 <input type="text" name="address">
             </div>
+            @if(isset($branches) && $branches->count() > 0)
+            <div class="form-group">
+                <label>Branch:</label>
+                <select name="branch_id" class="branch-modal-select">
+                    <option value="">No Branch</option>
+                    @foreach($branches as $branch)
+                        <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            @endif
             <input type="hidden" name="role" value="student">
             <div class="modal-buttons">
                 <button type="submit" class="btn-create">Save</button>
@@ -976,6 +1114,17 @@
                 <label>Address:</label>
                 <input type="text" id="edit_student_address" name="address">
             </div>
+            @if(isset($branches) && $branches->count() > 0)
+            <div class="form-group">
+                <label>Branch:</label>
+                <select id="edit_student_branch" name="branch_id" class="branch-modal-select">
+                    <option value="">No Branch</option>
+                    @foreach($branches as $branch)
+                        <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            @endif
             <div class="modal-buttons">
                 <button type="submit" class="btn-create">Update</button>
                 <button type="button" class="btn-cancel" onclick="closeEditStudentModal()">Cancel</button>
@@ -988,7 +1137,7 @@
 <div id="createInstructorModal" class="modal">
     <div class="modal-content">
         <h3>Create New Instructor</h3>
-        <form method="POST" action="{{ $schoolRoute('admin.storeAccount') }}">
+        <form method="POST" action="{{ school_route('admin.storeAccount') }}">
             @csrf
             <div class="form-group">
                 <label>Name:</label>
@@ -1010,6 +1159,17 @@
                 <label>License Number:</label>
                 <input type="text" name="license_number">
             </div>
+            @if(isset($branches) && $branches->count() > 0)
+            <div class="form-group">
+                <label>Branch:</label>
+                <select name="branch_id" class="branch-modal-select">
+                    <option value="">No Branch</option>
+                    @foreach($branches as $branch)
+                        <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            @endif
             <input type="hidden" name="role" value="instructor">
             <div class="modal-buttons">
                 <button type="submit" class="btn-create">Save</button>
@@ -1042,6 +1202,17 @@
                 <label>License Number:</label>
                 <input type="text" id="edit_instructor_license" name="license_number">
             </div>
+            @if(isset($branches) && $branches->count() > 0)
+            <div class="form-group">
+                <label>Branch:</label>
+                <select id="edit_instructor_branch" name="branch_id" class="branch-modal-select">
+                    <option value="">No Branch</option>
+                    @foreach($branches as $branch)
+                        <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            @endif
             <div class="modal-buttons">
                 <button type="submit" class="btn-create">Update</button>
                 <button type="button" class="btn-cancel" onclick="closeEditInstructorModal()">Cancel</button>
@@ -1056,113 +1227,45 @@
 
     // Initialize user management page
     function initializeUserManagementPage() {
-        // Any initialization code that needs to run on page load
         console.log('User Management page initialized');
     }
 
-    // Call initialization on DOMContentLoaded (initial page load)
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initializeUserManagementPage);
     } else {
-        // DOM already loaded (AJAX navigation), initialize immediately
         initializeUserManagementPage();
     }
 
-    // Filter Users by Type
+    // Filter Users by Type (via stat card clicks)
     function filterUsers(type, card) {
-        // Remove active class from all stat cards
-        document.querySelectorAll('.stat-card').forEach(c => {
-            c.classList.remove('active');
-        });
-        
-        // Add active class to clicked card
-        card.classList.add('active');
-        
-        // Show/hide sections based on filter
-        const studentsSection = document.getElementById('students');
-        const instructorsSection = document.getElementById('instructors');
-        
-        // Reset all rows to visible first
-        document.querySelectorAll('.table-container table tbody tr').forEach(row => {
-            row.style.display = '';
-        });
-        
-        if (type === 'all') {
-            studentsSection.style.display = 'block';
-            instructorsSection.style.display = 'block';
-        } else if (type === 'students') {
-            studentsSection.style.display = 'block';
-            instructorsSection.style.display = 'none';
-        } else if (type === 'instructors') {
-            studentsSection.style.display = 'none';
-            instructorsSection.style.display = 'block';
-        } else if (type === 'active') {
-            studentsSection.style.display = 'block';
-            instructorsSection.style.display = 'block';
-            filterByStatus('active');
-        } else if (type === 'inactive') {
-            studentsSection.style.display = 'block';
-            instructorsSection.style.display = 'block';
-            filterByStatus('inactive');
-        }
-    }
-    
-    // Filter by Status (Active/Inactive)
-    function filterByStatus(status) {
-        const tables = document.querySelectorAll('.table-container table tbody tr');
-        
-        tables.forEach(row => {
-            const statusSpan = row.querySelector('.status-badge');
-            if (statusSpan) {
-                const rowStatus = statusSpan.textContent.trim().toLowerCase();
-                row.style.display = (rowStatus === status) ? '' : 'none';
-            }
+        const rows = document.querySelectorAll('#usersTable tbody tr');
+
+        rows.forEach(row => {
+            const role = row.getAttribute('data-role');
+            const status = row.getAttribute('data-status');
+            let show = true;
+
+            if (type === 'students') show = (role === 'student');
+            else if (type === 'instructors') show = (role === 'instructor');
+            else if (type === 'active') show = (status === 'active');
+            else if (type === 'inactive') show = (status === 'inactive');
+            // 'all' -> show everything
+
+            row.style.display = show ? '' : 'none';
         });
     }
 
-    // Filter Users by Type
-    function filterUsers(type, card) {
-        // Remove active class from all stat cards
-        document.querySelectorAll('.stat-card').forEach(c => {
-            c.classList.remove('active');
-        });
-        
-        // Add active class to clicked card
-        card.classList.add('active');
-        
-        // Show/hide sections based on filter
-        const studentsSection = document.getElementById('students');
-        const instructorsSection = document.getElementById('instructors');
-        
-        if (type === 'all') {
-            studentsSection.style.display = 'block';
-            instructorsSection.style.display = 'block';
-        } else if (type === 'students') {
-            studentsSection.style.display = 'block';
-            instructorsSection.style.display = 'none';
-        } else if (type === 'instructors') {
-            studentsSection.style.display = 'none';
-            instructorsSection.style.display = 'block';
-        } else if (type === 'active') {
-            studentsSection.style.display = 'block';
-            instructorsSection.style.display = 'block';
-            filterByStatus('active');
-        } else if (type === 'inactive') {
-            studentsSection.style.display = 'block';
-            instructorsSection.style.display = 'block';
-            filterByStatus('inactive');
-        }
-    }
-    
-    // Filter by Status (Active/Inactive)
-    function filterByStatus(status) {
-        const tables = document.querySelectorAll('.table-container table tbody tr');
-        
-        tables.forEach(row => {
-            const statusBadge = row.querySelector('.badge');
-            if (statusBadge) {
-                const rowStatus = statusBadge.classList.contains('badge-active') ? 'active' : 'inactive';
-                row.style.display = (rowStatus === status) ? '' : 'none';
+    function filterByBranch() {
+        const val = document.getElementById('branchFilter').value;
+        const rows = document.querySelectorAll('#usersTable tbody tr');
+        rows.forEach(row => {
+            const branch = row.getAttribute('data-branch');
+            if (!val) {
+                row.style.display = '';
+            } else if (val === 'unassigned') {
+                row.style.display = (branch === 'unassigned' || !branch) ? '' : 'none';
+            } else {
+                row.style.display = (branch === val) ? '' : 'none';
             }
         });
     }
@@ -1172,6 +1275,7 @@
         const input = document.getElementById(searchId);
         const filter = input.value.toUpperCase();
         const table = document.getElementById(tableId);
+        if (!table) return;
         const tr = table.getElementsByTagName('tr');
         
         for (let i = 1; i < tr.length; i++) {
@@ -1203,19 +1307,49 @@
         document.getElementById('createStudentModal').style.display = 'none';
     }
     
-    function editStudent(id, name, email, contact, address) {
+    function editStudent(id, name, email, contact, address, branchId) {
         const form = document.getElementById('editStudentForm');
         form.action = `${studentBaseUrl}/${id}`;
-        document.getElementById('edit_student_name').value = name;
-        document.getElementById('edit_student_email').value = email;
+        document.getElementById('edit_student_name').value = name || '';
+        document.getElementById('edit_student_email').value = email || '';
         document.getElementById('edit_student_contact').value = contact || '';
         document.getElementById('edit_student_address').value = address || '';
+        const branchSelect = document.getElementById('edit_student_branch');
+        if (branchSelect) branchSelect.value = branchId || '';
         document.getElementById('editStudentModal').style.display = 'flex';
     }
     
     function closeEditStudentModal() {
         document.getElementById('editStudentModal').style.display = 'none';
     }
+    
+    // Export Dropdown
+    function toggleExportDropdown() {
+        document.getElementById('exportDropdown').classList.toggle('open');
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        const dropdown = document.getElementById('exportDropdown');
+        if (dropdown && !dropdown.contains(e.target)) {
+            dropdown.classList.remove('open');
+        }
+
+        const btn = e.target.closest('[data-action]');
+        if (!btn) return;
+        const action = btn.dataset.action;
+        if (action === 'edit-student') {
+            editStudent(btn.dataset.id, btn.dataset.name, btn.dataset.email, btn.dataset.contact, btn.dataset.address, btn.dataset.branch);
+        } else if (action === 'toggle-student-status') {
+            toggleStudentStatus(btn.dataset.id, btn.dataset.status);
+        } else if (action === 'edit-instructor') {
+            editInstructor(btn.dataset.id, btn.dataset.name, btn.dataset.email, btn.dataset.contact, btn.dataset.license, btn.dataset.branch);
+        } else if (action === 'toggle-instructor-status') {
+            toggleInstructorStatus(btn.dataset.id, btn.dataset.status);
+        } else if (action === 'toggle-instructor-availability') {
+            toggleInstructorAvailability(btn.dataset.id, btn.dataset.availability);
+        }
+    });
     
     function viewStudent(id) {
         Toast.info('Student details view coming soon!', 'Feature Info');
@@ -1260,13 +1394,15 @@
         document.getElementById('createInstructorModal').style.display = 'none';
     }
     
-    function editInstructor(id, name, email, contact, license) {
+    function editInstructor(id, name, email, contact, license, branchId) {
         const form = document.getElementById('editInstructorForm');
         form.action = `${instructorBaseUrl}/${id}`;
         document.getElementById('edit_instructor_name').value = name;
         document.getElementById('edit_instructor_email').value = email;
         document.getElementById('edit_instructor_contact').value = contact || '';
         document.getElementById('edit_instructor_license').value = license || '';
+        const branchSelect = document.getElementById('edit_instructor_branch');
+        if (branchSelect) branchSelect.value = branchId || '';
         document.getElementById('editInstructorModal').style.display = 'flex';
     }
     

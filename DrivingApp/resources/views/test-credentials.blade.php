@@ -315,7 +315,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🔐 Test Credentials</h1>
+            <h1>Test Credentials</h1>
             <p>{{ $school->name }} - Development Testing Accounts</p>
         </div>
 
@@ -323,14 +323,14 @@
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
-            <span>⚠️ DEVELOPMENT ONLY - These credentials are for testing purposes only. This page is disabled in production.</span>
+            <span>Warning: DEVELOPMENT ONLY - These credentials are for testing purposes only. This page is disabled in production.</span>
         </div>
 
         <div class="accounts-grid">
             <!-- Admin Account -->
             <div class="account-card admin">
                 <div class="account-header">
-                    <div class="account-icon">👤</div>
+                    <div class="account-icon"></div>
                     <div class="account-title">
                         <h3>Test Admin</h3>
                         <span class="badge">Admin</span>
@@ -354,13 +354,13 @@
                         </button>
                     </div>
                 </div>
-                <a href="{{ route('schools.admin.login', $school->slug) }}" class="login-btn">Login as Admin</a>
+                <a href="{{ route('schools.login', $school->slug) }}" class="login-btn">Login as Admin</a>
             </div>
 
             <!-- Instructor 1 -->
             <div class="account-card instructor">
                 <div class="account-header">
-                    <div class="account-icon">👨‍🏫</div>
+                    <div class="account-icon"></div>
                     <div class="account-title">
                         <h3>Test Instructor</h3>
                         <span class="badge">Instructor</span>
@@ -384,13 +384,13 @@
                         </button>
                     </div>
                 </div>
-                <a href="{{ route('schools.instructor.login', $school->slug) }}" class="login-btn">Login as Instructor</a>
+                <a href="{{ route('schools.login', $school->slug) }}" class="login-btn">Login as Instructor</a>
             </div>
 
             <!-- Instructor 2 -->
             <div class="account-card instructor">
                 <div class="account-header">
-                    <div class="account-icon">👨‍🏫</div>
+                    <div class="account-icon"></div>
                     <div class="account-title">
                         <h3>John Instructor</h3>
                         <span class="badge">Instructor</span>
@@ -414,13 +414,13 @@
                         </button>
                     </div>
                 </div>
-                <a href="{{ route('schools.instructor.login', $school->slug) }}" class="login-btn">Login as Instructor</a>
+                <a href="{{ route('schools.login', $school->slug) }}" class="login-btn">Login as Instructor</a>
             </div>
 
             <!-- Student 1 -->
             <div class="account-card student">
                 <div class="account-header">
-                    <div class="account-icon">🎓</div>
+                    <div class="account-icon"></div>
                     <div class="account-title">
                         <h3>Test Student</h3>
                         <span class="badge">Student (Approved)</span>
@@ -444,13 +444,13 @@
                         </button>
                     </div>
                 </div>
-                <a href="{{ route('schools.student.login', $school->slug) }}" class="login-btn">Login as Student</a>
+                <a href="{{ route('schools.login', $school->slug) }}" class="login-btn">Login as Student</a>
             </div>
 
             <!-- Student 2 -->
             <div class="account-card student">
                 <div class="account-header">
-                    <div class="account-icon">🎓</div>
+                    <div class="account-icon"></div>
                     <div class="account-title">
                         <h3>Jane Student</h3>
                         <span class="badge">Student (Approved)</span>
@@ -474,13 +474,13 @@
                         </button>
                     </div>
                 </div>
-                <a href="{{ route('schools.student.login', $school->slug) }}" class="login-btn">Login as Student</a>
+                <a href="{{ route('schools.login', $school->slug) }}" class="login-btn">Login as Student</a>
             </div>
 
             <!-- Guest 1 -->
             <div class="account-card guest">
                 <div class="account-header">
-                    <div class="account-icon">👤</div>
+                    <div class="account-icon"></div>
                     <div class="account-title">
                         <h3>Test Guest</h3>
                         <span class="badge">Guest (Pending)</span>
@@ -504,13 +504,15 @@
                         </button>
                     </div>
                 </div>
-                <a href="{{ route('schools.student.login', $school->slug) }}" class="login-btn">Login as Guest</a>
+                <a href="{{ route('schools.login', $school->slug) }}" class="login-btn">Login as Guest</a>
             </div>
 
             <!-- Guest 2 -->
             <div class="account-card guest">
                 <div class="account-header">
-                    <div class="account-icon">👤</div>
+                    <div class="account-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 20px; height: 20px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg></div>
                     <div class="account-title">
                         <h3>Mary Guest</h3>
                         <span class="badge">Guest (Pending)</span>
@@ -534,7 +536,7 @@
                         </button>
                     </div>
                 </div>
-                <a href="{{ route('schools.student.login', $school->slug) }}" class="login-btn">Login as Guest</a>
+                <a href="{{ route('schools.login', $school->slug) }}" class="login-btn">Login as Guest</a>
             </div>
         </div>
 
@@ -575,7 +577,7 @@
 
         // Display a welcome toast
         window.addEventListener('load', () => {
-            console.log('%c🔐 Test Credentials Loaded!', 'color: #667eea; font-size: 20px; font-weight: bold;');
+            console.log('%c🔒 Test Credentials Loaded!', 'color: #667eea; font-size: 20px; font-weight: bold;');
             console.log('%cAll accounts use password: "password"', 'color: #10b981; font-size: 14px;');
         });
     </script>

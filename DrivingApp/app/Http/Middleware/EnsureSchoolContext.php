@@ -6,6 +6,8 @@ use App\Models\School;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
 
 class EnsureSchoolContext
@@ -18,8 +20,14 @@ class EnsureSchoolContext
             return $next($request);
         }
 
-        // Skip school validation for logout route to prevent conflicts
-        if ($request->route()->getName() === 'schools.logout') {
+        // Block access to deactivated schools
+        if (array_key_exists('status', $school->getAttributes()) && $school->status !== 'active') {
+            abort(403, 'This school portal is currently unavailable.');
+        }
+
+        // Skip school validation for logout routes to prevent conflicts
+        $routeName = $request->route()?->getName();
+        if ($routeName && Str::endsWith($routeName, '.logout')) {
             return $next($request);
         }
 
@@ -42,13 +50,24 @@ class EnsureSchoolContext
         view()->share('schoolRoute', static function (string $name, array $parameters = []) use ($school) {
             $routeName = str_starts_with($name, 'schools.') ? $name : 'schools.' . $name;
 
-            return route($routeName, array_merge(['school' => $school], $parameters));
+            $candidates = [$routeName, $routeName . '.protected'];
+
+            foreach ($candidates as $candidate) {
+                if (Route::has($candidate)) {
+                    return route($candidate, array_merge(['school' => $school], $parameters));
+                }
+            }
+
+            // Fallback: try to build a URL path for the given name to avoid throwing
+            $fallbackPath = trim(str_replace('.', '/', preg_replace('/^schools\./', '', $routeName)), '/');
+
+            return url($school->slug . '/' . $fallbackPath);
         });
 
         foreach (['admin', 'instructor', 'student'] as $guard) {
             $user = Auth::guard($guard)->user();
 
-            if ($user && (int) $user->school_id !== (int) $school->id) {
+            if ($user && (int)$user->school_id !== (int)$school->id) {
                 Auth::guard($guard)->logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();

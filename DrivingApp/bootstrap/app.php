@@ -4,6 +4,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Session\TokenMismatchException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -22,6 +23,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'student.role' => \App\Http\Middleware\EnsureStudentRole::class,
             'system.admin' => \App\Http\Middleware\EnsureSystemAdmin::class,
             'redirect.system.admin' => \App\Http\Middleware\RedirectSystemAdmin::class,
+            'school.admin.only' => \App\Http\Middleware\EnsureSchoolAdminOnly::class,
+            'branch.access' => \App\Http\Middleware\EnsureBranchAccess::class,
+            'nocache' => \App\Http\Middleware\NoCache::class,
         ]);
         
         // Handle guest redirects for multi-tenant authentication
@@ -36,5 +40,18 @@ return Application::configure(basePath: dirname(__DIR__))
         });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Handle CSRF token mismatch (419) - redirect back instead of error page
+        $exceptions->renderable(function (TokenMismatchException $e, Request $request) {
+            // For AJAX requests, return JSON error
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'message' => 'Your session has expired. Please refresh the page.',
+                ], 419);
+            }
+
+            // For regular form submissions, redirect back with error
+            return redirect()->back()
+                ->withInput($request->except('_token', 'password', 'password_confirmation'))
+                ->withErrors(['session' => 'Your session has expired. Please try again.']);
+        });
     })->create();

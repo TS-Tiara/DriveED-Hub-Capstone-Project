@@ -325,6 +325,74 @@
     .btn-danger:hover {
         background: #b91c1c;
     }
+
+    .section-title-icon {
+        margin-right: 0.5rem;
+        color: #053d86;
+    }
+
+    .school-row-main {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .school-email {
+        font-size: 0.8rem;
+        color: #6b7280;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #6b7280;
+    }
+
+    .empty-state-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    .modal-section-divider {
+        margin: 20px 0;
+        border: none;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .modal-section-title {
+        margin-bottom: 16px;
+        color: #374151;
+        font-size: 1rem;
+    }
+
+    .danger-note {
+        margin-top: 10px;
+        color: #dc2626;
+        font-size: 0.85rem;
+    }
+
+    .modal-footer-centered {
+        justify-content: center;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .modal { max-width: 95%; margin: 10px; }
+        .modal-body { padding: 15px; }
+        .form-row { grid-template-columns: 1fr; gap: 10px; }
+        .modal-footer { flex-direction: column; }
+        .modal-footer .btn { width: 100%; min-height: 44px; }
+        .action-bar { flex-direction: column; gap: 10px; }
+        .search-box { max-width: 100%; }
+        .btn-action { width: 40px; height: 40px; min-height: 44px; min-width: 44px; }
+        .status-badge { padding: 6px 12px; }
+    }
+    
+    @media (max-width: 480px) {
+        .card-header { flex-direction: column; gap: 8px; }
+        .action-buttons { flex-wrap: wrap; }
+    }
 </style>
 @endsection
 
@@ -343,12 +411,13 @@
 <div class="card">
     <div class="card-header">
         <h3>
-            <i class="fas fa-building" style="margin-right: 0.5rem; color: #053d86;"></i>
+            <i class="fas fa-building section-title-icon"></i>
             All Schools ({{ $schools->total() }})
         </h3>
     </div>
     <div class="card-body">
         @if($schools->count() > 0)
+        <div class="table-container">
         <table>
             <thead>
                 <tr>
@@ -364,14 +433,14 @@
                 @foreach($schools as $school)
                 <tr>
                     <td>
-                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <div class="school-row-main">
                             <div class="school-icon">
                                 {{ strtoupper(substr($school->name, 0, 2)) }}
                             </div>
                             <div>
                                 <strong>{{ $school->name }}</strong>
                                 @if($school->email)
-                                <div style="font-size: 0.8rem; color: #6b7280;">{{ $school->email }}</div>
+                                <div class="school-email">{{ $school->email }}</div>
                                 @endif
                             </div>
                         </div>
@@ -389,14 +458,14 @@
                             <a href="/{{ $school->slug }}" target="_blank" class="btn-action btn-view" title="View School">
                                 <i class="fas fa-external-link-alt"></i>
                             </a>
-                            <form action="{{ route('system-admin.schools.toggle-status', $school) }}" method="POST" style="display: inline;">
+                            <form action="{{ route('system-admin.schools.toggle-status', $school) }}" method="POST" class="inline-form">
                                 @csrf
                                 @method('PATCH')
                                 <button type="submit" class="btn-action {{ ($school->status ?? 'active') === 'active' ? 'btn-deactivate' : 'btn-activate' }}" title="{{ ($school->status ?? 'active') === 'active' ? 'Deactivate' : 'Activate' }}">
                                     <i class="fas {{ ($school->status ?? 'active') === 'active' ? 'fa-ban' : 'fa-check' }}"></i>
                                 </button>
                             </form>
-                            <button type="button" class="btn-action btn-delete" onclick="confirmDelete('{{ $school->id }}', '{{ $school->name }}')" title="Delete School">
+                            <button type="button" class="btn-action btn-delete" data-action="delete-school" data-id="{{ $school->id }}" data-name="{{ $school->name }}" title="Delete School">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
@@ -405,10 +474,11 @@
                 @endforeach
             </tbody>
         </table>
+        </div>
         {{ $schools->appends(request()->query())->links() }}
         @else
-        <div style="text-align: center; padding: 3rem; color: #6b7280;">
-            <i class="fas fa-building" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+        <div class="empty-state">
+            <i class="fas fa-building empty-state-icon"></i>
             <p>No schools registered yet.</p>
         </div>
         @endif
@@ -416,11 +486,11 @@
 </div>
 
 <!-- Create School Modal -->
-<div class="modal-overlay" id="createSchoolModal">
+<div class="modal-overlay" id="createSchoolModal" role="dialog" aria-modal="true" aria-labelledby="createSchoolModalTitle" aria-hidden="true">
     <div class="modal">
         <div class="modal-header">
-            <h3><i class="fas fa-building" style="margin-right: 0.5rem; color: #053d86;"></i> Add Driving School</h3>
-            <button class="modal-close" onclick="closeModal('createSchoolModal')">&times;</button>
+            <h3 id="createSchoolModalTitle"><i class="fas fa-building section-title-icon"></i> Add Driving School</h3>
+            <button class="modal-close" onclick="closeModal('createSchoolModal')" aria-label="Close create school modal">&times;</button>
         </div>
         <form action="{{ route('system-admin.schools.store') }}" method="POST">
             @csrf
@@ -443,8 +513,8 @@
                     <textarea name="address" id="school_address" placeholder="Enter school address"></textarea>
                 </div>
                 
-                <hr style="margin: 20px 0; border: none; border-top: 1px solid #e5e7eb;">
-                <h4 style="margin-bottom: 16px; color: #374151; font-size: 1rem;">School Admin Account</h4>
+                <hr class="modal-section-divider">
+                <h4 class="modal-section-title">School Admin Account</h4>
                 
                 <div class="form-group">
                     <label for="admin_name">Admin Name</label>
@@ -470,12 +540,30 @@
 </div>
 
 <script>
+let activeModal = null;
+let modalTrigger = null;
+
 function openModal(id) {
-    document.getElementById(id).classList.add('active');
+    const modal = document.getElementById(id);
+    modalTrigger = document.activeElement;
+    modal.classList.add('active');
+    modal.setAttribute('aria-hidden', 'false');
+    activeModal = modal;
+
+    const firstFocusable = modal.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+    if (firstFocusable) {
+        firstFocusable.focus();
+    }
 }
 
 function closeModal(id) {
-    document.getElementById(id).classList.remove('active');
+    const modal = document.getElementById(id);
+    modal.classList.remove('active');
+    modal.setAttribute('aria-hidden', 'true');
+    activeModal = null;
+    if (modalTrigger) {
+        modalTrigger.focus();
+    }
 }
 
 // Auto-generate slug from name
@@ -491,35 +579,66 @@ document.getElementById('school_name').addEventListener('input', function() {
 
 // Close modal when clicking outside
 document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.setAttribute('aria-hidden', 'true');
     overlay.addEventListener('click', function(e) {
         if (e.target === this) {
-            this.classList.remove('active');
+            closeModal(this.id);
         }
     });
 });
 
-// Delete confirmation
-function confirmDelete(schoolId, schoolName) {
-    document.getElementById('deleteSchoolName').textContent = schoolName;
-    document.getElementById('deleteSchoolForm').action = '/system-admin/schools/' + schoolId;
+// Delete confirmation via event delegation (XSS-safe)
+document.addEventListener('click', function(e) {
+    const btn = e.target.closest('[data-action="delete-school"]');
+    if (!btn) return;
+    document.getElementById('deleteSchoolName').textContent = btn.dataset.name;
+    document.getElementById('deleteSchoolForm').action = '/system-admin/schools/' + btn.dataset.id;
     openModal('deleteSchoolModal');
-}
+});
+
+document.addEventListener('keydown', function(e) {
+    if (activeModal && e.key === 'Escape') {
+        e.preventDefault();
+        closeModal(activeModal.id);
+        return;
+    }
+
+    if (!activeModal || e.key !== 'Tab') {
+        return;
+    }
+
+    const focusable = Array.from(activeModal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'));
+    if (focusable.length === 0) {
+        return;
+    }
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+
+    if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+    }
+});
 </script>
 
 <!-- Delete Confirmation Modal -->
-<div class="modal-overlay delete-modal" id="deleteSchoolModal">
+<div class="modal-overlay delete-modal" id="deleteSchoolModal" role="dialog" aria-modal="true" aria-labelledby="deleteSchoolModalTitle" aria-hidden="true">
     <div class="modal">
         <div class="modal-body">
             <div class="warning-icon">
                 <i class="fas fa-exclamation-triangle"></i>
             </div>
-            <h4>Delete School?</h4>
+            <h4 id="deleteSchoolModalTitle">Delete School?</h4>
             <p>Are you sure you want to delete <strong id="deleteSchoolName"></strong>?</p>
-            <p style="margin-top: 10px; color: #dc2626; font-size: 0.85rem;">This will permanently delete all students, instructors, admins, courses, and bookings.</p>
+            <p class="danger-note">This will permanently delete all students, instructors, admins, courses, and schedules.</p>
         </div>
-        <div class="modal-footer" style="justify-content: center;">
+        <div class="modal-footer modal-footer-centered">
             <button type="button" class="btn-cancel" onclick="closeModal('deleteSchoolModal')">Cancel</button>
-            <form id="deleteSchoolForm" method="POST" style="display: inline;">
+            <form id="deleteSchoolForm" method="POST" class="inline-form">
                 @csrf
                 @method('DELETE')
                 <button type="submit" class="btn-danger"><i class="fas fa-trash"></i> Delete Permanently</button>

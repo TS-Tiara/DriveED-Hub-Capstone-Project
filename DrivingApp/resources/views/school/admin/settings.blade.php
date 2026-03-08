@@ -39,28 +39,6 @@
         margin: 0;
     }
 
-    /* Alert Styles */
-    .alert {
-        padding: 15px 20px;
-        border-radius: 8px;
-        margin-bottom: 20px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-
-    .alert-success {
-        background: #d1fae5;
-        color: #065f46;
-        border: 1px solid #6ee7b7;
-    }
-
-    .alert-danger {
-        background: #fee2e2;
-        color: #991b1b;
-        border: 1px solid #fca5a5;
-    }
-
     /* Settings Card */
     .settings-card {
         background: white;
@@ -269,6 +247,112 @@
         color: #374151;
     }
 
+    .form-control-compact {
+        padding: 10px;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 14px;
+    }
+
+    .form-row-two {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+
+    .checkbox-inline {
+        margin-right: 8px;
+    }
+
+    .login-preview-note {
+        background: #f0f9ff;
+        padding: 15px;
+        border-radius: 8px;
+        border-left: 4px solid #3b82f6;
+        margin-top: 20px;
+    }
+
+    .login-preview-note-title {
+        color: #1e40af;
+        display: block;
+        margin-bottom: 8px;
+    }
+
+    .login-preview-note-text {
+        color: #1e3a8a;
+        font-size: 0.9rem;
+        margin: 0;
+    }
+
+    .login-preview-note-code {
+        background: #dbeafe;
+        padding: 2px 6px;
+        border-radius: 4px;
+    }
+
+    .bg-image-group-hidden {
+        display: none;
+    }
+
+    .current-bg-wrap {
+        margin-top: 10px;
+    }
+
+    .current-bg-image {
+        max-width: 200px;
+        border-radius: 8px;
+        border: 2px solid #e5e7eb;
+    }
+
+    .current-bg-caption {
+        font-size: 0.85rem;
+        color: #666;
+        margin-top: 5px;
+    }
+
+    .opacity-control-row {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .opacity-range {
+        flex: 1;
+    }
+
+    .opacity-value {
+        min-width: 45px;
+        font-weight: 600;
+        color: #667eea;
+    }
+
+    .opacity-help {
+        color: #666;
+        font-size: 0.85rem;
+    }
+
+    .help-text-block {
+        display: block;
+        margin-top: 5px;
+    }
+
+    .help-text-muted {
+        color: #666;
+        font-size: 0.85rem;
+    }
+
+    .section-save-divider {
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 2px solid #e5e7eb;
+    }
+
+    .login-intro-text {
+        color: #6b7280;
+        font-size: 0.9rem;
+        margin-bottom: 20px;
+    }
+
     .save-button {
         width: 100%;
         padding: 12px;
@@ -457,6 +541,211 @@
         font-weight: 600;
     }
 
+    .tabs-container-frame {
+        margin-bottom: 30px;
+        background: white;
+        border-radius: 12px;
+        padding: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .tabs-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .preview-buttons-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .preview-buttons-note {
+        color: #6b7280;
+        font-size: 0.85rem;
+        margin-top: 15px;
+    }
+
+    .modal-preview-frame {
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .modal-preview-title {
+        margin: 0;
+        font-size: 1.2rem;
+    }
+
+    .modal-preview-subtitle {
+        margin: 8px 0 0 0;
+        opacity: 0.9;
+        font-size: 0.9rem;
+    }
+
+    .modal-preview-text {
+        margin: 0;
+        color: #6b7280;
+    }
+
+    .calendar-header-preview-shell {
+        padding: 20px 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+    }
+
+    .calendar-header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .calendar-nav-btn-shell {
+        padding: 10px 18px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        background: rgba(255, 255, 255, 0.15);
+        cursor: pointer;
+        font-weight: 600;
+    }
+
+    .calendar-month-shell {
+        font-size: 1.5rem;
+        font-weight: 700;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    .calendar-preview-title {
+        margin: 0 0 10px 0;
+        color: #374151;
+    }
+
+    .calendar-preview-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 8px;
+    }
+
+    .calendar-weekday-cell {
+        text-align: center;
+        font-weight: 600;
+        padding: 8px;
+        background: #f8f9fa;
+        border-radius: 4px;
+        font-size: 0.85rem;
+    }
+
+    .calendar-day-shell {
+        min-height: 60px;
+        padding: 8px;
+        background: white;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .calendar-day-shell.today-preview {
+        background: #fffbf0;
+        font-weight: 600;
+    }
+
+    .calendar-day-today-label {
+        font-size: 0.7rem;
+        opacity: 0.8;
+    }
+
+    .calendar-preview-note {
+        color: #6b7280;
+        font-size: 0.85rem;
+        margin-top: 10px;
+    }
+
+    .badge-preview-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .badge-preview-item {
+        border-radius: 6px;
+        color: white;
+    }
+
+    .badge-preview-note {
+        color: #6b7280;
+        font-size: 0.85rem;
+        margin-top: 15px;
+    }
+
+    .badge-icon-sm {
+        width: 16px;
+        height: 16px;
+    }
+
+    .color-preview-stack {
+        display: grid;
+        gap: 20px;
+    }
+
+    .color-preview-title {
+        margin: 0 0 10px 0;
+        color: #374151;
+    }
+
+    .background-preview-box {
+        width: 100%;
+        height: 150px;
+        border-radius: 8px;
+        border: 2px solid #d1d5db;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .background-preview-overlay {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #374151;
+        font-weight: 500;
+        text-shadow: 0 0 5px white, 0 0 10px white;
+    }
+
+    .swatches-stack {
+        display: grid;
+        gap: 15px;
+    }
+
+    .swatch-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .swatch-box {
+        width: 80px;
+        height: 80px;
+        border-radius: 8px;
+        border: 2px solid #d1d5db;
+    }
+
+    .swatch-note {
+        color: #6b7280;
+        font-size: 0.85rem;
+        margin: 4px 0 0 0;
+    }
+
+    .sidebar-preview-compact {
+        padding: 15px;
+    }
+
+    .sidebar-item-compact {
+        margin-bottom: 5px;
+    }
+
     /* Page Header Preview */
     .page-header-preview {
         padding: 20px;
@@ -584,8 +873,8 @@
     @endif
 
     <!-- Tab Navigation -->
-    <div class="tabs-container" style="margin-bottom: 30px; background: white; border-radius: 12px; padding: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-        <div class="tabs" style="display: flex; gap: 8px; flex-wrap: wrap;">
+    <div class="tabs-container tabs-container-frame">
+        <div class="tabs tabs-row">
             <button type="button" class="tab-btn active" onclick="switchTab('general')" data-tab="general">
                 General Settings
             </button>
@@ -605,39 +894,39 @@
                 <!-- Booking Settings -->
                 <div class="form-section">
                     <div class="section-header" onclick="toggleSection(this)">
-                        <h3 class="section-title">Booking Settings</h3>
+                        <h3 class="section-title">Scheduling Settings</h3>
                     </div>
                     
                     <div class="section-inputs">
                     <div class="form-group">
-                        <label class="form-label">Advance Booking Days</label>
+                        <label class="form-label">Advance Scheduling Days</label>
                         <input type="number" class="number-input" name="advance_booking_days" value="{{ old('advance_booking_days', $settings->advance_booking_days ?? 0) }}" min="0" max="30">
-                        <small class="text-muted" style="display: block; margin-top: 5px;">
-                            Minimum days in advance students must book (0 = same-day booking allowed)
+                        <small class="text-muted help-text-block">
+                            Minimum days in advance students must schedule (0 = same-day scheduling allowed)
                         </small>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label">
-                            <input type="checkbox" name="enable_booking_queue" value="1" {{ old('enable_booking_queue', $settings->enable_booking_queue ?? true) ? 'checked' : '' }} style="margin-right: 8px;">
-                            Enable Booking Queue/Cart System
+                            <input type="checkbox" name="enable_booking_queue" value="1" {{ old('enable_booking_queue', $settings->enable_booking_queue ?? true) ? 'checked' : '' }} class="checkbox-inline">
+                            Enable Schedule Queue/Cart System
                         </label>
-                        <small class="text-muted" style="display: block; margin-top: 5px;">
-                            When enabled, bookings go to a queue for admin review before confirmation
+                        <small class="text-muted help-text-block">
+                            When enabled, schedules go to a queue for admin review before confirmation
                         </small>
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">Booking Queue Days</label>
+                        <label class="form-label">Schedule Queue Days</label>
                         <input type="number" class="number-input" name="booking_queue_days" value="{{ old('booking_queue_days', $settings->booking_queue_days ?? 3) }}" min="1" max="14">
-                        <small class="text-muted" style="display: block; margin-top: 5px;">
-                            Days bookings stay in queue before auto-confirming (if queue enabled)
+                        <small class="text-muted help-text-block">
+                            Days schedules stay in queue before auto-confirming (if queue enabled)
                         </small>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label">Instructor Selection Mode</label>
-                        <select class="form-control" name="instructor_selection_mode" style="padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+                        <select class="form-control form-control-compact" name="instructor_selection_mode">
                             <option value="auto_assign" {{ old('instructor_selection_mode', $settings->instructor_selection_mode ?? 'auto_assign') == 'auto_assign' ? 'selected' : '' }}>
                                 Auto Assign - System randomly assigns instructors
                             </option>
@@ -645,11 +934,11 @@
                                 Student Chooses - Students pick their preferred instructor
                             </option>
                             <option value="admin_assigns" {{ old('instructor_selection_mode', $settings->instructor_selection_mode ?? 'auto_assign') == 'admin_assigns' ? 'selected' : '' }}>
-                                Admin Assigns - Admins manually assign instructors after booking
+                                Admin Assigns - Admins manually assign instructors after scheduling
                             </option>
                         </select>
-                        <small class="text-muted" style="display: block; margin-top: 5px;">
-                            Controls how instructors are assigned to student bookings
+                        <small class="text-muted help-text-block">
+                            Controls how instructors are assigned to student schedules
                         </small>
                     </div>
                     </div>
@@ -665,7 +954,7 @@
                     <div class="form-group">
                         <label class="form-label">Instructor Removal Notice Days</label>
                         <input type="number" class="number-input" name="instructor_removal_notice_days" value="{{ old('instructor_removal_notice_days', $school->instructor_removal_notice_days ?? 7) }}" min="0" max="30">
-                        <small class="text-muted" style="display: block; margin-top: 5px;">
+                        <small class="text-muted help-text-block">
                             Minimum days notice required for instructor schedule removal requests
                         </small>
                     </div>
@@ -687,7 +976,7 @@
                 </div>
 
                 <!-- Save Button for General Settings -->
-                <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e5e7eb;">
+                <div class="section-save-divider">
                     <button type="submit" class="save-button">Save Changes</button>
                     <button type="button" class="reset-button" onclick="resetToDefaults()">↺ Reset to Defaults</button>
                 </div>
@@ -746,24 +1035,24 @@
                     </div>
                 </div>
 
-                <div class="form-group" id="background_image_group" style="display: none;">
+                <div class="form-group bg-image-group-hidden" id="background_image_group">
                     <label class="form-label">Background Image</label>
                     <input type="file" class="form-control" name="background_image" accept="image/*" onchange="previewBackgroundImage(event)">
                     @if($settings && $settings->background_image)
-                        <div style="margin-top: 10px;">
-                            <img src="{{ asset('storage/' . $settings->background_image) }}" style="max-width: 200px; border-radius: 8px; border: 2px solid #e5e7eb;">
-                            <p style="font-size: 0.85rem; color: #666; margin-top: 5px;">Current background image</p>
+                        <div class="current-bg-wrap">
+                            <img src="{{ asset('storage/' . $settings->background_image) }}" class="current-bg-image">
+                            <p class="current-bg-caption">Current background image</p>
                         </div>
                     @endif
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">Background Opacity (%)</label>
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <input type="range" class="form-range" id="background_opacity" name="background_opacity" value="{{ old('background_opacity', $settings->background_opacity ?? 100) }}" min="0" max="100" style="flex: 1;" oninput="updateOpacityValue(); updatePreview()">
-                        <span id="opacity_value" style="min-width: 45px; font-weight: 600; color: #667eea;">{{ old('background_opacity', $settings->background_opacity ?? 100) }}%</span>
+                    <div class="opacity-control-row">
+                        <input type="range" class="form-range opacity-range" id="background_opacity" name="background_opacity" value="{{ old('background_opacity', $settings->background_opacity ?? 100) }}" min="0" max="100" oninput="updateOpacityValue(); updatePreview()">
+                        <span id="opacity_value" class="opacity-value">{{ old('background_opacity', $settings->background_opacity ?? 100) }}%</span>
                     </div>
-                    <small style="color: #666; font-size: 0.85rem;">Lower values make the background more transparent</small>
+                    <small class="help-text-muted">Lower values make the background more transparent</small>
                 </div>
                 </div>
 
@@ -774,12 +1063,12 @@
                         <button type="button" class="preview-close" onclick="closePreview('colors')">Close</button>
                     </div>
                     <div class="preview-content">
-                        <div style="display: grid; gap: 20px;">
+                        <div class="color-preview-stack">
                             <!-- Background Preview -->
                             <div>
-                                <h5 style="margin: 0 0 10px 0; color: #374151;">Background Preview</h5>
-                                <div id="background-preview" style="width: 100%; height: 150px; border-radius: 8px; border: 2px solid #d1d5db; position: relative; overflow: hidden;">
-                                    <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #374151; font-weight: 500; text-shadow: 0 0 5px white, 0 0 10px white;">
+                                <h5 class="color-preview-title">Background Preview</h5>
+                                <div id="background-preview" class="background-preview-box">
+                                    <div class="background-preview-overlay">
                                         Sample Content Area
                                     </div>
                                 </div>
@@ -787,27 +1076,27 @@
 
                             <!-- Color Swatches -->
                             <div>
-                                <h5 style="margin: 0 0 10px 0; color: #374151;">Color Swatches</h5>
-                                <div style="display: grid; gap: 15px;">
-                                    <div style="display: flex; align-items: center; gap: 10px;">
-                                        <div id="primary-color-swatch" style="width: 80px; height: 80px; border-radius: 8px; border: 2px solid #d1d5db;"></div>
+                                <h5 class="color-preview-title">Color Swatches</h5>
+                                <div class="swatches-stack">
+                                    <div class="swatch-row">
+                                        <div id="primary-color-swatch" class="swatch-box"></div>
                                         <div>
                                             <strong>Primary Color</strong>
-                                            <p style="color: #6b7280; font-size: 0.85rem; margin: 4px 0 0 0;">Used for main brand elements</p>
+                                            <p class="swatch-note">Used for main brand elements</p>
                                         </div>
                                     </div>
-                                    <div style="display: flex; align-items: center; gap: 10px;">
-                                        <div id="secondary-color-swatch" style="width: 80px; height: 80px; border-radius: 8px; border: 2px solid #d1d5db;"></div>
+                                    <div class="swatch-row">
+                                        <div id="secondary-color-swatch" class="swatch-box"></div>
                                         <div>
                                             <strong>Secondary Color</strong>
-                                            <p style="color: #6b7280; font-size: 0.85rem; margin: 4px 0 0 0;">Complementary accent color</p>
+                                            <p class="swatch-note">Complementary accent color</p>
                                         </div>
                                     </div>
-                                    <div style="display: flex; align-items: center; gap: 10px;">
-                                        <div id="accent-color-swatch" style="width: 80px; height: 80px; border-radius: 8px; border: 2px solid #d1d5db;"></div>
+                                    <div class="swatch-row">
+                                        <div id="accent-color-swatch" class="swatch-box"></div>
                                         <div>
                                             <strong>Accent Color</strong>
-                                            <p style="color: #6b7280; font-size: 0.85rem; margin: 4px 0 0 0;">Highlight elements</p>
+                                            <p class="swatch-note">Highlight elements</p>
                                         </div>
                                     </div>
                                 </div>
@@ -859,13 +1148,13 @@
                         <button type="button" class="preview-close" onclick="closePreview('sidebar')">Close</button>
                     </div>
                     <div class="preview-content">
-                        <div class="sidebar-preview" id="sidebar-preview" style="padding: 15px; border-radius: 8px;">
-                            <div class="sidebar-item" style="padding: 12px 15px; margin-bottom: 5px; border-radius: 6px; cursor: pointer; transition: all 0.3s;">Dashboard</div>
-                            <div class="sidebar-item" style="padding: 12px 15px; margin-bottom: 5px; border-radius: 6px; cursor: pointer; transition: all 0.3s;">Courses</div>
-                            <div class="sidebar-item" style="padding: 12px 15px; margin-bottom: 5px; border-radius: 6px; cursor: pointer; transition: all 0.3s;">Schedules</div>
-                            <div class="sidebar-item" style="padding: 12px 15px; margin-bottom: 5px; border-radius: 6px; cursor: pointer; transition: all 0.3s;">Students</div>
-                            <div class="sidebar-item" style="padding: 12px 15px; margin-bottom: 5px; border-radius: 6px; cursor: pointer; transition: all 0.3s;">Instructors</div>
-                            <div class="sidebar-item" style="padding: 12px 15px; margin-bottom: 5px; border-radius: 6px; cursor: pointer; transition: all 0.3s;">Settings</div>
+                        <div class="sidebar-preview sidebar-preview-compact" id="sidebar-preview">
+                            <div class="sidebar-item sidebar-item-compact">Dashboard</div>
+                            <div class="sidebar-item sidebar-item-compact">Courses</div>
+                            <div class="sidebar-item sidebar-item-compact">Schedules</div>
+                            <div class="sidebar-item sidebar-item-compact">Students</div>
+                            <div class="sidebar-item sidebar-item-compact">Instructors</div>
+                            <div class="sidebar-item sidebar-item-compact">Settings</div>
                         </div>
                     </div>
                 </div>
@@ -887,7 +1176,7 @@
                         <option value="solid" {{ old('button_style', $settings->button_style ?? 'solid') == 'solid' ? 'selected' : '' }}>Solid Color</option>
                         <option value="gradient" {{ old('button_style', $settings->button_style ?? 'solid') == 'gradient' ? 'selected' : '' }}>Gradient (Primary → Secondary)</option>
                     </select>
-                    <small style="color: #666; font-size: 0.85rem; display: block; margin-top: 5px;">
+                    <small class="help-text-muted help-text-block">
                         Gradient creates a smooth blend from Primary to Secondary color
                     </small>
                 </div>
@@ -937,13 +1226,13 @@
                         <button type="button" class="preview-close" onclick="closePreview('buttons')">Close</button>
                     </div>
                     <div class="preview-content">
-                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                            <button type="button" class="preview-button" id="button-primary-preview" style="padding: 10px 20px; border: none; color: white; cursor: pointer; font-weight: 600;">Primary Button</button>
-                            <button type="button" class="preview-button" id="button-secondary-preview" style="padding: 10px 20px; border: none; color: white; cursor: pointer; font-weight: 600;">Secondary Button</button>
-                            <button type="button" class="preview-button" id="button-success-preview" style="padding: 10px 20px; border: none; color: white; cursor: pointer; font-weight: 600;">Success Button</button>
-                            <button type="button" class="preview-button" id="button-danger-preview" style="padding: 10px 20px; border: none; color: white; cursor: pointer; font-weight: 600;">Danger Button</button>
+                        <div class="preview-buttons-row">
+                            <button type="button" class="preview-button" id="button-primary-preview">Primary Button</button>
+                            <button type="button" class="preview-button" id="button-secondary-preview">Secondary Button</button>
+                            <button type="button" class="preview-button" id="button-success-preview">Success Button</button>
+                            <button type="button" class="preview-button" id="button-danger-preview">Danger Button</button>
                         </div>
-                        <p style="color: #6b7280; font-size: 0.85rem; margin-top: 15px;">🎨 These are preview buttons - they won't submit the form. Adjust colors above to see changes in real-time!</p>
+                        <p class="preview-buttons-note">These are preview buttons - they won't submit the form. Adjust colors above to see changes in real-time!</p>
                     </div>
                 </div>
             </div>
@@ -982,13 +1271,13 @@
                         <button type="button" class="preview-close" onclick="closePreview('modal')">Close</button>
                     </div>
                     <div class="preview-content">
-                        <div style="border: 2px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
-                            <div class="modal-header-preview" id="modal-header-preview" style="padding: 20px;">
-                                <h5 style="margin: 0; font-size: 1.2rem;">Create New Course</h5>
-                                <p style="margin: 8px 0 0 0; opacity: 0.9; font-size: 0.9rem;">Fill in the details below</p>
+                        <div class="modal-preview-frame">
+                            <div class="modal-header-preview" id="modal-header-preview">
+                                <h5 class="modal-preview-title">Create New Course</h5>
+                                <p class="modal-preview-subtitle">Fill in the details below</p>
                             </div>
-                            <div style="padding: 20px; background: white;">
-                                <p style="margin: 0; color: #6b7280;">Modal content goes here. The header colors will change based on your settings.</p>
+                            <div class="modal-body-preview">
+                                <p class="modal-preview-text">Modal content goes here. The header colors will change based on your settings.</p>
                             </div>
                         </div>
                     </div>
@@ -1011,7 +1300,7 @@
                         <option value="1" {{ old('use_gradient_header', $settings->use_gradient_header ?? false) ? 'selected' : '' }}>Yes - Use Gradient (Primary → Secondary)</option>
                         <option value="0" {{ !old('use_gradient_header', $settings->use_gradient_header ?? false) ? 'selected' : '' }}>No - Use Solid Primary Color</option>
                     </select>
-                    <small style="color: #666; font-size: 0.85rem; display: block; margin-top: 5px;">
+                    <small class="help-text-muted help-text-block">
                         Applies to calendar header and other gradient elements
                     </small>
                 </div>
@@ -1022,7 +1311,7 @@
                         <input type="color" class="color-picker" id="header_text_color" name="header_text_color" value="{{ old('header_text_color', $settings->header_text_color ?? '#ffffff') }}" onchange="updatePreview()">
                         <input type="text" class="color-text" value="{{ old('header_text_color', $settings->header_text_color ?? '#ffffff') }}" readonly>
                     </div>
-                    <small style="color: #666; font-size: 0.85rem; display: block; margin-top: 5px;">
+                    <small class="help-text-muted help-text-block">
                         Text color for calendar headers and navigation buttons
                     </small>
                 </div>
@@ -1041,7 +1330,7 @@
                         <input type="color" class="color-picker" id="calendar_day_hover" name="calendar_day_hover" value="{{ old('calendar_day_hover', $settings->calendar_day_hover ?? $settings->primary_color ?? '#667eea') }}" onchange="updatePreview()">
                         <input type="text" class="color-text" value="{{ old('calendar_day_hover', $settings->calendar_day_hover ?? $settings->primary_color ?? '#667eea') }}" readonly>
                     </div>
-                    <small style="color: #666; font-size: 0.85rem; display: block; margin-top: 5px;">
+                    <small class="help-text-muted help-text-block">
                         Border color when hovering over calendar days
                     </small>
                 </div>
@@ -1052,7 +1341,7 @@
                         <input type="color" class="color-picker" id="calendar_today_color" name="calendar_today_color" value="{{ old('calendar_today_color', $settings->calendar_today_color ?? $settings->primary_color ?? '#667eea') }}" onchange="updatePreview()">
                         <input type="text" class="color-text" value="{{ old('calendar_today_color', $settings->calendar_today_color ?? $settings->primary_color ?? '#667eea') }}" readonly>
                     </div>
-                    <small style="color: #666; font-size: 0.85rem; display: block; margin-top: 5px;">
+                    <small class="help-text-muted help-text-block">
                         Border color for today's date in the calendar
                     </small>
                 </div>
@@ -1066,34 +1355,34 @@
                     </div>
                     <div class="preview-content">
                         <!-- Calendar Header Preview -->
-                        <div class="calendar-header-preview" id="calendar-header-preview" style="padding: 20px 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); margin-bottom: 20px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <button type="button" class="calendar-nav-btn-preview" style="padding: 10px 18px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.25); background: rgba(255, 255, 255, 0.15); cursor: pointer; font-weight: 600;">← Previous</button>
-                                <span class="calendar-month-preview" style="font-size: 1.5rem; font-weight: 700; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);">November 2025</span>
-                                <button type="button" class="calendar-nav-btn-preview" style="padding: 10px 18px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.25); background: rgba(255, 255, 255, 0.15); cursor: pointer; font-weight: 600;">Next →</button>
+                        <div class="calendar-header-preview calendar-header-preview-shell" id="calendar-header-preview">
+                            <div class="calendar-header-row">
+                                <button type="button" class="calendar-nav-btn-preview calendar-nav-btn-shell">← Previous</button>
+                                <span class="calendar-month-preview calendar-month-shell">November 2025</span>
+                                <button type="button" class="calendar-nav-btn-preview calendar-nav-btn-shell">Next →</button>
                             </div>
                         </div>
 
                         <!-- Mini Calendar Grid Preview -->
                         <div>
-                            <h5 style="margin: 0 0 10px 0; color: #374151;">Calendar Days Preview</h5>
-                            <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px;">
-                                <div style="text-align: center; font-weight: 600; padding: 8px; background: #f8f9fa; border-radius: 4px; font-size: 0.85rem;">Sun</div>
-                                <div style="text-align: center; font-weight: 600; padding: 8px; background: #f8f9fa; border-radius: 4px; font-size: 0.85rem;">Mon</div>
-                                <div style="text-align: center; font-weight: 600; padding: 8px; background: #f8f9fa; border-radius: 4px; font-size: 0.85rem;">Tue</div>
-                                <div style="text-align: center; font-weight: 600; padding: 8px; background: #f8f9fa; border-radius: 4px; font-size: 0.85rem;">Wed</div>
-                                <div style="text-align: center; font-weight: 600; padding: 8px; background: #f8f9fa; border-radius: 4px; font-size: 0.85rem;">Thu</div>
-                                <div style="text-align: center; font-weight: 600; padding: 8px; background: #f8f9fa; border-radius: 4px; font-size: 0.85rem;">Fri</div>
-                                <div style="text-align: center; font-weight: 600; padding: 8px; background: #f8f9fa; border-radius: 4px; font-size: 0.85rem;">Sat</div>
-                                <div class="calendar-day-preview" style="min-height: 60px; padding: 8px; background: white; border-radius: 8px; cursor: pointer; transition: all 0.3s;">1</div>
-                                <div class="calendar-day-preview" style="min-height: 60px; padding: 8px; background: white; border-radius: 8px; cursor: pointer; transition: all 0.3s;">2</div>
-                                <div class="calendar-day-preview" style="min-height: 60px; padding: 8px; background: white; border-radius: 8px; cursor: pointer; transition: all 0.3s;">3</div>
-                                <div class="calendar-day-preview" style="min-height: 60px; padding: 8px; background: white; border-radius: 8px; cursor: pointer; transition: all 0.3s;">4</div>
-                                <div class="calendar-day-preview today-preview" id="calendar-today-preview" style="min-height: 60px; padding: 8px; background: #fffbf0; border-radius: 8px; cursor: pointer; transition: all 0.3s; font-weight: 600;">5<br><small style="font-size: 0.7rem; opacity: 0.8;">Today</small></div>
-                                <div class="calendar-day-preview" style="min-height: 60px; padding: 8px; background: white; border-radius: 8px; cursor: pointer; transition: all 0.3s;">6</div>
-                                <div class="calendar-day-preview" style="min-height: 60px; padding: 8px; background: white; border-radius: 8px; cursor: pointer; transition: all 0.3s;">7</div>
+                            <h5 class="calendar-preview-title">Calendar Days Preview</h5>
+                            <div class="calendar-preview-grid">
+                                <div class="calendar-weekday-cell">Sun</div>
+                                <div class="calendar-weekday-cell">Mon</div>
+                                <div class="calendar-weekday-cell">Tue</div>
+                                <div class="calendar-weekday-cell">Wed</div>
+                                <div class="calendar-weekday-cell">Thu</div>
+                                <div class="calendar-weekday-cell">Fri</div>
+                                <div class="calendar-weekday-cell">Sat</div>
+                                <div class="calendar-day-preview calendar-day-shell">1</div>
+                                <div class="calendar-day-preview calendar-day-shell">2</div>
+                                <div class="calendar-day-preview calendar-day-shell">3</div>
+                                <div class="calendar-day-preview calendar-day-shell">4</div>
+                                <div class="calendar-day-preview calendar-day-shell today-preview" id="calendar-today-preview">5<br><small class="calendar-day-today-label">Today</small></div>
+                                <div class="calendar-day-preview calendar-day-shell">6</div>
+                                <div class="calendar-day-preview calendar-day-shell">7</div>
                             </div>
-                            <p style="color: #6b7280; font-size: 0.85rem; margin-top: 10px;">💡 Hover over calendar days to see the hover effect!</p>
+                            <p class="calendar-preview-note">Hover over calendar days to see the hover effect!</p>
                         </div>
                     </div>
                 </div>
@@ -1141,12 +1430,12 @@
                         <button type="button" class="preview-close" onclick="closePreview('badges')">Close</button>
                     </div>
                     <div class="preview-content">
-                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                            <span class="preview-badge" id="badge-pending-preview" style="padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; color: white;">⏳ Pending</span>
-                            <span class="preview-badge" id="badge-approved-preview" style="padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; color: white;">✓ Approved</span>
-                            <span class="preview-badge" id="badge-cancelled-preview" style="padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; color: white;">✗ Cancelled</span>
+                        <div class="badge-preview-row">
+                            <span class="preview-badge badge-preview-item" id="badge-pending-preview">Pending</span>
+                            <span class="preview-badge badge-preview-item" id="badge-approved-preview"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="badge-icon-sm"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> Approved</span>
+                            <span class="preview-badge badge-preview-item" id="badge-cancelled-preview"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="badge-icon-sm"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg> Cancelled</span>
                         </div>
-                        <p style="color: #6b7280; font-size: 0.85rem; margin-top: 15px;">Used for request statuses throughout the system</p>
+                        <p class="badge-preview-note">Used for request statuses throughout the system</p>
                     </div>
                 </div>
             </div>
@@ -1158,14 +1447,14 @@
                 </div>
                 
                 <div class="section-inputs">
-                    <p style="color: #6b7280; font-size: 0.9rem; margin-bottom: 20px;">
+                    <p class="login-intro-text">
                         Customize the header appearance on your login and registration pages. Changes apply to both pages.
                     </p>
 
                     <!-- Layout Selection -->
                     <div class="form-group">
                         <label class="form-label">Header Layout</label>
-                        <select class="form-control" name="login_header_layout" style="padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+                        <select class="form-control form-control-compact" name="login_header_layout">
                             <option value="horizontal" {{ old('login_header_layout', $settings->login_header_layout ?? 'horizontal') == 'horizontal' ? 'selected' : '' }}>
                                 Horizontal - Left, center, and right sections
                             </option>
@@ -1188,10 +1477,10 @@
                         <small class="text-muted">Upload logo to storage/app/public/ folder first</small>
                     </div>
 
-                    <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-row form-row-two">
                         <div class="form-group">
                             <label class="form-label">Logo Position</label>
-                            <select class="form-control" name="login_logo_position" style="padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px;">
+                            <select class="form-control form-control-compact" name="login_logo_position">
                                 <option value="left" {{ old('login_logo_position', $settings->login_logo_position ?? 'left') == 'left' ? 'selected' : '' }}>Left</option>
                                 <option value="center" {{ old('login_logo_position', $settings->login_logo_position ?? 'left') == 'center' ? 'selected' : '' }}>Center</option>
                                 <option value="right" {{ old('login_logo_position', $settings->login_logo_position ?? 'left') == 'right' ? 'selected' : '' }}>Right</option>
@@ -1207,7 +1496,7 @@
                     <!-- School Name Settings -->
                     <div class="form-group">
                         <label class="form-label">
-                            <input type="checkbox" name="login_show_school_name" value="1" {{ old('login_show_school_name', $settings->login_show_school_name ?? true) ? 'checked' : '' }} style="margin-right: 8px;">
+                            <input type="checkbox" name="login_show_school_name" value="1" {{ old('login_show_school_name', $settings->login_show_school_name ?? true) ? 'checked' : '' }} class="checkbox-inline">
                             Show School Name
                         </label>
                     </div>
@@ -1217,10 +1506,10 @@
                         <input type="text" class="form-control" name="login_school_name_text" value="{{ old('login_school_name_text', $settings->login_school_name_text ?? '') }}" placeholder="Leave empty to use {{ $schoolName }}">
                     </div>
 
-                    <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-row form-row-two">
                         <div class="form-group">
                             <label class="form-label">School Name Position</label>
-                            <select class="form-control" name="login_school_name_position" style="padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px;">
+                            <select class="form-control form-control-compact" name="login_school_name_position">
                                 <option value="left" {{ old('login_school_name_position', $settings->login_school_name_position ?? 'left') == 'left' ? 'selected' : '' }}>Left</option>
                                 <option value="center" {{ old('login_school_name_position', $settings->login_school_name_position ?? 'left') == 'center' ? 'selected' : '' }}>Center</option>
                                 <option value="right" {{ old('login_school_name_position', $settings->login_school_name_position ?? 'left') == 'right' ? 'selected' : '' }}>Right</option>
@@ -1236,7 +1525,7 @@
                     <!-- Welcome Text Settings -->
                     <div class="form-group">
                         <label class="form-label">
-                            <input type="checkbox" name="login_show_welcome_text" value="1" {{ old('login_show_welcome_text', $settings->login_show_welcome_text ?? true) ? 'checked' : '' }} style="margin-right: 8px;">
+                            <input type="checkbox" name="login_show_welcome_text" value="1" {{ old('login_show_welcome_text', $settings->login_show_welcome_text ?? true) ? 'checked' : '' }} class="checkbox-inline">
                             Show Welcome Text
                         </label>
                     </div>
@@ -1256,10 +1545,10 @@
                         <input type="text" class="form-control" name="register_subtitle_text" value="{{ old('register_subtitle_text', $settings->register_subtitle_text ?? '') }}" placeholder="e.g., Start your driving journey today!">
                     </div>
 
-                    <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-row form-row-two">
                         <div class="form-group">
                             <label class="form-label">Welcome Text Position</label>
-                            <select class="form-control" name="login_welcome_position" style="padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px;">
+                            <select class="form-control form-control-compact" name="login_welcome_position">
                                 <option value="left" {{ old('login_welcome_position', $settings->login_welcome_position ?? 'right') == 'left' ? 'selected' : '' }}>Left</option>
                                 <option value="center" {{ old('login_welcome_position', $settings->login_welcome_position ?? 'right') == 'center' ? 'selected' : '' }}>Center</option>
                                 <option value="right" {{ old('login_welcome_position', $settings->login_welcome_position ?? 'right') == 'right' ? 'selected' : '' }}>Right</option>
@@ -1275,7 +1564,7 @@
                     <!-- Header Background -->
                     <div class="form-group">
                         <label class="form-label">Header Background Type</label>
-                        <select class="form-control" name="login_header_bg_type" style="padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px;">
+                        <select class="form-control form-control-compact" name="login_header_bg_type">
                             <option value="gradient" {{ old('login_header_bg_type', $settings->login_header_bg_type ?? 'gradient') == 'gradient' ? 'selected' : '' }}>
                                 Gradient (uses primary & secondary colors)
                             </option>
@@ -1299,7 +1588,7 @@
                         <small class="text-muted">Upload image to storage/app/public/ folder first</small>
                     </div>
 
-                    <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-row form-row-two">
                         <div class="form-group">
                             <label class="form-label">Header Height (px)</label>
                             <input type="number" class="form-control" name="login_header_height" value="{{ old('login_header_height', $settings->login_header_height ?? 60) }}" min="50" max="200">
@@ -1313,15 +1602,15 @@
 
                     <div class="form-group">
                         <label class="form-label">
-                            <input type="checkbox" name="login_header_shadow" value="1" {{ old('login_header_shadow', $settings->login_header_shadow ?? true) ? 'checked' : '' }} style="margin-right: 8px;">
+                            <input type="checkbox" name="login_header_shadow" value="1" {{ old('login_header_shadow', $settings->login_header_shadow ?? true) ? 'checked' : '' }} class="checkbox-inline">
                             Enable Header Shadow
                         </label>
                     </div>
 
-                    <div style="background: #f0f9ff; padding: 15px; border-radius: 8px; border-left: 4px solid #3b82f6; margin-top: 20px;">
-                        <strong style="color: #1e40af; display: block; margin-bottom: 8px;">💡 Preview Your Changes</strong>
-                        <p style="color: #1e3a8a; font-size: 0.9rem; margin: 0;">
-                            Visit your login page at <code style="background: #dbeafe; padding: 2px 6px; border-radius: 4px;">/{{ $school->slug }}/login</code> to see your customizations in action!
+                    <div class="login-preview-note">
+                        <strong class="login-preview-note-title">Preview Your Changes</strong>
+                        <p class="login-preview-note-text">
+                            Visit your login page at <code class="login-preview-note-code">/{{ $school->slug }}/login</code> to see your customizations in action!
                         </p>
                     </div>
                 </div>
@@ -1347,24 +1636,24 @@
                         </div>
                     </div>
 
-                    <div class="form-group" id="loginBgImageGroup" style="display: none;">
+                    <div class="form-group bg-image-group-hidden" id="loginBgImageGroup">
                         <label class="form-label">Background Image</label>
                         <input type="file" class="form-control" name="login_page_bg_image" accept="image/*">
                         @if($settings && $settings->login_page_bg_image)
-                            <div style="margin-top: 10px;">
-                                <img src="{{ asset('storage/' . $settings->login_page_bg_image) }}" style="max-width: 200px; border-radius: 8px; border: 2px solid #e5e7eb;">
-                                <p style="font-size: 0.85rem; color: #666; margin-top: 5px;">Current background image</p>
+                            <div class="current-bg-wrap">
+                                <img src="{{ asset('storage/' . $settings->login_page_bg_image) }}" class="current-bg-image">
+                                <p class="current-bg-caption">Current background image</p>
                             </div>
                         @endif
                     </div>
 
                     <div class="form-group">
                         <label class="form-label">Background Opacity (%)</label>
-                        <div style="display: flex; align-items: center; gap: 15px;">
-                            <input type="range" class="form-range" name="login_page_bg_opacity" value="{{ old('login_page_bg_opacity', $settings->login_page_bg_opacity ?? 100) }}" min="0" max="100" style="flex: 1;" oninput="this.nextElementSibling.textContent = this.value + '%'">
-                            <span style="min-width: 45px; font-weight: 600; color: #667eea;">{{ old('login_page_bg_opacity', $settings->login_page_bg_opacity ?? 100) }}%</span>
+                        <div class="opacity-control-row">
+                            <input type="range" class="form-range opacity-range" name="login_page_bg_opacity" value="{{ old('login_page_bg_opacity', $settings->login_page_bg_opacity ?? 100) }}" min="0" max="100" oninput="this.nextElementSibling.textContent = this.value + '%'">
+                            <span class="opacity-value">{{ old('login_page_bg_opacity', $settings->login_page_bg_opacity ?? 100) }}%</span>
                         </div>
-                        <small style="color: #666; font-size: 0.85rem;">Lower values make the background more transparent</small>
+                        <small class="opacity-help">Lower values make the background more transparent</small>
                     </div>
                 </div>
             </div>

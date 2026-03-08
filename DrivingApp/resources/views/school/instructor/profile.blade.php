@@ -7,81 +7,63 @@
     $school = $school ?? $currentSchool ?? null;
     $instructor = Auth::guard('instructor')->user();
     $settings = $school?->schoolSetting;
+    $primaryColor = $settings?->primary_color ?? '#667eea';
+    $secondaryColor = $settings?->secondary_color ?? '#764ba2';
 @endphp
 
+@include('school.admin.partials.admin-styles')
+
 <style>
-    .profile-container {
-        padding: 20px;
-        max-width: 1400px;
-        margin: 0 auto;
-    }
-
-    .page-header {
-        margin-bottom: 30px;
-        padding-bottom: 15px;
-        border-bottom: 3px solid {{ $settings->primary_color ?? '#667eea' }};
-    }
-
-    .page-title {
-        font-size: 1.75rem;
-        color: #1f2937;
-        margin: 0;
-        font-weight: 600;
-    }
-
     .profile-card {
-        max-width: 600px;
+        max-width: 580px;
         margin: 0 auto;
         background: white;
         border-radius: 12px;
-        padding: 0;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
         position: relative;
+        overflow: hidden;
     }
 
     .status-badge-top {
         position: absolute;
-        top: 20px;
-        left: 20px;
+        top: 16px;
+        left: 16px;
         background: #10b981;
         color: white;
-        padding: 6px 14px;
+        padding: 5px 12px;
         border-radius: 20px;
-        font-size: 12px;
+        font-size: 0.72rem;
         font-weight: 600;
         text-transform: uppercase;
+        letter-spacing: 0.3px;
     }
 
     .profile-card-header {
         text-align: center;
-        padding: 40px 30px 30px;
+        padding: 40px 30px 24px;
     }
 
     .profile-avatar-circle {
-        width: 180px;
-        height: 180px;
+        width: 150px;
+        height: 150px;
         border-radius: 50%;
-        background: #000;
-        margin: 0 auto 20px;
+        background: {{ $primaryColor }};
+        margin: 0 auto 16px;
         display: flex;
         align-items: center;
         justify-content: center;
         overflow: hidden;
         position: relative;
         cursor: pointer;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
 
-    .profile-avatar-circle:hover .avatar-upload-overlay {
-        opacity: 1;
-    }
+    .profile-avatar-circle:hover .avatar-upload-overlay { opacity: 1; }
 
     .avatar-upload-overlay {
         position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.7);
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.6);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -90,296 +72,142 @@
         cursor: pointer;
     }
 
-    .avatar-upload-overlay span {
-        color: white;
-        font-size: 14px;
-        font-weight: 600;
-    }
+    .avatar-upload-overlay span { color: white; font-size: 0.82rem; font-weight: 600; }
 
-    .profile-avatar-circle img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
+    .profile-avatar-circle img { width: 100%; height: 100%; object-fit: cover; }
+    .profile-avatar-letter { font-size: 64px; font-weight: 700; color: white; }
+    .profile-name { font-size: 1.35rem; font-weight: 600; color: #1f2937; }
 
-    .profile-avatar-letter {
-        font-size: 80px;
-        font-weight: 700;
-        color: white;
-    }
-
-    .profile-name {
-        font-size: 24px;
-        font-weight: 600;
-        color: #000;
-    }
-
-    .profile-card-body {
-        padding: 0 30px 30px;
-    }
+    .profile-card-body { padding: 0 30px 24px; }
 
     .profile-field {
         display: grid;
-        grid-template-columns: 140px 1fr;
-        padding: 15px 0;
-        border-bottom: 1px solid #e0e0e0;
-        gap: 20px;
+        grid-template-columns: 130px 1fr;
+        padding: 13px 0;
+        border-bottom: 1px solid #f3f4f6;
+        gap: 16px;
     }
 
-    .profile-field:last-child {
-        border-bottom: none;
-    }
+    .profile-field:last-child { border-bottom: none; }
+    .profile-field-label { font-weight: 600; color: #374151; font-size: 0.88rem; }
+    .profile-field-value { color: #6b7280; font-size: 0.88rem; }
 
-    .profile-field-label {
-        font-weight: 600;
-        color: #000;
-        font-size: 15px;
-    }
-
-    .profile-field-value {
-        color: #666;
-        font-size: 15px;
-    }
-
-    .profile-actions {
-        text-align: center;
-        padding: 20px 30px 30px;
-    }
+    .profile-actions { text-align: center; padding: 16px 30px 28px; }
 
     .btn-edit-profile {
-        background: #007bff;
+        background: {{ $primaryColor }};
         color: white;
         border: none;
-        padding: 12px 40px;
-        border-radius: 6px;
-        font-size: 15px;
+        padding: 11px 36px;
+        border-radius: 10px;
+        font-size: 0.88rem;
         font-weight: 600;
         cursor: pointer;
-        transition: background 0.2s;
+        transition: all 0.2s;
     }
 
-    .btn-edit-profile:hover {
-        background: #0056b3;
-    }
+    .btn-edit-profile:hover { background: {{ $secondaryColor }}; transform: translateY(-1px); }
 
-    .edit-form {
-        display: none;
-        padding: 30px;
-    }
+    .edit-form { display: none; padding: 28px; }
 
-    .form-field {
-        margin-bottom: 20px;
-    }
-
-    .form-field label {
-        display: block;
-        font-weight: 600;
-        margin-bottom: 8px;
-        color: #000;
-        font-size: 14px;
-    }
+    .form-field { margin-bottom: 18px; }
+    .form-field label { display: block; font-weight: 600; margin-bottom: 6px; color: #374151; font-size: 0.85rem; }
 
     .form-field input {
         width: 100%;
         padding: 10px 12px;
-        border: 1px solid #ddd;
-        border-radius: 6px;
-        font-size: 15px;
-    }
-
-    .form-field input:focus {
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 0.88rem;
         outline: none;
-        border-color: {{ $settings->primary_color ?? '#667eea' }};
+        transition: border-color 0.2s;
     }
 
-    .form-actions {
-        display: flex;
-        gap: 10px;
-        justify-content: center;
-        margin-top: 30px;
-    }
+    .form-field input:focus { border-color: {{ $primaryColor }}; }
 
-    .btn-save {
-        background: {{ $settings->primary_color ?? '#667eea' }};
+    .form-actions { display: flex; gap: 10px; justify-content: center; margin-top: 24px; }
+
+    .btn-save-profile {
+        background: {{ $primaryColor }};
         color: white;
         border: none;
-        padding: 12px 30px;
-        border-radius: 6px;
-        font-size: 15px;
+        padding: 11px 28px;
+        border-radius: 10px;
+        font-size: 0.88rem;
         font-weight: 600;
         cursor: pointer;
+        transition: all 0.2s;
     }
 
-    .btn-save:hover {
-        opacity: 0.9;
-    }
+    .btn-save-profile:hover { background: {{ $secondaryColor }}; }
 
-    .btn-cancel {
-        background: #6c757d;
+    .btn-cancel-profile {
+        background: #6b7280;
         color: white;
         border: none;
-        padding: 12px 30px;
-        border-radius: 6px;
-        font-size: 15px;
+        padding: 11px 28px;
+        border-radius: 10px;
+        font-size: 0.88rem;
         font-weight: 600;
         cursor: pointer;
+        transition: all 0.2s;
     }
 
-    .btn-cancel:hover {
-        background: #5a6268;
-    }
+    .btn-cancel-profile:hover { background: #4b5563; }
 
     .alert {
-        padding: 15px;
+        padding: 14px 16px;
         margin-bottom: 20px;
-        border-radius: 6px;
-        max-width: 600px;
+        border-radius: 10px;
+        max-width: 580px;
         margin-left: auto;
         margin-right: auto;
+        font-size: 0.88rem;
     }
 
-    .alert-success {
-        background: #d4edda;
-        color: #155724;
-        border: 1px solid #c3e6cb;
+    .alert-success { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+    .alert-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+
+    .error-list-compact { margin: 0; padding-left: 20px; }
+    .hidden-file-input { display: none; }
+    .password-section { margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb; }
+    .password-section-title { margin: 0 0 15px 0; font-size: 0.95rem; color: #374151; font-weight: 600; }
+    .password-section-note { font-weight: 400; color: #9ca3af; font-size: 0.8rem; }
+    .password-error-box {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #dc2626;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        margin-bottom: 12px;
+    }
+    .password-error-text {
+        color: #dc2626;
+        font-size: 0.8rem;
+        margin-top: 4px;
+        display: block;
     }
 
-    .alert-error {
-        background: #f8d7da;
-        color: #721c24;
-        border: 1px solid #f5c6cb;
-    }
-
-    /* Mobile Responsive Styles */
     @media (max-width: 768px) {
-        .profile-container {
-            padding: 15px;
-        }
-
-        .page-title {
-            font-size: 1.5rem;
-        }
-
-        .profile-card {
-            margin: 0 auto;
-        }
-
-        .profile-card-header {
-            padding: 30px 20px 20px;
-        }
-
-        .profile-avatar-circle {
-            width: 140px;
-            height: 140px;
-        }
-
-        .profile-avatar-letter {
-            font-size: 60px;
-        }
-
-        .profile-name {
-            font-size: 20px;
-        }
-
-        .profile-card-body {
-            padding: 0 20px 20px;
-        }
-
-        .profile-field {
-            grid-template-columns: 1fr;
-            gap: 5px;
-            padding: 12px 0;
-        }
-
-        .profile-field-label {
-            font-size: 13px;
-            color: #666;
-        }
-
-        .profile-field-value {
-            font-size: 14px;
-        }
-
-        .profile-actions {
-            padding: 15px 20px 25px;
-        }
-
-        .btn-edit-profile {
-            width: 100%;
-            padding: 12px 20px;
-        }
-
-        .edit-form {
-            padding: 20px;
-        }
-
-        .form-actions {
-            flex-direction: column;
-        }
-
-        .btn-save,
-        .btn-cancel {
-            width: 100%;
-        }
-
-        .alert {
-            margin-left: 0;
-            margin-right: 0;
-            max-width: 100%;
-        }
-
-        .status-badge-top {
-            top: 15px;
-            left: 15px;
-            font-size: 11px;
-            padding: 5px 10px;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .profile-container {
-            padding: 10px;
-        }
-
-        .page-title {
-            font-size: 1.25rem;
-        }
-
-        .profile-card-header {
-            padding: 25px 15px 15px;
-        }
-
-        .profile-avatar-circle {
-            width: 110px;
-            height: 110px;
-        }
-
-        .profile-avatar-letter {
-            font-size: 48px;
-        }
-
-        .profile-name {
-            font-size: 18px;
-        }
-
-        .profile-card-body {
-            padding: 0 15px 15px;
-        }
-
-        .profile-field {
-            padding: 10px 0;
-        }
-
-        .profile-field-label,
-        .profile-field-value {
-            font-size: 13px;
-        }
+        .profile-avatar-circle { width: 120px; height: 120px; }
+        .profile-avatar-letter { font-size: 50px; }
+        .profile-name { font-size: 1.15rem; }
+        .profile-card-body { padding: 0 20px 20px; }
+        .profile-field { grid-template-columns: 1fr; gap: 4px; padding: 10px 0; }
+        .profile-field-label { font-size: 0.78rem; color: #9ca3af; }
+        .btn-edit-profile { width: 100%; }
+        .form-actions { flex-direction: column; }
+        .btn-save-profile, .btn-cancel-profile { width: 100%; }
     }
 </style>
 
-<div class="profile-container">
+<div class="admin-container">
     <div class="page-header">
-        <h1 class="page-title">Profile</h1>
+        <div class="page-header-left">
+            <h1 class="page-title">Profile</h1>
+            <p class="page-subtitle">View and manage your profile information</p>
+        </div>
     </div>
 
     @if(session('success'))
@@ -390,7 +218,7 @@
 
     @if($errors->any())
         <div class="alert alert-error">
-            <ul style="margin: 0; padding-left: 20px;">
+            <ul class="error-list-compact">
                 @foreach($errors->all() as $error)
                     <li>{{ $error }}</li>
                 @endforeach
@@ -399,7 +227,7 @@
     @endif
 
     <div class="profile-card">
-        <div class="status-badge-top">Active</div>
+        <div class="status-badge-top">{{ ucfirst($instructor->status ?? 'Active') }}</div>
         
         <div id="profileView">
             <div class="profile-card-header">
@@ -413,7 +241,7 @@
                         <span>Change Photo</span>
                     </div>
                 </div>
-                <input type="file" id="profilePictureInput" accept="image/png,image/jpg,image/jpeg,image/webp" style="display: none;" onchange="uploadProfilePicture(this)">
+                <input type="file" id="profilePictureInput" accept="image/png,image/jpg,image/jpeg,image/webp" class="hidden-file-input" onchange="uploadProfilePicture(this)">
                 <div class="profile-name">{{ $instructor->name ?? "Instructor's Name" }}</div>
             </div>
 
@@ -441,6 +269,10 @@
                 <div class="profile-field">
                     <div class="profile-field-label">License Number:</div>
                     <div class="profile-field-value">{{ $instructor->license_number ?? 'N/A' }}</div>
+                </div>
+                <div class="profile-field">
+                    <div class="profile-field-label">Branch:</div>
+                    <div class="profile-field-value">{{ $instructor->branch->name ?? 'Not Assigned' }}</div>
                 </div>
             </div>
 
@@ -484,13 +316,40 @@
                     <input type="text" id="license_number" name="license_number" value="{{ old('license_number', $instructor->license_number) }}">
                 </div>
 
+                <div class="password-section">
+                    <h4 class="password-section-title">Change Password <span class="password-section-note">(optional)</span></h4>
+                    
+                    @error('current_password')
+                        <div class="password-error-box">{{ $message }}</div>
+                    @enderror
+
+                    <div class="form-field">
+                        <label for="current_password">Current Password</label>
+                        <input type="password" id="current_password" name="current_password" placeholder="Enter current password">
+                    </div>
+
+                    <div class="form-field">
+                        <label for="new_password">New Password</label>
+                        <input type="password" id="new_password" name="new_password" placeholder="Min 8 chars, uppercase, lowercase, number">
+                        @error('new_password')
+                            <span class="password-error-text">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <div class="form-field">
+                        <label for="new_password_confirmation">Confirm New Password</label>
+                        <input type="password" id="new_password_confirmation" name="new_password_confirmation" placeholder="Re-enter new password">
+                    </div>
+                </div>
+
                 <div class="form-actions">
-                    <button type="submit" class="btn-save">Save Changes</button>
-                    <button type="button" class="btn-cancel" onclick="hideEditForm()">Cancel</button>
+                    <button type="submit" class="btn-save-profile">Save Changes</button>
+                    <button type="button" class="btn-cancel-profile" onclick="hideEditForm()">Cancel</button>
                 </div>
             </form>
         </div>
     </div>
+</div>
 </div>
 
 <script>

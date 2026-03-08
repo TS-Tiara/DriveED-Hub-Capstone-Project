@@ -12,9 +12,7 @@ class StoreSessionCompletionRequest extends FormRequest
     public function authorize(): bool
     {
         // Only instructors can log sessions
-        $user = $this->user();
-        
-        return $user && $user->role === 'instructor';
+        return \Illuminate\Support\Facades\Auth::guard('instructor')->check();
     }
 
     /**
@@ -25,7 +23,7 @@ class StoreSessionCompletionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'enrollment_id' => ['required', 'exists:enrollments,id'],
+            'enrollment_id' => ['required', 'exists:enrollment_requests,id'],
             'session_type' => ['required', 'in:theoretical,practical'],
             'hours_completed' => ['required', 'numeric', 'min:0.5', 'max:8'],
             'session_date' => ['required', 'date', 'before_or_equal:today'],
@@ -83,16 +81,14 @@ class StoreSessionCompletionRequest extends FormRequest
                     $validator->errors()->add('session_type', "Session type must match the course type ({$courseType}).");
                 }
 
-                // Check if enrollment is active
-                if (!$enrollment->isActive()) {
+                // Check if enrollment is active (approved status)
+                if ($enrollment->status !== 'approved') {
                     $validator->errors()->add('enrollment_id', 'Cannot log sessions for inactive enrollments.');
                 }
 
                 // Verify instructor is authorized for this enrollment
                 $user = $this->user();
-                if ($user->role === 'instructor') {
-                    $instructor = \App\Models\Instructor::where('user_id', $user->id)->first();
-                    
+                if ($user instanceof \App\Models\Instructor) {
                     // Optional: Add logic to verify instructor is assigned to this student/course
                     // This would require checking instructor assignments
                 }

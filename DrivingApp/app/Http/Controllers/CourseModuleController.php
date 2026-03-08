@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CourseModule;
 use App\Models\Course;
+use App\Models\School;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -11,15 +12,22 @@ use Illuminate\Support\Facades\DB;
 class CourseModuleController extends Controller
 {
     /**
+     * Resolve authenticated user role from multi-guard system
+     */
+    private function resolveAuthRole(): string
+    {
+        if (Auth::guard('admin')->check()) return 'admin';
+        if (Auth::guard('instructor')->check()) return 'instructor';
+        if (Auth::guard('student')->check()) return 'student';
+        abort(403);
+    }
+
+    /**
      * Display a listing of modules for a specific course
      */
-    public function index(Course $course)
+    public function index(School $school, Course $course)
     {
-        $user = Auth::user();
-        
-        if (!in_array($user->role, ['admin', 'superadmin', 'instructor', 'student'])) {
-            abort(403);
-        }
+        $role = $this->resolveAuthRole();
         
         $modules = $course->modules()
             ->with(['lessons' => function($query) {
@@ -29,40 +37,38 @@ class CourseModuleController extends Controller
             ->get();
         
         // Different views based on role
-        $viewPath = match($user->role) {
+        $viewPath = match($role) {
             'student' => 'student.modules.index',
             'instructor' => 'instructor.modules.index',
-            'admin', 'superadmin' => 'admin.modules.index',
+            'admin' => 'admin.modules.index',
             default => abort(403)
         };
         
-        return view($viewPath, compact('course', 'modules'));
+        return view($school->resolveView($viewPath), compact('school', 'course', 'modules'));
     }
 
     /**
      * Show the form for creating a new module
      */
-    public function create(Course $course)
+    public function create(School $school, Course $course)
     {
-        $user = Auth::user();
+        $role = $this->resolveAuthRole();
         
-        // Only admins can create modules
-        if (!in_array($user->role, ['admin', 'superadmin'])) {
+        if ($role !== 'admin') {
             abort(403);
         }
         
-        return view('admin.modules.create', compact('course'));
+        return view($school->resolveView('admin.modules.create'), compact('school', 'course'));
     }
 
     /**
      * Store a newly created module
      */
-    public function store(Request $request, Course $course)
+    public function store(Request $request, School $school, Course $course)
     {
-        $user = Auth::user();
+        $role = $this->resolveAuthRole();
         
-        // Only admins can create modules
-        if (!in_array($user->role, ['admin', 'superadmin'])) {
+        if ($role !== 'admin') {
             abort(403);
         }
         
@@ -97,7 +103,7 @@ class CourseModuleController extends Controller
             }
             
             return redirect()
-                ->route('admin.courses.modules.index', $course)
+                ->route('schools.admin.courses.modules.index', ['school' => $school->slug, 'course' => $course->id])
                 ->with('success', 'Module created successfully.');
             
         } catch (\Exception $e) {
@@ -119,9 +125,9 @@ class CourseModuleController extends Controller
     /**
      * Display the specified module with its lessons
      */
-    public function show(Course $course, CourseModule $module)
+    public function show(School $school, Course $course, CourseModule $module)
     {
-        $user = Auth::user();
+        $role = $this->resolveAuthRole();
         
         // Verify module belongs to course
         if ($module->course_id !== $course->id) {
@@ -132,25 +138,24 @@ class CourseModuleController extends Controller
             $query->ordered();
         }]);
         
-        $viewPath = match($user->role) {
+        $viewPath = match($role) {
             'student' => 'student.modules.show',
             'instructor' => 'instructor.modules.show',
-            'admin', 'superadmin' => 'admin.modules.show',
+            'admin' => 'admin.modules.show',
             default => abort(403)
         };
         
-        return view($viewPath, compact('course', 'module'));
+        return view($school->resolveView($viewPath), compact('school', 'course', 'module'));
     }
 
     /**
      * Show the form for editing the specified module
      */
-    public function edit(Course $course, CourseModule $module)
+    public function edit(School $school, Course $course, CourseModule $module)
     {
-        $user = Auth::user();
+        $role = $this->resolveAuthRole();
         
-        // Only admins can edit modules
-        if (!in_array($user->role, ['admin', 'superadmin'])) {
+        if ($role !== 'admin') {
             abort(403);
         }
         
@@ -159,18 +164,17 @@ class CourseModuleController extends Controller
             abort(404);
         }
         
-        return view('admin.modules.edit', compact('course', 'module'));
+        return view($school->resolveView('admin.modules.edit'), compact('school', 'course', 'module'));
     }
 
     /**
      * Update the specified module
      */
-    public function update(Request $request, Course $course, CourseModule $module)
+    public function update(Request $request, School $school, Course $course, CourseModule $module)
     {
-        $user = Auth::user();
+        $role = $this->resolveAuthRole();
         
-        // Only admins can update modules
-        if (!in_array($user->role, ['admin', 'superadmin'])) {
+        if ($role !== 'admin') {
             abort(403);
         }
         
@@ -202,19 +206,18 @@ class CourseModuleController extends Controller
         }
         
         return redirect()
-            ->route('admin.courses.modules.show', [$course, $module])
+            ->route('schools.admin.courses.modules.show', ['school' => $school->slug, 'course' => $course->id, 'module' => $module->id])
             ->with('success', 'Module updated successfully.');
     }
 
     /**
      * Remove the specified module
      */
-    public function destroy(Course $course, CourseModule $module)
+    public function destroy(School $school, Course $course, CourseModule $module)
     {
-        $user = Auth::user();
+        $role = $this->resolveAuthRole();
         
-        // Only admins can delete modules
-        if (!in_array($user->role, ['admin', 'superadmin'])) {
+        if ($role !== 'admin') {
             abort(403);
         }
         
@@ -234,7 +237,7 @@ class CourseModuleController extends Controller
             DB::commit();
             
             return redirect()
-                ->route('admin.courses.modules.index', $course)
+                ->route('schools.admin.courses.modules.index', ['school' => $school->slug, 'course' => $course->id])
                 ->with('success', 'Module and all its lessons deleted successfully.');
             
         } catch (\Exception $e) {
@@ -246,12 +249,11 @@ class CourseModuleController extends Controller
     /**
      * Reorder modules
      */
-    public function reorder(Request $request, Course $course)
+    public function reorder(Request $request, School $school, Course $course)
     {
-        $user = Auth::user();
+        $role = $this->resolveAuthRole();
         
-        // Only admins can reorder modules
-        if (!in_array($user->role, ['admin', 'superadmin'])) {
+        if ($role !== 'admin') {
             abort(403);
         }
         
@@ -287,12 +289,11 @@ class CourseModuleController extends Controller
     /**
      * Duplicate a module with all its lessons
      */
-    public function duplicate(Course $course, CourseModule $module)
+    public function duplicate(School $school, Course $course, CourseModule $module)
     {
-        $user = Auth::user();
+        $role = $this->resolveAuthRole();
         
-        // Only admins can duplicate modules
-        if (!in_array($user->role, ['admin', 'superadmin'])) {
+        if ($role !== 'admin') {
             abort(403);
         }
         
@@ -319,7 +320,7 @@ class CourseModuleController extends Controller
             DB::commit();
             
             return redirect()
-                ->route('admin.courses.modules.show', [$course, $newModule])
+                ->route('schools.admin.courses.modules.show', ['school' => $school->slug, 'course' => $course->id, 'module' => $newModule->id])
                 ->with('success', 'Module duplicated successfully.');
             
         } catch (\Exception $e) {

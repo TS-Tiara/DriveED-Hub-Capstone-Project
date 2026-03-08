@@ -19,6 +19,32 @@
             line-height: 1.6;
         }
 
+        .skip-link {
+            position: absolute;
+            left: -9999px;
+            top: 0;
+            background: #111827;
+            color: #fff;
+            padding: 10px 14px;
+            border-radius: 0 0 8px 0;
+            z-index: 3000;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .skip-link:focus {
+            left: 0;
+        }
+
+        a:focus-visible,
+        button:focus-visible,
+        input:focus-visible,
+        select:focus-visible,
+        textarea:focus-visible {
+            outline: 3px solid rgba(102, 126, 234, 0.45);
+            outline-offset: 2px;
+        }
+
         .container {
             max-width: 1200px;
             margin: 0 auto;
@@ -52,6 +78,26 @@
 
         .back-btn:hover {
             background: rgba(255,255,255,0.3);
+        }
+
+        .header-subtext {
+            margin-top: 5px;
+            opacity: 0.9;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .inline-form {
+            display: inline;
+        }
+
+        .logout-btn {
+            border: none;
+            cursor: pointer;
         }
 
         .log-detail {
@@ -165,6 +211,10 @@
             border-radius: 4px;
             font-size: 1.05rem;
             line-height: 1.8;
+        }
+
+        .message-box-sm {
+            font-size: 0.9rem;
         }
 
         .code-block {
@@ -293,17 +343,18 @@
     </style>
 </head>
 <body>
-    <div class="container">
+    <a href="#mainContent" class="skip-link">Skip to main content</a>
+    <div id="mainContent" class="container" tabindex="-1">
         <div class="header">
             <div>
                 <h1><i class="fas fa-file-alt"></i> Log #{{ $log->id }} Details</h1>
-                <p style="margin-top: 5px; opacity: 0.9;"><i class="fas fa-user"></i> {{ Auth::guard('admin')->user()->name }}</p>
+                <p class="header-subtext"><i class="fas fa-user"></i> {{ Auth::guard('admin')->user()->name }}</p>
             </div>
-            <div style="display: flex; gap: 10px; align-items: center;">
+            <div class="header-actions">
                 <a href="{{ route('system-admin.logs') }}" class="back-btn">← Back to Logs</a>
-                <form method="POST" action="{{ route('system-admin.logout') }}" style="display: inline;">
+                <form method="POST" action="{{ route('system-admin.logout') }}" class="inline-form">
                     @csrf
-                    <button type="submit" class="back-btn" style="border: none; cursor: pointer;">
+                    <button type="submit" class="back-btn logout-btn" aria-label="Logout from system admin">
                         <i class="fas fa-sign-out-alt"></i> Logout
                     </button>
                 </form>
@@ -415,6 +466,7 @@
             @if($log->context && count($log->context) > 0)
                 <div class="section">
                     <h3>Additional Context</h3>
+                    <div class="table-container">
                     <table class="context-table">
                         <thead>
                             <tr>
@@ -431,6 +483,7 @@
                             @endforeach
                         </tbody>
                     </table>
+                    </div>
                 </div>
             @endif
 
@@ -438,7 +491,7 @@
             @if($log->user_agent)
                 <div class="section">
                     <h3>User Agent</h3>
-                    <div class="message-box" style="font-size: 0.9rem;">
+                    <div class="message-box message-box-sm">
                         {{ $log->user_agent }}
                     </div>
                 </div>

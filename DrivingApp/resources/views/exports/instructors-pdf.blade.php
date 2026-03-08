@@ -39,7 +39,7 @@
                 <th>#</th>
                 <th>Name</th>
                 <th>Email</th>
-                <th>Contact</th>
+                <th>Phone</th>
                 <th>License #</th>
                 <th>Status</th>
                 <th>Availability</th>
@@ -52,11 +52,14 @@
                 <td>{{ $index + 1 }}</td>
                 <td>{{ $instructor->name }}</td>
                 <td>{{ $instructor->email }}</td>
-                <td>{{ $instructor->contact }}</td>
+                <td>{{ $instructor->contact ?? 'N/A' }}</td>
                 <td>{{ $instructor->license_number ?? 'N/A' }}</td>
                 <td>
-                    <span class="status-badge status-{{ $instructor->status }}">
-                        {{ ucfirst($instructor->status) }}
+                    @php
+                        $status = $instructor->status ?? 'active';
+                    @endphp
+                    <span class="status-badge status-{{ $status }}">
+                        {{ ucfirst($status) }}
                     </span>
                 </td>
                 <td>

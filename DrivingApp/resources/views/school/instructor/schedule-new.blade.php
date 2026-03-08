@@ -1,24 +1,20 @@
-@extends('layouts.app')
+@extends($isAjax ?? false ? 'layouts.ajax' : 'layouts.app')
 
 @section('title', 'My Schedule')
 
 @section('content')
-<?php
+@php
     $settings = $school?->schoolSetting;
-    $primaryColor = $settings?->primary_color ?? '#0d6efd';
-    $secondaryColor = $settings?->secondary_color ?? '#6c757d';
-?>
+    $primaryColor = $settings?->primary_color ?? '#667eea';
+    $secondaryColor = $settings?->secondary_color ?? '#764ba2';
+@endphp
+
+@include('school.admin.partials.admin-styles')
 
 <style>
-    .schedule-container {
-        padding: 20px;
-        max-width: 1400px;
-        margin: 0 auto;
-    }
-    
     .schedule-header {
         margin-bottom: 20px;
-        border-bottom: 4px solid {{ $primaryColor }};
+        border-bottom: 3px solid {{ $primaryColor }};
         padding-bottom: 15px;
         display: flex;
         justify-content: space-between;
@@ -28,10 +24,10 @@
     }
     
     .schedule-header h1 {
-        font-size: 1.8rem;
+        font-size: 1.5rem;
         font-weight: 600;
         margin: 0;
-        color: #1a202c;
+        color: #1f2937;
     }
     
     .main-toggle {
@@ -226,6 +222,10 @@
     }
     
     .btn-select:hover { opacity: 0.9; }
+
+    .btn-select-compact {
+        padding: 6px 12px;
+    }
     
     .btn-request {
         display: inline-block;
@@ -240,6 +240,11 @@
     }
     
     .btn-request:hover { background: #e0a800; }
+
+    .btn-request-disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
     
     .filter-bar {
         margin-bottom: 15px;
@@ -340,6 +345,14 @@
         padding: 10px;
         margin-bottom: 8px;
         font-size: 13px;
+    }
+
+    .mini-schedule-card-admin {
+        border-left-color: #ff9800;
+    }
+
+    .mini-schedule-card-my {
+        border-left-color: #28a745;
     }
     
     .mini-schedule-card:last-child { margin-bottom: 0; }
@@ -442,10 +455,73 @@
         max-height: calc(80vh - 80px);
         overflow-y: auto;
     }
+
+    .is-hidden {
+        display: none;
+    }
+
+    .branch-text {
+        color: #3730a3;
+    }
+
+    .not-specialty-text {
+        color: #856404;
+    }
+
+    .min-notice-text {
+        font-size: 11px;
+        color: #dc3545;
+    }
+
+    .no-students-text {
+        color: #6c757d;
+        font-size: 13px;
+        margin: 0;
+    }
+
+    .modal-help-text {
+        color: #666;
+        margin-bottom: 15px;
+    }
+
+    .modal-reason-label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .modal-required {
+        color: #dc3545;
+    }
+
+    .modal-reason-input {
+        width: 100%;
+        min-height: 100px;
+        padding: 10px;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        font-family: inherit;
+    }
+
+    .modal-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-top: 15px;
+    }
+
+    .modal-cancel-btn {
+        background: #e0e0e0;
+        color: #666;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+    }
     
     /* Mobile Responsiveness */
     @media (max-width: 768px) {
-        .schedule-container { padding: 10px; }
+        .admin-container { padding: 10px; }
         .schedule-header h1 { font-size: 1.3rem; }
         .main-toggle-btn { padding: 10px 16px; font-size: 13px; }
         .slot-item { padding: 12px; }
@@ -453,10 +529,12 @@
         .mobile-sidebar-btn { display: inline-block !important; }
     }
     
-    .mobile-sidebar-btn { display: none; }
+    .mobile-sidebar-btn {
+        display: none;
+    }
 </style>
 
-<div class="schedule-container">
+<div class="admin-container">
     <!-- Header -->
     <div class="schedule-header">
         <h1>My Schedule</h1>
@@ -491,15 +569,15 @@
                     <label>
                         <input type="checkbox" id="collapse-all-my" onchange="toggleCollapseAllMy(this)"> Collapse All
                     </label>
-                    <button type="button" class="btn-select mobile-sidebar-btn" onclick="toggleMobileSidebar()" style="padding: 6px 12px;">Today's Lessons</button>
+                    <button type="button" class="btn-select btn-select-compact mobile-sidebar-btn" onclick="toggleMobileSidebar()">Today's Lessons</button>
                 </div>
                 
                 @forelse($groupedMySlots as $date => $dateSlots)
                     @php $isPast = $date < $todayDate; @endphp
-                    <div class="schedule-item" data-is-past="{{ $isPast ? 'true' : 'false' }}" style="{{ $isPast ? 'display: none;' : '' }}">
+                    <div class="schedule-item {{ $isPast ? 'is-hidden' : '' }}" data-is-past="{{ $isPast ? 'true' : 'false' }}">
                         <div class="schedule-date-header" onclick="toggleDate(this)">
                             <span class="date-text">{{ \Carbon\Carbon::parse($date)->format('l, F d, Y') }}</span>
-                            <span class="toggle-icon">▼</span>
+                            <span class="toggle-icon">&#x25BC;</span>
                         </div>
                         <div class="schedule-slots">
                             @foreach($dateSlots as $slot)
@@ -525,9 +603,12 @@
                                             @endif
                                         </div>
                                         <div class="slot-info">
-                                            {{ $slot->course->title ?? 'General' }} • {{ $slot->instructors->count() }}/{{ $slot->max_instructors ?? 1 }} instructors
+                                            {{ $slot->course->title ?? 'General' }} &bull; {{ $slot->instructors->count() }}/{{ $slot->max_instructors ?? 1 }} instructors
                                             @if($slotBookings->count() > 0)
-                                                • {{ $slotBookings->count() }} student(s) booked
+                                                &bull; {{ $slotBookings->count() }} student(s) scheduled
+                                            @endif
+                                            @if($slot->branch_id && $slot->branch)
+                                                &bull; <span class="branch-text">{{ $slot->branch->name }}</span>
                                             @endif
                                         </div>
                                         @if($slot->notes)
@@ -537,11 +618,11 @@
                                         @if(!$hasPendingRequest)
                                         <div class="slot-actions">
                                             @if($isAdminAssigned)
-                                                <button type="button" class="btn-request" onclick="showRemovalModal({{ $slot->id }})" {{ !$canRequestRemoval ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : '' }}>
+                                                <button type="button" class="btn-request {{ !$canRequestRemoval ? 'btn-request-disabled' : '' }}" onclick="showRemovalModal({{ $slot->id }})" {{ !$canRequestRemoval ? 'disabled' : '' }}>
                                                     Request Removal
                                                 </button>
                                                 @if(!$canRequestRemoval)
-                                                    <span style="font-size: 11px; color: #dc3545;">(Min {{ $minimumNoticeDays }} days notice)</span>
+                                                    <span class="min-notice-text">(Min {{ $minimumNoticeDays }} days notice)</span>
                                                 @endif
                                             @else
                                                 <button type="button" class="btn-leave" onclick="leaveSlot({{ $slot->id }}, this)">Leave Slot</button>
@@ -581,7 +662,7 @@
                                         </div>
                                     @endforeach
                                 @else
-                                    <p style="color: #6c757d; font-size: 13px; margin: 0;">No students booked</p>
+                                    <p class="no-students-text">No students scheduled</p>
                                 @endif
                             </div>
                         @endforeach
@@ -597,7 +678,7 @@
                             $instructor = $slot->instructors->firstWhere('id', $instructorId);
                             $isAdmin = $instructor && $instructor->pivot->assignment_type === 'admin_assigned';
                         @endphp
-                        <div class="mini-schedule-card" style="border-left-color: {{ $isAdmin ? '#ff9800' : '#28a745' }};">
+                        <div class="mini-schedule-card {{ $isAdmin ? 'mini-schedule-card-admin' : 'mini-schedule-card-my' }}">
                             <div class="mini-schedule-date">{{ \Carbon\Carbon::parse($slot->date)->format('D, M d') }}</div>
                             <div class="mini-schedule-info">
                                 {{ \Carbon\Carbon::parse($slot->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($slot->end_time)->format('g:i A') }}
@@ -634,10 +715,10 @@
                             return empty($qualifiedCourseIds) || in_array($slot->course_id, $qualifiedCourseIds);
                         })->count() > 0;
                     @endphp
-                    <div class="schedule-item" data-is-past="{{ $isPast ? 'true' : 'false' }}" data-has-visible="{{ $hasVisibleSlots ? 'true' : 'false' }}" style="{{ $isPast || !$hasVisibleSlots ? 'display: none;' : '' }}">
+                    <div class="schedule-item {{ $isPast || !$hasVisibleSlots ? 'is-hidden' : '' }}" data-is-past="{{ $isPast ? 'true' : 'false' }}" data-has-visible="{{ $hasVisibleSlots ? 'true' : 'false' }}">
                         <div class="schedule-date-header" onclick="toggleDate(this)">
                             <span class="date-text">{{ \Carbon\Carbon::parse($date)->format('l, F d, Y') }}</span>
-                            <span class="toggle-icon">▼</span>
+                            <span class="toggle-icon">&#x25BC;</span>
                         </div>
                         <div class="schedule-slots">
                             @foreach($dateSlots as $slot)
@@ -645,22 +726,22 @@
                                     $isQualified = empty($qualifiedCourseIds) || in_array($slot->course_id, $qualifiedCourseIds);
                                     $spotsLeft = ($slot->max_instructors ?? 1) - $slot->instructors->count();
                                 @endphp
-                                <div class="slot-item" data-qualified="{{ $isQualified ? 'true' : 'false' }}" style="{{ !$isQualified ? 'display: none;' : '' }}">
+                                <div class="slot-item {{ !$isQualified ? 'is-hidden' : '' }}" data-qualified="{{ $isQualified ? 'true' : 'false' }}">
                                     <div class="slot-indicator available"></div>
                                     <div class="slot-details">
                                         <div class="slot-time">
                                             {{ \Carbon\Carbon::parse($slot->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($slot->end_time)->format('g:i A') }}
                                             <span class="slot-badge badge-available">Available</span>
                                             @if($isQualified)
-                                                <span class="slot-badge badge-qualified">{{ $slot->course->title ?? 'General' }} ✓</span>
+                                                <span class="slot-badge badge-qualified">{{ $slot->course->title ?? 'General' }} &#10003;</span>
                                             @else
                                                 <span class="slot-badge badge-not-qualified">{{ $slot->course->title ?? 'General' }}</span>
                                             @endif
                                         </div>
                                         <div class="slot-info">
-                                            {{ $slot->instructors->count() }}/{{ $slot->max_instructors ?? 1 }} instructors • {{ $spotsLeft }} spot(s) left
+                                            {{ $slot->instructors->count() }}/{{ $slot->max_instructors ?? 1 }} instructors &bull; {{ $spotsLeft }} spot(s) left
                                             @if(!$isQualified)
-                                                • <span style="color: #856404;">Not your specialty</span>
+                                                &bull; <span class="not-specialty-text">Not your specialty</span>
                                             @endif
                                         </div>
                                         @if($slot->notes)
@@ -702,7 +783,7 @@
                                         </div>
                                     @endforeach
                                 @else
-                                    <p style="color: #6c757d; font-size: 13px; margin: 0;">No students booked</p>
+                                    <p class="no-students-text">No students scheduled</p>
                                 @endif
                             </div>
                         @endforeach
@@ -739,15 +820,18 @@
         <div class="modal-body">
             <form id="removalForm" method="POST">
                 @csrf
-                <p style="color: #666; margin-bottom: 15px;">
+                <p class="modal-help-text">
                     Please provide a reason for requesting removal from this admin-assigned time slot.
+                </p>
+                <p style="color: #666; margin-bottom: 15px;">
+                    This sends a request to admin for review and does not remove you instantly.
                 </p>
                 <label style="display: block; font-weight: 600; margin-bottom: 8px;">
                     Reason: <span style="color: #dc3545;">*</span>
                 </label>
-                <textarea name="reason" required maxlength="500" style="width: 100%; min-height: 100px; padding: 10px; border: 1px solid #dee2e6; border-radius: 6px; font-family: inherit;" placeholder="E.g., conflicting appointment, personal emergency..."></textarea>
-                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 15px;">
-                    <button type="button" onclick="closeRemovalModal()" style="background: #e0e0e0; color: #666; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;">Cancel</button>
+                <textarea name="reason" required maxlength="500" class="modal-reason-input" placeholder="E.g., conflicting appointment, personal emergency..."></textarea>
+                <div class="modal-actions">
+                    <button type="button" onclick="closeRemovalModal()" class="modal-cancel-btn">Cancel</button>
                     <button type="submit" class="btn-request">Submit Request</button>
                 </div>
             </form>
@@ -780,7 +864,7 @@
                                 </div>
                             @endforeach
                         @else
-                            <p style="color: #6c757d; font-size: 13px; margin: 0;">No students booked</p>
+                            <p class="no-students-text">No students scheduled</p>
                         @endif
                     </div>
                 @endforeach
@@ -792,6 +876,32 @@
 </div>
 
 <script>
+    // Toast notification system
+    function showToast(message, type) {
+        type = type || 'success';
+        var toast = document.createElement('div');
+        toast.className = 'schedule-toast schedule-toast-' + type;
+        toast.textContent = message;
+        toast.style.cssText = 'position:fixed;top:20px;right:20px;z-index:10000;padding:14px 24px;border-radius:8px;color:white;font-weight:500;font-size:0.9rem;box-shadow:0 4px 12px rgba(0,0,0,0.15);transform:translateX(120%);transition:transform 0.3s ease;max-width:400px;';
+        toast.style.background = type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#f59e0b';
+        document.body.appendChild(toast);
+        requestAnimationFrame(function() { toast.style.transform = 'translateX(0)'; });
+        setTimeout(function() {
+            toast.style.transform = 'translateX(120%)';
+            setTimeout(function() { toast.remove(); }, 300);
+        }, 3000);
+    }
+
+    // Show pending toast from previous page action
+    (function() {
+        var msg = sessionStorage.getItem('scheduleToast');
+        if (msg) {
+            var data = JSON.parse(msg);
+            sessionStorage.removeItem('scheduleToast');
+            showToast(data.message, data.type);
+        }
+    })();
+
     // Tab switching
     function switchMainView(viewName) {
         document.querySelectorAll('.main-toggle-btn').forEach(function(btn) {
@@ -890,13 +1000,20 @@
     
     // Leave slot
     function leaveSlot(slotId, btn) {
-        if (!confirm('Are you sure you want to leave this slot?')) {
-            return;
-        }
-        
-        btn.textContent = 'Leaving...';
-        btn.disabled = true;
-        
+        showConfirm({
+            title: 'Leave Slot',
+            message: 'Are you sure you want to leave this slot?',
+            type: 'warning',
+            onConfirm: () => {
+                btn.textContent = 'Leaving...';
+                btn.disabled = true;
+                
+                leaveSlotExecute(slotId, btn);
+            }
+        });
+    }
+
+    function leaveSlotExecute(slotId, btn) {
         fetch('{{ url($school->slug) }}/instructor/timeslots/' + slotId + '/toggle', {
             method: 'POST',
             headers: {
@@ -911,17 +1028,17 @@
         })
         .then(function(data) {
             if (data.success) {
-                alert(data.message || 'Successfully left the slot!');
+                sessionStorage.setItem('scheduleToast', JSON.stringify({message: data.message || 'Successfully left the slot!', type: 'success'}));
                 window.location.reload();
             } else {
-                alert(data.message || 'Failed to leave slot');
+                showToast(data.message || 'Failed to leave slot', 'error');
                 btn.textContent = 'Leave Slot';
                 btn.disabled = false;
             }
         })
         .catch(function(error) {
             console.error('Error:', error);
-            alert('An error occurred. Please try again.');
+            showToast('An error occurred. Please try again.', 'error');
             btn.textContent = 'Leave Slot';
             btn.disabled = false;
         });
@@ -946,17 +1063,17 @@
         })
         .then(function(data) {
             if (data.success) {
-                alert(data.message || 'Successfully selected the slot!');
+                sessionStorage.setItem('scheduleToast', JSON.stringify({message: data.message || 'Successfully selected the slot!', type: 'success'}));
                 window.location.reload();
             } else {
-                alert(data.message || 'Failed to select slot');
+                showToast(data.message || 'Failed to select slot', 'error');
                 btn.textContent = 'Select Slot';
                 btn.disabled = false;
             }
         })
         .catch(function(error) {
             console.error('Error:', error);
-            alert('An error occurred. Please try again.');
+            showToast('An error occurred. Please try again.', 'error');
             btn.textContent = 'Select Slot';
             btn.disabled = false;
         });
@@ -964,15 +1081,31 @@
     
     // Removal request modal
     function showRemovalModal(slotId) {
-        var modal = document.getElementById('removalModal');
-        var form = document.getElementById('removalForm');
-        form.action = '{{ url($school->slug) }}/instructor/timeslots/' + slotId + '/request-removal';
-        modal.style.display = 'flex';
+        showConfirm({
+            title: 'Request Removal',
+            message: 'Do you want to submit a removal request for this slot?',
+            type: 'warning',
+            onConfirm: function() {
+                var modal = document.getElementById('removalModal');
+                var form = document.getElementById('removalForm');
+                form.action = '{{ url($school->slug) }}/instructor/timeslots/' + slotId + '/request-removal';
+                modal.style.display = 'flex';
+            }
+        });
     }
     
     function closeRemovalModal() {
         document.getElementById('removalModal').style.display = 'none';
     }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            var removalModal = document.getElementById('removalModal');
+            if (removalModal && removalModal.style.display === 'flex') {
+                closeRemovalModal();
+            }
+        }
+    });
     
     // Mobile sidebar toggle
     function toggleMobileSidebar() {
@@ -983,14 +1116,25 @@
     // Handle removal form submission
     document.getElementById('removalForm').addEventListener('submit', function(e) {
         e.preventDefault();
-        
         var form = this;
+
+        showConfirm({
+            title: 'Submit Removal Request',
+            message: 'Send this request to admin for review?',
+            type: 'warning',
+            onConfirm: function() {
+                submitRemovalRequest(form);
+            }
+        });
+    });
+
+    function submitRemovalRequest(form) {
         var formData = new FormData(form);
         var submitBtn = form.querySelector('button[type="submit"]');
-        
+
         submitBtn.textContent = 'Submitting...';
         submitBtn.disabled = true;
-        
+
         fetch(form.action, {
             method: 'POST',
             body: formData,
@@ -1004,20 +1148,20 @@
         })
         .then(function(data) {
             if (data.success) {
-                alert(data.message || 'Removal request submitted!');
+                sessionStorage.setItem('scheduleToast', JSON.stringify({message: data.message || 'Removal request submitted!', type: 'success'}));
                 window.location.reload();
             } else {
-                alert(data.message || 'Failed to submit request');
+                showToast(data.message || 'Failed to submit request', 'error');
                 submitBtn.textContent = 'Submit Request';
                 submitBtn.disabled = false;
             }
         })
         .catch(function(error) {
             console.error('Error:', error);
-            alert('An error occurred. Please try again.');
+            showToast('An error occurred. Please try again.', 'error');
             submitBtn.textContent = 'Submit Request';
             submitBtn.disabled = false;
         });
-    });
+    }
 </script>
 @endsection

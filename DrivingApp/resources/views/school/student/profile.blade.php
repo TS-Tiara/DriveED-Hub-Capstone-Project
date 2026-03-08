@@ -6,8 +6,10 @@
 @php
     $school = $school ?? $currentSchool ?? null;
     $schoolName = $school->name ?? 'Driving School';
-    $student = Auth::guard('student')->user();
+    $student = $student ?? Auth::guard('student')->user();
     $settings = $school?->schoolSetting;
+    $primaryColor = $settings?->primary_color ?? '#667eea';
+    $secondaryColor = $settings?->secondary_color ?? '#764ba2';
 @endphp
 
 <style>
@@ -20,7 +22,7 @@
     .page-header {
         margin-bottom: 30px;
         padding-bottom: 15px;
-        border-bottom: 3px solid {{ $settings->primary_color ?? '#667eea' }};
+        border-bottom: 4px solid {{ $primaryColor }};
     }
 
     .page-title {
@@ -41,21 +43,11 @@
     }
 
     .status-badge-top {
-        position: absolute;
-        top: 20px;
-        left: 20px;
-        background: #10b981;
-        color: white;
-        padding: 6px 14px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 600;
-        text-transform: uppercase;
+        display: none;
     }
 
     .profile-card-header {
-        text-align: center;
-        padding: 40px 30px 30px;
+        display: none;
     }
 
     .profile-avatar-circle {
@@ -72,7 +64,8 @@
         cursor: pointer;
     }
 
-    .profile-avatar-circle:hover .avatar-upload-overlay {
+    .profile-avatar-circle:hover .avatar-upload-overlay,
+    .profile-avatar:hover .avatar-upload-overlay {
         opacity: 1;
     }
 
@@ -149,7 +142,7 @@
     }
 
     .btn-edit-profile {
-        background: #007bff;
+        background: {{ $primaryColor }};
         color: white;
         border: none;
         padding: 12px 40px;
@@ -161,7 +154,56 @@
     }
 
     .btn-edit-profile:hover {
-        background: #0056b3;
+        opacity: 0.9;
+    }
+
+    .error-list-compact {
+        margin: 0;
+        padding-left: 20px;
+    }
+
+    .avatar-container-rel {
+        position: relative;
+    }
+
+    .hidden-file-input {
+        display: none;
+    }
+
+    .password-section {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .password-section-title {
+        margin: 0 0 15px 0;
+        font-size: 0.95rem;
+        color: #374151;
+        font-weight: 600;
+    }
+
+    .password-section-title-note {
+        font-weight: 400;
+        color: #9ca3af;
+        font-size: 0.8rem;
+    }
+
+    .password-error-box {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #dc2626;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        margin-bottom: 12px;
+    }
+
+    .password-error-text {
+        color: #dc2626;
+        font-size: 0.8rem;
+        margin-top: 4px;
+        display: block;
     }
 
     .edit-form {
@@ -191,18 +233,18 @@
 
     .form-field input:focus {
         outline: none;
-        border-color: {{ $settings->primary_color ?? '#667eea' }};
+        border-color: {{ $primaryColor }};
     }
 
     .form-actions {
         display: flex;
         gap: 10px;
-        justify-center;
+        justify-content: center;
         margin-top: 30px;
     }
 
     .btn-save {
-        background: {{ $settings->primary_color ?? '#667eea' }};
+        background: {{ $primaryColor }};
         color: white;
         border: none;
         padding: 12px 30px;
@@ -344,32 +386,32 @@
     }
     
     .btn-edit {
-        background: {{ $settings->primary_color ?? '#3b82f6' }};
+        background: {{ $primaryColor }};
         color: white;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
     
     .btn-edit:hover {
-        background: {{ $settings->secondary_color ?? '#2563eb' }};
+        background: {{ $secondaryColor }};
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
         transform: translateY(-1px);
     }
     
     .back-button {
         background: white;
-        color: {{ $settings->primary_color ?? '#3b82f6' }};
+        color: {{ $primaryColor }};
         padding: 10px 20px;
         border-radius: 8px;
         text-decoration: none;
         margin-bottom: 20px;
         display: inline-block;
-        border: 2px solid {{ $settings->primary_color ?? '#3b82f6' }};
+        border: 2px solid {{ $primaryColor }};
         transition: all 0.3s ease;
         font-weight: 500;
     }
     
     .back-button:hover {
-        background: {{ $settings->primary_color ?? '#3b82f6' }};
+        background: {{ $primaryColor }};
         color: white;
     }
 
@@ -402,8 +444,8 @@
 
     .form-group input:focus {
         outline: none;
-        border-color: {{ $settings->primary_color ?? '#3b82f6' }};
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        border-color: {{ $primaryColor }};
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
     }
     
     .form-buttons {
@@ -415,12 +457,12 @@
     }
     
     .btn-save {
-        background: {{ $settings->primary_color ?? '#3b82f6' }};
+        background: {{ $primaryColor }};
         color: white;
     }
     
     .btn-save:hover {
-        background: {{ $settings->secondary_color ?? '#2563eb' }};
+        background: {{ $secondaryColor }};
         transform: translateY(-1px);
     }
     
@@ -589,7 +631,7 @@
     
     @if($errors->any())
         <div class="error-message">
-            <ul style="margin: 0; padding-left: 20px;">
+            <ul class="error-list-compact">
                 @foreach($errors->all() as $error)
                     <li>{{ $error }}</li>
                 @endforeach
@@ -598,10 +640,10 @@
     @endif
 
     <div class="profile-card">
-        <div class="status-badge">Active</div>
+        <div class="status-badge">{{ ucfirst($student->status ?? 'Active') }}</div>
         
         <div class="profile-header">
-            <div class="profile-avatar" id="avatarContainer" style="position: relative;">
+            <div class="profile-avatar avatar-container-rel" id="avatarContainer">
                 @if($student->profile_picture && file_exists(public_path('storage/' . $student->profile_picture)))
                     <img src="{{ asset('storage/' . $student->profile_picture) }}" alt="{{ $student->name }}" id="avatarImage">
                 @else
@@ -611,7 +653,7 @@
                     <span>Change Photo</span>
                 </div>
             </div>
-            <input type="file" id="profilePictureInput" accept="image/png,image/jpg,image/jpeg,image/webp" style="display: none;" onchange="uploadProfilePicture(this)">
+            <input type="file" id="profilePictureInput" accept="image/png,image/jpg,image/jpeg,image/webp" class="hidden-file-input" onchange="uploadProfilePicture(this)">
             
             <h1 class="profile-title">{{ $student->name ?? 'Student\'s Name' }}</h1>
         </div>
@@ -638,6 +680,10 @@
                     <span class="info-label">Date of Birth:</span>
                     <span class="info-value">{{ $student->date_of_birth ? \Carbon\Carbon::parse($student->date_of_birth)->format('F d, Y') : 'N/A' }}</span>
                 </div>
+                <div class="info-row">
+                    <span class="info-label">Branch:</span>
+                    <span class="info-value">{{ $student->branchRelation?->name ?? 'Not Assigned' }}</span>
+                </div>
             </div>
             
             <div class="profile-buttons" id="profileButtons">
@@ -647,7 +693,7 @@
         
         <!-- Edit Form -->
         <div id="editForm" class="edit-form">
-            <form method="POST" action="{{ $schoolRoute('student.profile.update') }}">
+            <form method="POST" action="{{ school_route('student.profile.update') }}">
                 @csrf
                 @method('PUT')
                 
@@ -674,6 +720,32 @@
                 <div class="form-group">
                     <label for="date_of_birth">Date of Birth:</label>
                     <input type="date" id="date_of_birth" name="date_of_birth" value="{{ old('date_of_birth', $student->date_of_birth) }}">
+                </div>
+
+                <div class="password-section">
+                    <h4 class="password-section-title">Change Password <span class="password-section-title-note">(optional)</span></h4>
+                    
+                    @error('current_password')
+                        <div class="password-error-box">{{ $message }}</div>
+                    @enderror
+
+                    <div class="form-group">
+                        <label for="current_password">Current Password:</label>
+                        <input type="password" id="current_password" name="current_password" placeholder="Enter current password">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="new_password">New Password:</label>
+                        <input type="password" id="new_password" name="new_password" placeholder="Min 8 chars, uppercase, lowercase, number">
+                        @error('new_password')
+                            <span class="password-error-text">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label for="new_password_confirmation">Confirm New Password:</label>
+                        <input type="password" id="new_password_confirmation" name="new_password_confirmation" placeholder="Re-enter new password">
+                    </div>
                 </div>
                 
                 <div class="form-buttons">
@@ -727,7 +799,7 @@
         const originalText = overlay.textContent;
         overlay.textContent = 'Uploading...';
         
-        fetch('{{ $schoolRoute('student.profile.picture') }}', {
+        fetch('{{ school_route('student.profile.picture') }}', {
             method: 'POST',
             body: formData,
             headers: {
@@ -773,5 +845,4 @@
         });
     }
 </script>
-</div>
 @endsection

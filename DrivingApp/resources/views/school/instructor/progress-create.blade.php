@@ -1,12 +1,90 @@
-@extends('layouts.app')
+@extends($isAjax ?? false ? 'layouts.ajax' : 'layouts.app')
 
 @section('title', 'Add Progress')
 
 @section('content')
-<div class="dashboard-container">
+@php
+    $school = $school ?? $currentSchool ?? null;
+    $settings = $school?->schoolSetting;
+    $primaryColor = $settings?->primary_color ?? '#667eea';
+    $secondaryColor = $settings?->secondary_color ?? '#764ba2';
+@endphp
+
+@include('school.admin.partials.admin-styles')
+
+<style>
+    .form-card {
+        background: white;
+        border-radius: 12px;
+        padding: 28px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        max-width: 600px;
+    }
+
+    .form-group { margin-bottom: 18px; }
+    .form-group label { display: block; margin-bottom: 6px; font-weight: 600; color: #374151; font-size: 0.85rem; }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 0.88rem;
+        outline: none;
+        transition: border-color 0.2s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus { border-color: {{ $primaryColor }}; }
+
+    .form-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-top: 24px;
+        padding-top: 16px;
+        border-top: 1px solid #f3f4f6;
+    }
+
+    .btn-form-primary {
+        background: {{ $primaryColor }};
+        color: white;
+        padding: 10px 22px;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+    }
+
+    .btn-form-primary:hover { background: {{ $secondaryColor }}; }
+
+    .btn-form-secondary {
+        background: #f3f4f6;
+        color: #374151;
+        padding: 10px 22px;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+    }
+
+    .btn-form-secondary:hover { background: #e5e7eb; }
+</style>
+
+<div class="admin-container">
     <div class="page-header">
-        <h1>Add Student Progress</h1>
-        <p>Record progress for a student</p>
+        <div class="page-header-left">
+            <h1 class="page-title">Add Student Progress</h1>
+            <p class="page-subtitle">Record progress for a student</p>
+        </div>
     </div>
 
     <div class="form-card">
@@ -49,104 +127,10 @@
             </div>
 
             <div class="form-actions">
-                <a href="{{ $schoolRoute('instructor.students.index') }}" class="btn-secondary" onclick="loadContent(this.href); return false;">Cancel</a>
-                <button type="submit" class="btn-primary">Save Progress</button>
+                <a href="{{ $schoolRoute('instructor.progress.index') }}" class="btn-form-secondary" onclick="loadContent(this.href); return false;">Cancel</a>
+                <button type="submit" class="btn-form-primary">Save Progress</button>
             </div>
         </form>
     </div>
 </div>
-
-<style>
-    .dashboard-container {
-        padding: 20px;
-        max-width: 600px;
-        margin: 0 auto;
-    }
-
-    .page-header {
-        margin-bottom: 30px;
-    }
-
-    .page-header h1 {
-        font-size: 28px;
-        color: #333;
-        margin-bottom: 5px;
-    }
-
-    .page-header p {
-        color: #666;
-    }
-
-    .form-card {
-        background: white;
-        border-radius: 12px;
-        padding: 30px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-    }
-
-    .form-group {
-        margin-bottom: 20px;
-    }
-
-    .form-group label {
-        display: block;
-        margin-bottom: 8px;
-        font-weight: 500;
-        color: #333;
-    }
-
-    .form-group input,
-    .form-group select,
-    .form-group textarea {
-        width: 100%;
-        padding: 12px;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        font-size: 14px;
-    }
-
-    .form-group input:focus,
-    .form-group select:focus,
-    .form-group textarea:focus {
-        outline: none;
-        border-color: var(--primary-color, #007bff);
-    }
-
-    .form-actions {
-        display: flex;
-        gap: 15px;
-        justify-content: flex-end;
-        margin-top: 30px;
-        padding-top: 20px;
-        border-top: 1px solid #eee;
-    }
-
-    .btn-primary {
-        background: var(--primary-color, #007bff);
-        color: white;
-        padding: 12px 24px;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        font-weight: 500;
-    }
-
-    .btn-secondary {
-        background: #f1f1f1;
-        color: #333;
-        padding: 12px 24px;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        text-decoration: none;
-    }
-
-    .btn-primary:hover {
-        opacity: 0.9;
-    }
-
-    .btn-secondary:hover {
-        background: #e5e5e5;
-    }
-</style>
 @endsection

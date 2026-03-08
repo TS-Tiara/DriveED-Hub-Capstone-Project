@@ -2,33 +2,44 @@
 
 namespace App\Models;
 
+use App\Traits\HasSchoolScope;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class Student extends Authenticatable
 {
+    use HasSchoolScope;
     use HasFactory, Notifiable;
 
     protected $fillable = [
         'school_id',
+        'branch_id',
         'name',
         'email',
         'password',
         'contact',
         'address',
-        'status',
-        'role',
-        'branch',
         'location',
         'enrollment_date',
         'profile_picture',
+        'student_license_path',
+        'student_license_data',
+        'student_license_mime_type',
+        'student_license_filename',
+        'student_license_verified_by',
+        'student_license_rejection_reason',
         'experience_level',
         'has_passed_theoretical',
         'theoretical_passed_at',
-        'email_verified_at',
-        'verification_code',
         'verification_code_expires_at',
+        'failed_login_attempts',
+        'locked_until',
+        'last_login_at',
+        'status',
+        'is_active',
+        'role',
     ];
 
     protected $hidden = [
@@ -43,8 +54,12 @@ class Student extends Authenticatable
             'password' => 'hashed',
             'has_passed_theoretical' => 'boolean',
             'theoretical_passed_at' => 'datetime',
+            'student_license_verified_at' => 'datetime',
             'email_verified_at' => 'datetime',
             'verification_code_expires_at' => 'datetime',
+            'is_course_locked' => 'boolean',
+            'locked_until' => 'datetime',
+            'last_login_at' => 'datetime',
         ];
     }
 
@@ -53,9 +68,68 @@ class Student extends Authenticatable
         return $this->belongsTo(School::class);
     }
 
+    public function branchRelation()
+    {
+        return $this->belongsTo(Branch::class , 'branch_id');
+    }
+
     public function bookings()
     {
         return $this->hasMany(Booking::class);
+    }
+
+    /**
+     * Get the active enrollment for this student
+     */
+    public function activeEnrollment()
+    {
+        return $this->belongsTo(EnrollmentRequest::class , 'active_enrollment_id');
+    }
+
+    /**
+     * Get all enrollment records (from enrollment_requests table)
+     */
+    public function enrollmentRecords()
+    {
+        return $this->hasMany(EnrollmentRequest::class , 'learner_id');
+    }
+
+    /**
+     * Check if student is currently enrolled in a course
+     */
+    public function isEnrolledInCourse(): bool
+    {
+        return $this->is_course_locked && $this->active_enrollment_id !== null;
+    }
+
+    /**
+     * Check if student can enroll in a new course
+     */
+    public function canEnrollInNewCourse(): bool
+    {
+        return !$this->is_course_locked;
+    }
+
+    /**
+     * Lock student to a course
+     */
+    public function lockToCourse(EnrollmentRequest $enrollment): void
+    {
+        $this->update([
+            'active_enrollment_id' => $enrollment->id,
+            'is_course_locked' => true,
+        ]);
+    }
+
+    /**
+     * Unlock student from course (when course is completed)
+     */
+    public function unlockFromCourse(): void
+    {
+        $this->update([
+            'active_enrollment_id' => null,
+            'is_course_locked' => false,
+        ]);
     }
 
     public function progresses()
@@ -65,7 +139,7 @@ class Student extends Authenticatable
 
     public function enrollmentRequests()
     {
-        return $this->hasMany(EnrollmentRequest::class, 'learner_id');
+        return $this->hasMany(EnrollmentRequest::class , 'learner_id');
     }
 
     /**
@@ -74,8 +148,8 @@ class Student extends Authenticatable
     public function enrolledCourses()
     {
         return $this->hasManyThrough(
-            Course::class,
-            Booking::class,
+            Course::class ,
+            Booking::class ,
             'student_id', // Foreign key on bookings table
             'id', // Foreign key on courses table
             'id', // Local key on students table
@@ -104,8 +178,8 @@ class Student extends Authenticatable
      */
     public function enrollments()
     {
-        return $this->hasMany(EnrollmentRequest::class, 'learner_id')
-                    ->whereIn('status', ['approved', 'completed', 'cancelled']);
+        return $this->hasMany(EnrollmentRequest::class , 'learner_id')
+            ->whereIn('status', ['approved', 'completed', 'cancelled']);
     }
 
     /**
@@ -113,8 +187,8 @@ class Student extends Authenticatable
      */
     public function activeEnrollments()
     {
-        return $this->hasMany(EnrollmentRequest::class, 'learner_id')
-                    ->where('status', 'approved');
+        return $this->hasMany(EnrollmentRequest::class , 'learner_id')
+            ->where('status', 'approved');
     }
 
     /**
@@ -146,7 +220,47 @@ class Student extends Authenticatable
      */
     public function canEnrollPractical(): bool
     {
-        return $this->hasPassedTheoretical();
+        return $this->hasPassedTheoretical() && $this->hasVerifiedLicense();
+    }
+
+    /**
+     * Check if student has a verified student driver's license
+     */
+    public function hasVerifiedLicense(): bool
+    {
+        return $this->student_license_status === 'verified';
+    }
+
+    /**
+     * Check if student's license is pending verification
+     */
+    public function isLicensePending(): bool
+    {
+        return $this->student_license_status === 'pending';
+    }
+
+    /**
+     * Check if student's license was rejected
+     */
+    public function isLicenseRejected(): bool
+    {
+        return $this->student_license_status === 'rejected';
+    }
+
+    /**
+     * Check if student has not uploaded a license yet
+     */
+    public function hasNoLicense(): bool
+    {
+        return $this->student_license_status === 'none' || $this->student_license_status === null;
+    }
+
+    /**
+     * Get the admin who verified the license
+     */
+    public function licenseVerifiedBy()
+    {
+        return $this->belongsTo(Admin::class , 'student_license_verified_by');
     }
 
     /**
@@ -191,7 +305,7 @@ class Student extends Authenticatable
         $this->verification_code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
         $this->verification_code_expires_at = now()->addMinutes(15);
         $this->save();
-        
+
         return $this->verification_code;
     }
 
@@ -200,8 +314,8 @@ class Student extends Authenticatable
      */
     public function isVerificationCodeValid($code)
     {
-        return $this->verification_code === $code 
-            && $this->verification_code_expires_at 
+        return $this->verification_code === $code
+            && $this->verification_code_expires_at
             && $this->verification_code_expires_at->isFuture();
     }
 

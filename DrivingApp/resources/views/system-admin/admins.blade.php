@@ -322,6 +322,68 @@
         margin-top: 15px;
         font-size: 0.9rem;
     }
+
+    .action-bar-controls {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .section-title-icon {
+        margin-right: 0.5rem;
+        color: #053d86;
+    }
+
+    .admin-name-wrap {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .no-school {
+        color: #9ca3af;
+    }
+
+    .status-dot {
+        font-size: 6px;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #6b7280;
+    }
+
+    .empty-state-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    .modal-title-icon {
+        margin-right: 8px;
+    }
+
+    .required-mark {
+        color: #dc2626;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .modal-content { max-width: 95%; margin: 10px; }
+        .modal-body { padding: 15px; }
+        .modal-footer { flex-direction: column; }
+        .modal-footer .btn, .modal-footer button { width: 100%; min-height: 44px; }
+        .action-bar { flex-direction: column; gap: 10px; }
+        .search-box { max-width: 100%; }
+        .status-badge { padding: 6px 12px; }
+        th, td { padding: 10px 8px; font-size: 0.82rem; }
+    }
+    
+    @media (max-width: 480px) {
+        .card-header { flex-direction: column; gap: 8px; }
+        .action-buttons { flex-wrap: wrap; }
+    }
 </style>
 @endsection
 
@@ -336,7 +398,7 @@
         <button type="submit"><i class="fas fa-search"></i></button>
     </form>
     
-    <div style="display: flex; gap: 10px; align-items: center;">
+    <div class="action-bar-controls">
         <form method="GET">
             @if(request('search'))
                 <input type="hidden" name="search" value="{{ request('search') }}">
@@ -360,12 +422,13 @@
 <div class="card">
     <div class="card-header">
         <h3>
-            <i class="fas fa-user-tie" style="margin-right: 0.5rem; color: #053d86;"></i>
+            <i class="fas fa-user-tie section-title-icon"></i>
             School Admins ({{ $admins->total() }})
         </h3>
     </div>
     <div class="card-body">
         @if($admins->count() > 0)
+        <div class="table-container">
         <table>
             <thead>
                 <tr>
@@ -381,7 +444,7 @@
                 @foreach($admins as $admin)
                 <tr>
                     <td>
-                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <div class="admin-name-wrap">
                             <div class="user-avatar">
                                 {{ strtoupper(substr($admin->name, 0, 1)) }}
                             </div>
@@ -396,19 +459,19 @@
                                 {{ $admin->school->name }}
                             </span>
                         @else
-                            <span style="color: #9ca3af;">No school</span>
+                            <span class="no-school">No school</span>
                         @endif
                     </td>
                     <td>
                         <span class="status-badge {{ $admin->is_active ? 'active' : 'inactive' }}">
-                            <i class="fas fa-circle" style="font-size: 6px;"></i>
+                            <i class="fas fa-circle status-dot"></i>
                             {{ $admin->is_active ? 'Active' : 'Inactive' }}
                         </span>
                     </td>
                     <td>{{ $admin->created_at->format('M d, Y') }}</td>
                     <td>
                         <div class="actions-cell">
-                            <form action="{{ route('system-admin.admins.toggle-status', $admin->id) }}" method="POST" style="display: inline;">
+                            <form action="{{ route('system-admin.admins.toggle-status', $admin->id) }}" method="POST" class="inline-form">
                                 @csrf
                                 @method('PATCH')
                                 <button type="submit" class="btn-sm btn-toggle {{ $admin->is_active ? 'btn-active' : 'btn-inactive' }}" 
@@ -418,7 +481,7 @@
                                 </button>
                             </form>
                             <button type="button" class="btn-sm btn-danger" 
-                                    onclick="confirmDeleteAdmin('{{ $admin->id }}', '{{ $admin->name }}')"
+                                    data-action="delete-admin" data-id="{{ $admin->id }}" data-name="{{ $admin->name }}"
                                     title="Delete Admin">
                                 <i class="fas fa-trash"></i>
                             </button>
@@ -428,10 +491,11 @@
                 @endforeach
             </tbody>
         </table>
+        </div>
         {{ $admins->appends(request()->query())->links() }}
         @else
-        <div style="text-align: center; padding: 3rem; color: #6b7280;">
-            <i class="fas fa-user-tie" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+        <div class="empty-state">
+            <i class="fas fa-user-tie empty-state-icon"></i>
             <p>No school admins found.</p>
         </div>
         @endif
@@ -439,17 +503,17 @@
 </div>
 
 <!-- Create School Admin Modal -->
-<div class="modal-overlay" id="createAdminModal">
+<div class="modal-overlay" id="createAdminModal" role="dialog" aria-modal="true" aria-labelledby="createAdminModalTitle" aria-hidden="true">
     <div class="modal-content">
         <div class="modal-header">
-            <h3><i class="fas fa-user-plus" style="color: #053d86; margin-right: 8px;"></i>Add School Admin</h3>
-            <button type="button" class="modal-close" onclick="closeModal('createAdminModal')">&times;</button>
+            <h3 id="createAdminModalTitle"><i class="fas fa-user-plus section-title-icon modal-title-icon"></i>Add School Admin</h3>
+            <button type="button" class="modal-close" onclick="closeModal('createAdminModal')" aria-label="Close create admin modal">&times;</button>
         </div>
         <form action="{{ route('system-admin.admins.store') }}" method="POST">
             @csrf
             <div class="modal-body">
                 <div class="form-group">
-                    <label for="school_id">Assign to School <span style="color: #dc2626;">*</span></label>
+                    <label for="school_id">Assign to School <span class="required-mark">*</span></label>
                     <select name="school_id" id="school_id" required>
                         <option value="">Select a school...</option>
                         @foreach($schools as $school)
@@ -458,19 +522,19 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="name">Admin Name <span style="color: #dc2626;">*</span></label>
+                    <label for="name">Admin Name <span class="required-mark">*</span></label>
                     <input type="text" name="name" id="name" required placeholder="Enter admin name">
                 </div>
                 <div class="form-group">
-                    <label for="email">Email Address <span style="color: #dc2626;">*</span></label>
+                    <label for="email">Email Address <span class="required-mark">*</span></label>
                     <input type="email" name="email" id="email" required placeholder="admin@example.com">
                 </div>
                 <div class="form-group">
-                    <label for="password">Password <span style="color: #dc2626;">*</span></label>
+                    <label for="password">Password <span class="required-mark">*</span></label>
                     <input type="password" name="password" id="password" required placeholder="Minimum 8 characters" minlength="8">
                 </div>
                 <div class="form-group">
-                    <label for="password_confirmation">Confirm Password <span style="color: #dc2626;">*</span></label>
+                    <label for="password_confirmation">Confirm Password <span class="required-mark">*</span></label>
                     <input type="password" name="password_confirmation" id="password_confirmation" required placeholder="Confirm password">
                 </div>
             </div>
@@ -483,11 +547,11 @@
 </div>
 
 <!-- Delete Admin Confirmation Modal -->
-<div class="modal-overlay" id="deleteAdminModal">
+<div class="modal-overlay" id="deleteAdminModal" role="dialog" aria-modal="true" aria-labelledby="deleteAdminModalTitle" aria-hidden="true">
     <div class="modal-content modal-danger">
         <div class="modal-header">
-            <h3><i class="fas fa-exclamation-triangle" style="margin-right: 8px;"></i>Delete Admin</h3>
-            <button type="button" class="modal-close" onclick="closeModal('deleteAdminModal')">&times;</button>
+            <h3 id="deleteAdminModalTitle"><i class="fas fa-exclamation-triangle modal-title-icon"></i>Delete Admin</h3>
+            <button type="button" class="modal-close" onclick="closeModal('deleteAdminModal')" aria-label="Close delete admin modal">&times;</button>
         </div>
         <form id="deleteAdminForm" method="POST">
             @csrf
@@ -508,27 +572,77 @@
 </div>
 
 <script>
+let activeModal = null;
+let modalTrigger = null;
+
 function openModal(id) {
-    document.getElementById(id).classList.add('active');
+    const modal = document.getElementById(id);
+    modalTrigger = document.activeElement;
+    modal.classList.add('active');
+    modal.setAttribute('aria-hidden', 'false');
+    activeModal = modal;
+
+    const firstFocusable = modal.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+    if (firstFocusable) {
+        firstFocusable.focus();
+    }
 }
 
 function closeModal(id) {
-    document.getElementById(id).classList.remove('active');
+    const modal = document.getElementById(id);
+    modal.classList.remove('active');
+    modal.setAttribute('aria-hidden', 'true');
+    activeModal = null;
+    if (modalTrigger) {
+        modalTrigger.focus();
+    }
 }
 
-function confirmDeleteAdmin(id, name) {
-    document.getElementById('deleteAdminName').textContent = name;
-    document.getElementById('deleteAdminForm').action = '{{ url("system-admin/admins") }}/' + id;
+// Delete confirmation via event delegation (XSS-safe)
+document.addEventListener('click', function(e) {
+    const btn = e.target.closest('[data-action="delete-admin"]');
+    if (!btn) return;
+    document.getElementById('deleteAdminName').textContent = btn.dataset.name;
+    document.getElementById('deleteAdminForm').action = '{{ url("system-admin/admins") }}/' + btn.dataset.id;
     openModal('deleteAdminModal');
-}
+});
 
 // Close modal when clicking outside
 document.querySelectorAll('.modal-overlay').forEach(modal => {
+    modal.setAttribute('aria-hidden', 'true');
     modal.addEventListener('click', function(e) {
         if (e.target === this) {
-            this.classList.remove('active');
+            closeModal(this.id);
         }
     });
+});
+
+document.addEventListener('keydown', function(e) {
+    if (activeModal && e.key === 'Escape') {
+        e.preventDefault();
+        closeModal(activeModal.id);
+        return;
+    }
+
+    if (!activeModal || e.key !== 'Tab') {
+        return;
+    }
+
+    const focusable = Array.from(activeModal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'));
+    if (focusable.length === 0) {
+        return;
+    }
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+
+    if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+    }
 });
 </script>
 @endsection

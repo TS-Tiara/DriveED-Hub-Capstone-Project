@@ -6,414 +6,378 @@
 @php
     $school = $school ?? $currentSchool ?? null;
     $settings = $school?->schoolSetting;
+    $primaryColor = $settings?->primary_color ?? '#667eea';
 @endphp
 
+@include('school.admin.partials.admin-styles')
+
 <style>
-    .reports-container {
-        padding: 20px;
-        max-width: 1400px;
-        margin: 0 auto;
-    }
-
-    .page-header {
-        margin-bottom: 30px;
-        padding-bottom: 15px;
-        border-bottom: 4px solid {{ $settings->primary_color ?? '#667eea' }};
-    }
-
-    .page-title {
-        font-size: 2rem;
-        color: #111827;
-        margin: 0;
-        font-weight: 400;
-    }
-
-    .back-button {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 10px 20px;
-        background: white;
-        color: {{ $settings->primary_color ?? '#667eea' }};
-        border-radius: 8px;
-        text-decoration: none;
-        font-weight: 500;
-        transition: all 0.2s;
-        margin-bottom: 20px;
-    }
-
-    .back-button:hover {
-        background: {{ $settings->primary_color ?? '#667eea' }};
-        color: white;
-        transform: translateX(-5px);
-    }
-
-    .stats-grid {
+    /* ── Charts Grid ── */
+    .charts-grid {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(2, 1fr);
         gap: 20px;
-        margin-bottom: 30px;
+        margin-bottom: 24px;
     }
 
-    .stat-box {
+    .chart-card {
         background: white;
-        padding: 25px;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        padding: 24px;
+        border-radius: 16px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+
+    .chart-card h3 {
+        margin: 0 0 16px 0;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #1f2937;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #f3f4f6;
+    }
+
+    .chart-container {
+        height: 280px;
+        position: relative;
+    }
+
+    /* ── Monthly comparison ── */
+    .monthly-comparison {
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        padding: 20px;
+    }
+
+    .month-stat {
         text-align: center;
-        transition: transform 0.2s;
-        border-left: 4px solid {{ $settings->primary_color ?? '#667eea' }};
     }
 
-    .stat-box:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    .month-stat-label {
+        font-size: 0.82rem;
+        color: #6b7280;
+        margin-bottom: 8px;
     }
 
-    .stat-label {
-        font-size: 14px;
-        color: #666;
-        font-weight: 500;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 10px;
-    }
-
-    .stat-value {
-        font-size: 36px;
+    .month-stat-value {
+        font-size: 2.5rem;
         font-weight: 700;
-        color: {{ $settings->primary_color ?? '#667eea' }};
     }
 
-    .stat-subtext {
-        font-size: 12px;
-        color: #999;
-        margin-top: 8px;
+    .month-stat-sub {
+        font-size: 0.75rem;
+        color: #9ca3af;
+        margin-top: 2px;
     }
 
     .trend-indicator {
         display: inline-flex;
         align-items: center;
-        gap: 5px;
-        font-size: 14px;
+        gap: 4px;
+        font-size: 0.88rem;
         font-weight: 600;
-        margin-top: 10px;
+        margin-top: 8px;
     }
 
-    .trend-up {
-        color: #10b981;
-    }
+    .trend-up { color: #10b981; }
+    .trend-down { color: #ef4444; }
+    .trend-neutral { color: #f59e0b; }
 
-    .trend-down {
-        color: #ef4444;
-    }
-
-    .trend-neutral {
-        color: #f59e0b;
-    }
-
-    .charts-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 20px;
-        margin-bottom: 30px;
-    }
-
-    .chart-card {
-        background: white;
-        padding: 25px;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-
-    .chart-card h3 {
-        margin: 0 0 20px 0;
-        font-size: 18px;
-        font-weight: 600;
-        color: #333;
-        border-bottom: 2px solid {{ $settings->primary_color ?? '#667eea' }};
-        padding-bottom: 10px;
-    }
-
-    .chart-container {
-        height: 300px;
-        position: relative;
-    }
-
+    /* ── Data Tables ── */
     .data-table {
         width: 100%;
         border-collapse: collapse;
     }
 
     .data-table th {
-        background: #f3f4f6;
-        padding: 12px;
+        background: #f9fafb;
+        padding: 10px 14px;
         text-align: left;
         font-weight: 600;
-        font-size: 14px;
-        color: #374151;
-        border-bottom: 2px solid {{ $settings->primary_color ?? '#667eea' }};
+        font-size: 0.78rem;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        border-bottom: 1px solid #e5e7eb;
     }
 
     .data-table td {
-        padding: 12px;
-        border-bottom: 1px solid #e5e7eb;
-        font-size: 14px;
+        padding: 10px 14px;
+        border-bottom: 1px solid #f3f4f6;
+        font-size: 0.88rem;
+        color: #374151;
     }
 
-    .data-table tr:hover {
-        background: #f9fafb;
-    }
+    .data-table tr:hover { background: #fafbfc; }
 
-    .student-avatar {
-        width: 32px;
-        height: 32px;
+    .student-avatar-sm {
+        width: 30px;
+        height: 30px;
         border-radius: 50%;
-        background: {{ $settings->primary_color ?? '#667eea' }};
+        background: {{ $primaryColor }};
         color: white;
         display: inline-flex;
         align-items: center;
         justify-content: center;
         font-weight: 600;
-        font-size: 14px;
-        margin-right: 10px;
+        font-size: 0.78rem;
+        margin-right: 8px;
     }
 
     .status-badge {
-        padding: 4px 12px;
-        border-radius: 12px;
-        font-size: 12px;
+        padding: 3px 10px;
+        border-radius: 10px;
+        font-size: 0.72rem;
         font-weight: 600;
     }
 
-    .status-completed {
-        background: #d1fae5;
-        color: #065f46;
-    }
+    .status-completed { background: #d1fae5; color: #065f46; }
+    .status-scheduled { background: #dbeafe; color: #1e40af; }
+    .status-cancelled { background: #fee2e2; color: #991b1b; }
+    .status-no-show { background: #fef3c7; color: #92400e; }
 
-    .status-scheduled {
-        background: #dbeafe;
-        color: #1e40af;
-    }
-
-    .status-cancelled {
-        background: #fee2e2;
-        color: #991b1b;
-    }
-
-    .status-no-show {
-        background: #fef3c7;
-        color: #92400e;
-    }
-
+    /* ── Upcoming Lesson Items ── */
     .upcoming-lesson {
         background: #f9fafb;
-        padding: 15px;
+        padding: 12px 14px;
         border-radius: 8px;
-        margin-bottom: 10px;
-        border-left: 3px solid {{ $settings->primary_color ?? '#667eea' }};
+        margin-bottom: 8px;
+        border-left: 3px solid {{ $primaryColor }};
     }
 
     .lesson-time {
-        font-size: 14px;
+        font-size: 0.88rem;
         font-weight: 600;
-        color: #374151;
-        margin-bottom: 5px;
+        color: #1f2937;
+        margin-bottom: 3px;
     }
 
     .lesson-student {
-        font-size: 13px;
+        font-size: 0.8rem;
         color: #6b7280;
     }
 
     .empty-state {
         text-align: center;
-        padding: 40px;
+        padding: 32px;
         color: #9ca3af;
-        font-style: italic;
+        font-size: 0.9rem;
+    }
+
+    /* ── Export Button ── */
+    .btn-export {
+        padding: 10px 16px;
+        background: #10b981;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+
+    .btn-export:hover { background: #059669; color: white; }
+
+    .icon-18 {
+        width: 18px;
+        height: 18px;
+    }
+
+    .icon-24 {
+        width: 24px;
+        height: 24px;
+    }
+
+    .chart-card-spaced {
+        margin-bottom: 24px;
+    }
+
+    .month-stat-primary {
+        color: {{ $primaryColor }};
+    }
+
+    .month-stat-muted {
+        color: #9ca3af;
+    }
+
+    .month-arrow {
+        color: #d1d5db;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .month-arrow-icon {
+        width: 20px;
+        height: 20px;
+        stroke: currentColor;
+        stroke-width: 2.2;
+        fill: none;
+    }
+
+    .table-student-wrap {
+        display: flex;
+        align-items: center;
+    }
+
+    .upcoming-lessons-scroll {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .avg-grade-wrap {
+        text-align: center;
+        padding: 24px;
+    }
+
+    .avg-grade-value {
+        font-size: 4rem;
+        font-weight: 700;
+        color: {{ $primaryColor }};
+    }
+
+    .avg-grade-scale {
+        font-size: 1rem;
+        color: #6b7280;
+        margin-top: 6px;
+    }
+
+    .avg-grade-note {
+        margin-top: 16px;
+        padding: 12px;
+        background: #f9fafb;
+        border-radius: 8px;
+    }
+
+    .avg-grade-note-text {
+        font-size: 0.88rem;
+        color: #374151;
+    }
+
+    .avg-grade-rating-good {
+        color: #f59e0b;
+    }
+
+    .avg-grade-rating-excellent {
+        color: #10b981;
+    }
+
+    .avg-grade-rating-needs {
+        color: #ef4444;
     }
 
     @media (max-width: 1024px) {
-        .stats-grid {
-            grid-template-columns: repeat(2, 1fr);
-        }
-
-        .charts-grid {
-            grid-template-columns: 1fr;
-        }
-    }
-
-    @media (max-width: 768px) {
-        .reports-container {
-            padding: 15px;
-        }
-
-        .stats-grid {
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-        }
-
-        .stat-box {
-            padding: 10px;
-            text-align: center;
-        }
-
-        .stat-label {
-            font-size: 0.65rem;
-        }
-
-        .stat-value {
-            font-size: 1.25rem;
-        }
-
-        .stat-subtext {
-            font-size: 0.55rem;
-        }
-
-        .page-header h1 {
-            font-size: 1.5rem;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .reports-container {
-            padding: 10px;
-        }
-
-        .page-header h1 {
-            font-size: 1.3rem;
-        }
-
-        .stats-grid {
-            grid-template-columns: repeat(4, 1fr);
-            gap: 6px;
-        }
-
-        .stat-box {
-            padding: 8px 4px;
-        }
-
-        .stat-label {
-            font-size: 0.55rem;
-        }
-
-        .stat-value {
-            font-size: 1rem;
-        }
-
-        .stat-subtext {
-            font-size: 0.5rem;
-        }
-
-        .chart-card {
-            padding: 15px;
-        }
-
-        .chart-card h3 {
-            font-size: 15px;
-        }
-
-        .activity-list {
-            padding: 0 10px;
-        }
-
-        .activity-item {
-            padding: 12px 0;
-        }
-
-        .activity-date {
-            font-size: 11px;
-        }
-
-        .activity-details {
-            font-size: 13px;
-        }
-    }
-
-    @media (max-width: 360px) {
-        .stats-grid {
-            grid-template-columns: repeat(2, 1fr);
-        }
-
-        .stat-box {
-            padding: 8px;
-        }
-
-        .stat-label {
-            font-size: 0.6rem;
-        }
-
-        .stat-value {
-            font-size: 1.1rem;
-        }
+        .charts-grid { grid-template-columns: 1fr; }
     }
 </style>
 
-<div class="reports-container">
+<div class="admin-container">
+    <!-- Page Header -->
     <div class="page-header">
-        <h1 class="page-title">Performance Reports</h1>
+        <div class="page-header-left">
+            <h1 class="page-title">Performance Reports</h1>
+            <p class="page-subtitle">Overview of your teaching performance and trends</p>
+        </div>
+        <a href="{{ route('schools.instructor.exports.reports.pdf', $school) }}" class="btn-export">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-18"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            Export PDF
+        </a>
     </div>
 
-    <!-- Overall Statistics -->
+    <!-- Stats Cards -->
     <div class="stats-grid">
-        <div class="stat-box">
-            <div class="stat-label">Total Lessons</div>
-            <div class="stat-value">{{ $totalLessonsCompleted }}</div>
-            <div class="stat-subtext">All time completed</div>
+        <div class="stat-card total">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">Total Lessons</div>
+                        <div class="stat-value">{{ $totalLessonsCompleted }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                    </div>
+                </div>
+                <div class="stat-detail">All time completed</div>
+            </div>
         </div>
-
-        <div class="stat-box">
-            <div class="stat-label">Total Hours</div>
-            <div class="stat-value">{{ $totalHoursTaught }}</div>
-            <div class="stat-subtext">Teaching time</div>
+        <div class="stat-card growth">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">Total Hours</div>
+                        <div class="stat-value">{{ $totalHoursTaught }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                </div>
+                <div class="stat-detail">Teaching time</div>
+            </div>
         </div>
-
-        <div class="stat-box">
-            <div class="stat-label">Students Taught</div>
-            <div class="stat-value">{{ $totalStudentsTaught }}</div>
-            <div class="stat-subtext">{{ $activeStudents }} active now</div>
+        <div class="stat-card students">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">Students Taught</div>
+                        <div class="stat-value">{{ $totalStudentsTaught }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    </div>
+                </div>
+                <div class="stat-detail">{{ $activeStudents }} active now</div>
+            </div>
         </div>
-
-        <div class="stat-box">
-            <div class="stat-label">Attendance Rate</div>
-            <div class="stat-value">{{ $attendanceRate }}%</div>
-            <div class="stat-subtext">Last 30 days</div>
+        <div class="stat-card active">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">Attendance Rate</div>
+                        <div class="stat-value">{{ $attendanceRate }}%</div>
+                    </div>
+                    <div class="stat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                </div>
+                <div class="stat-detail">Last 30 days</div>
+            </div>
         </div>
     </div>
 
     <!-- Monthly Comparison -->
-    <div class="chart-card" style="margin-bottom: 30px;">
+    <div class="chart-card chart-card-spaced">
         <h3>Monthly Performance</h3>
-        <div style="display: flex; justify-content: space-around; align-items: center; padding: 20px;">
-            <div style="text-align: center;">
-                <div style="font-size: 14px; color: #666; margin-bottom: 10px;">This Month</div>
-                <div style="font-size: 42px; font-weight: 700; color: {{ $settings->primary_color ?? '#667eea' }};">
-                    {{ $thisMonthLessons }}
-                </div>
-                <div style="font-size: 12px; color: #999;">Completed Lessons</div>
+        <div class="monthly-comparison">
+            <div class="month-stat">
+                <div class="month-stat-label">This Month</div>
+                <div class="month-stat-value month-stat-primary">{{ $thisMonthLessons }}</div>
+                <div class="month-stat-sub">Completed Lessons</div>
             </div>
-            <div style="font-size: 48px; color: #e5e7eb;">→</div>
-            <div style="text-align: center;">
-                <div style="font-size: 14px; color: #666; margin-bottom: 10px;">Last Month</div>
-                <div style="font-size: 42px; font-weight: 700; color: #9ca3af;">
-                    {{ $lastMonthLessons }}
-                </div>
-                <div style="font-size: 12px; color: #999;">Completed Lessons</div>
+            <div class="month-arrow" aria-hidden="true">
+                <svg class="month-arrow-icon" viewBox="0 0 24 24"><path d="M5 12h14m0 0l-6-6m6 6l-6 6"/></svg>
             </div>
-            <div style="text-align: center;">
+            <div class="month-stat">
+                <div class="month-stat-label">Last Month</div>
+                <div class="month-stat-value month-stat-muted">{{ $lastMonthLessons }}</div>
+                <div class="month-stat-sub">Completed Lessons</div>
+            </div>
+            <div class="month-stat">
                 @php
                     $difference = $thisMonthLessons - $lastMonthLessons;
                     $trend = $difference > 0 ? 'up' : ($difference < 0 ? 'down' : 'neutral');
                     $trendIcon = $difference > 0 ? '↑' : ($difference < 0 ? '↓' : '→');
                 @endphp
-                <div style="font-size: 14px; color: #666; margin-bottom: 10px;">Change</div>
+                <div class="month-stat-label">Change</div>
                 <div class="trend-indicator trend-{{ $trend }}">
                     {{ $trendIcon }} {{ abs($difference) }} lessons
                 </div>
                 @if($lastMonthLessons > 0)
-                    <div style="font-size: 12px; color: #999; margin-top: 5px;">
-                        ({{ round(($difference / $lastMonthLessons) * 100, 1) }}%)
-                    </div>
+                    <div class="month-stat-sub">({{ round(($difference / $lastMonthLessons) * 100, 1) }}%)</div>
                 @endif
             </div>
         </div>
@@ -421,15 +385,12 @@
 
     <!-- Charts Grid -->
     <div class="charts-grid">
-        <!-- Lessons by Month Chart -->
         <div class="chart-card">
             <h3>Lessons Trend (6 Months)</h3>
             <div class="chart-container">
                 <canvas id="monthlyChart"></canvas>
             </div>
         </div>
-
-        <!-- Lessons by Status -->
         <div class="chart-card">
             <h3>Lessons by Status (30 Days)</h3>
             <div class="chart-container">
@@ -440,7 +401,6 @@
 
     <!-- Data Tables -->
     <div class="charts-grid">
-        <!-- Top Students -->
         <div class="chart-card">
             <h3>Top Students</h3>
             @if($topStudents->count() > 0)
@@ -455,8 +415,8 @@
                         @foreach($topStudents as $record)
                             <tr>
                                 <td>
-                                    <div style="display: flex; align-items: center;">
-                                        <div class="student-avatar">
+                                    <div class="table-student-wrap">
+                                        <div class="student-avatar-sm">
                                             {{ strtoupper(substr($record->student->name ?? 'U', 0, 1)) }}
                                         </div>
                                         <span>{{ $record->student->name ?? 'Unknown' }}</span>
@@ -472,11 +432,10 @@
             @endif
         </div>
 
-        <!-- Upcoming Lessons -->
         <div class="chart-card">
             <h3>Upcoming Schedule</h3>
             @if($upcomingLessons->count() > 0)
-                <div style="max-height: 400px; overflow-y: auto;">
+                <div class="upcoming-lessons-scroll">
                     @foreach($upcomingLessons as $lesson)
                         <div class="upcoming-lesson">
                             <div class="lesson-time">
@@ -495,19 +454,19 @@
         </div>
     </div>
 
-    <!-- Average Grade Display -->
+    <!-- Average Grade -->
     @if($avgGrade)
-        <div class="chart-card" style="margin-top: 20px;">
+        <div class="chart-card">
             <h3>Average Session Grade</h3>
-            <div style="text-align: center; padding: 30px;">
-                <div style="font-size: 72px; font-weight: 700; color: {{ $settings->primary_color ?? '#667eea' }};">
+            <div class="avg-grade-wrap">
+                <div class="avg-grade-value">
                     {{ number_format($avgGrade, 1) }}
                 </div>
-                <div style="font-size: 18px; color: #666; margin-top: 10px;">out of 100</div>
-                <div style="margin-top: 20px; padding: 15px; background: #f3f4f6; border-radius: 8px;">
-                    <div style="font-size: 14px; color: #374151;">
+                <div class="avg-grade-scale">out of 100</div>
+                <div class="avg-grade-note">
+                    <div class="avg-grade-note-text">
                         Performance Rating: 
-                        <strong style="color: {{ $avgGrade >= 90 ? '#10b981' : ($avgGrade >= 75 ? '#f59e0b' : '#ef4444') }};">
+                        <strong class="{{ $avgGrade >= 90 ? 'avg-grade-rating-excellent' : ($avgGrade >= 75 ? 'avg-grade-rating-good' : 'avg-grade-rating-needs') }}">
                             {{ $avgGrade >= 90 ? 'Excellent' : ($avgGrade >= 75 ? 'Good' : 'Needs Improvement') }}
                         </strong>
                     </div>
@@ -521,7 +480,6 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-    // Monthly Lessons Chart
     const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
     const monthlyData = @json($lessonsByMonth);
     
@@ -535,8 +493,8 @@
             datasets: [{
                 label: 'Completed Lessons',
                 data: monthlyData.map(item => item.count),
-                borderColor: '{{ $settings->primary_color ?? "#667eea" }}',
-                backgroundColor: '{{ $settings->primary_color ?? "#667eea" }}20',
+                borderColor: '{{ $primaryColor }}',
+                backgroundColor: '{{ $primaryColor }}20',
                 tension: 0.4,
                 fill: true
             }]
@@ -544,23 +502,11 @@
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        stepSize: 1
-                    }
-                }
-            }
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
         }
     });
 
-    // Status Distribution Chart
     const statusCtx = document.getElementById('statusChart').getContext('2d');
     const statusData = @json($lessonsByStatus);
     
@@ -583,11 +529,7 @@
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom'
-                }
-            }
+            plugins: { legend: { position: 'bottom' } }
         }
     });
 </script>

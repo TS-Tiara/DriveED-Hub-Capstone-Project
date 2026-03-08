@@ -8,12 +8,15 @@ class DatabaseSeeder extends Seeder
 {
     /**
      * Seed the application's database.
+     *
+     * Run: php artisan db:seed
+     * Or for fresh migration: php artisan migrate:fresh --seed
      */
     public function run(): void
     {
         $this->call([
-            OldSchoolsSeeder::class,
-            Alpha2TestSeeder::class,
+            UnifiedSeeder::class,
+            ContentProgressSeeder::class,
         ]);
     }
 }

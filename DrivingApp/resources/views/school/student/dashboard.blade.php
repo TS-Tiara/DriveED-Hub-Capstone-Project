@@ -6,8 +6,8 @@
 @php
     $school = $school ?? $currentSchool ?? null;
     $settings = $school->schoolSetting;
-    $primaryColor = $settings->primary_color ?? '#1e3a5f';
-    $secondaryColor = $settings->secondary_color ?? '#c5a028';
+    $primaryColor = $settings->primary_color ?? '#667eea';
+    $secondaryColor = $settings->secondary_color ?? '#764ba2';
     $borderRadius = $settings->border_radius ?? 8;
 @endphp
 
@@ -15,7 +15,7 @@
     .student-dashboard {
         padding: 20px;
         margin: 0 auto;
-        max-width: 1600px;
+        max-width: 1400px;
     }
 
     .page-header {
@@ -104,6 +104,107 @@
         background: #10b981;
         border-radius: 4px;
         transition: width 0.5s ease;
+    }
+
+    /* Radial Progress Ring */
+    .progress-visual {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 12px;
+    }
+
+    .progress-ring-wrapper {
+        position: relative;
+        flex-shrink: 0;
+    }
+
+    .progress-ring {
+        transform: rotate(-90deg);
+    }
+
+    .progress-ring-bg {
+        fill: none;
+        stroke: #e5e7eb;
+        stroke-width: 8;
+    }
+
+    .progress-ring-fill {
+        fill: none;
+        stroke-width: 8;
+        stroke-linecap: round;
+        transition: stroke-dashoffset 1s ease;
+    }
+
+    .progress-ring-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+    }
+
+    .progress-ring-percent {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #111827;
+        line-height: 1;
+    }
+
+    .progress-ring-label {
+        font-size: 0.6rem;
+        color: #9ca3af;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .progress-stats {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .progress-stat {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 6px 0;
+        border-bottom: 1px solid #f3f4f6;
+        font-size: 0.8rem;
+    }
+
+    .progress-stat:last-child {
+        border-bottom: none;
+    }
+
+    .progress-stat-label {
+        color: #6b7280;
+    }
+
+    .progress-stat-value {
+        font-weight: 600;
+        color: #111827;
+    }
+
+    .stat-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+
+    .stat-badge.passed {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .stat-badge.in-progress {
+        background: #fef3c7;
+        color: #92400e;
     }
 
     /* Quick Actions Section */
@@ -418,41 +519,258 @@
             font-size: 0.7rem;
         }
     }
+
+    /* Recent Feedback Section */
+    .recent-feedback-section {
+        margin-bottom: 20px;
+    }
+
+    .feedback-card {
+        background: white;
+        border-radius: {{ $borderRadius }}px;
+        border: 2px solid {{ $primaryColor }};
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+
+    .feedback-item {
+        padding: 14px 16px;
+        border-bottom: 1px solid #f3f4f6;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .feedback-item:last-child {
+        border-bottom: none;
+    }
+
+    .feedback-details {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .feedback-course {
+        font-weight: 600;
+        color: #1f2937;
+        font-size: 0.9rem;
+        margin-bottom: 2px;
+    }
+
+    .feedback-meta {
+        font-size: 0.8rem;
+        color: #6b7280;
+        margin-bottom: 6px;
+    }
+
+    .feedback-text {
+        font-size: 0.85rem;
+        color: #374151;
+        font-style: italic;
+        line-height: 1.4;
+    }
+
+    .header-profile-row {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .header-avatar-img {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid {{ $primaryColor }};
+    }
+
+    .header-avatar-fallback {
+        width: 60px;
+        height: 60px;
+        background: {{ $primaryColor }};
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 24px;
+        font-weight: bold;
+    }
+
+    .header-title-tight {
+        margin-bottom: 4px;
+    }
+
+    .header-email {
+        margin: 0;
+        color: #6b7280;
+        font-size: 0.9rem;
+    }
+
+    .header-branch {
+        margin: 2px 0 0;
+        color: #6b7280;
+        font-size: 0.85rem;
+    }
+
+    .header-branch-icon {
+        margin-right: 4px;
+    }
+
+    .progress-fill-dynamic {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.5s ease;
+    }
+
+    .theory-status-passed {
+        color: #10b981;
+    }
+
+    .theory-status-progress {
+        color: #f59e0b;
+    }
+
+    .mobile-progress-center {
+        text-align: center;
+        margin-bottom: 8px;
+    }
+
+    .mobile-progress-ring-inline {
+        display: inline-block;
+    }
+
+    .mobile-progress-percent {
+        font-size: 1rem;
+    }
+
+    .feedback-card-body {
+        padding: 0;
+    }
+
+    .feedback-empty {
+        padding: 30px;
+        text-align: center;
+        color: #9ca3af;
+    }
+
+    .feedback-empty-icon {
+        width: 40px;
+        height: 40px;
+        fill: #d1d5db;
+        margin: 0 auto 10px;
+    }
+
+    .feedback-empty-text {
+        margin: 0;
+        font-size: 0.9rem;
+    }
+
+    .lesson-instructor-icon {
+        fill: currentColor;
+        margin-right: 4px;
+    }
+
+    .grade-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 36px;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        flex-shrink: 0;
+    }
+
+    .grade-excellent { background: #d1fae5; color: #065f46; }
+    .grade-good { background: #dbeafe; color: #1e40af; }
+    .grade-average { background: #fef3c7; color: #92400e; }
+    .grade-poor { background: #fee2e2; color: #991b1b; }
+
+    @media screen and (max-width: 768px) {
+        .feedback-item {
+            padding: 12px;
+        }
+        .feedback-course {
+            font-size: 0.8rem;
+        }
+        .feedback-meta {
+            font-size: 0.75rem;
+        }
+        .feedback-text {
+            font-size: 0.8rem;
+        }
+    }
 </style>
 
 <div class="student-dashboard">
     <div class="page-header">
-        <div style="display: flex; align-items: center; gap: 16px;">
-            <div style="width: 60px; height: 60px; background: {{ $primaryColor }}; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; font-weight: bold;">
-                {{ strtoupper(substr(Auth::guard('student')->user()->name, 0, 1)) }}
-            </div>
+        <div class="header-profile-row">
+            @if($student->profile_picture)
+                <img src="{{ asset('storage/' . $student->profile_picture) }}" alt="Profile" class="header-avatar-img">
+            @else
+                <div class="header-avatar-fallback">
+                    {{ strtoupper(substr($student->name, 0, 1)) }}
+                </div>
+            @endif
             <div>
-                <h1 class="page-title" style="margin-bottom: 4px;">Welcome, {{ Auth::guard('student')->user()->name }}</h1>
-                <p style="margin: 0; color: #6b7280; font-size: 0.9rem;">{{ Auth::guard('student')->user()->email }}</p>
+                <h1 class="page-title header-title-tight">Welcome, {{ $student->name }}</h1>
+                <p class="header-email">{{ $student->email }}</p>
+                @if($student->branchRelation)
+                    <p class="header-branch"><i class="bi bi-building header-branch-icon"></i>{{ $student->branchRelation->name }}</p>
+                @endif
             </div>
         </div>
     </div>
 
     <!-- Desktop: 3 column layout -->
     <div class="dashboard-cards">
+        @php
+            $ringRadius = 40;
+            $ringCircumference = 2 * 3.14159 * $ringRadius;
+            $ringOffset = $ringCircumference - ($progressPercentage / 100) * $ringCircumference;
+            $ringColor = $progressPercentage >= 100 ? '#10b981' : ($progressPercentage >= 50 ? $primaryColor : '#f59e0b');
+        @endphp
         <div class="info-card">
             <div class="card-header">Learning Progress</div>
             <div class="card-body">
-                <div class="info-row">
-                    <span class="info-label">Lessons Completed</span>
-                    <span class="info-value">{{ $totalLessons }} of {{ $requiredHours }}</span>
+                <div class="progress-visual">
+                    <div class="progress-ring-wrapper">
+                        <svg class="progress-ring" width="96" height="96" viewBox="0 0 96 96">
+                            <circle class="progress-ring-bg" cx="48" cy="48" r="{{ $ringRadius }}"></circle>
+                            <circle class="progress-ring-fill" cx="48" cy="48" r="{{ $ringRadius }}"
+                                stroke="{{ $ringColor }}"
+                                stroke-dasharray="{{ $ringCircumference }}"
+                                stroke-dashoffset="{{ $ringOffset }}"></circle>
+                        </svg>
+                        <div class="progress-ring-text">
+                            <div class="progress-ring-percent">{{ $progressPercentage }}%</div>
+                            <div class="progress-ring-label">Complete</div>
+                        </div>
+                    </div>
+                    <div class="progress-stats">
+                        <div class="progress-stat">
+                            <span class="progress-stat-label">Sessions</span>
+                            <span class="progress-stat-value">{{ $sessionsCompleted }}/{{ $totalScheduledSessions > 0 ? $totalScheduledSessions : '—' }}</span>
+                        </div>
+                        <div class="progress-stat">
+                            <span class="progress-stat-label">Hours</span>
+                            <span class="progress-stat-value">{{ $hoursCompleted }}/{{ $requiredHours }} hrs</span>
+                        </div>
+                        <div class="progress-stat">
+                            <span class="progress-stat-label">TDC Status</span>
+                            <span class="stat-badge {{ $hasPassedTheoretical ? 'passed' : 'in-progress' }}">
+                                {{ $hasPassedTheoretical ? 'Passed' : 'In Progress' }}
+                            </span>
+                        </div>
+                    </div>
                 </div>
-                <div class="info-row">
-                    <span class="info-label">Session Hours</span>
-                    <span class="info-value">{{ $hoursDriven }} hrs</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Current Level</span>
-                    <span class="info-value">Intermediate</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Progress</span>
-                    <span class="info-value">{{ $progressPercentage }}% Complete</span>
+                <div class="progress-bar-wrapper">
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill progress-fill-dynamic" data-progress="{{ $progressPercentage }}" data-fill="{{ $ringColor }}"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -500,28 +818,25 @@
         </div>
 
         <div class="info-card">
-            <div class="card-header">Goals & Achievements</div>
+            <div class="card-header">Enrollment Status</div>
             <div class="card-body">
                 <div class="info-row">
-                    <span class="info-label">Test Readiness</span>
-                    <span class="info-value">{{ $testReadiness }}%</span>
-                </div>
-                <div class="progress-bar-wrapper">
-                    <div class="progress-bar-container">
-                        <div class="progress-bar-fill" style="width: {{ $testReadiness }}%"></div>
-                    </div>
+                    <span class="info-label">Enrolled Course</span>
+                    <span class="info-value">{{ $enrolledCourseName }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Skills Mastered</span>
-                    <span class="info-value">{{ min(10, floor($totalLessons / 2)) }}/10</span>
+                    <span class="info-label">Course Type</span>
+                    <span class="info-value">{{ $enrolledCourseType }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Hours Completed</span>
-                    <span class="info-value">{{ $hoursDriven }} / {{ $requiredHours }} hrs</span>
+                    <span class="info-label">Theoretical Status</span>
+                    <span class="info-value {{ $hasPassedTheoretical ? 'theory-status-passed' : 'theory-status-progress' }}">
+                        {{ $hasPassedTheoretical ? 'Passed' : 'In Progress' }}
+                    </span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Est. Test Date</span>
-                    <span class="info-value">{{ $progressPercentage >= 80 ? \Carbon\Carbon::now()->addWeeks(2)->format('M d, Y') : 'TBD' }}</span>
+                    <span class="info-label">Active Enrollments</span>
+                    <span class="info-value">{{ $activeEnrollments->count() }}</span>
                 </div>
             </div>
         </div>
@@ -572,49 +887,104 @@
         </div>
     </div>
 
-    <!-- Mobile: Learning Progress & Goals side by side -->
+    <!-- Mobile: Learning Progress & Enrollment Status side by side -->
     <div class="mobile-two-col">
         <div class="info-card">
             <div class="card-header">Learning Progress</div>
             <div class="card-body">
-                <div class="info-row">
-                    <span class="info-label">Lessons Completed</span>
-                    <span class="info-value">{{ $totalLessons }} of {{ $requiredHours }}</span>
+                <div class="mobile-progress-center">
+                    <div class="progress-ring-wrapper mobile-progress-ring-inline">
+                        <svg class="progress-ring" width="80" height="80" viewBox="0 0 96 96">
+                            <circle class="progress-ring-bg" cx="48" cy="48" r="{{ $ringRadius }}"></circle>
+                            <circle class="progress-ring-fill" cx="48" cy="48" r="{{ $ringRadius }}"
+                                stroke="{{ $ringColor }}"
+                                stroke-dasharray="{{ $ringCircumference }}"
+                                stroke-dashoffset="{{ $ringOffset }}"></circle>
+                        </svg>
+                        <div class="progress-ring-text">
+                            <div class="progress-ring-percent mobile-progress-percent">{{ $progressPercentage }}%</div>
+                            <div class="progress-ring-label">Done</div>
+                        </div>
+                    </div>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Session Hours</span>
-                    <span class="info-value">{{ $hoursDriven }} hrs</span>
+                    <span class="info-label">Sessions</span>
+                    <span class="info-value">{{ $sessionsCompleted }}/{{ $totalScheduledSessions > 0 ? $totalScheduledSessions : '—' }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Current Level</span>
-                    <span class="info-value">Intermediate</span>
+                    <span class="info-label">Hours</span>
+                    <span class="info-value">{{ $hoursCompleted }}/{{ $requiredHours }} hrs</span>
                 </div>
-                <div class="info-row">
-                    <span class="info-label">Progress</span>
-                    <span class="info-value">{{ $progressPercentage }}% Complete</span>
+                <div class="progress-bar-wrapper">
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill progress-fill-dynamic" data-progress="{{ $progressPercentage }}" data-fill="{{ $ringColor }}"></div>
+                    </div>
                 </div>
             </div>
         </div>
 
         <div class="info-card">
-            <div class="card-header">Goals & Achievements</div>
+            <div class="card-header">Enrollment Status</div>
             <div class="card-body">
                 <div class="info-row">
-                    <span class="info-label">Test Readiness</span>
-                    <span class="info-value">{{ $testReadiness }}%</span>
+                    <span class="info-label">Enrolled Course</span>
+                    <span class="info-value">{{ $enrolledCourseName }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Skills Mastered</span>
-                    <span class="info-value">{{ min(10, floor($totalLessons / 2)) }}/10</span>
+                    <span class="info-label">Course Type</span>
+                    <span class="info-value">{{ $enrolledCourseType }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Hours Completed</span>
-                    <span class="info-value">{{ $hoursDriven }} / {{ $requiredHours }} hrs</span>
+                    <span class="info-label">Theoretical</span>
+                    <span class="info-value {{ $hasPassedTheoretical ? 'theory-status-passed' : 'theory-status-progress' }}">
+                        {{ $hasPassedTheoretical ? 'Passed' : 'In Progress' }}
+                    </span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Est. Test Date</span>
-                    <span class="info-value">{{ $progressPercentage >= 80 ? \Carbon\Carbon::now()->addWeeks(2)->format('M d, Y') : 'TBD' }}</span>
+                    <span class="info-label">Active Enrollments</span>
+                    <span class="info-value">{{ $activeEnrollments->count() }}</span>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Feedback Section -->
+    <div class="recent-feedback-section">
+        <div class="feedback-card">
+            <div class="card-header">Recent Grades & Feedback</div>
+            <div class="card-body feedback-card-body">
+                @if(($recentGrades ?? collect())->count() > 0)
+                    @foreach($recentGrades as $grade)
+                        <div class="feedback-item">
+                            <div class="feedback-details">
+                                <div class="feedback-course">{{ $grade->course->title ?? 'Driving Session' }}</div>
+                                <div class="feedback-meta">
+                                    {{ $grade->instructor->name ?? 'Instructor' }} &middot; {{ \Carbon\Carbon::parse($grade->updated_at)->format('M d, Y') }}
+                                </div>
+                                @if($grade->instructor_feedback)
+                                    <div class="feedback-text">"{{ $grade->instructor_feedback }}"</div>
+                                @endif
+                            </div>
+                            @php
+                                $gradeVal = strtolower($grade->session_grade ?? '');
+                                $gradeClass = match(true) {
+                                    in_array($gradeVal, ['a', 'excellent', 'passed']) => 'grade-excellent',
+                                    in_array($gradeVal, ['b', 'good', 'satisfactory']) => 'grade-good',
+                                    in_array($gradeVal, ['c', 'average', 'needs improvement']) => 'grade-average',
+                                    default => 'grade-poor',
+                                };
+                            @endphp
+                            <span class="grade-badge {{ $gradeClass }}">{{ ucfirst($grade->session_grade) }}</span>
+                        </div>
+                    @endforeach
+                @else
+                    <div class="feedback-empty">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="feedback-empty-icon">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                        </svg>
+                        <p class="feedback-empty-text">No graded sessions yet. Your grades and instructor feedback will appear here.</p>
+                    </div>
+                @endif
             </div>
         </div>
     </div>
@@ -657,7 +1027,7 @@
                 <div class="lesson-details">
                     <div class="lesson-course-name">{{ $lesson->course->title ?? 'Driving Lesson' }}</div>
                     <div class="lesson-instructor-name">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" style="fill: currentColor; margin-right: 4px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" class="lesson-instructor-icon">
                             <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
                         </svg>
                         {{ $lesson->instructor->name ?? 'Instructor TBA' }}
@@ -668,4 +1038,19 @@
         @endif
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.progress-fill-dynamic').forEach(function (bar) {
+        const value = Number(bar.dataset.progress || 0);
+        const clamped = Math.max(0, Math.min(100, value));
+        bar.style.width = clamped + '%';
+
+        const fill = bar.dataset.fill;
+        if (fill) {
+            bar.style.background = fill;
+        }
+    });
+});
+</script>
 @endsection

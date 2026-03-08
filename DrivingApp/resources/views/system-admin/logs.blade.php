@@ -398,6 +398,19 @@
     .school-info.system .school-icon {
         background: #042e66;
     }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .logs-table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .logs-table { min-width: 600px; }
+        .filters-grid { grid-template-columns: 1fr; }
+        .logs-header { flex-direction: column; gap: 10px; align-items: flex-start; }
+    }
+    
+    @media (max-width: 480px) {
+        .stats-row { grid-template-columns: 1fr; }
+        .stat-box { padding: 1rem; }
+    }
 </style>
 @endsection
 

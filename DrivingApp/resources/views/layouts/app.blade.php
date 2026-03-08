@@ -183,19 +183,45 @@
             gap: 15px;
         }
         
-        .burger-menu {
-            background: none;
-            border: none;
+        /* Floating Sidebar Toggle Tab */
+        .sidebar-toggle-tab {
+            position: fixed;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1000;
+            background: var(--primary-color, #667eea);
             color: white;
-            font-size: 1.5rem;
+            border: none;
+            border-radius: 0 8px 8px 0;
+            width: 28px;
+            height: 56px;
             cursor: pointer;
-            padding: 8px;
-            border-radius: 4px;
-            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+            padding: 0;
         }
         
-        .burger-menu:hover {
-            background-color: rgba(255,255,255,0.1);
+        .sidebar-toggle-tab:hover {
+            width: 34px;
+            background: var(--primary-color, #5a6fd6);
+            box-shadow: 3px 2px 14px rgba(0,0,0,0.2);
+        }
+        
+        .sidebar-toggle-tab svg {
+            display: block;
+            transition: transform 0.3s ease;
+        }
+        
+        .sidebar-toggle-tab.active {
+            left: 300px;
+        }
+        
+        .sidebar-toggle-tab.active svg {
+            transform: rotate(180deg);
         }
         
         .notification-icon, .profile-dropdown {
@@ -208,6 +234,11 @@
         
         .notification-icon:hover, .profile-dropdown:hover {
             background-color: rgba(255,255,255,0.1);
+        }
+        
+        .notification-icon-emoji {
+            font-size: 20px;
+            line-height: 1;
         }
         
         /* Profile Dropdown Menu Styles */
@@ -318,31 +349,174 @@
             background: #ff4757;
             color: white;
             border-radius: 50%;
-            width: 18px;
+            min-width: 18px;
             height: 18px;
             font-size: 10px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+        }
+        
+        .notification-badge.has-notifications {
+            display: flex;
+        }
+
+        /* Notification Dropdown */
+        .notification-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            min-width: 340px;
+            max-width: 380px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+            border-radius: 12px;
+            z-index: 10002;
+            display: none;
+            border: 1px solid #e1e5e9;
+            margin-top: 8px;
+            max-height: 420px;
+            overflow: hidden;
+        }
+
+        .notification-dropdown.show {
+            display: block;
+        }
+
+        .notification-dropdown-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            border-bottom: 1px solid #e5e7eb;
+            background: #f8f9fa;
+            border-radius: 12px 12px 0 0;
+        }
+
+        .notification-dropdown-header h4 {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .notification-mark-all {
+            font-size: 12px;
+            color: #667eea;
+            cursor: pointer;
+            border: none;
+            background: none;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .notification-mark-all:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .notification-dropdown-body {
+            overflow-y: auto;
+            max-height: 340px;
+        }
+
+        .notification-item {
+            display: flex;
+            gap: 10px;
+            padding: 12px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background 0.15s;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .notification-item:hover {
+            background: #f8f9fa;
+        }
+
+        .notification-item.unread {
+            background: #eef2ff;
+        }
+
+        .notification-item.unread:hover {
+            background: #e0e7ff;
+        }
+
+        .notification-item-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+            width: 32px;
+            height: 32px;
             display: flex;
             align-items: center;
             justify-content: center;
+        }
+
+        .notification-item-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .notification-item-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .notification-item-message {
+            font-size: 12px;
+            color: #6b7280;
+            line-height: 1.3;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .notification-item-time {
+            font-size: 11px;
+            color: #9ca3af;
+            margin-top: 3px;
+        }
+
+        .notification-empty {
+            padding: 40px 20px;
+            text-align: center;
+            color: #9ca3af;
+        }
+
+        .notification-empty-icon {
+            font-size: 36px;
+            margin-bottom: 8px;
+        }
+
+        .notification-empty-text {
+            font-size: 13px;
         }
         
         /* Sidebar Styles */
         .sidebar {
             position: fixed;
             top: 60px;
-            right: -300px;
+            left: -300px;
             width: 300px;
             height: calc(100vh - 60px);
             background: var(--sidebar-bg);
-            transition: right 0.3s ease;
+            transition: left 0.3s ease;
             z-index: 999;
-            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
             overflow-y: auto;
             box-sizing: border-box;
         }
         
         .sidebar.active {
-            right: 0;
+            left: 0;
         }
         
         /* Prevent content shifting - removed duplicate style */
@@ -383,9 +557,99 @@
         }
         
         .sidebar-nav {
-            padding: 0;
+            padding: 10px 0;
+        }
+
+        /* Sidebar Category Styles */
+        .nav-category {
+            margin-bottom: 4px;
+        }
+
+        .nav-category-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 20px;
+            margin: 2px 10px;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--primary-color);
+            opacity: 1;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+            user-select: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-category-header::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 4px;
+            background: {{ $useGradient ? "linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%)" : "var(--primary-color)" }};
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
+        }
+
+        .nav-category-header:hover::before {
+            transform: scaleY(1);
+        }
+
+        .nav-category-header:hover {
+            background: var(--sidebar-hover);
+            color: var(--primary-color);
+            transform: translateX(5px);
+            opacity: 1;
+            box-shadow: 0 2px 8px rgba(var(--primary-rgb), 0.15);
+        }
+
+        .nav-category-arrow {
+            font-size: 10px;
+            transition: transform 0.25s ease;
+            color: var(--primary-color);
+            opacity: 0.7;
+        }
+
+        .nav-category.collapsed .nav-category-arrow {
+            transform: rotate(-90deg);
+        }
+
+        .nav-category-items {
+            overflow: hidden;
+            max-height: 500px;
+            transition: max-height 0.3s ease, opacity 0.25s ease;
+            opacity: 1;
+        }
+
+        .nav-category.collapsed .nav-category-items {
+            max-height: 0;
+            opacity: 0;
+        }
+
+        .nav-divider {
+            height: 1px;
+            background: rgba(0,0,0,0.08);
+            margin: 8px 20px;
         }
         
+        /* Sub-items inside categories: indented and slightly subdued */
+        .nav-category-items .nav-item {
+            padding: 10px 20px 10px 30px;
+            font-size: 13px;
+            opacity: 0.8;
+        }
+
+        .nav-category-items .nav-item:hover,
+        .nav-category-items .nav-item.active {
+            opacity: 1;
+        }
+
         .nav-item {
             display: block;
             padding: 12px 20px;
@@ -449,10 +713,10 @@
         
         /* Main Content Styles */
         .main-content {
-            margin-top: 60px;
+            margin-top: 100px;
             padding: 0;
-            transition: none;
-            min-height: calc(100vh - 60px);
+            transition: margin-left 0.3s ease;
+            min-height: calc(100vh - 100px);
             box-sizing: border-box;
             width: 100%;
             max-width: 100%;
@@ -617,11 +881,62 @@
             border: 2px solid var(--modal-border-color);
         }
         
-        /* Only apply sidebar-open margin on desktop */
-        @media (min-width: 1025px) {
+        /* Sidebar-open class only needed on mobile (desktop sidebar is always visible) */
+        @media (max-width: 1024px) {
             .main-content.sidebar-open {
-                margin-right: 300px;
-                transition: margin-right 0.3s ease;
+                /* No content push on mobile - sidebar overlays */
+            }
+        }
+        
+        /* Breadcrumb Navigation */
+        .breadcrumb-bar {
+            position: fixed;
+            top: 60px;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.45);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 8px 24px;
+            border-bottom: 1px solid rgba(var(--primary-rgb), 0.1);
+            display: flex;
+            align-items: center;
+            font-size: 13px;
+            color: #6b7280;
+            min-height: 20px;
+            z-index: 998;
+            transition: left 0.3s ease;
+        }
+        
+        .breadcrumb-bar a {
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        
+        .breadcrumb-bar a:hover {
+            color: var(--accent-color);
+            text-decoration: underline;
+        }
+        
+        .breadcrumb-separator {
+            margin: 0 8px;
+            color: rgba(var(--primary-rgb), 0.35);
+            font-size: 11px;
+        }
+        
+        .breadcrumb-current {
+            color: #374151;
+            font-weight: 600;
+        }
+        
+        @media (max-width: 600px) {
+            .breadcrumb-bar {
+                padding: 8px 14px;
+                font-size: 12px;
+            }
+            .breadcrumb-separator {
+                margin: 0 5px;
             }
         }
         
@@ -674,7 +989,66 @@
             display: block;
         }
         
+        /* ====== Empty State Styling ====== */
+        .empty-state {
+            text-align: center;
+            padding: 48px 24px;
+            color: #9ca3af;
+        }
+        .empty-state svg {
+            width: 56px;
+            height: 56px;
+            margin: 0 auto 16px;
+            color: #d1d5db;
+            display: block;
+        }
+        .empty-state .empty-state-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #6b7280;
+            margin-bottom: 6px;
+        }
+        .empty-state .empty-state-text {
+            font-size: 0.9rem;
+            color: #9ca3af;
+        }
+
         /* Responsive Design */
+        
+        /* ====== Mobile Touch Target & Table Improvements ====== */
+        @media (max-width: 768px) {
+            /* Ensure min 44px touch targets for interactive elements */
+            .btn, button.btn, .btn-action, .btn-sm,
+            input[type="submit"], input[type="button"] {
+                min-height: 44px;
+                min-width: 44px;
+            }
+            
+            /* Table container always scrollable */
+            .table-container {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            /* Better badge touch targets */
+            .badge, .status-badge, .payment-badge, .license-badge {
+                padding: 6px 12px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            /* Stack page headers vertically */
+            .page-header {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start !important;
+            }
+            
+            /* Full-width buttons on small screens */
+            .btn-action {
+                padding: 10px 14px;
+            }
+        }
         
         /* Large tablets and small laptops (768px - 1024px) */
         @media (min-width: 769px) and (max-width: 1024px) {
@@ -688,7 +1062,11 @@
             
             .sidebar {
                 width: 280px;
-                right: -280px;
+                left: -280px;
+            }
+            
+            .sidebar-toggle-tab.active {
+                left: 280px;
             }
             
             .main-content {
@@ -712,9 +1090,13 @@
                 white-space: nowrap;
             }
             
-            .burger-menu {
-                font-size: 1.3rem;
-                padding: 7px;
+            .sidebar-toggle-tab {
+                width: 24px;
+                height: 48px;
+            }
+            
+            .sidebar-toggle-tab.active {
+                left: 280px;
             }
             
             .notification-icon, .profile-dropdown {
@@ -728,7 +1110,7 @@
             
             .sidebar {
                 width: 280px;
-                right: -280px;
+                left: -280px;
                 top: 55px;
                 height: calc(100vh - 55px);
             }
@@ -788,9 +1170,13 @@
                 gap: 6px;
             }
             
-            .burger-menu {
-                font-size: 1.2rem;
-                padding: 6px;
+            .sidebar-toggle-tab {
+                width: 22px;
+                height: 44px;
+            }
+            
+            .sidebar-toggle-tab.active {
+                left: 270px;
             }
             
             .notification-icon, .profile-dropdown {
@@ -804,7 +1190,7 @@
             
             .sidebar {
                 width: 270px;
-                right: -270px;
+                left: -270px;
                 top: 50px;
                 height: calc(100vh - 50px);
             }
@@ -824,14 +1210,18 @@
             }
             
             .main-content {
-                margin-top: 50px;
-                min-height: calc(100vh - 50px);
+                margin-top: 90px;
+                min-height: calc(100vh - 90px);
                 padding: 14px;
                 width: 100%;
                 max-width: 100%;
                 box-sizing: border-box;
                 margin-left: 0;
                 margin-right: 0;
+            }
+            
+            .breadcrumb-bar {
+                top: 50px;
             }
             
             .dropdown-menu {
@@ -864,9 +1254,13 @@
                 gap: 5px;
             }
             
-            .burger-menu {
-                font-size: 1.15rem;
-                padding: 5px;
+            .sidebar-toggle-tab {
+                width: 22px;
+                height: 44px;
+            }
+            
+            .sidebar-toggle-tab.active {
+                left: 260px;
             }
             
             .notification-icon, .profile-dropdown {
@@ -882,7 +1276,7 @@
                 top: 48px;
                 height: calc(100vh - 48px);
                 width: 260px;
-                right: -260px;
+                left: -260px;
             }
             
             .sidebar-header {
@@ -900,14 +1294,19 @@
             }
             
             .main-content {
-                margin-top: 48px;
-                min-height: calc(100vh - 48px);
+                margin-top: 88px;
+                min-height: calc(100vh - 88px);
                 padding: 12px;
                 width: 100%;
                 max-width: 100%;
                 box-sizing: border-box;
                 margin-left: 0;
                 margin-right: 0;
+            }
+            
+            .breadcrumb-bar {
+                top: 48px;
+            }
             }
             
             .dropdown-menu {
@@ -944,9 +1343,13 @@
                 white-space: nowrap;
             }
             
-            .burger-menu {
-                font-size: 1rem;
-                padding: 3px;
+            .sidebar-toggle-tab {
+                width: 20px;
+                height: 40px;
+            }
+            
+            .sidebar-toggle-tab.active {
+                left: 240px;
             }
             
             .notification-icon, .profile-dropdown {
@@ -962,7 +1365,7 @@
                 top: 45px;
                 height: calc(100vh - 45px);
                 width: 240px;
-                right: -240px;
+                left: -240px;
             }
             
             .sidebar-header {
@@ -980,14 +1383,18 @@
             }
             
             .main-content {
-                margin-top: 45px;
-                min-height: calc(100vh - 45px);
+                margin-top: 85px;
+                min-height: calc(100vh - 85px);
                 padding: 10px;
                 width: 100%;
                 max-width: 100%;
                 box-sizing: border-box;
                 margin-left: 0;
                 margin-right: 0;
+            }
+            
+            .breadcrumb-bar {
+                top: 45px;
             }
             
             .dropdown-menu {
@@ -1039,14 +1446,20 @@
                 white-space: nowrap;
             }
             
-            .burger-menu {
-                font-size: 0.9rem;
-                padding: 2px;
+            .sidebar-toggle-tab {
+                width: 20px;
+                height: 38px;
+            }
+            
+            .sidebar-toggle-tab.active {
+                left: 220px;
             }
             
             .notification-icon, .profile-dropdown {
-                padding: 2px;
+                padding: 4px;
                 font-size: 0.75rem;
+                min-height: 36px;
+                min-width: 36px;
             }
             
             .topbar-left, .topbar-right {
@@ -1057,7 +1470,7 @@
                 top: 42px;
                 height: calc(100vh - 42px);
                 width: 220px;
-                right: -220px;
+                left: -220px;
             }
             
             .sidebar-header {
@@ -1075,9 +1488,13 @@
             }
             
             .main-content {
-                margin-top: 42px;
-                min-height: calc(100vh - 42px);
+                margin-top: 82px;
+                min-height: calc(100vh - 82px);
                 padding: 8px;
+            }
+            
+            .breadcrumb-bar {
+                top: 42px;
             }
             
             .dropdown-menu {
@@ -1113,29 +1530,66 @@
             }
         }
         
+        /* ====== Print Styles ====== */
+        @media print {
+            .topbar, .sidebar, .sidebar-overlay, .sidebar-toggle-tab,
+            .breadcrumb-bar, .btn, button, .dropdown,
+            .notification-badge, .profile-dropdown { display: none !important; }
+            .main-content { margin-left: 0 !important; padding: 0 !important; }
+            body { background: white !important; }
+            .table-container { overflow: visible !important; }
+            table { width: 100% !important; border-collapse: collapse; }
+            th, td { border: 1px solid #ddd !important; padding: 6px 8px !important; font-size: 11pt; }
+            .badge, .status-badge { border: 1px solid #999 !important; background: white !important; color: #333 !important; }
+            a { text-decoration: none !important; color: #333 !important; }
+            .card, .dashboard-card { box-shadow: none !important; border: 1px solid #ddd !important; page-break-inside: avoid; }
+        }
+
         @stack('styles')
     </style>
 </head>
 <body>
+    @php
+        $currentSchool = $currentSchool ?? current_school();
+        $schoolRoute = fn (string $name, array $parameters = []) => school_route($name, $parameters, $currentSchool);
+    @endphp
+
+    <!-- Floating Sidebar Toggle Tab -->
+    <button class="sidebar-toggle-tab" id="sidebarToggleTab" onclick="toggleSidebar()" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="sidebar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+    </button>
+    
     <!-- Topbar -->
-    <nav class="topbar">
+    <nav class="topbar" role="banner">
         <div class="topbar-left">
-            <div class="topbar-logo">
+            <div class="topbar-logo" role="heading" aria-level="1">
                 {{ $schoolName ?? 'Driving School' }}
             </div>
         </div>
         
         <div class="topbar-right">
-            <button class="burger-menu" onclick="toggleSidebar()">
-                ☰
-            </button>
             
-            <div class="notification-icon">
-                🔔
-                <span class="notification-badge"></span>
+            <div class="notification-icon" onclick="toggleNotificationDropdown(event)" role="button" aria-label="Notifications" aria-expanded="false" aria-haspopup="true" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleNotificationDropdown(event)}">
+                <span class="notification-icon-emoji">🔔</span>
+                <span class="notification-badge" id="notificationBadge"></span>
+                
+                <div class="notification-dropdown" id="notificationDropdown">
+                    <div class="notification-dropdown-header">
+                        <h4>Notifications</h4>
+                        <button class="notification-mark-all" onclick="markAllNotificationsRead(event)">Mark all read</button>
+                    </div>
+                    <div class="notification-dropdown-body" id="notificationList">
+                        <div class="notification-empty">
+                            <div class="notification-empty-icon"></div>
+                            <div class="notification-empty-text">No notifications yet</div>
+                        </div>
+                    </div>
+                </div>
             </div>
             
-            <div class="profile-dropdown" onclick="toggleProfileDropdown()">
+            <div class="profile-dropdown" onclick="toggleProfileDropdown()" role="button" aria-label="User menu" aria-expanded="false" aria-haspopup="true" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleProfileDropdown()}">
                 @if(Auth::guard('admin')->check())
                     @php $user = Auth::guard('admin')->user(); @endphp
                     @if($user->profile_picture)
@@ -1184,14 +1638,14 @@
                     @endif
                     <div class="dropdown-divider"></div>
                     @if(Auth::guard('admin')->check())
-                        <form method="POST" action="{{ $schoolRoute('admin.logout') }}" style="margin: 0;">
+                        <form method="POST" action="{{ $schoolRoute('logout') }}" style="margin: 0;">
                             @csrf
                             <button type="submit" class="dropdown-item">
                                 Logout
                             </button>
                         </form>
                     @elseif(Auth::guard('instructor')->check())
-                        <form method="POST" action="{{ $schoolRoute('instructor.logout') }}" style="margin: 0;">
+                        <form method="POST" action="{{ $schoolRoute('logout') }}" style="margin: 0;">
                             @csrf
                             <button type="submit" class="dropdown-item">
                                 Logout
@@ -1206,7 +1660,7 @@
                                 </button>
                             </form>
                         @else
-                            <form method="POST" action="{{ $schoolRoute('student.logout') }}" style="margin: 0;">
+                            <form method="POST" action="{{ $schoolRoute('logout') }}" style="margin: 0;">
                                 @csrf
                                 <button type="submit" class="dropdown-item">
                                     Logout
@@ -1220,7 +1674,7 @@
     </nav>
     
     <!-- Sidebar -->
-    <div class="sidebar" id="sidebar">
+    <div class="sidebar" id="sidebar" role="navigation" aria-label="Main navigation">
         <div class="sidebar-header">
             <h3>
                 @if(Auth::guard('admin')->check())
@@ -1235,32 +1689,95 @@
             </h3>
         </div>
         
-        <nav class="sidebar-nav">
+        <nav class="sidebar-nav" role="menubar">
             @if(Auth::guard('admin')->check())
-                <a href="{{ $schoolRoute('admin.dashboard') }}" class="nav-item" data-page="dashboard">Dashboard</a>
-                <a href="{{ $schoolRoute('admin.userManagement') }}" class="nav-item" data-page="user-management">User Management</a>
-                <a href="{{ $schoolRoute('admin.schedules') }}" class="nav-item" data-page="schedules">Schedules</a>
-                <a href="{{ $schoolRoute('admin.removalRequests') }}" class="nav-item" data-page="removal-requests">Removal Requests</a>
-                <a href="{{ $schoolRoute('admin.enrollments.index') }}" class="nav-item" data-page="enrollments">Enrollments</a>
-                <a href="{{ $schoolRoute('admin.courses') }}" class="nav-item" data-page="courses">Courses</a>
-                <a href="{{ $schoolRoute('admin.theoretical.index') }}" class="nav-item" data-page="theoretical">
-                    Theoretical Completions
-                    <span class="badge badge-new">NEW</span>
-                </a>
-                <a href="{{ $schoolRoute('admin.bookings.index') }}" class="nav-item" data-page="bookings">Bookings</a>
-                <a href="{{ $schoolRoute('admin.payments.index') }}" class="nav-item" data-page="payments">Payments</a>
-                <a href="{{ $schoolRoute('admin.reports.index') }}" class="nav-item" data-page="reports">Reports & Analytics</a>
-                <a href="{{ $schoolRoute('admin.settings') }}" class="nav-item" data-page="settings">Settings</a>
+                {{-- Dashboard (standalone) --}}
+                <a href="{{ school_route('admin.dashboard', [], $currentSchool) }}" class="nav-item" data-page="dashboard">Dashboard</a>
+
+                <div class="nav-divider"></div>
+
+                {{-- Users --}}
+                <div class="nav-category" data-category="admin-users">
+                    <div class="nav-category-header" onclick="toggleCategory(this)" role="button" aria-expanded="false" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleCategory(this)}">
+                        <span>Users</span>
+                        <span class="nav-category-arrow">&#9660;</span>
+                    </div>
+                    <div class="nav-category-items">
+                        <a href="{{ school_route('admin.userManagement', [], $currentSchool) }}" class="nav-item" data-page="user-management">User Management</a>
+                        <a href="{{ school_route('admin.removalRequests', [], $currentSchool) }}" class="nav-item" data-page="removal-requests">Removal Requests</a>
+                    </div>
+                </div>
+
+                {{-- Theoretical Training --}}
+                <div class="nav-category" data-category="admin-courses">
+                    <div class="nav-category-header" onclick="toggleCategory(this)" role="button" aria-expanded="false" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleCategory(this)}">
+                        <span>Courses & Training</span>
+                        <span class="nav-category-arrow">&#9660;</span>
+                    </div>
+                    <div class="nav-category-items">
+                        <a href="{{ school_route('admin.courses', [], $currentSchool) }}" class="nav-item" data-page="courses">Courses</a>
+                        <a href="{{ school_route('admin.enrollments.index', [], $currentSchool) }}" class="nav-item" data-page="enrollments">Enrollments</a>
+                        <a href="{{ school_route('admin.theoretical.index', [], $currentSchool) }}" class="nav-item" data-page="theoretical">Theoretical Training</a>
+                    </div>
+                </div>
+
+                {{-- Scheduling & Sessions --}}
+                <div class="nav-category" data-category="admin-sessions">
+                    <div class="nav-category-header" onclick="toggleCategory(this)" role="button" aria-expanded="false" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleCategory(this)}">
+                        <span>Scheduling &amp; Sessions</span>
+                        <span class="nav-category-arrow">&#9660;</span>
+                    </div>
+                    <div class="nav-category-items">
+                        <a href="{{ school_route('admin.schedules', [], $currentSchool) }}" class="nav-item" data-page="schedules">Time Slots</a>
+                        <a href="{{ school_route('admin.bookings.index', [], $currentSchool) }}" class="nav-item" data-page="bookings">Manage Schedules</a>
+                        <a href="{{ school_route('admin.sessions.index', [], $currentSchool) }}" class="nav-item" data-page="session-completions">Session Logs</a>
+                        <a href="{{ school_route('admin.phase-progressions.index', [], $currentSchool) }}" class="nav-item" data-page="phase-progressions">Phase Progressions</a>
+                    </div>
+                </div>
+
+                {{-- Payments & Reports --}}
+                <div class="nav-category" data-category="admin-finance">
+                    <div class="nav-category-header" onclick="toggleCategory(this)" role="button" aria-expanded="false" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleCategory(this)}">
+                        <span>Payments & Reports</span>
+                        <span class="nav-category-arrow">&#9660;</span>
+                    </div>
+                    <div class="nav-category-items">
+                        <a href="{{ school_route('admin.payments.index', [], $currentSchool) }}" class="nav-item" data-page="payments">Payments</a>
+                        @if(Auth::guard('admin')->user()?->isSchoolAdmin())
+                        <a href="{{ school_route('admin.reports.index', [], $currentSchool) }}" class="nav-item" data-page="reports">Reports & Analytics</a>
+                        @endif
+                    </div>
+                </div>
+
+                <div class="nav-divider"></div>
+
+                {{-- Internal Management (school_admin only) --}}
+                @if(Auth::guard('admin')->user()?->isSchoolAdmin())
+                <div class="nav-category" data-category="admin-internal-management">
+                    <div class="nav-category-header" onclick="toggleCategory(this)" role="button" aria-expanded="false" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleCategory(this)}">
+                        <span>Internal Management</span>
+                        <span class="nav-category-arrow">&#9660;</span>
+                    </div>
+                    <div class="nav-category-items">
+                        <a href="{{ school_route('admin.admin-management.index', [], $currentSchool) }}" class="nav-item" data-page="admin-management">Admin Management</a>
+                        <a href="{{ school_route('admin.branches.index', [], $currentSchool) }}" class="nav-item" data-page="branches">Branches</a>
+                        <a href="{{ school_route('admin.settings', [], $currentSchool) }}" class="nav-item" data-page="settings">Settings</a>
+                    </div>
+                </div>
+                @endif
             @elseif(Auth::guard('instructor')->check())
                 <a href="{{ $schoolRoute('instructor.dashboard') }}" class="nav-item" data-page="dashboard">Dashboard</a>
                 <a href="{{ $schoolRoute('instructor.schedule') }}" class="nav-item" data-page="my-schedule">My Schedule</a>
                 <a href="{{ $schoolRoute('instructor.students.index') }}" class="nav-item" data-page="students">My Students</a>
-                <a href="{{ $schoolRoute('instructor.sessions.create') }}" class="nav-item" data-page="sessions">
-                    Log Session
-                    <span class="badge badge-new">NEW</span>
+                <a href="{{ $schoolRoute('instructor.sessions.index') }}" class="nav-item" data-page="sessions">
+                    Session Logging
                 </a>
                 <a href="{{ $schoolRoute('instructor.grades') }}" class="nav-item" data-page="grades">Grades</a>
-                <a href="{{ $schoolRoute('instructor.reports') }}" class="nav-item" data-page="reports">Reports</a>
+
+                <div class="nav-divider"></div>
+
+                {{-- Theoretical Training --}}
+                <a href="{{ $schoolRoute('instructor.theoretical.index') }}" class="nav-item" data-page="theoretical">Theoretical Training</a>
             @elseif(Auth::guard('student')->check())
                 @php
                     $currentStudent = Auth::guard('student')->user();
@@ -1274,61 +1791,127 @@
                 @else
                     {{-- Student Navigation --}}
                     <a href="{{ $schoolRoute('student.dashboard') }}" class="nav-item" data-page="dashboard">Dashboard</a>
-                    <a href="{{ $schoolRoute('student.schedule') }}" class="nav-item" data-page="schedule">My Schedule</a>
-                    <a href="{{ $schoolRoute('student.enrollments.index') }}" class="nav-item" data-page="enrollments">My Enrollments</a>
-                    </a>
-                    <a href="{{ $schoolRoute('student.courses.index') }}" class="nav-item" data-page="courses">Browse Courses</a>
-                    <a href="{{ $schoolRoute('student.payments.index') }}" class="nav-item" data-page="payments">My Payments</a>
-                    <a href="{{ $schoolRoute('student.progress.index') }}" class="nav-item" data-page="progress">My Progress</a>
+
+                    <div class="nav-divider"></div>
+
+                    {{-- My Courses --}}
+                    <div class="nav-category" data-category="student-courses">
+                        <div class="nav-category-header" onclick="toggleCategory(this)" role="button" aria-expanded="false" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleCategory(this)}">
+                            <span>My Courses</span>
+                            <span class="nav-category-arrow">&#9660;</span>
+                        </div>
+                        <div class="nav-category-items">
+                            <a href="{{ $schoolRoute('student.my-course') }}" class="nav-item" data-page="my-course">Enrolled Course</a>
+                            <a href="{{ $schoolRoute('student.progress.index') }}" class="nav-item" data-page="progress">My Progress</a>
+                            <a href="{{ $schoolRoute('student.courses.index') }}" class="nav-item" data-page="courses">Browse Courses</a>
+                        </div>
+                    </div>
+
+                    {{-- My Sessions & Payments --}}
+                    <div class="nav-category" data-category="student-sessions">
+                        <div class="nav-category-header" onclick="toggleCategory(this)" role="button" aria-expanded="false" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleCategory(this)}">
+                            <span>Sessions & Payments</span>
+                            <span class="nav-category-arrow">&#9660;</span>
+                        </div>
+                        <div class="nav-category-items">
+                            <a href="{{ $schoolRoute('student.schedule') }}" class="nav-item" data-page="schedule">My Schedule</a>
+                            <a href="{{ $schoolRoute('student.payments.index') }}" class="nav-item" data-page="payments">My Payments</a>
+                        </div>
+                    </div>
                 @endif
             @endif
         </nav>
     </div>
     
     <!-- Sidebar Overlay for mobile -->
-    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()" role="presentation" aria-hidden="true"></div>
     
     <!-- Loading Overlay -->
-    <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-overlay" id="loadingOverlay" role="status" aria-label="Loading">
         <div class="loading-spinner"></div>
     </div>
     
+    <!-- Breadcrumb Navigation -->
+    <div class="breadcrumb-bar" id="breadcrumbBar" role="navigation" aria-label="Breadcrumb">
+        <span id="breadcrumbContent">
+            <a href="#" onclick="loadContent(getDashboardUrl()); return false;">Dashboard</a>
+        </span>
+    </div>
+    
     <!-- Main Content -->
-    <main class="main-content" id="mainContent">
+    <main class="main-content" id="mainContent" role="main">
         @yield('content')
     </main>
     
     <script>
         let sidebarOpen = false;
         let profileDropdownOpen = false;
+
+        // Sidebar category toggle with localStorage persistence
+        function toggleCategory(header) {
+            const category = header.closest('.nav-category');
+            if (!category) return;
+            category.classList.toggle('collapsed');
+            // Save state
+            const key = category.getAttribute('data-category');
+            if (key) {
+                const collapsed = JSON.parse(localStorage.getItem('sidebarCollapsed') || '{}');
+                collapsed[key] = category.classList.contains('collapsed');
+                localStorage.setItem('sidebarCollapsed', JSON.stringify(collapsed));
+            }
+        }
+
+        // Restore collapsed state & auto-expand category of active page
+        (function initSidebarCategories() {
+            const collapsed = JSON.parse(localStorage.getItem('sidebarCollapsed') || '{}');
+            document.querySelectorAll('.nav-category').forEach(function(cat) {
+                const key = cat.getAttribute('data-category');
+                // If this category contains the active nav-item, always expand it
+                const hasActive = cat.querySelector('.nav-item.active');
+                if (hasActive) {
+                    cat.classList.remove('collapsed');
+                    // Clear saved collapsed state for this category
+                    if (key && collapsed[key]) {
+                        collapsed[key] = false;
+                        localStorage.setItem('sidebarCollapsed', JSON.stringify(collapsed));
+                    }
+                } else if (key && collapsed[key]) {
+                    cat.classList.add('collapsed');
+                }
+            });
+        })();
         
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('sidebarOverlay');
-            const mainContent = document.getElementById('mainContent');
+            const toggleTab = document.getElementById('sidebarToggleTab');
             
             sidebarOpen = !sidebarOpen;
             
             if (sidebarOpen) {
                 sidebar.classList.add('active');
                 overlay.classList.add('active');
-                mainContent.classList.add('sidebar-open');
+                if (toggleTab) toggleTab.classList.add('active');
             } else {
                 sidebar.classList.remove('active');
                 overlay.classList.remove('active');
-                mainContent.classList.remove('sidebar-open');
+                if (toggleTab) toggleTab.classList.remove('active');
             }
+            if (toggleTab) toggleTab.setAttribute('aria-expanded', sidebarOpen);
         }
         
         function closeSidebar() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('sidebarOverlay');
-            const mainContent = document.getElementById('mainContent');
+            const toggleTab = document.getElementById('sidebarToggleTab');
             
             sidebarOpen = false;
             sidebar.classList.remove('active');
             overlay.classList.remove('active');
-            mainContent.classList.remove('sidebar-open');
+            if (toggleTab) {
+                toggleTab.classList.remove('active');
+                toggleTab.setAttribute('aria-expanded', 'false');
+            }
         }
         
         function toggleProfileDropdown() {
@@ -1346,6 +1929,323 @@
             const dropdownMenu = document.getElementById('profileDropdownMenu');
             profileDropdownOpen = false;
             dropdownMenu.classList.remove('show');
+        }
+        
+        // ========================================
+        // Notification Bell System
+        // ========================================
+        let notificationDropdownOpen = false;
+        const notificationsUrl = @json($schoolRoute('notifications.index'));
+        const markAllReadUrl = @json($schoolRoute('notifications.markAllAsRead'));
+        
+        function toggleNotificationDropdown(e) {
+            e.stopPropagation();
+            const dropdown = document.getElementById('notificationDropdown');
+            notificationDropdownOpen = !notificationDropdownOpen;
+            
+            if (notificationDropdownOpen) {
+                dropdown.classList.add('show');
+                closeProfileDropdown();
+                fetchNotifications();
+            } else {
+                dropdown.classList.remove('show');
+            }
+        }
+        
+        function closeNotificationDropdown() {
+            const dropdown = document.getElementById('notificationDropdown');
+            notificationDropdownOpen = false;
+            if (dropdown) dropdown.classList.remove('show');
+        }
+        
+        function fetchNotifications() {
+            fetch(notificationsUrl, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            })
+            .then(r => r.json())
+            .then(data => {
+                renderNotifications(data.notifications, data.unread_count);
+            })
+            .catch(err => console.warn('Failed to fetch notifications:', err));
+        }
+        
+        function renderNotifications(notifications, unreadCount) {
+            const badge = document.getElementById('notificationBadge');
+            const list = document.getElementById('notificationList');
+            
+            // Update badge
+            if (unreadCount > 0) {
+                badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+                badge.classList.add('has-notifications');
+            } else {
+                badge.textContent = '';
+                badge.classList.remove('has-notifications');
+            }
+            
+            // Render list
+            if (!notifications || notifications.length === 0) {
+                list.innerHTML = `
+                    <div class="notification-empty">
+                        <div class="notification-empty-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 48px; height: 48px;">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                            </svg></div>
+                        <div class="notification-empty-text">No notifications yet</div>
+                    </div>`;
+                return;
+            }
+            
+            list.innerHTML = notifications.map(n => `
+                <div class="notification-item ${n.is_read ? '' : 'unread'}" 
+                     onclick="handleNotificationClick(event, ${n.id}, '${n.action_url || ''}')">
+                    <div class="notification-item-icon">${n.icon}</div>
+                    <div class="notification-item-content">
+                        <div class="notification-item-title">${escapeHtml(n.title)}</div>
+                        <div class="notification-item-message">${escapeHtml(n.message)}</div>
+                        <div class="notification-item-time">${n.time_ago}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function handleNotificationClick(e, notificationId, actionUrl) {
+            e.stopPropagation();
+            
+            // Mark as read
+            const markReadUrl = notificationsUrl.replace(/\/$/, '') + '/' + notificationId + '/read';
+            fetch(markReadUrl, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            }).then(() => {
+                // Update UI
+                const item = e.currentTarget;
+                item.classList.remove('unread');
+                updateBadgeCount(-1);
+            }).catch(err => console.warn('Failed to mark notification read:', err));
+            
+            // Navigate if action URL exists
+            if (actionUrl) {
+                closeNotificationDropdown();
+                loadContent(actionUrl);
+            }
+        }
+        
+        function markAllNotificationsRead(e) {
+            e.stopPropagation();
+            
+            fetch(markAllReadUrl, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            }).then(() => {
+                document.querySelectorAll('.notification-item.unread').forEach(item => {
+                    item.classList.remove('unread');
+                });
+                const badge = document.getElementById('notificationBadge');
+                badge.textContent = '';
+                badge.classList.remove('has-notifications');
+            }).catch(err => console.warn('Failed to mark all read:', err));
+        }
+        
+        function updateBadgeCount(delta) {
+            const badge = document.getElementById('notificationBadge');
+            let current = parseInt(badge.textContent) || 0;
+            current = Math.max(0, current + delta);
+            if (current > 0) {
+                badge.textContent = current > 99 ? '99+' : current;
+                badge.classList.add('has-notifications');
+            } else {
+                badge.textContent = '';
+                badge.classList.remove('has-notifications');
+            }
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Poll for new notifications every 60 seconds
+        setInterval(() => {
+            fetch(notificationsUrl, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            })
+            .then(r => r.json())
+            .then(data => {
+                const badge = document.getElementById('notificationBadge');
+                if (data.unread_count > 0) {
+                    badge.textContent = data.unread_count > 99 ? '99+' : data.unread_count;
+                    badge.classList.add('has-notifications');
+                } else {
+                    badge.textContent = '';
+                    badge.classList.remove('has-notifications');
+                }
+            })
+            .catch(() => {});
+        }, 60000);
+        
+        // Load initial badge count on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(fetchNotifications, 1000);
+            updateBreadcrumbs(window.location.pathname);
+        });
+        
+        // ========================================
+        // Breadcrumb Navigation System
+        // ========================================
+        const breadcrumbMap = {
+            // Admin pages
+            'admin': 'Dashboard',
+            'admin/dashboard': 'Dashboard',
+            'admin/user-management': 'User Management',
+            'admin/removal-requests': 'Removal Requests',
+            'admin/courses': 'Courses',
+            'admin/enrollments': 'Enrollments',
+            'admin/theoretical': 'Theoretical Training',
+            'admin/schedules': 'Schedules',
+            'admin/bookings': 'Student Sessions',
+            'admin/phase-progressions': 'Phase Progressions',
+            'admin/payments': 'Payments',
+            'admin/reports': 'Reports & Analytics',
+            'admin/admin-management': 'Admin Management',
+            'admin/branches': 'Branches',
+            'admin/settings': 'Settings',
+            // Instructor pages
+            'instructor': 'Dashboard',
+            'instructor/dashboard': 'Dashboard',
+            'instructor/my-schedule': 'My Schedule',
+            'instructor/students': 'My Students',
+            'instructor/sessions': 'Session Logging',
+            'instructor/grades': 'Grades',
+            'instructor/theoretical': 'Theoretical Training',
+            // Student pages
+            'student': 'Dashboard',
+            'student/dashboard': 'Dashboard',
+            'student/my-course': 'Enrolled Course',
+            'student/progress': 'My Progress',
+            'student/courses': 'Browse Courses',
+            'student/schedule': 'My Schedule',
+            'student/payments': 'My Payments',
+            // Guest pages
+            'guest': 'Dashboard',
+            'guest/dashboard': 'Dashboard',
+            'guest/courses': 'Browse Courses',
+            'guest/enrollment-requests': 'My Enrollments',
+        };
+        
+        function getDashboardUrl() {
+            @if(Auth::guard('admin')->check())
+                return @json($schoolRoute('admin.dashboard'));
+            @elseif(Auth::guard('instructor')->check())
+                return @json($schoolRoute('instructor.dashboard'));
+            @elseif(Auth::guard('student')->check())
+                @php $currentStudent = Auth::guard('student')->user(); @endphp
+                @if($currentStudent && $currentStudent->role === 'guest')
+                    return @json($schoolRoute('guest.dashboard'));
+                @else
+                    return @json($schoolRoute('student.dashboard'));
+                @endif
+            @else
+                return '/';
+            @endif
+        }
+        
+        function getRoleLabel() {
+            @if(Auth::guard('admin')->check())
+                return 'Admin';
+            @elseif(Auth::guard('instructor')->check())
+                return 'Instructor';
+            @elseif(Auth::guard('student')->check())
+                @php $currentStudent = Auth::guard('student')->user(); @endphp
+                @if($currentStudent && $currentStudent->role === 'guest')
+                    return 'Guest';
+                @else
+                    return 'Student';
+                @endif
+            @else
+                return '';
+            @endif
+        }
+        
+        function updateBreadcrumbs(url) {
+            const container = document.getElementById('breadcrumbContent');
+            if (!container) return;
+            
+            // Extract path segments after school slug
+            const parts = url.replace(/^\//, '').split('/');
+            // Pattern: school-slug/role/page or school-slug/role/page/subpage
+            if (parts.length < 2) {
+                container.innerHTML = '<span class="breadcrumb-current">Dashboard</span>';
+                return;
+            }
+            
+            const schoolSlug = parts[0];
+            const rolePath = parts.slice(1).join('/');
+            const dashUrl = getDashboardUrl();
+            const roleLabel = getRoleLabel();
+            
+            // Check if this is a dashboard page
+            const isDashboard = rolePath.match(/^(admin|instructor|student|guest)(\/dashboard)?$/);
+            if (isDashboard) {
+                container.innerHTML = '<span class="breadcrumb-current">' + roleLabel + ' Dashboard</span>';
+                return;
+            }
+            
+            // Build breadcrumb trail
+            let html = '<a href="#" onclick="loadContent(\'' + dashUrl + '\'); return false;">Dashboard</a>';
+            
+            // Find the best matching breadcrumb
+            let matched = false;
+            const keys = Object.keys(breadcrumbMap).sort((a, b) => b.length - a.length);
+            for (const key of keys) {
+                if (rolePath === key || rolePath.startsWith(key + '/')) {
+                    const parentLabel = breadcrumbMap[key] || key.split('/').pop().replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+                    if (rolePath !== key && parentLabel === 'Dashboard') {
+                        continue;
+                    }
+
+                    html += '<span class="breadcrumb-separator">›</span>';
+                    
+                    // If there's a deeper path, make the parent clickable
+                    if (rolePath !== key && rolePath.startsWith(key + '/')) {
+                        html += '<a href="#" onclick="loadContent(\'/' + schoolSlug + '/' + key + '\'); return false;">' + parentLabel + '</a>';
+                        // Add the subpage
+                        const subPath = rolePath.slice(key.length + 1);
+                        const subLabel = subPath.split('/').map(s => s.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())).join(' > ');
+                        html += '<span class="breadcrumb-separator">›</span>';
+                        html += '<span class="breadcrumb-current">' + subLabel + '</span>';
+                    } else {
+                        html += '<span class="breadcrumb-current">' + parentLabel + '</span>';
+                    }
+                    matched = true;
+                    break;
+                }
+            }
+            
+            if (!matched) {
+                // Fallback: use the last segment
+                const lastSegment = parts[parts.length - 1]
+                    .replace(/-/g, ' ')
+                    .replace(/\b\w/g, l => l.toUpperCase());
+                html += '<span class="breadcrumb-separator">›</span>';
+                html += '<span class="breadcrumb-current">' + lastSegment + '</span>';
+            }
+            
+            container.innerHTML = html;
         }
         
         // Function to reinitialize JavaScript for dynamically loaded content
@@ -1549,6 +2449,12 @@
             const action = form.action || '';
             const formHTML = form.outerHTML;
             
+            // Exclude login and registration forms from AJAX handling
+            // These forms should submit normally to trigger full page redirects after session establishment
+            if (action.includes('login') || action.includes('register')) {
+                return true;
+            }
+            
             // Exclude logout forms
             if (action.includes('logout') || formHTML.includes('logout')) {
                 return true;
@@ -1569,7 +2475,6 @@
                 return true;
             }
             
-            // Exclude protected forms (timeslot forms)
             if (form.hasAttribute('data-protected')) {
                 return true;
             }
@@ -1811,7 +2716,17 @@
         // Helper function to reload current page content
         function reloadCurrentPage() {
             setTimeout(() => {
-                loadContent(window.location.pathname);
+                const path = window.location.pathname;
+                
+                // Safety check: If we are on login/register pages but somehow got here,
+                // it usually means a success event happened (like guest login).
+                // Instead of reloading the login page via AJAX, redirect to dashboard.
+                if (path.endsWith('/login') || path.endsWith('/register') || path === '/') {
+                    window.location.href = getDashboardUrl();
+                    return;
+                }
+                
+                loadContent(path);
             }, 500); // Small delay to show notification
         }
         
@@ -1828,9 +2743,9 @@
             // Set styles based on type
             const colors = {
                 success: { bg: '#4CAF50', icon: '✓' },
-                error: { bg: '#f44336', icon: '✗' },
-                warning: { bg: '#ff9800', icon: '⚠' },
-                info: { bg: '#2196F3', icon: 'ℹ' }
+                error: { bg: '#f44336', icon: '' },
+                warning: { bg: '#ff9800', icon: '' },
+                info: { bg: '#2196F3', icon: '' }
             };
             
             const color = colors[type] || colors.info;
@@ -2004,7 +2919,6 @@
             const modals = document.querySelectorAll('.modal, [id*="Modal"], [id*="modal"]');
             modals.forEach(modal => {
                 modal.style.display = 'none';
-                modal.style.visibility = 'hidden';
                 // Remove any inline styles that might force display
                 if (modal.style.display !== 'none') {
                     modal.style.setProperty('display', 'none', 'important');
@@ -2055,7 +2969,17 @@
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }
-                return response.text();
+                return response.text().then(text => {
+                    // Safety check: if the response contains a login form (indicated by specific input names),
+                    // it means we've likely been redirected to login due to session expiry or role change.
+                    // In this case, do NOT inject the HTML, instead do a full browser redirect.
+                    if (text.includes('name="email"') && text.includes('name="password"') && text.includes('type="password"')) {
+                        console.warn('Login page detected in AJAX response. Redirecting to login.');
+                        window.location.href = url;
+                        return;
+                    }
+                    return text;
+                });
             })
             .then(html => {
                 // Update main content
@@ -2084,6 +3008,26 @@
                 // Re-initialize forms for AJAX handling (respects data-no-ajax)
                 initializeForms();
                 
+                // Update document title safely based on the breadcrumb text or URL path
+                let newTitle = 'Driving School Management System';
+                const mainTitleEl = mainContent.querySelector('h1, h2, .page-title');
+                if (mainTitleEl && mainTitleEl.innerText.trim()) {
+                    newTitle = mainTitleEl.innerText.trim() + ' - ' + newTitle;
+                } else {
+                    const parts = url.replace(/^\//, '').split('/');
+                    if (parts.length > 1) {
+                        const rolePath = parts.slice(1).join('/');
+                        const mappedTitle = breadcrumbMap[rolePath];
+                        if (mappedTitle) {
+                            newTitle = mappedTitle + ' - DSMS';
+                        } else {
+                            const fallbackTitle = parts[parts.length - 1].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                            newTitle = fallbackTitle + ' - DSMS';
+                        }
+                    }
+                }
+                document.title = newTitle;
+                
                 // Update browser URL if requested
                 if (pushState) {
                     history.pushState({url: url}, '', url);
@@ -2091,6 +3035,9 @@
                 
                 // Update active sidebar item
                 updateActiveNavItem(url);
+                
+                // Update breadcrumbs
+                updateBreadcrumbs(url);
                 
                 // Hide loading overlay
                 setTimeout(() => {
@@ -2107,15 +3054,36 @@
         }
         
         function updateActiveNavItem(url) {
+            const normalizePath = function(value) {
+                try {
+                    const parsedUrl = new URL(value, window.location.origin);
+                    return parsedUrl.pathname.replace(/\/+$/, '') || '/';
+                } catch (e) {
+                    return String(value || '').replace(/\/+$/, '') || '/';
+                }
+            };
+
+            const currentPath = normalizePath(url || window.location.pathname);
+
             // Remove active class from all nav items
             document.querySelectorAll('.nav-item').forEach(item => {
                 item.classList.remove('active');
+                item.removeAttribute('aria-current');
             });
             
             // Add active class to current nav item
             document.querySelectorAll('.nav-item').forEach(item => {
-                if (item.getAttribute('href') === url) {
+                const href = item.getAttribute('href');
+                if (!href) {
+                    return;
+                }
+
+                const navPath = normalizePath(href);
+                const isCurrent = navPath === currentPath || (currentPath.startsWith(navPath + '/') && navPath !== '/');
+
+                if (isCurrent) {
                     item.classList.add('active');
+                    item.setAttribute('aria-current', 'page');
                 }
             });
         }
@@ -2129,43 +3097,114 @@
         
         // Initialize AJAX navigation
         document.addEventListener('DOMContentLoaded', function() {
-            // Handle sidebar navigation clicks
-            document.addEventListener('click', function(e) {
-                const navItem = e.target.closest('.nav-item');
-                if (navItem && navItem.getAttribute('href') && !navItem.getAttribute('href').startsWith('#')) {
-                    e.preventDefault();
-                    const url = navItem.getAttribute('href');
-                    loadContent(url);
-                    
-                    // Close sidebar on mobile after navigation
-                    if (window.innerWidth <= 768) {
-                        closeSidebar();
-                    }
-                }
-            });
-            
             // Set initial state
             const currentUrl = window.location.pathname;
             history.replaceState({url: currentUrl}, '', currentUrl);
             updateActiveNavItem(currentUrl);
         });
         
-        // Close sidebar when clicking outside on mobile
+        // Handle sidebar navigation clicks - Use capture phase to ensure it runs first
         document.addEventListener('click', function(e) {
-            // Close sidebar
-            if (sidebarOpen && !e.target.closest('.sidebar') && !e.target.closest('.burger-menu')) {
-                if (window.innerWidth <= 768) {
+            const navItem = e.target.closest('.nav-item');
+            if (navItem && navItem.getAttribute('href') && !navItem.getAttribute('href').startsWith('#')) {
+                e.preventDefault();
+                e.stopPropagation(); // Stop event from bubbling to prevent sidebar close
+                const url = navItem.getAttribute('href');
+                loadContent(url);
+                
+                // Close sidebar after navigation
+                setTimeout(() => {
                     closeSidebar();
-                }
+                }, 100);
+            }
+        }, true); // Use capture phase
+        
+        // Close sidebar when clicking outside
+        document.addEventListener('click', function(e) {
+            // Don't close if clicking on a nav-item (handled above)
+            if (e.target.closest('.nav-item')) {
+                return;
+            }
+            
+            // Close sidebar if clicking outside
+            if (sidebarOpen && !e.target.closest('.sidebar') && !e.target.closest('.sidebar-toggle-tab')) {
+                closeSidebar();
             }
             
             // Close profile dropdown
             if (profileDropdownOpen && !e.target.closest('.profile-dropdown')) {
                 closeProfileDropdown();
             }
+            
+            // Close notification dropdown
+            if (notificationDropdownOpen && !e.target.closest('.notification-icon')) {
+                closeNotificationDropdown();
+            }
         });
     </script>
     
+    {{-- Global: Prevent double form submissions --}}
+    <style>
+        .btn-submitting {
+            opacity: 0.65;
+            pointer-events: none;
+            position: relative;
+        }
+        .btn-submitting::after {
+            content: '';
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            margin-left: 8px;
+            border: 2px solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: btn-spin 0.6s linear infinite;
+            vertical-align: middle;
+        }
+        @keyframes btn-spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+    <script>
+    (function() {
+        document.addEventListener('submit', function(e) {
+            var form = e.target;
+            // Only protect POST/PUT/PATCH/DELETE forms (not GET search/filter forms)
+            var method = (form.method || 'GET').toUpperCase();
+            if (method === 'GET') return;
+
+            // Skip forms explicitly marked as no-guard
+            if (form.dataset.noSubmitGuard) return;
+
+            // Check if already submitting
+            if (form.dataset.submitting === 'true') {
+                e.preventDefault();
+                return;
+            }
+
+            // Mark as submitting
+            form.dataset.submitting = 'true';
+
+            // Disable all submit buttons within this form
+            var buttons = form.querySelectorAll('button[type="submit"], input[type="submit"], button:not([type])');
+            buttons.forEach(function(btn) {
+                btn.classList.add('btn-submitting');
+                btn.disabled = true;
+            });
+
+            // Safety fallback: re-enable after 8 seconds in case of network issues
+            setTimeout(function() {
+                form.dataset.submitting = 'false';
+                buttons.forEach(function(btn) {
+                    btn.classList.remove('btn-submitting');
+                    btn.disabled = false;
+                });
+            }, 8000);
+        }, true); // Capture phase to run before other handlers
+    })();
+    </script>
+
     @stack('scripts')
 </body>
 </html>

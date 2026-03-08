@@ -12,6 +12,7 @@ class School extends Model
     protected $fillable = [
         'name',
         'slug',
+        'status',
         'timezone',
         'branding',
         'settings',
@@ -73,9 +74,59 @@ class School extends Model
         return $this->hasMany(ScheduleInstructor::class);
     }
 
+    public function progress()
+    {
+        return $this->hasMany(Progress::class);
+    }
+
+    public function phaseProgressions()
+    {
+        return $this->hasMany(PhaseProgression::class);
+    }
+
+    public function instructorRemovalRequests()
+    {
+        return $this->hasMany(InstructorRemovalRequest::class);
+    }
+
+    public function registrationRequests()
+    {
+        return $this->hasMany(RegistrationRequest::class);
+    }
+
+    public function studentActionRequests()
+    {
+        return $this->hasMany(StudentActionRequest::class);
+    }
+
+    public function reports()
+    {
+        return $this->hasMany(Report::class);
+    }
+
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    public function systemLogs()
+    {
+        return $this->hasMany(SystemLog::class);
+    }
+
+    public function sessionCompletions()
+    {
+        return $this->hasMany(SessionCompletion::class);
+    }
+
     public function schoolSetting()
     {
         return $this->hasOne(SchoolSetting::class);
+    }
+
+    public function branches()
+    {
+        return $this->hasMany(\App\Models\Branch::class);
     }
 
     public function resolveView(string $view): string
