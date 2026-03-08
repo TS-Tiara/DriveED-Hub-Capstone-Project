@@ -1458,48 +1458,73 @@ function bulkReject() {
         alert('Please select at least one enrollment request');
         return;
     }
-    
-    const remarks = prompt(`Enter rejection reason for ${ids.length} request(s):`);
-    if (remarks === null) return; // User cancelled
-    
-    if (!remarks.trim()) {
-        alert('Rejection reason is required');
-        return;
-    }
-    
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = '{{ route('schools.admin.enrollments.bulkReject', $school) }}';
-    
-    const csrf = document.createElement('input');
-    csrf.type = 'hidden';
-    csrf.name = '_token';
-    csrf.value = '{{ csrf_token() }}';
-    form.appendChild(csrf);
-    
-    const remarksInput = document.createElement('input');
-    remarksInput.type = 'hidden';
-    remarksInput.name = 'remarks';
-    remarksInput.value = remarks;
-    form.appendChild(remarksInput);
-    
-    ids.forEach(id => {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'enrollment_ids[]';
-        input.value = id;
-        form.appendChild(input);
+
+    showConfirm({
+        type: 'danger',
+        title: 'Bulk Reject Enrollments',
+        message: `Are you sure you want to reject ${ids.length} enrollment request(s)?`,
+        confirmText: 'Continue',
+        onConfirm: function() {
+            Swal.fire({
+                title: 'Rejection Reason',
+                input: 'textarea',
+                inputLabel: `Enter rejection reason for ${ids.length} request(s):`,
+                inputPlaceholder: 'Rejection reason is required',
+                inputAttributes: {
+                    maxlength: 1000,
+                    'aria-label': 'Rejection reason'
+                },
+                showCancelButton: true,
+                confirmButtonText: 'Reject All',
+                confirmButtonColor: '#dc2626',
+                inputValidator: (value) => {
+                    if (!value || !value.trim()) {
+                        return 'Rejection reason is required';
+                    }
+                    return null;
+                }
+            }).then((result) => {
+                if (!result.isConfirmed) {
+                    return;
+                }
+
+                const remarks = result.value.trim();
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '{{ route('schools.admin.enrollments.bulkReject', $school) }}';
+
+                const csrf = document.createElement('input');
+                csrf.type = 'hidden';
+                csrf.name = '_token';
+                csrf.value = '{{ csrf_token() }}';
+                form.appendChild(csrf);
+
+                const remarksInput = document.createElement('input');
+                remarksInput.type = 'hidden';
+                remarksInput.name = 'remarks';
+                remarksInput.value = remarks;
+                form.appendChild(remarksInput);
+
+                ids.forEach(id => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'enrollment_ids[]';
+                    input.value = id;
+                    form.appendChild(input);
+                });
+
+                Swal.fire({
+                    title: 'Processing...',
+                    html: 'Please wait while we reject the selected requests.',
+                    allowOutsideClick: false,
+                    didOpen: () => Swal.showLoading()
+                });
+
+                document.body.appendChild(form);
+                form.submit();
+            });
+        }
     });
-    
-    Swal.fire({
-        title: 'Processing...',
-        html: 'Please wait while we reject the selected requests.',
-        allowOutsideClick: false,
-        didOpen: () => Swal.showLoading()
-    });
-    
-    document.body.appendChild(form);
-    form.submit();
 }
 
 // Prevent double-submit on modal forms (reject, cancel, license reject)

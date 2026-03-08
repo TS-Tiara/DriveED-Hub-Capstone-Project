@@ -115,8 +115,8 @@ class SchedulingConflictService
             // Check if there's a gap before this session
             if ($currentTime->diffInMinutes($sessionStart) >= $durationMinutes) {
                 $availableSlots[] = [
-                    'start' => $currentTime->format('H:i:s'),
-                    'end' => $sessionStart->format('H:i:s'),
+                    'start' => $currentTime->format('H:i'),
+                    'end' => $sessionStart->format('H:i'),
                     'start_formatted' => $currentTime->format('g:i A'),
                     'end_formatted' => $sessionStart->format('g:i A'),
                 ];
@@ -128,8 +128,8 @@ class SchedulingConflictService
         // Check if there's time left at the end of the day
         if ($currentTime->diffInMinutes($workEnd) >= $durationMinutes) {
             $availableSlots[] = [
-                'start' => $currentTime->format('H:i:s'),
-                'end' => $workEnd->format('H:i:s'),
+                'start' => $currentTime->format('H:i'),
+                'end' => $workEnd->format('H:i'),
                 'start_formatted' => $currentTime->format('g:i A'),
                 'end_formatted' => $workEnd->format('g:i A'),
             ];
