@@ -1114,9 +1114,47 @@ class AdminController extends Controller
     {
         $admin = Auth::guard('admin')->user();
 
-        // Date filter: next 30 days by default
-        $startDate = $request->input('start_date', now()->toDateString());
-        $endDate = $request->input('end_date', now()->addDays(30)->toDateString());
+        $defaultStartDate = now()->toDateString();
+        $defaultEndDate = now()->addDays(30)->toDateString();
+        $monthInput = $request->input('month');
+
+        if ($monthInput) {
+            // Month navigation takes precedence over manual date inputs.
+            $request->validate([
+                'month' => 'date_format:Y-m',
+            ]);
+
+            $monthDate = Carbon::createFromFormat('Y-m', $monthInput)->startOfMonth();
+            $startDate = $monthDate->toDateString();
+            $endDate = $monthDate->copy()->endOfMonth()->toDateString();
+        } else {
+            $startDate = $request->input('start_date', $defaultStartDate);
+            $endDate = $request->input('end_date', $defaultEndDate);
+        }
+
+        $validated = validator(
+            [
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+            ],
+            [
+                'start_date' => 'required|date_format:Y-m-d',
+                'end_date' => 'required|date_format:Y-m-d|after_or_equal:start_date',
+            ]
+        )->validate();
+
+        $startDateCarbon = Carbon::createFromFormat('Y-m-d', $validated['start_date'])->startOfDay();
+        $endDateCarbon = Carbon::createFromFormat('Y-m-d', $validated['end_date'])->startOfDay();
+
+        if ($startDateCarbon->diffInDays($endDateCarbon) > 90) {
+            return redirect()
+                ->back()
+                ->withErrors(['end_date' => 'Date range cannot exceed 90 days.'])
+                ->withInput();
+        }
+
+        $startDate = $validated['start_date'];
+        $endDate = $validated['end_date'];
 
         $timeslots = $admin->scopeToBranch(TimeSlot::with(['instructors', 'course'])
             ->where('school_id', $school->id)

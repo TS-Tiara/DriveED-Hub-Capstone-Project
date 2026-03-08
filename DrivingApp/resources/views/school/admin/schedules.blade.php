@@ -226,6 +226,37 @@
     .text-danger {
         color: #ef4444;
     }
+
+    .filter-wrap {
+        margin-bottom: 20px;
+        padding: 16px;
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+    }
+
+    .filter-form {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: flex-end;
+    }
+
+    .filter-field {
+        min-width: 180px;
+        flex: 1 1 180px;
+    }
+
+    .filter-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .filter-note {
+        margin-top: 10px;
+        color: #6b7280;
+        font-size: 0.85rem;
+    }
     
     /* Container Styles */
     .timeslots-container {
@@ -1444,6 +1475,31 @@
     </div>
     @endif
 
+    <div class="filter-wrap">
+        <form method="GET" action="{{ route('schools.admin.schedules', $school) }}" class="filter-form">
+            <div class="filter-field">
+                <label for="start_date" class="form-label">Start Date</label>
+                <input type="date" id="start_date" name="start_date" class="form-control" value="{{ old('start_date', $startDate) }}" required>
+            </div>
+            <div class="filter-field">
+                <label for="end_date" class="form-label">End Date</label>
+                <input type="date" id="end_date" name="end_date" class="form-control" value="{{ old('end_date', $endDate) }}" required>
+            </div>
+            <div class="filter-actions">
+                <button type="submit" class="btn btn-primary">Filter</button>
+                <a href="{{ route('schools.admin.schedules', $school) }}" class="btn btn-secondary">Reset</a>
+            </div>
+        </form>
+        @if($errors->has('start_date') || $errors->has('end_date') || $errors->has('month'))
+            <div class="text-danger" style="margin-top: 10px;">
+                {{ $errors->first('start_date') ?: ($errors->first('end_date') ?: $errors->first('month')) }}
+            </div>
+        @endif
+        <div class="filter-note">
+            Month navigation applies a full-month date range and overrides custom start/end dates.
+        </div>
+    </div>
+
     <!-- View Toggle -->
     <div class="center-toggle-wrap">
         <div class="view-toggle">
@@ -1581,7 +1637,7 @@
     <!-- Calendar View -->
     <div id="calendar-view" class="view-content">
         @php
-            $currentMonth = request('month', now()->format('Y-m'));
+            $currentMonth = request('month', \Carbon\Carbon::parse($startDate)->format('Y-m'));
             $calendar = \Carbon\Carbon::parse($currentMonth . '-01');
             $monthStart = $calendar->copy()->startOfMonth();
             $monthEnd = $calendar->copy()->endOfMonth();
@@ -2064,9 +2120,17 @@
         
         const year = currentDate.getFullYear();
         const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+        const monthStart = `${year}-${month}-01`;
+
+        const endDateObj = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+        const endMonth = String(endDateObj.getMonth() + 1).padStart(2, '0');
+        const endDay = String(endDateObj.getDate()).padStart(2, '0');
+        const monthEnd = `${endDateObj.getFullYear()}-${endMonth}-${endDay}`;
         
         const url = new URL(window.location);
         url.searchParams.set('month', `${year}-${month}`);
+        url.searchParams.set('start_date', monthStart);
+        url.searchParams.set('end_date', monthEnd);
         window.location.href = url.toString();
     }
     

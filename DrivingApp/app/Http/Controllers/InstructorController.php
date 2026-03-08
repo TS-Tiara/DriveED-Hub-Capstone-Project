@@ -91,6 +91,12 @@ class InstructorController extends Controller
     {
         $instructor = Auth::guard('instructor')->user();
 
+        $assignedStudentIds = Booking::where('school_id', $school->id)
+            ->where('instructor_id', $instructor->id)
+            ->whereIn('status', ['scheduled', 'completed'])
+            ->distinct()
+            ->pluck('student_id')
+            ->toArray();
 
         // Get ALL students from the school with pagination
         $students = Student::where('school_id', '=', $school->id)
@@ -101,9 +107,9 @@ class InstructorController extends Controller
             ->paginate(10, ['*']);
 
         // Add computed data for each student
-        $students->getCollection()->each(function ($student) use ($instructor, $assignedStudentIds) {
+        $students->getCollection()->each(function ($student) use ($assignedStudentIds) {
             // Mark if student is assigned to this instructor
-            $student->is_assigned = in_array($student->id, $assignedStudentIds);
+            $student->is_assigned = in_array($student->id, $assignedStudentIds, true);
 
             // Get most recent booking with this instructor
             $recentBooking = $student->bookings->first();

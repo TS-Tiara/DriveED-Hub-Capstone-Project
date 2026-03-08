@@ -536,30 +536,38 @@ class EnrollmentRequestController extends Controller
         }
 
         $approved = 0;
-        $errors = [];
 
         DB::beginTransaction();
         try {
             foreach ($request->enrollment_ids as $id) {
                 $enrollment = EnrollmentRequest::find($id);
 
-                // Skip if not belonging to this school
-                if ($enrollment->school_id !== $school->id) {
+                if (!$enrollment) {
                     continue;
                 }
 
-                // Skip if already approved
-                if ($enrollment->status === 'approved') {
+                // Skip if not belonging to this school
+                if ((int)$enrollment->school_id !== (int)$school->id) {
+                    continue;
+                }
+
+                // Skip finalized states (defense-in-depth against crafted requests)
+                if (in_array((string)$enrollment->status, ['approved', 'rejected', 'cancelled'], true)) {
+                    continue;
+                }
+
+                $student = $enrollment->student;
+                if (!$student) {
                     continue;
                 }
 
                 // Skip if student is already active
-                if ($enrollment->student->role !== 'guest') {
+                if ($student->role !== 'guest') {
                     continue;
                 }
 
                 // Skip if student is locked to another course
-                if ($enrollment->student->is_course_locked) {
+                if ($student->is_course_locked) {
                     continue;
                 }
 
@@ -570,10 +578,10 @@ class EnrollmentRequestController extends Controller
                     'enrolled_at' => now(),
                 ]);
 
-                $enrollment->student->update(['role' => 'student']);
-
-                // Lock student to this course
-                $enrollment->student->update(['is_course_locked' => true]);
+                $student->update([
+                    'role' => 'student',
+                    'is_course_locked' => true,
+                ]);
 
                 // Send email notification
                 try {

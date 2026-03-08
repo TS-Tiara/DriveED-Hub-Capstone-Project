@@ -252,8 +252,8 @@ class InstructorTimeSlotController extends Controller
             }
             $instructorSchedule[$dateKey][] = [
                 'id' => $slot->id,
-                'start' => $slot->start_time->format('H:i'),
-                'end' => $slot->end_time->format('H:i'),
+                'start' => $slot->formatted_start_time,
+                'end' => $slot->formatted_end_time,
             ];
         }
 
