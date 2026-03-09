@@ -1294,7 +1294,7 @@
         <div>
             <h1 class="page-title">
                 <i class="bi bi-mortarboard-fill"></i>
-                Courses Management
+            Courses Management
             </h1>
             <p class="page-subtitle">Manage courses, packages, and pricing for {{ $schoolName }}</p>
         </div>

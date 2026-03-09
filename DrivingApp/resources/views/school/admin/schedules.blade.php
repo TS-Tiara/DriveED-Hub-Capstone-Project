@@ -1,6 +1,6 @@
 ﻿@extends($isAjax ?? false ? 'layouts.ajax' : 'layouts.app')
 
-@section('title', 'Schedule Management')
+@section('title', 'Manage Schedule')
 
 @section('content')
 @php
@@ -295,7 +295,6 @@
     .center-toggle-wrap {
         display: flex;
         justify-content: center;
-        margin-bottom: 30px;
     }
 
     .cursor-pointer {
@@ -554,7 +553,6 @@
     .view-toggle {
         display: flex;
         gap: 0;
-        margin-bottom: 30px;
         background: #6b7280;
         border-radius: 8px;
         overflow: hidden;
@@ -562,12 +560,12 @@
     }
     
     .view-btn {
-        padding: 12px 28px;
+        padding: 8px 20px;
         background: #6b7280;
         color: white;
         border: none;
         cursor: pointer;
-        font-size: 15px;
+        font-size: 14px;
         font-weight: 500;
         transition: background 0.3s;
     }
@@ -766,11 +764,6 @@
     
     .timeslot-item.type-assigned {
         border-left-color: #3b82f6;
-    }
-    
-    .timeslot-item:hover {
-        background: white;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
     
     .timeslot-row {
@@ -1438,17 +1431,23 @@
 <div class="timeslots-container">
     <div class="page-header">
         <div>
-            <h1 class="page-title">Schedule Management</h1>
+            <h1 class="page-title">Manage Schedule</h1>
             <p class="page-subtitle">Dual assignment modes: Open (instructor self-select) or Assigned (admin-controlled)</p>
         </div>
-        <div>
-            <button type="button" id="createScheduleBtn" class="btn btn-success btn-create" onclick="openCreateModal(); return false;">
-                <i class="bi bi-calendar-plus"></i> Create Schedule
-            </button>
-            <div class="export-buttons">
-                <a href="{{ school_route('admin.exports.schedules.pdf') }}" class="btn-export btn-export-pdf">
-                    Export PDF
-                </a>
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 10px;">
+            <div class="view-toggle">
+                <button type="button" class="view-btn active" data-view-toggle="list" onclick="switchView('list')">List View</button>
+                <button type="button" class="view-btn" data-view-toggle="calendar" onclick="switchView('calendar')">Calendar View</button>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button type="button" id="createScheduleBtn" class="btn btn-success btn-create" onclick="openCreateModal(); return false;">
+                    <i class="bi bi-calendar-plus"></i> Create Schedule
+                </button>
+                <div class="export-buttons" style="margin-top: 0;">
+                    <a href="{{ school_route('admin.exports.schedules.pdf') }}" class="btn-export btn-export-pdf">
+                        Export PDF
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -1500,13 +1499,6 @@
         </div>
     </div>
 
-    <!-- View Toggle -->
-    <div class="center-toggle-wrap">
-        <div class="view-toggle">
-            <button type="button" class="view-btn active" data-view-toggle="list" onclick="switchView('list')">List View</button>
-            <button type="button" class="view-btn" data-view-toggle="calendar" onclick="switchView('calendar')">Calendar View</button>
-        </div>
-    </div>
 
     <!-- List View -->
     <div id="list-view" class="view-content active">
