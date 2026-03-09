@@ -553,7 +553,8 @@
     .view-toggle {
         display: flex;
         gap: 0;
-        background: #6b7280;
+        background: #f3f4f6;
+        border: 1px solid #e5e7eb;
         border-radius: 8px;
         overflow: hidden;
         width: fit-content;
@@ -561,21 +562,22 @@
     
     .view-btn {
         padding: 8px 20px;
-        background: #6b7280;
-        color: white;
+        background: transparent;
+        color: #4b5563;
         border: none;
         cursor: pointer;
         font-size: 14px;
         font-weight: 500;
-        transition: background 0.3s;
+        transition: all 0.3s;
     }
     
     .view-btn.active {
-        background: #4b5563;
+        background: {{ $primaryColor }};
+        color: white;
     }
     
-    .view-btn:hover {
-        background: #4b5563;
+    .view-btn:hover:not(.active) {
+        background: #e5e7eb;
     }
     
     .view-content {
@@ -729,7 +731,7 @@
     }
     
     .date-header:hover {
-        background: linear-gradient(135deg, #5568d3 0%, #653a8b 100%);
+        filter: brightness(0.95);
     }
     
     .date-header.collapsed .bi-chevron-down {
