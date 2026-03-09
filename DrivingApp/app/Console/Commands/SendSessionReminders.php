@@ -27,6 +27,12 @@ class SendSessionReminders extends Command
     public function handle(): int
     {
         $hours = (int) $this->option('hours');
+        $policy = config('notification_policy.commands.reminders.sessions', []);
+
+        $sendEmail = (bool) ($policy['email'] ?? true);
+        $sendInAppStudent = (bool) ($policy['in_app_student'] ?? true);
+        $sendInAppInstructor = (bool) ($policy['in_app_instructor'] ?? true);
+
         $now = now();
         $reminderWindow = $now->copy()->addHours($hours);
 
@@ -61,23 +67,27 @@ class SendSessionReminders extends Command
             }
 
             try {
-                // Send email
-                Mail::to($booking->student->email)
-                    ->send(new SessionReminder($booking, $booking->school));
+                // Channel behavior is controlled by notification_policy.commands.reminders.sessions.
+                if ($sendEmail) {
+                    Mail::to($booking->student->email)
+                        ->send(new SessionReminder($booking, $booking->school));
+                }
 
                 // Create in-app notification for student
                 $sessionTime = $booking->scheduled_at->format('M d, g:i A');
-                Notification::send(
-                    $booking->student,
-                    'session_reminder',
-                    'Upcoming Session',
-                    "You have a driving session on {$sessionTime}. Booking #{$booking->id}.",
-                    'session',
-                    "/{$booking->school->slug}/student/schedule"
-                );
+                if ($sendInAppStudent) {
+                    Notification::send(
+                        $booking->student,
+                        'session_reminder',
+                        'Upcoming Session',
+                        "You have a driving session on {$sessionTime}. Booking #{$booking->id}.",
+                        'session',
+                        "/{$booking->school->slug}/student/schedule"
+                    );
+                }
 
                 // Also notify the instructor if assigned
-                if ($booking->instructor) {
+                if ($booking->instructor && $sendInAppInstructor) {
                     Notification::send(
                         $booking->instructor,
                         'session_reminder',

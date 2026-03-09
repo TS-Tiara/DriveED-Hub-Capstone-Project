@@ -29,6 +29,13 @@ class ConfirmQueuedBookings extends Command
     public function handle()
     {
         $this->info('Checking for bookings ready to be confirmed...');
+
+        $policy = config('notification_policy.commands.bookings.confirm_queued', []);
+        $notificationsEnabled = (bool) ($policy['email'] ?? false) || (bool) ($policy['in_app'] ?? false);
+
+        if ($notificationsEnabled) {
+            $this->warn('Notification channels are configured for bookings:confirm-queued, but this command intentionally applies status changes only.');
+        }
         
         $schools = School::with('schoolSetting')->get();
         $totalConfirmed = 0;

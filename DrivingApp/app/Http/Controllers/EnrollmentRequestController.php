@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\LifecycleStatusUpdate;
 use Illuminate\Http\Request;
 use App\Models\EnrollmentRequest;
 use App\Models\PhaseProgression;
@@ -177,14 +178,17 @@ class EnrollmentRequestController extends Controller
 
             // Send approval email notification
             try {
-                Mail::to($enrollmentRequest->learner->email)
-                    ->send(new EnrollmentApproved($enrollmentRequest, $school));
+                if ($this->transitionUsesChannel('approved', 'email')) {
+                    Mail::to($enrollmentRequest->learner->email)
+                        ->send(new EnrollmentApproved($enrollmentRequest, $school));
+                }
             } catch (\Exception $e) {
                 Log::warning('Failed to send enrollment approval email: ' . $e->getMessage());
             }
 
             // Create in-app notification for the student
-            Notification::send(
+            $this->sendInAppTransitionNotification(
+                'approved',
                 $enrollmentRequest->student,
                 'enrollment_approved',
                 'Enrollment Approved!',
@@ -259,14 +263,17 @@ class EnrollmentRequestController extends Controller
 
         // Send rejection email
         try {
-            Mail::to($enrollmentRequest->learner->email)
-                ->send(new EnrollmentRejected($enrollmentRequest, $school));
+            if ($this->transitionUsesChannel('rejected', 'email')) {
+                Mail::to($enrollmentRequest->learner->email)
+                    ->send(new EnrollmentRejected($enrollmentRequest, $school));
+            }
         } catch (\Exception $e) {
             Log::warning('Failed to send enrollment rejection email: ' . $e->getMessage());
         }
 
         // Create in-app notification for the guest
-        Notification::send(
+        $this->sendInAppTransitionNotification(
+            'rejected',
             $enrollmentRequest->student,
             'enrollment_rejected',
             'Enrollment Request Update',
@@ -352,13 +359,26 @@ class EnrollmentRequestController extends Controller
         // Notify student about payment status change
         if ($enrollmentRequest->student) {
             try {
-                Notification::send(
+                $notificationMessage = "Your payment status for {$enrollmentRequest->course->title} has been updated to: {$validated['payment_status']}.";
+
+                $this->sendInAppTransitionNotification(
+                    'payment_status_updated',
                     $enrollmentRequest->student,
                     'payment_status_updated',
                     'Payment Status Updated',
-                    "Your payment status for {$enrollmentRequest->course->title} has been updated to: {$validated['payment_status']}.",
+                    $notificationMessage,
                     'payment',
                     "/{$school->slug}/student"
+                );
+
+                $this->sendLifecycleTransitionEmail(
+                    'payment_status_updated',
+                    $enrollmentRequest->student,
+                    $school,
+                    'Payment Status Updated',
+                    $notificationMessage,
+                    "/{$school->slug}/student",
+                    'View Enrollment'
                 );
             } catch (\Exception $e) {
                 Log::warning('Failed to send payment status notification: ' . $e->getMessage());
@@ -399,13 +419,26 @@ class EnrollmentRequestController extends Controller
 
             // Notify student about enrollment completion
             try {
-                Notification::send(
+                $notificationMessage = "Congratulations! You have successfully completed {$enrollmentRequest->course->title}.";
+
+                $this->sendInAppTransitionNotification(
+                    'enrollment_completed',
                     $enrollmentRequest->student,
                     'enrollment_completed',
                     'Course Completed!',
-                    "Congratulations! You have successfully completed {$enrollmentRequest->course->title}.",
+                    $notificationMessage,
                     'success',
                     "/{$school->slug}/student/my-progress"
+                );
+
+                $this->sendLifecycleTransitionEmail(
+                    'enrollment_completed',
+                    $enrollmentRequest->student,
+                    $school,
+                    'Course Completed!',
+                    $notificationMessage,
+                    "/{$school->slug}/student/my-progress",
+                    'View Progress'
                 );
             } catch (\Exception $e) {
                 Log::warning('Failed to send enrollment completion notification: ' . $e->getMessage());
@@ -454,13 +487,26 @@ class EnrollmentRequestController extends Controller
         if ($enrollmentRequest->student) {
             try {
                 $reason = $validated['remarks'] ? " Reason: {$validated['remarks']}" : '';
-                Notification::send(
+                $notificationMessage = "Your enrollment for {$enrollmentRequest->course->title} has been cancelled.{$reason}";
+
+                $this->sendInAppTransitionNotification(
+                    'enrollment_cancelled',
                     $enrollmentRequest->student,
                     'enrollment_cancelled',
                     'Enrollment Cancelled',
-                    "Your enrollment for {$enrollmentRequest->course->title} has been cancelled.{$reason}",
+                    $notificationMessage,
                     'warning',
                     "/{$school->slug}/student"
+                );
+
+                $this->sendLifecycleTransitionEmail(
+                    'enrollment_cancelled',
+                    $enrollmentRequest->student,
+                    $school,
+                    'Enrollment Cancelled',
+                    $notificationMessage,
+                    "/{$school->slug}/student",
+                    'View Dashboard'
                 );
             } catch (\Exception $e) {
                 Log::warning('Failed to send cancellation notification: ' . $e->getMessage());
@@ -502,13 +548,26 @@ class EnrollmentRequestController extends Controller
         // Notify student about theoretical completion
         if ($enrollmentRequest->student) {
             try {
-                Notification::send(
+                $notificationMessage = "You have passed the theoretical portion for {$enrollmentRequest->course->title}. You may now proceed to practical training.";
+
+                $this->sendInAppTransitionNotification(
+                    'theoretical_passed',
                     $enrollmentRequest->student,
                     'theoretical_passed',
                     'Theoretical Exam Passed!',
-                    "You have passed the theoretical portion for {$enrollmentRequest->course->title}. You may now proceed to practical training.",
+                    $notificationMessage,
                     'success',
                     "/{$school->slug}/student/my-course"
+                );
+
+                $this->sendLifecycleTransitionEmail(
+                    'theoretical_passed',
+                    $enrollmentRequest->student,
+                    $school,
+                    'Theoretical Exam Passed!',
+                    $notificationMessage,
+                    "/{$school->slug}/student/my-course",
+                    'View Course'
                 );
             } catch (\Exception $e) {
                 Log::warning('Failed to send theoretical passed notification: ' . $e->getMessage());
@@ -585,14 +644,17 @@ class EnrollmentRequestController extends Controller
 
                 // Send email notification
                 try {
-                    Mail::to($enrollment->learner->email)
-                        ->send(new EnrollmentApproved($enrollment, $school));
+                    if ($this->transitionUsesChannel('approved', 'email')) {
+                        Mail::to($enrollment->learner->email)
+                            ->send(new EnrollmentApproved($enrollment, $school));
+                    }
                 } catch (\Exception $e) {
                     Log::warning('Failed to send bulk approval email: ' . $e->getMessage());
                 }
 
                 // Create in-app notification
-                Notification::send(
+                $this->sendInAppTransitionNotification(
+                    'approved',
                     $enrollment->student,
                     'enrollment_approved',
                     'Enrollment Approved!',
@@ -663,14 +725,17 @@ class EnrollmentRequestController extends Controller
 
                 // Send rejection email
                 try {
-                    Mail::to($enrollment->learner->email)
-                        ->send(new EnrollmentRejected($enrollment, $school));
+                    if ($this->transitionUsesChannel('rejected', 'email')) {
+                        Mail::to($enrollment->learner->email)
+                            ->send(new EnrollmentRejected($enrollment, $school));
+                    }
                 } catch (\Exception $e) {
                     Log::warning('Failed to send bulk rejection email: ' . $e->getMessage());
                 }
 
                 // Create in-app notification
-                Notification::send(
+                $this->sendInAppTransitionNotification(
+                    'rejected',
                     $enrollment->student,
                     'enrollment_rejected',
                     'Enrollment Request Update',
@@ -724,13 +789,26 @@ class EnrollmentRequestController extends Controller
         ]);
 
         // Notify the student
-        Notification::send(
+        $notificationMessage = "Your student driver's license has been verified. You can now enroll in Practical Driving Courses (PDC).";
+
+        $this->sendInAppTransitionNotification(
+            'license_verified',
             $student,
             'license_verified',
             'License Verified!',
-            "Your student driver's license has been verified. You can now enroll in Practical Driving Courses (PDC).",
+            $notificationMessage,
             'success',
             "/{$school->slug}/guest/courses"
+        );
+
+        $this->sendLifecycleTransitionEmail(
+            'license_verified',
+            $student,
+            $school,
+            'License Verified!',
+            $notificationMessage,
+            "/{$school->slug}/guest/courses",
+            'Browse Courses'
         );
 
         return redirect()->back()->with('success', "Student driver's license for {$student->name} has been verified.");
@@ -766,16 +844,95 @@ class EnrollmentRequestController extends Controller
         ]);
 
         // Notify the student
-        Notification::send(
+        $notificationMessage = "Your student driver's license was not approved: {$request->rejection_reason}";
+
+        $this->sendInAppTransitionNotification(
+            'license_rejected',
             $student,
             'license_rejected',
             'License Not Approved',
-            "Your student driver's license was not approved: {$request->rejection_reason}",
+            $notificationMessage,
             'warning',
             "/{$school->slug}/guest/dashboard"
         );
 
+        $this->sendLifecycleTransitionEmail(
+            'license_rejected',
+            $student,
+            $school,
+            'License Not Approved',
+            $notificationMessage,
+            "/{$school->slug}/guest/dashboard",
+            'View Dashboard'
+        );
+
         return redirect()->back()->with('success', "Student driver's license for {$student->name} has been rejected.");
+    }
+
+    private function transitionUsesChannel(string $transition, string $channel): bool
+    {
+        $channels = config("notification_policy.enrollment_transitions.{$transition}.channels", []);
+
+        return in_array($channel, $channels, true);
+    }
+
+    private function sendInAppTransitionNotification(
+        string $transition,
+        Student $student,
+        string $type,
+        string $title,
+        string $message,
+        string $icon,
+        string $actionUrl,
+    ): void {
+        if (!$this->transitionUsesChannel($transition, 'in_app')) {
+            return;
+        }
+
+        Notification::send(
+            $student,
+            $type,
+            $title,
+            $message,
+            $icon,
+            $actionUrl
+        );
+    }
+
+    private function sendLifecycleTransitionEmail(
+        string $transition,
+        Student $student,
+        School $school,
+        string $title,
+        string $message,
+        ?string $actionPath = null,
+        ?string $actionLabel = null,
+    ): void {
+        if (!config('notification_policy.enable_lifecycle_transition_emails', false)) {
+            return;
+        }
+
+        $disabledTransitions = config('notification_policy.disabled_lifecycle_email_transitions', []);
+        if (in_array($transition, $disabledTransitions, true)) {
+            return;
+        }
+
+        if (!$this->transitionUsesChannel($transition, 'email')) {
+            return;
+        }
+
+        $actionUrl = $actionPath ? url($actionPath) : null;
+
+        Mail::to($student->email)->send(
+            new LifecycleStatusUpdate(
+                $school,
+                $student->name,
+                $title,
+                $message,
+                $actionUrl,
+                $actionLabel,
+            )
+        );
     }
 
     /**
