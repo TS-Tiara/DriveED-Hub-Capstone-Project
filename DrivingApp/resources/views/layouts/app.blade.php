@@ -1728,8 +1728,8 @@
                         <span class="nav-category-arrow">&#9660;</span>
                     </div>
                     <div class="nav-category-items">
-                        <a href="{{ school_route('admin.schedules', [], $currentSchool) }}" class="nav-item" data-page="schedules">Time Slots</a>
-                        <a href="{{ school_route('admin.bookings.index', [], $currentSchool) }}" class="nav-item" data-page="bookings">Manage Schedules</a>
+                        <a href="{{ school_route('admin.schedules', [], $currentSchool) }}" class="nav-item" data-page="schedules">Manage Schedule</a>
+                        <a href="{{ school_route('admin.bookings.index', [], $currentSchool) }}" class="nav-item" data-page="bookings">Student Sessions</a>
                         <a href="{{ school_route('admin.sessions.index', [], $currentSchool) }}" class="nav-item" data-page="session-completions">Session Logs</a>
                         <a href="{{ school_route('admin.phase-progressions.index', [], $currentSchool) }}" class="nav-item" data-page="phase-progressions">Phase Progressions</a>
                     </div>
@@ -2115,7 +2115,7 @@
             'admin/courses': 'Courses',
             'admin/enrollments': 'Enrollments',
             'admin/theoretical': 'Theoretical Training',
-            'admin/schedules': 'Schedules',
+            'admin/schedules': 'Manage Schedule',
             'admin/bookings': 'Student Sessions',
             'admin/phase-progressions': 'Phase Progressions',
             'admin/payments': 'Payments',

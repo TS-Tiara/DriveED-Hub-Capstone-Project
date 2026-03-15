@@ -112,26 +112,27 @@
     }
 
     /* Stat card color variants */
+    /* Stat card color variants */
     .stat-card.students {
-        border-left-color: #3b82f6;
+        border-left-color: {{ $primaryColor }};
     }
     .stat-card.students::before {
-        background: #3b82f6;
+        background: {{ $primaryColor }};
     }
     .stat-card.students .stat-icon {
-        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-        color: #1e40af;
+        background: {{ $primaryColor }}15;
+        color: {{ $primaryColor }};
     }
 
     .stat-card.instructors {
-        border-left-color: #8b5cf6;
+        border-left-color: {{ $secondaryColor }};
     }
     .stat-card.instructors::before {
-        background: #8b5cf6;
+        background: {{ $secondaryColor }};
     }
     .stat-card.instructors .stat-icon {
-        background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
-        color: #6d28d9;
+        background: {{ $secondaryColor }}15;
+        color: {{ $secondaryColor }};
     }
 
     .stat-card.growth {
@@ -146,14 +147,14 @@
     }
 
     .stat-card.active {
-        border-left-color: #06b6d4;
+        border-left-color: {{ $primaryColor }};
     }
     .stat-card.active::before {
-        background: #06b6d4;
+        background: {{ $primaryColor }};
     }
     .stat-card.active .stat-icon {
-        background: linear-gradient(135deg, #cffafe 0%, #a5f3fc 100%);
-        color: #0e7490;
+        background: {{ $primaryColor }}15;
+        color: {{ $primaryColor }};
     }
 
     .stat-card.danger {
@@ -168,14 +169,14 @@
     }
 
     .stat-card.info {
-        border-left-color: #3b82f6;
+        border-left-color: {{ $primaryColor }};
     }
     .stat-card.info::before {
-        background: #3b82f6;
+        background: {{ $primaryColor }};
     }
     .stat-card.info .stat-icon {
-        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-        color: #1e40af;
+        background: {{ $primaryColor }}15;
+        color: {{ $primaryColor }};
     }
 
     .stat-card.success {
@@ -223,14 +224,14 @@
     }
 
     .stat-card.total {
-        border-left-color: #667eea;
+        border-left-color: {{ $primaryColor }};
     }
     .stat-card.total::before {
-        background: #667eea;
+        background: {{ $primaryColor }};
     }
     .stat-card.total .stat-icon {
-        background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
-        color: #4338ca;
+        background: {{ $primaryColor }}15;
+        color: {{ $primaryColor }};
     }
 
     .stat-content {

@@ -43,16 +43,6 @@
         transition: all 0.3s ease;
     }
 
-    .booking-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-    }
-
-    .booking-card:hover::before {
-        transform: scale(1.2);
-        opacity: 0.08;
-    }
-
     .booking-header {
         display: flex;
         justify-content: space-between;

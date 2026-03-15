@@ -89,21 +89,25 @@
         .remember-group {
             display: flex;
             align-items: center;
-            gap: 8px;
+            justify-content: flex-start;
+            gap: 10px;
             margin-bottom: 25px;
         }
 
         .remember-checkbox {
-            width: auto;
+            width: 18px !important;
+            height: 18px;
             cursor: pointer;
+            margin: 0;
         }
 
         .remember-label {
-            margin-bottom: 0;
+            display: inline !important;
+            margin-bottom: 0 !important;
             cursor: pointer;
-            font-weight: normal;
-            font-size: 0.85rem;
-            color: #6b7280;
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: #4b5563;
         }
 
         .form-group label {

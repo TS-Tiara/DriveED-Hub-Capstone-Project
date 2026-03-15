@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\OtpVerificationCode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -282,13 +283,8 @@ class AuthController extends Controller
                 $otp = $student->generateVerificationCode();
 
                 try {
-                    Mail::raw(
-                        "Please verify your email.\n\nYour verification code is: {$otp}\n\nThis code will expire in 15 minutes.",
-                        function ($message) use ($student, $school) {
-                        $message->to($student->email)
-                            ->subject("{$school->name} - Email Verification Required");
-                    }
-                    );
+                    Mail::to($student->email)
+                        ->send(new OtpVerificationCode($school, $student, $otp, false));
                 }
                 catch (\Exception $e) {
                     Log::error('Failed to send verification email: ' . $e->getMessage());

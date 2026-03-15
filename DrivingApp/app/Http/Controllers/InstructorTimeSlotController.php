@@ -371,13 +371,18 @@ class InstructorTimeSlotController extends Controller
             ->where('id', $id)
             ->firstOrFail();
 
+        $isAjax = $request->ajax() || $request->header('X-Requested-With') === 'XMLHttpRequest';
+
         // Check minimum notice period
         $minimumNoticeDays = $school->instructor_removal_notice_days ?? 7;
         $daysUntilSlot = now()->startOfDay()->diffInDays($timeSlot->date->startOfDay(), false);
 
         if ($daysUntilSlot < $minimumNoticeDays) {
-            return redirect()->back()
-                ->with('error', "You must request removal at least {$minimumNoticeDays} days before the scheduled time slot. This slot is in {$daysUntilSlot} day(s).");
+            $message = "You must request removal at least {$minimumNoticeDays} days before the scheduled time slot. This slot is in {$daysUntilSlot} day(s).";
+            if ($isAjax) {
+                return response()->json(['success' => false, 'message' => $message], 400);
+            }
+            return redirect()->back()->with('error', $message);
         }
 
         // Check if instructor is assigned to this slot
@@ -388,20 +393,29 @@ class InstructorTimeSlotController extends Controller
             ->first();
 
         if (!$pivot) {
-            return redirect()->back()
-                ->with('error', 'You are not assigned to this time slot.');
+            $message = 'You are not assigned to this time slot.';
+            if ($isAjax) {
+                return response()->json(['success' => false, 'message' => $message], 400);
+            }
+            return redirect()->back()->with('error', $message);
         }
 
         // Only allow removal requests for admin-assigned slots
         if ($pivot->assignment_type !== 'admin_assigned') {
-            return redirect()->back()
-                ->with('error', 'You can only request removal from admin-assigned slots. Self-selected slots can be left directly.');
+            $message = 'You can only request removal from admin-assigned slots. Self-selected slots can be left directly.';
+            if ($isAjax) {
+                return response()->json(['success' => false, 'message' => $message], 400);
+            }
+            return redirect()->back()->with('error', $message);
         }
 
         // Check if there's already a pending request
         if ($pivot->has_pending_removal_request) {
-            return redirect()->back()
-                ->with('error', 'You already have a pending removal request for this time slot.');
+            $message = 'You already have a pending removal request for this time slot.';
+            if ($isAjax) {
+                return response()->json(['success' => false, 'message' => $message], 400);
+            }
+            return redirect()->back()->with('error', $message);
         }
 
         try {
@@ -418,12 +432,19 @@ class InstructorTimeSlotController extends Controller
                 ->where('id', $pivot->id)
                 ->update(['has_pending_removal_request' => true]);
 
-            return redirect()->back()
-                ->with('success', 'Your removal request has been submitted to the admin for review.');
+            $message = 'Your removal request has been submitted to the admin for review.';
+            if ($isAjax) {
+                return response()->json(['success' => true, 'message' => $message]);
+            }
+            return redirect()->back()->with('success', $message);
         }
         catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Failed to request removal', ['error' => $e->getMessage()]);
-            return redirect()->back()->with('error', 'An error occurred while processing your request.');
+            $message = 'An error occurred while processing your request.';
+            if ($isAjax) {
+                return response()->json(['success' => false, 'message' => $message], 500);
+            }
+            return redirect()->back()->with('error', $message);
         }
     }
 

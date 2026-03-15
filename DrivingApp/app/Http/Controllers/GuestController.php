@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Mail\OtpVerificationCode;
 use App\Models\Student;
 use App\Models\School;
 use App\Models\Course;
@@ -77,13 +78,8 @@ class GuestController extends Controller
         try {
             $otp = $guest->generateVerificationCode();
 
-            Mail::raw(
-                "Please verify your email.\n\nYour verification code is: {$otp}\n\nThis code will expire in 15 minutes.",
-                function ($message) use ($guest, $school) {
-                    $message->to($guest->email)
-                        ->subject("{$school->name} - Email Verification Required");
-                }
-            );
+            Mail::to($guest->email)
+                ->send(new OtpVerificationCode($school, $guest, $otp, false));
         } catch (\Exception $e) {
             Log::warning('Failed to send verification email on registration: ' . $e->getMessage());
         }
@@ -513,13 +509,8 @@ class GuestController extends Controller
 
         // Send email
         try {
-            Mail::raw(
-                "Your new verification code is: {$otp}\n\nThis code will expire in 15 minutes.",
-                function ($message) use ($student, $school) {
-                    $message->to($student->email)
-                        ->subject("{$school->name} - New Verification Code");
-                }
-            );
+            Mail::to($student->email)
+                ->send(new OtpVerificationCode($school, $student, $otp, true));
         } catch (\Exception $e) {
             Log::error('Failed to resend verification email: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Failed to send email. Please try again.']);

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\PasswordResetRequested;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
@@ -73,13 +74,8 @@ class PasswordResetController extends Controller
 
         // Send email
         try {
-            Mail::raw(
-                "Hello {$user->name},\n\nYou are receiving this email because we received a password reset request for your account.\n\nClick the link below to reset your password:\n{$resetUrl}\n\nThis link will expire in 60 minutes.\n\nIf you did not request a password reset, no further action is required.\n\nRegards,\n{$school->name}",
-                function ($message) use ($email, $school) {
-                $message->to($email)
-                    ->subject("{$school->name} - Password Reset Request");
-            }
-            );
+            Mail::to($email)
+                ->send(new PasswordResetRequested($school, $user->name, $resetUrl));
 
             return back()->with('success', 'Password reset link has been sent to your email!');
         }

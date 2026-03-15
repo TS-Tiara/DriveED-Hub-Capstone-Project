@@ -29,7 +29,7 @@
         align-items: center;
         margin-bottom: 30px;
         padding-bottom: 15px;
-        border-bottom: 3px solid {{ $settings->primary_color ?? '#667eea' }};
+        border-bottom: 3px solid {{ $primaryColor }};
     }
     
     .page-title {
@@ -55,25 +55,25 @@
     
     /* Additional stat card color variants for user management */
     .stat-card.total {
-        border-left-color: #6366f1;
+        border-left-color: {{ $primaryColor }};
     }
     .stat-card.total::before {
-        background: #6366f1;
+        background: {{ $primaryColor }};
     }
     .stat-card.total .stat-icon {
-        background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
-        color: #4338ca;
+        background: {{ $primaryColor }}15;
+        color: {{ $primaryColor }};
     }
 
     .stat-card.inactive {
-        border-left-color: #f59e0b;
+        border-left-color: #6b7280;
     }
     .stat-card.inactive::before {
-        background: #f59e0b;
+        background: #6b7280;
     }
     .stat-card.inactive .stat-icon {
-        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-        color: #b45309;
+        background: #6b728015;
+        color: #6b7280;
     }
     
     /* Action Buttons */
@@ -119,7 +119,7 @@
     
     .search-box input:focus {
         outline: none;
-        border-color: #667eea;
+        border-color: {{ $primaryColor }};
     }
     
     .search-box::after {
@@ -200,7 +200,7 @@
     }
     
     thead {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
         color: white;
     }
     
@@ -376,7 +376,7 @@
     }
     
     .modal-content h3 {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
         color: white;
         margin: 0;
         padding: 32px;
@@ -420,9 +420,9 @@
     
     .form-group input:focus,
     .form-group select:focus {
-        border-color: #667eea;
+        border-color: {{ $primaryColor }};
         outline: none;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        box-shadow: 0 0 0 3px {{ $primaryColor }}15;
     }
     
     .modal-buttons {

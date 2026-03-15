@@ -20,7 +20,6 @@ class StudentFactory extends Factory
             'password' => Hash::make('password'),
             'contact' => '09' . fake()->numerify('#########'),
             'address' => fake()->address(),
-            'branch' => fake()->optional()->city(),
             'location' => fake()->optional()->city(),
             'status' => 'active',
             'role' => 'student',

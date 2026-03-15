@@ -24,7 +24,7 @@
         align-items: center;
         margin-bottom: 30px;
         padding-bottom: 15px;
-        border-bottom: 3px solid {{ $settings->primary_color ?? '#667eea' }};
+        border-bottom: 3px solid {{ $settings->primary_color }};
     }
 
     .page-title {
@@ -48,7 +48,7 @@
         @if($settings?->use_gradient_header)
             background: linear-gradient(135deg, {{ $settings->primary_color }} 0%, {{ $settings->secondary_color }} 100%);
         @else
-            background: {{ $settings->primary_color ?? '#667eea' }};
+            background: {{ $settings->primary_color }};
         @endif
         color: white;
         border: none;
@@ -64,7 +64,7 @@
 
     .btn-create:hover {
         transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        box-shadow: 0 8px 20px {{ $settings->primary_color }}40;
     }
 
     /* Courses Grid */
@@ -94,7 +94,7 @@
         right: 0;
         width: 100px;
         height: 100px;
-        background: {{ $settings->primary_color ?? '#667eea' }};
+        background: {{ $settings->primary_color }};
         border-radius: 50%;
         opacity: 0.05;
         transition: all 0.3s ease;
@@ -118,7 +118,7 @@
         @if($settings?->use_gradient_header)
             background: linear-gradient(135deg, {{ $settings->primary_color }} 0%, {{ $settings->secondary_color }} 100%);
         @else
-            background: {{ $settings->primary_color ?? '#667eea' }};
+            background: {{ $settings->primary_color }};
         @endif
         display: flex;
         align-items: center;
@@ -250,7 +250,7 @@
     .package-price {
         font-size: 1.3rem;
         font-weight: 700;
-        color: {{ $settings->primary_color ?? '#667eea' }};
+        color: {{ $settings->primary_color }};
         margin-right: 15px;
     }
 
@@ -274,14 +274,15 @@
     }
 
     .btn-preview {
-        background: {{ $settings->accent_color ?? '#8b5cf6' }};
+        background: {{ $settings->accent_color }};
         color: white;
     }
 
     .btn-preview:hover {
-        background: #7c3aed;
+        background: {{ $settings->accent_color }};
+        filter: brightness(0.9);
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+        box-shadow: 0 4px 12px {{ $settings->accent_color }}40;
     }
 
     .btn-edit {
@@ -366,7 +367,7 @@
     }
 
     .course-feature-more {
-        color: {{ $settings->primary_color ?? '#667eea' }};
+        color: {{ $settings->primary_color }};
         font-weight: 600;
     }
 
@@ -379,7 +380,7 @@
     }
 
     .package-tag-vehicle {
-        background: {{ $settings->accent_color ?? '#8b5cf6' }};
+        background: {{ $settings->accent_color }};
     }
 
     .package-tag-transmission-manual {
@@ -1294,7 +1295,7 @@
         <div>
             <h1 class="page-title">
                 <i class="bi bi-mortarboard-fill"></i>
-                Courses Management
+            Courses Management
             </h1>
             <p class="page-subtitle">Manage courses, packages, and pricing for {{ $schoolName }}</p>
         </div>
