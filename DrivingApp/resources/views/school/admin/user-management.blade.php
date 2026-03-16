@@ -8,6 +8,9 @@
     $settings = $school?->schoolSetting;
     $schoolName = $school->name ?? 'Driving School';
     
+    $primaryColor = $settings->primary_color ?? '#667eea';
+    $secondaryColor = $settings->secondary_color ?? '#764ba2';
+    
     // Statistics are now passed from the controller to ensure accuracy with pagination
     $totalUsers = $totalStudents + $totalInstructors;
     $totalActive = $activeStudents + $activeInstructors;

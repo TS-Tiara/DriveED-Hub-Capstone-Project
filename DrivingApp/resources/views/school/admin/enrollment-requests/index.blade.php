@@ -1278,12 +1278,6 @@ function approveRequest(requestId) {
         message: 'Are you sure you want to approve this enrollment request? This will promote the guest to a student.',
         confirmText: 'Approve',
         onConfirm: function() {
-            Swal.fire({
-                title: 'Processing...',
-                html: 'Please wait while we approve this request.',
-                allowOutsideClick: false,
-                didOpen: () => Swal.showLoading()
-            });
             document.getElementById('approveForm' + requestId).submit();
         }
     });
@@ -1296,12 +1290,6 @@ function completeEnrollment(requestId) {
         message: 'Are you sure you want to mark this enrollment as completed? The student has finished the course.',
         confirmText: 'Complete',
         onConfirm: function() {
-            Swal.fire({
-                title: 'Processing...',
-                html: 'Please wait while we complete this enrollment.',
-                allowOutsideClick: false,
-                didOpen: () => Swal.showLoading()
-            });
             document.getElementById('completeForm' + requestId).submit();
         }
     });
@@ -1438,12 +1426,6 @@ function bulkApprove() {
                 form.appendChild(input);
             });
             
-            Swal.fire({
-                title: 'Processing...',
-                html: 'Please wait while we approve the selected requests.',
-                allowOutsideClick: false,
-                didOpen: () => Swal.showLoading()
-            });
             document.body.appendChild(form);
             form.submit();
         }
@@ -1465,64 +1447,39 @@ function bulkReject() {
         message: `Are you sure you want to reject ${ids.length} enrollment request(s)?`,
         confirmText: 'Continue',
         onConfirm: function() {
-            Swal.fire({
-                title: 'Rejection Reason',
-                input: 'textarea',
-                inputLabel: `Enter rejection reason for ${ids.length} request(s):`,
-                inputPlaceholder: 'Rejection reason is required',
-                inputAttributes: {
-                    maxlength: 1000,
-                    'aria-label': 'Rejection reason'
-                },
-                showCancelButton: true,
-                confirmButtonText: 'Reject All',
-                confirmButtonColor: '#dc2626',
-                inputValidator: (value) => {
-                    if (!value || !value.trim()) {
-                        return 'Rejection reason is required';
-                    }
-                    return null;
-                }
-            }).then((result) => {
-                if (!result.isConfirmed) {
-                    return;
-                }
+            const reason = prompt(`Enter rejection reason for ${ids.length} request(s):`);
+            if (!reason || !reason.trim()) {
+                if (reason !== null) alert('Rejection reason is required');
+                return;
+            }
 
-                const remarks = result.value.trim();
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = '{{ route('schools.admin.enrollments.bulkReject', $school) }}';
+            const remarks = reason.trim();
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ route('schools.admin.enrollments.bulkReject', $school) }}';
 
-                const csrf = document.createElement('input');
-                csrf.type = 'hidden';
-                csrf.name = '_token';
-                csrf.value = '{{ csrf_token() }}';
-                form.appendChild(csrf);
+            const csrf = document.createElement('input');
+            csrf.type = 'hidden';
+            csrf.name = '_token';
+            csrf.value = '{{ csrf_token() }}';
+            form.appendChild(csrf);
 
-                const remarksInput = document.createElement('input');
-                remarksInput.type = 'hidden';
-                remarksInput.name = 'remarks';
-                remarksInput.value = remarks;
-                form.appendChild(remarksInput);
+            const remarksInput = document.createElement('input');
+            remarksInput.type = 'hidden';
+            remarksInput.name = 'remarks';
+            remarksInput.value = remarks;
+            form.appendChild(remarksInput);
 
-                ids.forEach(id => {
-                    const input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = 'enrollment_ids[]';
-                    input.value = id;
-                    form.appendChild(input);
-                });
-
-                Swal.fire({
-                    title: 'Processing...',
-                    html: 'Please wait while we reject the selected requests.',
-                    allowOutsideClick: false,
-                    didOpen: () => Swal.showLoading()
-                });
-
-                document.body.appendChild(form);
-                form.submit();
+            ids.forEach(id => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'enrollment_ids[]';
+                input.value = id;
+                form.appendChild(input);
             });
+
+            document.body.appendChild(form);
+            form.submit();
         }
     });
 }
@@ -1535,12 +1492,6 @@ function bulkReject() {
             var submitBtn = formEl.querySelector('button[type="submit"]');
             if (submitBtn.disabled) { e.preventDefault(); return; }
             submitBtn.disabled = true;
-            Swal.fire({
-                title: 'Processing...',
-                html: 'Please wait while we process your request.',
-                allowOutsideClick: false,
-                didOpen: () => Swal.showLoading()
-            });
         });
     }
 });

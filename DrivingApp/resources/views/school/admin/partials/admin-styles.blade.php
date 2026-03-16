@@ -1513,7 +1513,11 @@ function closeConfirmModal() {
 
 function executeConfirm() {
     if (confirmCallback) {
-        confirmCallback();
+        try {
+            confirmCallback();
+        } catch (e) {
+            console.error('Error in confirm callback:', e);
+        }
     }
     closeConfirmModal();
 }
