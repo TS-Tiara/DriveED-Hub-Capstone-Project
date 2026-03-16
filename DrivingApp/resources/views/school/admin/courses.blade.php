@@ -1776,7 +1776,7 @@
 </div>
 
 <script>
-    const coursesData = @json($courses);
+    const coursesData = @json($courses->items());
     let currentCourseId = null;
     let currentPackageId = null;
 
