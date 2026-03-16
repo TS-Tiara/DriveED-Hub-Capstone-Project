@@ -22,7 +22,7 @@ class EnsureSchoolContext
 
         // Block access to deactivated schools
         if (array_key_exists('status', $school->getAttributes()) && $school->status !== 'active') {
-            abort(403, 'This school portal is currently unavailable.');
+            return response()->view('errors.inactive-school', ['school' => $school], 403);
         }
 
         // Skip school validation for logout routes to prevent conflicts

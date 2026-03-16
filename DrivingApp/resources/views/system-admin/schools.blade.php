@@ -301,6 +301,20 @@
     .btn-delete { background: #fee2e2; color: #991b1b; }
     .btn-delete:hover { background: #fecaca; }
 
+    /* Fix for small circular buttons: Swap the icon for a centered loading spinner */
+    .btn-action.btn-submitting i {
+        display: none; /* Hide the icon to clear space */
+    }
+
+    .btn-action.btn-submitting::after {
+        margin-left: 0 !important; /* Remove margin to center the spinner perfectly */
+    }
+
+    .btn-action.btn-submitting {
+        opacity: 0.8;
+        cursor: wait;
+    }
+
     /* Delete Confirmation Modal */
     .delete-modal .modal {
         max-width: 400px;

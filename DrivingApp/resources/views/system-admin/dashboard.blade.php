@@ -118,7 +118,11 @@
                         <td>{{ $school->students_count }}</td>
                         <td>{{ $school->instructors_count }}</td>
                         <td>{{ $school->admins_count }}</td>
-                        <td><span class="badge badge-success">Active</span></td>
+                        <td>
+                            <span class="badge {{ ($school->status ?? 'active') === 'active' ? 'badge-success' : 'badge-danger' }}">
+                                {{ ucfirst($school->status ?? 'active') }}
+                            </span>
+                        </td>
                     </tr>
                     @empty
                     <tr>
