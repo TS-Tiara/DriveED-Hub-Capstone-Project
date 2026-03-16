@@ -66,26 +66,35 @@
             
             /* Header */
             --header-gradient: {{ $headerBg }};
-            --page-header-border: {{ $settings->page_header_border ?? '#667eea' }};
+            --page-header-border: {{ $settings->page_header_border ?? '#3b82f6' }};
             
             /* Buttons */
-            --btn-primary-bg: {{ $settings->button_primary_bg ?? '#667eea' }};
+            --btn-primary-bg: {{ $settings->button_primary_bg ?? '#3b82f6' }};
             --btn-primary-text: {{ $settings->button_primary_text ?? '#ffffff' }};
             --btn-secondary-bg: {{ $settings->button_secondary_bg ?? '#6c757d' }};
             --btn-secondary-text: {{ $settings->button_secondary_text ?? '#ffffff' }};
-            --btn-success-bg: {{ $settings->button_success_bg ?? '#28a745' }};
+            --btn-success-bg: {{ $settings->button_success_bg ?? '#10b981' }};
             --btn-success-text: {{ $settings->button_success_text ?? '#ffffff' }};
             --btn-danger-bg: {{ $settings->button_danger_bg ?? '#dc3545' }};
             --btn-danger-text: {{ $settings->button_danger_text ?? '#ffffff' }};
+            
+            /* Role Colors (Customizable in future) */
+            --role-student-bg: {{ $settings->role_student_bg ?? '#dbeafe' }};
+            --role-student-text: {{ $settings->role_student_text ?? '#1e40af' }};
+            --role-instructor-bg: {{ $settings->role_instructor_bg ?? '#e0f2fe' }};
+            --role-instructor-text: {{ $settings->role_instructor_text ?? '#0369a1' }};
+            
+            /* Brand Shadow */
+            --brand-shadow: rgba(var(--primary-rgb), 0.2);
             
             /* Borders & Shapes */
             --border-radius: {{ $settings->border_radius ?? 8 }}px;
             --button-border-radius: {{ $settings->button_border_radius ?? 8 }}px;
             
             /* Modals */
-            --modal-header-bg: {{ $settings->modal_header_bg ?? '#667eea' }};
+            --modal-header-bg: {{ $settings->modal_header_bg ?? '#3b82f6' }};
             --modal-header-text: {{ $settings->modal_header_text ?? '#ffffff' }};
-            --modal-border-color: {{ $settings->modal_border_color ?? '#667eea' }};
+            --modal-border-color: {{ $settings->modal_border_color ?? '#3b82f6' }};
             
             /* Cards */
             --card-border-color: {{ $settings->card_border_color ?? '#e5e7eb' }};

@@ -8,8 +8,8 @@
     $settings = $school?->schoolSetting;
     $schoolName = $school->name ?? 'Driving School';
     
-    $primaryColor = $settings->primary_color ?? '#667eea';
-    $secondaryColor = $settings->secondary_color ?? '#764ba2';
+    $primaryColor = $settings->primary_color ?? '#3b82f6';
+    $secondaryColor = $settings->secondary_color ?? '#60a5fa';
     
     // Statistics are now passed from the controller to ensure accuracy with pagination
     $totalUsers = $totalStudents + $totalInstructors;
@@ -32,7 +32,7 @@
         align-items: center;
         margin-bottom: 30px;
         padding-bottom: 15px;
-        border-bottom: 3px solid {{ $primaryColor }};
+        border-bottom: 3px solid var(--primary-color);
     }
     
     .page-title {
@@ -58,14 +58,14 @@
     
     /* Additional stat card color variants for user management */
     .stat-card.total {
-        border-left-color: {{ $primaryColor }};
+        border-left-color: var(--primary-color);
     }
     .stat-card.total::before {
-        background: {{ $primaryColor }};
+        background: var(--primary-color);
     }
     .stat-card.total .stat-icon {
-        background: {{ $primaryColor }}15;
-        color: {{ $primaryColor }};
+        background: rgba(var(--primary-rgb), 0.1);
+        color: var(--primary-color);
     }
 
     .stat-card.inactive {
@@ -122,7 +122,7 @@
     
     .search-box input:focus {
         outline: none;
-        border-color: {{ $primaryColor }};
+        border-color: var(--primary-color);
     }
     
     .search-box::after {
@@ -203,7 +203,7 @@
     }
     
     thead {
-        background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
+        background: var(--header-gradient);
         color: white;
     }
     
@@ -256,13 +256,13 @@
     }
 
     .role-student {
-        background: #dbeafe;
-        color: #1e40af;
+        background: var(--role-student-bg);
+        color: var(--role-student-text);
     }
 
     .role-instructor {
-        background: #ede9fe;
-        color: #5b21b6;
+        background: var(--role-instructor-bg);
+        color: var(--role-instructor-text);
     }
 
     .branch-label {
@@ -379,7 +379,7 @@
     }
     
     .modal-content h3 {
-        background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
+        background: var(--header-gradient);
         color: white;
         margin: 0;
         padding: 32px;
@@ -423,9 +423,9 @@
     
     .form-group input:focus,
     .form-group select:focus {
-        border-color: {{ $primaryColor }};
+        border-color: var(--primary-color);
         outline: none;
-        box-shadow: 0 0 0 3px {{ $primaryColor }}15;
+        box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
     }
     
     .modal-buttons {
@@ -517,14 +517,14 @@
         display: flex;
         align-items: center;
         gap: 8px;
-        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        background: var(--header-gradient);
         color: white;
-        box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
+        box-shadow: var(--brand-shadow);
     }
 
     .btn-export-trigger:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+        box-shadow: 0 4px 12px var(--brand-shadow);
     }
 
     .btn-export-trigger svg {
