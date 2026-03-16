@@ -236,6 +236,29 @@
         gap: 16px;
     }
 
+    .password-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .password-toggle {
+        position: absolute;
+        right: 12px;
+        background: none;
+        border: none;
+        color: #6b7280;
+        cursor: pointer;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .password-toggle:hover {
+        color: #374151;
+    }
+
     .status-badge {
         display: inline-block;
         padding: 4px 10px;
@@ -465,7 +488,7 @@
                                     <i class="fas {{ ($school->status ?? 'active') === 'active' ? 'fa-ban' : 'fa-check' }}"></i>
                                 </button>
                             </form>
-                            <button type="button" class="btn-action btn-delete" data-action="delete-school" data-id="{{ $school->id }}" data-name="{{ $school->name }}" title="Delete School">
+                            <button type="button" class="btn-action btn-delete" data-action="delete-school" data-slug="{{ $school->slug }}" data-name="{{ $school->name }}" title="Delete School">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
@@ -527,7 +550,12 @@
                     </div>
                     <div class="form-group">
                         <label for="admin_password">Password</label>
-                        <input type="password" name="admin_password" id="admin_password" required placeholder="Password" minlength="8">
+                        <div class="password-wrapper">
+                            <input type="password" name="admin_password" id="admin_password" required placeholder="Password" minlength="8">
+                            <button type="button" class="password-toggle" onclick="togglePasswordVisibility('admin_password', this)" aria-label="Toggle password visibility">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -577,6 +605,22 @@ document.getElementById('school_name').addEventListener('input', function() {
     document.getElementById('school_slug').value = slug;
 });
 
+// Toggle password visibility
+function togglePasswordVisibility(inputId, button) {
+    const input = document.getElementById(inputId);
+    const icon = button.querySelector('i');
+    
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+}
+
 // Close modal when clicking outside
 document.querySelectorAll('.modal-overlay').forEach(overlay => {
     overlay.setAttribute('aria-hidden', 'true');
@@ -592,7 +636,7 @@ document.addEventListener('click', function(e) {
     const btn = e.target.closest('[data-action="delete-school"]');
     if (!btn) return;
     document.getElementById('deleteSchoolName').textContent = btn.dataset.name;
-    document.getElementById('deleteSchoolForm').action = '/system-admin/schools/' + btn.dataset.id;
+    document.getElementById('deleteSchoolForm').action = '/system-admin/schools/' + btn.dataset.slug;
     openModal('deleteSchoolModal');
 });
 
