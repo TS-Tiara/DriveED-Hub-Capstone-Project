@@ -34,7 +34,7 @@
             </div>
             <div class="detail-row">
                 <span class="detail-label">Type:</span>
-                <span>{{ ucfirst($enrollment->course->type) }}</span>
+                <span>{{ $enrollment->course->course_type === 'theoretical' ? 'TDC (Theoretical)' : 'PDC (Practical)' }}</span>
             </div>
             <div class="detail-row">
                 <span class="detail-label">Duration:</span>
@@ -52,7 +52,7 @@
             </center>
 
             <p style="color: #6b7280; font-size: 14px; margin-top: 25px;">
-                If you have any questions, please don't hesitate to contact us at {{ $school->email ?? 'the school office' }}.
+                If you have any questions, please don't hesitate to contact us at {{ $school->schoolSetting->contact_email ?? 'the school office' }}.
             </p>
         </div>
         <div class="footer">

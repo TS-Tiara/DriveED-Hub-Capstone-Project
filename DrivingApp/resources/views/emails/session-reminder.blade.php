@@ -87,7 +87,7 @@
             </center>
 
             <p style="color: #6b7280; font-size: 14px; margin-top: 25px;">
-                Need to reschedule? Please contact us at {{ $school->email ?? 'the school office' }} as soon as possible.
+                Need to reschedule? Please contact us at {{ $school->schoolSetting->contact_email ?? 'the school office' }} as soon as possible.
             </p>
         </div>
         <div class="footer">

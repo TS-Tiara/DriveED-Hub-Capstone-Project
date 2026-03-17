@@ -83,7 +83,7 @@
             </center>
 
             <p style="color: #6b7280; font-size: 14px; margin-top: 25px;">
-                If you have any questions, please don't hesitate to contact us at {{ $school->email ?? 'the school office' }}.
+                If you have any questions, please don't hesitate to contact us at {{ $school->schoolSetting->contact_email ?? 'the school office' }}.
             </p>
         </div>
         <div class="footer">

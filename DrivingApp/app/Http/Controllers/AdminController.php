@@ -921,6 +921,7 @@ class AdminController extends Controller
                 'advance_booking_days' => 'nullable|integer|min:0|max:30',
                 'enable_booking_queue' => 'nullable|boolean',
                 'booking_queue_days' => 'nullable|integer|min:1|max:14',
+                'contact_email' => 'nullable|email|max:255',
                 'primary_color' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
                 'secondary_color' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
                 'accent_color' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
@@ -1079,6 +1080,7 @@ class AdminController extends Controller
                 'advance_booking_days' => $request->advance_booking_days ?? 0,
                 'enable_booking_queue' => $request->has('enable_booking_queue'),
                 'booking_queue_days' => $request->booking_queue_days ?? 3,
+                'contact_email' => $request->contact_email,
                 // Login page settings
                 'login_header_layout' => $request->login_header_layout ?? 'horizontal',
                 'login_logo_image' => $request->login_logo_image,

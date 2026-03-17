@@ -170,11 +170,11 @@ class PasswordResetController extends Controller
     {
         switch ($type) {
             case 'student':
-                return Student::where('email', '=', $email, 'and')->where('school_id', '=', $schoolId, 'and')->first();
+                return Student::where('email', $email)->where('school_id', $schoolId)->first();
             case 'admin':
-                return Admin::where('email', '=', $email, 'and')->where('school_id', '=', $schoolId, 'and')->first();
+                return Admin::where('email', $email)->where('school_id', $schoolId)->first();
             case 'instructor':
-                return Instructor::where('email', '=', $email, 'and')->where('school_id', '=', $schoolId, 'and')->first();
+                return Instructor::where('email', $email)->where('school_id', $schoolId)->first();
             default:
                 return null;
         }

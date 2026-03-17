@@ -957,6 +957,23 @@
                     </div>
                 </div>
 
+                <!-- Email Settings -->
+                <div class="form-section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <h3 class="section-title">Email Settings</h3>
+                    </div>
+                    
+                    <div class="section-inputs">
+                    <div class="form-group">
+                        <label class="form-label">School Contact Email</label>
+                        <input type="email" class="form-control-compact" style="width:100%; padding:10px;" name="contact_email" value="{{ old('contact_email', $settings->contact_email ?? '') }}" placeholder="e.g. info@yourschool.com">
+                        <small class="text-muted help-text-block">
+                            Displayed in automated emails as the school's contact address. If left blank, emails will say "the school office".
+                        </small>
+                    </div>
+                    </div>
+                </div>
+
                 <!-- UI Settings -->
                 <div class="form-section">
                     <div class="section-header" onclick="toggleSection(this)">

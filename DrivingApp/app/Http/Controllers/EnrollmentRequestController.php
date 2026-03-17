@@ -700,7 +700,7 @@ class EnrollmentRequestController extends Controller
                 try {
                     if ($this->transitionUsesChannel('approved', 'email')) {
                         Mail::to($enrollment->learner->email)
-                            ->send(new EnrollmentApproved($enrollment, $school));
+                            ->queue(new EnrollmentApproved($enrollment, $school));
                     }
                 } catch (\Exception $e) {
                     Log::warning('Failed to send bulk approval email: ' . $e->getMessage());
@@ -781,7 +781,7 @@ class EnrollmentRequestController extends Controller
                 try {
                     if ($this->transitionUsesChannel('rejected', 'email')) {
                         Mail::to($enrollment->learner->email)
-                            ->send(new EnrollmentRejected($enrollment, $school));
+                            ->queue(new EnrollmentRejected($enrollment, $school));
                     }
                 } catch (\Exception $e) {
                     Log::warning('Failed to send bulk rejection email: ' . $e->getMessage());
