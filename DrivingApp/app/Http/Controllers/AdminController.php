@@ -369,6 +369,9 @@ class AdminController extends Controller
                 ->route('schools.admin.userManagement', $school)
                 ->with('success', $successMessage);
         }
+        catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        }
         catch (\Exception $e) {
             SystemLog::logError('Failed to create account: ' . $e->getMessage(), 'database', $e, [
                 'school_id' => $school->id,
