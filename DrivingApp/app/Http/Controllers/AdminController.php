@@ -370,11 +370,11 @@ class AdminController extends Controller
                 ->with('success', $successMessage);
         }
         catch (\Exception $e) {
-            SystemLog::logError('Failed to create account: ' . $e->getMessage(), [
+            SystemLog::logError('Failed to create account: ' . $e->getMessage(), 'database', $e, [
                 'school_id' => $school->id,
                 'email' => $request->get('email'),
                 'role' => $request->get('role')
-            ], $e, $school->id, 'create_account');
+            ], $school->id, 'create_account');
             return back()->withInput()->with('error', 'Unable to create account at this time. Please try again later.');
         }
     }
@@ -687,7 +687,7 @@ class AdminController extends Controller
         }
 
         $request->validate([
-            'profile_picture' => 'required|image|mimes:png,jpg,jpeg,webp|max:2048',
+            'profile_picture' => 'required|image|mimes:png,jpg,jpeg,webp|max:2048|dimensions:max_width=2000,max_height=2000',
         ]);
 
         // Delete old profile picture if exists
@@ -902,7 +902,7 @@ class AdminController extends Controller
                 'accent_color' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
                 'background_type' => 'required|in:color,image',
                 'background_color' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
-                'background_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'background_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048|dimensions:max_width=4000,max_height=4000',
                 'background_opacity' => 'required|integer|min:0|max:100',
                 'sidebar_bg_color' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
                 'sidebar_text_color' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
@@ -958,7 +958,7 @@ class AdminController extends Controller
                 'register_subtitle_text' => 'nullable|string|max:255',
                 'login_page_bg_type' => 'nullable|in:color,image',
                 'login_page_bg_color' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
-                'login_page_bg_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'login_page_bg_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048|dimensions:max_width=4000,max_height=4000',
                 'login_page_bg_opacity' => 'nullable|integer|min:0|max:100',
             ], [
                 'instructor_removal_notice_days.required' => 'Minimum notice period is required.',
@@ -1435,7 +1435,7 @@ class AdminController extends Controller
             $validated = $request->validate([
                 'title' => 'required|string|max:255',
                 'description' => 'nullable|string',
-                'banner_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'banner_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048|dimensions:max_width=4000,max_height=4000',
                 'type' => 'nullable|string',
                 'vehicle_type' => 'nullable|string',
                 'course_type' => 'nullable|in:theoretical,practical',
@@ -1502,7 +1502,7 @@ class AdminController extends Controller
             $validated = $request->validate([
                 'title' => 'required|string|max:255',
                 'description' => 'nullable|string',
-                'banner_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'banner_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048|dimensions:max_width=4000,max_height=4000',
                 'type' => 'nullable|string',
                 'vehicle_type' => 'nullable|string',
                 'course_type' => 'nullable|in:theoretical,practical',

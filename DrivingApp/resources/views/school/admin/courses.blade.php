@@ -1599,7 +1599,7 @@
 
                 <div class="form-group">
                     <label class="form-label">Banner Image (Max 2MB)</label>
-                    <input type="file" name="banner_image" id="courseBanner" class="form-control" accept="image/*" onchange="previewImage(this)">
+                    <input type="file" name="banner_image" id="courseBanner" class="form-control" accept=".jpg,.jpeg,.png,.webp" onchange="previewImage(this)">
                     <img id="imagePreview" class="image-preview">
                     <small class="banner-help-text">Recommended size: 1200x400px for best results</small>
                 </div>

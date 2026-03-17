@@ -892,27 +892,7 @@
         </div>
     </div>
     
-    @if(session('success'))
-    <div class="flash-message success">
-        <div class="flash-icon">&#10003;</div>
-        <div class="flash-content">
-            <div class="flash-title">Success!</div>
-            <div class="flash-text">{{ session('success') }}</div>
-        </div>
-        <button class="flash-close" onclick="this.parentElement.remove()">&times;</button>
-    </div>
-    @endif
-    
-    @if(session('error'))
-    <div class="flash-message error">
-        <div class="flash-icon">&#10005;</div>
-        <div class="flash-content">
-            <div class="flash-title">Error!</div>
-            <div class="flash-text">{{ session('error') }}</div>
-        </div>
-        <button class="flash-close" onclick="this.parentElement.remove()">&times;</button>
-    </div>
-    @endif
+    <!-- Toast Notifications handled at the bottom of the file -->
     
     <!-- Students Section -->
     <div id="usersSection" class="user-section">
@@ -1087,8 +1067,8 @@
             @endif
             <input type="hidden" name="role" value="student">
             <div class="modal-buttons">
-                <button type="submit" class="btn-create">Save</button>
                 <button type="button" class="btn-cancel" onclick="closeCreateStudentModal()">Cancel</button>
+                <button type="submit" class="btn-create">Save</button>
             </div>
         </form>
     </div>
@@ -1129,8 +1109,8 @@
             </div>
             @endif
             <div class="modal-buttons">
-                <button type="submit" class="btn-create">Update</button>
                 <button type="button" class="btn-cancel" onclick="closeEditStudentModal()">Cancel</button>
+                <button type="submit" class="btn-create">Update</button>
             </div>
         </form>
     </div>
@@ -1175,8 +1155,8 @@
             @endif
             <input type="hidden" name="role" value="instructor">
             <div class="modal-buttons">
-                <button type="submit" class="btn-create">Save</button>
                 <button type="button" class="btn-cancel" onclick="closeCreateInstructorModal()">Cancel</button>
+                <button type="submit" class="btn-create">Save</button>
             </div>
         </form>
     </div>
@@ -1217,8 +1197,8 @@
             </div>
             @endif
             <div class="modal-buttons">
-                <button type="submit" class="btn-create">Update</button>
                 <button type="button" class="btn-cancel" onclick="closeEditInstructorModal()">Cancel</button>
+                <button type="submit" class="btn-create">Update</button>
             </div>
         </form>
     </div>
@@ -1483,6 +1463,29 @@
             e.target.style.display = 'none';
         }
     }
+    
+    // Check for session flash messages and trigger toast notifications if available
+    document.addEventListener('DOMContentLoaded', function() {
+        @if(session('success'))
+            if (typeof showToast === 'function') {
+                showToast('success', "{{ session('success') }}");
+            } else if (typeof toastr !== 'undefined') {
+                toastr.success("{{ session('success') }}");
+            } else {
+                alert("Success: {{ session('success') }}");
+            }
+        @endif
+        
+        @if(session('error'))
+            if (typeof showToast === 'function') {
+                showToast('error', "{{ session('error') }}");
+            } else if (typeof toastr !== 'undefined') {
+                toastr.error("{{ session('error') }}");
+            } else {
+                alert("Error: {{ session('error') }}");
+            }
+        @endif
+    });
 </script>
 
 @endsection

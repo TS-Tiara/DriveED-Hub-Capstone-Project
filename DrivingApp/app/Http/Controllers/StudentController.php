@@ -179,7 +179,7 @@ class StudentController extends Controller
         $student = Auth::guard('student')->user();
 
         $request->validate([
-            'profile_picture' => 'required|image|mimes:png,jpg,jpeg,webp|max:2048',
+            'profile_picture' => 'required|image|mimes:png,jpg,jpeg,webp|max:2048|dimensions:max_width=2000,max_height=2000',
         ]);
 
         // Delete old profile picture if exists
