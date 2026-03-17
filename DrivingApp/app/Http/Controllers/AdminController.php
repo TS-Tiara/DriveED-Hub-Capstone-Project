@@ -327,6 +327,10 @@ class AdminController extends Controller
                     'status' => 'active',
                     'branch_id' => $admin->isBranchSecretary() ? $admin->branch_id : $request->branch_id,
                 ]));
+
+                $user->role = 'student';
+                $user->save();
+
                 $successMessage = 'Student created successfully!';
 
                 // Log student creation
@@ -346,6 +350,7 @@ class AdminController extends Controller
                     'branch_id' => $admin->isBranchSecretary() ? $admin->branch_id : $request->branch_id,
                     'address' => $request->address ?? null, // Restored address field
                 ]));
+
                 $successMessage = 'Instructor created successfully!';
 
                 // Log instructor creation
@@ -414,7 +419,15 @@ class AdminController extends Controller
                 'contact' => ['nullable', 'string', 'max:13', 'regex:/^(09\d{9}|\+639\d{9})$/'],
                 'address' => 'nullable|string|max:255',
                 'password' => 'nullable|string|min:6',
-                'branch_id' => 'nullable|exists:branches,id',
+                'branch_id' => [
+                    'nullable',
+                    'exists:branches,id',
+                    function ($attribute, $value, $fail) use ($admin) {
+                        if ($admin->isBranchSecretary() && !empty($value) && (int)$value !== (int)$admin->branch_id) {
+                            $fail('You can only assign students to your own branch.');
+                        }
+                    },
+                ],
             ]);
 
             DB::beginTransaction();
@@ -518,7 +531,15 @@ class AdminController extends Controller
                 'contact' => ['nullable', 'string', 'max:13', 'regex:/^(09\d{9}|\+639\d{9})$/'],
                 'license_number' => 'nullable|string|max:50',
                 'password' => 'nullable|string|min:6',
-                'branch_id' => 'nullable|exists:branches,id',
+                'branch_id' => [
+                    'nullable',
+                    'exists:branches,id',
+                    function ($attribute, $value, $fail) use ($admin) {
+                        if ($admin->isBranchSecretary() && !empty($value) && (int)$value !== (int)$admin->branch_id) {
+                            $fail('You can only assign instructors to your own branch.');
+                        }
+                    },
+                ],
             ]);
 
             $data = $request->only('name', 'email', 'contact', 'license_number', 'branch_id');

@@ -203,10 +203,8 @@ class TheoreticalCompletionController extends Controller
 
         DB::beginTransaction();
         try {
-            // Update student record
-            $enrollment->student->update([
-                'has_passed_theoretical' => true,
-            ]);
+            // AUD-004 Fix: Sync theoretical completion flags using model helper
+            $enrollment->markTheoreticalPassed($user->id, $request->notes);
 
             // Complete the enrollment
             $enrollment->update([

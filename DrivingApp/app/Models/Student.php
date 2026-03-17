@@ -39,13 +39,13 @@ class Student extends Authenticatable
         'last_login_at',
         'status',
         'is_active',
-        'role',
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
         'verification_code',
+        'student_license_data',
     ];
 
     protected function casts(): array
@@ -170,7 +170,8 @@ class Student extends Authenticatable
 
     public function promoteToStudent()
     {
-        $this->update(['role' => 'student']);
+        $this->role = 'student';
+        $this->save();
     }
 
     /**

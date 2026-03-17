@@ -190,9 +190,10 @@ class StudentActionRequestController extends Controller
                         'email' => $actionRequest->student_email,
                         'contact' => $actionRequest->student_contact,
                         'password' => Hash::make('temporary-' . uniqid()), // Temp password
-                        'role' => 'guest',
                         'status' => 'active',
                     ]);
+                    $student->role = 'guest';
+                    $student->save();
                     $actionRequest->update(['student_id' => $student->id]);
                 }
             } elseif ($actionRequest->isRemoveRequest()) {

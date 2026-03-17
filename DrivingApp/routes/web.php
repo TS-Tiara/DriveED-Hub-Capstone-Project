@@ -137,6 +137,12 @@ Route::prefix('{school:slug}')
                     Route::get('/enrollment-requests', [GuestController::class , 'enrollmentRequests'])->name('enrollmentRequests');
                 }
                 );
+
+                // AUD-002: Secure Document Access
+                Route::middleware(['auth:student,admin', 'nocache'])->group(function (): void {
+                    Route::get('/license/{student}', [\App\Http\Controllers\StorageController::class, 'streamLicense'])->name('storage.license');
+                    Route::get('/credential/{enrollment}', [\App\Http\Controllers\StorageController::class, 'streamCredential'])->name('storage.credential');
+                });
             }
             );
 

@@ -525,6 +525,15 @@
                                 </span>
                             </div>
 
+                            <div class="detail-item">
+                                <svg class="detail-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                                <span>
+                                    <span class="detail-label">Experience:</span> {{ $request->experience_level === 'experienced' ? 'Experienced Driver' : 'New Driver' }}
+                                </span>
+                            </div>
+
                             @if(($request->course->course_type ?? null) || ($request->course->type ?? null))
                                 <div class="detail-item">
                                     <svg class="detail-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -568,13 +577,6 @@
                         @elseif($request->remarks)
                             <div class="request-note-box">
                                 <strong class="request-note-title">Notes:</strong>
-                                <p class="request-note-text">{{ $request->remarks }}</p>
-                            </div>
-                        @endif
-
-                        @if($request->remarks)
-                            <div class="request-note-box">
-                                <strong class="request-note-title">Your Notes:</strong>
                                 <p class="request-note-text">{{ $request->remarks }}</p>
                             </div>
                         @endif

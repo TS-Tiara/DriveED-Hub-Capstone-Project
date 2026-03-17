@@ -172,28 +172,34 @@ class SmartDrivingSeeder extends Seeder
         for ($b = 0; $b < count($branches); $b++) {
             for ($j = 0; $j < 8; $j++) {
                 $name = $this->nameAt($stuOffset);
-                $students[] = Student::updateOrCreate(
+                $student = Student::updateOrCreate(
                     ['school_id' => $school->id, 'email' => $this->makeEmail("sd.stu.{$stuOffset}", 'smartdriving.test')],
                     [
                         'name' => $name,
                         'branch_id' => $branches[$b]->id,
                         'contact' => '+63-9' . rand(10, 99) . '-' . rand(100, 999) . '-' . rand(1000, 9999),
                         'password' => $hashedPassword,
-                        'status' => 'active', 'role' => 'student',
+                        'status' => 'active',
                         'enrollment_date' => now()->subDays(rand(7, 90)),
                     ]
                 );
+                $student->role = 'student';
+                $student->save();
+                $students[] = $student;
                 $stuOffset++;
             }
         }
-        $students[] = Student::updateOrCreate(
+        $demoStudent = Student::updateOrCreate(
             ['school_id' => $school->id, 'email' => 'student@gmail.com'],
             [
                 'name' => 'Demo Student', 'branch_id' => $branches[0]->id,
                 'contact' => '+63-900-000-0001', 'password' => $hashedPassword,
-                'status' => 'active', 'role' => 'student', 'enrollment_date' => now()->subDays(30),
+                'status' => 'active', 'enrollment_date' => now()->subDays(30),
             ]
         );
+        $demoStudent->role = 'student';
+        $demoStudent->save();
+        $students[] = $demoStudent;
         $this->command->info('   ✓ ' . count($students) . ' Students created (8 per branch + 1 demo)');
 
         // ── Courses ──

@@ -16,7 +16,7 @@
     if ($student) {
         $existingRequest = \App\Models\EnrollmentRequest::where('learner_id', $student->id)
             ->where('course_id', $course->id)
-            ->whereIn('status', ['pending', 'approved', 'completed'])
+            ->orderBy('created_at', 'desc')
             ->first();
         if ($existingRequest) {
             $enrollmentStatus = $existingRequest->status;

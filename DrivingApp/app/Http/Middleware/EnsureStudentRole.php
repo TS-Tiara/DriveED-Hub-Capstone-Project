@@ -29,6 +29,15 @@ class EnsureStudentRole
                 ->with('info', 'Please complete the enrollment process first.');
         }
 
+        // AUD-005 Fix: School Boundary Check
+        $schoolParam = $request->route('school');
+        $school = $schoolParam instanceof \App\Models\School ? $schoolParam : \App\Models\School::where('slug', '=', $schoolParam, 'and')->first(['*']);
+        if (!$school || (int)$student->school_id !== (int)$school->id) {
+            auth()->guard('student')->logout();
+            return redirect()->route('schools.login', ['school' => $school?->slug ?? $schoolParam])
+                ->with('error', 'Unauthorized: You do not belong to this school.');
+        }
+
         return $next($request);
     }
 }

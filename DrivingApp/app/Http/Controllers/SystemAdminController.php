@@ -620,6 +620,13 @@ class SystemAdminController extends Controller
             elseif ($type === 'instructor') {
                 $user = Instructor::findOrFail($id);
             }
+            elseif ($type === 'admin') {
+                $user = Admin::findOrFail($id);
+                // Prevent toggling system admins via this general route
+                if ($user->role === 'system_admin') {
+                    return back()->with('error', 'Cannot toggle status of system administrators.');
+                }
+            }
             else {
                 return back()->with('error', 'Invalid user type.');
             }

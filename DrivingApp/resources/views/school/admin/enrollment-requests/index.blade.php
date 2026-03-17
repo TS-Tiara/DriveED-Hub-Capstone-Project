@@ -912,6 +912,7 @@
                         <input type="checkbox" id="selectAll" onchange="toggleSelectAll()" class="row-checkbox">
                     </th>
                     <th>Learner</th>
+                    <th>Experience</th>
                     <th>Course</th>
                     <th>Branch</th>
                     <th>Fee</th>
@@ -956,6 +957,13 @@
                                     @endif
                                 @endif
                             </div>
+                        </td>
+                        <td>
+                            @if($request->experience_level === 'experienced')
+                                <span class="badge bg-primary" title="Experienced Driver">Experienced</span>
+                            @else
+                                <span class="badge bg-secondary" title="New Driver">New Driver</span>
+                            @endif
                         </td>
                         <td>
                             <div class="course-info">

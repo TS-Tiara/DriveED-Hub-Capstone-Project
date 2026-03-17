@@ -173,8 +173,10 @@ trait HandlesSchoolSeeding
         foreach ($guestData as $g) {
             $guest = Student::updateOrCreate(
                 ['school_id' => $school->id, 'email' => $g['email']],
-                ['name' => $g['name'], 'contact' => '+63-9' . rand(10, 99) . '-' . rand(100, 999) . '-' . rand(1000, 9999), 'password' => $password, 'status' => 'active', 'role' => 'guest', 'student_license_status' => $g['license_status'], 'student_license_verified_at' => $g['license_status'] === 'verified' ? now()->subDays(5) : null]
+                ['name' => $g['name'], 'contact' => '+63-9' . rand(10, 99) . '-' . rand(100, 999) . '-' . rand(1000, 9999), 'password' => $password, 'status' => 'active', 'student_license_status' => $g['license_status'], 'student_license_verified_at' => $g['license_status'] === 'verified' ? now()->subDays(5) : null]
             );
+            $guest->role = 'guest';
+            $guest->save();
             $guests[] = $guest;
             if ($g['enrollment_status'] && !empty($courses)) {
                 $course = $courses[array_rand($courses)];

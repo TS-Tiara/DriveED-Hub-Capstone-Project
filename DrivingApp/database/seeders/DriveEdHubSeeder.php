@@ -201,15 +201,18 @@ class DriveEdHubSeeder extends Seeder
 
         $students = [];
         foreach ($data as $i => $s) {
-            $students[] = Student::updateOrCreate(
+            $student = Student::updateOrCreate(
                 ['school_id' => $school->id, 'email' => $s['email']],
                 [
                     'name' => $s['name'], 'branch_id' => $branches[$i % count($branches)]->id,
                     'contact' => '+63-9' . rand(10, 99) . '-' . rand(100, 999) . '-' . rand(1000, 9999),
-                    'password' => $password, 'status' => 'active', 'role' => 'student',
+                    'password' => $password, 'status' => 'active',
                     'experience_level' => $s['level'], 'enrollment_date' => now()->subDays(rand(7, 60)),
                 ]
             );
+            $student->role = 'student';
+            $student->save();
+            $students[] = $student;
         }
         return $students;
     }
@@ -221,8 +224,10 @@ class DriveEdHubSeeder extends Seeder
         // Guest 1 – Enrolled (approved, PDC)
         $g1 = Student::updateOrCreate(
             ['school_id' => $school->id, 'email' => 'guest.enrolled1@drivedhub.test'],
-            ['name' => 'Elena Joy Reyes', 'contact' => '+63-919-800-1001', 'password' => $password, 'status' => 'active', 'role' => 'guest', 'student_license_status' => 'verified', 'student_license_verified_at' => now()->subDays(10), 'experience_level' => 'new_driver']
+            ['name' => 'Elena Joy Reyes', 'contact' => '+63-919-800-1001', 'password' => $password, 'status' => 'active', 'student_license_status' => 'verified', 'student_license_verified_at' => now()->subDays(10), 'experience_level' => 'new_driver']
         );
+        $g1->role = 'guest';
+        $g1->save();
         $guests[] = $g1;
         if (!empty($courses)) {
             \App\Models\EnrollmentRequest::updateOrCreate(
@@ -234,8 +239,10 @@ class DriveEdHubSeeder extends Seeder
         // Guest 2 – Enrolled (approved, TDC)
         $g2 = Student::updateOrCreate(
             ['school_id' => $school->id, 'email' => 'guest.enrolled2@drivedhub.test'],
-            ['name' => 'Mark Anthony Dizon', 'contact' => '+63-919-800-1002', 'password' => $password, 'status' => 'active', 'role' => 'guest', 'student_license_status' => 'verified', 'student_license_verified_at' => now()->subDays(8), 'experience_level' => 'experienced']
+            ['name' => 'Mark Anthony Dizon', 'contact' => '+63-919-800-1002', 'password' => $password, 'status' => 'active', 'student_license_status' => 'verified', 'student_license_verified_at' => now()->subDays(8), 'experience_level' => 'experienced']
         );
+        $g2->role = 'guest';
+        $g2->save();
         $guests[] = $g2;
         if (count($courses) > 3) {
             \App\Models\EnrollmentRequest::updateOrCreate(
@@ -247,15 +254,19 @@ class DriveEdHubSeeder extends Seeder
         // Guest 3 – NOT enrolled (no request)
         $g3 = Student::updateOrCreate(
             ['school_id' => $school->id, 'email' => 'guest.new1@drivedhub.test'],
-            ['name' => 'Jamie Lyn Pascual', 'contact' => '+63-919-800-1003', 'password' => $password, 'status' => 'active', 'role' => 'guest', 'student_license_status' => 'none', 'experience_level' => 'new_driver']
+            ['name' => 'Jamie Lyn Pascual', 'contact' => '+63-919-800-1003', 'password' => $password, 'status' => 'active', 'student_license_status' => 'none', 'experience_level' => 'new_driver']
         );
+        $g3->role = 'guest';
+        $g3->save();
         $guests[] = $g3;
 
         // Guest 4 – NOT enrolled (pending request)
         $g4 = Student::updateOrCreate(
             ['school_id' => $school->id, 'email' => 'guest.pending@drivedhub.test'],
-            ['name' => 'Carlo Miguel Bautista', 'contact' => '+63-919-800-1004', 'password' => $password, 'status' => 'active', 'role' => 'guest', 'student_license_status' => 'pending', 'experience_level' => 'new_driver']
+            ['name' => 'Carlo Miguel Bautista', 'contact' => '+63-919-800-1004', 'password' => $password, 'status' => 'active', 'student_license_status' => 'pending', 'experience_level' => 'new_driver']
         );
+        $g4->role = 'guest';
+        $g4->save();
         $guests[] = $g4;
         if (!empty($courses)) {
             \App\Models\EnrollmentRequest::updateOrCreate(
@@ -267,8 +278,10 @@ class DriveEdHubSeeder extends Seeder
         // Guest 5 – NOT enrolled (rejected)
         $g5 = Student::updateOrCreate(
             ['school_id' => $school->id, 'email' => 'guest.rejected@drivedhub.test'],
-            ['name' => 'Angelica Mae Soriano', 'contact' => '+63-919-800-1005', 'password' => $password, 'status' => 'active', 'role' => 'guest', 'student_license_status' => 'none', 'experience_level' => 'new_driver']
+            ['name' => 'Angelica Mae Soriano', 'contact' => '+63-919-800-1005', 'password' => $password, 'status' => 'active', 'student_license_status' => 'none', 'experience_level' => 'new_driver']
         );
+        $g5->role = 'guest';
+        $g5->save();
         $guests[] = $g5;
         if (count($courses) > 2) {
             \App\Models\EnrollmentRequest::updateOrCreate(

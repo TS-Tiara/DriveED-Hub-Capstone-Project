@@ -102,7 +102,7 @@ class StoreEnrollmentRequestRequest extends FormRequest
         // Credentials are now optional for all enrollment requests.
         // Even experienced drivers on practical courses can enroll first and provide proof later.
         /* 
-         if ($this->experience_level === 'experienced_driver' && !$this->hasFile('credential_file')) {
+         if ($this->experience_level === 'experienced' && !$this->hasFile('credential_file')) {
          $courseModel = $course instanceof \App\Models\Course ? $course : \App\Models\Course::find($courseId);
          if ($courseModel && $courseModel->isPractical()) {
          $validator->errors()->add('credential_file', 'Experienced drivers must upload proof of theoretical completion when applying for practical courses.');

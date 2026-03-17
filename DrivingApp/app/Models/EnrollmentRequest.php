@@ -166,7 +166,8 @@ class EnrollmentRequest extends Model
         ]);
 
         // Update the learner's role from guest to student
-        $this->learner->update(['role' => 'student']);
+        $this->learner->role = 'student';
+        $this->learner->save();
     }
 
     public function reject($remarks = null)
@@ -253,7 +254,10 @@ class EnrollmentRequest extends Model
         if (!$this->hasStudentPermit()) {
             return null;
         }
-        return asset('storage/' . $this->credentials_file_path);
+        return route('schools.guest.storage.credential', [
+            'school' => $this->school->slug,
+            'enrollment' => $this->id
+        ]);
     }
 
     /**
