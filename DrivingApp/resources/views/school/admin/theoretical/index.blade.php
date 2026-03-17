@@ -6,8 +6,8 @@
 @php
     $school = $school ?? $currentSchool ?? null;
     $settings = $school?->schoolSetting;
-    $primaryColor = $settings->primary_color ?? '#667eea';
-    $secondaryColor = $settings->secondary_color ?? '#764ba2';
+    $primaryColor = $settings->primary_color ?? '#3b82f6';
+    $secondaryColor = $settings->secondary_color ?? '#60a5fa';
 
     // ...existing code...
 @endphp
@@ -27,7 +27,7 @@
         align-items: center;
         margin-bottom: 24px;
         padding-bottom: 15px;
-        border-bottom: 3px solid {{ $primaryColor }};
+        border-bottom: 3px solid var(--primary-color);
     }
 
     .page-title {
@@ -66,7 +66,7 @@
     table { width: 100%; border-collapse: collapse; }
 
     thead {
-        background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
+        background: var(--header-gradient);
         color: white;
     }
 
@@ -96,7 +96,7 @@
 
     .user-avatar {
         width: 36px; height: 36px; border-radius: 50%;
-        background: linear-gradient(135deg, {{ $primaryColor }}, {{ $secondaryColor }});
+        background: var(--header-gradient);
         color: white; display: flex; align-items: center; justify-content: center;
         font-weight: 700; font-size: 0.95rem; flex-shrink: 0;
     }
