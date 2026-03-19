@@ -707,76 +707,7 @@
             </header>
 
             <div class="content">
-                {{-- Toasts are handled via JS below, but we keep these as backup or for non-JS environments if needed --}}
-                <div id="toast-container" class="toast-container"></div>
-
-                @yield('content')
-            </div>
-        </main>
-    </div>
-    
-    <script>
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const burger = document.querySelector('.burger-menu');
-            sidebar.classList.toggle('active');
-            document.getElementById('sidebarOverlay').classList.toggle('active');
-            if (burger) burger.setAttribute('aria-expanded', sidebar.classList.contains('active'));
-        }
-        
-        function closeSidebar() {
-            const burger = document.querySelector('.burger-menu');
-            document.getElementById('sidebar').classList.remove('active');
-            document.getElementById('sidebarOverlay').classList.remove('active');
-            if (burger) burger.setAttribute('aria-expanded', 'false');
-        }
-
-        // --- Toast System ---
-        function showToast(message, type = 'info') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = `toast toast-${type}`;
-            
-            let icon = 'fa-info-circle';
-            if (type === 'success') icon = 'fa-check-circle';
-            if (type === 'error') icon = 'fa-exclamation-circle';
-            if (type === 'warning') icon = 'fa-exclamation-triangle';
-            
-            toast.innerHTML = `
-                <div class="toast-content">
-                    <i class="fas ${icon} toast-icon"></i>
-                    <div class="toast-message">${message}</div>
-                </div>
-                <button class="toast-close" onclick="this.parentElement.remove()">&times;</button>
-            `;
-            
-            container.appendChild(toast);
-            
-            // Auto remove after 5 seconds
-            setTimeout(() => {
-                toast.classList.add('toast-fade-out');
-                setTimeout(() => toast.remove(), 500);
-            }, 5000);
-        }
-
-        // Initialize toasts from session and errors
-        document.addEventListener('DOMContentLoaded', function() {
-            @if(session('success'))
-                showToast("{{ session('success') }}", 'success');
-            @endif
-
-            @if(session('error'))
-                showToast("{{ session('error') }}", 'error');
-            @endif
-
-            @if(session('info'))
-                showToast("{{ session('info') }}", 'info');
-            @endif
-
-            @if($errors->any())
-                showToast("Please correct the mistakes in the form.", 'error');
-            @endif
-        });
+    @include('partials.toast-notifications')
     </script>
 
     <style>

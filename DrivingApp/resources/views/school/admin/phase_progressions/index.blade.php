@@ -189,19 +189,7 @@
         </div>
     </div>
 
-    @if(session('success'))
-    <div class="alert alert-success">
-        {{ session('success') }}
-        <button class="close-btn" onclick="this.parentElement.remove()">×</button>
-    </div>
-    @endif
 
-    @if(session('error'))
-    <div class="alert alert-danger">
-        {{ session('error') }}
-        <button class="close-btn" onclick="this.parentElement.remove()">×</button>
-    </div>
-    @endif
 
     <!-- Requests Table -->
     <div class="content-card">
@@ -346,7 +334,11 @@
         if (decision === 'reject') {
             const notes = form.querySelector('[name="admin_notes"]').value.trim();
             if (!notes) {
-                alert('Please provide a reason for rejection in the notes field.');
+                if (typeof Toast !== 'undefined') {
+                    Toast.warning('Please provide a reason for rejection in the notes field.', 'Input Required');
+                } else {
+                    alert('Please provide a reason for rejection in the notes field.');
+                }
                 return;
             }
         }
@@ -378,7 +370,11 @@
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('An error occurred while processing the request.');
+            if (typeof Toast !== 'undefined') {
+                Toast.error('An error occurred while processing the request.', 'Error');
+            } else {
+                alert('An error occurred while processing the request.');
+            }
             buttons.forEach(btn => btn.disabled = false);
         });
     }

@@ -511,7 +511,13 @@ function markAsPaid(paymentId) {
                 }
             })
             .catch(error => {
-                alert('Error updating payment. Please try again.');
+                if (typeof Toast !== 'undefined') {
+                    Toast.error('Error updating payment. Please try again.', 'Update Failed');
+                } else if (typeof showToast !== 'undefined') {
+                    showToast('error', 'Error updating payment. Please try again.');
+                } else {
+                    alert('Error updating payment. Please try again.');
+                }
                 console.error(error);
             });
         }

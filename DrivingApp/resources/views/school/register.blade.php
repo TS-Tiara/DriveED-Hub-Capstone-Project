@@ -826,9 +826,7 @@
             <h2>Create Your Account</h2>
             <p class="subtitle">Register to browse courses and start your driving journey</p>
 
-            @if (session('success'))
-                <div class="success">{{ session('success') }}</div>
-            @endif
+            @include('partials.toast-notifications')
 
             <form method="POST" action="{{ route('schools.registration.submit', $school) }}">
                 @csrf

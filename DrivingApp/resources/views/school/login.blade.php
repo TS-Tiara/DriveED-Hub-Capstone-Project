@@ -764,19 +764,7 @@
         <div class="login-container">
             <h2 class="login-title">Login</h2>
 
-            @if(session('success'))
-                <div class="alert alert-success">
-                    {{ session('success') }}
-                </div>
-            @endif
-
-            @if($errors->any())
-                <div class="alert alert-error">
-                    @foreach($errors->all() as $error)
-                        <div>{{ $error }}</div>
-                    @endforeach
-                </div>
-            @endif
+            @include('partials.toast-notifications')
 
             <form method="POST" action="{{ route('schools.login.submit', $school) }}">
                 @csrf

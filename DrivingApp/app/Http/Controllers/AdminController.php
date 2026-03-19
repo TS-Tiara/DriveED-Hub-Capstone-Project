@@ -1441,13 +1441,61 @@ class AdminController extends Controller
     /**
      * Show courses management page
      */
-    public function courses(School $school)
+    public function courses(Request $request, School $school)
     {
-        $courses = \App\Models\Course::with('packages')
-            ->where('school_id', $school->id)
-            ->orderBy('sort_order')
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        $query = \App\Models\Course::with('packages')
+            ->where('school_id', $school->id);
+
+        $sort = $request->get('sort', 'newest');
+
+        switch ($sort) {
+            case 'title_asc':
+                $query->orderBy('title', 'asc');
+                break;
+            case 'title_desc':
+                $query->orderBy('title', 'desc');
+                break;
+            case 'price_low':
+                $query->select('courses.*')
+                    ->leftJoin('course_packages', 'courses.id', '=', 'course_packages.course_id')
+                    ->selectRaw('MIN(course_packages.price) as min_price')
+                    ->groupBy('courses.id')
+                    ->orderBy('min_price', 'asc');
+                break;
+            case 'price_high':
+                $query->select('courses.*')
+                    ->leftJoin('course_packages', 'courses.id', '=', 'course_packages.course_id')
+                    ->selectRaw('MAX(course_packages.price) as max_price')
+                    ->groupBy('courses.id')
+                    ->orderBy('max_price', 'desc');
+                break;
+            case 'popularity':
+                $query->withCount(['bookings' => function($q) {
+                    $q->whereIn('status', ['confirmed', 'in_progress', 'completed']);
+                }])->orderBy('bookings_count', 'desc');
+                break;
+            case 'status':
+                $query->orderByRaw("CASE WHEN status = 'active' THEN 0 ELSE 1 END")
+                      ->orderBy('created_at', 'desc');
+                break;
+            case 'duration':
+                $query->orderBy('hours_required', 'desc');
+                break;
+            case 'type':
+                $query->orderBy('course_type', 'asc')
+                      ->orderBy('title', 'asc');
+                break;
+            case 'oldest':
+                $query->orderBy('created_at', 'asc');
+                break;
+            case 'newest':
+            default:
+                $query->orderBy('sort_order')
+                      ->orderBy('created_at', 'desc');
+                break;
+        }
+
+        $courses = $query->paginate(10)->withQueryString();
 
         return view($school->resolveView('admin.courses'), compact('school', 'courses'));
     }

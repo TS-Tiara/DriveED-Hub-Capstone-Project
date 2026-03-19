@@ -168,27 +168,7 @@
 
 <div class="admin-container">
     <!-- Flash Messages -->
-    @if(session('success'))
-    <div class="flash-message success">
-        <div class="flash-icon">✓</div>
-        <div class="flash-content">
-            <div class="flash-title">Success!</div>
-            <div class="flash-text">{{ session('success') }}</div>
-        </div>
-        <button class="flash-close" onclick="this.parentElement.remove()">×</button>
-    </div>
-    @endif
-    
-    @if(session('error'))
-    <div class="flash-message error">
-        <div class="flash-icon">✕</div>
-        <div class="flash-content">
-            <div class="flash-title">Error!</div>
-            <div class="flash-text">{{ session('error') }}</div>
-        </div>
-        <button class="flash-close" onclick="this.parentElement.remove()">×</button>
-    </div>
-    @endif
+
 
     <!-- Page Header -->
     <div class="page-header">

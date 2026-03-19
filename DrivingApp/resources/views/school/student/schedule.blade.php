@@ -1335,23 +1335,7 @@
         </div>
     </div>
     
-    @if(session('success'))
-        <div id="success-alert" class="schedule-alert schedule-alert-success">
-            <span>{{ session('success') }}</span>
-            <button type="button" class="dismiss-alert-btn dismiss-alert-btn-success" aria-label="Dismiss success message" onclick="this.parentElement.remove()">&times;</button>
-        </div>
-    @endif
-    
-    @if($errors->any())
-        <div id="error-alert" class="schedule-alert schedule-alert-error">
-            <button type="button" class="dismiss-alert-btn dismiss-alert-btn-error" aria-label="Dismiss error messages" onclick="this.parentElement.remove()">&times;</button>
-            <ul class="error-list-compact">
-                @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
+
     
     <!-- My Schedule View -->
     <div id="my-schedule-view" class="main-view-section active">

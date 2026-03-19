@@ -1454,27 +1454,7 @@
         </div>
     </div>
 
-    @if(session('success'))
-    <div class="flash-message success">
-        <div class="flash-icon"><svg class="icon-20" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg></div>
-        <div class="flash-content">
-            <div class="flash-title">Success!</div>
-            <div class="flash-text">{{ session('success') }}</div>
-        </div>
-        <button class="flash-close" onclick="this.parentElement.remove()">×</button>
-    </div>
-    @endif
 
-    @if(session('error'))
-    <div class="flash-message error">
-        <div class="flash-icon">✕</div>
-        <div class="flash-content">
-            <div class="flash-title">Error!</div>
-            <div class="flash-text">{{ session('error') }}</div>
-        </div>
-        <button class="flash-close" onclick="this.parentElement.remove()">×</button>
-    </div>
-    @endif
 
     <div class="filter-wrap">
         <form method="GET" action="{{ route('schools.admin.schedules', $school) }}" class="filter-form">
@@ -2140,8 +2120,8 @@
             console.error('Could not find slot item with ID:', slotId);
             if (typeof Toast !== 'undefined' && Toast.error) {
                 Toast.error('Could not find schedule details. Please refresh the page and try again.', 'Not Found');
-            } else {
-                alert('Could not find schedule details. Please refresh the page and try again.');
+            } else if (typeof showToast !== 'undefined') {
+                showToast('error', 'Could not find schedule details. Please refresh the page and try again.');
             }
             return;
         }

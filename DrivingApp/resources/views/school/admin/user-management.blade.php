@@ -966,7 +966,7 @@
                         <tr data-role="{{ $user->role }}" data-status="{{ $user->status }}" data-branch="{{ $user->branch_id ?? 'unassigned' }}">
                             <td><strong>{{ $user->name }}</strong></td>
                             <td>{{ $user->email }}</td>
-                            <td>{{ $user->contact ?? 'N/A' }}</td>
+                            <td>{{ $user->contact ?: '—' }}</td>
                             <td>
                                 <span class="role-badge role-{{ $user->role }}">
                                     {{ ucfirst($user->role) }}
@@ -974,9 +974,9 @@
                             </td>
                             <td>
                                 @php
-                                    $branchName = $user->branch_id ? ($branches->firstWhere('id', $user->branch_id)?->name ?? 'Unknown') : null;
+                                    $branchName = $user->branch_id ? ($branches->firstWhere('id', $user->branch_id)?->name ?? null) : null;
                                 @endphp
-                                <span class="branch-label {{ $branchName ? 'branch-assigned' : 'branch-unassigned' }}">{{ $branchName ?? 'Unassigned' }}</span>
+                                <span class="branch-label {{ $branchName ? 'branch-assigned' : 'branch-unassigned' }}">{{ $branchName ?? '—' }}</span>
                             </td>
                             <td>
                                 <span class="status-badge status-{{ $user->status }}">
@@ -1467,23 +1467,11 @@
     // Check for session flash messages and trigger toast notifications if available
     document.addEventListener('DOMContentLoaded', function() {
         @if(session('success'))
-            if (typeof showToast === 'function') {
-                showToast('success', "{{ session('success') }}");
-            } else if (typeof toastr !== 'undefined') {
-                toastr.success("{{ session('success') }}");
-            } else {
-                alert("Success: {{ session('success') }}");
-            }
+            showToast('success', "{{ session('success') }}");
         @endif
         
         @if(session('error'))
-            if (typeof showToast === 'function') {
-                showToast('error', "{{ session('error') }}");
-            } else if (typeof toastr !== 'undefined') {
-                toastr.error("{{ session('error') }}");
-            } else {
-                alert("Error: {{ session('error') }}");
-            }
+            showToast('error', "{{ session('error') }}");
         @endif
     });
 </script>

@@ -282,16 +282,7 @@
 </style>
 
 <div class="course-detail-container">
-    @if(session('success'))
-        <div class="status-alert status-approved mb-6">
-            {{ session('success') }}
-        </div>
-    @endif
-    @if(session('error'))
-        <div class="status-alert status-pending bg-red-100 text-red-800 mb-6">
-            {{ session('error') }}
-        </div>
-    @endif
+
 
     <div class="course-header-banner">
         @if($course->banner_image)

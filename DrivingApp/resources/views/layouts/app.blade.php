@@ -2739,69 +2739,14 @@
             }, 500); // Small delay to show notification
         }
         
-        // Enhanced notification system with multiple types
-        function showNotification(message, type = 'info', duration = 3000) {
-            // Remove existing notifications
-            const existingNotifications = document.querySelectorAll('.notification');
-            existingNotifications.forEach(n => n.remove());
-            
-            // Create notification
-            const notification = document.createElement('div');
-            notification.className = `notification notification-${type}`;
-            
-            // Set styles based on type
-            const colors = {
-                success: { bg: '#4CAF50', icon: '✓' },
-                error: { bg: '#f44336', icon: '' },
-                warning: { bg: '#ff9800', icon: '' },
-                info: { bg: '#2196F3', icon: '' }
-            };
-            
-            const color = colors[type] || colors.info;
-            
-            notification.style.cssText = `
-                position: fixed;
-                top: 80px;
-                right: 20px;
-                background: ${color.bg};
-                color: white;
-                padding: 15px 20px;
-                border-radius: 8px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-                z-index: 10000;
-                font-weight: bold;
-                max-width: 350px;
-                font-family: Arial, sans-serif;
-                font-size: 14px;
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                cursor: pointer;
-                transition: all 0.3s ease;
-            `;
-            
-            notification.innerHTML = `
-                <span style="font-size: 16px;">${color.icon}</span>
-                <span>${message}</span>
-                <span style="margin-left: auto; opacity: 0.7; font-size: 12px;">×</span>
-            `;
-            
-            // Add click to dismiss
-            notification.addEventListener('click', () => {
-                notification.remove();
-            });
-            
-            // Add to page
-            document.body.appendChild(notification);
-            
-            // Auto remove after specified duration
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.style.opacity = '0';
-                    setTimeout(() => notification.remove(), 300);
-                }
-            }, duration);
-        }
+    @include('partials.toast-notifications')
+        
+        // Alias showToast to showNotification for backward compatibility with older view scripts
+        window.showToast = function(type, message) {
+            // Map legacy 'error' type (if any) to 'error', etc.
+            // showNotification handles success, error, warning, info
+            showNotification(message, type);
+        };
         
         // Test function for the universal AJAX system
         window.testUniversalAjax = function() {

@@ -15,6 +15,7 @@ use App\Rules\StrongPassword;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class SystemAdminController extends Controller
 {
@@ -249,7 +250,7 @@ class SystemAdminController extends Controller
             Admin::create([
                 'name' => $request->admin_name,
                 'email' => $request->admin_email,
-                'password' => $request->admin_password,
+                'password' => bcrypt($request->admin_password),
                 'must_reset_password' => true, // Force reset on first login
                 'role' => 'school_admin',
                 'school_id' => $school->id,
@@ -257,13 +258,18 @@ class SystemAdminController extends Controller
 
             DB::commit();
 
-            SystemLog::logInfo(
-                "Created new driving school: {$school->name}",
-                'system',
-            ['school_id' => $school->id, 'admin_email' => $request->admin_email],
-                null,
-                'create_school'
-            );
+            try {
+                SystemLog::logInfo(
+                    "Created new driving school: {$school->name}",
+                    'system',
+                    ['school_id' => $school->id, 'admin_email' => $request->admin_email],
+                    null,
+                    'create_school'
+                );
+            } catch (\Exception $e) {
+                // Logging failure should not crash the response
+                Log::error("Failed to log school creation: " . $e->getMessage());
+            }
 
             return redirect()->route('system-admin.schools')->with('success', "Driving school '{$school->name}' created successfully!");
         }
@@ -438,19 +444,24 @@ class SystemAdminController extends Controller
             $admin = Admin::create([
                 'name' => $request->name,
                 'email' => $request->email,
-                'password' => $request->password,
+                'password' => bcrypt($request->password),
                 'must_reset_password' => true, // Force reset on first login
                 'role' => 'school_admin',
                 'school_id' => $school->id,
             ]);
 
-            SystemLog::logInfo(
-                "Created new school admin: {$admin->name} for {$school->name}",
-                'system',
-            ['admin_id' => $admin->id, 'school_id' => $school->id, 'email' => $admin->email],
-                $school->id,
-                'create_school_admin'
-            );
+            try {
+                SystemLog::logInfo(
+                    "Created new school admin: {$admin->name} for {$school->name}",
+                    'system',
+                    ['admin_id' => $admin->id, 'school_id' => $school->id, 'email' => $admin->email],
+                    $school->id,
+                    'create_school_admin'
+                );
+            } catch (\Exception $e) {
+                // Logging failure should not crash the response
+                Log::error("Failed to log admin creation: " . $e->getMessage());
+            }
 
             return redirect()->route('system-admin.admins')->with('success', "School admin '{$admin->name}' created successfully for {$school->name}!");
         }
@@ -484,10 +495,10 @@ class SystemAdminController extends Controller
 
             // Prevent deactivating the last active school admin
             if ($admin->is_active && $admin->role === 'school_admin') {
-                $schoolAdminCount = Admin::where('school_id', $admin->school_id)
-                    ->where('role', 'school_admin')
-                    ->where('is_active', true)
-                    ->count();
+                $schoolAdminCount = Admin::where('school_id', '=', $admin->school_id, 'and')
+                    ->where('role', '=', 'school_admin', 'and')
+                    ->where('is_active', '=', true, 'and')
+                    ->count('*');
                 
                 if ($schoolAdminCount <= 1) {
                     return back()->with('error', 'Cannot deactivate the only active school administrator.');
@@ -537,9 +548,9 @@ class SystemAdminController extends Controller
 
             // Prevent deleting the last school admin
             if ($admin->role === 'school_admin') {
-                $schoolAdminCount = Admin::where('school_id', $admin->school_id)
-                    ->where('role', 'school_admin')
-                    ->count();
+                $schoolAdminCount = Admin::where('school_id', '=', $admin->school_id, 'and')
+                    ->where('role', '=', 'school_admin', 'and')
+                    ->count('*');
                 
                 if ($schoolAdminCount <= 1) {
                     return back()->with('error', 'Cannot delete the only school administrator left. Each school must have at least one administrator.');

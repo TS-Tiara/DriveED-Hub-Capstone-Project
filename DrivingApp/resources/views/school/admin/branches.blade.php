@@ -499,20 +499,7 @@
         </button>
     </div>
 
-    {{-- Flash Messages --}}
-    @if(session('success'))
-    <div class="alert alert-success">
-        <span>{{ session('success') }}</span>
-        <button class="close-btn" onclick="this.parentElement.remove()">&times;</button>
-    </div>
-    @endif
 
-    @if(session('error'))
-    <div class="alert alert-error">
-        <span>{{ session('error') }}</span>
-        <button class="close-btn" onclick="this.parentElement.remove()">&times;</button>
-    </div>
-    @endif
 
     {{-- Stats --}}
     <div class="branch-stats">

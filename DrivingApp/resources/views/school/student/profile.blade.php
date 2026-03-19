@@ -623,21 +623,7 @@
         <h1 class="page-title">Profile</h1>
     </div>
     
-    @if(session('success'))
-        <div class="success-message">
-            {{ session('success') }}
-        </div>
-    @endif
-    
-    @if($errors->any())
-        <div class="error-message">
-            <ul class="error-list-compact">
-                @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
+
 
     <div class="profile-card">
         <div class="status-badge">{{ ucfirst($student->status ?? 'Active') }}</div>

@@ -544,19 +544,7 @@
         </div>
     </div>
     
-    @if(session('success'))
-        <div class="alert alert-success">
-            <span>{{ session('success') }}</span>
-            <button class="alert-close" onclick="this.parentElement.remove()">&times;</button>
-        </div>
-    @endif
-    
-    @if(session('error'))
-        <div class="alert alert-error">
-            <span>{{ session('error') }}</span>
-            <button class="alert-close" onclick="this.parentElement.remove()">&times;</button>
-        </div>
-    @endif
+
     
     <!-- My Slots View -->
     <div id="my-slots-view" class="main-view-section active">

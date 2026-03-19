@@ -846,27 +846,7 @@
         <p class="page-subtitle">Personalize your school's appearance with colors, styles, and branding</p>
     </div>
 
-    @if (session('success'))
-    <div class="flash-message success">
-        <div class="flash-icon">✓</div>
-        <div class="flash-content">
-            <div class="flash-title">Success!</div>
-            <div class="flash-text">{{ session('success') }}</div>
-        </div>
-        <button class="flash-close" onclick="this.parentElement.remove()">×</button>
-    </div>
-    @endif
 
-    @if ($errors->any())
-    <div class="flash-message error">
-        <div class="flash-icon">✕</div>
-        <div class="flash-content">
-            <div class="flash-title">Error!</div>
-            <div class="flash-text">Please fix the errors below</div>
-        </div>
-        <button class="flash-close" onclick="this.parentElement.remove()">×</button>
-    </div>
-    @endif
 
     <!-- Tab Navigation -->
     <div class="tabs-container tabs-container-frame">

@@ -99,6 +99,20 @@ class AuthController extends Controller
                 Auth::guard('admin')->login($admin, $remember);
                 $request->session()->regenerate();
 
+                // Check for forced password reset
+                if ($admin->must_reset_password) {
+                    SystemLog::logInfo(
+                        "Admin forced to reset password: {$admin->name}",
+                        'authentication',
+                        ['admin_id' => $admin->id, 'email' => $admin->email],
+                        $school->id,
+                        'force_password_reset_triggered'
+                    );
+
+                    return redirect()->route('schools.password.force-reset', $school)
+                        ->with('info', 'Please set a new password for your account to continue.');
+                }
+
                 // Log successful login — label reflects actual role
                 $roleLabel = match ($admin->role) {
                         'branch_secretary' => 'Branch secretary',
@@ -397,6 +411,47 @@ class AuthController extends Controller
 
         return redirect()->route('schools.login', $school)
             ->with('success', 'You have been logged out successfully.');
+    }
+
+    public function showForceResetForm(School $school)
+    {
+        $admin = Auth::guard('admin')->user();
+        if (!$admin || !$admin->must_reset_password) {
+            return redirect()->route('schools.admin.dashboard', $school);
+        }
+
+        return view($school->resolveView('password.force-reset'), [
+            'school' => $school,
+            'admin' => $admin,
+        ]);
+    }
+
+    public function handleForceReset(Request $request, School $school)
+    {
+        $admin = Auth::guard('admin')->user();
+        if (!$admin || !$admin->must_reset_password) {
+            return redirect()->route('schools.admin.dashboard', $school);
+        }
+
+        $request->validate([
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $admin->update([
+            'password' => bcrypt($request->password),
+            'must_reset_password' => false,
+        ]);
+
+        SystemLog::logInfo(
+            "Admin completed forced password reset: {$admin->name}",
+            'authentication',
+            ['admin_id' => $admin->id, 'email' => $admin->email],
+            $school->id,
+            'force_password_reset_completed'
+        );
+
+        return redirect()->route('schools.admin.dashboard', $school)
+            ->with('success', 'Your password has been updated successfully. Welcome to the portal!');
     }
 
     private function clearOtherAuthGuards(string $keepGuard): void

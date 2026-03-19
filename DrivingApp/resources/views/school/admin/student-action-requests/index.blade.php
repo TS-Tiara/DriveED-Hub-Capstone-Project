@@ -598,31 +598,7 @@
         @endif
     </div>
 
-    {{-- Flash Messages --}}
-    @if(session('success'))
-    <div class="alert alert-success">
-        <span>{{ session('success') }}</span>
-        <button class="close-btn" onclick="this.parentElement.remove()">&times;</button>
-    </div>
-    @endif
 
-    @if(session('error'))
-    <div class="alert alert-error">
-        <span>{{ session('error') }}</span>
-        <button class="close-btn" onclick="this.parentElement.remove()">&times;</button>
-    </div>
-    @endif
-
-    @if($errors->any())
-    <div class="alert alert-error">
-        <div>
-            @foreach($errors->all() as $error)
-                <div>{{ $error }}</div>
-            @endforeach
-        </div>
-        <button class="close-btn" onclick="this.parentElement.remove()">&times;</button>
-    </div>
-    @endif
 
     {{-- Requests Table --}}
     @if($requests->count() > 0)

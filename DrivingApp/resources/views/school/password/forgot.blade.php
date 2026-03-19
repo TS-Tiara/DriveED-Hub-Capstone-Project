@@ -148,19 +148,7 @@
                 Enter your registered email address and we'll send you a secure link to reset your password.
             </p>
 
-            @if(session('success'))
-                <div class="alert alert-success">
-                    {{ session('success') }}
-                </div>
-            @endif
-
-            @if($errors->any())
-                <div class="alert alert-error">
-                    @foreach($errors->all() as $error)
-                        <div>{{ $error }}</div>
-                    @endforeach
-                </div>
-            @endif
+            @include('partials.toast-notifications')
 
             <form method="POST" action="{{ route('schools.password.email', $school) }}">
                 @csrf

@@ -738,28 +738,7 @@
     </div>
     @endif
 
-    <!-- Alert Messages -->
-    @if(session('success'))
-    <div class="flash-message success">
-        <div class="flash-icon">&#10003;</div>
-        <div class="flash-content">
-            <div class="flash-title">Success!</div>
-            <div class="flash-text">{{ session('success') }}</div>
-        </div>
-        <button class="flash-close" onclick="this.parentElement.remove()">&times;</button>
-    </div>
-    @endif
 
-    @if(session('error'))
-    <div class="flash-message error">
-        <div class="flash-icon">&#10005;</div>
-        <div class="flash-content">
-            <div class="flash-title">Error!</div>
-            <div class="flash-text">{{ session('error') }}</div>
-        </div>
-        <button class="flash-close" onclick="this.parentElement.remove()">&times;</button>
-    </div>
-    @endif
     
     <div class="stats-grid">
         <div class="stat-card info" onclick="filterRequests('all', this)" data-status="all">
@@ -967,11 +946,11 @@
                         </td>
                         <td>
                             <div class="course-info">
-                                <div class="course-name">{{ $request->course->title ?? 'N/A' }}</div>
+                                <div class="course-name">{{ $request->course->title ?: 'N/A' }}</div>
                                 <div class="course-type">{{ ucfirst($request->course->type ?? 'standard') }}</div>
                             </div>
                         </td>
-                        <td>{{ $request->branchRelation?->name ?? '—' }}</td>
+                        <td>{{ $request->branchRelation?->name ?: '—' }}</td>
                         <td>
                             <strong>&#8369;{{ number_format($request->course->price ?? 0, 2) }}</strong>
                         </td>
@@ -987,8 +966,8 @@
                         </td>
                         <td>
                             <div class="date-text">
-                                {{ $request->created_at->format('M d, Y') }}<br>
-                                <small>{{ $request->created_at->format('h:i A') }}</small>
+                                {{ $request->created_at->timezone($school->timezone ?? 'Asia/Manila')->format('M d, Y') }}<br>
+                                <small>{{ $request->created_at->timezone($school->timezone ?? 'Asia/Manila')->format('h:i A') }}</small>
                             </div>
                         </td>
                         <td>
@@ -1053,11 +1032,11 @@
             </div>
             <div class="mobile-card-row">
                 <span class="mobile-card-label">Course</span>
-                <span class="mobile-card-value">{{ $request->course->title ?? 'N/A' }}</span>
+                <span class="mobile-card-value">{{ $request->course->title ?: 'N/A' }}</span>
             </div>
             <div class="mobile-card-row">
                 <span class="mobile-card-label">Branch</span>
-                <span class="mobile-card-value">{{ $request->branchRelation?->name ?? '—' }}</span>
+                <span class="mobile-card-value">{{ $request->branchRelation?->name ?: '—' }}</span>
             </div>
             <div class="mobile-card-row">
                 <span class="mobile-card-label">Fee</span>
@@ -1069,7 +1048,7 @@
             </div>
             <div class="mobile-card-row">
                 <span class="mobile-card-label">Date</span>
-                <span class="mobile-card-value">{{ $request->created_at->format('M d, Y h:i A') }}</span>
+                <span class="mobile-card-value">{{ $request->created_at->timezone($school->timezone ?? 'Asia/Manila')->format('M d, Y h:i A') }}</span>
             </div>
             @if($request->status === 'pending')
                 <div class="mobile-card-actions">
@@ -1406,7 +1385,7 @@ function bulkApprove() {
     const ids = Array.from(checkboxes).map(cb => cb.value);
     
     if (ids.length === 0) {
-        alert('Please select at least one enrollment request');
+        Toast.warning('Please select at least one enrollment request', 'Selection Required');
         return;
     }
     
@@ -1445,7 +1424,7 @@ function bulkReject() {
     const ids = Array.from(checkboxes).map(cb => cb.value);
     
     if (ids.length === 0) {
-        alert('Please select at least one enrollment request');
+        Toast.warning('Please select at least one enrollment request', 'Selection Required');
         return;
     }
 
@@ -1455,9 +1434,15 @@ function bulkReject() {
         message: `Are you sure you want to reject ${ids.length} enrollment request(s)?`,
         confirmText: 'Continue',
         onConfirm: function() {
+            // Using showConfirm instead of prompt for bulk rejection is better, but maybe we need a textarea modal
+            // For now, let's use a Toast error if they try to proceed without reason IF we can capture it.
+            // Actually, the current showConfirm doesn't support an input field.
+            // I'll suggest to the user that we should add a generic 'Input Modal' or just use the existing Reject Modal for multiple.
+            // But for now, I'll just change alert to Toast.
+            
             const reason = prompt(`Enter rejection reason for ${ids.length} request(s):`);
             if (!reason || !reason.trim()) {
-                if (reason !== null) alert('Rejection reason is required');
+                if (reason !== null) Toast.error('Rejection reason is required');
                 return;
             }
 

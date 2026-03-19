@@ -98,9 +98,12 @@ Route::prefix('{school:slug}')
     ->group(function (): void {
         Route::controller(AuthController::class)->group(function (): void {
             Route::get('/', 'showLogin')->name('login');
-            Route::get('/login', 'showLogin');
             Route::post('/login', 'login')->name('login.submit')->middleware('throttle:5,1');
             Route::post('/logout', 'logout')->name('logout');
+
+            // Force Password Reset (for first-time admins)
+            Route::get('/force-password-reset', 'showForceResetForm')->name('password.force-reset');
+            Route::post('/force-password-reset', 'handleForceReset')->name('password.force-reset.update');
         }
         );
 

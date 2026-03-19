@@ -394,19 +394,7 @@
         </a>
     </div>
 
-    @if(session('success'))
-        <div class="flash-message success">
-            <span class="flash-icon">&#10003;</span>
-            <span>{{ session('success') }}</span>
-        </div>
-    @endif
 
-    @if(session('error'))
-        <div class="flash-message error">
-            <span class="flash-icon">&#10007;</span>
-            <span>{{ session('error') }}</span>
-        </div>
-    @endif
 
     <div class="content-grid">
         <!-- Left Column -->
