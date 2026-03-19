@@ -764,7 +764,7 @@
         <div class="login-container">
             <h2 class="login-title">Login</h2>
 
-            @include('partials.toast-notifications')
+
 
             <form method="POST" action="{{ route('schools.login.submit', $school) }}">
                 @csrf
@@ -838,5 +838,6 @@
             });
         });
     </script>
+    @include('partials.toast-notifications')
 </body>
 </html>

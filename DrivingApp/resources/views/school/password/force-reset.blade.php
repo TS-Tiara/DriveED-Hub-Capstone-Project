@@ -164,7 +164,7 @@
             <h2 class="login-title">Secure Your Account</h2>
             <p class="login-subtitle">Welcome, <strong>{{ $admin->name }}</strong>. For security reasons, you must change your temporary password before accessing the dashboard.</p>
 
-            @include('partials.toast-notifications')
+
 
             <form method="POST" action="{{ route('schools.password.force-reset.update', $school) }}">
                 @csrf
@@ -208,5 +208,6 @@
             }
         });
     </script>
+    @include('partials.toast-notifications')
 </body>
 </html>

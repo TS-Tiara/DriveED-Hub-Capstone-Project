@@ -3,112 +3,149 @@
 <style>
     .toast-container {
         position: fixed;
-        top: 20px;
-        right: 20px;
-        z-index: 10001; /* Higher than sidebar and modals */
+        top: 24px;
+        right: 24px;
+        z-index: 10001;
         display: flex;
         flex-direction: column;
         gap: 12px;
-        max-width: 400px;
-        width: calc(100% - 40px);
+        max-width: 420px;
+        width: calc(100% - 48px);
         pointer-events: none;
     }
 
     .toast {
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-radius: var(--border-radius, 12px);
+        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.12);
         padding: 16px;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 12px;
-        border-left: 5px solid #ddd;
-        animation: toast-slide-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        gap: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-left: 6px solid var(--primary-color, #667eea);
+        animation: toast-slide-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         pointer-events: auto;
         overflow: hidden;
         position: relative;
+        transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s;
     }
 
-    .toast-success { border-left-color: #10b981; }
-    .toast-error { border-left-color: #ef4444; }
-    .toast-warning { border-left-color: #f59e0b; }
-    .toast-info { border-left-color: #3b82f6; }
+    .toast:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 14px 40px rgba(0, 0, 0, 0.18);
+    }
+
+    .toast-success { border-left-color: var(--btn-success-bg, #10b981) !important; }
+    .toast-error { border-left-color: var(--btn-danger-bg, #ef4444) !important; }
+    .toast-warning { border-left-color: var(--badge-pending-bg, #f59e0b) !important; }
+    .toast-info { border-left-color: var(--primary-color, #3b82f6) !important; }
 
     .toast-icon-wrap {
         flex-shrink: 0;
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 16px;
+        font-size: 18px;
+        background: rgba(var(--primary-rgb, 102, 126, 234), 0.1);
+        color: var(--primary-color, #667eea);
     }
 
-    .toast-success .toast-icon-wrap { background: #d1fae5; color: #065f46; }
-    .toast-error .toast-icon-wrap { background: #fee2e2; color: #991b1b; }
-    .toast-warning .toast-icon-wrap { background: #fef3c7; color: #92400e; }
-    .toast-info .toast-icon-wrap { background: #dbeafe; color: #1e40af; }
+    .toast-success .toast-icon-wrap { background: rgba(16, 185, 129, 0.15); color: #059669; }
+    .toast-error .toast-icon-wrap { background: rgba(239, 68, 68, 0.15); color: #dc2626; }
+    .toast-warning .toast-icon-wrap { background: rgba(245, 158, 11, 0.15); color: #d97706; }
+    .toast-info .toast-icon-wrap { background: rgba(59, 130, 246, 0.15); color: #2563eb; }
 
     .toast-content {
         flex: 1;
         font-size: 14px;
         line-height: 1.5;
-        color: #1f2937;
-        font-weight: 600;
+        color: #111827;
+        font-weight: 500;
         padding-right: 8px;
     }
 
     .toast-close {
         flex-shrink: 0;
-        background: #f3f4f6;
+        background: transparent;
         border: none;
-        color: #6b7280;
+        color: #9ca3af;
         cursor: pointer;
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 18px;
+        font-size: 20px;
         transition: all 0.2s;
         line-height: 1;
     }
 
     .toast-close:hover {
-        background: #e5e7eb;
-        color: #111827;
+        background: rgba(0,0,0,0.05);
+        color: #374151;
         transform: rotate(90deg);
     }
 
+    /* Progress Bar */
+    .toast-progress {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 4px;
+        width: 100%;
+        background: rgba(0, 0, 0, 0.05);
+        transform-origin: left;
+    }
+
+    .toast-progress-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 100%;
+        width: 100%;
+        background: inherit;
+        filter: brightness(0.9);
+        transform-origin: left;
+        background: var(--primary-color, #667eea);
+        opacity: 0.3;
+    }
+
+    .toast-success .toast-progress-bar { background: var(--btn-success-bg, #10b981); }
+    .toast-error .toast-progress-bar { background: var(--btn-danger-bg, #ef4444); }
+    .toast-warning .toast-progress-bar { background: var(--badge-pending-bg, #f59e0b); }
+    .toast-info .toast-progress-bar { background: var(--primary-color, #3b82f6); }
+
     @keyframes toast-slide-in {
-        from { transform: translateX(120%); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
+        from { transform: translateX(120%) scale(0.9); opacity: 0; }
+        to { transform: translateX(0) scale(1); opacity: 1; }
     }
 
     .toast-fade-out {
-        animation: toast-fade-out 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        animation: toast-fade-out 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
     }
 
     @keyframes toast-fade-out {
-        from { transform: translateX(0); opacity: 1; }
-        to { transform: translateX(120%); opacity: 0; }
+        from { transform: translateX(0) scale(1); opacity: 1; }
+        to { transform: translateX(120%) scale(0.9); opacity: 0; }
     }
 
     /* Mobile adjustments */
     @media (max-width: 480px) {
         .toast-container {
-            top: 15px;
-            right: 15px;
-            max-width: 100%;
+            top: 16px;
+            right: 16px;
+            width: calc(100% - 32px);
         }
         .toast {
-            padding: 12px;
-        }
-        .toast-content {
-            font-size: 13px;
+            padding: 12px 14px;
         }
     }
 </style>
@@ -122,13 +159,19 @@
 
             const toast = document.createElement('div');
             toast.className = `toast toast-${type}`;
+            
+            // Progress tracking
+            let remainingTime = duration;
+            let startTime = Date.now();
+            let timerId = null;
+            let progressInterval = null;
 
             // Icons mapping
             const icons = {
-                success: '<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>',
-                error: '<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>',
-                warning: '<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>',
-                info: '<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>'
+                success: '<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>',
+                error: '<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>',
+                warning: '<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>',
+                info: '<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>'
             };
 
             const iconHtml = icons[type] || icons.info;
@@ -136,36 +179,67 @@
             toast.innerHTML = `
                 <div class="toast-icon-wrap">${iconHtml}</div>
                 <div class="toast-content">${message}</div>
-                <button class="toast-close" title="Dismiss" onclick="this.parentElement.remove()">&times;</button>
+                <button class="toast-close" title="Dismiss">&times;</button>
+                <div class="toast-progress">
+                    <div class="toast-progress-bar" id="progress-${Date.now()}"></div>
+                </div>
             `;
 
-            // Auto-remove on click
-            toast.addEventListener('click', function(e) {
+            const progressBar = toast.querySelector('.toast-progress-bar');
+
+            function startTimer() {
+                startTime = Date.now();
+                if (duration > 0) {
+                    timerId = setTimeout(removeToast, remainingTime);
+                    
+                    // Smooth progress bar update
+                    progressInterval = setInterval(() => {
+                        const elapsed = Date.now() - startTime;
+                        const currentProgress = ((remainingTime - elapsed) / duration) * 100;
+                        if (currentProgress >= 0) {
+                            progressBar.style.transform = `scaleX(${currentProgress / 100})`;
+                        }
+                    }, 10);
+                }
+            }
+
+            function pauseTimer() {
+                clearTimeout(timerId);
+                clearInterval(progressInterval);
+                remainingTime -= Date.now() - startTime;
+            }
+
+            function removeToast() {
+                toast.classList.add('toast-fade-out');
+                setTimeout(() => {
+                    if (toast.parentElement) toast.remove();
+                }, 400);
+            }
+
+            // Events
+            toast.addEventListener('mouseenter', pauseTimer);
+            toast.addEventListener('mouseleave', () => {
+                if (remainingTime > 0) startTimer();
+            });
+
+            toast.querySelector('.toast-close').addEventListener('click', (e) => {
+                e.stopPropagation();
+                removeToast();
+            });
+
+            // Universal click to dismiss (optional)
+            toast.addEventListener('click', (e) => {
                 if (!e.target.closest('.toast-close')) {
-                    this.classList.add('toast-fade-out');
-                    setTimeout(() => this.remove(), 400);
+                    removeToast();
                 }
             });
 
             container.appendChild(toast);
-
-            // Auto-remove after duration
-            if (duration > 0) {
-                setTimeout(() => {
-                    if (toast.parentNode) {
-                        toast.classList.add('toast-fade-out');
-                        setTimeout(() => {
-                            if (toast.parentNode) toast.remove();
-                        }, 400);
-                    }
-                }, duration);
-            }
+            startTimer();
         };
 
         // Compatibility alias
-        window.showNotification = function(message, type, duration) {
-            window.showToast(message, type, duration);
-        };
+        window.showNotification = window.showToast;
 
         // Initialize from session on load
         document.addEventListener('DOMContentLoaded', function() {
@@ -197,3 +271,4 @@
         });
     })();
 </script>
+

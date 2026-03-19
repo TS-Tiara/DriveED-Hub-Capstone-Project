@@ -148,7 +148,7 @@
                 Enter your registered email address and we'll send you a secure link to reset your password.
             </p>
 
-            @include('partials.toast-notifications')
+
 
             <form method="POST" action="{{ route('schools.password.email', $school) }}">
                 @csrf
@@ -164,5 +164,6 @@
             </div>
         </div>
     </div>
+    @include('partials.toast-notifications')
 </body>
 </html>

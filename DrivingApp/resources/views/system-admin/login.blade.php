@@ -196,7 +196,7 @@
             <p>Secure Access Portal</p>
         </div>
 
-            @include('partials.toast-notifications')
+
 
             <form method="POST" action="{{ route('system-admin.login.submit') }}">
                 @csrf
@@ -251,5 +251,6 @@
                 </a>
             </div>
         </div>
+    @include('partials.toast-notifications')
 </body>
 </html>

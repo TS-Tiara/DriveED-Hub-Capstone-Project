@@ -600,7 +600,7 @@
             </div>
         @endif
 
-        @include('partials.toast-notifications')
+
 
         <form method="POST" action="{{ route('schools.verification.verify', $school, false) }}">
             @csrf
@@ -779,5 +779,6 @@
         });
 
     </script>
+    @include('partials.toast-notifications')
 </body>
 </html>

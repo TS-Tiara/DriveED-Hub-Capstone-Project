@@ -22,6 +22,11 @@ class EnsureGuestRole
                 ->with('error', 'Please login first.');
         }
 
+        // Enforce email verification
+        if (!$student->hasVerifiedEmail()) {
+            return redirect()->route('schools.verification.show', ['school' => $request->route('school')]);
+        }
+
         // Check if user has guest role
         if ($student->role !== 'guest') {
             // If they're already a student, redirect to student dashboard

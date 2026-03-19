@@ -27,6 +27,12 @@ class AuthController extends Controller
         }
         if (Auth::guard('student')->check()) {
             $student = Auth::guard('student')->user();
+
+            // Redirection for unverified students (fix for 'Back to Login' bypass)
+            if (!$student->hasVerifiedEmail()) {
+                return redirect()->route('schools.verification.show', $school);
+            }
+
             if ($student->role === 'guest') {
                 return redirect()->route('schools.guest.dashboard', $school);
             }
