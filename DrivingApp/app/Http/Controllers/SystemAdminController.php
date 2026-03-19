@@ -482,6 +482,18 @@ class SystemAdminController extends Controller
                 return back()->with('error', 'Cannot modify system administrators.');
             }
 
+            // Prevent deactivating the last active school admin
+            if ($admin->is_active && $admin->role === 'school_admin') {
+                $schoolAdminCount = Admin::where('school_id', $admin->school_id)
+                    ->where('role', 'school_admin')
+                    ->where('is_active', true)
+                    ->count();
+                
+                if ($schoolAdminCount <= 1) {
+                    return back()->with('error', 'Cannot deactivate the only active school administrator.');
+                }
+            }
+
             $admin->is_active = !$admin->is_active;
             $admin->save();
 
@@ -521,6 +533,17 @@ class SystemAdminController extends Controller
             // Prevent deleting system admins
             if ($admin->role === 'system_admin') {
                 return back()->with('error', 'Cannot delete system administrators.');
+            }
+
+            // Prevent deleting the last school admin
+            if ($admin->role === 'school_admin') {
+                $schoolAdminCount = Admin::where('school_id', $admin->school_id)
+                    ->where('role', 'school_admin')
+                    ->count();
+                
+                if ($schoolAdminCount <= 1) {
+                    return back()->with('error', 'Cannot delete the only school administrator left. Each school must have at least one administrator.');
+                }
             }
 
             $adminName = $admin->name;

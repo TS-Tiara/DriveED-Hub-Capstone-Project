@@ -41,12 +41,13 @@ class TestSmtpConnection extends Command
 
             $this->info("SUCCESS: Test email sent to {$recipient}!");
             return 0;
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             $this->error("FAILED: Could not establish a connection with the mail server.");
             $this->error("Error Message: " . $e->getMessage());
             $this->line("");
             $this->info("Diagnostics:");
-            
+
             if (str_contains($e->getMessage(), 'Failed to establish a connection')) {
                 $this->warn("- This is often a networking/firewall issue.");
                 $this->warn("- On Railway, check if IPv6 is being used. You might try forced IPv4 by using an IP address for MAIL_HOST.");
@@ -61,7 +62,7 @@ class TestSmtpConnection extends Command
                 'exception' => $e,
                 'config' => config('mail.mailers.smtp')
             ]);
-            
+
             return 1;
         }
     }
