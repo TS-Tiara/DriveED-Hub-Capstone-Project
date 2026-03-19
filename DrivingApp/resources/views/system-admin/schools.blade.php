@@ -570,6 +570,7 @@
                                 <i class="fas fa-eye"></i>
                             </button>
                         </div>
+                        <small class="password-hint">Must be at least 8 characters and include an uppercase letter, a number, and a special character (!@#$%^&*).</small>
                     </div>
                 </div>
             </div>

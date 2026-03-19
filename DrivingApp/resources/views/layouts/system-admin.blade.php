@@ -707,17 +707,8 @@
             </header>
 
             <div class="content">
-                @if(session('success'))
-                    <div class="alert alert-success">{{ session('success') }}</div>
-                @endif
-
-                @if(session('error'))
-                    <div class="alert alert-error">{{ session('error') }}</div>
-                @endif
-
-                @if(session('info'))
-                    <div class="alert alert-info">{{ session('info') }}</div>
-                @endif
+                {{-- Toasts are handled via JS below, but we keep these as backup or for non-JS environments if needed --}}
+                <div id="toast-container" class="toast-container"></div>
 
                 @yield('content')
             </div>
@@ -739,7 +730,138 @@
             document.getElementById('sidebarOverlay').classList.remove('active');
             if (burger) burger.setAttribute('aria-expanded', 'false');
         }
+
+        // --- Toast System ---
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            
+            let icon = 'fa-info-circle';
+            if (type === 'success') icon = 'fa-check-circle';
+            if (type === 'error') icon = 'fa-exclamation-circle';
+            if (type === 'warning') icon = 'fa-exclamation-triangle';
+            
+            toast.innerHTML = `
+                <div class="toast-content">
+                    <i class="fas ${icon} toast-icon"></i>
+                    <div class="toast-message">${message}</div>
+                </div>
+                <button class="toast-close" onclick="this.parentElement.remove()">&times;</button>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                toast.classList.add('toast-fade-out');
+                setTimeout(() => toast.remove(), 500);
+            }, 5000);
+        }
+
+        // Initialize toasts from session and errors
+        document.addEventListener('DOMContentLoaded', function() {
+            @if(session('success'))
+                showToast("{{ session('success') }}", 'success');
+            @endif
+
+            @if(session('error'))
+                showToast("{{ session('error') }}", 'error');
+            @endif
+
+            @if(session('info'))
+                showToast("{{ session('info') }}", 'info');
+            @endif
+
+            @if($errors->any())
+                showToast("Please correct the mistakes in the form.", 'error');
+            @endif
+        });
     </script>
+
+    <style>
+        /* Toast Styles */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 350px;
+        }
+
+        .toast {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            animation: toast-slide-in 0.3s ease-out forwards;
+            border-left: 6px solid #ccc;
+            min-width: 280px;
+        }
+
+        .toast-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .toast-icon {
+            font-size: 1.25rem;
+        }
+
+        .toast-message {
+            font-size: 0.95rem;
+            color: #1f2937;
+            font-weight: 500;
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: #9ca3af;
+            font-size: 1.25rem;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+            margin-left: 10px;
+        }
+
+        .toast-close:hover {
+            color: #4b5563;
+        }
+
+        .toast-success { border-left-color: #10b981; }
+        .toast-success .toast-icon { color: #10b981; }
+
+        .toast-error { border-left-color: #ef4444; }
+        .toast-error .toast-icon { color: #ef4444; }
+
+        .toast-warning { border-left-color: #f59e0b; }
+        .toast-warning .toast-icon { color: #f59e0b; }
+
+        .toast-info { border-left-color: #3b82f6; }
+        .toast-info .toast-icon { color: #3b82f6; }
+
+        @keyframes toast-slide-in {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .toast-fade-out {
+            animation: toast-fade-out 0.5s ease-in forwards;
+        }
+
+        @keyframes toast-fade-out {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+    </style>
 
     {{-- Global: Prevent double form submissions --}}
     <style>

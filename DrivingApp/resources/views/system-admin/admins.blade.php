@@ -532,6 +532,7 @@
                 <div class="form-group">
                     <label for="password">Password <span class="required-mark">*</span></label>
                     <input type="password" name="password" id="password" required placeholder="Minimum 8 characters" minlength="8">
+                    <small class="password-hint" style="display: block; margin-top: 4px; color: #6b7280; font-size: 0.8rem;">Must be at least 8 characters and include an uppercase letter, a number, and a special character (!@#$%^&*).</small>
                 </div>
                 <div class="form-group">
                     <label for="password_confirmation">Confirm Password <span class="required-mark">*</span></label>

@@ -80,6 +80,9 @@ class SystemAdminController extends Controller
             ])->withInput($request->only('email'));
 
         }
+        catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        }
         catch (\Exception $e) {
             SystemLog::logError(
                 'System admin login failed',
@@ -264,6 +267,10 @@ class SystemAdminController extends Controller
 
             return redirect()->route('system-admin.schools')->with('success', "Driving school '{$school->name}' created successfully!");
         }
+        catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            throw $e;
+        }
         catch (\Exception $e) {
             DB::rollBack();
 
@@ -446,6 +453,9 @@ class SystemAdminController extends Controller
             );
 
             return redirect()->route('system-admin.admins')->with('success', "School admin '{$admin->name}' created successfully for {$school->name}!");
+        }
+        catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
         }
         catch (\Exception $e) {
             SystemLog::logError(
