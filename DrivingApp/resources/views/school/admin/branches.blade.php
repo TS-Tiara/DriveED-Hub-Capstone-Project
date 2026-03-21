@@ -634,7 +634,7 @@
                 </div>
                 <div class="form-group">
                     <label for="branchContact">Contact Number</label>
-                    <input type="text" id="branchContact" name="contact_number" placeholder="e.g. 09xx-xxx-xxxx">
+                    <input type="text" id="branchContact" name="contact_number" placeholder="e.g. 09xx-xxx-xxxx" inputmode="numeric" pattern="[0-9]*" autocomplete="tel" maxlength="15">
                 </div>
                 <div class="form-group">
                     <label for="branchEmail">Email</label>
@@ -657,6 +657,19 @@
 <script>
     const branchesBaseUrl = '{{ url($school->slug . "/admin/branches") }}';
     const csrfToken = '{{ csrf_token() }}';
+
+    function enforceNumericOnly(input) {
+        if (!input) return;
+        const sanitize = function() {
+            input.value = input.value.replace(/\D+/g, '');
+        };
+        input.addEventListener('input', sanitize);
+        input.addEventListener('paste', function() { setTimeout(sanitize, 0); });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        enforceNumericOnly(document.getElementById('branchContact'));
+    });
 
     function openBranchModal() {
         document.getElementById('branchModalTitle').textContent = 'Add New Branch';

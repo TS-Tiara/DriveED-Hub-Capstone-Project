@@ -2739,15 +2739,6 @@
             }, 500); // Small delay to show notification
         }
         
-    @include('partials.toast-notifications')
-        
-        // Alias showToast to showNotification for backward compatibility with older view scripts
-        window.showToast = function(type, message) {
-            // Map legacy 'error' type (if any) to 'error', etc.
-            // showNotification handles success, error, warning, info
-            showNotification(message, type);
-        };
-        
         // Test function for the universal AJAX system
         window.testUniversalAjax = function() {
             console.log('=== Universal AJAX System Test ===');
@@ -3160,5 +3151,6 @@
     </script>
 
     @stack('scripts')
+    @include('partials.toast-notifications')
 </body>
 </html>

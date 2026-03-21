@@ -1,4 +1,4 @@
-﻿@extends($isAjax ?? false ? 'layouts.ajax' : 'layouts.app')
+@extends($isAjax ?? false ? 'layouts.ajax' : 'layouts.app')
 
 @section('title', 'Welcome')
 
@@ -940,15 +940,23 @@
                 </div>
             </div>
         @elseif($guest->isLicensePending())
-            <div class="license-status license-pending">
+            <div class="license-status license-pending" style="border: 2px solid #f59e0b; animation: pulse 2s infinite;">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-28 icon-shrink">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <div>
-                    <strong>Pending Verification</strong>
-                    <div class="license-status-note">Your license has been submitted and is awaiting admin verification.</div>
+                    <strong>Verification in Progress</strong>
+                    <div class="license-status-note">Your student driver's license has been successfully uploaded and is currently being reviewed by our administrators. You will be notified once verified!</div>
                 </div>
             </div>
+            
+            <style>
+                @keyframes pulse {
+                    0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+                    70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
+                    100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+                }
+            </style>
         @elseif($guest->isLicenseRejected())
             <div class="license-status license-rejected">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-28 icon-shrink">

@@ -765,7 +765,7 @@
                 </div>
                 <div class="form-group">
                     <label for="add_student_contact">Student Contact Number</label>
-                    <input type="text" id="add_student_contact" name="student_contact"
+                    <input type="text" id="add_student_contact" name="student_contact" inputmode="numeric" pattern="[0-9]*" autocomplete="tel" maxlength="15"
                            placeholder="Enter student's contact number" value="{{ old('student_contact') }}">
                     <div class="form-hint">Optional but recommended.</div>
                 </div>
@@ -881,6 +881,19 @@
 @endif
 
 <script>
+    function enforceNumericOnly(input) {
+        if (!input) return;
+        const sanitize = function() {
+            input.value = input.value.replace(/\D+/g, '');
+        };
+        input.addEventListener('input', sanitize);
+        input.addEventListener('paste', function() { setTimeout(sanitize, 0); });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        enforceNumericOnly(document.getElementById('add_student_contact'));
+    });
+
     // Generic modal open/close
     function openModal(id) {
         document.getElementById(id).classList.add('active');

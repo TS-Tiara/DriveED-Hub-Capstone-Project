@@ -145,7 +145,7 @@
         <div class="login-container">
             <h2 class="login-title">Forgot Password</h2>
             <p class="login-subtitle">
-                Enter your registered email address and we'll send you a secure link to reset your password.
+                Enter your registered email address and we will send a secure reset link if an account exists.
             </p>
 
 
@@ -155,6 +155,9 @@
                 <div class="form-group">
                     <label class="form-label" for="email">Email Address</label>
                     <input type="email" id="email" name="email" value="{{ old('email') }}" placeholder="your@email.com" required autofocus>
+                    @error('email')
+                        <span style="color: #991b1b; font-size: 12px; margin-top: 5px; display: block;">{{ $message }}</span>
+                    @enderror
                 </div>
                 <button type="submit" class="login-button">Send Reset Link</button>
             </form>

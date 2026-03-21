@@ -849,7 +849,7 @@
 
                 <div class="form-group">
                     <label for="contact">Contact Number *</label>
-                    <input type="text" id="contact" name="contact" value="{{ old('contact') }}" required>
+                    <input type="text" id="contact" name="contact" value="{{ old('contact') }}" required inputmode="numeric" pattern="[0-9]*" autocomplete="tel" maxlength="15">
                     @error('contact')
                         <div class="error">{{ $message }}</div>
                     @enderror
@@ -1049,6 +1049,21 @@
     </div>
 
     <script>
+        function enforceNumericOnly(input) {
+            if (!input) {
+                return;
+            }
+
+            const sanitize = function() {
+                input.value = input.value.replace(/\D+/g, '');
+            };
+
+            input.addEventListener('input', sanitize);
+            input.addEventListener('paste', function() {
+                setTimeout(sanitize, 0);
+            });
+        }
+
         function showPrivacy(e) {
             if (e && typeof e.preventDefault === 'function') {
                 e.preventDefault();
@@ -1101,6 +1116,8 @@
                 togglePasswordVisibility(trigger.getAttribute('data-password-toggle'), trigger);
             });
         });
+
+        enforceNumericOnly(document.getElementById('contact'));
     </script>
     @include('partials.toast-notifications')
 </body>

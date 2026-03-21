@@ -26,7 +26,7 @@
         justify-content: space-between;
         gap: 14px;
         border: 1px solid rgba(255, 255, 255, 0.3);
-        border-left: 6px solid var(--primary-color, #667eea);
+        border-left: 6px solid var(--primary-color, #2563eb);
         animation: toast-slide-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         pointer-events: auto;
         overflow: hidden;
@@ -41,7 +41,7 @@
 
     .toast-success { border-left-color: var(--btn-success-bg, #10b981) !important; }
     .toast-error { border-left-color: var(--btn-danger-bg, #ef4444) !important; }
-    .toast-warning { border-left-color: var(--badge-pending-bg, #f59e0b) !important; }
+    .toast-warning { border-left-color: var(--badge-pending-bg, #fbbf24) !important; }
     .toast-info { border-left-color: var(--primary-color, #3b82f6) !important; }
 
     .toast-icon-wrap {
@@ -53,8 +53,8 @@
         align-items: center;
         justify-content: center;
         font-size: 18px;
-        background: rgba(var(--primary-rgb, 102, 126, 234), 0.1);
-        color: var(--primary-color, #667eea);
+        background: rgba(37, 99, 235, 0.1);
+        color: var(--primary-color, #2563eb);
     }
 
     .toast-success .toast-icon-wrap { background: rgba(16, 185, 129, 0.15); color: #059669; }
@@ -152,8 +152,66 @@
 
 <script>
     (function() {
+        function normalizeToastArgs(arg1, arg2, arg3) {
+            const defaultConfig = {
+                message: '',
+                type: 'info',
+                duration: 5000
+            };
+
+            const typeSet = { success: true, error: true, warning: true, info: true, danger: true };
+
+            if (arg1 && typeof arg1 === 'object' && !Array.isArray(arg1)) {
+                const message = String(arg1.message ?? arg1.text ?? '');
+                const rawType = String(arg1.type ?? arg1.level ?? defaultConfig.type).toLowerCase();
+                const type = typeSet[rawType] ? rawType : defaultConfig.type;
+                const duration = Number.isFinite(Number(arg1.duration)) ? Math.max(0, Number(arg1.duration)) : defaultConfig.duration;
+                return { message, type, duration };
+            }
+
+            if (typeof arg1 === 'string' && typeSet[arg1.toLowerCase()] && typeof arg2 === 'string') {
+                const duration = Number.isFinite(Number(arg3)) ? Math.max(0, Number(arg3)) : defaultConfig.duration;
+                return {
+                    message: arg2,
+                    type: arg1.toLowerCase(),
+                    duration
+                };
+            }
+
+            if (typeof arg1 === 'string' && arg2 && typeof arg2 === 'object' && !Array.isArray(arg2)) {
+                const rawType = String(arg2.type ?? arg2.level ?? defaultConfig.type).toLowerCase();
+                const type = typeSet[rawType] ? rawType : defaultConfig.type;
+                const duration = Number.isFinite(Number(arg2.duration)) ? Math.max(0, Number(arg2.duration)) : defaultConfig.duration;
+                return {
+                    message: arg1,
+                    type,
+                    duration
+                };
+            }
+
+            return {
+                message: String(arg1 ?? ''),
+                type: (typeof arg2 === 'string' && typeSet[arg2.toLowerCase()]) ? arg2.toLowerCase() : defaultConfig.type,
+                duration: Number.isFinite(Number(arg3)) ? Math.max(0, Number(arg3)) : defaultConfig.duration
+            };
+        }
+
+        function escapeHtml(text) {
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
         // Universal notification function
-        window.showToast = function(message, type = 'info', duration = 5000) {
+        window.showToast = function(arg1, arg2, arg3) {
+            const normalized = normalizeToastArgs(arg1, arg2, arg3);
+            const message = normalized.message;
+            const type = normalized.type === 'danger' ? 'error' : normalized.type;
+            const duration = normalized.duration;
+
             const container = document.getElementById('toast-container');
             if (!container) return;
 
@@ -178,7 +236,7 @@
 
             toast.innerHTML = `
                 <div class="toast-icon-wrap">${iconHtml}</div>
-                <div class="toast-content">${message}</div>
+                <div class="toast-content">${escapeHtml(message)}</div>
                 <button class="toast-close" title="Dismiss">&times;</button>
                 <div class="toast-progress">
                     <div class="toast-progress-bar" id="progress-${Date.now()}"></div>
@@ -238,8 +296,12 @@
             startTimer();
         };
 
-        // Compatibility alias
-        window.showNotification = window.showToast;
+        // Compatibility alias - avoid infinite loop if already defined
+        if (!window.showNotification) {
+            window.showNotification = function(arg1, arg2, arg3) {
+                window.showToast(arg1, arg2, arg3);
+            };
+        }
 
         // Initialize from session on load
         document.addEventListener('DOMContentLoaded', function() {

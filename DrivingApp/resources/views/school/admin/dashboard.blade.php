@@ -318,7 +318,7 @@
                         </li>
                         @endforeach
                     </ul>
-                    <a href="{{ $schoolRoute('admin.userManagement') }}" onclick="loadContent(this.href); return false;" class="view-all-link">
+                    <a href="{{ school_route('admin.userManagement') }}" onclick="loadContent(this.href); return false;" class="view-all-link">
                         View All Students →
                     </a>
                 @else
@@ -349,7 +349,7 @@
                         </li>
                         @endforeach
                     </ul>
-                    <a href="{{ $schoolRoute('admin.userManagement') }}" onclick="loadContent(this.href); return false;" class="view-all-link">
+                    <a href="{{ school_route('admin.userManagement') }}" onclick="loadContent(this.href); return false;" class="view-all-link">
                         View All Instructors →
                     </a>
                 @else
