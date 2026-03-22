@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log as LogFacade;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -128,14 +129,26 @@ class AdminController extends Controller
             $pendingProgressions = $admin->scopeToBranch(PhaseProgression::where('school_id', $school->id))->where('status', 'pending')->count();
 
             // Calculate monthly revenue (completed payments paid_on this month)
-            $monthlyRevenue = $admin->scopeToBranch(Payment::where('school_id', $school->id))
-                ->where('status', '=', 'approved')
-                ->whereBetween('received_at', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()])
-                ->sum('amount')
-                - $admin->scopeToBranch(Payment::where('school_id', $school->id))
-                ->where('status', '=', 'refunded')
-                ->whereBetween('refunded_at', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()])
-                ->sum('refunded_amount');
+            try {
+                $hasReceivedAt = Schema::hasColumn('payments', 'received_at');
+                $hasRefundedAt = Schema::hasColumn('payments', 'refunded_at');
+
+                if ($hasReceivedAt && $hasRefundedAt) {
+                    $monthlyRevenue = $admin->scopeToBranch(Payment::where('school_id', $school->id))
+                        ->where('status', '=', 'approved')
+                        ->whereBetween('received_at', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()])
+                        ->sum('amount')
+                        - $admin->scopeToBranch(Payment::where('school_id', $school->id))
+                        ->where('status', '=', 'refunded')
+                        ->whereBetween('refunded_at', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()])
+                        ->sum('refunded_amount');
+                } else {
+                    $monthlyRevenue = 0;
+                }
+            } catch (\Exception $e) {
+                LogFacade::warning("Dashboard revenue calculation failed, falling back to 0: " . $e->getMessage());
+                $monthlyRevenue = 0;
+            }
 
             // Calculate active enrollments (approved requests)
             $activeEnrollments = $admin->scopeToBranch(EnrollmentRequest::where('school_id', $school->id))
@@ -166,15 +179,22 @@ class AdminController extends Controller
         }
         catch (\Exception $e) {
             SystemLog::logError(
-                'Failed to load admin dashboard',
+                'Fatal dashboard failure triggered loop protection',
                 'database',
                 $e,
-            ['school_id' => $school->id],
+                ['school_id' => $school->id],
                 $school->id,
                 'view_dashboard'
             );
 
-            return back()->with('error', 'Unable to load dashboard. The system administrator has been notified.');
+            // Force logout and session termination to break the redirect loop
+            Auth::guard('admin')->logout();
+            request()->session()->invalidate();
+            request()->session()->regenerateToken();
+
+            return redirect()->route('schools.login', $school)
+                ->with('error', 'Dashboard temporarily unavailable. Please contact support.')
+                ->with('dashboard_failed', true);
         }
     }
 
