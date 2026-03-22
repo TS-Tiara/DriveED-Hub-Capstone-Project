@@ -311,23 +311,38 @@ class Student extends Authenticatable
     }
 
     /**
-     * Check if verification code is valid
+     * Check if verification code is valid with hardening.
      */
     public function isVerificationCodeValid($code)
     {
-        return $this->verification_code === $code
-            && $this->verification_code_expires_at
-            && $this->verification_code_expires_at->isFuture();
+        // 1. Expiry check (15 mins)
+        if (!$this->verification_code_expires_at || $this->verification_code_expires_at->isPast()) {
+            return false;
+        }
+
+        // 2. Brute-force protection: Limit to 5 attempts
+        if ($this->verification_attempts >= 5) {
+            return false;
+        }
+
+        // 3. Increment attempts
+        $this->increment('verification_attempts');
+        $this->last_verification_attempt_at = now();
+        $this->save();
+
+        // 4. Comparison
+        return $this->verification_code === $code;
     }
 
     /**
-     * Mark email as verified
+     * Mark email as verified and clear OTP (Single-use).
      */
     public function markEmailAsVerified()
     {
         $this->email_verified_at = now();
         $this->verification_code = null;
         $this->verification_code_expires_at = null;
+        $this->verification_attempts = 0;
         $this->save();
     }
 

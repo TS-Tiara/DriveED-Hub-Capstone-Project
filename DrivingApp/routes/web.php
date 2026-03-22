@@ -205,15 +205,6 @@ Route::prefix('{school:slug}')
                             Route::get('/instructors', [AdminController::class , 'instructorReports'])->name('reports.instructors');
                             Route::get('/logs', [AdminController::class , 'logs'])->name('reports.logs');
 
-                            // Report exports
-                            Route::prefix('export')->name('reports.export.')->group(function () {
-                                    Route::get('/students', [ReportController::class , 'exportStudents'])->name('students');
-                                    Route::get('/instructors', [ReportController::class , 'exportInstructors'])->name('instructors');
-                                    Route::get('/bookings', [ReportController::class , 'exportBookings'])->name('bookings');
-                                    Route::get('/payments', [ReportController::class , 'exportPayments'])->name('payments');
-                                    Route::get('/courses', [ReportController::class , 'exportCourses'])->name('courses');
-                                }
-                                );
                             }
                             );
 
@@ -232,6 +223,8 @@ Route::prefix('{school:slug}')
                             Route::get('/schedules/pdf', [ExportController::class , 'schedulesPdf'])->name('schedules.pdf');
                             Route::get('/payments/pdf', [ExportController::class , 'paymentsPdf'])->name('payments.pdf');
                             Route::get('/payments/excel', [ExportController::class , 'paymentsExcel'])->name('payments.excel');
+                            Route::get('/bookings/excel', [ExportController::class , 'bookingsExcel'])->name('bookings.excel');
+                            Route::get('/courses/excel', [ExportController::class , 'coursesExcel'])->name('courses.excel');
                             Route::get('/courses/pdf', [ExportController::class , 'coursesPdf'])->name('courses.pdf');
                         }
                         );

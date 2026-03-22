@@ -42,7 +42,7 @@ class AdminController extends Controller
 
             // Get counts and statistics
             // Get consolidated counts for Students and Instructors
-            $studentStats = $admin->scopeToBranch(Student::where('school_id', $school->id))
+            $studentStats = $admin->scopeToBranch(Student::where('school_id', '=', $school->id))
                 ->selectRaw("
                     COUNT(*) as total,
                     SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active,
@@ -129,9 +129,13 @@ class AdminController extends Controller
 
             // Calculate monthly revenue (completed payments paid_on this month)
             $monthlyRevenue = $admin->scopeToBranch(Payment::where('school_id', $school->id))
-                ->where('status', 'completed')
-                ->whereBetween('paid_on', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()])
-                ->sum('amount');
+                ->where('status', '=', 'approved')
+                ->whereBetween('received_at', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()])
+                ->sum('amount')
+                - $admin->scopeToBranch(Payment::where('school_id', $school->id))
+                ->where('status', '=', 'refunded')
+                ->whereBetween('refunded_at', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()])
+                ->sum('refunded_amount');
 
             // Calculate active enrollments (approved requests)
             $activeEnrollments = $admin->scopeToBranch(EnrollmentRequest::where('school_id', $school->id))
@@ -568,10 +572,14 @@ class AdminController extends Controller
                 ->with('success', 'Instructor updated successfully!');
         }
         catch (\Exception $e) {
-            SystemLog::logError('Failed to update instructor: ' . $e->getMessage(), [
-                'school_id' => $school->id,
-                'instructor_id' => $id
-            ], $e, $school->id, 'update_instructor');
+            SystemLog::logError(
+                'Failed to update instructor: ' . $e->getMessage(),
+                'database',
+                $e,
+                ['school_id' => $school->id, 'instructor_id' => $id],
+                $school->id,
+                'update_instructor'
+            );
             return back()->withInput()->with('error', 'Unable to update instructor profile at this time. Please try again later.');
         }
     }

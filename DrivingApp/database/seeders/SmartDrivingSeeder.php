@@ -212,7 +212,7 @@ class SmartDrivingSeeder extends Seeder
         $this->command->info('   ✓ Time slots, bookings, and payments created');
 
         // ── Guests & Enrollment Requests ──
-        $admins = Admin::where('school_id', '=', $school->id)->where('role', '=', 'school_admin')->get(['id'])->all();
+        $admins = Admin::where('school_id', '=', $school->id)->where('role', '=', 'school_admin')->get()->all();
         $guests = $this->createGuestsAndEnrollmentRequests($school, $courses, $admins, 'P@ssw0rd123');
         $this->command->info('   ✓ Guest students and enrollment requests created');
 

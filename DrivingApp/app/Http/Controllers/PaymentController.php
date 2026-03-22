@@ -4,15 +4,22 @@ namespace App\Http\Controllers;
 
 use App\Models\Payment;
 use App\Models\School;
+use App\Services\PaymentSubmissionService;
+use App\Services\PaymentVerificationService;
+use App\Services\ReceiptStorageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class PaymentController extends Controller
 {
+    use AuthorizesRequests;
     /**
      * Display a listing of payments.
      */
-    public function index(School $school)
+    public function index(School $school, ReceiptStorageService $storageService)
     {
         // Require authentication
         if (!Auth::guard('admin')->check() && !Auth::guard('student')->check()) {
@@ -20,18 +27,12 @@ class PaymentController extends Controller
         }
 
         $query = Payment::where('school_id', '=', $school->id)
-            ->with(['booking.student', 'booking.course']);
+            ->with(['payer', 'booking.course', 'enrollmentRequest.course']);
 
         // Filter by role - students can only see their own payments
         if (Auth::guard('student')->check()) {
             $studentId = Auth::guard('student')->id();
-            $query->where(function ($q) use ($studentId) {
-                $q->whereHas('booking', function ($inner) use ($studentId) {
-                    $inner->where('student_id', '=', $studentId);
-                })->orWhereHas('enrollmentRequest', function ($inner) use ($studentId) {
-                    $inner->where('learner_id', '=', $studentId);
-                });
-            });
+            $query->where('payer_user_id', $studentId);
         }
         elseif (Auth::guard('admin')->check()) {
             $admin = Auth::guard('admin')->user();
@@ -39,6 +40,10 @@ class PaymentController extends Controller
                 // Use the new branch_id field for reliable scoping across all payment types
                 $query->where('branch_id', '=', $admin->branch_id);
             }
+        }
+
+        if (request('enrollment_id')) {
+            $query->where('enrollment_request_id', '=', request('enrollment_id'));
         }
 
         if (request('status')) {
@@ -49,14 +54,22 @@ class PaymentController extends Controller
             $query->where('method', '=', request('method'));
         }
 
-        // Pre-compute statistics for display (before pagination)
+        $payments = $query->latest('paid_on')->paginate(10);
+
+        // Append temporary URLs for GCash receipts
+        $payments->getCollection()->transform(function ($payment) use ($storageService) {
+            if ($payment->method === 'gcash' && $payment->proof_of_payment_path) {
+                $payment->proof_url = $storageService->getUrl($payment->proof_of_payment_path);
+            }
+            return $payment;
+        });
+
+        // Pre-compute statistics for display
         $stats = [
-            'total_revenue' => (clone $query)->where('status', 'completed')->sum('amount'),
-            'completed_count' => (clone $query)->where('status', 'completed')->count(),
+            'total_revenue' => (clone $query)->where('status', 'approved')->sum('amount'),
+            'approved_count' => (clone $query)->where('status', 'approved')->count(),
             'pending_count' => (clone $query)->where('status', 'pending')->count(),
         ];
-
-        $payments = $query->latest('paid_on')->paginate(10);
 
         // Only return JSON if explicitly requested via Accept header
         if (request()->expectsJson()) {
@@ -68,85 +81,70 @@ class PaymentController extends Controller
 
         // Only admin and student have payment views
         $guard = Auth::guard('admin')->check() ? 'admin' : 'student';
-        $view = "{$guard}.payments";
-        return view($school->resolveView($view), compact('school', 'payments', 'stats'));
+        $view = "school.{$guard}.payments";
+        return view($view, compact('school', 'payments', 'stats'));
     }
 
     /**
-     * Store a newly created payment.
+     * Store a newly created payment (GCash or On-site).
      */
-    public function store(Request $request, School $school)
+    public function store(Request $request, School $school, PaymentSubmissionService $submissionService, ReceiptStorageService $storageService)
     {
-        // Only admins can record payments, or students recording their own
         $isAdmin = Auth::guard('admin')->check();
-        $studentId = Auth::guard('student')->id();
-
-        if (!$isAdmin && !$studentId) {
-            abort(403, 'Unauthorized access.');
-        }
+        $student = Auth::guard('student')->user();
+        $studentId = $student?->id;
 
         $validated = $request->validate([
+            'method' => 'required|in:gcash,on_site',
+            'amount' => 'required|numeric|min:1',
             'booking_id' => 'nullable|exists:bookings,id',
             'enrollment_request_id' => 'nullable|exists:enrollment_requests,id',
-            'amount' => 'required|numeric|min:0',
-            'method' => 'nullable|in:cash,card,bank_transfer,online',
-            'reference' => 'nullable|string|max:120',
-            'paid_on' => 'nullable|date',
-            'status' => 'nullable|in:pending,completed,failed,refunded',
+            
+            // GCash fields
+            'reference' => 'required_if:method,gcash|nullable|string|max:120',
+            'proof_of_payment' => 'required_if:method,gcash|nullable|image|max:5120',
+            
+            // On-site fields
+            'or_number' => 'required_if:method,on_site|nullable|string|max:120',
         ]);
 
-        // Security: Ensure at least one linkage is provided
+        // Forensic XOR Linkage check
         if (empty($validated['booking_id']) && empty($validated['enrollment_request_id'])) {
-            return response()->json(['success' => false, 'message' => 'Payment must be linked to a booking or enrollment request.'], 422);
+            return response()->json(['success' => false, 'message' => 'Payment must be linked to a booking or enrollment.'], 422);
         }
 
-        // Determine branch attribution
-        $branchId = null;
+        $data = $validated;
+        $data['school_id'] = $school->id;
+        $data['payer_user_id'] = $studentId;
+
+        // Determine branch and check ownership
         if (!empty($validated['booking_id'])) {
             $booking = \App\Models\Booking::findOrFail($validated['booking_id']);
-            if (!$isAdmin && $booking->student_id !== $studentId) {
-                abort(403, 'You can only record payments for your own bookings.');
-            }
-            $branchId = $booking->branch_id;
-        } elseif (!empty($validated['enrollment_request_id'])) {
+            if (!$isAdmin && (int)$booking->student_id !== (int)$studentId) abort(403);
+            $data['branch_id'] = $booking->branch_id;
+        } else {
             $enrollment = \App\Models\EnrollmentRequest::findOrFail($validated['enrollment_request_id']);
-            if (!$isAdmin && $enrollment->learner_id !== $studentId) {
-                abort(403, 'You can only record payments for your own enrollments.');
-            }
-            $branchId = $enrollment->branch_id;
+            if (!$isAdmin && (int)$enrollment->learner_id !== (int)$studentId) abort(403);
+            $data['branch_id'] = $enrollment->branch_id;
         }
 
-        // Security: Only admins can mark payments as completed/failed immediately
-        $status = $validated['status'] ?? 'pending';
-        if (!$isAdmin) {
-            $status = 'pending';
+        if ($validated['method'] === 'gcash') {
+            // Store receipt securely
+            $data['proof_of_payment_path'] = $storageService->store($request->file('proof_of_payment'), $school->id);
+            $payment = $submissionService->submitGcash($data);
+        } else {
+            // On-site usually recorded by Admin
+            if (!$isAdmin) abort(403, 'Students cannot record on-site payments.');
+            $data['received_by_admin_id'] = auth()->id();
+            $data['received_at'] = now();
+            $payment = $submissionService->submitOnsite($data);
         }
 
-        $payment = new Payment([
-            'school_id' => $school->id,
-            'branch_id' => $branchId,
-            'booking_id' => $validated['booking_id'] ?? null,
-            'enrollment_request_id' => $validated['enrollment_request_id'] ?? null,
-            'amount' => $validated['amount'],
-            'method' => $validated['method'] ?? 'cash',
-            'reference' => $validated['reference'] ?? null,
-            'paid_on' => $validated['paid_on'] ?? now(),
-        ]);
-        $payment->status = $status;
-        $payment->save();
-
-        $payment->load(['booking.student', 'booking.course']);
-
-        if ($request->ajax() || $request->wantsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Payment recorded successfully',
-                'payment' => $payment
-            ], 201);
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true, 'message' => 'Payment submitted for verification.', 'payment' => $payment], 201);
         }
 
-        return redirect()->route('payments.show', [$school->slug, $payment->id])
-            ->with('success', 'Payment recorded successfully');
+        return redirect()->back()->with('success', 'Payment submitted successfully.');
     }
 
     /**
@@ -195,43 +193,51 @@ class PaymentController extends Controller
     }
 
     /**
-     * Update the specified payment.
+     * Process verification (Approve, Reject, Refund).
      */
-    public function update(Request $request, School $school, Payment $payment)
+    public function update(Request $request, School $school, Payment $payment, PaymentVerificationService $verificationService)
     {
-        abort_if($payment->school_id !== $school->id, 404);
-
-        // Only admins can update payments
-        if (!Auth::guard('admin')->check()) {
-            abort(403, 'Only administrators can update payment records.');
-        }
+        abort_if($payment->school_id !== (int)$school->id, 404);
+        $this->authorize('update', $payment);
 
         $validated = $request->validate([
-            'amount' => 'required|numeric|min:0',
-            'method' => 'nullable|in:cash,card,bank_transfer,online',
-            'reference' => 'nullable|string|max:120',
-            'paid_on' => 'nullable|date',
-            'status' => 'nullable|in:pending,completed,failed,refunded',
+            'action' => 'required|in:approve,reject,refund',
+            'reason_code' => [
+                'required_if:action,reject,refund',
+                'nullable',
+                'string',
+                function ($attribute, $value, $fail) use ($request) {
+                    $action = $request->input('action');
+                    if ($action === 'reject') {
+                        $validCodes = ['invalid_reference', 'duplicate_submission', 'insufficient_amount', 'wrong_school', 'no_receipt_image', 'other'];
+                        if (!in_array($value, $validCodes)) $fail("Invalid rejection reason code.");
+                    } elseif ($action === 'refund') {
+                        $validCodes = ['duplicate_payment', 'course_cancelled', 'student_withdrawal', 'overpayment', 'other'];
+                        if (!in_array($value, $validCodes)) $fail("Invalid refund reason code.");
+                    }
+                }
+            ],
+            'reason_note' => 'nullable|string|max:500',
         ]);
 
-        $payment->fill($validated);
-        if (isset($validated['status'])) {
-            $payment->status = $validated['status'];
-        }
-        $payment->save();
-
-        $payment->load(['booking.student', 'booking.course']);
-
-        if ($request->ajax() || $request->wantsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Payment updated successfully',
-                'payment' => $payment
-            ]);
+        $admin = auth()->user();
+        if (!$admin instanceof \App\Models\Admin) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized admin action.'], 403);
         }
 
-        return redirect()->route('payments.show', [$school->slug, $payment->id])
-            ->with('success', 'Payment updated successfully');
+        switch ($validated['action']) {
+            case 'approve':
+                $verificationService->approve($payment, $admin);
+                break;
+            case 'reject':
+                $verificationService->reject($payment, $admin, $validated['reason_code'], $validated['reason_note']);
+                break;
+            case 'refund':
+                $verificationService->refund($payment, $admin, $validated['reason_code'], $validated['reason_note']);
+                break;
+        }
+
+        return response()->json(['success' => true, 'message' => "Payment handled as " . $validated['action']]);
     }
 
     /**
@@ -251,7 +257,7 @@ class PaymentController extends Controller
         }
 
         // Warning: Deleting a completed payment affects financial reports
-        if ($payment->status === 'completed' && !$admin->isSchoolAdmin()) {
+        if ($payment->status === 'approved' && !$admin->isSchoolAdmin()) {
             abort(403, 'Only school administrators can delete completed payments.');
         }
 
@@ -281,16 +287,18 @@ class PaymentController extends Controller
 
         $stats = [
             'total_revenue' => $admin->scopeToBranch(Payment::where('school_id', $school->id))
-                ->where('status', 'completed')
-                ->sum('amount'),
+                ->where('status', '=', 'approved')
+                ->sum('amount') - $admin->scopeToBranch(Payment::where('school_id', $school->id))
+                ->where('status', '=', 'refunded')
+                ->sum('refunded_amount'),
             'pending_payments' => $admin->scopeToBranch(Payment::where('school_id', $school->id))
-                ->where('status', 'pending')
+                ->where('status', '=', 'pending')
                 ->count(),
             'total_payments' => $admin->scopeToBranch(Payment::where('school_id', $school->id))
                 ->count(),
             'by_method' => $admin->scopeToBranch(Payment::where('school_id', $school->id))
-                ->where('status', 'completed')
-                ->selectRaw('method, SUM(amount) as total')
+                ->where('status', 'approved')
+                ->selectRaw('method, SUM(amount) as total, COUNT(*) as count')
                 ->groupBy('method')
                 ->get(),
         ];

@@ -605,19 +605,19 @@
             </button>
             <div class="export-menu" id="exportMenu">
                 <div class="export-menu-title">Download as Excel</div>
-                <a href="{{ route('schools.admin.reports.export.students', $school) }}">
+                <a href="{{ route('schools.admin.exports.students.excel', $school) }}">
                     Students
                 </a>
-                <a href="{{ route('schools.admin.reports.export.instructors', $school) }}">
+                <a href="{{ route('schools.admin.exports.instructors.excel', $school) }}">
                     Instructors
                 </a>
-                <a href="{{ route('schools.admin.reports.export.bookings', $school) }}">
+                <a href="{{ route('schools.admin.exports.bookings.excel', $school) }}">
                     Schedules
                 </a>
-                <a href="{{ route('schools.admin.reports.export.payments', $school) }}">
+                <a href="{{ route('schools.admin.exports.payments.excel', $school) }}">
                     Payments
                 </a>
-                <a href="{{ route('schools.admin.reports.export.courses', $school) }}">
+                <a href="{{ route('schools.admin.exports.courses.excel', $school) }}">
                     Courses
                 </a>
             </div>
@@ -1162,20 +1162,24 @@
         <div class="section-content collapsed">
             <div class="stats-summary">
                 <div class="stat-box">
-                    <div class="label">Revenue (Payment Date)</div>
+                    <div class="label">Gross Revenue</div>
+                    <div class="value">&#8369;{{ number_format($analytics['financial']['gross_revenue'], 2) }}</div>
+                </div>
+                <div class="stat-box">
+                    <div class="label">Refunded</div>
+                    <div class="value value-danger">&#8369;{{ number_format($analytics['financial']['total_refunded'], 2) }}</div>
+                </div>
+                <div class="stat-box">
+                    <div class="label">Net Revenue (Paid)</div>
                     <div class="value value-success">&#8369;{{ number_format($analytics['financial']['total_revenue'], 2) }}</div>
                 </div>
                 <div class="stat-box">
-                    <div class="label">Pending (Registration Date)</div>
+                    <div class="label">Pending *</div>
                     <div class="value value-warning">&#8369;{{ number_format($analytics['financial']['pending_payments'], 2) }}</div>
-                </div>
-                <div class="stat-box">
-                    <div class="label">Total Expected *</div>
-                    <div class="value value-primary">&#8369;{{ number_format($analytics['financial']['total_revenue'] + $analytics['financial']['pending_payments'], 2) }}</div>
                 </div>
             </div>
             <p class="text-muted" style="font-size: 0.85rem; margin-top: 10px;">
-                * Total Expected is the sum of completed revenue (tracked by the date it was paid) and pending payments (tracked by the date they were recorded).
+                * Gross Revenue includes all <strong>approved</strong> forensic payments. Net Revenue is Gross minus total <strong>refunded</strong> amounts. Pending reflects payments awaiting verification.
             </p>
 
             <h3 class="section-subtitle">Payments by Method</h3>

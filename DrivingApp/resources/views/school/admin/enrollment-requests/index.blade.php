@@ -964,9 +964,9 @@
                             </span>
                         </td>
                         <td>
-                            <span class="payment-badge payment-{{ $request->payment_status }}">
+                            <a href="{{ school_route('admin.payments.index', ['enrollment_id' => $request->id]) }}" class="payment-badge payment-{{ $request->payment_status }} hover:opacity-80 transition-opacity">
                                 {{ ucfirst(str_replace('_', ' ', $request->payment_status)) }}
-                            </span>
+                            </a>
                         </td>
                         <td>
                             <div class="date-text">
@@ -1228,7 +1228,7 @@ function approveRequest(requestId) {
     showConfirm({
         type: 'success',
         title: 'Approve Enrollment',
-        message: 'Are you sure you want to approve this enrollment request? This will promote the guest to a student.',
+        message: 'Are you sure you want to approve this enrollment request? Note: The student role will be promoted automatically once their first payment is verified.',
         confirmText: 'Approve',
         onConfirm: function() {
             document.getElementById('approveForm' + requestId).submit();

@@ -327,8 +327,8 @@
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
-                        <div class="stat-label">Completed Payments</div>
-                        <div class="stat-value">{{ $stats['completed_count'] }}</div>
+                        <div class="stat-label">Approved Payments</div>
+                        <div class="stat-value">{{ $stats['approved_count'] }}</div>
                     </div>
                     <div class="stat-icon">
                         <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -339,10 +339,10 @@
             </div>
         </div>
         <div class="stat-card inactive">
-            <div class="stat-content">
+             <div class="stat-content">
                 <div class="stat-header">
                     <div>
-                        <div class="stat-label">Pending Payments</div>
+                        <div class="stat-label">Pending Verifications</div>
                         <div class="stat-value">{{ $stats['pending_count'] }}</div>
                     </div>
                     <div class="stat-icon">
@@ -357,10 +357,11 @@
 
     <!-- Filters -->
     <div class="filter-group">
-        <button class="filter-btn active" data-filter="all" onclick="filterPayments('all', this)">All Payments</button>
-        <button class="filter-btn" data-filter="completed" onclick="filterPayments('completed', this)">Completed</button>
+        <button class="filter-btn active" data-filter="all" onclick="filterPayments('all', this)">All</button>
+        <button class="filter-btn" data-filter="approved" onclick="filterPayments('approved', this)">Approved</button>
         <button class="filter-btn" data-filter="pending" onclick="filterPayments('pending', this)">Pending</button>
-        <button class="filter-btn" data-filter="failed" onclick="filterPayments('failed', this)">Failed</button>
+        <button class="filter-btn" data-filter="rejected" onclick="filterPayments('rejected', this)">Rejected</button>
+        <button class="filter-btn" data-filter="refunded" onclick="filterPayments('refunded', this)">Refunded</button>
     </div>
 
     <!-- Payments Table -->
@@ -383,26 +384,47 @@
                     @forelse($payments as $payment)
                     <tr data-status="{{ $payment->status }}" id="payment-row-{{ $payment->id }}">
                         <td>{{ $payment->paid_on ? $payment->paid_on->format('M d, Y') : 'N/A' }}</td>
-                        <td><strong>{{ $payment->booking->student->name ?? 'N/A' }}</strong></td>
-                        <td>{{ $payment->booking->course->title ?? 'N/A' }}</td>
+                        <td><strong>{{ $payment->payer->name ?? 'Guest' }}</strong></td>
+                        <td>{{ $payment->booking->course->title ?? $payment->enrollmentRequest->course->title ?? 'N/A' }}</td>
                         <td class="amount-cell">₱{{ number_format($payment->amount, 2) }}</td>
-                        <td><span class="method-badge">{{ ucfirst($payment->method ?? 'N/A') }}</span></td>
-                        <td class="reference-cell">{{ $payment->reference ?? '-' }}</td>
                         <td>
-                            <span class="badge badge-{{ $payment->status === 'completed' ? 'success' : ($payment->status === 'pending' ? 'warning' : 'danger') }}" id="payment-badge-{{ $payment->id }}">
+                            <span class="method-badge">{{ ucfirst($payment->method ?? 'N/A') }}</span>
+                            @if($payment->proof_url)
+                                <br><a href="{{ $payment->proof_url }}" target="_blank" class="text-xs text-blue-600 hover:underline">View Receipt</a>
+                            @endif
+                        </td>
+                        <td class="reference-cell">
+                            {{ $payment->reference ?? $payment->or_number ?? '-' }}
+                            @if($payment->normalized_reference || $payment->normalized_or_number)
+                                <div class="text-xs text-gray-400">Norm: {{ $payment->normalized_reference ?? $payment->normalized_or_number }}</div>
+                            @endif
+                        </td>
+                        <td>
+                            @php
+                                $statusClass = match($payment->status) {
+                                    'approved' => 'success',
+                                    'pending' => 'warning',
+                                    'rejected' => 'danger',
+                                    'refunded' => 'info',
+                                    default => 'secondary'
+                                };
+                            @endphp
+                            <span class="badge badge-{{ $statusClass }}" id="payment-badge-{{ $payment->id }}">
                                 {{ ucfirst($payment->status) }}
                             </span>
                         </td>
                         <td>
                             @if($payment->status === 'pending')
-                                <button type="button" class="btn-action btn-mark-paid" onclick="markAsPaid({{ $payment->id }})" title="Mark as Paid">
-                                    <svg class="icon-16" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    Mark Paid
-                                </button>
-                            @elseif($payment->status === 'completed')
-                                <span class="payment-status-paid">✓ Paid</span>
+                                <div class="flex flex-col gap-1">
+                                    <button type="button" class="btn-mark-paid" onclick="verifyPayment({{ $payment->id }}, 'approve')" title="Approve Payment">
+                                        Approve
+                                    </button>
+                                    <button type="button" class="btn-action bg-red-100 text-red-700 px-2 py-1 rounded text-xs" onclick="verifyPayment({{ $payment->id }}, 'reject')" title="Reject Payment">
+                                        Reject
+                                    </button>
+                                </div>
+                            @elseif($payment->status === 'approved')
+                                <button type="button" class="text-xs text-gray-500 hover:text-red-600" onclick="verifyPayment({{ $payment->id }}, 'refund')">Refund</button>
                             @else
                                 <span class="payment-status-none">—</span>
                             @endif
@@ -467,57 +489,48 @@
 </div>
 
 <script>
-function markAsPaid(paymentId) {
+function verifyPayment(paymentId, action) {
+    const actionText = action.charAt(0).toUpperCase() + action.slice(1);
+    
+    let reasonPrompt = '';
+    if (action === 'reject' || action === 'refund') {
+        // In a real app, this would be a nice modal with a dropdown.
+        // For MVP, we use simple prompt with fixed codes.
+        reasonPrompt = prompt(`Enter reason code for ${action} (e.g., invalid_reference, policy_violation):`);
+        if (!reasonPrompt) return;
+    }
+
     showConfirm({
-        title: 'Confirm Payment',
-        message: 'Mark this payment as completed?',
-        type: 'warning',
+        title: `${actionText} Payment`,
+        message: `Are you sure you want to ${action} this payment?`,
+        type: action === 'approve' ? 'success' : 'warning',
         onConfirm: () => {
-            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') 
-                || '{{ csrf_token() }}';
+            const csrfToken = '{{ csrf_token() }}';
             
             fetch(`{{ url($school->slug . '/admin/payments') }}/${paymentId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': csrfToken,
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
+                    'Accept': 'application/json'
                 },
                 body: JSON.stringify({
-                    amount: document.querySelector(`#payment-row-${paymentId} .amount-cell`)?.textContent?.replace(/[₱,]/g, '').trim() || '0',
-                    status: 'completed'
+                    action: action,
+                    reason_code: reasonPrompt,
+                    reason_note: `Verification via Dashboard`
                 })
             })
-            .then(response => {
-                if (!response.ok) throw new Error('Failed to update payment');
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    const badge = document.getElementById(`payment-badge-${paymentId}`);
-                    if (badge) {
-                        badge.className = 'badge badge-success';
-                        badge.textContent = 'Completed';
-                    }
-                    const row = document.getElementById(`payment-row-${paymentId}`);
-                    if (row) {
-                        row.setAttribute('data-status', 'completed');
-                    }
-                    const actionCell = row?.querySelector('td:last-child');
-                    if (actionCell) {
-                        actionCell.innerHTML = '<span class="payment-status-paid">✓ Paid</span>';
-                    }
+                    if (typeof showToast !== 'undefined') showToast('success', data.message);
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    throw new Error(data.message || 'Failed to update payment');
                 }
             })
             .catch(error => {
-                if (typeof Toast !== 'undefined') {
-                    Toast.error('Error updating payment. Please try again.', 'Update Failed');
-                } else if (typeof showToast !== 'undefined') {
-                    showToast('error', 'Error updating payment. Please try again.');
-                } else {
-                    alert('Error updating payment. Please try again.');
-                }
+                alert(error.message);
                 console.error(error);
             });
         }
