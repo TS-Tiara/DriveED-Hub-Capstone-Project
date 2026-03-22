@@ -164,7 +164,7 @@
                     <span>•</span>
                     <span>{{ $activity->category }}</span>
                     <span>•</span>
-                    <span>{{ $activity->created_at->diffForHumans() }}</span>
+                    <span>{{ $activity->created_at->timezone('Asia/Manila')->diffForHumans() }}</span>
                 </div>
             </div>
         </div>

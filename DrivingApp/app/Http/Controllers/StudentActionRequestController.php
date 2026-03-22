@@ -58,7 +58,7 @@ class StudentActionRequestController extends Controller
             'student_id' => ['nullable', 'exists:students,id'],
             'student_name' => ['required_without:student_id', 'nullable', 'string', 'max:255'],
             'student_email' => ['required_without:student_id', 'nullable', 'email', 'max:255'],
-            'student_contact' => ['nullable', 'string', 'max:20'],
+            'student_contact' => ['nullable', 'string', 'max:20', 'regex:/^[0-9]+$/'],
             'reason' => ['required', 'string', 'max:1000'],
         ]);
 

@@ -7,6 +7,7 @@ use App\Models\Instructor;
 use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\Course;
+use App\Models\EnrollmentRequest;
 use App\Models\School;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -49,27 +50,31 @@ class ReportController extends Controller
             }
 
             // â”€â”€ 1. Student metrics (2 queries) â”€â”€
-            $studentCounts = Student::where('school_id', $schoolId)
-                ->when($startDate, fn($q) => $q->whereBetween('enrollment_date', [$startDate, $endDate]))
+            $studentCounts = $admin->scopeToBranch(Student::where('school_id', $schoolId))
+                ->when($startDate, fn($q) => $q->whereBetween('created_at', [$startDate, $endDate]))
                 ->selectRaw("COUNT(*) as total, SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active")
                 ->first();
 
-            $studentsByStatus = Student::where('school_id', $schoolId)
-                ->when($startDate, fn($q) => $q->whereBetween('enrollment_date', [$startDate, $endDate]))
+            $studentsByStatus = $admin->scopeToBranch(Student::where('school_id', $schoolId))
+                ->when($startDate, fn($q) => $q->whereBetween('created_at', [$startDate, $endDate]))
                 ->selectRaw('status, COUNT(*) as count')
                 ->groupBy('status')
                 ->get();
 
-            // â”€â”€ 2. Enrollment trends (1 query) â”€â”€
-            $enrollmentsThisMonth = Student::where('school_id', $schoolId)
-                ->when($startDate, fn($q) => $q->whereBetween('enrollment_date', [$startDate, $endDate]),
-            fn($q) => $q->whereMonth('enrollment_date', now()->month)->whereYear('enrollment_date', now()->year))
+            // â”€â”€ 2. Enrollment trends (Semantic Fix: Use EnrollmentRequest) â”€â”€
+            $activeEnrollmentsCount = $admin->scopeToBranch(EnrollmentRequest::where('school_id', $schoolId))
+                ->where('status', 'approved')
+                ->count();
+
+            $enrollmentsThisMonth = $admin->scopeToBranch(EnrollmentRequest::where('school_id', $schoolId))
+                ->when($startDate, fn($q) => $q->whereBetween('created_at', [$startDate, $endDate]),
+                    fn($q) => $q->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year))
                 ->count();
 
 
 
             // â”€â”€ 3. ALL booking stats in ONE query using conditional aggregation â”€â”€
-            $bookingStats = Booking::where('school_id', $schoolId)
+            $bookingStats = $admin->scopeToBranch(Booking::where('school_id', $schoolId))
                 ->when($startDate, fn($q) => $q->whereBetween('scheduled_at', [$startDate, $endDate]))
                 ->selectRaw("
                 COUNT(*) as total,
@@ -95,7 +100,7 @@ class ReportController extends Controller
             // â”€â”€ 4. Course stats - ONE bulk query instead of per-course loops â”€â”€
             $courses = Course::where('school_id', $schoolId)->get();
 
-            $courseBookingStats = Booking::where('school_id', $schoolId)
+            $courseBookingStats = $admin->scopeToBranch(Booking::where('school_id', $schoolId))
                 ->when($startDate, fn($q) => $q->whereBetween('scheduled_at', [$startDate, $endDate]))
                 ->selectRaw("
                 course_id,
@@ -107,15 +112,31 @@ class ReportController extends Controller
                 ->get()
                 ->keyBy('course_id');
 
-            // Course revenue - ONE bulk query
-            $courseRevenue = DB::table('payments')
+            // Course revenue - ONE bulk query (Corrected Axis: paid_on + Enrollment Fees)
+            $courseRevenueFromBookings = DB::table('payments')
                 ->join('bookings', 'payments.booking_id', '=', 'bookings.id')
                 ->where('bookings.school_id', $schoolId)
+                ->when($admin->isBranchSecretary(), fn($q) => $q->where('bookings.branch_id', $admin->branch_id))
                 ->where('payments.status', 'completed')
-                ->when($startDate, fn($q) => $q->whereBetween('bookings.scheduled_at', [$startDate, $endDate]))
+                ->when($startDate, fn($q) => $q->whereBetween('payments.paid_on', [$startDate, $endDate]))
                 ->selectRaw('bookings.course_id, SUM(payments.amount) as total_revenue')
                 ->groupBy('bookings.course_id')
                 ->pluck('total_revenue', 'course_id');
+
+            $courseRevenueFromEnrollments = DB::table('payments')
+                ->join('enrollment_requests', 'payments.enrollment_request_id', '=', 'enrollment_requests.id')
+                ->where('enrollment_requests.school_id', $schoolId)
+                ->when($admin->isBranchSecretary(), fn($q) => $q->where('enrollment_requests.branch_id', $admin->branch_id))
+                ->where('payments.status', 'completed')
+                ->when($startDate, fn($q) => $q->whereBetween('payments.paid_on', [$startDate, $endDate]))
+                ->selectRaw('enrollment_requests.course_id, SUM(payments.amount) as total_revenue')
+                ->groupBy('enrollment_requests.course_id')
+                ->pluck('total_revenue', 'course_id');
+
+            $courseRevenue = $courseRevenueFromBookings;
+            foreach ($courseRevenueFromEnrollments as $courseId => $amount) {
+                $courseRevenue[$courseId] = ($courseRevenue[$courseId] ?? 0) + $amount;
+            }
 
             $courseStats = $courses->map(function ($course) use ($courseBookingStats, $courseRevenue) {
                 $stats = $courseBookingStats->get($course->id);
@@ -134,7 +155,7 @@ class ReportController extends Controller
             })->sortByDesc('total_enrolled')->take(10);
 
             // â”€â”€ 5. Top instructors - already efficient (single GROUP BY query) â”€â”€
-            $topInstructors = Booking::where('school_id', $schoolId)
+            $topInstructors = $admin->scopeToBranch(Booking::where('school_id', $schoolId))
                 ->when($startDate, fn($q) => $q->whereBetween('scheduled_at', [$startDate, $endDate]))
                 ->with('instructor')
                 ->selectRaw('instructor_id, 
@@ -155,7 +176,7 @@ class ReportController extends Controller
             ]);
 
             // â”€â”€ 6. Lessons by instructor - already efficient (single GROUP BY) â”€â”€
-            $lessonsByInstructor = Booking::where('school_id', $schoolId)
+            $lessonsByInstructor = $admin->scopeToBranch(Booking::where('school_id', $schoolId))
                 ->with('instructor')
                 ->when($startDate, fn($q) => $q->whereBetween('scheduled_at', [$startDate, $endDate]))
                 ->whereNotNull('instructor_id')
@@ -170,7 +191,7 @@ class ReportController extends Controller
             ]);
 
             // â”€â”€ 7. Cancellation details (1 query with eager loading) â”€â”€
-            $cancellationDetails = Booking::where('school_id', $schoolId)
+            $cancellationDetails = $admin->scopeToBranch(Booking::where('school_id', $schoolId))
                 ->whereIn('status', ['cancelled', 'no_show', 'no-show'])
                 ->when($startDate, fn($q) => $q->whereBetween('scheduled_at', [$startDate, $endDate]))
                 ->with(['student', 'instructor', 'course'])
@@ -178,12 +199,12 @@ class ReportController extends Controller
                 ->limit(20)
                 ->get();
 
-            // â”€â”€ 8. Financial data - 3 queries (already efficient, no loops) â”€â”€
-            $financialBaseQuery = fn() => Payment::whereHas('booking', fn($q) => $q->where('school_id', $schoolId));
+            // â”€â”€ 8. Financial data - 3 queries (Semantic Fix: Standardize on paid_on) â”€â”€
+            $financialBaseQuery = fn() => $admin->scopeToBranch(Payment::where('school_id', $schoolId));
 
             $totalRevenue = $financialBaseQuery()
                 ->where('status', 'completed')
-                ->when($startDate, fn($q) => $q->whereBetween('created_at', [$startDate, $endDate]))
+                ->when($startDate, fn($q) => $q->whereBetween('paid_on', [$startDate, $endDate]))
                 ->sum('amount');
 
             $pendingPayments = $financialBaseQuery()
@@ -202,6 +223,7 @@ class ReportController extends Controller
             $studentProgress = DB::table('bookings')
                 ->join('students', 'bookings.student_id', '=', 'students.id')
                 ->where('bookings.school_id', $schoolId)
+                ->when($admin->isBranchSecretary(), fn($q) => $q->where('bookings.branch_id', $admin->branch_id))
                 ->when($startDate, fn($q) => $q->whereBetween('bookings.scheduled_at', [$startDate, $endDate]))
                 ->selectRaw("
                 students.id, students.name, students.email, students.enrollment_date, students.status,
@@ -240,7 +262,8 @@ class ReportController extends Controller
                 'current_period' => $period,
                 'total_students' => (int)$studentCounts->total,
                 'active_students' => (int)$studentCounts->active,
-                'total_instructors' => Instructor::where('school_id', $schoolId)->count(),
+                'active_enrollments' => $activeEnrollmentsCount,
+                'total_instructors' => $admin->scopeToBranch(Instructor::where('school_id', $schoolId))->count(),
                 'total_bookings_this_month' => $totalAllBookings,
                 'completed_lessons_this_month' => $completedCount,
                 'students_by_status' => $studentsByStatus,

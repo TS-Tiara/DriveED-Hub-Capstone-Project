@@ -34,8 +34,8 @@ class EnsureSchoolContext
         $request->session()->put('school_id', $school->id);
         $request->session()->put('school_slug', $school->slug);
 
-        config(['app.timezone' => $school->timezone ?? config('app.timezone')]);
-        date_default_timezone_set(config('app.timezone'));
+        // We keep app.timezone as UTC globally for consistent storage.
+        // We can use $school->timezone for display-level conversion in views.
 
         view()->share('currentSchool', $school);
         view()->share('schoolUrl', static function (string $path = '') use ($school): string {

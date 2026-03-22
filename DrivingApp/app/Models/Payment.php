@@ -15,11 +15,14 @@ class Payment extends Model
 
     protected $fillable = [
         'school_id',
+        'branch_id',
         'booking_id',
+        'enrollment_request_id',
         'amount',
         'paid_on',
         'method',
         'reference',
+        'status',
     ];
 
     protected $casts = [
@@ -41,6 +44,22 @@ class Payment extends Model
     public function booking(): BelongsTo
     {
         return $this->belongsTo(Booking::class);
+    }
+
+    /**
+     * Get the branch that owns the payment.
+     */
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
+    /**
+     * Get the enrollment request for the payment.
+     */
+    public function enrollmentRequest(): BelongsTo
+    {
+        return $this->belongsTo(EnrollmentRequest::class);
     }
 
     /**

@@ -35,6 +35,17 @@ class EnrollmentRequestController extends Controller
 
         $admin->scopeToBranch($baseQuery);
 
+        // Server-side filtering
+        if ($request->filled('status') && $request->status !== 'all') {
+            $baseQuery->where('status', $request->status);
+        }
+
+        if ($request->filled('branch')) {
+            $baseQuery->whereHas('branchRelation', function($q) use ($request) {
+                $q->where('name', $request->branch);
+            });
+        }
+
         $allRequests = (clone $baseQuery)->paginate(20)->withQueryString();
 
         $allRequestsCount = (clone $baseQuery)->count();
@@ -1003,14 +1014,18 @@ class EnrollmentRequestController extends Controller
             abort(403, 'Student does not belong to this school.');
         }
 
-        // 1. Check if we have a direct file path (New Method)
+        // 1. Direct Disk Check (Public then Local)
         if (!empty($student->student_license_path)) {
-            if (Storage::disk('public')->exists($student->student_license_path)) {
-                return Storage::disk('public')->response($student->student_license_path, $student->student_license_filename);
+            $path = $student->student_license_path;
+            
+            foreach (['public', 'local'] as $disk) {
+                if (Storage::disk($disk)->exists($path)) {
+                    return Storage::disk($disk)->response($path, $student->student_license_filename);
+                }
             }
         }
 
-        // 2. Check for legacy Base64 data (Old Method)
+        // 2. Legacy Base64 data (Old Method)
         if (!empty($student->student_license_data)) {
             $decodedData = base64_decode($student->student_license_data, true);
 
@@ -1023,18 +1038,12 @@ class EnrollmentRequestController extends Controller
                     'Content-Disposition' => 'inline; filename="' . $safeFilename . '"',
                 ]);
             }
-
-            Log::warning('Invalid base64 student license data', [
-                'school_id' => $school->id,
-                'student_id' => $student->id,
-            ]);
         }
 
-        // 3. Fallback: Try to find file by candidates if path was messy or partial
+        // 3. Last Resort: Try Candidate Paths (Messy/Partial paths)
         $storedPath = trim((string) $student->student_license_path);
         if ($storedPath !== '') {
-            $pathFromUrl = parse_url($storedPath, PHP_URL_PATH);
-            $normalizedPath = ltrim($pathFromUrl ?: $storedPath, '/');
+            $normalizedPath = ltrim(parse_url($storedPath, PHP_URL_PATH) ?: $storedPath, '/');
             $fileName = basename($normalizedPath);
 
             $candidates = array_values(array_filter(array_unique([
@@ -1047,8 +1056,9 @@ class EnrollmentRequestController extends Controller
 
             foreach (['public', 'local'] as $disk) {
                 foreach ($candidates as $candidatePath) {
-                if (Storage::disk($disk)->exists($candidatePath)) {
-                    return Storage::disk($disk)->response($candidatePath);
+                    if (Storage::disk($disk)->exists($candidatePath)) {
+                        return Storage::disk($disk)->response($candidatePath);
+                    }
                 }
             }
         }
@@ -1056,11 +1066,9 @@ class EnrollmentRequestController extends Controller
         Log::warning('Student license file not found during admin view', [
             'school_id' => $school->id,
             'student_id' => $student->id,
-            'stored_path' => $storedPath,
-            'candidate_paths' => $candidates,
+            'stored_path' => $student->student_license_path,
         ]);
-    }
 
-    abort(404, 'License file not found.');
+        abort(404, 'License file not found.');
     }
 }

@@ -9,6 +9,7 @@ use App\Models\Instructor;
 use App\Models\TimeSlot;
 use App\Models\Booking;
 use App\Models\Progress;
+use App\Models\SessionCompletion;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -52,12 +53,25 @@ class InstructorController extends Controller
             ->orderBy('start_time', 'asc')
             ->first();
 
-        // 2. Student & Booking Statistics
-        $activeStudents = Booking::where('school_id', '=', $school->id, 'and')
+        $bookingStudents = Booking::where('school_id', '=', $school->id, 'and')
             ->where('instructor_id', '=', $instructor->id, 'and')
             ->where('status', '!=', 'cancelled', 'and')
             ->distinct()
-            ->count('student_id');
+            ->pluck('student_id', 'id')
+            ->toArray();
+
+        $sessionStudents = SessionCompletion::where('school_id', '=', $school->id, 'and')
+            ->where('instructor_id', '=', $instructor->id, 'and')
+            ->with(['enrollment' => function($q) {
+                $q->select('id', 'learner_id');
+            }])
+            ->get()
+            ->map(fn($session) => $session->enrollment->learner_id ?? null)
+            ->filter()
+            ->unique()
+            ->toArray();
+
+        $activeStudents = count(array_unique(array_merge($bookingStudents, $sessionStudents)));
 
         $pendingBookings = Booking::where('school_id', '=', $school->id, 'and')
             ->where('instructor_id', '=', $instructor->id, 'and')
@@ -98,12 +112,26 @@ class InstructorController extends Controller
     {
         $instructor = Auth::guard('instructor')->user();
 
-        $assignedStudentIds = Booking::where('school_id', '=', $school->id, 'and')
+        $bookingStudentIds = Booking::where('school_id', '=', $school->id, 'and')
             ->where('instructor_id', '=', $instructor->id, 'and')
             ->whereIn('status', ['scheduled', 'completed'], 'and', false)
             ->distinct()
             ->pluck('student_id', null)
             ->toArray();
+
+        // Include students from session completions (e.g., theoretical training logs)
+        $sessionStudentIds = SessionCompletion::where('school_id', '=', $school->id, 'and')
+            ->where('instructor_id', '=', $instructor->id, 'and')
+            ->with(['enrollment' => function($q) {
+                $q->select('id', 'learner_id');
+            }])
+            ->get()
+            ->map(fn($session) => $session->enrollment->learner_id ?? null)
+            ->filter()
+            ->unique()
+            ->toArray();
+
+        $assignedStudentIds = array_unique(array_merge($bookingStudentIds, $sessionStudentIds));
 
         // AUD-003 Fix: Only get students assigned to this instructor to prevent PII leakage
         $students = Student::where('school_id', '=', $school->id)
@@ -380,10 +408,25 @@ class InstructorController extends Controller
         $instructor = Auth::guard('instructor')->user();
 
         // Get students who have bookings with this instructor
-        $studentIds = Booking::where('school_id', '=', $school->id, 'and')
+        $bookingStudentIds = Booking::where('school_id', '=', $school->id, 'and')
             ->where('instructor_id', '=', $instructor->id, 'and')
             ->distinct()
-            ->pluck('student_id', null);
+            ->pluck('student_id', null)
+            ->toArray();
+
+        // Include students from session completions
+        $sessionStudentIds = SessionCompletion::where('school_id', '=', $school->id, 'and')
+            ->where('instructor_id', '=', $instructor->id, 'and')
+            ->with(['enrollment' => function($q) {
+                $q->select('id', 'learner_id');
+            }])
+            ->get()
+            ->map(fn($session) => $session->enrollment->learner_id ?? null)
+            ->filter()
+            ->unique()
+            ->toArray();
+
+        $studentIds = array_unique(array_merge($bookingStudentIds, $sessionStudentIds));
 
         $students = Student::whereIn('id', $studentIds, 'and', false)
             ->with(['bookings' => function($q) use ($instructor) {
@@ -434,7 +477,7 @@ class InstructorController extends Controller
                 'email',
                 Rule::unique('instructors', 'email')->ignore($instructor->id),
             ],
-            'contact' => 'nullable|string|max:20',
+            'contact' => 'nullable|string|max:20|regex:/^[0-9]+$/',
             'license_number' => 'nullable|string|max:50',
             'current_password' => 'nullable|required_with:new_password',
             'new_password' => 'nullable|string|min:6|confirmed',

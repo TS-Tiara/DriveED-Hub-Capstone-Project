@@ -251,7 +251,7 @@
             </div>
         </a>
         
-        <a href="{{ $schoolRoute('admin.schedules') }}" class="stat-card active stat-card-link" onclick="loadContent(this.href); return false;">
+        <a href="{{ $schoolRoute('admin.reports.index') }}" class="stat-card active stat-card-link" onclick="loadContent(this.href); return false;">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -265,6 +265,40 @@
                     </div>
                 </div>
                 <div class="stat-detail">Currently active accounts</div>
+            </div>
+        </a>
+
+        <a href="{{ $schoolRoute('admin.enrollments.index') }}" class="stat-card info stat-card-link" onclick="loadContent(this.href); return false;">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">Active Enrollments</div>
+                        <div class="stat-value">{{ $activeEnrollments }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="stat-detail">Approved training requests</div>
+            </div>
+        </a>
+
+        <a href="{{ $schoolRoute('admin.reports.index') }}" class="stat-card success stat-card-link" onclick="loadContent(this.href); return false;">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">Monthly Revenue</div>
+                        <div class="stat-value">&#8369;{{ number_format($monthlyRevenue, 2) }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="stat-detail">Cash received this month</div>
             </div>
         </a>
     </div>

@@ -67,7 +67,7 @@ class AdminManagementController extends Controller
                 Rule::unique('admins', 'email'),
             ],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'contact' => ['nullable', 'string', 'max:20'],
+            'contact' => ['nullable', 'string', 'max:20', 'regex:/^[0-9]+$/'],
             'role' => ['required', 'in:school_admin,branch_secretary'],
             'branch_id' => ['required_if:role,branch_secretary', 'nullable', 'exists:branches,id'],
         ]);
@@ -151,7 +151,7 @@ class AdminManagementController extends Controller
                 Rule::unique('admins', 'email')->ignore($targetAdmin->id),
             ],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
-            'contact' => ['nullable', 'string', 'max:20'],
+            'contact' => ['nullable', 'string', 'max:20', 'regex:/^[0-9]+$/'],
             'role' => ['required', 'in:school_admin,branch_secretary'],
             'branch_id' => ['required_if:role,branch_secretary', 'nullable', 'exists:branches,id'],
         ]);

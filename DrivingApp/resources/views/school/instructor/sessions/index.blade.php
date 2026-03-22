@@ -282,6 +282,15 @@
 
     .btn-first-session:hover { opacity: 0.9; color: white; }
 
+    .btn-first-session svg {
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+        display: inline-block;
+        margin: 0;
+        vertical-align: middle;
+    }
+
     /* ── Pagination ── */
     .table-footer {
         padding: 14px 24px;

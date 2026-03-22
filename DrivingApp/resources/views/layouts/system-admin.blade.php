@@ -639,6 +639,12 @@
         }
     </style>
     @yield('styles')
+    
+    <style>
+        :root {
+            --primary-color: #2563eb; /* Default system admin blue */
+        }
+    </style>
 </head>
 <body>
     <a href="#mainContent" class="skip-link">Skip to main content</a>
@@ -707,93 +713,41 @@
             </header>
 
             <div class="content">
-    @include('partials.toast-notifications')
+                @yield('content')
+            </div>
+        </main>
+    </div>
+    <script>
+    (function() {
+        var sidebar = document.getElementById('sidebar');
+        var overlay = document.getElementById('sidebarOverlay');
+        var burger = document.querySelector('.burger-menu');
+
+        window.toggleSidebar = function() {
+            if (!sidebar || !overlay) return;
+            var isActive = sidebar.classList.toggle('active');
+            overlay.classList.toggle('active', isActive);
+            if (burger) {
+                burger.setAttribute('aria-expanded', isActive ? 'true' : 'false');
+            }
+        };
+
+        window.closeSidebar = function() {
+            if (!sidebar || !overlay) return;
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+            if (burger) {
+                burger.setAttribute('aria-expanded', 'false');
+            }
+        };
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                window.closeSidebar();
+            }
+        });
+    })();
     </script>
-
-    <style>
-        /* Toast Styles */
-        .toast-container {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            max-width: 350px;
-        }
-
-        .toast {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-            padding: 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            animation: toast-slide-in 0.3s ease-out forwards;
-            border-left: 6px solid #ccc;
-            min-width: 280px;
-        }
-
-        .toast-content {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .toast-icon {
-            font-size: 1.25rem;
-        }
-
-        .toast-message {
-            font-size: 0.95rem;
-            color: #1f2937;
-            font-weight: 500;
-        }
-
-        .toast-close {
-            background: none;
-            border: none;
-            color: #9ca3af;
-            font-size: 1.25rem;
-            cursor: pointer;
-            padding: 0;
-            line-height: 1;
-            margin-left: 10px;
-        }
-
-        .toast-close:hover {
-            color: #4b5563;
-        }
-
-        .toast-success { border-left-color: #10b981; }
-        .toast-success .toast-icon { color: #10b981; }
-
-        .toast-error { border-left-color: #ef4444; }
-        .toast-error .toast-icon { color: #ef4444; }
-
-        .toast-warning { border-left-color: #f59e0b; }
-        .toast-warning .toast-icon { color: #f59e0b; }
-
-        .toast-info { border-left-color: #3b82f6; }
-        .toast-info .toast-icon { color: #3b82f6; }
-
-        @keyframes toast-slide-in {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-
-        .toast-fade-out {
-            animation: toast-fade-out 0.5s ease-in forwards;
-        }
-
-        @keyframes toast-fade-out {
-            from { transform: translateX(0); opacity: 1; }
-            to { transform: translateX(100%); opacity: 0; }
-        }
-    </style>
-
     {{-- Global: Prevent double form submissions --}}
     <style>
         .btn-submitting {
@@ -848,5 +802,6 @@
         }, true);
     })();
     </script>
+    @include('partials.toast-notifications')
 </body>
 </html>

@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 
 class SystemAdminController extends Controller
 {
@@ -47,6 +48,15 @@ class SystemAdminController extends Controller
                 'email' => 'required|email',
                 'password' => 'required',
             ]);
+
+            $credentials['email'] = strtolower(trim($credentials['email']));
+
+            $throttleMessage = $this->getSystemAdminThrottleMessage($request, $credentials['email']);
+            if ($throttleMessage !== null) {
+                return back()->withErrors([
+                    'email' => $throttleMessage,
+                ])->withInput($request->only('email'));
+            }
             $remember = $request->has('remember');
 
             // Attempt to authenticate as admin
@@ -57,6 +67,7 @@ class SystemAdminController extends Controller
                 // Check if the admin has system_admin role
                 if ($admin->role === 'system_admin') {
                     $request->session()->regenerate();
+                    $this->clearSystemAdminAttemptLimits($request, $credentials['email']);
 
                     SystemLog::logInfo(
                         "System admin logged in: {$admin->name}",
@@ -71,10 +82,13 @@ class SystemAdminController extends Controller
 
                 // Not a system admin, logout
                 Auth::guard('admin')->logout();
+                $this->registerSystemAdminAttempt($request, $credentials['email']);
                 return back()->withErrors([
                     'email' => 'Access denied. System Administrator privileges required.',
                 ])->withInput($request->only('email'));
             }
+
+            $this->registerSystemAdminAttempt($request, $credentials['email']);
 
             return back()->withErrors([
                 'email' => 'The provided credentials do not match our records.',
@@ -96,6 +110,45 @@ class SystemAdminController extends Controller
 
             return back()->with('error', 'Login failed. Please try again.');
         }
+    }
+
+    private function systemAdminLimiterKeyIpAndEmail(Request $request, string $email): string
+    {
+        return 'system-admin-login:ip-email:' . sha1($email) . ':' . sha1((string) $request->ip());
+    }
+
+    private function systemAdminLimiterKeyEmail(string $email): string
+    {
+        return 'system-admin-login:email:' . sha1($email);
+    }
+
+    private function getSystemAdminThrottleMessage(Request $request, string $email): ?string
+    {
+        $ipEmailKey = $this->systemAdminLimiterKeyIpAndEmail($request, $email);
+        if (RateLimiter::tooManyAttempts($ipEmailKey, 5)) {
+            $seconds = RateLimiter::availableIn($ipEmailKey);
+            return 'Too many login attempts. Please wait ' . max(1, (int) ceil($seconds / 60)) . ' minute(s) and try again.';
+        }
+
+        $emailKey = $this->systemAdminLimiterKeyEmail($email);
+        if (RateLimiter::tooManyAttempts($emailKey, 20)) {
+            $seconds = RateLimiter::availableIn($emailKey);
+            return 'Too many login attempts for this account. Please wait ' . max(1, (int) ceil($seconds / 60)) . ' minute(s) and try again.';
+        }
+
+        return null;
+    }
+
+    private function registerSystemAdminAttempt(Request $request, string $email): void
+    {
+        RateLimiter::hit($this->systemAdminLimiterKeyIpAndEmail($request, $email), 60);
+        RateLimiter::hit($this->systemAdminLimiterKeyEmail($email), 3600);
+    }
+
+    private function clearSystemAdminAttemptLimits(Request $request, string $email): void
+    {
+        RateLimiter::clear($this->systemAdminLimiterKeyIpAndEmail($request, $email));
+        RateLimiter::clear($this->systemAdminLimiterKeyEmail($email));
     }
 
     /**

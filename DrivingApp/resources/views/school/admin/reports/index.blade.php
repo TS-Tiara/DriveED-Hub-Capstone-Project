@@ -649,9 +649,9 @@
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
-                        <div class="stat-label">Total Students</div>
+                        <div class="stat-label">Total Student Accounts</div>
                         <div class="stat-value">{{ $analytics['total_students'] }}</div>
-                        <div class="subtitle">{{ $analytics['active_students'] }} active</div>
+                        <div class="subtitle text-success" style="font-weight: 600;">{{ $analytics['active_enrollments'] }} Active Enrollments</div>
                     </div>
                     <div class="stat-icon">
                         <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -732,15 +732,15 @@
         <div class="section-content">
             <div class="stats-summary">
                 <div class="stat-box">
-                    <div class="label">Total Enrolled</div>
+                    <div class="label">Total Students</div>
                     <div class="value">{{ $analytics['total_students'] }}</div>
                 </div>
                 <div class="stat-box">
-                    <div class="label">Active</div>
-                    <div class="value value-success">{{ $analytics['active_students'] }}</div>
+                    <div class="label">Active Enrollments</div>
+                    <div class="value value-success">{{ $analytics['active_enrollments'] }}</div>
                 </div>
                 <div class="stat-box">
-                    <div class="label">{{ $periodLabel }}</div>
+                    <div class="label">{{ $periodLabel }} Enrollments</div>
                     <div class="value">{{ $analytics['enrollments_this_month'] }}</div>
                 </div>
             </div>
@@ -1162,18 +1162,21 @@
         <div class="section-content collapsed">
             <div class="stats-summary">
                 <div class="stat-box">
-                    <div class="label">Total Revenue</div>
+                    <div class="label">Revenue (Payment Date)</div>
                     <div class="value value-success">&#8369;{{ number_format($analytics['financial']['total_revenue'], 2) }}</div>
                 </div>
                 <div class="stat-box">
-                    <div class="label">Pending Payments</div>
+                    <div class="label">Pending (Registration Date)</div>
                     <div class="value value-warning">&#8369;{{ number_format($analytics['financial']['pending_payments'], 2) }}</div>
                 </div>
                 <div class="stat-box">
-                    <div class="label">Total Expected</div>
+                    <div class="label">Total Expected *</div>
                     <div class="value value-primary">&#8369;{{ number_format($analytics['financial']['total_revenue'] + $analytics['financial']['pending_payments'], 2) }}</div>
                 </div>
             </div>
+            <p class="text-muted" style="font-size: 0.85rem; margin-top: 10px;">
+                * Total Expected is the sum of completed revenue (tracked by the date it was paid) and pending payments (tracked by the date they were recorded).
+            </p>
 
             <h3 class="section-subtitle">Payments by Method</h3>
             <table class="reports-table">

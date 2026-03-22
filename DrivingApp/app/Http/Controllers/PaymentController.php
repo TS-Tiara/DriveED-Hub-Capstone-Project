@@ -25,16 +25,19 @@ class PaymentController extends Controller
         // Filter by role - students can only see their own payments
         if (Auth::guard('student')->check()) {
             $studentId = Auth::guard('student')->id();
-            $query->whereHas('booking', function ($q) use ($studentId) {
-                $q->where('student_id', '=', $studentId);
+            $query->where(function ($q) use ($studentId) {
+                $q->whereHas('booking', function ($inner) use ($studentId) {
+                    $inner->where('student_id', '=', $studentId);
+                })->orWhereHas('enrollmentRequest', function ($inner) use ($studentId) {
+                    $inner->where('learner_id', '=', $studentId);
+                });
             });
         }
         elseif (Auth::guard('admin')->check()) {
             $admin = Auth::guard('admin')->user();
             if ($admin->isBranchSecretary() && $admin->branch_id) {
-                $query->whereHas('booking', function ($q) use ($admin) {
-                    $q->where('branch_id', '=', $admin->branch_id);
-                });
+                // Use the new branch_id field for reliable scoping across all payment types
+                $query->where('branch_id', '=', $admin->branch_id);
             }
         }
 
@@ -83,7 +86,8 @@ class PaymentController extends Controller
         }
 
         $validated = $request->validate([
-            'booking_id' => 'required|exists:bookings,id',
+            'booking_id' => 'nullable|exists:bookings,id',
+            'enrollment_request_id' => 'nullable|exists:enrollment_requests,id',
             'amount' => 'required|numeric|min:0',
             'method' => 'nullable|in:cash,card,bank_transfer,online',
             'reference' => 'nullable|string|max:120',
@@ -91,14 +95,28 @@ class PaymentController extends Controller
             'status' => 'nullable|in:pending,completed,failed,refunded',
         ]);
 
-        // Security: If student, ensure booking belongs to them
-        $booking = \App\Models\Booking::findOrFail($validated['booking_id']);
-        if (!$isAdmin && $booking->student_id !== $studentId) {
-            abort(403, 'You can only record payments for your own bookings.');
+        // Security: Ensure at least one linkage is provided
+        if (empty($validated['booking_id']) && empty($validated['enrollment_request_id'])) {
+            return response()->json(['success' => false, 'message' => 'Payment must be linked to a booking or enrollment request.'], 422);
+        }
+
+        // Determine branch attribution
+        $branchId = null;
+        if (!empty($validated['booking_id'])) {
+            $booking = \App\Models\Booking::findOrFail($validated['booking_id']);
+            if (!$isAdmin && $booking->student_id !== $studentId) {
+                abort(403, 'You can only record payments for your own bookings.');
+            }
+            $branchId = $booking->branch_id;
+        } elseif (!empty($validated['enrollment_request_id'])) {
+            $enrollment = \App\Models\EnrollmentRequest::findOrFail($validated['enrollment_request_id']);
+            if (!$isAdmin && $enrollment->learner_id !== $studentId) {
+                abort(403, 'You can only record payments for your own enrollments.');
+            }
+            $branchId = $enrollment->branch_id;
         }
 
         // Security: Only admins can mark payments as completed/failed immediately
-        // Students can only create pending payments (e.g. upload receipt)
         $status = $validated['status'] ?? 'pending';
         if (!$isAdmin) {
             $status = 'pending';
@@ -106,7 +124,9 @@ class PaymentController extends Controller
 
         $payment = new Payment([
             'school_id' => $school->id,
-            'booking_id' => $validated['booking_id'],
+            'branch_id' => $branchId,
+            'booking_id' => $validated['booking_id'] ?? null,
+            'enrollment_request_id' => $validated['enrollment_request_id'] ?? null,
             'amount' => $validated['amount'],
             'method' => $validated['method'] ?? 'cash',
             'reference' => $validated['reference'] ?? null,
@@ -138,16 +158,25 @@ class PaymentController extends Controller
 
         // Security check
         if (Auth::guard('student')->check()) {
-            $payment->load('booking');
-            if ($payment->booking->student_id !== Auth::guard('student')->id()) {
-                abort(403);
+            $studentId = Auth::guard('student')->id();
+            $payment->load(['booking', 'enrollmentRequest']);
+            
+            $isOwner = false;
+            if ($payment->booking && (int)$payment->booking->student_id === (int)$studentId) {
+                $isOwner = true;
+            } elseif ($payment->enrollmentRequest && (int)$payment->enrollmentRequest->learner_id === (int)$studentId) {
+                $isOwner = true;
+            }
+
+            if (!$isOwner) {
+                abort(403, 'You do not have access to this payment record.');
             }
         }
         elseif (Auth::guard('admin')->check()) {
             $admin = Auth::guard('admin')->user();
             if ($admin->isBranchSecretary() && $admin->branch_id) {
-                $payment->load('booking');
-                if ($payment->booking->branch_id && (int)$payment->booking->branch_id !== (int)$admin->branch_id) {
+                // Securely check branch access using payment-level branch_id
+                if ($payment->branch_id && (int)$payment->branch_id !== (int)$admin->branch_id) {
                     abort(403, 'You do not have access to payments from this branch.');
                 }
             }
@@ -215,8 +244,8 @@ class PaymentController extends Controller
         // Security: Branch secretary restriction
         $admin = Auth::guard('admin')->user();
         if ($admin->isBranchSecretary() && $admin->branch_id) {
-            $payment->load('booking');
-            if ($payment->booking->branch_id && (int)$payment->booking->branch_id !== (int)$admin->branch_id) {
+            // Securely check branch access using payment-level branch_id
+            if ($payment->branch_id && (int)$payment->branch_id !== (int)$admin->branch_id) {
                 abort(403, 'You do not have access to payments from this branch.');
             }
         }
@@ -244,25 +273,26 @@ class PaymentController extends Controller
      */
     public function statistics(School $school)
     {
+        $admin = Auth::guard('admin')->user();
         // Only admins can view general statistics
-        if (!Auth::guard('admin')->check()) {
+        if (!$admin) {
             abort(403);
         }
 
         $stats = [
-            'total_revenue' => Payment::where('school_id', $school->id)
-            ->where('status', 'completed')
-            ->sum('amount'),
-            'pending_payments' => Payment::where('school_id', $school->id)
-            ->where('status', 'pending')
-            ->count(),
-            'total_payments' => Payment::where('school_id', $school->id)
-            ->count(),
-            'by_method' => Payment::where('school_id', $school->id)
-            ->where('status', 'completed')
-            ->selectRaw('method, SUM(amount) as total')
-            ->groupBy('method')
-            ->get(),
+            'total_revenue' => $admin->scopeToBranch(Payment::where('school_id', $school->id))
+                ->where('status', 'completed')
+                ->sum('amount'),
+            'pending_payments' => $admin->scopeToBranch(Payment::where('school_id', $school->id))
+                ->where('status', 'pending')
+                ->count(),
+            'total_payments' => $admin->scopeToBranch(Payment::where('school_id', $school->id))
+                ->count(),
+            'by_method' => $admin->scopeToBranch(Payment::where('school_id', $school->id))
+                ->where('status', 'completed')
+                ->selectRaw('method, SUM(amount) as total')
+                ->groupBy('method')
+                ->get(),
         ];
 
         return response()->json([

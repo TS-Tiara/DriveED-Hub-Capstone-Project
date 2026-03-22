@@ -111,7 +111,7 @@ Route::prefix('{school:slug}')
         Route::get('/forgot-password', [PasswordResetController::class , 'showForgotForm'])->name('password.request');
         Route::post('/forgot-password', [PasswordResetController::class , 'sendResetLink'])->name('password.email')->middleware('throttle:3,1');
         Route::get('/reset-password/{token}', [PasswordResetController::class , 'showResetForm'])->name('password.reset');
-        Route::post('/reset-password', [PasswordResetController::class , 'reset'])->name('password.update');
+        Route::post('/reset-password', [PasswordResetController::class , 'reset'])->name('password.update')->middleware('throttle:5,1');
 
         // Public guest registration (Main registration entry point)
         Route::get('/register', [GuestController::class , 'showRegistrationForm'])->name('registration.form');

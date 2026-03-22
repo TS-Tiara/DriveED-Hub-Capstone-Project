@@ -9,6 +9,7 @@ use App\Models\EnrollmentRequest;
 use App\Models\Instructor;
 use App\Models\InstructorRemovalRequest;
 use App\Models\Log;
+use App\Models\Payment;
 use App\Models\RegistrationRequest;
 use App\Models\School;
 use App\Models\SchoolSetting;
@@ -126,6 +127,17 @@ class AdminController extends Controller
             $pendingEnrollments = $admin->scopeToBranch(EnrollmentRequest::where('school_id', $school->id))->where('status', 'pending')->count();
             $pendingProgressions = $admin->scopeToBranch(PhaseProgression::where('school_id', $school->id))->where('status', 'pending')->count();
 
+            // Calculate monthly revenue (completed payments paid_on this month)
+            $monthlyRevenue = $admin->scopeToBranch(Payment::where('school_id', $school->id))
+                ->where('status', 'completed')
+                ->whereBetween('paid_on', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()])
+                ->sum('amount');
+
+            // Calculate active enrollments (approved requests)
+            $activeEnrollments = $admin->scopeToBranch(EnrollmentRequest::where('school_id', $school->id))
+                ->where('status', 'approved')
+                ->count();
+
             return view($school->resolveView('admin.dashboard'), [
                 'school' => $school,
                 'admin' => $admin,
@@ -144,6 +156,8 @@ class AdminController extends Controller
                 'instructorsThisMonth' => $instructorsThisMonth,
                 'pendingEnrollments' => $pendingEnrollments,
                 'pendingProgressions' => $pendingProgressions,
+                'monthlyRevenue' => $monthlyRevenue,
+                'activeEnrollments' => $activeEnrollments,
             ]);
         }
         catch (\Exception $e) {

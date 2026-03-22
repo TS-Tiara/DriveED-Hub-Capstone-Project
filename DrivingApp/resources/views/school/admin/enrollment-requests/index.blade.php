@@ -60,8 +60,8 @@
     }
     
     /* Active selection state for stat cards */
-    .stat-card.selected {
-        border-left-color: {{ $primaryColor }};
+    .stat-card.active {
+        border-left: 4px solid {{ $primaryColor }} !important;
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
         transform: translateY(-3px);
     }
@@ -729,19 +729,23 @@
 
     @if($branches->count() > 0)
     <div class="mb-3 branch-filter-wrap">
-        <select id="branchFilter" class="form-select branch-filter-select">
+    @if($branches->count() > 0)
+    <div class="mb-3 branch-filter-wrap">
+        <select id="branchFilter" class="form-select branch-filter-select" onchange="window.location.href = '{{ route('schools.admin.enrollments', ['school' => $school->slug]) }}?branch=' + encodeURIComponent(this.value) + '&status={{ request('status', 'all') }}'">
             <option value="">All Branches</option>
             @foreach($branches as $branch)
-                <option value="{{ $branch->name }}">{{ $branch->name }}</option>
+                <option value="{{ $branch->name }}" {{ request('branch') === $branch->name ? 'selected' : '' }}>{{ $branch->name }}</option>
             @endforeach
         </select>
+    </div>
+    @endif
     </div>
     @endif
 
 
     
     <div class="stats-grid">
-        <div class="stat-card info" onclick="filterRequests('all', this)" data-status="all">
+        <div class="stat-card info {{ request('status', 'all') === 'all' ? 'active' : '' }}" onclick="window.location.href='{{ route('schools.admin.enrollments', ['school' => $school->slug, 'status' => 'all', 'branch' => request('branch')]) }}'">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -756,7 +760,7 @@
                 </div>
             </div>
         </div>
-        <div class="stat-card pending" onclick="filterRequests('pending', this)" data-status="pending">
+        <div class="stat-card pending {{ request('status') === 'pending' ? 'active' : '' }}" onclick="window.location.href='{{ route('schools.admin.enrollments', ['school' => $school->slug, 'status' => 'pending', 'branch' => request('branch')]) }}'">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -771,7 +775,7 @@
                 </div>
             </div>
         </div>
-        <div class="stat-card growth" onclick="filterRequests('approved', this)" data-status="approved">
+        <div class="stat-card growth {{ request('status') === 'approved' ? 'active' : '' }}" onclick="window.location.href='{{ route('schools.admin.enrollments', ['school' => $school->slug, 'status' => 'approved', 'branch' => request('branch')]) }}'">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -786,7 +790,7 @@
                 </div>
             </div>
         </div>
-        <div class="stat-card active" onclick="filterRequests('completed', this)" data-status="completed">
+        <div class="stat-card active {{ request('status') === 'completed' ? 'active' : '' }}" onclick="window.location.href='{{ route('schools.admin.enrollments', ['school' => $school->slug, 'status' => 'completed', 'branch' => request('branch')]) }}'">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -801,7 +805,7 @@
                 </div>
             </div>
         </div>
-        <div class="stat-card inactive" onclick="filterRequests('cancelled', this)" data-status="cancelled">
+        <div class="stat-card inactive {{ request('status') === 'cancelled' ? 'active' : '' }}" onclick="window.location.href='{{ route('schools.admin.enrollments', ['school' => $school->slug, 'status' => 'cancelled', 'branch' => request('branch')]) }}'">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -816,7 +820,7 @@
                 </div>
             </div>
         </div>
-        <div class="stat-card danger" onclick="filterRequests('rejected', this)" data-status="rejected">
+        <div class="stat-card danger {{ request('status') === 'rejected' ? 'active' : '' }}" onclick="window.location.href='{{ route('schools.admin.enrollments', ['school' => $school->slug, 'status' => 'rejected', 'branch' => request('branch')]) }}'">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -1203,46 +1207,8 @@
 </div>
 
 <script>
-var currentStatusFilter = 'all';
-var currentBranchFilter = '';
-
-function applyFilters() {
-    const rows = document.querySelectorAll('.requests-table tbody tr');
-    const mobileCards = document.querySelectorAll('.mobile-card');
-    
-    function shouldShow(el) {
-        const statusMatch = currentStatusFilter === 'all' || el.dataset.status === currentStatusFilter;
-        const branchMatch = currentBranchFilter === '' || el.dataset.branch === currentBranchFilter;
-        return statusMatch && branchMatch;
-    }
-    
-    rows.forEach(row => {
-        row.style.display = shouldShow(row) ? '' : 'none';
-    });
-    mobileCards.forEach(card => {
-        card.style.display = shouldShow(card) ? 'block' : 'none';
-    });
-}
-
-function filterRequests(status, cardElement) {
-    const cards = document.querySelectorAll('.stat-card');
-    
-    // Update active card
-    cards.forEach(card => card.classList.remove('active'));
-    cardElement.classList.add('active');
-    
-    currentStatusFilter = status;
-    applyFilters();
-}
-
-// Branch filter
-var branchSelect = document.getElementById('branchFilter');
-if (branchSelect) {
-    branchSelect.addEventListener('change', function() {
-        currentBranchFilter = this.value;
-        applyFilters();
-    });
-}
+// Server-side filtering is now used.
+// JS applyFilters and filterRequests functions removed.
 
 function showRejectModal(requestId) {
     const modal = document.getElementById('rejectModal');
