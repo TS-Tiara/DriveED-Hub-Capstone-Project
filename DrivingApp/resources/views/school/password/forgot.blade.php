@@ -145,28 +145,19 @@
         <div class="login-container">
             <h2 class="login-title">Forgot Password</h2>
             <p class="login-subtitle">
-                Enter your registered email address and we'll send you a secure link to reset your password.
+                Enter your registered email address and we will send a secure reset link if an account exists.
             </p>
 
-            @if(session('success'))
-                <div class="alert alert-success">
-                    {{ session('success') }}
-                </div>
-            @endif
 
-            @if($errors->any())
-                <div class="alert alert-error">
-                    @foreach($errors->all() as $error)
-                        <div>{{ $error }}</div>
-                    @endforeach
-                </div>
-            @endif
 
             <form method="POST" action="{{ route('schools.password.email', $school) }}">
                 @csrf
                 <div class="form-group">
                     <label class="form-label" for="email">Email Address</label>
                     <input type="email" id="email" name="email" value="{{ old('email') }}" placeholder="your@email.com" required autofocus>
+                    @error('email')
+                        <span style="color: #991b1b; font-size: 12px; margin-top: 5px; display: block;">{{ $message }}</span>
+                    @enderror
                 </div>
                 <button type="submit" class="login-button">Send Reset Link</button>
             </form>
@@ -176,5 +167,6 @@
             </div>
         </div>
     </div>
+    @include('partials.toast-notifications')
 </body>
 </html>

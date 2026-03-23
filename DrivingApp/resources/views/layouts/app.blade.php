@@ -66,26 +66,35 @@
             
             /* Header */
             --header-gradient: {{ $headerBg }};
-            --page-header-border: {{ $settings->page_header_border ?? '#667eea' }};
+            --page-header-border: {{ $settings->page_header_border ?? '#3b82f6' }};
             
             /* Buttons */
-            --btn-primary-bg: {{ $settings->button_primary_bg ?? '#667eea' }};
+            --btn-primary-bg: {{ $settings->button_primary_bg ?? '#3b82f6' }};
             --btn-primary-text: {{ $settings->button_primary_text ?? '#ffffff' }};
             --btn-secondary-bg: {{ $settings->button_secondary_bg ?? '#6c757d' }};
             --btn-secondary-text: {{ $settings->button_secondary_text ?? '#ffffff' }};
-            --btn-success-bg: {{ $settings->button_success_bg ?? '#28a745' }};
+            --btn-success-bg: {{ $settings->button_success_bg ?? '#10b981' }};
             --btn-success-text: {{ $settings->button_success_text ?? '#ffffff' }};
             --btn-danger-bg: {{ $settings->button_danger_bg ?? '#dc3545' }};
             --btn-danger-text: {{ $settings->button_danger_text ?? '#ffffff' }};
+            
+            /* Role Colors (Customizable in future) */
+            --role-student-bg: {{ $settings->role_student_bg ?? '#dbeafe' }};
+            --role-student-text: {{ $settings->role_student_text ?? '#1e40af' }};
+            --role-instructor-bg: {{ $settings->role_instructor_bg ?? '#e0f2fe' }};
+            --role-instructor-text: {{ $settings->role_instructor_text ?? '#0369a1' }};
+            
+            /* Brand Shadow */
+            --brand-shadow: rgba(var(--primary-rgb), 0.2);
             
             /* Borders & Shapes */
             --border-radius: {{ $settings->border_radius ?? 8 }}px;
             --button-border-radius: {{ $settings->button_border_radius ?? 8 }}px;
             
             /* Modals */
-            --modal-header-bg: {{ $settings->modal_header_bg ?? '#667eea' }};
+            --modal-header-bg: {{ $settings->modal_header_bg ?? '#3b82f6' }};
             --modal-header-text: {{ $settings->modal_header_text ?? '#ffffff' }};
-            --modal-border-color: {{ $settings->modal_border_color ?? '#667eea' }};
+            --modal-border-color: {{ $settings->modal_border_color ?? '#3b82f6' }};
             
             /* Cards */
             --card-border-color: {{ $settings->card_border_color ?? '#e5e7eb' }};
@@ -2730,70 +2739,6 @@
             }, 500); // Small delay to show notification
         }
         
-        // Enhanced notification system with multiple types
-        function showNotification(message, type = 'info', duration = 3000) {
-            // Remove existing notifications
-            const existingNotifications = document.querySelectorAll('.notification');
-            existingNotifications.forEach(n => n.remove());
-            
-            // Create notification
-            const notification = document.createElement('div');
-            notification.className = `notification notification-${type}`;
-            
-            // Set styles based on type
-            const colors = {
-                success: { bg: '#4CAF50', icon: '✓' },
-                error: { bg: '#f44336', icon: '' },
-                warning: { bg: '#ff9800', icon: '' },
-                info: { bg: '#2196F3', icon: '' }
-            };
-            
-            const color = colors[type] || colors.info;
-            
-            notification.style.cssText = `
-                position: fixed;
-                top: 80px;
-                right: 20px;
-                background: ${color.bg};
-                color: white;
-                padding: 15px 20px;
-                border-radius: 8px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-                z-index: 10000;
-                font-weight: bold;
-                max-width: 350px;
-                font-family: Arial, sans-serif;
-                font-size: 14px;
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                cursor: pointer;
-                transition: all 0.3s ease;
-            `;
-            
-            notification.innerHTML = `
-                <span style="font-size: 16px;">${color.icon}</span>
-                <span>${message}</span>
-                <span style="margin-left: auto; opacity: 0.7; font-size: 12px;">×</span>
-            `;
-            
-            // Add click to dismiss
-            notification.addEventListener('click', () => {
-                notification.remove();
-            });
-            
-            // Add to page
-            document.body.appendChild(notification);
-            
-            // Auto remove after specified duration
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.style.opacity = '0';
-                    setTimeout(() => notification.remove(), 300);
-                }
-            }, duration);
-        }
-        
         // Test function for the universal AJAX system
         window.testUniversalAjax = function() {
             console.log('=== Universal AJAX System Test ===');
@@ -3206,5 +3151,6 @@
     </script>
 
     @stack('scripts')
+    @include('partials.toast-notifications')
 </body>
 </html>

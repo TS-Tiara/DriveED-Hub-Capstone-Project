@@ -9,10 +9,12 @@ use App\Models\Instructor;
 use App\Models\TimeSlot;
 use App\Models\Booking;
 use App\Models\Progress;
+use App\Models\SessionCompletion;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Log;
 
 class InstructorController extends Controller
 {
@@ -25,43 +27,62 @@ class InstructorController extends Controller
         $instructor->load('branch');
 
         // 1. Schedule Statistics
-        $todaysSchedules = TimeSlot::whereHas('instructors', function ($query) use ($instructor) {
-            $query->where('instructor_id', '=', $instructor->id);
+        $todaysSchedules = TimeSlot::where('school_id', '=', $school->id, 'and')
+            ->whereHas('instructors', function ($query) use ($instructor) {
+            $query->where('instructor_id', '=', $instructor->id, 'and');
         })
-            ->whereDate('date', '=', Carbon::today())
+            ->whereDate('date', '=', Carbon::today(), 'and')
             ->count();
 
-        $weeklySchedules = TimeSlot::whereHas('instructors', function ($query) use ($instructor) {
-            $query->where('instructor_id', '=', $instructor->id);
+        $weeklySchedules = TimeSlot::where('school_id', '=', $school->id, 'and')
+            ->whereHas('instructors', function ($query) use ($instructor) {
+            $query->where('instructor_id', '=', $instructor->id, 'and');
         })
             ->whereBetween('date', [
             Carbon::now()->startOfWeek(),
             Carbon::now()->endOfWeek()
-        ])
+        ], 'and', false)
             ->count();
 
-        $nextLesson = TimeSlot::whereHas('instructors', function ($query) use ($instructor) {
-            $query->where('instructor_id', '=', $instructor->id);
+        $nextLesson = TimeSlot::where('school_id', '=', $school->id, 'and')
+            ->whereHas('instructors', function ($query) use ($instructor) {
+            $query->where('instructor_id', '=', $instructor->id, 'and');
         })
-            ->where('date', '>=', Carbon::now())
+            ->where('date', '>=', Carbon::now(), 'and')
             ->orderBy('date', 'asc')
             ->orderBy('start_time', 'asc')
             ->first();
 
-        // 2. Student & Booking Statistics
-        $activeStudents = Booking::where('instructor_id', '=', $instructor->id)
-            ->where('status', '!=', 'cancelled')
+        $bookingStudents = Booking::where('school_id', '=', $school->id, 'and')
+            ->where('instructor_id', '=', $instructor->id, 'and')
+            ->where('status', '!=', 'cancelled', 'and')
             ->distinct()
-            ->count('student_id');
+            ->pluck('student_id', 'id')
+            ->toArray();
 
-        $pendingBookings = Booking::where('instructor_id', '=', $instructor->id)
-            ->where('status', '=', 'scheduled')
+        $sessionStudents = SessionCompletion::where('school_id', '=', $school->id, 'and')
+            ->where('instructor_id', '=', $instructor->id, 'and')
+            ->with(['enrollment' => function($q) {
+                $q->select('id', 'learner_id');
+            }])
+            ->get()
+            ->map(fn($session) => $session->enrollment->learner_id ?? null)
+            ->filter()
+            ->unique()
+            ->toArray();
+
+        $activeStudents = count(array_unique(array_merge($bookingStudents, $sessionStudents)));
+
+        $pendingBookings = Booking::where('school_id', '=', $school->id, 'and')
+            ->where('instructor_id', '=', $instructor->id, 'and')
+            ->where('status', '=', 'scheduled', 'and')
             ->count('*');
 
         // 3. Upcoming Bookings - optimized with selective eager loading
-        $upcomingBookings = Booking::where('instructor_id', '=', $instructor->id)
-            ->where('scheduled_at', '>=', Carbon::now())
-            ->where('status', '=', 'scheduled')
+        $upcomingBookings = Booking::where('school_id', '=', $school->id, 'and')
+            ->where('instructor_id', '=', $instructor->id, 'and')
+            ->where('scheduled_at', '>=', Carbon::now(), 'and')
+            ->where('status', '=', 'scheduled', 'and')
             ->with([
             'student:id,name,email,contact',
             'course:id,title,duration_hours'
@@ -91,17 +112,32 @@ class InstructorController extends Controller
     {
         $instructor = Auth::guard('instructor')->user();
 
-        $assignedStudentIds = Booking::where('school_id', $school->id)
-            ->where('instructor_id', $instructor->id)
-            ->whereIn('status', ['scheduled', 'completed'])
+        $bookingStudentIds = Booking::where('school_id', '=', $school->id, 'and')
+            ->where('instructor_id', '=', $instructor->id, 'and')
+            ->whereIn('status', ['scheduled', 'completed'], 'and', false)
             ->distinct()
-            ->pluck('student_id')
+            ->pluck('student_id', null)
             ->toArray();
 
-        // Get ALL students from the school with pagination
+        // Include students from session completions (e.g., theoretical training logs)
+        $sessionStudentIds = SessionCompletion::where('school_id', '=', $school->id, 'and')
+            ->where('instructor_id', '=', $instructor->id, 'and')
+            ->with(['enrollment' => function($q) {
+                $q->select('id', 'learner_id');
+            }])
+            ->get()
+            ->map(fn($session) => $session->enrollment->learner_id ?? null)
+            ->filter()
+            ->unique()
+            ->toArray();
+
+        $assignedStudentIds = array_unique(array_merge($bookingStudentIds, $sessionStudentIds));
+
+        // AUD-003 Fix: Only get students assigned to this instructor to prevent PII leakage
         $students = Student::where('school_id', '=', $school->id)
+            ->whereIn('id', $assignedStudentIds, 'and', false)
             ->with(['progresses.course', 'bookings' => function ($query) use ($instructor) {
-            $query->where('instructor_id', '=', $instructor->id)
+            $query->where('instructor_id', '=', $instructor->id, 'and')
                 ->orderBy('scheduled_at', 'desc');
         }])
             ->paginate(10, ['*']);
@@ -137,33 +173,47 @@ class InstructorController extends Controller
     {
         $instructor = Auth::guard('instructor')->user();
 
+        // AUD-003 Fix: IDOR Guard - Verify student is assigned to this instructor
+        $isAssigned = Booking::where('instructor_id', '=', $instructor->id, 'and')
+            ->where('student_id', '=', $id, 'and')
+            ->where('school_id', '=', $school->id, 'and')
+            ->exists();
+        
+        abort_unless($isAssigned, 403, 'Unauthorized access: You are not assigned to this student.');
+
         // Get student with only essential data (no personal details like address, email)
         // Load ALL bookings to show session history from all instructors
         $student = Student::select(['id', 'name', 'contact', 'status', 'school_id'])
             ->with(['bookings' => function ($query) use ($school) {
-            $query->where('school_id', $school->id)
+            $query->where('school_id', '=', $school->id, 'and')
                 ->orderBy('scheduled_at', 'desc');
         }, 'bookings.course', 'bookings.instructor'])
-            ->where('school_id', $school->id)
+            ->where('school_id', '=', $school->id, 'and')
             ->findOrFail($id);
 
         // Get all sessions (from all instructors) so current instructor can see previous notes
         $sessions = $student->bookings->map(function ($booking) use ($instructor) {
             return [
-            'id' => $booking->id,
-            'date' => $booking->scheduled_at,
-            'course' => $booking->course->title ?? 'N/A',
-            'status' => $booking->status,
-            'notes' => $booking->notes ?? '',
-            'instructor_name' => $booking->instructor->name ?? 'Unknown',
-            'is_mine' => $booking->instructor_id === $instructor->id,
+                'id' => $booking->id,
+                'date' => $booking->scheduled_at,
+                'instructor_name' => $booking->instructor->name ?? 'Unknown',
+                'is_mine' => ($booking->instructor_id == $instructor->id),
+                'course' => $booking->course->title ?? 'N/A',
+                'status' => $booking->status,
+                'notes' => $booking->notes ?? 'No notes provided',
             ];
         });
 
-        // Count sessions with current instructor only
-        $mySessionsCount = $sessions->where('is_mine', true)->count();
-        $myCompletedCount = $sessions->where('is_mine', true)->where('status', 'completed')->count();
-        $myUpcomingCount = $sessions->where('is_mine', true)->where('status', 'scheduled')->count();
+        // Calculate counts for the view
+        $myCompletedCount = Booking::where('instructor_id', '=', $instructor->id, 'and')
+            ->where('student_id', '=', $student->id, 'and')
+            ->where('status', '=', 'completed', 'and')
+            ->count('*');
+
+        $myUpcomingCount = Booking::where('instructor_id', '=', $instructor->id, 'and')
+            ->where('student_id', '=', $student->id, 'and')
+            ->where('status', '=', 'scheduled', 'and')
+            ->count('*');
 
         return view($school->resolveView('instructor.student-detail'), [
             'school' => $school,
@@ -175,209 +225,278 @@ class InstructorController extends Controller
         ]);
     }
 
-    /**
-     * Display instructor performance reports and analytics
-     */
-    public function reports(School $school)
+    public function updateProgress(Request $request, School $school, $studentId)
     {
         try {
             $instructor = Auth::guard('instructor')->user();
 
-            // Date ranges
-            $thisMonth = Carbon::now()->startOfMonth();
-            $lastMonth = Carbon::now()->subMonth()->startOfMonth();
-            $last30Days = Carbon::now()->subDays(30);
-            $last6Months = Carbon::now()->subMonths(6);
+            // Verify authorization
+            $isAssigned = Booking::where('instructor_id', '=', $instructor->id, 'and')
+                ->where('student_id', '=', $studentId, 'and')
+                ->exists();
 
-            // 1 & 2. Consolidated Statistics (Overall and Monthly)
-            $stats = Booking::where('instructor_id', $instructor->id)
-                ->where('school_id', $school->id)
-                ->selectRaw("
-                    COUNT(CASE WHEN status = 'completed' THEN 1 END) as total_completed,
-                    COUNT(DISTINCT student_id) as total_students,
-                    COUNT(CASE WHEN status = 'completed' AND scheduled_at >= ? THEN 1 END) as this_month_lessons,
-                    COUNT(CASE WHEN status = 'completed' AND scheduled_at BETWEEN ? AND ? THEN 1 END) as last_month_lessons
-                ", [
-                $thisMonth,
-                $lastMonth,
-                $lastMonth->copy()->endOfMonth()
-            ])
-                ->first();
+            abort_unless($isAssigned, 403);
 
-            $totalLessonsCompleted = $stats->total_completed;
-            $totalStudentsTaught = $stats->total_students;
-            $thisMonthLessons = $stats->this_month_lessons;
-            $lastMonthLessons = $stats->last_month_lessons;
-            $totalHoursTaught = $totalLessonsCompleted * 2; // Default estimate
-
-            // 3. Last 30 Days Statistics (Active students and Attendance)
-            $recentStats = Booking::where('instructor_id', $instructor->id)
-                ->where('school_id', $school->id)
-                ->where('scheduled_at', '>=', $last30Days)
-                ->selectRaw("
-                    COUNT(DISTINCT CASE WHEN status != 'cancelled' THEN student_id END) as active_students,
-                    COUNT(CASE WHEN scheduled_at <= NOW() AND status IN ('completed', 'no-show') THEN 1 END) as total_scheduled_recent,
-                    COUNT(CASE WHEN scheduled_at <= NOW() AND status = 'completed' THEN 1 END) as attended_recent
-                ")
-                ->first();
-
-            $activeStudents = $recentStats->active_students;
-            $totalScheduled = $recentStats->total_scheduled_recent;
-            $attended = $recentStats->attended_recent;
-            $attendanceRate = $totalScheduled > 0 ? round(($attended / $totalScheduled) * 100, 1) : 0;
-
-            // Use actual session completion data if available (more accurate)
-            $actualHours = \App\Models\SessionCompletion::where('instructor_id', $instructor->id)
-                ->where('school_id', $school->id)
-                ->sum('hours_completed');
-            if ($actualHours > 0) {
-                $totalHoursTaught = round($actualHours, 1);
-            }
-
-            // 4. Average Session Grade
-            $studentProgress = \App\Models\SessionCompletion::where('instructor_id', '=', $instructor->id)
-                ->where('school_id', '=', $school->id)
-                ->where('created_at', '>=', $last6Months)
-                ->whereNotNull('status')
-                ->groupBy('session_type')
-                ->selectRaw('session_type, SUM(hours_completed) as total_hours')
-                ->get();
-
-            $lessonTrends = Booking::where('instructor_id', '=', $instructor->id)
-                ->where('school_id', '=', $school->id)
-                ->where('status', '=', 'completed')
-                ->selectRaw("DATE_FORMAT(scheduled_at, '%Y-%m') as month, COUNT(*) as count")
-                ->groupBy('month')
-                ->orderBy('month', 'asc')
-                ->get();
-
-            // 6. Lessons by Status (Last 30 Days)
-            $lessonsByStatus = Booking::where('instructor_id', '=', $instructor->id)
-                ->where('school_id', '=', $school->id)
-                ->where('scheduled_at', '>=', $last30Days)
-                ->selectRaw('status, COUNT(*) as count')
-                ->groupBy('status')
-                ->get();
-
-            // 7. Top Students (by completed lessons)
-            $topStudents = Booking::where('instructor_id', '=', $instructor->id)
-                ->where('school_id', '=', $school->id)
-                ->where('status', '=', 'completed')
-                ->with('student')
-                ->selectRaw('student_id, COUNT(*) as lesson_count')
-                ->groupBy('student_id')
-                ->orderByDesc('lesson_count')
-                ->limit(5)
-                ->get();
-
-            // 8. Recent Performance Trend (Daily for last 7 days)
-            $dailyLessons = Booking::where('instructor_id', '=', $instructor->id)
-                ->where('school_id', '=', $school->id)
-                ->where('status', '=', 'completed')
-                ->where('scheduled_at', '>=', Carbon::now()->subDays(7))
-                ->selectRaw('DATE(scheduled_at) as date, COUNT(*) as count')
-                ->groupBy('date')
-                ->orderBy('date')
-                ->get();
-
-            // 9. Upcoming Schedule Summary
-            $upcomingLessons = Booking::where('instructor_id', '=', $instructor->id)
-                ->where('school_id', '=', $school->id)
-                ->where('status', '=', 'scheduled')
-                ->where('scheduled_at', '>=', Carbon::now())
-                ->orderBy('scheduled_at')
-                ->limit(10)
-                ->with(['student', 'course'])
-                ->get();
-
-            return view($school->resolveView('instructor.reports'), [
-                'school' => $school,
-                'instructor' => $instructor,
-                'totalLessonsCompleted' => $totalLessonsCompleted,
-                'totalStudentsTaught' => $totalStudentsTaught,
-                'totalHoursTaught' => $totalHoursTaught,
-                'activeStudents' => $activeStudents,
-                'thisMonthLessons' => $thisMonthLessons,
-                'lastMonthLessons' => $lastMonthLessons,
-                'attendanceRate' => $attendanceRate,
-                'studentProgress' => $studentProgress,
-                'lessonsByStatus' => $lessonsByStatus,
-                'topStudents' => $topStudents,
-                'dailyLessons' => $dailyLessons,
-                'upcomingLessons' => $upcomingLessons,
-                'lessonTrends' => $lessonTrends,
+            $validated = $request->validate([
+                'course_id' => 'required|exists:courses,id',
+                'completion_percent' => 'required|numeric|min:0|max:100',
+                'remarks' => 'nullable|string|max:500',
             ]);
-        }
-        catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Instructor Reports Error: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Failed to load performance reports at this time.');
+
+            Progress::updateOrCreate(
+                [
+                    'student_id' => $studentId,
+                    'course_id' => $validated['course_id'],
+                ],
+                [
+                    'completion_percent' => $validated['completion_percent'],
+                    'remarks' => $validated['remarks'],
+                    'updated_by_instructor' => $instructor->id,
+                ]
+            );
+
+            return back()->with('success', 'Progress updated successfully!');
+        } catch (\Exception $e) {
+            Log::error('Failed to update student progress: ' . $e->getMessage());
+            return back()->with('error', 'Unable to update progress.');
         }
     }
 
+    public function mySchedule(School $school)
+    {
+        $instructor = Auth::guard('instructor')->user();
+        
+        $schedules = TimeSlot::whereHas('instructors', function ($query) use ($instructor) {
+            $query->where('instructor_id', '=', $instructor->id, 'and');
+        })
+            ->with(['course', 'branch'])
+            ->where('date', '>=', now()->toDateString(), 'and')
+            ->orderBy('date')
+            ->orderBy('start_time')
+            ->get()
+            ->groupBy('date');
+
+        return view($school->resolveView('instructor.schedule'), [
+            'school' => $school,
+            'schedules' => $schedules,
+            'instructor' => $instructor,
+        ]);
+    }
+
     /**
-     * Display grade management interface
+     * Display performance reports for the instructor.
+     */
+    public function reports(School $school)
+    {
+        $instructor = Auth::guard('instructor')->user();
+
+        // 1. Basic Stats
+        $totalLessonsCompleted = Booking::where('school_id', '=', $school->id, 'and')
+            ->where('instructor_id', '=', $instructor->id, 'and')
+            ->where('status', '=', 'completed', 'and')
+            ->count('*');
+
+        // Assume 1 hour per lesson if duration is not explicitly tracked per booking
+        $totalHoursTaught = Booking::where('school_id', '=', $school->id, 'and')
+            ->where('instructor_id', '=', $instructor->id, 'and')
+            ->where('status', '=', 'completed', 'and')
+            ->with(['course'])
+            ->get(['id', 'course_id'])
+            ->sum(function($booking) {
+                return $booking->course->duration_hours ?? 1;
+            });
+
+        $totalStudentsTaught = Booking::where('school_id', '=', $school->id, 'and')
+            ->where('instructor_id', '=', $instructor->id, 'and')
+            ->where('status', '=', 'completed', 'and')
+            ->distinct()
+            ->count('student_id');
+
+        $activeStudents = Booking::where('school_id', '=', $school->id, 'and')
+            ->where('instructor_id', '=', $instructor->id, 'and')
+            ->where('status', '=', 'scheduled', 'and')
+            ->distinct()
+            ->count('student_id');
+
+        // Attendance Rate (last 30 days)
+        $last30DaysBookings = Booking::where('school_id', '=', $school->id, 'and')
+            ->where('instructor_id', '=', $instructor->id, 'and')
+            ->where('scheduled_at', '>=', now()->subDays(30), 'and')
+            ->whereIn('status', ['completed', 'no-show'], 'and', false)
+            ->count('*');
+        
+        $attended = Booking::where('school_id', '=', $school->id, 'and')
+            ->where('instructor_id', '=', $instructor->id, 'and')
+            ->where('scheduled_at', '>=', now()->subDays(30), 'and')
+            ->where('status', '=', 'completed', 'and')
+            ->count('*');
+
+        $attendanceRate = $last30DaysBookings > 0 ? round(($attended / $last30DaysBookings) * 100) : 100;
+
+        // 2. Monthly Trends
+        $thisMonthLessons = Booking::where('school_id', '=', $school->id, 'and')
+            ->where('instructor_id', '=', $instructor->id, 'and')
+            ->where('status', '=', 'completed', 'and')
+            ->whereMonth('scheduled_at', '=', now()->month, 'and')
+            ->whereYear('scheduled_at', '=', now()->year, 'and')
+            ->count('*');
+
+        $lastMonthLessons = Booking::where('school_id', '=', $school->id, 'and')
+            ->where('instructor_id', '=', $instructor->id, 'and')
+            ->where('status', '=', 'completed', 'and')
+            ->whereMonth('scheduled_at', '=', now()->subMonth()->month, 'and')
+            ->whereYear('scheduled_at', '=', now()->subMonth()->year, 'and')
+            ->count('*');
+
+        // 6 Months Trend
+        $lessonsByMonth = Booking::where('school_id', '=', $school->id, 'and')
+            ->where('instructor_id', '=', $instructor->id, 'and')
+            ->where('status', '=', 'completed', 'and')
+            ->where('scheduled_at', '>=', now()->subMonths(6), 'and')
+            ->selectRaw("DATE_FORMAT(scheduled_at, '%Y-%m') as month, COUNT(*) as count")
+            ->groupBy('month')
+            ->orderBy('month', 'asc')
+            ->get(['month', 'count']);
+
+        // 3. Status Distribution (30 days)
+        $lessonsByStatus = Booking::where('school_id', '=', $school->id, 'and')
+            ->where('instructor_id', '=', $instructor->id, 'and')
+            ->where('scheduled_at', '>=', now()->subDays(30), 'and')
+            ->selectRaw('status, COUNT(*) as count')
+            ->groupBy('status')
+            ->get(['status', 'count']);
+
+        // 4. Top Students
+        $topStudents = Booking::where('school_id', '=', $school->id, 'and')
+            ->where('instructor_id', '=', $instructor->id, 'and')
+            ->where('status', '=', 'completed', 'and')
+            ->with(['student:id,name'])
+            ->selectRaw('student_id, COUNT(*) as lesson_count')
+            ->groupBy('student_id')
+            ->orderBy('lesson_count', 'desc')
+            ->limit(5)
+            ->get(['student_id', 'lesson_count']);
+
+        // 5. Upcoming Schedule
+        $upcomingLessons = Booking::where('school_id', '=', $school->id, 'and')
+            ->where('instructor_id', '=', $instructor->id, 'and')
+            ->where('status', '=', 'scheduled', 'and')
+            ->where('scheduled_at', '>=', now(), 'and')
+            ->with(['student:id,name', 'course:id,title'])
+            ->orderBy('scheduled_at', 'asc')
+            ->limit(10)
+            ->get(['id', 'student_id', 'course_id', 'scheduled_at', 'status']);
+
+        $avgGrade = Booking::where('school_id', '=', $school->id, 'and')
+            ->where('instructor_id', '=', $instructor->id, 'and')
+            ->whereNotNull('session_grade', 'and')
+            ->avg('session_grade');
+
+        return view($school->resolveView('instructor.reports'), compact(
+            'school', 'instructor', 'totalLessonsCompleted', 'totalHoursTaught', 
+            'totalStudentsTaught', 'activeStudents', 'attendanceRate',
+            'thisMonthLessons', 'lastMonthLessons', 'lessonsByMonth', 
+            'lessonsByStatus', 'topStudents', 'upcomingLessons', 'avgGrade'
+        ));
+    }
+
+    /**
+     * Display student grades for the instructor.
      */
     public function grades(School $school)
     {
         $instructor = Auth::guard('instructor')->user();
 
-        // Get all students who have had bookings with this instructor
-        $studentIds = Booking::where('instructor_id', '=', $instructor->id)
-            ->where('school_id', '=', $school->id)
-            ->distinct('student_id')
-            ->pluck('student_id');
-
-        $students = Student::whereIn('id', $studentIds)
-            ->with(['bookings' => function ($query) use ($instructor) {
-            $query->where('instructor_id', '=', $instructor->id)
-                ->orderBy('scheduled_at', 'desc');
-        }])
-            ->paginate(10);
-
-        // Calculate summary statistics
-        $totalStudents = Booking::where('instructor_id', '=', $instructor->id)
-            ->where('school_id', '=', $school->id)
+        // Get students who have bookings with this instructor
+        $bookingStudentIds = Booking::where('school_id', '=', $school->id, 'and')
+            ->where('instructor_id', '=', $instructor->id, 'and')
             ->distinct()
-            ->count('student_id');
+            ->pluck('student_id', null)
+            ->toArray();
 
-        $activeStudents = Booking::where('instructor_id', '=', $instructor->id)
-            ->where('school_id', '=', $school->id)
-            ->where('status', '!=', 'cancelled')
-            ->distinct()
-            ->count('student_id');
+        // Include students from session completions
+        $sessionStudentIds = SessionCompletion::where('school_id', '=', $school->id, 'and')
+            ->where('instructor_id', '=', $instructor->id, 'and')
+            ->with(['enrollment' => function($q) {
+                $q->select('id', 'learner_id');
+            }])
+            ->get()
+            ->map(fn($session) => $session->enrollment->learner_id ?? null)
+            ->filter()
+            ->unique()
+            ->toArray();
 
-        $todayLessons = Booking::where('instructor_id', '=', $instructor->id)
-            ->where('school_id', '=', $school->id)
-            ->whereDate('scheduled_at', '=', Carbon::today())
-            ->whereIn('status', ['scheduled', 'completed'])
+        $studentIds = array_unique(array_merge($bookingStudentIds, $sessionStudentIds));
+
+        $students = Student::whereIn('id', $studentIds, 'and', false)
+            ->with(['bookings' => function($q) use ($instructor) {
+                $q->where('instructor_id', '=', $instructor->id, 'and');
+            }])
+            ->paginate(15, ['id', 'name', 'contact', 'status', 'school_id']);
+
+        $gradedSessions = Booking::where('school_id', '=', $school->id, 'and')
+            ->where('instructor_id', '=', $instructor->id, 'and')
+            ->whereNotNull('session_grade', 'and')
             ->count('*');
 
-        $gradedSessions = Booking::where('instructor_id', '=', $instructor->id)
-            ->where('school_id', '=', $school->id)
-            ->whereNotNull('session_grade')
-            ->count('*');
-
-        $averageGrade = Booking::where('instructor_id', '=', $instructor->id)
-            ->where('school_id', '=', $school->id)
-            ->whereNotNull('session_grade')
+        $averageGrade = Booking::where('school_id', '=', $school->id, 'and')
+            ->where('instructor_id', '=', $instructor->id, 'and')
+            ->whereNotNull('session_grade', 'and')
             ->avg('session_grade') ?? 0;
 
-        $pendingGrades = Booking::where('instructor_id', '=', $instructor->id)
-            ->where('school_id', '=', $school->id)
-            ->where('status', '=', 'completed')
-            ->whereNull('session_grade')
+        $pendingGrades = Booking::where('school_id', '=', $school->id, 'and')
+            ->where('instructor_id', '=', $instructor->id, 'and')
+            ->where('status', '=', 'completed', 'and')
+            ->whereNull('session_grade', 'and', false)
             ->count('*');
 
-        return view($school->resolveView('instructor.grades'), [
+        return view($school->resolveView('instructor.grades'), compact(
+            'school', 'instructor', 'students', 'gradedSessions', 'averageGrade', 'pendingGrades'
+        ));
+    }
+
+    public function profile(School $school)
+    {
+        $instructor = Auth::guard('instructor')->user();
+        $instructor->load('branch');
+        
+        return view($school->resolveView('instructor.profile'), [
             'school' => $school,
             'instructor' => $instructor,
-            'students' => $students,
-            'totalStudents' => $totalStudents,
-            'activeStudents' => $activeStudents,
-            'todayLessons' => $todayLessons,
-            'gradedSessions' => $gradedSessions,
-            'averageGrade' => $averageGrade,
-            'pendingGrades' => $pendingGrades,
         ]);
+    }
+
+    public function updateProfile(Request $request, School $school)
+    {
+        $instructor = Auth::guard('instructor')->user();
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => [
+                'required',
+                'email',
+                Rule::unique('instructors', 'email')->ignore($instructor->id),
+            ],
+            'contact' => 'nullable|string|max:20|regex:/^[0-9]+$/',
+            'license_number' => 'nullable|string|max:50',
+            'current_password' => 'nullable|required_with:new_password',
+            'new_password' => 'nullable|string|min:6|confirmed',
+        ]);
+
+        if ($request->filled('new_password')) {
+            if (!Hash::check($request->current_password, $instructor->password)) {
+                return back()->withErrors(['current_password' => 'Current password is incorrect.']);
+            }
+            $instructor->password = Hash::make($request->new_password);
+        }
+
+        $instructor->update([
+            'name' => $request->name,
+            'email' => $request->email,
+            'contact' => $request->contact,
+            'license_number' => $request->license_number,
+        ]);
+
+        return back()->with('success', 'Profile updated successfully!');
     }
 }

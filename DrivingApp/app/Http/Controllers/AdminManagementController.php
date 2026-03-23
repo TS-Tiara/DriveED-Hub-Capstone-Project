@@ -67,7 +67,7 @@ class AdminManagementController extends Controller
                 Rule::unique('admins', 'email'),
             ],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'contact' => ['nullable', 'string', 'max:20'],
+            'contact' => ['nullable', 'string', 'max:20', 'regex:/^[0-9]+$/'],
             'role' => ['required', 'in:school_admin,branch_secretary'],
             'branch_id' => ['required_if:role,branch_secretary', 'nullable', 'exists:branches,id'],
         ]);
@@ -88,7 +88,7 @@ class AdminManagementController extends Controller
             'branch_id' => $validated['role'] === Admin::ROLE_BRANCH_SECRETARY ? $validated['branch_id'] : null,
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'password' => $validated['password'], // Will be hashed by model cast
+            'password' => bcrypt($validated['password']),
             'must_reset_password' => true, // Force reset on first login
             'role' => $validated['role'],
             'contact' => $validated['contact'] ?? null,
@@ -97,18 +97,23 @@ class AdminManagementController extends Controller
 
         $roleLabel = $validated['role'] === Admin::ROLE_BRANCH_SECRETARY ? 'Branch Secretary' : 'School Admin';
 
-        SystemLog::logInfo(
-            "New {$roleLabel} '{$newAdmin->name}' created by {$admin->name}",
-            'admin',
-        [
-            'new_admin_id' => $newAdmin->id,
-            'role' => $newAdmin->role,
-            'branch_id' => $newAdmin->branch_id,
-            'created_by' => $admin->id,
-        ],
-            $school->id,
-            'admin_created'
-        );
+        try {
+            SystemLog::logInfo(
+                "New {$roleLabel} '{$newAdmin->name}' created by {$admin->name}",
+                'admin',
+                [
+                    'new_admin_id' => $newAdmin->id,
+                    'role' => $newAdmin->role,
+                    'branch_id' => $newAdmin->branch_id,
+                    'created_by' => $admin->id,
+                ],
+                $school->id,
+                'admin_created'
+            );
+        } catch (\Exception $e) {
+            // Logging failure should not crash the response
+            Log::error("Failed to log admin creation in AdminManagementController: " . $e->getMessage());
+        }
 
         return redirect()->back()->with('success', "{$roleLabel} '{$newAdmin->name}' has been created successfully.");
     }
@@ -146,7 +151,7 @@ class AdminManagementController extends Controller
                 Rule::unique('admins', 'email')->ignore($targetAdmin->id),
             ],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
-            'contact' => ['nullable', 'string', 'max:20'],
+            'contact' => ['nullable', 'string', 'max:20', 'regex:/^[0-9]+$/'],
             'role' => ['required', 'in:school_admin,branch_secretary'],
             'branch_id' => ['required_if:role,branch_secretary', 'nullable', 'exists:branches,id'],
         ]);

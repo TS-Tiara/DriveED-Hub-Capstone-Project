@@ -605,19 +605,19 @@
             </button>
             <div class="export-menu" id="exportMenu">
                 <div class="export-menu-title">Download as Excel</div>
-                <a href="{{ route('schools.admin.reports.export.students', $school) }}">
+                <a href="{{ route('schools.admin.exports.students.excel', $school) }}">
                     Students
                 </a>
-                <a href="{{ route('schools.admin.reports.export.instructors', $school) }}">
+                <a href="{{ route('schools.admin.exports.instructors.excel', $school) }}">
                     Instructors
                 </a>
-                <a href="{{ route('schools.admin.reports.export.bookings', $school) }}">
+                <a href="{{ route('schools.admin.exports.bookings.excel', $school) }}">
                     Schedules
                 </a>
-                <a href="{{ route('schools.admin.reports.export.payments', $school) }}">
+                <a href="{{ route('schools.admin.exports.payments.excel', $school) }}">
                     Payments
                 </a>
-                <a href="{{ route('schools.admin.reports.export.courses', $school) }}">
+                <a href="{{ route('schools.admin.exports.courses.excel', $school) }}">
                     Courses
                 </a>
             </div>
@@ -649,9 +649,9 @@
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
-                        <div class="stat-label">Total Students</div>
+                        <div class="stat-label">Total Student Accounts</div>
                         <div class="stat-value">{{ $analytics['total_students'] }}</div>
-                        <div class="subtitle">{{ $analytics['active_students'] }} active</div>
+                        <div class="subtitle text-success" style="font-weight: 600;">{{ $analytics['active_enrollments'] }} Active Enrollments</div>
                     </div>
                     <div class="stat-icon">
                         <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -727,20 +727,20 @@
     <div class="collapsible-section">
         <div class="section-header" onclick="toggleSection(this)">
             <h2>Student Enrollment Overview</h2>
-            <span class="collapse-icon">&#x25BC;</span>
+            <span class="collapse-icon"><svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg></span>
         </div>
         <div class="section-content">
             <div class="stats-summary">
                 <div class="stat-box">
-                    <div class="label">Total Enrolled</div>
+                    <div class="label">Total Students</div>
                     <div class="value">{{ $analytics['total_students'] }}</div>
                 </div>
                 <div class="stat-box">
-                    <div class="label">Active</div>
-                    <div class="value value-success">{{ $analytics['active_students'] }}</div>
+                    <div class="label">Active Enrollments</div>
+                    <div class="value value-success">{{ $analytics['active_enrollments'] }}</div>
                 </div>
                 <div class="stat-box">
-                    <div class="label">{{ $periodLabel }}</div>
+                    <div class="label">{{ $periodLabel }} Enrollments</div>
                     <div class="value">{{ $analytics['enrollments_this_month'] }}</div>
                 </div>
             </div>
@@ -791,7 +791,7 @@
     <div class="collapsible-section">
         <div class="section-header" onclick="toggleSection(this)">
             <h2>Schedule Analytics</h2>
-            <span class="collapse-icon">&#x25BC;</span>
+            <span class="collapse-icon"><svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg></span>
         </div>
         <div class="section-content">
             <div class="stats-summary">
@@ -860,7 +860,7 @@
     <div class="collapsible-section">
         <div class="section-header" onclick="toggleSection(this)">
             <h2>Course Performance & Analytics</h2>
-            <span class="collapse-icon">&#x25BC;</span>
+            <span class="collapse-icon"><svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg></span>
         </div>
         <div class="section-content collapsed">
             @php
@@ -936,7 +936,7 @@
     <div class="collapsible-section">
         <div class="section-header" onclick="toggleSection(this)">
             <h2>Instructor Performance</h2>
-            <span class="collapse-icon collapsed">&#x25BC;</span>
+            <span class="collapse-icon collapsed"><svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg></span>
         </div>
         <div class="section-content collapsed">
             <table class="reports-table">
@@ -985,7 +985,7 @@
     <div class="collapsible-section">
         <div class="section-header" onclick="toggleSection(this)">
             <h2>Attendance & Performance</h2>
-            <span class="collapse-icon collapsed">&#x25BC;</span>
+            <span class="collapse-icon collapsed"><svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg></span>
         </div>
         <div class="section-content collapsed">
             <div class="stats-summary">
@@ -1017,7 +1017,7 @@
     <div class="collapsible-section">
         <div class="section-header" onclick="toggleSection(this)">
             <h2>Lessons Report</h2>
-            <span class="collapse-icon">&#x25BC;</span>
+            <span class="collapse-icon"><svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg></span>
         </div>
         <div class="section-content collapsed">
             <div class="stats-summary">
@@ -1101,7 +1101,7 @@
     <div class="collapsible-section">
         <div class="section-header" onclick="toggleSection(this)">
             <h2>Schedules & Cancellations</h2>
-            <span class="collapse-icon">&#x25BC;</span>
+            <span class="collapse-icon"><svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg></span>
         </div>
         <div class="section-content collapsed">
             <div class="stats-summary">
@@ -1157,23 +1157,30 @@
     <div class="collapsible-section">
         <div class="section-header" onclick="toggleSection(this)">
             <h2>Financial Report</h2>
-            <span class="collapse-icon">&#x25BC;</span>
+            <span class="collapse-icon"><svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg></span>
         </div>
         <div class="section-content collapsed">
             <div class="stats-summary">
                 <div class="stat-box">
-                    <div class="label">Total Revenue</div>
+                    <div class="label">Gross Revenue</div>
+                    <div class="value">&#8369;{{ number_format($analytics['financial']['gross_revenue'], 2) }}</div>
+                </div>
+                <div class="stat-box">
+                    <div class="label">Refunded</div>
+                    <div class="value value-danger">&#8369;{{ number_format($analytics['financial']['total_refunded'], 2) }}</div>
+                </div>
+                <div class="stat-box">
+                    <div class="label">Net Revenue (Paid)</div>
                     <div class="value value-success">&#8369;{{ number_format($analytics['financial']['total_revenue'], 2) }}</div>
                 </div>
                 <div class="stat-box">
-                    <div class="label">Pending Payments</div>
+                    <div class="label">Pending *</div>
                     <div class="value value-warning">&#8369;{{ number_format($analytics['financial']['pending_payments'], 2) }}</div>
                 </div>
-                <div class="stat-box">
-                    <div class="label">Total Expected</div>
-                    <div class="value value-primary">&#8369;{{ number_format($analytics['financial']['total_revenue'] + $analytics['financial']['pending_payments'], 2) }}</div>
-                </div>
             </div>
+            <p class="text-muted" style="font-size: 0.85rem; margin-top: 10px;">
+                * Gross Revenue includes all <strong>approved</strong> forensic payments. Net Revenue is Gross minus total <strong>refunded</strong> amounts. Pending reflects payments awaiting verification.
+            </p>
 
             <h3 class="section-subtitle">Payments by Method</h3>
             <table class="reports-table">
@@ -1205,7 +1212,7 @@
     <div class="collapsible-section">
         <div class="section-header" onclick="toggleSection(this)">
             <h2>Student Progress Report</h2>
-            <span class="collapse-icon">&#x25BC;</span>
+            <span class="collapse-icon"><svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg></span>
         </div>
         <div class="section-content collapsed">
             <table class="reports-table">

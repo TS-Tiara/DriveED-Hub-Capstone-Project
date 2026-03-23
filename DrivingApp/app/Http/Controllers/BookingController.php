@@ -301,6 +301,13 @@ class BookingController extends Controller
     {
         abort_if($booking->school_id !== $school->id, 404);
 
+        // IDOR Guard: Check if student is the owner or instructor is assigned
+        if (Auth::guard('student')->check()) {
+            abort_if((int)$booking->student_id !== (int)Auth::guard('student')->id(), 403, 'Unauthorized access to booking details.');
+        } elseif (Auth::guard('instructor')->check()) {
+            abort_if((int)$booking->instructor_id !== (int)Auth::guard('instructor')->id(), 403, 'Unauthorized access to booking details.');
+        }
+
         $booking->load(['student', 'instructor', 'course', 'payment']);
 
         // Always return JSON - booking details shown in modals
@@ -316,6 +323,13 @@ class BookingController extends Controller
     public function update(Request $request, School $school, Booking $booking)
     {
         abort_if($booking->school_id !== $school->id, 404);
+
+        // IDOR Guard: Only admin or the student owner can update (students usually cancel via status)
+        if (Auth::guard('student')->check()) {
+            abort_if((int)$booking->student_id !== (int)Auth::guard('student')->id(), 403, 'Unauthorized update attempt.');
+        } elseif (Auth::guard('instructor')->check()) {
+            abort_if((int)$booking->instructor_id !== (int)Auth::guard('instructor')->id(), 403, 'Instructors cannot update bookings directly.');
+        }
 
         $validated = $request->validate([
             'student_id' => 'required|exists:students,id',
@@ -361,7 +375,7 @@ class BookingController extends Controller
             ]);
         }
 
-        return redirect()->route('bookings.show', [$school->slug, $booking->id])
+        return redirect()->route('schools.admin.bookings.show', [$school->slug, $booking->id])
             ->with('success', 'Schedule updated successfully');
     }
 
@@ -395,7 +409,7 @@ class BookingController extends Controller
             ]);
         }
 
-        return redirect()->route('bookings.index', $school->slug)
+        return redirect()->route('schools.admin.bookings.index', $school->slug)
             ->with('success', 'Schedule deleted successfully');
     }
 
@@ -405,6 +419,13 @@ class BookingController extends Controller
     public function updateStatus(Request $request, School $school, Booking $booking)
     {
         abort_if($booking->school_id !== $school->id, 404);
+
+        // IDOR Guard
+        if (Auth::guard('student')->check()) {
+            abort_if((int)$booking->student_id !== (int)Auth::guard('student')->id(), 403, 'Unauthorized status update.');
+        } elseif (Auth::guard('instructor')->check()) {
+            abort_if((int)$booking->instructor_id !== (int)Auth::guard('instructor')->id(), 403, 'Unauthorized status update.');
+        }
 
         $validated = $request->validate([
             'status' => 'required|in:scheduled,completed,cancelled,no-show',

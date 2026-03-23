@@ -9,6 +9,7 @@ use App\Models\School;
 use App\Models\Student;
 use App\Models\TimeSlot;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 
 uses(RefreshDatabase::class);
 
@@ -25,11 +26,11 @@ function buildSchoolWithAdmin(): array
 
 function createStudentForSchool(School $school, string $role = 'guest'): Student
 {
-    return Student::create([
+    return Student::forceCreate([
         'school_id' => $school->id,
         'name' => 'Test Student ' . uniqid(),
         'email' => 'student_' . uniqid() . '@example.com',
-        'password' => 'password123',
+        'password' => Hash::needsRehash('password123') ? Hash::make('password123') : 'password123',
         'status' => 'active',
         'role' => $role,
     ]);

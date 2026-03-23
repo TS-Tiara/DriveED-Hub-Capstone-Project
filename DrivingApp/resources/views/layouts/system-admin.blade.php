@@ -639,6 +639,12 @@
         }
     </style>
     @yield('styles')
+    
+    <style>
+        :root {
+            --primary-color: #2563eb; /* Default system admin blue */
+        }
+    </style>
 </head>
 <body>
     <a href="#mainContent" class="skip-link">Skip to main content</a>
@@ -707,40 +713,41 @@
             </header>
 
             <div class="content">
-                @if(session('success'))
-                    <div class="alert alert-success">{{ session('success') }}</div>
-                @endif
-
-                @if(session('error'))
-                    <div class="alert alert-error">{{ session('error') }}</div>
-                @endif
-
-                @if(session('info'))
-                    <div class="alert alert-info">{{ session('info') }}</div>
-                @endif
-
                 @yield('content')
             </div>
         </main>
     </div>
-    
     <script>
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const burger = document.querySelector('.burger-menu');
-            sidebar.classList.toggle('active');
-            document.getElementById('sidebarOverlay').classList.toggle('active');
-            if (burger) burger.setAttribute('aria-expanded', sidebar.classList.contains('active'));
-        }
-        
-        function closeSidebar() {
-            const burger = document.querySelector('.burger-menu');
-            document.getElementById('sidebar').classList.remove('active');
-            document.getElementById('sidebarOverlay').classList.remove('active');
-            if (burger) burger.setAttribute('aria-expanded', 'false');
-        }
-    </script>
+    (function() {
+        var sidebar = document.getElementById('sidebar');
+        var overlay = document.getElementById('sidebarOverlay');
+        var burger = document.querySelector('.burger-menu');
 
+        window.toggleSidebar = function() {
+            if (!sidebar || !overlay) return;
+            var isActive = sidebar.classList.toggle('active');
+            overlay.classList.toggle('active', isActive);
+            if (burger) {
+                burger.setAttribute('aria-expanded', isActive ? 'true' : 'false');
+            }
+        };
+
+        window.closeSidebar = function() {
+            if (!sidebar || !overlay) return;
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+            if (burger) {
+                burger.setAttribute('aria-expanded', 'false');
+            }
+        };
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                window.closeSidebar();
+            }
+        });
+    })();
+    </script>
     {{-- Global: Prevent double form submissions --}}
     <style>
         .btn-submitting {
@@ -795,5 +802,6 @@
         }, true);
     })();
     </script>
+    @include('partials.toast-notifications')
 </body>
 </html>

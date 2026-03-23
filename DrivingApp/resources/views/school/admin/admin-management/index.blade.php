@@ -491,30 +491,7 @@
     </div>
 
     {{-- Flash Messages --}}
-    @if(session('success'))
-    <div class="alert alert-success">
-        <span>{{ session('success') }}</span>
-        <button class="close-btn" onclick="this.parentElement.remove()">&times;</button>
-    </div>
-    @endif
 
-    @if(session('error'))
-    <div class="alert alert-error">
-        <span>{{ session('error') }}</span>
-        <button class="close-btn" onclick="this.parentElement.remove()">&times;</button>
-    </div>
-    @endif
-
-    @if($errors->any())
-    <div class="alert alert-error">
-        <div>
-            @foreach($errors->all() as $error)
-                <div>{{ $error }}</div>
-            @endforeach
-        </div>
-        <button class="close-btn" onclick="this.parentElement.remove()">&times;</button>
-    </div>
-    @endif
 
     {{-- Admin Table --}}
     @if($admins->count() > 0)
@@ -643,7 +620,7 @@
                 </div>
                 <div class="form-group">
                     <label for="create_contact">Contact Number</label>
-                    <input type="text" id="create_contact" name="contact" placeholder="Enter contact number" value="{{ old('contact') }}">
+                    <input type="text" id="create_contact" name="contact" placeholder="Enter contact number" value="{{ old('contact') }}" inputmode="numeric" pattern="[0-9]*" autocomplete="tel" maxlength="15">
                 </div>
                 <div class="form-group">
                     <label for="create_role">Role</label>
@@ -708,7 +685,7 @@
                 </div>
                 <div class="form-group">
                     <label for="edit_contact">Contact Number</label>
-                    <input type="text" id="edit_contact" name="contact" placeholder="Enter contact number">
+                    <input type="text" id="edit_contact" name="contact" placeholder="Enter contact number" inputmode="numeric" pattern="[0-9]*" autocomplete="tel" maxlength="15">
                 </div>
                 <div class="form-group">
                     <label for="edit_role">Role</label>
@@ -740,6 +717,20 @@
 </div>
 
 <script>
+    function enforceNumericOnly(input) {
+        if (!input) return;
+        const sanitize = function() {
+            input.value = input.value.replace(/\D+/g, '');
+        };
+        input.addEventListener('input', sanitize);
+        input.addEventListener('paste', function() { setTimeout(sanitize, 0); });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        enforceNumericOnly(document.getElementById('create_contact'));
+        enforceNumericOnly(document.getElementById('edit_contact'));
+    });
+
     // Toggle branch field visibility based on role selection
     function toggleBranchField(prefix) {
         const roleSelect = document.getElementById(prefix + '_role');

@@ -1123,6 +1123,39 @@
         box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
         color: white;
     }
+
+    /* Sort Dropdown Styles */
+    .sort-control {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: #f1f5f9;
+        padding: 5px 12px;
+        border-radius: 10px;
+        border: 2px solid #e2e8f0;
+    }
+
+    .sort-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #64748b;
+        white-space: nowrap;
+    }
+
+    .sort-select {
+        border: none;
+        background: transparent;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #2d3748;
+        cursor: pointer;
+        outline: none;
+        padding-right: 20px;
+    }
+
+    .sort-select:focus {
+        color: {{ $settings->primary_color ?? '#667eea' }};
+    }
     
     /* Mobile Responsive Styles */
     @media (max-width: 768px) {
@@ -1305,6 +1338,21 @@
                     Export PDF
                 </a>
             </div>
+            <div class="sort-control">
+                <span class="sort-label"><i class="bi bi-sort-down"></i> Sort by:</span>
+                <select class="sort-select" onchange="applySort(this.value)">
+                    <option value="newest" {{ request('sort') == 'newest' ? 'selected' : '' }}>Newest First</option>
+                    <option value="oldest" {{ request('sort') == 'oldest' ? 'selected' : '' }}>Oldest First</option>
+                    <option value="title_asc" {{ request('sort') == 'title_asc' ? 'selected' : '' }}>Title (A-Z)</option>
+                    <option value="title_desc" {{ request('sort') == 'title_desc' ? 'selected' : '' }}>Title (Z-A)</option>
+                    <option value="price_low" {{ request('sort') == 'price_low' ? 'selected' : '' }}>Lowest Price</option>
+                    <option value="price_high" {{ request('sort') == 'price_high' ? 'selected' : '' }}>Highest Price</option>
+                    <option value="popularity" {{ request('sort') == 'popularity' ? 'selected' : '' }}>Most Popular</option>
+                    <option value="duration" {{ request('sort') == 'duration' ? 'selected' : '' }}>Longest Duration</option>
+                    <option value="status" {{ request('sort') == 'status' ? 'selected' : '' }}>Active Status</option>
+                    <option value="type" {{ request('sort') == 'type' ? 'selected' : '' }}>Course Type</option>
+                </select>
+            </div>
             <div class="view-toggle">
                 <button class="view-toggle-btn active" onclick="switchView('cards')">
                     <i class="bi bi-grid-3x3-gap-fill"></i> Cards
@@ -1320,27 +1368,7 @@
         </div>
     </div>
 
-    @if(session('success'))
-    <div class="flash-message success">
-        <div class="flash-icon">✓</div>
-        <div class="flash-content">
-            <div class="flash-title">Success!</div>
-            <div class="flash-text">{{ session('success') }}</div>
-        </div>
-        <button class="flash-close" onclick="this.parentElement.remove()">×</button>
-    </div>
-    @endif
 
-    @if(session('error'))
-    <div class="flash-message error">
-        <div class="flash-icon">✕</div>
-        <div class="flash-content">
-            <div class="flash-title">Error!</div>
-            <div class="flash-text">{{ session('error') }}</div>
-        </div>
-        <button class="flash-close" onclick="this.parentElement.remove()">×</button>
-    </div>
-    @endif
 
     @if($courses->isEmpty())
         <div class="empty-state">
@@ -1599,7 +1627,7 @@
 
                 <div class="form-group">
                     <label class="form-label">Banner Image (Max 2MB)</label>
-                    <input type="file" name="banner_image" id="courseBanner" class="form-control" accept="image/*" onchange="previewImage(this)">
+                    <input type="file" name="banner_image" id="courseBanner" class="form-control" accept=".jpg,.jpeg,.png,.webp" onchange="previewImage(this)">
                     <img id="imagePreview" class="image-preview">
                     <small class="banner-help-text">Recommended size: 1200x400px for best results</small>
                 </div>
@@ -2100,39 +2128,51 @@
         const gridBtn = document.querySelector('.view-toggle-btn:nth-child(1)');
         const listBtn = document.querySelector('.view-toggle-btn:nth-child(2)');
 
-        if (view === 'cards' || view === 'grid') { // Support both for backward compatibility
+        if (view === 'cards') {
             if (gridView) gridView.classList.add('active');
             if (listView) listView.classList.remove('active');
-            gridBtn.classList.add('active');
-            listBtn.classList.remove('active');
+            if (gridBtn) gridBtn.classList.add('active');
+            if (listBtn) listBtn.classList.remove('active');
             localStorage.setItem('coursesView', 'cards');
         } else {
             if (gridView) gridView.classList.remove('active');
             if (listView) listView.classList.add('active');
-            gridBtn.classList.remove('active');
-            listBtn.classList.add('active');
+            if (gridBtn) gridBtn.classList.remove('active');
+            if (listBtn) listBtn.classList.add('active');
             localStorage.setItem('coursesView', 'list');
+        }
+    }
+
+    function applySort(sort) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('sort', sort);
+        // Reset to page 1 on new sort
+        url.searchParams.set('page', 1);
+        
+        // Use our global loadPage function if available (consistent with sidebar ajax navigation)
+        if (window.loadPage) {
+            window.loadPage(url.pathname + url.search);
+        } else {
+            window.location.href = url.href;
         }
     }
 
     // Restore view preference on load
     document.addEventListener('DOMContentLoaded', function() {
         const savedView = localStorage.getItem('coursesView');
-        // Only switch if there's a saved preference different from default 'cards'
         if (savedView && savedView !== 'cards') {
             switchView(savedView);
         }
-        // If no saved preference or it's 'cards', the HTML default active class handles it
     });
 
-    // Auto-hide alerts after 5 seconds
+    // Auto-hide alerts
     setTimeout(() => {
-        const successAlert = document.getElementById('successAlert');
-        const errorAlert = document.getElementById('errorAlert');
-        if (successAlert) successAlert.style.display = 'none';
-        if (errorAlert) errorAlert.style.display = 'none';
+        const alerts = document.querySelectorAll('.flash-message');
+        alerts.forEach(alert => {
+            alert.style.opacity = '0';
+            setTimeout(() => alert.remove(), 500);
+        });
     }, 5000);
 </script>
 
 @endsection
-

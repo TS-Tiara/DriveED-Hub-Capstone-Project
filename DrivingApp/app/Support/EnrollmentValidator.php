@@ -84,7 +84,7 @@ class EnrollmentValidator
 
         // Experienced drivers on practical courses - credential upload is now optional
         /* 
-         if ($data['experience_level'] === 'experienced_driver') {
+         if ($data['experience_level'] === 'experienced') {
          if (empty($data['credentials_file_path'])) {
          return [
          'valid' => false,

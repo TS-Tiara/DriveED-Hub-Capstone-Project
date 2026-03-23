@@ -8,6 +8,9 @@
     $settings = $school?->schoolSetting;
     $schoolName = $school->name ?? 'Driving School';
     
+    $primaryColor = $settings->primary_color ?? '#3b82f6';
+    $secondaryColor = $settings->secondary_color ?? '#60a5fa';
+    
     // Statistics are now passed from the controller to ensure accuracy with pagination
     $totalUsers = $totalStudents + $totalInstructors;
     $totalActive = $activeStudents + $activeInstructors;
@@ -29,7 +32,7 @@
         align-items: center;
         margin-bottom: 30px;
         padding-bottom: 15px;
-        border-bottom: 3px solid {{ $primaryColor }};
+        border-bottom: 3px solid var(--primary-color);
     }
     
     .page-title {
@@ -55,14 +58,14 @@
     
     /* Additional stat card color variants for user management */
     .stat-card.total {
-        border-left-color: {{ $primaryColor }};
+        border-left-color: var(--primary-color);
     }
     .stat-card.total::before {
-        background: {{ $primaryColor }};
+        background: var(--primary-color);
     }
     .stat-card.total .stat-icon {
-        background: {{ $primaryColor }}15;
-        color: {{ $primaryColor }};
+        background: rgba(var(--primary-rgb), 0.1);
+        color: var(--primary-color);
     }
 
     .stat-card.inactive {
@@ -119,7 +122,7 @@
     
     .search-box input:focus {
         outline: none;
-        border-color: {{ $primaryColor }};
+        border-color: var(--primary-color);
     }
     
     .search-box::after {
@@ -200,7 +203,7 @@
     }
     
     thead {
-        background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
+        background: var(--header-gradient);
         color: white;
     }
     
@@ -253,13 +256,13 @@
     }
 
     .role-student {
-        background: #dbeafe;
-        color: #1e40af;
+        background: var(--role-student-bg);
+        color: var(--role-student-text);
     }
 
     .role-instructor {
-        background: #ede9fe;
-        color: #5b21b6;
+        background: var(--role-instructor-bg);
+        color: var(--role-instructor-text);
     }
 
     .branch-label {
@@ -376,7 +379,7 @@
     }
     
     .modal-content h3 {
-        background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
+        background: var(--header-gradient);
         color: white;
         margin: 0;
         padding: 32px;
@@ -420,9 +423,9 @@
     
     .form-group input:focus,
     .form-group select:focus {
-        border-color: {{ $primaryColor }};
+        border-color: var(--primary-color);
         outline: none;
-        box-shadow: 0 0 0 3px {{ $primaryColor }}15;
+        box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
     }
     
     .modal-buttons {
@@ -514,14 +517,14 @@
         display: flex;
         align-items: center;
         gap: 8px;
-        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        background: var(--header-gradient);
         color: white;
-        box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
+        box-shadow: var(--brand-shadow);
     }
 
     .btn-export-trigger:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+        box-shadow: 0 4px 12px var(--brand-shadow);
     }
 
     .btn-export-trigger svg {
@@ -889,27 +892,7 @@
         </div>
     </div>
     
-    @if(session('success'))
-    <div class="flash-message success">
-        <div class="flash-icon">&#10003;</div>
-        <div class="flash-content">
-            <div class="flash-title">Success!</div>
-            <div class="flash-text">{{ session('success') }}</div>
-        </div>
-        <button class="flash-close" onclick="this.parentElement.remove()">&times;</button>
-    </div>
-    @endif
-    
-    @if(session('error'))
-    <div class="flash-message error">
-        <div class="flash-icon">&#10005;</div>
-        <div class="flash-content">
-            <div class="flash-title">Error!</div>
-            <div class="flash-text">{{ session('error') }}</div>
-        </div>
-        <button class="flash-close" onclick="this.parentElement.remove()">&times;</button>
-    </div>
-    @endif
+    <!-- Toast Notifications handled at the bottom of the file -->
     
     <!-- Students Section -->
     <div id="usersSection" class="user-section">
@@ -983,7 +966,7 @@
                         <tr data-role="{{ $user->role }}" data-status="{{ $user->status }}" data-branch="{{ $user->branch_id ?? 'unassigned' }}">
                             <td><strong>{{ $user->name }}</strong></td>
                             <td>{{ $user->email }}</td>
-                            <td>{{ $user->contact ?? 'N/A' }}</td>
+                            <td>{{ $user->contact ?: '—' }}</td>
                             <td>
                                 <span class="role-badge role-{{ $user->role }}">
                                     {{ ucfirst($user->role) }}
@@ -991,9 +974,9 @@
                             </td>
                             <td>
                                 @php
-                                    $branchName = $user->branch_id ? ($branches->firstWhere('id', $user->branch_id)?->name ?? 'Unknown') : null;
+                                    $branchName = $user->branch_id ? ($branches->firstWhere('id', $user->branch_id)?->name ?? null) : null;
                                 @endphp
-                                <span class="branch-label {{ $branchName ? 'branch-assigned' : 'branch-unassigned' }}">{{ $branchName ?? 'Unassigned' }}</span>
+                                <span class="branch-label {{ $branchName ? 'branch-assigned' : 'branch-unassigned' }}">{{ $branchName ?? '—' }}</span>
                             </td>
                             <td>
                                 <span class="status-badge status-{{ $user->status }}">
@@ -1084,8 +1067,8 @@
             @endif
             <input type="hidden" name="role" value="student">
             <div class="modal-buttons">
-                <button type="submit" class="btn-create">Save</button>
                 <button type="button" class="btn-cancel" onclick="closeCreateStudentModal()">Cancel</button>
+                <button type="submit" class="btn-create">Save</button>
             </div>
         </form>
     </div>
@@ -1126,8 +1109,8 @@
             </div>
             @endif
             <div class="modal-buttons">
-                <button type="submit" class="btn-create">Update</button>
                 <button type="button" class="btn-cancel" onclick="closeEditStudentModal()">Cancel</button>
+                <button type="submit" class="btn-create">Update</button>
             </div>
         </form>
     </div>
@@ -1172,8 +1155,8 @@
             @endif
             <input type="hidden" name="role" value="instructor">
             <div class="modal-buttons">
-                <button type="submit" class="btn-create">Save</button>
                 <button type="button" class="btn-cancel" onclick="closeCreateInstructorModal()">Cancel</button>
+                <button type="submit" class="btn-create">Save</button>
             </div>
         </form>
     </div>
@@ -1214,8 +1197,8 @@
             </div>
             @endif
             <div class="modal-buttons">
-                <button type="submit" class="btn-create">Update</button>
                 <button type="button" class="btn-cancel" onclick="closeEditInstructorModal()">Cancel</button>
+                <button type="submit" class="btn-create">Update</button>
             </div>
         </form>
     </div>
@@ -1480,6 +1463,17 @@
             e.target.style.display = 'none';
         }
     }
+    
+    // Check for session flash messages and trigger toast notifications if available
+    document.addEventListener('DOMContentLoaded', function() {
+        @if(session('success'))
+            showToast('success', "{{ session('success') }}");
+        @endif
+        
+        @if(session('error'))
+            showToast('error', "{{ session('error') }}");
+        @endif
+    });
 </script>
 
 @endsection

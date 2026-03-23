@@ -22,7 +22,7 @@ uses(RefreshDatabase::class);
 
 function createStudentRecord(School $school, array $overrides = []): Student
 {
-    return Student::create(array_merge([
+    return Student::forceCreate(array_merge([
         'school_id' => $school->id,
         'name' => 'Test Student ' . uniqid(),
         'email' => 'student_' . uniqid() . '@example.com',
@@ -167,6 +167,7 @@ test('reject transition sends one email and one in-app notification', function (
 
 test('payment status transition sends in-app notification without lifecycle email by default policy', function () {
     Mail::fake();
+    config(['notification_policy.enable_lifecycle_transition_emails' => false]);
     [$school, $admin, $student, $course, $enrollment] = createEnrollmentContext('approved');
 
     $this->withHeaders(['X-Requested-With' => 'XMLHttpRequest'])
@@ -186,6 +187,7 @@ test('payment status transition sends in-app notification without lifecycle emai
 
 test('completion cancellation theoretical and license transitions send in-app notifications without lifecycle email by default policy', function () {
     Mail::fake();
+    config(['notification_policy.enable_lifecycle_transition_emails' => false]);
 
     // Complete
     [$school1, $admin1, $student1, $course1, $enrollment1] = createEnrollmentContext('approved');

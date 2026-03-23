@@ -598,31 +598,7 @@
         @endif
     </div>
 
-    {{-- Flash Messages --}}
-    @if(session('success'))
-    <div class="alert alert-success">
-        <span>{{ session('success') }}</span>
-        <button class="close-btn" onclick="this.parentElement.remove()">&times;</button>
-    </div>
-    @endif
 
-    @if(session('error'))
-    <div class="alert alert-error">
-        <span>{{ session('error') }}</span>
-        <button class="close-btn" onclick="this.parentElement.remove()">&times;</button>
-    </div>
-    @endif
-
-    @if($errors->any())
-    <div class="alert alert-error">
-        <div>
-            @foreach($errors->all() as $error)
-                <div>{{ $error }}</div>
-            @endforeach
-        </div>
-        <button class="close-btn" onclick="this.parentElement.remove()">&times;</button>
-    </div>
-    @endif
 
     {{-- Requests Table --}}
     @if($requests->count() > 0)
@@ -789,7 +765,7 @@
                 </div>
                 <div class="form-group">
                     <label for="add_student_contact">Student Contact Number</label>
-                    <input type="text" id="add_student_contact" name="student_contact"
+                    <input type="text" id="add_student_contact" name="student_contact" inputmode="numeric" pattern="[0-9]*" autocomplete="tel" maxlength="15"
                            placeholder="Enter student's contact number" value="{{ old('student_contact') }}">
                     <div class="form-hint">Optional but recommended.</div>
                 </div>
@@ -905,6 +881,19 @@
 @endif
 
 <script>
+    function enforceNumericOnly(input) {
+        if (!input) return;
+        const sanitize = function() {
+            input.value = input.value.replace(/\D+/g, '');
+        };
+        input.addEventListener('input', sanitize);
+        input.addEventListener('paste', function() { setTimeout(sanitize, 0); });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        enforceNumericOnly(document.getElementById('add_student_contact'));
+    });
+
     // Generic modal open/close
     function openModal(id) {
         document.getElementById(id).classList.add('active');

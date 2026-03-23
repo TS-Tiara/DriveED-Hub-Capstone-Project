@@ -30,4 +30,4 @@ cmds = [
 ]
 
 [start]
-cmd = "php artisan storage:link --force && php artisan migrate --force && php artisan app:seed-once && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"
+cmd = "php artisan storage:link --force && php artisan migrate --force && php artisan app:seed-once && (php artisan queue:work --tries=3 --timeout=90 & php artisan serve --host=0.0.0.0 --port=${PORT:-8080})"

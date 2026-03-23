@@ -22,11 +22,25 @@ class EnsureStudentRole
                 ->with('error', 'Please login first.');
         }
 
+        // Enforce email verification
+        if (!$student->hasVerifiedEmail()) {
+            return redirect()->route('schools.verification.show', ['school' => $request->route('school')]);
+        }
+
         // Check if user has student role
         if ($student->role !== 'student') {
             // If they're a guest, redirect to guest dashboard
             return redirect()->route('schools.guest.dashboard', ['school' => $request->route('school')])
                 ->with('info', 'Please complete the enrollment process first.');
+        }
+
+        // AUD-005 Fix: School Boundary Check
+        $schoolParam = $request->route('school');
+        $school = $schoolParam instanceof \App\Models\School ? $schoolParam : \App\Models\School::where('slug', '=', $schoolParam, 'and')->first(['*']);
+        if (!$school || (int)$student->school_id !== (int)$school->id) {
+            auth()->guard('student')->logout();
+            return redirect()->route('schools.login', ['school' => $school?->slug ?? $schoolParam])
+                ->with('error', 'Unauthorized: You do not belong to this school.');
         }
 
         return $next($request);

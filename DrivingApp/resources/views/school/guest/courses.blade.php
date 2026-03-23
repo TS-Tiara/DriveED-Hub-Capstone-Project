@@ -688,33 +688,7 @@
         <p>Browse our courses and submit an enrollment request to get started</p>
     </div>
 
-    @if(session('success'))
-        <div class="alert alert-success">
-            <span>✓ {{ session('success') }}</span>
-            <button type="button" class="alert-close" aria-label="Dismiss success message" onclick="this.parentElement.remove()">&times;</button>
-        </div>
-    @endif
-    
-    @if(session('error'))
-        <div class="alert alert-error">
-            <span>✕ {{ session('error') }}</span>
-            <button type="button" class="alert-close" aria-label="Dismiss error message" onclick="this.parentElement.remove()">&times;</button>
-        </div>
-    @endif
-    
-    @if(session('warning'))
-        <div class="alert alert-warning">
-            <span>⚠ {{ session('warning') }}</span>
-            <button type="button" class="alert-close" aria-label="Dismiss warning message" onclick="this.parentElement.remove()">&times;</button>
-        </div>
-    @endif
-    
-    @if(session('info'))
-        <div class="alert alert-info">
-            <span>ℹ {{ session('info') }}</span>
-            <button type="button" class="alert-close" aria-label="Dismiss information message" onclick="this.parentElement.remove()">&times;</button>
-        </div>
-    @endif
+
 
     <div class="courses-grid">
         

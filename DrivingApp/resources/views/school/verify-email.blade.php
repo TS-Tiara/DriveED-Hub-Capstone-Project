@@ -600,17 +600,7 @@
             </div>
         @endif
 
-        @if(session('success'))
-            <div class="success center-message">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="inline-success-icon"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> {{ session('success') }}
-            </div>
-        @endif
 
-        @if(session('info'))
-            <div class="info center-message">
-                {{ session('info') }}
-            </div>
-        @endif
 
         <form method="POST" action="{{ route('schools.verification.verify', $school, false) }}">
             @csrf
@@ -789,5 +779,6 @@
         });
 
     </script>
+    @include('partials.toast-notifications')
 </body>
 </html>

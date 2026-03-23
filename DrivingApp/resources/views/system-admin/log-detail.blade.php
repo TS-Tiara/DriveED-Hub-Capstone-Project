@@ -361,17 +361,7 @@
             </div>
         </div>
 
-        @if(session('success'))
-            <div class="alert alert-success">
-                {{ session('success') }}
-            </div>
-        @endif
-
-        @if(session('error'))
-            <div class="alert alert-error">
-                {{ session('error') }}
-            </div>
-        @endif
+        @include('partials.toast-notifications')
 
         <div class="log-detail">
             <!-- Header -->

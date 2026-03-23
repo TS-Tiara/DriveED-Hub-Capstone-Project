@@ -166,7 +166,7 @@ class SystemLog extends Model
             'action' => $action,
             'message' => self::maskPii($message),
             'exception_class' => $exception ? get_class($exception) : null,
-            'stack_trace' => $exception ? $exception->getTraceAsString() : null,
+            'stack_trace' => $exception ? self::redactStackTrace($exception->getTraceAsString()) : null,
             'context' => self::maskContextPii($context),
             'ip_address' => Request::ip(),
             'user_agent' => Request::userAgent(),
@@ -215,6 +215,23 @@ class SystemLog extends Model
             }
         });
         return $context;
+    }
+
+    /**
+     * Redact and truncate stack traces to prevent sensitive path exposure
+     */
+    private static function redactStackTrace(string $trace): string
+    {
+        // Redact absolute paths to the project root
+        $root = base_path();
+        $trace = str_replace($root, '[PROJECT_ROOT]', $trace);
+
+        // Limit length to prevent massive log entries
+        if (strlen($trace) > 5000) {
+            $trace = substr($trace, 0, 5000) . "\n... [TRUNCATED]";
+        }
+
+        return $trace;
     }
 
     /**

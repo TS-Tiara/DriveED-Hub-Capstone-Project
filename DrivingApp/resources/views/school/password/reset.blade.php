@@ -148,13 +148,7 @@
         <div class="login-container">
             <h2 class="login-title">Reset Password</h2>
 
-            @if($errors->any())
-                <div class="alert alert-error">
-                    @foreach($errors->all() as $error)
-                        <div>{{ $error }}</div>
-                    @endforeach
-                </div>
-            @endif
+
 
             <form method="POST" action="{{ route('schools.password.update', $school) }}">
                 @csrf
@@ -206,5 +200,6 @@
             }
         });
     </script>
+    @include('partials.toast-notifications')
 </body>
 </html>

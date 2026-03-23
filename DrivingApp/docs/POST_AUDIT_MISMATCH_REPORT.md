@@ -69,7 +69,7 @@
 
 ---
 
-### C-4. Experience Level Enum Mismatch — Form vs Database
+### C-4. Experience Level Enum Mismatch — Form vs Database [RESOLVED]
 
 | Detail | Value |
 |--------|-------|
@@ -78,7 +78,7 @@
 | **Impact** | Selecting "Experienced Driver" passes validation but causes a database constraint violation on insert |
 | **Affected Role** | Guest |
 | **Root Cause** | Form/validation was never aligned with the database enum values |
-| **Fix** | Either change DB enum to `['new_driver', 'experienced_driver']` OR change form + validation to use `'experienced'` |
+| **Fix** | Standardized all references to use `'experienced'` to match the database enum and form values. [FIXED March 18, 2026] |
 
 ---
 

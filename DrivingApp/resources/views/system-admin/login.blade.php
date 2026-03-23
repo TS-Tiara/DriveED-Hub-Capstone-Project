@@ -196,17 +196,7 @@
             <p>Secure Access Portal</p>
         </div>
 
-            @if(session('success'))
-                <div class="alert alert-success">
-                    {{ session('success') }}
-                </div>
-            @endif
 
-            @if(session('error'))
-                <div class="alert alert-error">
-                    {{ session('error') }}
-                </div>
-            @endif
 
             <form method="POST" action="{{ route('system-admin.login.submit') }}">
                 @csrf
@@ -261,5 +251,6 @@
                 </a>
             </div>
         </div>
+    @include('partials.toast-notifications')
 </body>
 </html>

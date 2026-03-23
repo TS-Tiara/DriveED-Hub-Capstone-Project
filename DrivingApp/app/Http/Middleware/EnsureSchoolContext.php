@@ -22,7 +22,7 @@ class EnsureSchoolContext
 
         // Block access to deactivated schools
         if (array_key_exists('status', $school->getAttributes()) && $school->status !== 'active') {
-            abort(403, 'This school portal is currently unavailable.');
+            return response()->view('errors.inactive-school', ['school' => $school], 403);
         }
 
         // Skip school validation for logout routes to prevent conflicts
@@ -34,8 +34,8 @@ class EnsureSchoolContext
         $request->session()->put('school_id', $school->id);
         $request->session()->put('school_slug', $school->slug);
 
-        config(['app.timezone' => $school->timezone ?? config('app.timezone')]);
-        date_default_timezone_set(config('app.timezone'));
+        // We keep app.timezone as UTC globally for consistent storage.
+        // We can use $school->timezone for display-level conversion in views.
 
         view()->share('currentSchool', $school);
         view()->share('schoolUrl', static function (string $path = '') use ($school): string {

@@ -98,9 +98,12 @@ Route::prefix('{school:slug}')
     ->group(function (): void {
         Route::controller(AuthController::class)->group(function (): void {
             Route::get('/', 'showLogin')->name('login');
-            Route::get('/login', 'showLogin');
             Route::post('/login', 'login')->name('login.submit')->middleware('throttle:5,1');
             Route::post('/logout', 'logout')->name('logout');
+
+            // Force Password Reset (for first-time admins)
+            Route::get('/force-password-reset', 'showForceResetForm')->name('password.force-reset');
+            Route::post('/force-password-reset', 'handleForceReset')->name('password.force-reset.update');
         }
         );
 
@@ -108,7 +111,7 @@ Route::prefix('{school:slug}')
         Route::get('/forgot-password', [PasswordResetController::class , 'showForgotForm'])->name('password.request');
         Route::post('/forgot-password', [PasswordResetController::class , 'sendResetLink'])->name('password.email')->middleware('throttle:3,1');
         Route::get('/reset-password/{token}', [PasswordResetController::class , 'showResetForm'])->name('password.reset');
-        Route::post('/reset-password', [PasswordResetController::class , 'reset'])->name('password.update');
+        Route::post('/reset-password', [PasswordResetController::class , 'reset'])->name('password.update')->middleware('throttle:5,1');
 
         // Public guest registration (Main registration entry point)
         Route::get('/register', [GuestController::class , 'showRegistrationForm'])->name('registration.form');
@@ -135,8 +138,19 @@ Route::prefix('{school:slug}')
                     Route::post('/enroll/{course}', [GuestController::class , 'enroll'])->name('enroll');
                     Route::post('/upload-license', [GuestController::class , 'uploadLicense'])->name('uploadLicense');
                     Route::get('/enrollment-requests', [GuestController::class , 'enrollmentRequests'])->name('enrollmentRequests');
+                    
+                    // Guest payment routes
+                    Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
+                    Route::post('/payments', [PaymentController::class, 'store'])->name('payments.store');
                 }
                 );
+
+                // AUD-002: Secure Document Access
+                Route::middleware(['auth:student,admin', 'nocache'])->group(function (): void {
+                    Route::get('/license/{student}', [\App\Http\Controllers\StorageController::class, 'streamLicense'])->name('storage.license');
+                    Route::get('/credential/{enrollment}', [\App\Http\Controllers\StorageController::class, 'streamCredential'])->name('storage.credential');
+                    Route::get('/gcash-qr/{gcashSetting}', [\App\Http\Controllers\StorageController::class, 'streamGcashQr'])->name('storage.gcash-qr');
+                });
             }
             );
 
@@ -196,15 +210,6 @@ Route::prefix('{school:slug}')
                             Route::get('/instructors', [AdminController::class , 'instructorReports'])->name('reports.instructors');
                             Route::get('/logs', [AdminController::class , 'logs'])->name('reports.logs');
 
-                            // Report exports
-                            Route::prefix('export')->name('reports.export.')->group(function () {
-                                    Route::get('/students', [ReportController::class , 'exportStudents'])->name('students');
-                                    Route::get('/instructors', [ReportController::class , 'exportInstructors'])->name('instructors');
-                                    Route::get('/bookings', [ReportController::class , 'exportBookings'])->name('bookings');
-                                    Route::get('/payments', [ReportController::class , 'exportPayments'])->name('payments');
-                                    Route::get('/courses', [ReportController::class , 'exportCourses'])->name('courses');
-                                }
-                                );
                             }
                             );
 
@@ -223,6 +228,8 @@ Route::prefix('{school:slug}')
                             Route::get('/schedules/pdf', [ExportController::class , 'schedulesPdf'])->name('schedules.pdf');
                             Route::get('/payments/pdf', [ExportController::class , 'paymentsPdf'])->name('payments.pdf');
                             Route::get('/payments/excel', [ExportController::class , 'paymentsExcel'])->name('payments.excel');
+                            Route::get('/bookings/excel', [ExportController::class , 'bookingsExcel'])->name('bookings.excel');
+                            Route::get('/courses/excel', [ExportController::class , 'coursesExcel'])->name('courses.excel');
                             Route::get('/courses/pdf', [ExportController::class , 'coursesPdf'])->name('courses.pdf');
                         }
                         );
@@ -251,10 +258,6 @@ Route::prefix('{school:slug}')
                             // (Reports route handled in the main reports group to avoid URI collision)
                             }
                             );
-
-
-                        }
-                        );
 
                         // New LMS routes WITH ajax middleware for layout consistency
                         // Enrollment management (combining enrollment requests and enrollments)
@@ -337,7 +340,10 @@ Route::prefix('{school:slug}')
                                 );
                             }
                             ); // end ajax middleware for LMS routes
-                    
+                            
+                        }
+                        ); // end admin group
+
                             Route::post('/logout', [AuthController::class , 'logout'])->name('logout');
                         }
                         );
@@ -461,6 +467,7 @@ Route::prefix('{school:slug}')
                     // Student payments
                     Route::get('/payments', [PaymentController::class , 'index'])->name('payments.index');
                     Route::get('/payments/{payment}', [PaymentController::class , 'show'])->name('payments.show');
+                    Route::post('/payments', [PaymentController::class , 'store'])->name('payments.store');
 
                     // Student schedule
                     Route::get('/schedule', [StudentController::class , 'schedule'])->name('schedule');

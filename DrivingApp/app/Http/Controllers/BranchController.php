@@ -44,7 +44,7 @@ class BranchController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'address' => 'nullable|string|max:500',
-            'contact_number' => 'nullable|string|max:50',
+            'contact_number' => 'nullable|string|max:50|regex:/^[0-9]+$/',
             'email' => 'nullable|email|max:255',
             'is_active' => 'sometimes|boolean',
             'sort_order' => 'sometimes|integer|min:0',
@@ -94,7 +94,7 @@ class BranchController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'address' => 'nullable|string|max:500',
-            'contact_number' => 'nullable|string|max:50',
+            'contact_number' => 'nullable|string|max:50|regex:/^[0-9]+$/',
             'email' => 'nullable|email|max:255',
             'is_active' => 'sometimes|boolean',
             'sort_order' => 'sometimes|integer|min:0',

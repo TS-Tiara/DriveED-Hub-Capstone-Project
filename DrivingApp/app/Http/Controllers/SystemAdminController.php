@@ -15,6 +15,8 @@ use App\Rules\StrongPassword;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 
 class SystemAdminController extends Controller
 {
@@ -46,6 +48,15 @@ class SystemAdminController extends Controller
                 'email' => 'required|email',
                 'password' => 'required',
             ]);
+
+            $credentials['email'] = strtolower(trim($credentials['email']));
+
+            $throttleMessage = $this->getSystemAdminThrottleMessage($request, $credentials['email']);
+            if ($throttleMessage !== null) {
+                return back()->withErrors([
+                    'email' => $throttleMessage,
+                ])->withInput($request->only('email'));
+            }
             $remember = $request->has('remember');
 
             // Attempt to authenticate as admin
@@ -56,6 +67,7 @@ class SystemAdminController extends Controller
                 // Check if the admin has system_admin role
                 if ($admin->role === 'system_admin') {
                     $request->session()->regenerate();
+                    $this->clearSystemAdminAttemptLimits($request, $credentials['email']);
 
                     SystemLog::logInfo(
                         "System admin logged in: {$admin->name}",
@@ -70,15 +82,21 @@ class SystemAdminController extends Controller
 
                 // Not a system admin, logout
                 Auth::guard('admin')->logout();
+                $this->registerSystemAdminAttempt($request, $credentials['email']);
                 return back()->withErrors([
                     'email' => 'Access denied. System Administrator privileges required.',
                 ])->withInput($request->only('email'));
             }
 
+            $this->registerSystemAdminAttempt($request, $credentials['email']);
+
             return back()->withErrors([
                 'email' => 'The provided credentials do not match our records.',
             ])->withInput($request->only('email'));
 
+        }
+        catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
         }
         catch (\Exception $e) {
             SystemLog::logError(
@@ -92,6 +110,45 @@ class SystemAdminController extends Controller
 
             return back()->with('error', 'Login failed. Please try again.');
         }
+    }
+
+    private function systemAdminLimiterKeyIpAndEmail(Request $request, string $email): string
+    {
+        return 'system-admin-login:ip-email:' . sha1($email) . ':' . sha1((string) $request->ip());
+    }
+
+    private function systemAdminLimiterKeyEmail(string $email): string
+    {
+        return 'system-admin-login:email:' . sha1($email);
+    }
+
+    private function getSystemAdminThrottleMessage(Request $request, string $email): ?string
+    {
+        $ipEmailKey = $this->systemAdminLimiterKeyIpAndEmail($request, $email);
+        if (RateLimiter::tooManyAttempts($ipEmailKey, 5)) {
+            $seconds = RateLimiter::availableIn($ipEmailKey);
+            return 'Too many login attempts. Please wait ' . max(1, (int) ceil($seconds / 60)) . ' minute(s) and try again.';
+        }
+
+        $emailKey = $this->systemAdminLimiterKeyEmail($email);
+        if (RateLimiter::tooManyAttempts($emailKey, 20)) {
+            $seconds = RateLimiter::availableIn($emailKey);
+            return 'Too many login attempts for this account. Please wait ' . max(1, (int) ceil($seconds / 60)) . ' minute(s) and try again.';
+        }
+
+        return null;
+    }
+
+    private function registerSystemAdminAttempt(Request $request, string $email): void
+    {
+        RateLimiter::hit($this->systemAdminLimiterKeyIpAndEmail($request, $email), 60);
+        RateLimiter::hit($this->systemAdminLimiterKeyEmail($email), 3600);
+    }
+
+    private function clearSystemAdminAttemptLimits(Request $request, string $email): void
+    {
+        RateLimiter::clear($this->systemAdminLimiterKeyIpAndEmail($request, $email));
+        RateLimiter::clear($this->systemAdminLimiterKeyEmail($email));
     }
 
     /**
@@ -246,7 +303,7 @@ class SystemAdminController extends Controller
             Admin::create([
                 'name' => $request->admin_name,
                 'email' => $request->admin_email,
-                'password' => $request->admin_password,
+                'password' => bcrypt($request->admin_password),
                 'must_reset_password' => true, // Force reset on first login
                 'role' => 'school_admin',
                 'school_id' => $school->id,
@@ -254,15 +311,24 @@ class SystemAdminController extends Controller
 
             DB::commit();
 
-            SystemLog::logInfo(
-                "Created new driving school: {$school->name}",
-                'system',
-            ['school_id' => $school->id, 'admin_email' => $request->admin_email],
-                null,
-                'create_school'
-            );
+            try {
+                SystemLog::logInfo(
+                    "Created new driving school: {$school->name}",
+                    'system',
+                    ['school_id' => $school->id, 'admin_email' => $request->admin_email],
+                    null,
+                    'create_school'
+                );
+            } catch (\Exception $e) {
+                // Logging failure should not crash the response
+                Log::error("Failed to log school creation: " . $e->getMessage());
+            }
 
             return redirect()->route('system-admin.schools')->with('success', "Driving school '{$school->name}' created successfully!");
+        }
+        catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            throw $e;
         }
         catch (\Exception $e) {
             DB::rollBack();
@@ -431,21 +497,29 @@ class SystemAdminController extends Controller
             $admin = Admin::create([
                 'name' => $request->name,
                 'email' => $request->email,
-                'password' => $request->password,
+                'password' => bcrypt($request->password),
                 'must_reset_password' => true, // Force reset on first login
                 'role' => 'school_admin',
                 'school_id' => $school->id,
             ]);
 
-            SystemLog::logInfo(
-                "Created new school admin: {$admin->name} for {$school->name}",
-                'system',
-            ['admin_id' => $admin->id, 'school_id' => $school->id, 'email' => $admin->email],
-                $school->id,
-                'create_school_admin'
-            );
+            try {
+                SystemLog::logInfo(
+                    "Created new school admin: {$admin->name} for {$school->name}",
+                    'system',
+                    ['admin_id' => $admin->id, 'school_id' => $school->id, 'email' => $admin->email],
+                    $school->id,
+                    'create_school_admin'
+                );
+            } catch (\Exception $e) {
+                // Logging failure should not crash the response
+                Log::error("Failed to log admin creation: " . $e->getMessage());
+            }
 
             return redirect()->route('system-admin.admins')->with('success', "School admin '{$admin->name}' created successfully for {$school->name}!");
+        }
+        catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
         }
         catch (\Exception $e) {
             SystemLog::logError(
@@ -470,6 +544,18 @@ class SystemAdminController extends Controller
             // Prevent toggling system admins
             if ($admin->role === 'system_admin') {
                 return back()->with('error', 'Cannot modify system administrators.');
+            }
+
+            // Prevent deactivating the last active school admin
+            if ($admin->is_active && $admin->role === 'school_admin') {
+                $schoolAdminCount = Admin::where('school_id', '=', $admin->school_id, 'and')
+                    ->where('role', '=', 'school_admin', 'and')
+                    ->where('is_active', '=', true, 'and')
+                    ->count('*');
+                
+                if ($schoolAdminCount <= 1) {
+                    return back()->with('error', 'Cannot deactivate the only active school administrator.');
+                }
             }
 
             $admin->is_active = !$admin->is_active;
@@ -511,6 +597,17 @@ class SystemAdminController extends Controller
             // Prevent deleting system admins
             if ($admin->role === 'system_admin') {
                 return back()->with('error', 'Cannot delete system administrators.');
+            }
+
+            // Prevent deleting the last school admin
+            if ($admin->role === 'school_admin') {
+                $schoolAdminCount = Admin::where('school_id', '=', $admin->school_id, 'and')
+                    ->where('role', '=', 'school_admin', 'and')
+                    ->count('*');
+                
+                if ($schoolAdminCount <= 1) {
+                    return back()->with('error', 'Cannot delete the only school administrator left. Each school must have at least one administrator.');
+                }
             }
 
             $adminName = $admin->name;
@@ -619,6 +716,13 @@ class SystemAdminController extends Controller
             }
             elseif ($type === 'instructor') {
                 $user = Instructor::findOrFail($id);
+            }
+            elseif ($type === 'admin') {
+                $user = Admin::findOrFail($id);
+                // Prevent toggling system admins via this general route
+                if ($user->role === 'system_admin') {
+                    return back()->with('error', 'Cannot toggle status of system administrators.');
+                }
             }
             else {
                 return back()->with('error', 'Invalid user type.');

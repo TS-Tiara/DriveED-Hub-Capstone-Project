@@ -3,6 +3,8 @@
 @section('title', 'Branch Management')
 
 @section('content')
+<!-- Fix: Load Bootstrap Icons for this view since stat cards rely on them -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 @php
     $school = $school ?? $currentSchool ?? null;
     $schoolName = $school->name ?? 'Driving School';
@@ -499,20 +501,7 @@
         </button>
     </div>
 
-    {{-- Flash Messages --}}
-    @if(session('success'))
-    <div class="alert alert-success">
-        <span>{{ session('success') }}</span>
-        <button class="close-btn" onclick="this.parentElement.remove()">&times;</button>
-    </div>
-    @endif
 
-    @if(session('error'))
-    <div class="alert alert-error">
-        <span>{{ session('error') }}</span>
-        <button class="close-btn" onclick="this.parentElement.remove()">&times;</button>
-    </div>
-    @endif
 
     {{-- Stats --}}
     <div class="branch-stats">
@@ -647,7 +636,7 @@
                 </div>
                 <div class="form-group">
                     <label for="branchContact">Contact Number</label>
-                    <input type="text" id="branchContact" name="contact_number" placeholder="e.g. 09xx-xxx-xxxx">
+                    <input type="text" id="branchContact" name="contact_number" placeholder="e.g. 09xx-xxx-xxxx" inputmode="numeric" pattern="[0-9]*" autocomplete="tel" maxlength="15">
                 </div>
                 <div class="form-group">
                     <label for="branchEmail">Email</label>
@@ -670,6 +659,19 @@
 <script>
     const branchesBaseUrl = '{{ url($school->slug . "/admin/branches") }}';
     const csrfToken = '{{ csrf_token() }}';
+
+    function enforceNumericOnly(input) {
+        if (!input) return;
+        const sanitize = function() {
+            input.value = input.value.replace(/\D+/g, '');
+        };
+        input.addEventListener('input', sanitize);
+        input.addEventListener('paste', function() { setTimeout(sanitize, 0); });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        enforceNumericOnly(document.getElementById('branchContact'));
+    });
 
     function openBranchModal() {
         document.getElementById('branchModalTitle').textContent = 'Add New Branch';

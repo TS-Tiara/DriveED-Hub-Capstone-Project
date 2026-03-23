@@ -48,12 +48,13 @@ class GuestController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:students,email'],
             'password' => ['required', 'confirmed', new StrongPassword()],
-            'contact' => ['required', 'string', 'max:20'],
+            'contact' => ['required', 'string', 'max:20', 'regex:/^[0-9]+$/'],
             'address' => ['nullable', 'string', 'max:500'],
             'location' => ['nullable', 'string', 'max:255'],
             'accept_privacy' => ['required', 'accepted'],
             'accept_terms' => ['required', 'accepted'],
         ], [
+            'contact.regex' => 'Contact number must contain digits only.',
             'accept_privacy.required' => 'You must accept the Data Privacy Policy.',
             'accept_privacy.accepted' => 'You must accept the Data Privacy Policy.',
             'accept_terms.required' => 'You must accept the Terms and Conditions.',
@@ -68,9 +69,11 @@ class GuestController extends Controller
             'contact' => $validated['contact'],
             'address' => $validated['address'] ?? null,
             'location' => $validated['location'] ?? null,
-            'role' => 'guest',
             'status' => 'active',
         ]);
+
+        $guest->role = 'guest';
+        $guest->save();
 
         // Auto-login the guest
         Auth::guard('student')->login($guest);
@@ -216,14 +219,18 @@ class GuestController extends Controller
             return redirect()->back()->with('error', 'Practical Driving Courses (PDC) require a verified Student Driver\'s License. Please complete a TDC first and upload your license.');
         }
 
-        // Check if already enrolled for this course
+        // Check if already enrolled for this course (including previous rejections/cancellations)
         $existingRequest = EnrollmentRequest::where('learner_id', $guest->id)
             ->where('course_id', $course->id)
-            ->whereIn('status', ['pending', 'approved'])
             ->first();
 
         if ($existingRequest) {
-            return redirect()->back()->with('warning', 'You already have an enrollment request for this course.');
+            if (in_array($existingRequest->status, ['pending', 'approved'])) {
+                return redirect()->back()->with('warning', 'You already have an active enrollment request for this course.');
+            }
+            
+            // If they have a rejected or cancelled request, they should contact admin rather than hitting a DB error
+            return redirect()->back()->with('error', 'You have a previous application for this course with status: ' . ucfirst($existingRequest->status) . '. Please contact the administrator if you wish to re-enroll.');
         }
 
         try {
@@ -244,7 +251,7 @@ class GuestController extends Controller
             // Handle credential file upload for experienced drivers
             if ($request->hasFile('credential_file')) {
                 $file = $request->file('credential_file');
-                $path = $file->store('credentials', 'public');
+                $path = $file->store('credentials', 'local');
                 $data['credentials_file_path'] = $path;
             }
 
@@ -344,15 +351,17 @@ class GuestController extends Controller
         try {
             // Delete old file if re-uploading
             if ($guest->student_license_path) {
-                Storage::disk('public')->delete($guest->student_license_path);
+                Storage::disk('local')->delete($guest->student_license_path);
             }
 
             $uploadedFile = $request->file('student_license');
-            $fileData = base64_encode(file_get_contents($uploadedFile->getRealPath()));
+            
+            // Store file on private disk
+            $path = $uploadedFile->store('student-licenses', 'local');
 
             $guest->update([
-                'student_license_path' => null,
-                'student_license_data' => $fileData,
+                'student_license_path' => $path,
+                'student_license_data' => null, // Clear legacy data to free up DB space
                 'student_license_mime_type' => $uploadedFile->getMimeType(),
                 'student_license_filename' => $uploadedFile->getClientOriginalName(),
                 'student_license_status' => 'pending',
@@ -361,10 +370,10 @@ class GuestController extends Controller
                 'student_license_rejection_reason' => null,
             ]);
 
-            Log::info('Student license uploaded', [
+            Log::info('Student license uploaded to disk', [
                 'student_id' => $guest->id,
                 'school_id' => $school->id,
-                'storage' => 'database',
+                'path' => $path,
             ]);
 
             // Notify admins about pending license verification
@@ -381,6 +390,8 @@ class GuestController extends Controller
             }
 
             return redirect()->back()->with('success', 'License uploaded successfully! It will be reviewed by an admin.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             Log::error('Failed to upload student license', [
                 'error' => $e->getMessage(),

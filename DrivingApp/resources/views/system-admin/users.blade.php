@@ -531,6 +531,7 @@
                 <tbody>
                     @foreach($students as $student)
                     <tr>
+                        <td class="hide-mobile">{{ $student->id }}</td>
                         <td>
                             <div class="user-name-wrap">
                                 <div class="user-avatar student">
@@ -540,6 +541,7 @@
                             </div>
                         </td>
                         <td>{{ $student->email }}</td>
+                        <td class="hide-mobile">{{ $student->contact ?: '—' }}</td>
                         <td>
                             <span class="school-badge">
                                 <i class="fas fa-school"></i>
@@ -551,7 +553,7 @@
                                 {{ ucfirst($student->status) }}
                             </span>
                         </td>
-                        <td>{{ $student->created_at->format('M d, Y') }}</td>
+                        <td class="hide-mobile">{{ $student->created_at->format('M d, Y') }}</td>
                         <td>
                             <div class="actions-cell">
                                 <form action="{{ route('system-admin.users.toggle-status', ['type' => 'student', 'id' => $student->id]) }}" method="POST" class="inline-form">
@@ -597,17 +599,20 @@
             <table>
                 <thead>
                     <tr>
+                        <th class="hide-mobile">ID</th>
                         <th>Name</th>
                         <th>Email</th>
+                        <th class="hide-mobile">Contact</th>
                         <th>School</th>
                         <th>Status</th>
-                        <th>Joined</th>
+                        <th class="hide-mobile">Joined</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($instructors as $instructor)
                     <tr>
+                        <td class="hide-mobile">{{ $instructor->id }}</td>
                         <td>
                             <div class="user-name-wrap">
                                 <div class="user-avatar instructor">
@@ -617,6 +622,7 @@
                             </div>
                         </td>
                         <td>{{ $instructor->email }}</td>
+                        <td class="hide-mobile">{{ $instructor->contact ?: '—' }}</td>
                         <td>
                             <span class="school-badge">
                                 <i class="fas fa-school"></i>
@@ -628,7 +634,7 @@
                                 {{ ucfirst($instructor->status) }}
                             </span>
                         </td>
-                        <td>{{ $instructor->created_at->format('M d, Y') }}</td>
+                        <td class="hide-mobile">{{ $instructor->created_at->format('M d, Y') }}</td>
                         <td>
                             <div class="actions-cell">
                                 <form action="{{ route('system-admin.users.toggle-status', ['type' => 'instructor', 'id' => $instructor->id]) }}" method="POST" class="inline-form">

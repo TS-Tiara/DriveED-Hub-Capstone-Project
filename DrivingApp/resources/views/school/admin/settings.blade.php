@@ -7,6 +7,7 @@
     $school = $school ?? $currentSchool ?? null;
     $schoolName = $school->name ?? 'Driving School';
     $settings = $school->schoolSetting ?? null;
+    $gcashSetting = $gcashSetting ?? null;
 @endphp
 
 @include('school.admin.partials.admin-styles')
@@ -23,7 +24,7 @@
     .page-header {
         margin-bottom: 30px;
         padding-bottom: 15px;
-        border-bottom: 3px solid {{ $settings?->primary_color ?? '#667eea' }};
+        border-bottom: 3px solid var(--primary-color);
     }
 
     .page-title {
@@ -83,7 +84,7 @@
         content: '';
         width: 4px;
         height: 20px;
-        background: {{ $settings->primary_color ?? '#667eea' }};
+        background: var(--primary-color);
         border-radius: 2px;
     }
 
@@ -101,13 +102,9 @@
     }
 
     .tab-btn.active {
-        @if($settings && $settings->use_gradient_header)
-            background: linear-gradient(135deg, {{ $settings->primary_color ?? '#667eea' }} 0%, {{ $settings->secondary_color ?? '#764ba2' }} 100%);
-        @else
-            background: {{ $settings->primary_color ?? '#667eea' }};
-        @endif
+        background: var(--header-gradient);
         color: white;
-        border-color: {{ $settings->primary_color ?? '#667eea' }};
+        border-color: var(--primary-color);
     }
 
     .tab-content {
@@ -121,8 +118,8 @@
     .preview-toggle {
         padding: 6px 12px;
         background: white;
-        border: 2px solid #667eea;
-        color: #667eea;
+        border: 2px solid var(--primary-color);
+        color: var(--primary-color);
         border-radius: 6px;
         font-size: 0.85rem;
         font-weight: 600;
@@ -134,7 +131,7 @@
     }
 
     .preview-toggle.active {
-        background: #667eea;
+        background: var(--primary-color);
         color: white;
     }
 
@@ -195,8 +192,8 @@
 
     .color-text:focus {
         outline: none;
-        border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
     }
 
     .number-input {
@@ -210,8 +207,8 @@
 
     .number-input:focus {
         outline: none;
-        border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
     }
 
     .form-control,
@@ -235,8 +232,8 @@
     .form-control:focus,
     .form-select:focus {
         outline: none;
-        border-color: {{ $settings->primary_color ?? '#667eea' }};
-        box-shadow: 0 0 0 3px {{ $settings->primary_color ?? '#667eea' }}15;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
         background-color: white;
     }
 
@@ -323,7 +320,7 @@
     .opacity-value {
         min-width: 45px;
         font-weight: 600;
-        color: #667eea;
+        color: var(--primary-color);
     }
 
     .opacity-help {
@@ -403,9 +400,9 @@
         margin-top: 20px;
         padding: 20px;
         background: white;
-        border: 2px solid #667eea;
+        border: 2px solid var(--primary-color);
         border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+        box-shadow: 0 4px 12px var(--brand-shadow);
         animation: slideDown 0.3s ease;
     }
 
@@ -432,12 +429,12 @@
         align-items: center;
         margin-bottom: 15px;
         padding-bottom: 10px;
-        border-bottom: 2px solid #667eea;
+        border-bottom: 2px solid var(--primary-color);
     }
 
     .preview-header h4 {
         font-size: 1.1rem;
-        color: #667eea;
+        color: var(--primary-color);
         margin: 0;
         display: flex;
         align-items: center;
@@ -850,27 +847,7 @@
         <p class="page-subtitle">Personalize your school's appearance with colors, styles, and branding</p>
     </div>
 
-    @if (session('success'))
-    <div class="flash-message success">
-        <div class="flash-icon">✓</div>
-        <div class="flash-content">
-            <div class="flash-title">Success!</div>
-            <div class="flash-text">{{ session('success') }}</div>
-        </div>
-        <button class="flash-close" onclick="this.parentElement.remove()">×</button>
-    </div>
-    @endif
 
-    @if ($errors->any())
-    <div class="flash-message error">
-        <div class="flash-icon">✕</div>
-        <div class="flash-content">
-            <div class="flash-title">Error!</div>
-            <div class="flash-text">Please fix the errors below</div>
-        </div>
-        <button class="flash-close" onclick="this.parentElement.remove()">×</button>
-    </div>
-    @endif
 
     <!-- Tab Navigation -->
     <div class="tabs-container tabs-container-frame">
@@ -958,6 +935,56 @@
                             Minimum days notice required for instructor schedule removal requests
                         </small>
                     </div>
+                    </div>
+                </div>
+
+                <!-- Email Settings -->
+                <div class="form-section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <h3 class="section-title">Email Settings</h3>
+                    </div>
+                    
+                    <div class="section-inputs">
+                    <div class="form-group">
+                        <label class="form-label">School Contact Email</label>
+                        <input type="email" class="form-control-compact" style="width:100%; padding:10px;" name="contact_email" value="{{ old('contact_email', $settings->contact_email ?? '') }}" placeholder="e.g. info@yourschool.com">
+                        <small class="text-muted help-text-block">
+                            Displayed in automated emails as the school's contact address. If left blank, emails will say "the school office".
+                        </small>
+                    </div>
+                    </div>
+                </div>
+
+                <!-- Payment Settings -->
+                <div class="form-section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <h3 class="section-title">Payment Settings (GCash)</h3>
+                    </div>
+
+                    <div class="section-inputs">
+                    <div class="form-group">
+                        <label class="form-label">
+                            <input type="checkbox" name="gcash_enabled" value="1" {{ old('gcash_enabled', $gcashSetting->is_active ?? true) ? 'checked' : '' }} class="checkbox-inline">
+                            Enable GCash payment option for students
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">GCash Payment Image {{ empty($gcashSetting?->qr_path) ? '(required for first-time setup)' : '(upload to replace)' }}</label>
+                        <input type="file" class="form-control" name="gcash_qr" accept="image/*">
+                        <small class="text-muted help-text-block">
+                            Upload a single image containing the QR, account name, and number. Accepted formats: JPG, PNG, WEBP. Max size: 5MB.
+                        </small>
+                    </div>
+
+                    @if(!empty($gcashSetting?->qr_path))
+                    <div class="form-group">
+                        <label class="form-label">Current GCash Payment Image</label>
+                        <div class="current-bg-wrap">
+                            <img class="current-bg-image" src="{{ route('schools.guest.storage.gcash-qr', ['school' => $school, 'gcashSetting' => $gcashSetting]) }}" alt="Current GCash payment image">
+                        </div>
+                    </div>
+                    @endif
                     </div>
                 </div>
 
@@ -1440,6 +1467,65 @@
                 </div>
             </div>
 
+            <!-- Role Branding -->
+            <div class="form-section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <h3 class="section-title">Role Branding</h3>
+                    <button type="button" class="preview-toggle" onclick="event.stopPropagation(); showPreview('roles')">
+                        Preview
+                    </button>
+                </div>
+                
+                <div class="section-inputs">
+                <div class="form-group">
+                    <label class="form-label">Student Badge Background</label>
+                    <div class="color-input-group">
+                        <input type="color" class="color-picker" id="role_student_bg" name="role_student_bg" value="{{ old('role_student_bg', $settings->role_student_bg ?? '#dbeafe') }}" onchange="updatePreview()">
+                        <input type="text" class="color-text" value="{{ old('role_student_bg', $settings->role_student_bg ?? '#dbeafe') }}" readonly>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Student Badge Text</label>
+                    <div class="color-input-group">
+                        <input type="color" class="color-picker" id="role_student_text" name="role_student_text" value="{{ old('role_student_text', $settings->role_student_text ?? '#1e40af') }}" onchange="updatePreview()">
+                        <input type="text" class="color-text" value="{{ old('role_student_text', $settings->role_student_text ?? '#1e40af') }}" readonly>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Instructor Badge Background</label>
+                    <div class="color-input-group">
+                        <input type="color" class="color-picker" id="role_instructor_bg" name="role_instructor_bg" value="{{ old('role_instructor_bg', $settings->role_instructor_bg ?? '#e0f2fe') }}" onchange="updatePreview()">
+                        <input type="text" class="color-text" value="{{ old('role_instructor_bg', $settings->role_instructor_bg ?? '#e0f2fe') }}" readonly>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Instructor Badge Text</label>
+                    <div class="color-input-group">
+                        <input type="color" class="color-picker" id="role_instructor_text" name="role_instructor_text" value="{{ old('role_instructor_text', $settings->role_instructor_text ?? '#0369a1') }}" onchange="updatePreview()">
+                        <input type="text" class="color-text" value="{{ old('role_instructor_text', $settings->role_instructor_text ?? '#0369a1') }}" readonly>
+                    </div>
+                </div>
+                </div>
+
+                <!-- Preview Area for Role Badges -->
+                <div class="preview-area" id="preview-roles">
+                    <div class="preview-header">
+                        <h4>Role Badges Preview</h4>
+                        <button type="button" class="preview-close" onclick="closePreview('roles')">Close</button>
+                    </div>
+                    <div class="preview-content">
+                        <div class="badge-preview-row">
+                            <span class="preview-badge" id="role-student-preview">Student</span>
+                            <span class="preview-badge" id="role-instructor-preview">Instructor</span>
+                        </div>
+                        <p class="badge-preview-note">These colors are used for user roles in tables and profiles</p>
+                    </div>
+                </div>
+            </div>
+
             <!-- Login/Signup Header Customization -->
             <div class="form-section">
                 <div class="section-header" onclick="toggleSection(this)">
@@ -1900,6 +1986,19 @@ function updatePreview() {
         document.getElementById('badge-approved-preview').style.backgroundColor = badgeApproved;
         document.getElementById('badge-cancelled-preview').style.backgroundColor = badgeCancelled;
     }
+
+    // Role Badges
+    const roleStudentBg = document.getElementById('role_student_bg').value;
+    const roleStudentText = document.getElementById('role_student_text').value;
+    const roleInstructorBg = document.getElementById('role_instructor_bg').value;
+    const roleInstructorText = document.getElementById('role_instructor_text').value;
+
+    if (document.getElementById('role-student-preview')) {
+        document.getElementById('role-student-preview').style.backgroundColor = roleStudentBg;
+        document.getElementById('role-student-preview').style.color = roleStudentText;
+        document.getElementById('role-instructor-preview').style.backgroundColor = roleInstructorBg;
+        document.getElementById('role-instructor-preview').style.color = roleInstructorText;
+    }
 }
 
 function hexToRgb(hex) {
@@ -1966,6 +2065,10 @@ function resetToDefaults() {
             document.getElementById('badge_pending_bg').value = '#fbbf24';
             document.getElementById('badge_approved_bg').value = '#10b981';
             document.getElementById('badge_cancelled_bg').value = '#ef4444';
+            document.getElementById('role_student_bg').value = '#dbeafe';
+            document.getElementById('role_student_text').value = '#1e40af';
+            document.getElementById('role_instructor_bg').value = '#e0f2fe';
+            document.getElementById('role_instructor_text').value = '#0369a1';
             document.getElementById('border_radius').value = '8';
             
             // Update text inputs

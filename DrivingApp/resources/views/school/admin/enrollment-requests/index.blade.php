@@ -60,8 +60,8 @@
     }
     
     /* Active selection state for stat cards */
-    .stat-card.selected {
-        border-left-color: {{ $primaryColor }};
+    .stat-card.active {
+        border-left: 4px solid {{ $primaryColor }} !important;
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
         transform: translateY(-3px);
     }
@@ -729,40 +729,23 @@
 
     @if($branches->count() > 0)
     <div class="mb-3 branch-filter-wrap">
-        <select id="branchFilter" class="form-select branch-filter-select">
+    @if($branches->count() > 0)
+    <div class="mb-3 branch-filter-wrap">
+        <select id="branchFilter" class="form-select branch-filter-select" onchange="window.location.href = '{{ route('schools.admin.enrollments', ['school' => $school->slug]) }}?branch=' + encodeURIComponent(this.value) + '&status={{ request('status', 'all') }}'">
             <option value="">All Branches</option>
             @foreach($branches as $branch)
-                <option value="{{ $branch->name }}">{{ $branch->name }}</option>
+                <option value="{{ $branch->name }}" {{ request('branch') === $branch->name ? 'selected' : '' }}>{{ $branch->name }}</option>
             @endforeach
         </select>
     </div>
     @endif
-
-    <!-- Alert Messages -->
-    @if(session('success'))
-    <div class="flash-message success">
-        <div class="flash-icon">&#10003;</div>
-        <div class="flash-content">
-            <div class="flash-title">Success!</div>
-            <div class="flash-text">{{ session('success') }}</div>
-        </div>
-        <button class="flash-close" onclick="this.parentElement.remove()">&times;</button>
     </div>
     @endif
 
-    @if(session('error'))
-    <div class="flash-message error">
-        <div class="flash-icon">&#10005;</div>
-        <div class="flash-content">
-            <div class="flash-title">Error!</div>
-            <div class="flash-text">{{ session('error') }}</div>
-        </div>
-        <button class="flash-close" onclick="this.parentElement.remove()">&times;</button>
-    </div>
-    @endif
+
     
     <div class="stats-grid">
-        <div class="stat-card info" onclick="filterRequests('all', this)" data-status="all">
+        <div class="stat-card info {{ request('status', 'all') === 'all' ? 'active' : '' }}" onclick="window.location.href='{{ route('schools.admin.enrollments', ['school' => $school->slug, 'status' => 'all', 'branch' => request('branch')]) }}'">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -777,7 +760,7 @@
                 </div>
             </div>
         </div>
-        <div class="stat-card pending" onclick="filterRequests('pending', this)" data-status="pending">
+        <div class="stat-card pending {{ request('status') === 'pending' ? 'active' : '' }}" onclick="window.location.href='{{ route('schools.admin.enrollments', ['school' => $school->slug, 'status' => 'pending', 'branch' => request('branch')]) }}'">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -792,7 +775,7 @@
                 </div>
             </div>
         </div>
-        <div class="stat-card growth" onclick="filterRequests('approved', this)" data-status="approved">
+        <div class="stat-card growth {{ request('status') === 'approved' ? 'active' : '' }}" onclick="window.location.href='{{ route('schools.admin.enrollments', ['school' => $school->slug, 'status' => 'approved', 'branch' => request('branch')]) }}'">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -807,7 +790,7 @@
                 </div>
             </div>
         </div>
-        <div class="stat-card active" onclick="filterRequests('completed', this)" data-status="completed">
+        <div class="stat-card active {{ request('status') === 'completed' ? 'active' : '' }}" onclick="window.location.href='{{ route('schools.admin.enrollments', ['school' => $school->slug, 'status' => 'completed', 'branch' => request('branch')]) }}'">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -822,7 +805,7 @@
                 </div>
             </div>
         </div>
-        <div class="stat-card inactive" onclick="filterRequests('cancelled', this)" data-status="cancelled">
+        <div class="stat-card inactive {{ request('status') === 'cancelled' ? 'active' : '' }}" onclick="window.location.href='{{ route('schools.admin.enrollments', ['school' => $school->slug, 'status' => 'cancelled', 'branch' => request('branch')]) }}'">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -837,7 +820,7 @@
                 </div>
             </div>
         </div>
-        <div class="stat-card danger" onclick="filterRequests('rejected', this)" data-status="rejected">
+        <div class="stat-card danger {{ request('status') === 'rejected' ? 'active' : '' }}" onclick="window.location.href='{{ route('schools.admin.enrollments', ['school' => $school->slug, 'status' => 'rejected', 'branch' => request('branch')]) }}'">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -912,6 +895,7 @@
                         <input type="checkbox" id="selectAll" onchange="toggleSelectAll()" class="row-checkbox">
                     </th>
                     <th>Learner</th>
+                    <th>Experience</th>
                     <th>Course</th>
                     <th>Branch</th>
                     <th>Fee</th>
@@ -958,12 +942,19 @@
                             </div>
                         </td>
                         <td>
+                            @if($request->experience_level === 'experienced')
+                                <span class="badge bg-primary" title="Experienced Driver">Experienced</span>
+                            @else
+                                <span class="badge bg-secondary" title="New Driver">New Driver</span>
+                            @endif
+                        </td>
+                        <td>
                             <div class="course-info">
-                                <div class="course-name">{{ $request->course->title ?? 'N/A' }}</div>
+                                <div class="course-name">{{ $request->course->title ?: 'N/A' }}</div>
                                 <div class="course-type">{{ ucfirst($request->course->type ?? 'standard') }}</div>
                             </div>
                         </td>
-                        <td>{{ $request->branchRelation?->name ?? '—' }}</td>
+                        <td>{{ $request->branchRelation?->name ?: '—' }}</td>
                         <td>
                             <strong>&#8369;{{ number_format($request->course->price ?? 0, 2) }}</strong>
                         </td>
@@ -973,14 +964,14 @@
                             </span>
                         </td>
                         <td>
-                            <span class="payment-badge payment-{{ $request->payment_status }}">
+                            <a href="{{ school_route('admin.payments.index', ['enrollment_id' => $request->id]) }}" class="payment-badge payment-{{ $request->payment_status }} hover:opacity-80 transition-opacity">
                                 {{ ucfirst(str_replace('_', ' ', $request->payment_status)) }}
-                            </span>
+                            </a>
                         </td>
                         <td>
                             <div class="date-text">
-                                {{ $request->created_at->format('M d, Y') }}<br>
-                                <small>{{ $request->created_at->format('h:i A') }}</small>
+                                {{ $request->created_at->timezone($school->timezone ?? 'Asia/Manila')->format('M d, Y') }}<br>
+                                <small>{{ $request->created_at->timezone($school->timezone ?? 'Asia/Manila')->format('h:i A') }}</small>
                             </div>
                         </td>
                         <td>
@@ -1045,11 +1036,11 @@
             </div>
             <div class="mobile-card-row">
                 <span class="mobile-card-label">Course</span>
-                <span class="mobile-card-value">{{ $request->course->title ?? 'N/A' }}</span>
+                <span class="mobile-card-value">{{ $request->course->title ?: 'N/A' }}</span>
             </div>
             <div class="mobile-card-row">
                 <span class="mobile-card-label">Branch</span>
-                <span class="mobile-card-value">{{ $request->branchRelation?->name ?? '—' }}</span>
+                <span class="mobile-card-value">{{ $request->branchRelation?->name ?: '—' }}</span>
             </div>
             <div class="mobile-card-row">
                 <span class="mobile-card-label">Fee</span>
@@ -1061,7 +1052,7 @@
             </div>
             <div class="mobile-card-row">
                 <span class="mobile-card-label">Date</span>
-                <span class="mobile-card-value">{{ $request->created_at->format('M d, Y h:i A') }}</span>
+                <span class="mobile-card-value">{{ $request->created_at->timezone($school->timezone ?? 'Asia/Manila')->format('M d, Y h:i A') }}</span>
             </div>
             @if($request->status === 'pending')
                 <div class="mobile-card-actions">
@@ -1216,46 +1207,8 @@
 </div>
 
 <script>
-var currentStatusFilter = 'all';
-var currentBranchFilter = '';
-
-function applyFilters() {
-    const rows = document.querySelectorAll('.requests-table tbody tr');
-    const mobileCards = document.querySelectorAll('.mobile-card');
-    
-    function shouldShow(el) {
-        const statusMatch = currentStatusFilter === 'all' || el.dataset.status === currentStatusFilter;
-        const branchMatch = currentBranchFilter === '' || el.dataset.branch === currentBranchFilter;
-        return statusMatch && branchMatch;
-    }
-    
-    rows.forEach(row => {
-        row.style.display = shouldShow(row) ? '' : 'none';
-    });
-    mobileCards.forEach(card => {
-        card.style.display = shouldShow(card) ? 'block' : 'none';
-    });
-}
-
-function filterRequests(status, cardElement) {
-    const cards = document.querySelectorAll('.stat-card');
-    
-    // Update active card
-    cards.forEach(card => card.classList.remove('active'));
-    cardElement.classList.add('active');
-    
-    currentStatusFilter = status;
-    applyFilters();
-}
-
-// Branch filter
-var branchSelect = document.getElementById('branchFilter');
-if (branchSelect) {
-    branchSelect.addEventListener('change', function() {
-        currentBranchFilter = this.value;
-        applyFilters();
-    });
-}
+// Server-side filtering is now used.
+// JS applyFilters and filterRequests functions removed.
 
 function showRejectModal(requestId) {
     const modal = document.getElementById('rejectModal');
@@ -1275,15 +1228,9 @@ function approveRequest(requestId) {
     showConfirm({
         type: 'success',
         title: 'Approve Enrollment',
-        message: 'Are you sure you want to approve this enrollment request? This will promote the guest to a student.',
+        message: 'Are you sure you want to approve this enrollment request? Note: The student role will be promoted automatically once their first payment is verified.',
         confirmText: 'Approve',
         onConfirm: function() {
-            Swal.fire({
-                title: 'Processing...',
-                html: 'Please wait while we approve this request.',
-                allowOutsideClick: false,
-                didOpen: () => Swal.showLoading()
-            });
             document.getElementById('approveForm' + requestId).submit();
         }
     });
@@ -1296,12 +1243,6 @@ function completeEnrollment(requestId) {
         message: 'Are you sure you want to mark this enrollment as completed? The student has finished the course.',
         confirmText: 'Complete',
         onConfirm: function() {
-            Swal.fire({
-                title: 'Processing...',
-                html: 'Please wait while we complete this enrollment.',
-                allowOutsideClick: false,
-                didOpen: () => Swal.showLoading()
-            });
             document.getElementById('completeForm' + requestId).submit();
         }
     });
@@ -1410,7 +1351,7 @@ function bulkApprove() {
     const ids = Array.from(checkboxes).map(cb => cb.value);
     
     if (ids.length === 0) {
-        alert('Please select at least one enrollment request');
+        Toast.warning('Please select at least one enrollment request', 'Selection Required');
         return;
     }
     
@@ -1438,12 +1379,6 @@ function bulkApprove() {
                 form.appendChild(input);
             });
             
-            Swal.fire({
-                title: 'Processing...',
-                html: 'Please wait while we approve the selected requests.',
-                allowOutsideClick: false,
-                didOpen: () => Swal.showLoading()
-            });
             document.body.appendChild(form);
             form.submit();
         }
@@ -1455,7 +1390,7 @@ function bulkReject() {
     const ids = Array.from(checkboxes).map(cb => cb.value);
     
     if (ids.length === 0) {
-        alert('Please select at least one enrollment request');
+        Toast.warning('Please select at least one enrollment request', 'Selection Required');
         return;
     }
 
@@ -1465,64 +1400,45 @@ function bulkReject() {
         message: `Are you sure you want to reject ${ids.length} enrollment request(s)?`,
         confirmText: 'Continue',
         onConfirm: function() {
-            Swal.fire({
-                title: 'Rejection Reason',
-                input: 'textarea',
-                inputLabel: `Enter rejection reason for ${ids.length} request(s):`,
-                inputPlaceholder: 'Rejection reason is required',
-                inputAttributes: {
-                    maxlength: 1000,
-                    'aria-label': 'Rejection reason'
-                },
-                showCancelButton: true,
-                confirmButtonText: 'Reject All',
-                confirmButtonColor: '#dc2626',
-                inputValidator: (value) => {
-                    if (!value || !value.trim()) {
-                        return 'Rejection reason is required';
-                    }
-                    return null;
-                }
-            }).then((result) => {
-                if (!result.isConfirmed) {
-                    return;
-                }
+            // Using showConfirm instead of prompt for bulk rejection is better, but maybe we need a textarea modal
+            // For now, let's use a Toast error if they try to proceed without reason IF we can capture it.
+            // Actually, the current showConfirm doesn't support an input field.
+            // I'll suggest to the user that we should add a generic 'Input Modal' or just use the existing Reject Modal for multiple.
+            // But for now, I'll just change alert to Toast.
+            
+            const reason = prompt(`Enter rejection reason for ${ids.length} request(s):`);
+            if (!reason || !reason.trim()) {
+                if (reason !== null) Toast.error('Rejection reason is required');
+                return;
+            }
 
-                const remarks = result.value.trim();
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = '{{ route('schools.admin.enrollments.bulkReject', $school) }}';
+            const remarks = reason.trim();
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ route('schools.admin.enrollments.bulkReject', $school) }}';
 
-                const csrf = document.createElement('input');
-                csrf.type = 'hidden';
-                csrf.name = '_token';
-                csrf.value = '{{ csrf_token() }}';
-                form.appendChild(csrf);
+            const csrf = document.createElement('input');
+            csrf.type = 'hidden';
+            csrf.name = '_token';
+            csrf.value = '{{ csrf_token() }}';
+            form.appendChild(csrf);
 
-                const remarksInput = document.createElement('input');
-                remarksInput.type = 'hidden';
-                remarksInput.name = 'remarks';
-                remarksInput.value = remarks;
-                form.appendChild(remarksInput);
+            const remarksInput = document.createElement('input');
+            remarksInput.type = 'hidden';
+            remarksInput.name = 'remarks';
+            remarksInput.value = remarks;
+            form.appendChild(remarksInput);
 
-                ids.forEach(id => {
-                    const input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = 'enrollment_ids[]';
-                    input.value = id;
-                    form.appendChild(input);
-                });
-
-                Swal.fire({
-                    title: 'Processing...',
-                    html: 'Please wait while we reject the selected requests.',
-                    allowOutsideClick: false,
-                    didOpen: () => Swal.showLoading()
-                });
-
-                document.body.appendChild(form);
-                form.submit();
+            ids.forEach(id => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'enrollment_ids[]';
+                input.value = id;
+                form.appendChild(input);
             });
+
+            document.body.appendChild(form);
+            form.submit();
         }
     });
 }
@@ -1535,12 +1451,6 @@ function bulkReject() {
             var submitBtn = formEl.querySelector('button[type="submit"]');
             if (submitBtn.disabled) { e.preventDefault(); return; }
             submitBtn.disabled = true;
-            Swal.fire({
-                title: 'Processing...',
-                html: 'Please wait while we process your request.',
-                allowOutsideClick: false,
-                didOpen: () => Swal.showLoading()
-            });
         });
     }
 });

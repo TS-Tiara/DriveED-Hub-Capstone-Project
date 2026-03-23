@@ -270,33 +270,7 @@
         <h1 class="profile-page-title">Profile</h1>
     </div>
 
-    @if(session('success'))
-    <div class="flash-message success">
-        <div class="flash-icon">✓</div>
-        <div class="flash-content">
-            <div class="flash-title">Success!</div>
-            <div class="flash-text">{{ session('success') }}</div>
-        </div>
-        <button class="flash-close" onclick="this.parentElement.remove()">×</button>
-    </div>
-    @endif
 
-    @if($errors->any())
-    <div class="flash-message error">
-        <div class="flash-icon">✕</div>
-        <div class="flash-content">
-            <div class="flash-title">Error!</div>
-            <div class="flash-text">
-                <ul class="error-list">
-                    @foreach($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        </div>
-        <button class="flash-close" onclick="this.parentElement.remove()">×</button>
-    </div>
-    @endif
 
     <div class="profile-card">
         <div id="profileView">

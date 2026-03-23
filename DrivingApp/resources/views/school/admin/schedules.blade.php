@@ -1,4 +1,4 @@
-﻿@extends($isAjax ?? false ? 'layouts.ajax' : 'layouts.app')
+@extends($isAjax ?? false ? 'layouts.ajax' : 'layouts.app')
 
 @section('title', 'Manage Schedule')
 
@@ -9,8 +9,8 @@
     $schoolName = $school->name ?? 'Driving School';
     $instructors = $instructors ?? collect();
     $currentFilter = request('type', 'all');
-    $primaryColor = $settings->primary_color ?? '#667eea';
-    $secondaryColor = $settings->secondary_color ?? '#764ba2';
+    $primaryColor = $settings->primary_color ?? '#3b82f6';
+    $secondaryColor = $settings->secondary_color ?? '#60a5fa';
 @endphp
 
 @include('school.admin.partials.admin-styles')
@@ -160,7 +160,7 @@
     .form-control:focus {
         outline: none;
         border-color: {{ $primaryColor }};
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
     }
     
     /* Checkbox Styles */
@@ -271,7 +271,7 @@
         align-items: center;
         margin-bottom: 30px;
         padding-bottom: 15px;
-        border-bottom: 3px solid {{ $settings->primary_color ?? '#667eea' }};
+        border-bottom: 3px solid var(--primary-color);
     }
     
     .page-title {
@@ -309,12 +309,12 @@
     .course-badge {
         margin-bottom: 12px;
         padding: 8px 12px;
-        background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
+        background: var(--header-gradient);
         color: white;
         border-radius: 8px;
         display: inline-block;
         font-weight: 500;
-        box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+        box-shadow: var(--brand-shadow);
     }
 
     .course-type {
@@ -611,13 +611,13 @@
     
     .filter-dropdown select:hover {
         border-color: {{ $secondaryColor }};
-        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+        box-shadow: 0 2px 8px rgba(var(--primary-rgb), 0.2);
     }
     
     .filter-dropdown select:focus {
         outline: none;
-        border-color: {{ $primaryColor }};
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
     }
     
     .filter-dropdown::after {
@@ -887,8 +887,8 @@
     }
     
     .form-control:focus, .form-select:focus {
-        border-color: {{ $primaryColor }};
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
     }
     
     /* Multi-select styling */
@@ -1113,8 +1113,8 @@
     }
     
     .calendar-day:hover {
-        border-color: {{ $primaryColor }};
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+        border-color: var(--primary-color);
+        box-shadow: 0 4px 12px var(--brand-shadow);
         transform: translateY(-2px);
     }
     
@@ -1124,8 +1124,8 @@
     }
     
     .calendar-day.today {
-        border-color: {{ $primaryColor }};
-        background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+        border-color: var(--primary-color);
+        background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.05) 0%, rgba(var(--primary-rgb), 0.02) 100%);
     }
     
     .calendar-day.has-schedule {
@@ -1139,7 +1139,7 @@
     
     .calendar-day.clickable:hover {
         transform: translateY(-3px);
-        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.2);
+        box-shadow: 0 6px 16px var(--brand-shadow);
     }
     
     .day-number {
@@ -1454,27 +1454,7 @@
         </div>
     </div>
 
-    @if(session('success'))
-    <div class="flash-message success">
-        <div class="flash-icon"><svg class="icon-20" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg></div>
-        <div class="flash-content">
-            <div class="flash-title">Success!</div>
-            <div class="flash-text">{{ session('success') }}</div>
-        </div>
-        <button class="flash-close" onclick="this.parentElement.remove()">×</button>
-    </div>
-    @endif
 
-    @if(session('error'))
-    <div class="flash-message error">
-        <div class="flash-icon">✕</div>
-        <div class="flash-content">
-            <div class="flash-title">Error!</div>
-            <div class="flash-text">{{ session('error') }}</div>
-        </div>
-        <button class="flash-close" onclick="this.parentElement.remove()">×</button>
-    </div>
-    @endif
 
     <div class="filter-wrap">
         <form method="GET" action="{{ route('schools.admin.schedules', $school) }}" class="filter-form">
@@ -2140,8 +2120,8 @@
             console.error('Could not find slot item with ID:', slotId);
             if (typeof Toast !== 'undefined' && Toast.error) {
                 Toast.error('Could not find schedule details. Please refresh the page and try again.', 'Not Found');
-            } else {
-                alert('Could not find schedule details. Please refresh the page and try again.');
+            } else if (typeof showToast !== 'undefined') {
+                showToast('error', 'Could not find schedule details. Please refresh the page and try again.');
             }
             return;
         }

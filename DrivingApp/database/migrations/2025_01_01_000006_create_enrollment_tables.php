@@ -50,7 +50,7 @@ return new class extends Migration
             $table->timestamp('completed_at')->nullable();
             $table->boolean('theoretical_passed')->default(false);
             $table->timestamp('theoretical_passed_at')->nullable();
-            $table->foreignId('theoretical_passed_by')->nullable()->constrained('users')->onDelete('set null');
+            $table->foreignId('theoretical_passed_by')->nullable()->constrained('admins')->onDelete('set null');
             $table->text('theoretical_pass_notes')->nullable();
             $table->timestamps();
 
@@ -72,7 +72,7 @@ return new class extends Migration
             $table->time('end_time')->nullable();
             $table->enum('status', ['scheduled', 'completed', 'cancelled'])->default('completed');
             $table->text('notes')->nullable();
-            $table->foreignId('logged_by')->nullable()->constrained('users')->onDelete('cascade');
+            $table->foreignId('logged_by')->nullable()->constrained('instructors')->onDelete('cascade');
             $table->timestamps();
 
             $table->index('school_id');

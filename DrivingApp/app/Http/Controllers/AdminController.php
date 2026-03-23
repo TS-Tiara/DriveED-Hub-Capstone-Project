@@ -6,21 +6,25 @@ use Illuminate\Http\Request;
 use App\Models\Admin;
 use App\Models\Branch;
 use App\Models\EnrollmentRequest;
+use App\Models\GCashSetting;
 use App\Models\Instructor;
 use App\Models\InstructorRemovalRequest;
 use App\Models\Log;
+use App\Models\Payment;
 use App\Models\RegistrationRequest;
 use App\Models\School;
 use App\Models\SchoolSetting;
 use App\Models\Student;
 use App\Models\SystemLog;
 use App\Http\Controllers\ReportController;
+use App\Services\FinancialService;
 use App\Models\TimeSlot;
 use App\Models\PhaseProgression;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log as LogFacade;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -41,7 +45,7 @@ class AdminController extends Controller
 
             // Get counts and statistics
             // Get consolidated counts for Students and Instructors
-            $studentStats = $admin->scopeToBranch(Student::where('school_id', $school->id))
+            $studentStats = $admin->scopeToBranch(Student::where('school_id', '=', $school->id))
                 ->selectRaw("
                     COUNT(*) as total,
                     SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active,
@@ -126,6 +130,33 @@ class AdminController extends Controller
             $pendingEnrollments = $admin->scopeToBranch(EnrollmentRequest::where('school_id', $school->id))->where('status', 'pending')->count();
             $pendingProgressions = $admin->scopeToBranch(PhaseProgression::where('school_id', $school->id))->where('status', 'pending')->count();
 
+            // Calculate monthly revenue (completed payments paid_on this month)
+            try {
+                $hasReceivedAt = Schema::hasColumn('payments', 'received_at');
+                $hasRefundedAt = Schema::hasColumn('payments', 'refunded_at');
+
+                if ($hasReceivedAt && $hasRefundedAt) {
+                    $monthlyRevenue = $admin->scopeToBranch(Payment::where('school_id', $school->id))
+                        ->where('status', '=', 'approved')
+                        ->whereBetween('received_at', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()])
+                        ->sum('amount')
+                        - $admin->scopeToBranch(Payment::where('school_id', $school->id))
+                        ->where('status', '=', 'refunded')
+                        ->whereBetween('refunded_at', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()])
+                        ->sum('refunded_amount');
+                } else {
+                    $monthlyRevenue = 0;
+                }
+            } catch (\Exception $e) {
+                LogFacade::warning("Dashboard revenue calculation failed, falling back to 0: " . $e->getMessage());
+                $monthlyRevenue = 0;
+            }
+
+            // Calculate active enrollments (approved requests)
+            $activeEnrollments = $admin->scopeToBranch(EnrollmentRequest::where('school_id', $school->id))
+                ->where('status', 'approved')
+                ->count();
+
             return view($school->resolveView('admin.dashboard'), [
                 'school' => $school,
                 'admin' => $admin,
@@ -144,19 +175,28 @@ class AdminController extends Controller
                 'instructorsThisMonth' => $instructorsThisMonth,
                 'pendingEnrollments' => $pendingEnrollments,
                 'pendingProgressions' => $pendingProgressions,
+                'monthlyRevenue' => $monthlyRevenue,
+                'activeEnrollments' => $activeEnrollments,
             ]);
         }
         catch (\Exception $e) {
             SystemLog::logError(
-                'Failed to load admin dashboard',
+                'Fatal dashboard failure triggered loop protection',
                 'database',
                 $e,
-            ['school_id' => $school->id],
+                ['school_id' => $school->id],
                 $school->id,
                 'view_dashboard'
             );
 
-            return back()->with('error', 'Unable to load dashboard. The system administrator has been notified.');
+            // Force logout and session termination to break the redirect loop
+            Auth::guard('admin')->logout();
+            request()->session()->invalidate();
+            request()->session()->regenerateToken();
+
+            return redirect()->route('schools.login', $school)
+                ->with('error', 'Dashboard temporarily unavailable. Please contact support.')
+                ->with('dashboard_failed', true);
         }
     }
 
@@ -327,6 +367,10 @@ class AdminController extends Controller
                     'status' => 'active',
                     'branch_id' => $admin->isBranchSecretary() ? $admin->branch_id : $request->branch_id,
                 ]));
+
+                $user->role = 'student';
+                $user->save();
+
                 $successMessage = 'Student created successfully!';
 
                 // Log student creation
@@ -346,6 +390,7 @@ class AdminController extends Controller
                     'branch_id' => $admin->isBranchSecretary() ? $admin->branch_id : $request->branch_id,
                     'address' => $request->address ?? null, // Restored address field
                 ]));
+
                 $successMessage = 'Instructor created successfully!';
 
                 // Log instructor creation
@@ -369,12 +414,15 @@ class AdminController extends Controller
                 ->route('schools.admin.userManagement', $school)
                 ->with('success', $successMessage);
         }
+        catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        }
         catch (\Exception $e) {
-            SystemLog::logError('Failed to create account: ' . $e->getMessage(), [
+            SystemLog::logError('Failed to create account: ' . $e->getMessage(), 'database', $e, [
                 'school_id' => $school->id,
                 'email' => $request->get('email'),
                 'role' => $request->get('role')
-            ], $e, $school->id, 'create_account');
+            ], $school->id, 'create_account');
             return back()->withInput()->with('error', 'Unable to create account at this time. Please try again later.');
         }
     }
@@ -411,7 +459,15 @@ class AdminController extends Controller
                 'contact' => ['nullable', 'string', 'max:13', 'regex:/^(09\d{9}|\+639\d{9})$/'],
                 'address' => 'nullable|string|max:255',
                 'password' => 'nullable|string|min:6',
-                'branch_id' => 'nullable|exists:branches,id',
+                'branch_id' => [
+                    'nullable',
+                    'exists:branches,id',
+                    function ($attribute, $value, $fail) use ($admin) {
+                        if ($admin->isBranchSecretary() && !empty($value) && (int)$value !== (int)$admin->branch_id) {
+                            $fail('You can only assign students to your own branch.');
+                        }
+                    },
+                ],
             ]);
 
             DB::beginTransaction();
@@ -515,7 +571,15 @@ class AdminController extends Controller
                 'contact' => ['nullable', 'string', 'max:13', 'regex:/^(09\d{9}|\+639\d{9})$/'],
                 'license_number' => 'nullable|string|max:50',
                 'password' => 'nullable|string|min:6',
-                'branch_id' => 'nullable|exists:branches,id',
+                'branch_id' => [
+                    'nullable',
+                    'exists:branches,id',
+                    function ($attribute, $value, $fail) use ($admin) {
+                        if ($admin->isBranchSecretary() && !empty($value) && (int)$value !== (int)$admin->branch_id) {
+                            $fail('You can only assign instructors to your own branch.');
+                        }
+                    },
+                ],
             ]);
 
             $data = $request->only('name', 'email', 'contact', 'license_number', 'branch_id');
@@ -530,10 +594,14 @@ class AdminController extends Controller
                 ->with('success', 'Instructor updated successfully!');
         }
         catch (\Exception $e) {
-            SystemLog::logError('Failed to update instructor: ' . $e->getMessage(), [
-                'school_id' => $school->id,
-                'instructor_id' => $id
-            ], $e, $school->id, 'update_instructor');
+            SystemLog::logError(
+                'Failed to update instructor: ' . $e->getMessage(),
+                'database',
+                $e,
+                ['school_id' => $school->id, 'instructor_id' => $id],
+                $school->id,
+                'update_instructor'
+            );
             return back()->withInput()->with('error', 'Unable to update instructor profile at this time. Please try again later.');
         }
     }
@@ -599,7 +667,7 @@ class AdminController extends Controller
      */
     public function studentReports(School $school)
     {
-        return app(ReportController::class)->index($school);
+        return app(ReportController::class)->index($school, app(FinancialService::class));
     }
 
     /**
@@ -607,7 +675,7 @@ class AdminController extends Controller
      */
     public function instructorReports(School $school)
     {
-        return app(ReportController::class)->index($school);
+        return app(ReportController::class)->index($school, app(FinancialService::class));
     }
 
     /**
@@ -615,7 +683,7 @@ class AdminController extends Controller
      */
     public function logs(School $school)
     {
-        return app(ReportController::class)->index($school);
+        return app(ReportController::class)->index($school, app(FinancialService::class));
     }
 
     public function profile(School $school)
@@ -687,7 +755,7 @@ class AdminController extends Controller
         }
 
         $request->validate([
-            'profile_picture' => 'required|image|mimes:png,jpg,jpeg,webp|max:2048',
+            'profile_picture' => 'required|image|mimes:png,jpg,jpeg,webp|max:2048|dimensions:max_width=2000,max_height=2000',
         ]);
 
         // Delete old profile picture if exists
@@ -847,26 +915,6 @@ class AdminController extends Controller
     // ==========================
     // SCHOOL SETTINGS
     // ==========================
-    public function canManageSchedules(): bool
-    {
-        return $this->isSchoolAdmin() || $this->isBranchSecretary();
-    }
-
-    /**
-     * Check if admin can manage courses (only school_admin).
-     */
-    public function canManageCourses(): bool
-    {
-        return $this->isSchoolAdmin();
-    }
-
-    /**
-     * Check if admin can manage students (school_admin + branch_secretary for own branch).
-     */
-    public function canManageStudents(): bool
-    {
-        return $this->isSchoolAdmin() || $this->isBranchSecretary();
-    }
     public function settings(School $school)
     {
         $admin = Auth::guard('admin')->user();
@@ -876,8 +924,13 @@ class AdminController extends Controller
 
         abort_unless($admin->school_id === $school->id, 403);
 
+        $gcashSetting = GCashSetting::where('school_id', $school->id)
+            ->whereNull('branch_id')
+            ->first();
+
         return view($school->resolveView('admin.settings'), [
             'school' => $school,
+            'gcashSetting' => $gcashSetting,
         ]);
     }
 
@@ -891,18 +944,23 @@ class AdminController extends Controller
 
             abort_unless($admin->school_id === $school->id, 403);
 
+            $schoolLevelGcash = GCashSetting::where('school_id', $school->id)
+                ->whereNull('branch_id')
+                ->first();
+
             $request->validate([
                 'instructor_removal_notice_days' => 'required|integer|min:0|max:30',
                 'instructor_selection_mode' => 'required|in:student_chooses,auto_assign,admin_assigns',
                 'advance_booking_days' => 'nullable|integer|min:0|max:30',
                 'enable_booking_queue' => 'nullable|boolean',
                 'booking_queue_days' => 'nullable|integer|min:1|max:14',
+                'contact_email' => 'nullable|email|max:255',
                 'primary_color' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
                 'secondary_color' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
                 'accent_color' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
                 'background_type' => 'required|in:color,image',
                 'background_color' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
-                'background_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'background_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048|dimensions:max_width=4000,max_height=4000',
                 'background_opacity' => 'required|integer|min:0|max:100',
                 'sidebar_bg_color' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
                 'sidebar_text_color' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
@@ -931,6 +989,10 @@ class AdminController extends Controller
                 'badge_approved_text' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
                 'badge_cancelled_bg' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
                 'badge_cancelled_text' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
+                'role_student_bg' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
+                'role_student_text' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
+                'role_instructor_bg' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
+                'role_instructor_text' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
                 // Login page settings
                 'login_header_layout' => 'nullable|in:horizontal,vertical,centered,logo-only',
                 'login_logo_image' => 'nullable|string|max:255',
@@ -954,8 +1016,13 @@ class AdminController extends Controller
                 'register_subtitle_text' => 'nullable|string|max:255',
                 'login_page_bg_type' => 'nullable|in:color,image',
                 'login_page_bg_color' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
-                'login_page_bg_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'login_page_bg_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048|dimensions:max_width=4000,max_height=4000',
                 'login_page_bg_opacity' => 'nullable|integer|min:0|max:100',
+                // School-level GCash settings
+                'gcash_account_name' => 'nullable|string|max:120',
+                'gcash_account_number' => 'nullable|string|max:40',
+                'gcash_qr' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+                'gcash_enabled' => 'nullable|boolean',
             ], [
                 'instructor_removal_notice_days.required' => 'Minimum notice period is required.',
                 'instructor_removal_notice_days.integer' => 'Notice period must be a number.',
@@ -967,6 +1034,16 @@ class AdminController extends Controller
                 'button_border_radius.min' => 'Button border radius must be at least 0.',
                 'button_border_radius.max' => 'Button border radius cannot exceed 30 pixels.',
             ]);
+
+            if (
+                $request->boolean('gcash_enabled')
+                && !$request->hasFile('gcash_qr')
+                && empty($schoolLevelGcash?->qr_path)
+            ) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'gcash_qr' => 'Please upload a GCash payment image for initial setup.',
+                ]);
+            }
 
             DB::beginTransaction();
 
@@ -1043,10 +1120,15 @@ class AdminController extends Controller
                 'badge_approved_text' => $request->badge_approved_text ?? '#065f46',
                 'badge_cancelled_bg' => $request->badge_cancelled_bg ?? '#ef4444',
                 'badge_cancelled_text' => $request->badge_cancelled_text ?? '#7f1d1d',
+                'role_student_bg' => $request->role_student_bg ?? '#dbeafe',
+                'role_student_text' => $request->role_student_text ?? '#1e40af',
+                'role_instructor_bg' => $request->role_instructor_bg ?? '#e0f2fe',
+                'role_instructor_text' => $request->role_instructor_text ?? '#0369a1',
                 'instructor_selection_mode' => $request->instructor_selection_mode ?? 'auto_assign',
                 'advance_booking_days' => $request->advance_booking_days ?? 0,
                 'enable_booking_queue' => $request->has('enable_booking_queue'),
                 'booking_queue_days' => $request->booking_queue_days ?? 3,
+                'contact_email' => $request->contact_email,
                 // Login page settings
                 'login_header_layout' => $request->login_header_layout ?? 'horizontal',
                 'login_logo_image' => $request->login_logo_image,
@@ -1075,6 +1157,56 @@ class AdminController extends Controller
             ]);
 
             $schoolSetting->save();
+
+            // Upsert school-level GCash configuration (branch_id = null)
+            $hasGcashInput = $request->filled('gcash_account_name')
+                || $request->filled('gcash_account_number')
+                || $request->hasFile('gcash_qr')
+                || $request->has('gcash_enabled')
+                || !empty($schoolLevelGcash);
+
+            if ($hasGcashInput) {
+                $gcashSetting = $schoolLevelGcash ?? new GCashSetting([
+                    'school_id' => $school->id,
+                    'branch_id' => null,
+                ]);
+
+                $qrPath = $gcashSetting->qr_path;
+                if ($request->hasFile('gcash_qr')) {
+                    if ($qrPath) {
+                        Storage::disk('public')->delete($qrPath);
+                    }
+                    $qrPath = $request->file('gcash_qr')->store('gcash-qr/' . $school->slug, 'public');
+                }
+
+                $accountName = trim((string) $request->input('gcash_account_name', $gcashSetting->account_name ?? ''));
+                $accountNumber = trim((string) $request->input('gcash_account_number', $gcashSetting->account_number ?? ''));
+
+                // Backward-compatible placeholders: details can live in the uploaded image.
+                if ($accountName === '') {
+                    $accountName = 'See uploaded payment image';
+                }
+                if ($accountNumber === '') {
+                    $accountNumber = 'See uploaded payment image';
+                }
+
+                if (empty($qrPath)) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'gcash_qr' => 'A GCash payment image is required to activate school GCash payments.',
+                    ]);
+                }
+
+                $gcashSetting->fill([
+                    'account_name' => $accountName,
+                    'account_number' => $accountNumber,
+                    'qr_path' => $qrPath,
+                    'is_active' => $request->has('gcash_enabled')
+                        ? $request->boolean('gcash_enabled')
+                        : (bool) ($gcashSetting->is_active ?? true),
+                ]);
+
+                $gcashSetting->save();
+            }
 
             DB::commit();
 
@@ -1194,7 +1326,7 @@ class AdminController extends Controller
         $admin = Auth::guard('admin')->user();
 
         // General schedule management check
-        if (!$admin || !$admin->canManageSchedules()) {
+        if (!$admin instanceof Admin || !$admin->canManageSchedules()) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -1276,7 +1408,7 @@ class AdminController extends Controller
     {
         try {
             $admin = Auth::guard('admin')->user();
-            if (!$admin || !$admin->canManageSchedules()) {
+            if (!$admin instanceof Admin || !$admin->canManageSchedules()) {
                 abort(403, 'Unauthorized action.');
             }
 
@@ -1369,7 +1501,7 @@ class AdminController extends Controller
     {
         try {
             $admin = Auth::guard('admin')->user();
-            if (!$admin || !$admin->canManageSchedules()) {
+            if (!$admin instanceof Admin || !$admin->canManageSchedules()) {
                 abort(403, 'Unauthorized action.');
             }
 
@@ -1407,13 +1539,61 @@ class AdminController extends Controller
     /**
      * Show courses management page
      */
-    public function courses(School $school)
+    public function courses(Request $request, School $school)
     {
-        $courses = \App\Models\Course::with('packages')
-            ->where('school_id', $school->id)
-            ->orderBy('sort_order')
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        $query = \App\Models\Course::with('packages')
+            ->where('school_id', $school->id);
+
+        $sort = $request->get('sort', 'newest');
+
+        switch ($sort) {
+            case 'title_asc':
+                $query->orderBy('title', 'asc');
+                break;
+            case 'title_desc':
+                $query->orderBy('title', 'desc');
+                break;
+            case 'price_low':
+                $query->select('courses.*')
+                    ->leftJoin('course_packages', 'courses.id', '=', 'course_packages.course_id')
+                    ->selectRaw('MIN(course_packages.price) as min_price')
+                    ->groupBy('courses.id')
+                    ->orderBy('min_price', 'asc');
+                break;
+            case 'price_high':
+                $query->select('courses.*')
+                    ->leftJoin('course_packages', 'courses.id', '=', 'course_packages.course_id')
+                    ->selectRaw('MAX(course_packages.price) as max_price')
+                    ->groupBy('courses.id')
+                    ->orderBy('max_price', 'desc');
+                break;
+            case 'popularity':
+                $query->withCount(['bookings' => function($q) {
+                    $q->whereIn('status', ['confirmed', 'in_progress', 'completed']);
+                }])->orderBy('bookings_count', 'desc');
+                break;
+            case 'status':
+                $query->orderByRaw("CASE WHEN status = 'active' THEN 0 ELSE 1 END")
+                      ->orderBy('created_at', 'desc');
+                break;
+            case 'duration':
+                $query->orderBy('hours_required', 'desc');
+                break;
+            case 'type':
+                $query->orderBy('course_type', 'asc')
+                      ->orderBy('title', 'asc');
+                break;
+            case 'oldest':
+                $query->orderBy('created_at', 'asc');
+                break;
+            case 'newest':
+            default:
+                $query->orderBy('sort_order')
+                      ->orderBy('created_at', 'desc');
+                break;
+        }
+
+        $courses = $query->paginate(10)->withQueryString();
 
         return view($school->resolveView('admin.courses'), compact('school', 'courses'));
     }
@@ -1427,7 +1607,7 @@ class AdminController extends Controller
             $validated = $request->validate([
                 'title' => 'required|string|max:255',
                 'description' => 'nullable|string',
-                'banner_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'banner_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048|dimensions:max_width=4000,max_height=4000',
                 'type' => 'nullable|string',
                 'vehicle_type' => 'nullable|string',
                 'course_type' => 'nullable|in:theoretical,practical',
@@ -1494,7 +1674,7 @@ class AdminController extends Controller
             $validated = $request->validate([
                 'title' => 'required|string|max:255',
                 'description' => 'nullable|string',
-                'banner_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'banner_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048|dimensions:max_width=4000,max_height=4000',
                 'type' => 'nullable|string',
                 'vehicle_type' => 'nullable|string',
                 'course_type' => 'nullable|in:theoretical,practical',

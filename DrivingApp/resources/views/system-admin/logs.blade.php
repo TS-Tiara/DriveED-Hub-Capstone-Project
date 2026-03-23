@@ -543,8 +543,8 @@
                     <tr>
                         <td>
                             <div class="log-time">
-                                <span class="date">{{ $log->created_at->format('M d, Y') }}</span>
-                                <span class="time">{{ $log->created_at->format('h:i A') }}</span>
+                                <span class="date">{{ $log->created_at->timezone('Asia/Manila')->format('M d, Y') }}</span>
+                                <span class="time">{{ $log->created_at->timezone('Asia/Manila')->format('h:i A') }}</span>
                             </div>
                         </td>
                         <td>

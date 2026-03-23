@@ -210,21 +210,7 @@
         </div>
     </div>
 
-    @if(session('success'))
-        <div class="alert alert-success">
-            {{ session('success') }}
-        </div>
-    @endif
 
-    @if($errors->any())
-        <div class="alert alert-error">
-            <ul class="error-list-compact">
-                @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
 
     <div class="profile-card">
         <div class="status-badge-top">{{ ucfirst($instructor->status ?? 'Active') }}</div>
@@ -298,7 +284,7 @@
 
                 <div class="form-field">
                     <label for="contact">Contact</label>
-                    <input type="text" id="contact" name="contact" value="{{ old('contact', $instructor->contact) }}">
+                    <input type="text" id="contact" name="contact" value="{{ old('contact', $instructor->contact) }}" inputmode="numeric" pattern="[0-9]*" autocomplete="tel" maxlength="15">
                 </div>
 
                 <div class="form-field">
@@ -350,9 +336,21 @@
         </div>
     </div>
 </div>
-</div>
 
 <script>
+    function enforceNumericOnly(input) {
+        if (!input) return;
+        const sanitize = function() {
+            input.value = input.value.replace(/\D+/g, '');
+        };
+        input.addEventListener('input', sanitize);
+        input.addEventListener('paste', function() { setTimeout(sanitize, 0); });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        enforceNumericOnly(document.getElementById('contact'));
+    });
+
     function showEditForm() {
         document.getElementById('profileView').style.display = 'none';
         document.getElementById('editForm').style.display = 'block';

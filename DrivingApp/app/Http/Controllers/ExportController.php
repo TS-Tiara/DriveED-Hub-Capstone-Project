@@ -14,7 +14,6 @@ use App\Models\Booking;
 use App\Models\SessionCompletion;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class ExportController extends Controller
@@ -46,9 +45,8 @@ class ExportController extends Controller
             ]);
 
             return $pdf->download('students-list-' . date('Y-m-d') . '.pdf');
-        }
-        catch (\Exception $e) {
-            Log::error('PDF Generation Error (studentsPdf): ' . $e->getMessage());
+        } catch (\Exception $e) {
+            \App\Models\SystemLog::logError('PDF Generation Error (studentsPdf): ' . $e->getMessage(), 'database', $e, ['school_id' => $school->id], $school->id, 'export_students_pdf');
             return back()->with('error', 'Failed to generate PDF. Please try again later.');
         }
     }
@@ -84,9 +82,8 @@ class ExportController extends Controller
             ]);
 
             return $pdf->download('enrollment-requests-' . date('Y-m-d') . '.pdf');
-        }
-        catch (\Exception $e) {
-            Log::error('PDF Generation Error (enrollmentsPdf): ' . $e->getMessage());
+        } catch (\Exception $e) {
+            \App\Models\SystemLog::logError('PDF Generation Error (enrollmentsPdf): ' . $e->getMessage(), 'database', $e, ['school_id' => $school->id], $school->id, 'export_enrollments_pdf');
             return back()->with('error', 'Failed to generate PDF. Please try again later.');
         }
     }
@@ -128,9 +125,8 @@ class ExportController extends Controller
             ]);
 
             return $pdf->download('progress-' . $student->name . '-' . date('Y-m-d') . '.pdf');
-        }
-        catch (\Exception $e) {
-            Log::error('PDF Generation Error (studentProgressPdf): ' . $e->getMessage());
+        } catch (\Exception $e) {
+            \App\Models\SystemLog::logError('PDF Generation Error (studentProgressPdf): ' . $e->getMessage(), 'database', $e, ['school_id' => $school->id, 'student_id' => $student->id], $school->id, 'export_student_progress_pdf');
             return back()->with('error', 'Failed to generate progress report PDF.');
         }
     }
@@ -177,9 +173,8 @@ class ExportController extends Controller
             );
 
             return $this->excelResponse($html, $school->slug . '_students_' . date('Y-m-d') . '.xls');
-        }
-        catch (\Exception $e) {
-            Log::error('Excel Export Error (studentsExcel): ' . $e->getMessage());
+        } catch (\Exception $e) {
+            \App\Models\SystemLog::logError('Excel Export Error (studentsExcel): ' . $e->getMessage(), 'database', $e, ['school_id' => $school->id], $school->id, 'export_students_excel');
             return back()->with('error', 'Failed to generate Excel file.');
         }
     }
@@ -209,9 +204,8 @@ class ExportController extends Controller
             ]);
 
             return $pdf->download('instructors-list-' . date('Y-m-d') . '.pdf');
-        }
-        catch (\Exception $e) {
-            Log::error('PDF Generation Error (instructorsPdf): ' . $e->getMessage());
+        } catch (\Exception $e) {
+            \App\Models\SystemLog::logError('PDF Generation Error (instructorsPdf): ' . $e->getMessage(), 'database', $e, ['school_id' => $school->id], $school->id, 'export_instructors_pdf');
             return back()->with('error', 'Failed to generate PDF. Please try again later.');
         }
     }
@@ -229,11 +223,11 @@ class ExportController extends Controller
 
             set_time_limit(120);
 
-            $instructors = Instructor::where('school_id', $school->id)
+            $instructors = Instructor::where('school_id', '=', $school->id)
                 ->withCount([
                 'bookings',
                 'bookings as completed_lessons_count' => function ($query) {
-                $query->where('status', 'completed');
+                $query->where('status', '=', 'completed');
             }
             ])
                 ->orderBy('name')
@@ -262,9 +256,8 @@ class ExportController extends Controller
             );
 
             return $this->excelResponse($html, $school->slug . '_instructors_' . date('Y-m-d') . '.xls');
-        }
-        catch (\Exception $e) {
-            Log::error('Excel Export Error (instructorsExcel): ' . $e->getMessage());
+        } catch (\Exception $e) {
+            \App\Models\SystemLog::logError('Excel Export Error (instructorsExcel): ' . $e->getMessage(), 'database', $e, ['school_id' => $school->id], $school->id, 'export_instructors_excel');
             return back()->with('error', 'Failed to generate Excel file.');
         }
     }
@@ -281,7 +274,7 @@ class ExportController extends Controller
 
         set_time_limit(120);
 
-        $schedules = TimeSlot::where('school_id', $school->id)
+        $schedules = TimeSlot::where('school_id', '=', $school->id)
             ->with(['instructors'])
             ->orderBy('date')
             ->orderBy('start_time')
@@ -296,9 +289,8 @@ class ExportController extends Controller
             ]);
 
             return $pdf->download('schedules-' . date('Y-m-d') . '.pdf');
-        }
-        catch (\Exception $e) {
-            Log::error('PDF Generation Error (schedulesPdf): ' . $e->getMessage());
+        } catch (\Exception $e) {
+            \App\Models\SystemLog::logError('PDF Generation Error (schedulesPdf): ' . $e->getMessage(), 'database', $e, ['school_id' => $school->id], $school->id, 'export_schedules_pdf');
             return back()->with('error', 'Failed to generate PDF. Please try again later.');
         }
     }
@@ -315,15 +307,20 @@ class ExportController extends Controller
 
         set_time_limit(120);
 
-        $query = Payment::whereHas('booking', function ($q) use ($school) {
-            $q->where('school_id', $school->id);
-        })->with(['booking.student', 'booking.course']);
+        $query = Payment::where('school_id', $school->id)
+            ->when($admin->isBranchSecretary(), function ($q) use ($admin) {
+                return $q->where('branch_id', $admin->branch_id);
+            }, null)
+            ->with(['booking.course', 'enrollmentRequest.course', 'payer']);
 
         if ($request->has('status') && $request->status !== 'all') {
             $query->where('status', $request->status);
         }
 
-        $payments = $query->orderBy('created_at', 'desc')->limit(500)->cursor();
+        $payments = $query->orderByRaw('COALESCE(received_at, paid_on) DESC')
+            ->orderBy('created_at', 'desc')
+            ->limit(500)
+            ->cursor();
 
         try {
             $pdf = Pdf::loadView('exports.payments-pdf', [
@@ -334,9 +331,8 @@ class ExportController extends Controller
             ]);
 
             return $pdf->download('payments-' . date('Y-m-d') . '.pdf');
-        }
-        catch (\Exception $e) {
-            Log::error('PDF Generation Error (paymentsPdf): ' . $e->getMessage());
+        } catch (\Exception $e) {
+            \App\Models\SystemLog::logError('PDF Generation Error (paymentsPdf): ' . $e->getMessage(), 'database', $e, ['school_id' => $school->id], $school->id, 'export_payments_pdf');
             return back()->with('error', 'Failed to generate PDF. Please try again later.');
         }
     }
@@ -354,9 +350,12 @@ class ExportController extends Controller
 
             set_time_limit(120);
 
-            $payments = Payment::whereHas('booking', function ($q) use ($school) {
-                $q->where('school_id', $school->id);
-            })->with(['booking.student', 'booking.course'])
+            $payments = Payment::where('school_id', $school->id)
+                ->when($admin->isBranchSecretary(), function ($q) use ($admin) {
+                    return $q->where('branch_id', $admin->branch_id);
+                }, null)
+                ->with(['booking.course', 'enrollmentRequest.course', 'payer'])
+                ->orderByRaw('COALESCE(received_at, paid_on) DESC')
                 ->orderBy('created_at', 'desc')
                 ->limit(1000)
                 ->cursor();
@@ -364,12 +363,12 @@ class ExportController extends Controller
             $rows = [];
             foreach ($payments as $payment) {
                 $rows[] = [
-                    $payment->paid_on ? $payment->paid_on->format('M d, Y') : 'N/A',
-                    $payment->booking->student->name ?? 'N/A',
-                    $payment->booking->course->title ?? 'N/A',
+                    $payment->received_at ? $payment->received_at->format('M d, Y') : ($payment->paid_on ? $payment->paid_on->format('M d, Y') : 'N/A'),
+                    $payment->payer->name ?? 'N/A',
+                    $payment->booking->course->title ?? $payment->enrollmentRequest->course->title ?? 'N/A',
                     'PHP ' . number_format($payment->amount, 2),
                     ucfirst($payment->method ?? 'N/A'),
-                    $payment->reference ?? '-',
+                    $payment->reference ?? $payment->or_number ?? '-',
                     ucfirst($payment->status),
                 ];
             }
@@ -381,9 +380,53 @@ class ExportController extends Controller
             );
 
             return $this->excelResponse($html, $school->slug . '_payments_' . date('Y-m-d') . '.xls');
+        } catch (\Exception $e) {
+            \App\Models\SystemLog::logError('Excel Export Error (paymentsExcel): ' . $e->getMessage(), 'database', $e, ['school_id' => $school->id], $school->id, 'export_payments_excel');
+            return back()->with('error', 'Failed to generate Excel file.');
         }
-        catch (\Exception $e) {
-            Log::error('Excel Export Error (paymentsExcel): ' . $e->getMessage());
+    }
+
+    /**
+     * Export bookings list as Excel
+     */
+    public function bookingsExcel(School $school)
+    {
+        try {
+            $admin = Auth::guard('admin')->user();
+            if (!$admin || $admin->school_id !== $school->id) {
+                abort(403);
+            }
+
+            $bookings = Booking::where('school_id', '=', $school->id)
+                ->when($admin->isBranchSecretary(), function ($q) use ($admin) {
+                    return $q->where('branch_id', $admin->branch_id);
+                }, null)
+                ->with(['student', 'instructor', 'course'])
+                ->orderBy('scheduled_at', 'desc')
+                ->limit(1000)
+                ->cursor();
+
+            $rows = [];
+            foreach ($bookings as $booking) {
+                $rows[] = [
+                    $booking->student->name ?? 'N/A',
+                    $booking->instructor->name ?? 'Unassigned',
+                    $booking->course->title ?? 'N/A',
+                    $booking->scheduled_at ? $booking->scheduled_at->format('M d, Y h:i A') : 'N/A',
+                    ucfirst($booking->status),
+                    $booking->session_grade ?? 'Not Graded',
+                ];
+            }
+
+            $html = $this->buildExcelHtml(
+                $school->name . ' - Booking List',
+                ['Student', 'Instructor', 'Course', 'Scheduled At', 'Status', 'Grade'],
+                $rows
+            );
+
+            return $this->excelResponse($html, $school->slug . '_bookings_' . date('Y-m-d') . '.xls');
+        } catch (\Exception $e) {
+            \App\Models\SystemLog::logError('Excel Export Error (bookingsExcel): ' . $e->getMessage(), 'database', $e, ['school_id' => $school->id], $school->id, 'export_bookings');
             return back()->with('error', 'Failed to generate Excel file.');
         }
     }
@@ -411,10 +454,60 @@ class ExportController extends Controller
             ]);
 
             return $pdf->download('courses-' . date('Y-m-d') . '.pdf');
-        }
-        catch (\Exception $e) {
-            Log::error('PDF Generation Error (coursesPdf): ' . $e->getMessage());
+        } catch (\Exception $e) {
+            \App\Models\SystemLog::logError('PDF Generation Error (coursesPdf): ' . $e->getMessage(), 'database', $e, ['school_id' => $school->id], $school->id, 'export_courses_pdf');
             return back()->with('error', 'Failed to generate PDF. Please try again later.');
+        }
+    }
+
+    /**
+     * Export courses list as Excel
+     */
+    public function coursesExcel(School $school)
+    {
+        try {
+            $admin = Auth::guard('admin')->user();
+            if (!$admin || $admin->school_id !== $school->id) {
+                abort(403);
+            }
+
+            $courses = Course::where('school_id', '=', $school->id)
+                ->with(['packages'])
+                ->orderBy('title')
+                ->get();
+
+            $courseStats = Booking::where('school_id', '=', $school->id)
+                ->selectRaw('course_id, COUNT(*) as enrollments, SUM(CASE WHEN status = "completed" THEN 1 ELSE 0 END) as completed')
+                ->groupBy('course_id')
+                ->get()
+                ->keyBy('course_id');
+
+            $rows = [];
+            foreach ($courses as $course) {
+                $stats = $courseStats->get($course->id);
+                $enrollments = (int)($stats->enrollments ?? 0);
+                $completed = (int)($stats->completed ?? 0);
+                $rate = $enrollments > 0 ? round(($completed / $enrollments) * 100, 1) . '%' : '0%';
+                $rows[] = [
+                    $course->title,
+                    'PHP ' . number_format($course->price, 2),
+                    $course->duration_hours ?? 'N/A',
+                    $enrollments,
+                    $completed,
+                    $rate,
+                ];
+            }
+
+            $html = $this->buildExcelHtml(
+                $school->name . ' - Course List',
+                ['Title', 'Price', 'Duration', 'Enrollments', 'Completed', 'Rate'],
+                $rows
+            );
+
+            return $this->excelResponse($html, $school->slug . '_courses_' . date('Y-m-d') . '.xls');
+        } catch (\Exception $e) {
+            \App\Models\SystemLog::logError('Excel Export Error (coursesExcel): ' . $e->getMessage(), 'database', $e, ['school_id' => $school->id], $school->id, 'export_courses');
+            return back()->with('error', 'Failed to generate Excel file.');
         }
     }
 
@@ -561,9 +654,8 @@ class ExportController extends Controller
             ]);
 
             return $pdf->download('my-students-' . date('Y-m-d') . '.pdf');
-        }
-        catch (\Exception $e) {
-            Log::error('Instructor PDF Export Error (instructorStudentsPdf): ' . $e->getMessage());
+        } catch (\Exception $e) {
+            \App\Models\SystemLog::logError('Instructor PDF Export Error (instructorStudentsPdf): ' . $e->getMessage(), 'database', $e, ['school_id' => $school->id, 'instructor_id' => $instructor->id], $school->id, 'instructor_export_students_pdf');
             return back()->with('error', 'Failed to generate PDF report.');
         }
     }
@@ -615,9 +707,8 @@ class ExportController extends Controller
             );
 
             return $this->excelResponse($html, 'my-students-' . date('Y-m-d') . '.xls');
-        }
-        catch (\Exception $e) {
-            Log::error('Instructor Excel Export Error (instructorStudentsExcel): ' . $e->getMessage());
+        } catch (\Exception $e) {
+            \App\Models\SystemLog::logError('Instructor Excel Export Error (instructorStudentsExcel): ' . $e->getMessage(), 'database', $e, ['school_id' => $school->id, 'instructor_id' => $instructor->id], $school->id, 'instructor_export_students_excel');
             return back()->with('error', 'Failed to generate Excel file.');
         }
     }
@@ -651,9 +742,8 @@ class ExportController extends Controller
             ]);
 
             return $pdf->download('session-logs-' . date('Y-m-d') . '.pdf');
-        }
-        catch (\Exception $e) {
-            Log::error('Instructor PDF Export Error (instructorSessionsPdf): ' . $e->getMessage());
+        } catch (\Exception $e) {
+            \App\Models\SystemLog::logError('Instructor PDF Export Error (instructorSessionsPdf): ' . $e->getMessage(), 'database', $e, ['school_id' => $school->id, 'instructor_id' => $instructor->id], $school->id, 'instructor_export_sessions_pdf');
             return back()->with('error', 'Failed to generate PDF report.');
         }
     }
@@ -694,9 +784,8 @@ class ExportController extends Controller
             );
 
             return $this->excelResponse($html, 'session-logs-' . date('Y-m-d') . '.xls');
-        }
-        catch (\Exception $e) {
-            Log::error('Instructor Excel Export Error (instructorSessionsExcel): ' . $e->getMessage());
+        } catch (\Exception $e) {
+            \App\Models\SystemLog::logError('Instructor Excel Export Error (instructorSessionsExcel): ' . $e->getMessage(), 'database', $e, ['school_id' => $school->id, 'instructor_id' => $instructor->id], $school->id, 'instructor_export_sessions_excel');
             return back()->with('error', 'Failed to generate Excel file.');
         }
     }
@@ -742,9 +831,8 @@ class ExportController extends Controller
             ]);
 
             return $pdf->download('grades-report-' . date('Y-m-d') . '.pdf');
-        }
-        catch (\Exception $e) {
-            Log::error('Instructor PDF Export Error (instructorGradesPdf): ' . $e->getMessage());
+        } catch (\Exception $e) {
+            \App\Models\SystemLog::logError('Instructor PDF Export Error (instructorGradesPdf): ' . $e->getMessage(), 'database', $e, ['school_id' => $school->id, 'instructor_id' => $instructor->id], $school->id, 'instructor_export_grades_pdf');
             return back()->with('error', 'Failed to generate PDF report.');
         }
     }
@@ -798,9 +886,8 @@ class ExportController extends Controller
             );
 
             return $this->excelResponse($html, 'grades-report-' . date('Y-m-d') . '.xls');
-        }
-        catch (\Exception $e) {
-            Log::error('Instructor Excel Export Error (instructorGradesExcel): ' . $e->getMessage());
+        } catch (\Exception $e) {
+            \App\Models\SystemLog::logError('Instructor Excel Export Error (instructorGradesExcel): ' . $e->getMessage(), 'database', $e, ['school_id' => $school->id, 'instructor_id' => $instructor->id], $school->id, 'instructor_export_grades_excel');
             return back()->with('error', 'Failed to generate Excel file.');
         }
     }
@@ -868,9 +955,8 @@ class ExportController extends Controller
             ]);
 
             return $pdf->download('performance-report-' . date('Y-m-d') . '.pdf');
-        }
-        catch (\Exception $e) {
-            Log::error('Instructor PDF Export Error (instructorReportsPdf): ' . $e->getMessage());
+        } catch (\Exception $e) {
+            \App\Models\SystemLog::logError('Instructor PDF Export Error (instructorReportsPdf): ' . $e->getMessage(), 'database', $e, ['school_id' => $school->id, 'instructor_id' => $instructor->id], $school->id, 'instructor_export_performance_pdf');
             return back()->with('error', 'Failed to generate performance report.');
         }
     }

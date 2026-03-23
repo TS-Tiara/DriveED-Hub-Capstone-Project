@@ -60,6 +60,7 @@ class SchoolSetting extends Model
         'booking_queue_days',
         'advance_booking_days',
         'enable_branches',
+        'contact_email',
         // Login/Signup Header Customization
         'login_header_layout',
         'login_logo_image',
