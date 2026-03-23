@@ -727,7 +727,7 @@
     <div class="collapsible-section">
         <div class="section-header" onclick="toggleSection(this)">
             <h2>Student Enrollment Overview</h2>
-            <span class="collapse-icon">&#x25BC;</span>
+            <span class="collapse-icon"><svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg></span>
         </div>
         <div class="section-content">
             <div class="stats-summary">
@@ -791,7 +791,7 @@
     <div class="collapsible-section">
         <div class="section-header" onclick="toggleSection(this)">
             <h2>Schedule Analytics</h2>
-            <span class="collapse-icon">&#x25BC;</span>
+            <span class="collapse-icon"><svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg></span>
         </div>
         <div class="section-content">
             <div class="stats-summary">
@@ -860,7 +860,7 @@
     <div class="collapsible-section">
         <div class="section-header" onclick="toggleSection(this)">
             <h2>Course Performance & Analytics</h2>
-            <span class="collapse-icon">&#x25BC;</span>
+            <span class="collapse-icon"><svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg></span>
         </div>
         <div class="section-content collapsed">
             @php
@@ -936,7 +936,7 @@
     <div class="collapsible-section">
         <div class="section-header" onclick="toggleSection(this)">
             <h2>Instructor Performance</h2>
-            <span class="collapse-icon collapsed">&#x25BC;</span>
+            <span class="collapse-icon collapsed"><svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg></span>
         </div>
         <div class="section-content collapsed">
             <table class="reports-table">
@@ -985,7 +985,7 @@
     <div class="collapsible-section">
         <div class="section-header" onclick="toggleSection(this)">
             <h2>Attendance & Performance</h2>
-            <span class="collapse-icon collapsed">&#x25BC;</span>
+            <span class="collapse-icon collapsed"><svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg></span>
         </div>
         <div class="section-content collapsed">
             <div class="stats-summary">
@@ -1017,7 +1017,7 @@
     <div class="collapsible-section">
         <div class="section-header" onclick="toggleSection(this)">
             <h2>Lessons Report</h2>
-            <span class="collapse-icon">&#x25BC;</span>
+            <span class="collapse-icon"><svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg></span>
         </div>
         <div class="section-content collapsed">
             <div class="stats-summary">
@@ -1101,7 +1101,7 @@
     <div class="collapsible-section">
         <div class="section-header" onclick="toggleSection(this)">
             <h2>Schedules & Cancellations</h2>
-            <span class="collapse-icon">&#x25BC;</span>
+            <span class="collapse-icon"><svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg></span>
         </div>
         <div class="section-content collapsed">
             <div class="stats-summary">
@@ -1157,7 +1157,7 @@
     <div class="collapsible-section">
         <div class="section-header" onclick="toggleSection(this)">
             <h2>Financial Report</h2>
-            <span class="collapse-icon">&#x25BC;</span>
+            <span class="collapse-icon"><svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg></span>
         </div>
         <div class="section-content collapsed">
             <div class="stats-summary">
@@ -1212,7 +1212,7 @@
     <div class="collapsible-section">
         <div class="section-header" onclick="toggleSection(this)">
             <h2>Student Progress Report</h2>
-            <span class="collapse-icon">&#x25BC;</span>
+            <span class="collapse-icon"><svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg></span>
         </div>
         <div class="section-content collapsed">
             <table class="reports-table">
