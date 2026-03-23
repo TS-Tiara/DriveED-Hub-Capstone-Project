@@ -7,6 +7,7 @@
     $school = $school ?? $currentSchool ?? null;
     $schoolName = $school->name ?? 'Driving School';
     $settings = $school->schoolSetting ?? null;
+    $gcashSetting = $gcashSetting ?? null;
 @endphp
 
 @include('school.admin.partials.admin-styles')
@@ -951,6 +952,39 @@
                             Displayed in automated emails as the school's contact address. If left blank, emails will say "the school office".
                         </small>
                     </div>
+                    </div>
+                </div>
+
+                <!-- Payment Settings -->
+                <div class="form-section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <h3 class="section-title">Payment Settings (GCash)</h3>
+                    </div>
+
+                    <div class="section-inputs">
+                    <div class="form-group">
+                        <label class="form-label">
+                            <input type="checkbox" name="gcash_enabled" value="1" {{ old('gcash_enabled', $gcashSetting->is_active ?? true) ? 'checked' : '' }} class="checkbox-inline">
+                            Enable GCash payment option for students
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">GCash Payment Image {{ empty($gcashSetting?->qr_path) ? '(required for first-time setup)' : '(upload to replace)' }}</label>
+                        <input type="file" class="form-control" name="gcash_qr" accept="image/*">
+                        <small class="text-muted help-text-block">
+                            Upload a single image containing the QR, account name, and number. Accepted formats: JPG, PNG, WEBP. Max size: 5MB.
+                        </small>
+                    </div>
+
+                    @if(!empty($gcashSetting?->qr_path))
+                    <div class="form-group">
+                        <label class="form-label">Current GCash Payment Image</label>
+                        <div class="current-bg-wrap">
+                            <img class="current-bg-image" src="{{ route('schools.guest.storage.gcash-qr', ['school' => $school, 'gcashSetting' => $gcashSetting]) }}" alt="Current GCash payment image">
+                        </div>
+                    </div>
+                    @endif
                     </div>
                 </div>
 
