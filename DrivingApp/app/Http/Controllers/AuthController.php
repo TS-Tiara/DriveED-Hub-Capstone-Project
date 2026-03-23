@@ -19,6 +19,13 @@ class AuthController extends Controller
 {
     public function showLogin(School $school)
     {
+        // One-time break-glass flag to prevent redirect loops on dashboard failure
+        if (session()->pull('dashboard_failed')) {
+            return view($school->resolveView('login'), [
+                'school' => $school,
+            ]);
+        }
+
         // Redirect if already authenticated
         if (Auth::guard('admin')->check()) {
             return redirect()->route('schools.admin.dashboard', $school);

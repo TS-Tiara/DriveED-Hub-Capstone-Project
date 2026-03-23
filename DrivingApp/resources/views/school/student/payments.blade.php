@@ -296,8 +296,16 @@ nav[role="navigation"] span:not([aria-current]):not([aria-disabled]) {
 </style>
 
 <div class="payments-container">
-    <div class="page-header">
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
         <h1 class="page-title">My Payments</h1>
+        @if(($pendingEnrollments ?? collect())->isNotEmpty() || ($pendingBookings ?? collect())->isNotEmpty())
+            <button class="btn btn-primary" onclick="openPaymentModal()" style="padding: 10px 20px; background: {{ $primaryColor }}; color: white; border-radius: 6px; font-weight: 500; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
+                <svg xmlns="http://www.w3.org/2000/svg" style="width: 18px; height: 18px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+                Upload Payment
+            </button>
+        @endif
     </div>
 
     <div class="total-spent">
@@ -378,4 +386,93 @@ nav[role="navigation"] span:not([aria-current]):not([aria-disabled]) {
         @endif
     </div>
 </div>
+
+@if(($pendingEnrollments ?? collect())->isNotEmpty() || ($pendingBookings ?? collect())->isNotEmpty())
+<div id="paymentModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 50; align-items: center; justify-content: center;">
+    <div class="modal-content" style="background: white; border-radius: 12px; width: 100%; max-width: 500px; padding: 24px; position: relative;">
+        <button onclick="closePaymentModal()" style="position: absolute; top: 16px; right: 16px; background: none; border: none; cursor: pointer; color: #6b7280;">
+            <svg style="width: 24px; height: 24px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+        <h2 style="font-size: 1.5rem; font-weight: 600; margin-top: 0; margin-bottom: 20px; color: #111827;">Upload Proof of Payment</h2>
+
+        @if(!empty($gcashPaymentImageUrl))
+            <div style="margin-bottom: 16px; border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px; background: #f9fafb;">
+                <label style="display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 8px;">GCash Payment Image</label>
+                <img src="{{ $gcashPaymentImageUrl }}" alt="GCash payment image" style="width: 100%; max-height: 260px; object-fit: contain; border-radius: 8px; background: #fff; border: 1px solid #d1d5db;">
+                <p style="font-size: 0.75rem; color: #6b7280; margin-top: 8px; margin-bottom: 0;">Use this image as reference for payment destination details.</p>
+            </div>
+        @else
+            <div style="margin-bottom: 16px; border: 1px solid #fde68a; border-radius: 10px; padding: 12px; background: #fffbeb; color: #92400e; font-size: 0.875rem;">
+                GCash payment image is not yet configured by the admin. Please contact your school admin before submitting payment.
+            </div>
+        @endif
+
+        <form method="POST" action="{{ route('schools.' . ((Auth::guard('student')->user()->role ?? 'student') === 'guest' ? 'guest' : 'student') . '.payments.store', ['school' => $school->slug]) }}" enctype="multipart/form-data">
+            @csrf
+            <input type="hidden" name="method" value="gcash">
+
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 6px;">Payment For <span style="color: red;">*</span></label>
+                <select id="paymentTypeSelect" name="payment_target" required style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 1rem;" onchange="updatePaymentTarget()">
+                    <option value="" disabled selected>Select what you are paying for...</option>
+                    @foreach($pendingEnrollments ?? [] as $enrollment)
+                        <option value="enrollment_{{ $enrollment->id }}">Enrollment Request: {{ $enrollment->course->title ?? 'Course' }}</option>
+                    @endforeach
+                    @foreach($pendingBookings ?? [] as $booking)
+                        <option value="booking_{{ $booking->id }}">Booking: {{ $booking->course->title ?? 'Course' }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <input type="hidden" id="enrollment_request_id" name="enrollment_request_id" value="">
+            <input type="hidden" id="booking_id" name="booking_id" value="">
+
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 6px;">Amount (PHP) <span style="color: red;">*</span></label>
+                <input type="number" name="amount" min="1" step="0.01" required style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 1rem;">
+            </div>
+
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 6px;">GCash Reference No. <span style="color: red;">*</span></label>
+                <input type="text" name="reference" required style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 1rem;" placeholder="e.g. 1234567890123">
+            </div>
+
+            <div style="margin-bottom: 24px;">
+                <label style="display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 6px;">Proof of Payment (Screenshot) <span style="color: red;">*</span></label>
+                <input type="file" name="proof_of_payment" accept="image/*" required style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.875rem;">
+                <p style="font-size: 0.75rem; color: #6b7280; margin-top: 4px;">Accepted formats: JPG, PNG, WEBP. Max size: 5MB.</p>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 12px;">
+                <button type="button" onclick="closePaymentModal()" style="padding: 10px 16px; background: white; border: 1px solid #d1d5db; color: #374151; border-radius: 6px; font-weight: 500; cursor: pointer;">Cancel</button>
+                <button type="submit" style="padding: 10px 16px; background: {{ $primaryColor }}; color: white; border: none; border-radius: 6px; font-weight: 500; cursor: pointer;">Submit Payment</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openPaymentModal() {
+    document.getElementById('paymentModal').style.display = 'flex';
+}
+
+function closePaymentModal() {
+    document.getElementById('paymentModal').style.display = 'none';
+}
+
+function updatePaymentTarget() {
+    const select = document.getElementById('paymentTypeSelect');
+    const val = select.value;
+
+    document.getElementById('enrollment_request_id').value = '';
+    document.getElementById('booking_id').value = '';
+
+    if (val.startsWith('enrollment_')) {
+        document.getElementById('enrollment_request_id').value = val.replace('enrollment_', '');
+    } else if (val.startsWith('booking_')) {
+        document.getElementById('booking_id').value = val.replace('booking_', '');
+    }
+}
+</script>
+@endif
 @endsection

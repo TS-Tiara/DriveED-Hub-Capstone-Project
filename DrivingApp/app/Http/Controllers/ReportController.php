@@ -114,29 +114,38 @@ class ReportController extends Controller
                 ->keyBy('course_id');
 
             // Course revenue - ONE bulk query (Corrected Axis: paid_on + Enrollment Fees)
-            $courseRevenueFromBookings = DB::table('payments')
-                ->join('bookings', 'payments.booking_id', '=', 'bookings.id')
-                ->where('bookings.school_id', $schoolId)
-                ->when($admin->isBranchSecretary(), fn($q) => $q->where('bookings.branch_id', $admin->branch_id))
-                ->where('payments.status', 'approved')
-                ->when($startDate, fn($q) => $q->whereBetween('payments.received_at', [$startDate, $endDate]))
-                ->selectRaw('bookings.course_id, SUM(payments.amount) as total_revenue')
-                ->groupBy('bookings.course_id')
-                ->pluck('total_revenue', 'course_id');
+            $courseRevenue = collect();
+            try {
+                $hasReceivedAt = \Illuminate\Support\Facades\Schema::hasColumn('payments', 'received_at');
+                $dateColumn = $hasReceivedAt ? 'payments.received_at' : 'payments.paid_on';
 
-            $courseRevenueFromEnrollments = DB::table('payments')
-                ->join('enrollment_requests', 'payments.enrollment_request_id', '=', 'enrollment_requests.id')
-                ->where('enrollment_requests.school_id', $schoolId)
-                ->when($admin->isBranchSecretary(), fn($q) => $q->where('enrollment_requests.branch_id', $admin->branch_id))
-                ->where('payments.status', 'approved')
-                ->when($startDate, fn($q) => $q->whereBetween('payments.received_at', [$startDate, $endDate]))
-                ->selectRaw('enrollment_requests.course_id, SUM(payments.amount) as total_revenue')
-                ->groupBy('enrollment_requests.course_id')
-                ->pluck('total_revenue', 'course_id');
+                $courseRevenueFromBookings = DB::table('payments')
+                    ->join('bookings', 'payments.booking_id', '=', 'bookings.id')
+                    ->where('bookings.school_id', $schoolId)
+                    ->when($admin->isBranchSecretary(), fn($q) => $q->where('bookings.branch_id', $admin->branch_id))
+                    ->where('payments.status', 'approved')
+                    ->when($startDate, fn($q) => $q->whereBetween($dateColumn, [$startDate, $endDate]))
+                    ->selectRaw('bookings.course_id, SUM(payments.amount) as total_revenue')
+                    ->groupBy('bookings.course_id')
+                    ->pluck('total_revenue', 'course_id');
 
-            $courseRevenue = $courseRevenueFromBookings;
-            foreach ($courseRevenueFromEnrollments as $courseId => $amount) {
-                $courseRevenue[$courseId] = ($courseRevenue[$courseId] ?? 0) + $amount;
+                $courseRevenueFromEnrollments = DB::table('payments')
+                    ->join('enrollment_requests', 'payments.enrollment_request_id', '=', 'enrollment_requests.id')
+                    ->where('enrollment_requests.school_id', $schoolId)
+                    ->when($admin->isBranchSecretary(), fn($q) => $q->where('enrollment_requests.branch_id', $admin->branch_id))
+                    ->where('payments.status', 'approved')
+                    ->when($startDate, fn($q) => $q->whereBetween($dateColumn, [$startDate, $endDate]))
+                    ->selectRaw('enrollment_requests.course_id, SUM(payments.amount) as total_revenue')
+                    ->groupBy('enrollment_requests.course_id')
+                    ->pluck('total_revenue', 'course_id');
+
+                $courseRevenue = $courseRevenueFromBookings;
+                foreach ($courseRevenueFromEnrollments as $courseId => $amount) {
+                    $courseRevenue[$courseId] = ($courseRevenue[$courseId] ?? 0) + $amount;
+                }
+            } catch (\Exception $e) {
+                // Fallback to empty revenue if schema is out of sync or column missing
+                \Illuminate\Support\Facades\Log::warning('Course revenue query failed: ' . $e->getMessage());
             }
 
             $courseStats = $courses->map(function ($course) use ($courseBookingStats, $courseRevenue) {

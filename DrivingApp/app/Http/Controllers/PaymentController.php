@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Admin;
+use App\Models\GCashSetting;
 use App\Models\Payment;
 use App\Models\School;
 use App\Services\PaymentSubmissionService;
@@ -36,7 +38,7 @@ class PaymentController extends Controller
         }
         elseif (Auth::guard('admin')->check()) {
             $admin = Auth::guard('admin')->user();
-            if ($admin->isBranchSecretary() && $admin->branch_id) {
+            if ($admin instanceof Admin && $admin->isBranchSecretary() && $admin->branch_id) {
                 // Use the new branch_id field for reliable scoping across all payment types
                 $query->where('branch_id', '=', $admin->branch_id);
             }
@@ -71,6 +73,33 @@ class PaymentController extends Controller
             'pending_count' => (clone $query)->where('status', 'pending')->count(),
         ];
 
+        $pendingEnrollments = collect();
+        $pendingBookings = collect();
+        $gcashPaymentImageUrl = null;
+
+        if (Auth::guard('student')->check()) {
+            $studentId = Auth::guard('student')->id();
+            $student = Auth::guard('student')->user();
+
+            $activeGcashSetting = GCashSetting::getActiveSetting($school->id, $student?->branch_id);
+            if ($activeGcashSetting && $activeGcashSetting->is_active && !empty($activeGcashSetting->qr_path)) {
+                $gcashPaymentImageUrl = route('schools.guest.storage.gcash-qr', [
+                    'school' => $school,
+                    'gcashSetting' => $activeGcashSetting,
+                ]);
+            }
+
+            $pendingEnrollments = \App\Models\EnrollmentRequest::where('learner_id', $studentId)
+                ->whereIn('payment_status', ['pending', 'partial', 'on_hold'])
+                ->with('course')
+                ->get();
+
+            $pendingBookings = \App\Models\Booking::where('student_id', $studentId)
+                ->whereIn('payment_status', ['pending', 'partial', 'on_hold'])
+                ->with('course')
+                ->get();
+        }
+
         // Only return JSON if explicitly requested via Accept header
         if (request()->expectsJson()) {
             return response()->json([
@@ -82,7 +111,7 @@ class PaymentController extends Controller
         // Only admin and student have payment views
         $guard = Auth::guard('admin')->check() ? 'admin' : 'student';
         $view = "school.{$guard}.payments";
-        return view($view, compact('school', 'payments', 'stats'));
+        return view($view, compact('school', 'payments', 'stats', 'pendingEnrollments', 'pendingBookings', 'gcashPaymentImageUrl'));
     }
 
     /**
@@ -135,7 +164,7 @@ class PaymentController extends Controller
         } else {
             // On-site usually recorded by Admin
             if (!$isAdmin) abort(403, 'Students cannot record on-site payments.');
-            $data['received_by_admin_id'] = auth()->id();
+            $data['received_by_admin_id'] = Auth::guard('admin')->id();
             $data['received_at'] = now();
             $payment = $submissionService->submitOnsite($data);
         }
@@ -172,7 +201,7 @@ class PaymentController extends Controller
         }
         elseif (Auth::guard('admin')->check()) {
             $admin = Auth::guard('admin')->user();
-            if ($admin->isBranchSecretary() && $admin->branch_id) {
+            if ($admin instanceof Admin && $admin->isBranchSecretary() && $admin->branch_id) {
                 // Securely check branch access using payment-level branch_id
                 if ($payment->branch_id && (int)$payment->branch_id !== (int)$admin->branch_id) {
                     abort(403, 'You do not have access to payments from this branch.');
@@ -220,8 +249,8 @@ class PaymentController extends Controller
             'reason_note' => 'nullable|string|max:500',
         ]);
 
-        $admin = auth()->user();
-        if (!$admin instanceof \App\Models\Admin) {
+        $admin = Auth::guard('admin')->user();
+        if (!$admin instanceof Admin) {
             return response()->json(['success' => false, 'message' => 'Unauthorized admin action.'], 403);
         }
 
@@ -249,6 +278,9 @@ class PaymentController extends Controller
 
         // Security: Branch secretary restriction
         $admin = Auth::guard('admin')->user();
+        if (!$admin instanceof Admin) {
+            abort(403, 'Unauthorized admin action.');
+        }
         if ($admin->isBranchSecretary() && $admin->branch_id) {
             // Securely check branch access using payment-level branch_id
             if ($payment->branch_id && (int)$payment->branch_id !== (int)$admin->branch_id) {
@@ -281,7 +313,7 @@ class PaymentController extends Controller
     {
         $admin = Auth::guard('admin')->user();
         // Only admins can view general statistics
-        if (!$admin) {
+        if (!$admin instanceof Admin) {
             abort(403);
         }
 

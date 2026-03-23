@@ -138,6 +138,10 @@ Route::prefix('{school:slug}')
                     Route::post('/enroll/{course}', [GuestController::class , 'enroll'])->name('enroll');
                     Route::post('/upload-license', [GuestController::class , 'uploadLicense'])->name('uploadLicense');
                     Route::get('/enrollment-requests', [GuestController::class , 'enrollmentRequests'])->name('enrollmentRequests');
+                    
+                    // Guest payment routes
+                    Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
+                    Route::post('/payments', [PaymentController::class, 'store'])->name('payments.store');
                 }
                 );
 
@@ -145,6 +149,7 @@ Route::prefix('{school:slug}')
                 Route::middleware(['auth:student,admin', 'nocache'])->group(function (): void {
                     Route::get('/license/{student}', [\App\Http\Controllers\StorageController::class, 'streamLicense'])->name('storage.license');
                     Route::get('/credential/{enrollment}', [\App\Http\Controllers\StorageController::class, 'streamCredential'])->name('storage.credential');
+                    Route::get('/gcash-qr/{gcashSetting}', [\App\Http\Controllers\StorageController::class, 'streamGcashQr'])->name('storage.gcash-qr');
                 });
             }
             );
@@ -254,10 +259,6 @@ Route::prefix('{school:slug}')
                             }
                             );
 
-
-                        }
-                        );
-
                         // New LMS routes WITH ajax middleware for layout consistency
                         // Enrollment management (combining enrollment requests and enrollments)
                         Route::middleware(['ajax'])->group(function () {
@@ -339,7 +340,10 @@ Route::prefix('{school:slug}')
                                 );
                             }
                             ); // end ajax middleware for LMS routes
-                    
+                            
+                        }
+                        ); // end admin group
+
                             Route::post('/logout', [AuthController::class , 'logout'])->name('logout');
                         }
                         );
@@ -463,6 +467,7 @@ Route::prefix('{school:slug}')
                     // Student payments
                     Route::get('/payments', [PaymentController::class , 'index'])->name('payments.index');
                     Route::get('/payments/{payment}', [PaymentController::class , 'show'])->name('payments.show');
+                    Route::post('/payments', [PaymentController::class , 'store'])->name('payments.store');
 
                     // Student schedule
                     Route::get('/schedule', [StudentController::class , 'schedule'])->name('schedule');

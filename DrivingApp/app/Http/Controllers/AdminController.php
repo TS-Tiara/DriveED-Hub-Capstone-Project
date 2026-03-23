@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Admin;
 use App\Models\Branch;
 use App\Models\EnrollmentRequest;
+use App\Models\GCashSetting;
 use App\Models\Instructor;
 use App\Models\InstructorRemovalRequest;
 use App\Models\Log;
@@ -16,12 +17,14 @@ use App\Models\SchoolSetting;
 use App\Models\Student;
 use App\Models\SystemLog;
 use App\Http\Controllers\ReportController;
+use App\Services\FinancialService;
 use App\Models\TimeSlot;
 use App\Models\PhaseProgression;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log as LogFacade;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -128,14 +131,26 @@ class AdminController extends Controller
             $pendingProgressions = $admin->scopeToBranch(PhaseProgression::where('school_id', $school->id))->where('status', 'pending')->count();
 
             // Calculate monthly revenue (completed payments paid_on this month)
-            $monthlyRevenue = $admin->scopeToBranch(Payment::where('school_id', $school->id))
-                ->where('status', '=', 'approved')
-                ->whereBetween('received_at', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()])
-                ->sum('amount')
-                - $admin->scopeToBranch(Payment::where('school_id', $school->id))
-                ->where('status', '=', 'refunded')
-                ->whereBetween('refunded_at', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()])
-                ->sum('refunded_amount');
+            try {
+                $hasReceivedAt = Schema::hasColumn('payments', 'received_at');
+                $hasRefundedAt = Schema::hasColumn('payments', 'refunded_at');
+
+                if ($hasReceivedAt && $hasRefundedAt) {
+                    $monthlyRevenue = $admin->scopeToBranch(Payment::where('school_id', $school->id))
+                        ->where('status', '=', 'approved')
+                        ->whereBetween('received_at', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()])
+                        ->sum('amount')
+                        - $admin->scopeToBranch(Payment::where('school_id', $school->id))
+                        ->where('status', '=', 'refunded')
+                        ->whereBetween('refunded_at', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()])
+                        ->sum('refunded_amount');
+                } else {
+                    $monthlyRevenue = 0;
+                }
+            } catch (\Exception $e) {
+                LogFacade::warning("Dashboard revenue calculation failed, falling back to 0: " . $e->getMessage());
+                $monthlyRevenue = 0;
+            }
 
             // Calculate active enrollments (approved requests)
             $activeEnrollments = $admin->scopeToBranch(EnrollmentRequest::where('school_id', $school->id))
@@ -166,15 +181,22 @@ class AdminController extends Controller
         }
         catch (\Exception $e) {
             SystemLog::logError(
-                'Failed to load admin dashboard',
+                'Fatal dashboard failure triggered loop protection',
                 'database',
                 $e,
-            ['school_id' => $school->id],
+                ['school_id' => $school->id],
                 $school->id,
                 'view_dashboard'
             );
 
-            return back()->with('error', 'Unable to load dashboard. The system administrator has been notified.');
+            // Force logout and session termination to break the redirect loop
+            Auth::guard('admin')->logout();
+            request()->session()->invalidate();
+            request()->session()->regenerateToken();
+
+            return redirect()->route('schools.login', $school)
+                ->with('error', 'Dashboard temporarily unavailable. Please contact support.')
+                ->with('dashboard_failed', true);
         }
     }
 
@@ -645,7 +667,7 @@ class AdminController extends Controller
      */
     public function studentReports(School $school)
     {
-        return app(ReportController::class)->index($school);
+        return app(ReportController::class)->index($school, app(FinancialService::class));
     }
 
     /**
@@ -653,7 +675,7 @@ class AdminController extends Controller
      */
     public function instructorReports(School $school)
     {
-        return app(ReportController::class)->index($school);
+        return app(ReportController::class)->index($school, app(FinancialService::class));
     }
 
     /**
@@ -661,7 +683,7 @@ class AdminController extends Controller
      */
     public function logs(School $school)
     {
-        return app(ReportController::class)->index($school);
+        return app(ReportController::class)->index($school, app(FinancialService::class));
     }
 
     public function profile(School $school)
@@ -893,26 +915,6 @@ class AdminController extends Controller
     // ==========================
     // SCHOOL SETTINGS
     // ==========================
-    public function canManageSchedules(): bool
-    {
-        return $this->isSchoolAdmin() || $this->isBranchSecretary();
-    }
-
-    /**
-     * Check if admin can manage courses (only school_admin).
-     */
-    public function canManageCourses(): bool
-    {
-        return $this->isSchoolAdmin();
-    }
-
-    /**
-     * Check if admin can manage students (school_admin + branch_secretary for own branch).
-     */
-    public function canManageStudents(): bool
-    {
-        return $this->isSchoolAdmin() || $this->isBranchSecretary();
-    }
     public function settings(School $school)
     {
         $admin = Auth::guard('admin')->user();
@@ -922,8 +924,13 @@ class AdminController extends Controller
 
         abort_unless($admin->school_id === $school->id, 403);
 
+        $gcashSetting = GCashSetting::where('school_id', $school->id)
+            ->whereNull('branch_id')
+            ->first();
+
         return view($school->resolveView('admin.settings'), [
             'school' => $school,
+            'gcashSetting' => $gcashSetting,
         ]);
     }
 
@@ -936,6 +943,10 @@ class AdminController extends Controller
             }
 
             abort_unless($admin->school_id === $school->id, 403);
+
+            $schoolLevelGcash = GCashSetting::where('school_id', $school->id)
+                ->whereNull('branch_id')
+                ->first();
 
             $request->validate([
                 'instructor_removal_notice_days' => 'required|integer|min:0|max:30',
@@ -1007,6 +1018,11 @@ class AdminController extends Controller
                 'login_page_bg_color' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
                 'login_page_bg_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048|dimensions:max_width=4000,max_height=4000',
                 'login_page_bg_opacity' => 'nullable|integer|min:0|max:100',
+                // School-level GCash settings
+                'gcash_account_name' => 'nullable|string|max:120',
+                'gcash_account_number' => 'nullable|string|max:40',
+                'gcash_qr' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+                'gcash_enabled' => 'nullable|boolean',
             ], [
                 'instructor_removal_notice_days.required' => 'Minimum notice period is required.',
                 'instructor_removal_notice_days.integer' => 'Notice period must be a number.',
@@ -1018,6 +1034,16 @@ class AdminController extends Controller
                 'button_border_radius.min' => 'Button border radius must be at least 0.',
                 'button_border_radius.max' => 'Button border radius cannot exceed 30 pixels.',
             ]);
+
+            if (
+                $request->boolean('gcash_enabled')
+                && !$request->hasFile('gcash_qr')
+                && empty($schoolLevelGcash?->qr_path)
+            ) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'gcash_qr' => 'Please upload a GCash payment image for initial setup.',
+                ]);
+            }
 
             DB::beginTransaction();
 
@@ -1131,6 +1157,56 @@ class AdminController extends Controller
             ]);
 
             $schoolSetting->save();
+
+            // Upsert school-level GCash configuration (branch_id = null)
+            $hasGcashInput = $request->filled('gcash_account_name')
+                || $request->filled('gcash_account_number')
+                || $request->hasFile('gcash_qr')
+                || $request->has('gcash_enabled')
+                || !empty($schoolLevelGcash);
+
+            if ($hasGcashInput) {
+                $gcashSetting = $schoolLevelGcash ?? new GCashSetting([
+                    'school_id' => $school->id,
+                    'branch_id' => null,
+                ]);
+
+                $qrPath = $gcashSetting->qr_path;
+                if ($request->hasFile('gcash_qr')) {
+                    if ($qrPath) {
+                        Storage::disk('public')->delete($qrPath);
+                    }
+                    $qrPath = $request->file('gcash_qr')->store('gcash-qr/' . $school->slug, 'public');
+                }
+
+                $accountName = trim((string) $request->input('gcash_account_name', $gcashSetting->account_name ?? ''));
+                $accountNumber = trim((string) $request->input('gcash_account_number', $gcashSetting->account_number ?? ''));
+
+                // Backward-compatible placeholders: details can live in the uploaded image.
+                if ($accountName === '') {
+                    $accountName = 'See uploaded payment image';
+                }
+                if ($accountNumber === '') {
+                    $accountNumber = 'See uploaded payment image';
+                }
+
+                if (empty($qrPath)) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'gcash_qr' => 'A GCash payment image is required to activate school GCash payments.',
+                    ]);
+                }
+
+                $gcashSetting->fill([
+                    'account_name' => $accountName,
+                    'account_number' => $accountNumber,
+                    'qr_path' => $qrPath,
+                    'is_active' => $request->has('gcash_enabled')
+                        ? $request->boolean('gcash_enabled')
+                        : (bool) ($gcashSetting->is_active ?? true),
+                ]);
+
+                $gcashSetting->save();
+            }
 
             DB::commit();
 
@@ -1250,7 +1326,7 @@ class AdminController extends Controller
         $admin = Auth::guard('admin')->user();
 
         // General schedule management check
-        if (!$admin || !$admin->canManageSchedules()) {
+        if (!$admin instanceof Admin || !$admin->canManageSchedules()) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -1332,7 +1408,7 @@ class AdminController extends Controller
     {
         try {
             $admin = Auth::guard('admin')->user();
-            if (!$admin || !$admin->canManageSchedules()) {
+            if (!$admin instanceof Admin || !$admin->canManageSchedules()) {
                 abort(403, 'Unauthorized action.');
             }
 
@@ -1425,7 +1501,7 @@ class AdminController extends Controller
     {
         try {
             $admin = Auth::guard('admin')->user();
-            if (!$admin || !$admin->canManageSchedules()) {
+            if (!$admin instanceof Admin || !$admin->canManageSchedules()) {
                 abort(403, 'Unauthorized action.');
             }
 
