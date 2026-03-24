@@ -1,0 +1,1 @@
+* * * * * /usr/bin/php /home/USERNAME/domains/YOUR_DOMAIN/laravel_app/artisan schedule:run >> /dev/null 2>&1

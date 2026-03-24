@@ -1,0 +1,85 @@
+<?php
+
+namespace App\Models;
+
+use App\Traits\HasSchoolScope;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class ModuleLesson extends Model
+{
+    use HasSchoolScope;
+    use HasFactory;
+
+    protected $fillable = [
+        'school_id',
+        'module_id',
+        'title',
+        'content',
+        'attachments',
+        'video_url',
+        'sort_order',
+    ];
+
+    protected $casts = [
+        'attachments' => 'array',
+        'sort_order' => 'integer',
+    ];
+
+    /**
+     * Get the school
+     */
+    public function school(): BelongsTo
+    {
+        return $this->belongsTo(School::class);
+    }
+
+    /**
+     * Get the module that owns this lesson
+     */
+    public function module(): BelongsTo
+    {
+        return $this->belongsTo(CourseModule::class , 'module_id');
+    }
+
+    /**
+     * Get the course through the module
+     */
+    public function course(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
+    {
+        return $this->hasOneThrough(
+            Course::class ,
+            CourseModule::class ,
+            'id', // Foreign key on course_modules table
+            'id', // Foreign key on courses table
+            'module_id', // Local key on module_lessons table
+            'course_id' // Local key on course_modules table
+        );
+    }
+
+    /**
+     * Scope to get lessons ordered by sort_order
+     */
+    public function scopeOrdered($query)
+    {
+        return $query->orderBy('sort_order');
+    }
+
+    /**
+     * Check if lesson has attachments
+     */
+    public function hasAttachments(): bool
+    {
+        return !empty($this->attachments);
+    }
+
+    /**
+     * Check if lesson has video
+     */
+    public function hasVideo(): bool
+    {
+        return !empty($this->video_url);
+    }
+}
