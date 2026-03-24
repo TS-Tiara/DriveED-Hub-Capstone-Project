@@ -374,8 +374,20 @@ class InstructorTimeSlotController extends Controller
         $isAjax = $request->ajax() || $request->header('X-Requested-With') === 'XMLHttpRequest';
 
         // Check minimum notice period
+        $schoolTimezone = $school->timezone;
+        try {
+            if (!$schoolTimezone || !in_array($schoolTimezone, \DateTimeZone::listIdentifiers())) {
+                $schoolTimezone = config('app.timezone', 'UTC');
+            }
+        } catch (\Exception $e) {
+            $schoolTimezone = 'UTC';
+        }
+
+        $now = \Carbon\Carbon::now($schoolTimezone)->startOfDay();
+        $slotDate = \Carbon\Carbon::parse($timeSlot->date, $schoolTimezone)->startOfDay();
         $minimumNoticeDays = $school->instructor_removal_notice_days ?? 7;
-        $daysUntilSlot = now()->startOfDay()->diffInDays($timeSlot->date->startOfDay(), false);
+        
+        $daysUntilSlot = $now->diffInDays($slotDate, false);
 
         if ($daysUntilSlot < $minimumNoticeDays) {
             $message = "You must request removal at least {$minimumNoticeDays} days before the scheduled time slot. This slot is in {$daysUntilSlot} day(s).";

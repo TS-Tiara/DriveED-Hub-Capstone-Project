@@ -181,8 +181,37 @@
         </div>
     </div>
 
-
-    <!-- Key Statistics -->
+    <!-- Operational Alerts -->
+    @if(($pendingEnrollments ?? 0) > 0)
+        @php
+            $alertClass = ($isAlertCritical ?? false) ? 'alert-danger' : 'alert-warning';
+            $alertIcon = ($isAlertCritical ?? false) ? 'exclamation-circle' : 'exclamation-triangle';
+        @endphp
+        <div class="alert {{ $alertClass }} d-flex align-items-center mb-4 shadow-sm border-0" role="alert" style="border-radius: 12px; padding: 1.25rem;">
+            <div class="me-3" style="font-size: 1.5rem;">
+                <i class="fas fa-{{ $alertIcon }}"></i>
+            </div>
+            <div class="flex-grow-1">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="alert-heading mb-1" style="font-weight: 700; font-size: 1.1rem;">
+                            {{ $pendingEnrollments }} Enrollment Requests Awaiting Review
+                        </h4>
+                        <p class="mb-0 text-dark opacity-75" style="font-size: 0.95rem;">
+                            @if($isAlertCritical ?? false)
+                                Action Required: Pending requests have exceeded your threshold of {{ $alertThreshold }}.
+                            @else
+                                Note: You have pending enrollment requests that need to be processed.
+                            @endif
+                        </p>
+                    </div>
+                    <a href="{{ school_route('admin.enrollments.index') }}" class="btn btn-sm btn-light border shadow-sm px-4" style="font-weight: 600; border-radius: 8px;">
+                        Manage Enrollments
+                    </a>
+                </div>
+            </div>
+        </div>
+    @endif
     <div class="stats-grid">
         <a href="{{ school_route('admin.userManagement') }}" class="stat-card students stat-card-link" onclick="loadContent(this.href); return false;">
             <div class="stat-content">
@@ -234,7 +263,7 @@
             </div>
         </a>
         
-        <a href="{{ $schoolRoute('admin.enrollments.index') }}" class="stat-card growth stat-card-link" onclick="loadContent(this.href); return false;">
+        <a href="{{ school_route('admin.enrollments.index') }}" class="stat-card growth stat-card-link" onclick="loadContent(this.href); return false;">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -251,7 +280,7 @@
             </div>
         </a>
         
-        <a href="{{ $schoolRoute('admin.reports.index') }}" class="stat-card active stat-card-link" onclick="loadContent(this.href); return false;">
+        <a href="{{ school_route('admin.reports.index') }}" class="stat-card active stat-card-link" onclick="loadContent(this.href); return false;">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -268,7 +297,7 @@
             </div>
         </a>
 
-        <a href="{{ $schoolRoute('admin.enrollments.index') }}" class="stat-card info stat-card-link" onclick="loadContent(this.href); return false;">
+        <a href="{{ school_route('admin.enrollments.index') }}" class="stat-card info stat-card-link" onclick="loadContent(this.href); return false;">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -285,7 +314,7 @@
             </div>
         </a>
 
-        <a href="{{ $schoolRoute('admin.reports.index') }}" class="stat-card success stat-card-link" onclick="loadContent(this.href); return false;">
+        <a href="{{ school_route('admin.reports.index') }}" class="stat-card success stat-card-link" onclick="loadContent(this.href); return false;">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -308,19 +337,19 @@
         <div class="content-card-header">Quick Actions</div>
         <div class="content-card-body">
             <div class="quick-actions">
-                <a href="{{ $schoolRoute('admin.enrollments.index') }}" class="quick-action-btn" onclick="loadContent(this.href); return false;">
+                <a href="{{ school_route('admin.enrollments.index') }}" class="quick-action-btn" onclick="loadContent(this.href); return false;">
                     Enrollments
                     @if(($pendingEnrollments ?? 0) > 0)
                         <span class="pending-badge">{{ $pendingEnrollments }}</span>
                     @endif
                 </a>
-                <a href="{{ $schoolRoute('admin.schedules') }}" class="quick-action-btn" onclick="loadContent(this.href); return false;">
+                <a href="{{ school_route('admin.schedules') }}" class="quick-action-btn" onclick="loadContent(this.href); return false;">
                     Schedules
                 </a>
-                <a href="{{ $schoolRoute('admin.payments.index') }}" class="quick-action-btn" onclick="loadContent(this.href); return false;">
+                <a href="{{ school_route('admin.payments.index') }}" class="quick-action-btn" onclick="loadContent(this.href); return false;">
                     Payments
                 </a>
-                <a href="{{ $schoolRoute('admin.phase-progressions.index') }}" class="quick-action-btn" onclick="loadContent(this.href); return false;">
+                <a href="{{ school_route('admin.phase-progressions.index') }}" class="quick-action-btn" onclick="loadContent(this.href); return false;">
                     Phase Progressions
                     @if(($pendingProgressions ?? 0) > 0)
                         <span class="pending-badge">{{ $pendingProgressions }}</span>

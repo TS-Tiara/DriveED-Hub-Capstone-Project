@@ -22,6 +22,7 @@ class School extends Model
     protected $casts = [
         'branding' => 'array',
         'settings' => 'array',
+        'instructor_removal_notice_days' => 'integer',
     ];
 
     public function getRouteKeyName(): string
