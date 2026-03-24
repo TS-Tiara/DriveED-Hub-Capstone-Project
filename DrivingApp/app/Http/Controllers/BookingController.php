@@ -144,14 +144,39 @@ class BookingController extends Controller
 
         $validated['school_id'] = $school->id;
         
-        // Check if booking queue is enabled
+        // Get school settings and timezone with defensive fallback
         $settings = $school->schoolSetting;
-        $queueEnabled = $settings?->enable_booking_queue ?? true;
+        $schoolTimezone = $school->timezone;
         
-        // Check advance booking requirement
+        // Defensive: Validate timezone source to avoid Carbon exceptions
+        try {
+            if (!$schoolTimezone || !in_array($schoolTimezone, \DateTimeZone::listIdentifiers())) {
+                $schoolTimezone = config('app.timezone', 'UTC');
+            }
+        } catch (\Exception $e) {
+            $schoolTimezone = 'UTC';
+        }
+
+        $now = \Carbon\Carbon::now($schoolTimezone);
+        $queueEnabled = $settings?->enable_booking_queue ?? true;
+        $bookingCutoffHours = $settings?->booking_cutoff_hours ?? 0;
         $advanceBookingDays = $settings?->advance_booking_days ?? 0;
-        $scheduledDate = \Carbon\Carbon::parse($validated['scheduled_at'])->startOfDay();
-        $minBookingDate = now()->addDays($advanceBookingDays)->startOfDay();
+
+        // Combine date/time and enforce cutoff + advance booking
+        $scheduledAt = \Carbon\Carbon::parse($request->scheduled_at, $schoolTimezone);
+
+        // 1. Hard Cutoff Check (Hours)
+        if ($now->copy()->addHours($bookingCutoffHours)->gt($scheduledAt)) {
+            $message = "Bookings must be made at least {$bookingCutoffHours} hour(s) before the scheduled time.";
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $message], 422);
+            }
+            return back()->withErrors(['scheduled_at' => $message]);
+        }
+        
+        // 2. Advance Booking Check (Days)
+        $scheduledDate = $scheduledAt->copy()->startOfDay();
+        $minBookingDate = $now->copy()->addDays($advanceBookingDays)->startOfDay();
         
         if ($scheduledDate->lt($minBookingDate)) {
             $message = $advanceBookingDays > 0 
@@ -159,10 +184,7 @@ class BookingController extends Controller
                 : "Cannot schedule in the past.";
                 
             if ($request->ajax() || $request->wantsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $message
-                ], 422);
+                return response()->json(['success' => false, 'message' => $message], 422);
             }
             return back()->withErrors(['scheduled_at' => $message]);
         }
@@ -177,23 +199,32 @@ class BookingController extends Controller
         if (!empty($validated['time_slot_id'])) {
             $timeSlot = \App\Models\TimeSlot::find($validated['time_slot_id']);
             if ($timeSlot) {
-                $validated['booking_date'] = $timeSlot->date;
+                // Combine time slot date and start time for precise cutoff check
+                $slotStartTime = \Carbon\Carbon::parse($timeSlot->date->format('Y-m-d') . ' ' . $timeSlot->start_time, $schoolTimezone);
                 
-                // Re-check advance booking for time slot date
-                $timeSlotDate = \Carbon\Carbon::parse($timeSlot->date)->startOfDay();
-                if ($timeSlotDate->lt($minBookingDate)) {
+                // 1. Hard Cutoff Check (Hours) for Time Slot
+                if ($now->copy()->addHours($bookingCutoffHours)->gt($slotStartTime)) {
+                    $message = "This time slot is now closed for bookings (cutoff: {$bookingCutoffHours} hour(s)).";
+                    if ($request->ajax() || $request->wantsJson()) {
+                        return response()->json(['success' => false, 'message' => $message], 422);
+                    }
+                    return back()->withErrors(['time_slot' => $message]);
+                }
+
+                // 2. Advance Booking Check (Days) for Time Slot
+                $slotDate = $slotStartTime->copy()->startOfDay();
+                if ($slotDate->lt($minBookingDate)) {
                     $message = $advanceBookingDays > 0 
                         ? "Schedules must be made at least {$advanceBookingDays} day(s) in advance."
                         : "Cannot schedule in the past.";
                         
                     if ($request->ajax() || $request->wantsJson()) {
-                        return response()->json([
-                            'success' => false,
-                            'message' => $message
-                        ], 422);
+                        return response()->json(['success' => false, 'message' => $message], 422);
                     }
-                    return back()->withErrors(['scheduled_at' => $message]);
+                    return back()->withErrors(['time_slot' => $message]);
                 }
+
+                $validated['booking_date'] = $timeSlot->date;
                 
                 // Override course_id with time slot's course if available
                 if ($timeSlot->course_id) {

@@ -87,6 +87,8 @@ class SchoolSetting extends Model
         'login_page_bg_color',
         'login_page_bg_image',
         'login_page_bg_opacity',
+        'booking_cutoff_hours',
+        'alert_threshold_pending',
     ];
 
     protected $casts = [
@@ -96,6 +98,8 @@ class SchoolSetting extends Model
         'login_show_school_name' => 'boolean',
         'login_show_welcome_text' => 'boolean',
         'login_header_shadow' => 'boolean',
+        'booking_cutoff_hours' => 'integer',
+        'alert_threshold_pending' => 'integer',
         'custom_css' => 'array',
         'additional_settings' => 'array',
     ];

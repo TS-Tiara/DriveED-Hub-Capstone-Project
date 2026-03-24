@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class GCashSetting extends Model
 {
+    protected $table = 'gcash_settings';
+
     protected $fillable = [
         'school_id',
         'branch_id',

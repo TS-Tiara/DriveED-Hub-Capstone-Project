@@ -177,6 +177,8 @@ class AdminController extends Controller
                 'pendingProgressions' => $pendingProgressions,
                 'monthlyRevenue' => $monthlyRevenue,
                 'activeEnrollments' => $activeEnrollments,
+                'alertThreshold' => $alertThreshold = ($school->schoolSetting?->alert_threshold_pending ?? 50),
+                'isAlertCritical' => $pendingEnrollments > $alertThreshold,
             ]);
         }
         catch (\Exception $e) {
@@ -928,9 +930,12 @@ class AdminController extends Controller
             ->whereNull('branch_id')
             ->first();
 
+        $timezones = \DateTimeZone::listIdentifiers();
+
         return view($school->resolveView('admin.settings'), [
             'school' => $school,
             'gcashSetting' => $gcashSetting,
+            'timezones' => $timezones,
         ]);
     }
 
@@ -1023,6 +1028,9 @@ class AdminController extends Controller
                 'gcash_account_number' => 'nullable|string|max:40',
                 'gcash_qr' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
                 'gcash_enabled' => 'nullable|boolean',
+                'booking_cutoff_hours' => 'required|integer|min:0|max:168',
+                'alert_threshold_pending' => 'required|integer|min:0|max:999',
+                'timezone' => 'required|string|timezone',
             ], [
                 'instructor_removal_notice_days.required' => 'Minimum notice period is required.',
                 'instructor_removal_notice_days.integer' => 'Notice period must be a number.',
@@ -1050,6 +1058,7 @@ class AdminController extends Controller
             // Update school settings
             $school->update([
                 'instructor_removal_notice_days' => $request->instructor_removal_notice_days,
+                'timezone' => $request->timezone,
             ]);
 
             // Update or create color settings
@@ -1150,10 +1159,11 @@ class AdminController extends Controller
                 'login_header_shadow' => $request->has('login_header_shadow'),
                 'register_welcome_text' => $request->register_welcome_text ?? 'Student Registration',
                 'register_subtitle_text' => $request->register_subtitle_text,
-                'login_page_bg_type' => $request->login_page_bg_type ?? 'color',
                 'login_page_bg_color' => $request->login_page_bg_color ?? '#f5f5f5',
                 'login_page_bg_image' => $loginBgImagePath,
                 'login_page_bg_opacity' => $request->login_page_bg_opacity ?? 100,
+                'booking_cutoff_hours' => $request->booking_cutoff_hours ?? 0,
+                'alert_threshold_pending' => $request->alert_threshold_pending ?? 999,
             ]);
 
             $schoolSetting->save();

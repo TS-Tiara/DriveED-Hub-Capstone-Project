@@ -731,7 +731,7 @@
     <div class="mb-3 branch-filter-wrap">
     @if($branches->count() > 0)
     <div class="mb-3 branch-filter-wrap">
-        <select id="branchFilter" class="form-select branch-filter-select" onchange="window.location.href = '{{ route('schools.admin.enrollments', ['school' => $school->slug]) }}?branch=' + encodeURIComponent(this.value) + '&status={{ request('status', 'all') }}'">
+        <select id="branchFilter" class="form-select branch-filter-select" onchange="window.location.href = '{{ school_route('admin.enrollments.index') }}?branch=' + encodeURIComponent(this.value) + '&status={{ request('status', 'all') }}'">
             <option value="">All Branches</option>
             @foreach($branches as $branch)
                 <option value="{{ $branch->name }}" {{ request('branch') === $branch->name ? 'selected' : '' }}>{{ $branch->name }}</option>
@@ -745,7 +745,7 @@
 
     
     <div class="stats-grid">
-        <div class="stat-card info {{ request('status', 'all') === 'all' ? 'active' : '' }}" onclick="window.location.href='{{ route('schools.admin.enrollments', ['school' => $school->slug, 'status' => 'all', 'branch' => request('branch')]) }}'">
+        <div class="stat-card info {{ request('status', 'all') === 'all' ? 'active' : '' }}" onclick="window.location.href='{{ school_route('admin.enrollments.index', ['status' => 'all', 'branch' => request('branch')]) }}'">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -760,7 +760,7 @@
                 </div>
             </div>
         </div>
-        <div class="stat-card pending {{ request('status') === 'pending' ? 'active' : '' }}" onclick="window.location.href='{{ route('schools.admin.enrollments', ['school' => $school->slug, 'status' => 'pending', 'branch' => request('branch')]) }}'">
+        <div class="stat-card pending {{ request('status') === 'pending' ? 'active' : '' }}" onclick="window.location.href='{{ school_route('admin.enrollments.index', ['status' => 'pending', 'branch' => request('branch')]) }}'">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -775,7 +775,7 @@
                 </div>
             </div>
         </div>
-        <div class="stat-card growth {{ request('status') === 'approved' ? 'active' : '' }}" onclick="window.location.href='{{ route('schools.admin.enrollments', ['school' => $school->slug, 'status' => 'approved', 'branch' => request('branch')]) }}'">
+        <div class="stat-card growth {{ request('status') === 'approved' ? 'active' : '' }}" onclick="window.location.href='{{ school_route('admin.enrollments.index', ['status' => 'approved', 'branch' => request('branch')]) }}'">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -790,7 +790,7 @@
                 </div>
             </div>
         </div>
-        <div class="stat-card active {{ request('status') === 'completed' ? 'active' : '' }}" onclick="window.location.href='{{ route('schools.admin.enrollments', ['school' => $school->slug, 'status' => 'completed', 'branch' => request('branch')]) }}'">
+        <div class="stat-card active {{ request('status') === 'completed' ? 'active' : '' }}" onclick="window.location.href='{{ school_route('admin.enrollments.index', ['status' => 'completed', 'branch' => request('branch')]) }}'">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -805,7 +805,7 @@
                 </div>
             </div>
         </div>
-        <div class="stat-card inactive {{ request('status') === 'cancelled' ? 'active' : '' }}" onclick="window.location.href='{{ route('schools.admin.enrollments', ['school' => $school->slug, 'status' => 'cancelled', 'branch' => request('branch')]) }}'">
+        <div class="stat-card inactive {{ request('status') === 'cancelled' ? 'active' : '' }}" onclick="window.location.href='{{ school_route('admin.enrollments.index', ['status' => 'cancelled', 'branch' => request('branch')]) }}'">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -820,7 +820,7 @@
                 </div>
             </div>
         </div>
-        <div class="stat-card danger {{ request('status') === 'rejected' ? 'active' : '' }}" onclick="window.location.href='{{ route('schools.admin.enrollments', ['school' => $school->slug, 'status' => 'rejected', 'branch' => request('branch')]) }}'">
+        <div class="stat-card danger {{ request('status') === 'rejected' ? 'active' : '' }}" onclick="window.location.href='{{ school_route('admin.enrollments.index', ['status' => 'rejected', 'branch' => request('branch')]) }}'">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>

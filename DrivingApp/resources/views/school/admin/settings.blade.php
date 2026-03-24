@@ -868,13 +868,35 @@
 
             <!-- General Settings Tab -->
             <div class="tab-content active" id="tab-general">
-                <!-- Booking Settings -->
+                <!-- Scheduling & Timezone Settings -->
                 <div class="form-section">
                     <div class="section-header" onclick="toggleSection(this)">
-                        <h3 class="section-title">Scheduling Settings</h3>
+                        <h3 class="section-title">Scheduling & Timezone</h3>
                     </div>
                     
                     <div class="section-inputs">
+                    <div class="form-group">
+                        <label class="form-label">School Timezone</label>
+                        <select class="form-select" name="timezone">
+                            @foreach($timezones as $tz)
+                                <option value="{{ $tz }}" {{ old('timezone', $school->timezone ?? config('app.timezone')) == $tz ? 'selected' : '' }}>
+                                    {{ $tz }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <small class="text-muted help-text-block">
+                            Canonical timezone for all school operations and booking cutoffs
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Booking Cutoff Hours</label>
+                        <input type="number" class="number-input" name="booking_cutoff_hours" value="{{ old('booking_cutoff_hours', $settings->booking_cutoff_hours ?? 0) }}" min="0" max="168">
+                        <small class="text-muted help-text-block">
+                            Hours before a time slot when bookings are disabled (0-168 hours)
+                        </small>
+                    </div>
+
                     <div class="form-group">
                         <label class="form-label">Advance Scheduling Days</label>
                         <input type="number" class="number-input" name="advance_booking_days" value="{{ old('advance_booking_days', $settings->advance_booking_days ?? 0) }}" min="0" max="30">
@@ -933,6 +955,23 @@
                         <input type="number" class="number-input" name="instructor_removal_notice_days" value="{{ old('instructor_removal_notice_days', $school->instructor_removal_notice_days ?? 7) }}" min="0" max="30">
                         <small class="text-muted help-text-block">
                             Minimum days notice required for instructor schedule removal requests
+                        </small>
+                    </div>
+                    </div>
+                </div>
+
+                <!-- Operational Alerts -->
+                <div class="form-section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <h3 class="section-title">Operational Alerts</h3>
+                    </div>
+                    
+                    <div class="section-inputs">
+                    <div class="form-group">
+                        <label class="form-label">Pending Request Alert Threshold</label>
+                        <input type="number" class="number-input" name="alert_threshold_pending" value="{{ old('alert_threshold_pending', $settings->alert_threshold_pending ?? 999) }}" min="0" max="999">
+                        <small class="text-muted help-text-block">
+                            Alert staff when pending enrollment requests exceed this count (Default: 999)
                         </small>
                     </div>
                     </div>
