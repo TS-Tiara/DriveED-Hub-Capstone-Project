@@ -41,3 +41,22 @@ Thumbs.db
 /tests/Browser/screenshots/**/*.jpg
 /tests/Browser/screenshots/**/*.jpeg
 /tests/Browser/screenshots/**/*.webp
+
+/tests
+/routes.json
+/routes_list.txt
+/routes_utf8.json
+/tmp_audit_integrity.php
+/tmp_check_db.php
+/tmp_verify_student_parity.php
+
+# Deployment & Config
+/phpunit.xml
+/vite.config.js
+/package.json
+/package-lock.json
+/README.md
+/nixpacks.toml
+/railway.json
+/.env.*
+!.env.example
