@@ -152,7 +152,20 @@ trait HandlesSchoolSeeding
                 'session_status' => $status == 'completed' ? 'completed' : null,
             ]);
             if ($status == 'completed') {
-                Payment::create(['school_id' => $school->id, 'booking_id' => $booking->id, 'amount' => $package->price, 'paid_on' => $bookingDate, 'method' => ['cash', 'gcash', 'bank_transfer'][rand(0, 2)], 'status' => 'completed']);
+                $method = rand(0, 1) === 0 ? 'on_site' : 'gcash';
+
+                Payment::create([
+                    'school_id' => $school->id,
+                    'branch_id' => $booking->branch_id,
+                    'booking_id' => $booking->id,
+                    'payer_user_id' => $student->id,
+                    'amount' => $package->price,
+                    'paid_on' => $bookingDate,
+                    'method' => $method,
+                    'status' => 'approved',
+                    'or_number' => $method === 'on_site' ? ('OR-SEED-' . strtoupper((string) \Illuminate\Support\Str::random(8))) : null,
+                    'reference' => $method === 'gcash' ? ('GCASH-SEED-' . strtoupper((string) \Illuminate\Support\Str::random(8))) : null,
+                ]);
                 $prog = Progress::where('student_id', '=', $student->id)->where('course_id', '=', $course->id)->first();
                 if ($prog) { $prog->update(['completion_percent' => min(100, $prog->completion_percent + rand(10, 25)), 'last_updated' => now(), 'notes' => 'Good progress.']); }
                 else { Progress::create(['school_id' => $school->id, 'student_id' => $student->id, 'course_id' => $course->id, 'completion_percent' => rand(10, 40), 'last_updated' => now(), 'notes' => 'Good progress.']); }

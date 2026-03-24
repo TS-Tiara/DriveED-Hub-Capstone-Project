@@ -56,6 +56,8 @@ class DriveEdHubSeeder extends Seeder
                 'sidebar_bg_color' => '#ffffff', 'sidebar_text_color' => '#667eea',
                 'instructor_selection_mode' => 'admin_assigned',
                 'enable_booking_queue' => true, 'booking_queue_days' => 3, 'enable_branches' => true,
+                'booking_cutoff_hours' => 12,
+                'alert_threshold_pending' => 50,
             ]
         );
 

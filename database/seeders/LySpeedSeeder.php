@@ -57,6 +57,8 @@ class LySpeedSeeder extends Seeder
                 'sidebar_bg_color' => '#ffffff', 'sidebar_text_color' => '#8B0000',
                 'instructor_selection_mode' => 'student_choice',
                 'enable_booking_queue' => true, 'booking_queue_days' => 2, 'enable_branches' => true,
+                'booking_cutoff_hours' => 12,
+                'alert_threshold_pending' => 50,
             ]
         );
 

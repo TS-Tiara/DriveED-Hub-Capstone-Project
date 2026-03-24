@@ -57,6 +57,8 @@ class SmartDrivingSeeder extends Seeder
                 'sidebar_bg_color' => '#ffffff', 'sidebar_text_color' => '#3b82f6',
                 'instructor_selection_mode' => 'student_choice',
                 'enable_booking_queue' => true, 'booking_queue_days' => 3, 'enable_branches' => true,
+                'booking_cutoff_hours' => 12,
+                'alert_threshold_pending' => 50,
             ]
         );
 
