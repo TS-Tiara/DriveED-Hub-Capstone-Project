@@ -390,16 +390,18 @@ class SystemAdminController extends Controller
 
             DB::beginTransaction();
 
-            // Delete related data (cascade should handle most, but let's be explicit and thorough)
-            $school->students()->delete();
-            $school->instructors()->delete();
-            $school->admins()->delete();
-            $school->courses()->delete();
-            $school->bookings()->delete();
-            $school->timeSlots()->delete();
+            // Delete related data in the correct order to handle restrictOnDelete constraints
+            // Children/Dependencies first
             $school->payments()->delete();
-            $school->enrollmentRequests()->delete();
             $school->sessionCompletions()->delete();
+            $school->bookings()->delete();
+            $school->enrollments()->delete();
+            $school->enrollmentRequests()->delete();
+            $school->progress()->delete();
+            $school->scheduleInstructors()->delete(); 
+            $school->timeSlots()->delete();
+            
+            // Other related data
             $school->phaseProgressions()->delete();
             $school->instructorRemovalRequests()->delete();
             $school->registrationRequests()->delete();
@@ -407,8 +409,17 @@ class SystemAdminController extends Controller
             $school->reports()->delete();
             $school->notifications()->delete();
             $school->systemLogs()->delete();
+            $school->gcashSettings()->delete();
             $school->schoolSetting()->delete();
             $school->branches()->delete();
+            
+            // Parent records last
+            $school->students()->delete();
+            $school->instructors()->delete();
+            $school->admins()->delete();
+            $school->courses()->delete();
+            
+            // Finally delete the school
             $school->delete();
 
             DB::commit();

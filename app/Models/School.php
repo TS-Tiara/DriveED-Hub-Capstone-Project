@@ -50,6 +50,11 @@ class School extends Model
         return $this->hasMany(EnrollmentRequest::class);
     }
 
+    public function enrollments()
+    {
+        return $this->hasMany(Enrollment::class);
+    }
+
     public function courses()
     {
         return $this->hasMany(Course::class);
@@ -118,6 +123,11 @@ class School extends Model
     public function sessionCompletions()
     {
         return $this->hasMany(SessionCompletion::class);
+    }
+
+    public function gcashSettings()
+    {
+        return $this->hasMany(GCashSetting::class);
     }
 
     public function schoolSetting()
