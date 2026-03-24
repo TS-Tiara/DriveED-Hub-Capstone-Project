@@ -11,7 +11,7 @@ use Illuminate\Queue\SerializesModels;
 use App\Models\EnrollmentRequest;
 use App\Models\School;
 
-class EnrollmentRequestReceived extends Mailable implements ShouldQueue
+class EnrollmentRequestReceived extends Mailable
 {
     use Queueable, SerializesModels;
 

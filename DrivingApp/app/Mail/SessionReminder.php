@@ -11,7 +11,7 @@ use Illuminate\Queue\SerializesModels;
 use App\Models\Booking;
 use App\Models\School;
 
-class SessionReminder extends Mailable implements ShouldQueue
+class SessionReminder extends Mailable
 {
     use Queueable, SerializesModels;
 
