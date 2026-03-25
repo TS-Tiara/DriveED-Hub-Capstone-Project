@@ -306,28 +306,28 @@
         // Initialize from session on load
         document.addEventListener('DOMContentLoaded', function() {
             @if(session('success'))
-                showToast("{{ session('success') }}", 'success');
+                showToast("{!! addslashes(session('success')) !!}", 'success');
             @endif
 
             @if(session('error'))
-                showToast("{{ session('error') }}", 'error', 7000);
+                showToast("{!! addslashes(session('error')) !!}", 'error', 7000);
             @endif
 
             @if(session('status'))
-                showToast("{{ session('status') }}", 'info');
+                showToast("{!! addslashes(session('status')) !!}", 'info');
             @endif
 
             @if(session('info'))
-                showToast("{{ session('info') }}", 'info');
+                showToast("{!! addslashes(session('info')) !!}", 'info');
             @endif
 
             @if(session('warning'))
-                showToast("{{ session('warning') }}", 'warning', 7000);
+                showToast("{!! addslashes(session('warning')) !!}", 'warning', 7000);
             @endif
 
             @if($errors->any())
                 @foreach($errors->all() as $error)
-                    showToast("{{ $error }}", 'error', 8000);
+                    showToast("{!! addslashes($error) !!}", 'error', 8000);
                 @endforeach
             @endif
         });

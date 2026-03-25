@@ -1088,7 +1088,7 @@
     </div>
 </div>
 
-@if(session('test_credentials') && config('app.env') === 'local')
+@if(session('test_credentials') && app()->environment('local', 'development', 'testing'))
 <!-- Test Credentials Popup Modal (Development Only) -->
 <div id="testCredentialsModal" class="tc-modal-overlay">
     <div class="tc-modal-card">

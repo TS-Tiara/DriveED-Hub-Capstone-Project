@@ -549,7 +549,7 @@
             </h3>
             <ul>
                 <li><strong>All Passwords:</strong> password</li>
-                <li><strong>School Slug:</strong> test-school</li>
+                <li><strong>School Slug:</strong> {{ $school->slug }}</li>
                 <li><strong>Courses Available:</strong> Theoretical (₱3,000) and Practical (₱8,000)</li>
                 <li><strong>Guest Enrollment Requests:</strong> 2 pending approval</li>
                 <li><strong>Approved Enrollment:</strong> Test Student enrolled in Theoretical</li>
