@@ -79,7 +79,7 @@
             <p style="margin-top: 20px;">You'll receive an email notification once your request has been reviewed. You can also check the status of your request by logging in to your account.</p>
 
             <center>
-                <a href="{{ url($school->slug . '/login') }}" class="button">Check Your Status</a>
+                <a href="{{ route('schools.login', ['school' => $school]) }}" class="button">Check Your Status</a>
             </center>
 
             <p style="color: #6b7280; font-size: 14px; margin-top: 25px;">

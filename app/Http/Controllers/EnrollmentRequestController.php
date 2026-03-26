@@ -173,45 +173,13 @@ class EnrollmentRequestController extends Controller
 
         DB::beginTransaction();
         try {
-            // Update enrollment status and set enrolled_at
-            $enrollmentRequest->update([
-                'status' => 'approved',
-                'approved_by' => $admin->id,
-                'approved_at' => now(),
-                'enrolled_at' => now(),
-            ]);
-
-            // Role promotion now happens on PAYMENT approval, not enrollment approval,
-            // as per the new forensic identity strategy.
-            // But we still lock the student to this course.
-            $enrollmentRequest->student->update(['is_course_locked' => true]);
-
-            // Send approval email notification
-            try {
-                if ($this->transitionUsesChannel('approved', 'email')) {
-                    Mail::to($enrollmentRequest->learner->email)
-                        ->send(new EnrollmentApproved($enrollmentRequest, $school));
-                }
-            } catch (\Exception $e) {
-                Log::warning('Failed to send enrollment approval email: ' . $e->getMessage());
-            }
-
-            // Create in-app notification for the student
-            $this->sendInAppTransitionNotification(
-                'approved',
-                $enrollmentRequest->student,
-                'enrollment_approved',
-                'Enrollment Approved!',
-                "Your enrollment for {$enrollmentRequest->course->title} has been approved. Welcome aboard!",
-                'success',
-                "/{$school->slug}/student"
-            );
+            $this->processApproval($enrollmentRequest, $admin, $school);
 
             DB::commit();
 
             return redirect()
                 ->back()
-                ->with('success', 'Student account activated! Role changed from Guest to Student. Notification email sent.');
+                ->with('success', 'Enrollment approved and student account activated.');
                 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -309,12 +277,11 @@ class EnrollmentRequestController extends Controller
     }
 
     /**
-     * Update payment status (Legacy approach - redirected to forensic payment flow if possible)
+     * Update payment status (sub-status only, no role promotion).
+     * Kept for "free/waived" overrides.
      */
     public function updatePaymentStatus(Request $request, School $school, EnrollmentRequest $enrollmentRequest)
     {
-        // NOTE: In the new forensic system, payment updates should go through PaymentController@update.
-        // This method is kept for backwards compatibility or for "free/waived" overrides.
         
         $validated = $request->validate([
             'payment_status' => ['required', 'in:pending,on_hold,paid'],
@@ -335,10 +302,8 @@ class EnrollmentRequestController extends Controller
                 'payment_confirmation_notes' => $validated['payment_notes'],
             ]);
 
-            // If manually marked as paid, we should trigger role promotion if not already done.
-            if ($validated['payment_status'] === 'paid' && $enrollmentRequest->student?->role === 'guest') {
-                $enrollmentRequest->student->promoteToStudent();
-            }
+            // Role promotion is handled exclusively by the enrollment approval path.
+            // No promotion here.
 
             DB::commit();
             return redirect()->back()->with('success', 'Payment status updated.');
@@ -397,7 +362,7 @@ class EnrollmentRequestController extends Controller
                         $school,
                         'Course Completed!',
                         $notificationMessage,
-                        "/{$school->slug}/student/my-progress",
+                        'schools.student.my-progress',
                         'View Progress'
                     );
                 } catch (\Exception $e) {
@@ -476,7 +441,7 @@ class EnrollmentRequestController extends Controller
                         $school,
                         'Enrollment Cancelled',
                         $notificationMessage,
-                        "/{$school->slug}/student",
+                        'schools.student.dashboard',
                         'View Dashboard'
                     );
                 } catch (\Exception $e) {
@@ -548,7 +513,7 @@ class EnrollmentRequestController extends Controller
                         $school,
                         'Theoretical Exam Passed!',
                         $notificationMessage,
-                        "/{$school->slug}/student/my-course",
+                        'schools.student.my-course',
                         'View Course'
                     );
                 } catch (\Exception $e) {
@@ -592,7 +557,7 @@ class EnrollmentRequestController extends Controller
             foreach ($request->enrollment_ids as $id) {
                 $enrollment = EnrollmentRequest::find($id);
 
-                if (!$enrollment) {
+                if (!$enrollment instanceof EnrollmentRequest) {
                     continue;
                 }
 
@@ -621,37 +586,7 @@ class EnrollmentRequestController extends Controller
                     continue;
                 }
 
-                $enrollment->update([
-                    'status' => 'approved',
-                    'approved_by' => $admin->id,
-                    'approved_at' => now(),
-                    'enrolled_at' => now(),
-                ]);
-
-                $student->role = 'student';
-                $student->is_course_locked = true;
-                $student->save();
-
-                // Send email notification
-                try {
-                    if ($this->transitionUsesChannel('approved', 'email')) {
-                        Mail::to($enrollment->learner->email)
-                            ->queue(new EnrollmentApproved($enrollment, $school));
-                    }
-                } catch (\Exception $e) {
-                    Log::warning('Failed to send bulk approval email: ' . $e->getMessage());
-                }
-
-                // Create in-app notification
-                $this->sendInAppTransitionNotification(
-                    'approved',
-                    $enrollment->student,
-                    'enrollment_approved',
-                    'Enrollment Approved!',
-                    "Your enrollment for {$enrollment->course->title} has been approved. Welcome aboard!",
-                    'success',
-                    "/{$school->slug}/student"
-                );
+                $this->processApproval($enrollment, $admin, $school);
 
                 $approved++;
             }
@@ -778,28 +713,8 @@ class EnrollmentRequestController extends Controller
             'student_license_rejection_reason' => null,
         ]);
 
-        // NEW: Check if there's an active enrollment request that can now be approved
-        $latestEnrollment = EnrollmentRequest::where('user_id', $student->id)
-            ->where('status', 'pending')
-            ->latest()
-            ->first();
-
-        if ($latestEnrollment && $latestEnrollment->payment_status === 'paid' && $student->role === 'guest') {
-            $student->promoteToStudent();
-            $latestEnrollment->update([
-                'status' => 'approved',
-                'approved_by' => $admin->id,
-                'approved_at' => now(),
-                'enrolled_at' => now(),
-            ]);
-            $student->update(['is_course_locked' => true]);
-            
-            try {
-                Mail::to($student->email)->send(new EnrollmentApproved($latestEnrollment, $school));
-            } catch (\Exception $e) {
-                Log::warning('Email failed in verifyLicense promotion: ' . $e->getMessage());
-            }
-        }
+        // Role promotion is handled exclusively by the enrollment approval path.
+        // verifyLicense only updates the license sub-status.
 
         if ($request->ajax()) {
             return response()->json(['success' => true, 'message' => 'License verified successfully!']);
@@ -824,7 +739,7 @@ class EnrollmentRequestController extends Controller
             $school,
             'License Verified!',
             $notificationMessage,
-            "/{$school->slug}/guest/courses",
+            'schools.guest.courses',
             'Browse Courses'
         );
 
@@ -879,11 +794,56 @@ class EnrollmentRequestController extends Controller
             $school,
             'License Not Approved',
             $notificationMessage,
-            "/{$school->slug}/guest/dashboard",
+            'schools.guest.dashboard',
             'View Dashboard'
         );
 
         return redirect()->back()->with('success', "Student driver's license for {$student->name} has been rejected.");
+    }
+
+    /**
+     * Shared single-source approval domain path.
+     * Called by both approve() and bulkApprove().
+     * Atomically: sets enrollment approved + promotes guest to student + locks course.
+     */
+    private function processApproval(EnrollmentRequest $enrollmentRequest, $admin, School $school): void
+    {
+        $enrollmentRequest->update([
+            'status' => 'approved',
+            'approved_by' => $admin->id,
+            'approved_at' => now(),
+            'enrolled_at' => now(),
+        ]);
+
+        $student = $enrollmentRequest->student;
+        if ($student) {
+            // Atomic role promotion: guest -> student
+            if ($student->role === 'guest') {
+                $student->promoteToStudent();
+            }
+            $student->update(['is_course_locked' => true]);
+        }
+
+        // Send approval email
+        try {
+            if ($this->transitionUsesChannel('approved', 'email')) {
+                Mail::to($enrollmentRequest->learner->email)
+                    ->send(new EnrollmentApproved($enrollmentRequest, $school));
+            }
+        } catch (\Exception $e) {
+            Log::warning('Failed to send enrollment approval email: ' . $e->getMessage());
+        }
+
+        // In-app notification
+        $this->sendInAppTransitionNotification(
+            'approved',
+            $enrollmentRequest->student,
+            'enrollment_approved',
+            'Enrollment Approved!',
+            "Your enrollment for {$enrollmentRequest->course->title} has been approved. Welcome aboard!",
+            'success',
+            "/{$school->slug}/student"
+        );
     }
 
     private function transitionUsesChannel(string $transition, string $channel): bool
@@ -922,7 +882,7 @@ class EnrollmentRequestController extends Controller
         School $school,
         string $title,
         string $message,
-        ?string $actionPath = null,
+        ?string $actionRoute = null,
         ?string $actionLabel = null,
     ): void {
         if (!config('notification_policy.enable_lifecycle_transition_emails', false)) {
@@ -938,7 +898,7 @@ class EnrollmentRequestController extends Controller
             return;
         }
 
-        $actionUrl = $actionPath ? url($actionPath) : null;
+        $actionUrl = $actionRoute ? route($actionRoute, ['school' => $school]) : null;
 
         Mail::to($student->email)->send(
             new LifecycleStatusUpdate(
@@ -1057,7 +1017,7 @@ class EnrollmentRequestController extends Controller
             // Verification Endpoints
             'verify_payment_url' => route('schools.admin.api.enrollments.verify-payment', ['school' => $school->slug, 'enrollmentRequest' => $enrollmentRequest->id]),
             'verify_license_url' => route('schools.admin.api.enrollments.verify-license', ['school' => $school->slug, 'enrollmentRequest' => $enrollmentRequest->id]),
-            'reject_url' => route('schools.admin.api.enrollments.reject', ['school' => $school->slug, 'enrollmentRequest' => $enrollmentRequest->id]),
+            'reject_url' => route('schools.admin.enrollments.reject', ['school' => $school->slug, 'enrollmentRequest' => $enrollmentRequest->id]),
         ]);
     }
 
@@ -1078,27 +1038,8 @@ class EnrollmentRequestController extends Controller
                 'payment_confirmed_at' => now(),
             ]);
 
-            // Promote to student if license is also verified and they are a guest
-            $student = $enrollmentRequest->student;
-            if ($student && $student->role === 'guest' && $student->student_license_status === 'verified') {
-                $student->promoteToStudent();
-                
-                // Trigger Enrollment Approval logic (same as bulk/manual approve)
-                $enrollmentRequest->update([
-                    'status' => 'approved',
-                    'approved_by' => $admin->id,
-                    'approved_at' => now(),
-                    'enrolled_at' => now(),
-                ]);
-                $student->update(['is_course_locked' => true]);
-
-                // Send Email
-                try {
-                    Mail::to($student->email)->send(new EnrollmentApproved($enrollmentRequest, $school));
-                } catch (\Exception $e) {
-                    Log::warning('Email failed in verifyPayment: ' . $e->getMessage());
-                }
-            }
+            // Role promotion is handled exclusively by the enrollment approval path.
+            // verifyPayment only updates the payment sub-status.
 
             DB::commit();
             return response()->json(['success' => true, 'message' => 'Payment verified successfully!']);
@@ -1107,6 +1048,42 @@ class EnrollmentRequestController extends Controller
             Log::error('verifyPayment failed: ' . $e->getMessage());
             return response()->json(['success' => false, 'message' => 'Verification failed.'], 500);
         }
+    }
+
+    /**
+     * Verify license via AJAX (API route accepts EnrollmentRequest, not Student).
+     * Resolves student from the enrollment request and delegates to license verification.
+     */
+    public function apiVerifyLicense(Request $request, School $school, EnrollmentRequest $enrollmentRequest)
+    {
+        $admin = Auth::guard('admin')->user();
+        if (!$admin || $admin->school_id !== (int)$school->id) abort(403);
+        if (!$admin->canApproveEnrollments()) abort(403);
+
+        $student = $enrollmentRequest->student;
+        if (!$student) {
+            return response()->json(['success' => false, 'message' => 'Student not found for this enrollment.'], 404);
+        }
+
+        if ($student->school_id !== $school->id) {
+            return response()->json(['success' => false, 'message' => 'Student does not belong to this school.'], 403);
+        }
+
+        if ($student->student_license_status !== 'pending') {
+            return response()->json(['success' => false, 'message' => 'License is not pending verification.'], 422);
+        }
+
+        $student->update([
+            'student_license_status' => 'verified',
+            'student_license_verified_at' => now(),
+            'student_license_verified_by' => $admin->id,
+            'student_license_rejection_reason' => null,
+        ]);
+
+        // Role promotion is handled exclusively by the enrollment approval path.
+        // apiVerifyLicense only updates the license sub-status.
+
+        return response()->json(['success' => true, 'message' => 'License verified successfully!']);
     }
 
     /**

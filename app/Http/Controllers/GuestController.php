@@ -362,7 +362,7 @@ class GuestController extends Controller
                 'payment_method' => 'gcash',
                 'payment_reference' => $request->reference_number,
                 'payment_proof_path' => $path,
-                'payment_status' => 'pending_verification',
+                'payment_status' => 'pending',
             ]);
 
             // Notify Admins

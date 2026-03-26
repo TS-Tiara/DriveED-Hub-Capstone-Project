@@ -37,10 +37,8 @@ class PaymentGating
                     ->with('info', 'Your enrollment is still being processed. Please wait for approval before accessing this feature.');
             }
             
-            // Auto-promote if they somehow have an approved enrollment but still role=guest
-            if ($hasApprovedEnrollment && $student->role === 'guest') {
-                $student->promoteToStudent();
-            }
+            // Side-door promotion removed. Role promotion is handled
+            // exclusively by the enrollment approval path.
         }
 
         return $next($request);

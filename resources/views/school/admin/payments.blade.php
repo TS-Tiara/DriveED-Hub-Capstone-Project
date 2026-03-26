@@ -361,7 +361,6 @@
         <button class="filter-btn" data-filter="approved" onclick="filterPayments('approved', this)">Approved</button>
         <button class="filter-btn" data-filter="pending" onclick="filterPayments('pending', this)">Pending</button>
         <button class="filter-btn" data-filter="rejected" onclick="filterPayments('rejected', this)">Rejected</button>
-        <button class="filter-btn" data-filter="refunded" onclick="filterPayments('refunded', this)">Refunded</button>
     </div>
 
     <!-- Payments Table -->
@@ -377,7 +376,6 @@
                         <th>Method</th>
                         <th>Reference</th>
                         <th>Status</th>
-                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -405,7 +403,6 @@
                                     'approved' => 'success',
                                     'pending' => 'warning',
                                     'rejected' => 'danger',
-                                    'refunded' => 'info',
                                     default => 'secondary'
                                 };
                             @endphp
@@ -413,26 +410,10 @@
                                 {{ ucfirst($payment->status) }}
                             </span>
                         </td>
-                        <td>
-                            @if($payment->status === 'pending')
-                                <div class="flex flex-col gap-1">
-                                    <button type="button" class="btn-mark-paid" onclick="verifyPayment({{ $payment->id }}, 'approve')" title="Approve Payment">
-                                        Approve
-                                    </button>
-                                    <button type="button" class="btn-action bg-red-100 text-red-700 px-2 py-1 rounded text-xs" onclick="verifyPayment({{ $payment->id }}, 'reject')" title="Reject Payment">
-                                        Reject
-                                    </button>
-                                </div>
-                            @elseif($payment->status === 'approved')
-                                <button type="button" class="text-xs text-gray-500 hover:text-red-600" onclick="verifyPayment({{ $payment->id }}, 'refund')">Refund</button>
-                            @else
-                                <span class="payment-status-none">—</span>
-                            @endif
-                        </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="8">
+                        <td colspan="7">
                             <div class="empty-state">
                                 <div class="empty-state-title">No payments found</div>
                                 <div class="empty-state-text">Payment records will appear here once transactions are made.</div>
@@ -467,13 +448,6 @@
                 <span class="card-label">Date</span>
                 <span class="card-val">{{ $payment->paid_on ? $payment->paid_on->format('M d, Y') : 'N/A' }}</span>
             </div>
-            @if($payment->status === 'pending')
-            <div class="mobile-action-wrap">
-                <button type="button" class="btn-action btn-mark-paid btn-mark-paid-full" onclick="markAsPaid({{ $payment->id }})">
-                    ✓ Mark Paid
-                </button>
-            </div>
-            @endif
         </div>
         @empty
         <div class="empty-state">
@@ -489,54 +463,6 @@
 </div>
 
 <script>
-function verifyPayment(paymentId, action) {
-    const actionText = action.charAt(0).toUpperCase() + action.slice(1);
-    
-    let reasonPrompt = '';
-    if (action === 'reject' || action === 'refund') {
-        // In a real app, this would be a nice modal with a dropdown.
-        // For MVP, we use simple prompt with fixed codes.
-        reasonPrompt = prompt(`Enter reason code for ${action} (e.g., invalid_reference, policy_violation):`);
-        if (!reasonPrompt) return;
-    }
-
-    showConfirm({
-        title: `${actionText} Payment`,
-        message: `Are you sure you want to ${action} this payment?`,
-        type: action === 'approve' ? 'success' : 'warning',
-        onConfirm: () => {
-            const csrfToken = '{{ csrf_token() }}';
-            
-            fetch(`{{ url($school->slug . '/admin/payments') }}/${paymentId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken,
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    action: action,
-                    reason_code: reasonPrompt,
-                    reason_note: `Verification via Dashboard`
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    if (typeof showToast !== 'undefined') showToast('success', data.message);
-                    setTimeout(() => location.reload(), 1000);
-                } else {
-                    throw new Error(data.message || 'Failed to update payment');
-                }
-            })
-            .catch(error => {
-                alert(error.message);
-                console.error(error);
-            });
-        }
-    });
-}
-
 function filterPayments(status, btn) {
     const rows = document.querySelectorAll('#paymentsTable tbody tr[data-status]');
     const buttons = document.querySelectorAll('.filter-btn');

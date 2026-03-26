@@ -67,7 +67,7 @@
             <p style="margin-top: 20px;">Don't be discouraged! You can always submit a new enrollment request once you've addressed the feedback above.</p>
 
             <center>
-                <a href="{{ url($school->slug . '/guest/courses') }}" class="button">Browse Courses</a>
+                <a href="{{ route('schools.guest.courses', ['school' => $school]) }}" class="button">Browse Courses</a>
             </center>
 
             <p style="color: #6b7280; font-size: 14px; margin-top: 25px;">
