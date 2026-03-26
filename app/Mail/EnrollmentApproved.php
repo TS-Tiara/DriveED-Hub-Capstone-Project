@@ -2,18 +2,17 @@
 
 namespace App\Mail;
 
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 use App\Models\EnrollmentRequest;
 use App\Models\School;
+use Illuminate\Mail\Mailables\Address;
 
-class EnrollmentApproved extends Mailable implements ShouldQueue
+class EnrollmentApproved extends Mailable
 {
-    use Queueable, SerializesModels;
+    use SerializesModels;
 
     public $enrollment;
     public $school;
@@ -33,6 +32,7 @@ class EnrollmentApproved extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
+            from: new Address("{$this->school->slug}@driveedhub.com", $this->school->name),
             subject: $this->school->name . ' - Enrollment Approved',
         );
     }

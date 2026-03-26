@@ -1009,10 +1009,20 @@
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">GCash Payment Image {{ empty($gcashSetting?->qr_path) ? '(required for first-time setup)' : '(upload to replace)' }}</label>
+                        <label class="form-label">GCash Account Name</label>
+                        <input type="text" class="form-control" name="gcash_account_name" value="{{ old('gcash_account_name', $gcashSetting->account_name ?? '') }}" placeholder="e.g. John Doe">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">GCash Account Number</label>
+                        <input type="text" class="form-control" name="gcash_account_number" value="{{ old('gcash_account_number', $gcashSetting->account_number ?? '') }}" placeholder="e.g. 09123456789">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">GCash Payment QR Image {{ empty($gcashSetting?->qr_path) ? '(required for first-time setup)' : '(upload to replace)' }}</label>
                         <input type="file" class="form-control" name="gcash_qr" accept="image/*">
                         <small class="text-muted help-text-block">
-                            Upload a single image containing the QR, account name, and number. Accepted formats: JPG, PNG, WEBP. Max size: 5MB.
+                            Upload a single image containing the QR code. Accepted formats: JPG, PNG, WEBP. Max size: 5MB.
                         </small>
                     </div>
 

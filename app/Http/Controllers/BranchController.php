@@ -33,7 +33,7 @@ class BranchController extends Controller
 
         $settings = $school->schoolSetting;
 
-        return view('school.admin.branches', compact('school', 'branches', 'settings', 'totalBranchesCount', 'activeBranchesCount'));
+        return view('school.admin.branches', array_merge(compact('school', 'branches', 'settings', 'totalBranchesCount', 'activeBranchesCount'), ['isAjax' => $request->ajax()]));
     }
 
     /**

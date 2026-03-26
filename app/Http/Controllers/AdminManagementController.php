@@ -18,7 +18,7 @@ class AdminManagementController extends Controller
      * List all admins and branch secretaries for this school.
      * Only accessible by school_admin role.
      */
-    public function index(School $school)
+    public function index(Request $request, School $school)
     {
         $admin = Auth::guard('admin')->user();
 
@@ -42,9 +42,9 @@ class AdminManagementController extends Controller
             ->filter()
             ->toArray();
 
-        return view('school.admin.admin-management.index', compact(
+        return view('school.admin.admin-management.index', array_merge(compact(
             'school', 'admin', 'admins', 'branches', 'branchesWithSecretary'
-        ));
+        ), ['isAjax' => $request->ajax()]));
     }
 
     /**

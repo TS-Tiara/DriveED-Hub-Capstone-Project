@@ -18,7 +18,7 @@ use Carbon\Carbon;
 
 class StudentController extends Controller
 {
-    public function dashboard(School $school)
+    public function dashboard(Request $request, School $school)
     {
         $student = Auth::guard('student')->user();
         $studentModel = Student::with('branchRelation')->find($student->id);
@@ -107,6 +107,7 @@ class StudentController extends Controller
             ->get();
         
         return view($school->resolveView('student.dashboard'), [
+            'isAjax' => $request->ajax(),
             'school' => $school,
             'student' => $studentModel,
             'sessionsCompleted' => $totalSessionsCompleted,
@@ -125,7 +126,7 @@ class StudentController extends Controller
         ]);
     }
 
-    public function profile(School $school)
+    public function profile(Request $request, School $school)
     {
         $student = Auth::guard('student')->user();
         $student->load('branchRelation');
@@ -133,6 +134,7 @@ class StudentController extends Controller
         return view($school->resolveView('student.profile'), [
             'school' => $school,
             'student' => $student,
+            'isAjax' => $request->ajax(),
         ]);
     }
 
@@ -201,7 +203,7 @@ class StudentController extends Controller
         ]);
     }
 
-    public function schedule(School $school)
+    public function schedule(Request $request, School $school)
     {
         $student = Auth::guard('student')->user();
         
@@ -269,6 +271,7 @@ class StudentController extends Controller
             ->sortBy('booking_date');
         
         return view($school->resolveView('student.schedule'), [
+            'isAjax' => $request->ajax(),
             'school' => $school,
             'enrolledCourseIds' => $enrolledCourseIds,
             'allBookings' => $allBookings,
@@ -291,7 +294,7 @@ class StudentController extends Controller
     /**
      * Display the student's current active course (My Course page)
      */
-    public function myCourse(School $school)
+    public function myCourse(Request $request, School $school)
     {
         $student = Auth::guard('student')->user();
         
@@ -343,6 +346,7 @@ class StudentController extends Controller
         }
         
         return view($school->resolveView('student.my-course'), [
+            'isAjax' => $request->ajax(),
             'school' => $school,
             'student' => $student,
             'activeEnrollment' => $activeEnrollment,
@@ -361,7 +365,7 @@ class StudentController extends Controller
     /**
      * Display the student's enrollment progress overview (My Progress page)
      */
-    public function myProgress(School $school)
+    public function myProgress(Request $request, School $school)
     {
         $student = Auth::guard('student')->user();
 
@@ -410,6 +414,7 @@ class StudentController extends Controller
         $completedEnrollments = $enrollmentHistory->where('status', 'completed');
 
         return view($school->resolveView('student.my-progress'), [
+            'isAjax' => $request->ajax(),
             'school' => $school,
             'student' => $student,
             'activeEnrollment' => $activeEnrollment,

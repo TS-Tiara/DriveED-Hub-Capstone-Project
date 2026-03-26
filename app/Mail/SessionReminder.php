@@ -2,18 +2,17 @@
 
 namespace App\Mail;
 
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 use App\Models\Booking;
 use App\Models\School;
+use Illuminate\Mail\Mailables\Address;
 
-class SessionReminder extends Mailable implements ShouldQueue
+class SessionReminder extends Mailable
 {
-    use Queueable, SerializesModels;
+    use SerializesModels;
 
     public $booking;
     public $school;
@@ -33,6 +32,7 @@ class SessionReminder extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
+            from: new Address("{$this->school->slug}@driveedhub.com", $this->school->name),
             subject: $this->school->name . ' - Session Reminder',
         );
     }

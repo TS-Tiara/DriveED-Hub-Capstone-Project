@@ -21,7 +21,7 @@ class PaymentController extends Controller
     /**
      * Display a listing of payments.
      */
-    public function index(School $school, ReceiptStorageService $storageService)
+    public function index(Request $request, School $school, ReceiptStorageService $storageService)
     {
         // Require authentication
         if (!Auth::guard('admin')->check() && !Auth::guard('student')->check()) {
@@ -111,7 +111,10 @@ class PaymentController extends Controller
         // Only admin and student have payment views
         $guard = Auth::guard('admin')->check() ? 'admin' : 'student';
         $view = "school.{$guard}.payments";
-        return view($view, compact('school', 'payments', 'stats', 'pendingEnrollments', 'pendingBookings', 'gcashPaymentImageUrl'));
+        return view($view, array_merge(
+            compact('school', 'payments', 'stats', 'pendingEnrollments', 'pendingBookings', 'gcashPaymentImageUrl'),
+            ['isAjax' => $request->ajax()]
+        ));
     }
 
     /**

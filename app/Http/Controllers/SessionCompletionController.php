@@ -54,7 +54,7 @@ class SessionCompletionController extends Controller
 
             $sessions = $sessionsQuery->paginate(10);
 
-            return view('school.instructor.sessions.index', compact('school', 'sessions', 'stats'));
+            return view('school.instructor.sessions.index', compact('school', 'sessions', 'stats'))->with('isAjax', $request->ajax());
         }
 
         // Admin view
@@ -139,7 +139,7 @@ class SessionCompletionController extends Controller
             ?EnrollmentRequest::find($request->enrollment_id)
             : null;
 
-        return view('school.instructor.sessions.create', compact('school', 'enrollments', 'selectedEnrollment'));
+        return view('school.instructor.sessions.create', compact('school', 'enrollments', 'selectedEnrollment'))->with('isAjax', $request->ajax());
     }
 
     /**
@@ -241,7 +241,7 @@ class SessionCompletionController extends Controller
     /**
      * Display the specified session completion
      */
-    public function show(School $school, $sessionCompletion)
+    public function show(Request $request, School $school, $sessionCompletion)
     {
         // Fetch session manually
         $sessionCompletion = SessionCompletion::with([
@@ -261,7 +261,7 @@ class SessionCompletionController extends Controller
             if ($sessionCompletion->instructor_id !== $instructor->id) {
                 abort(403);
             }
-            return view('school.instructor.sessions.show', compact('school', 'sessionCompletion'));
+            return view('school.instructor.sessions.show', compact('school', 'sessionCompletion'))->with('isAjax', $request->ajax());
         }
 
         // Admin view
@@ -286,7 +286,7 @@ class SessionCompletionController extends Controller
     /**
      * Show the form for editing the specified session completion
      */
-    public function edit(School $school, $sessionCompletion)
+    public function edit(Request $request, School $school, $sessionCompletion)
     {
         if (!Auth::guard('instructor')->check()) {
             abort(403);
@@ -308,7 +308,7 @@ class SessionCompletionController extends Controller
             abort(403);
         }
 
-        return view('school.instructor.sessions.edit', compact('school', 'sessionCompletion'));
+        return view('school.instructor.sessions.edit', compact('school', 'sessionCompletion'))->with('isAjax', $request->ajax());
     }
 
     /**

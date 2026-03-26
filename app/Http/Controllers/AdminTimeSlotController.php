@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Auth;
 class AdminTimeSlotController extends Controller
 {
     // Display all time slots
-    public function index(School $school)
+    public function index(Request $request, School $school)
     {
         $admin = Auth::guard('admin')->user();
         abort_unless($admin, 403);
@@ -41,6 +41,7 @@ class AdminTimeSlotController extends Controller
             'school' => $school,
             'timeSlots' => $timeSlots,
             'instructors' => $instructors,
+            'isAjax' => $request->ajax(),
         ]);
     }
 

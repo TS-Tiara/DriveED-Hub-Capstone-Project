@@ -17,7 +17,7 @@ class ModuleLessonController extends Controller
     /**
      * Display a listing of lessons for a specific module
      */
-    public function index(School $school, Course $course, CourseModule $module)
+    public function index(Request $request, School $school, Course $course, CourseModule $module)
     {
         // Verify course belongs to school
         if ($course->school_id !== $school->id) {
@@ -43,17 +43,17 @@ class ModuleLessonController extends Controller
                 abort(403, 'You must be enrolled in this course to view lessons.');
             }
 
-            return view('school.student.lessons.index', compact('school', 'course', 'module', 'lessons'));
+            return view('school.student.lessons.index', compact('school', 'course', 'module', 'lessons'))->with('isAjax', $request->ajax());
         }
 
         // Instructor view
         if (Auth::guard('instructor')->check()) {
-            return view('school.instructor.lessons.index', compact('school', 'course', 'module', 'lessons'));
+            return view('school.instructor.lessons.index', compact('school', 'course', 'module', 'lessons'))->with('isAjax', $request->ajax());
         }
 
         // Admin view
         if (Auth::guard('admin')->check()) {
-            return view('school.admin.lessons.index', compact('school', 'course', 'module', 'lessons'));
+            return view('school.admin.lessons.index', compact('school', 'course', 'module', 'lessons'))->with('isAjax', $request->ajax());
         }
 
         abort(403);
@@ -62,7 +62,7 @@ class ModuleLessonController extends Controller
     /**
      * Show the form for creating a new lesson
      */
-    public function create(School $school, Course $course, CourseModule $module)
+    public function create(Request $request, School $school, Course $course, CourseModule $module)
     {
         if (!Auth::guard('admin')->check()) {
             abort(403);
@@ -78,7 +78,7 @@ class ModuleLessonController extends Controller
             abort(404);
         }
 
-        return view('school.admin.lessons.create', compact('school', 'course', 'module'));
+        return view('school.admin.lessons.create', compact('school', 'course', 'module'))->with('isAjax', $request->ajax());
     }
 
     /**
@@ -173,7 +173,7 @@ class ModuleLessonController extends Controller
     /**
      * Display the specified lesson
      */
-    public function show(School $school, Course $course, CourseModule $module, ModuleLesson $lesson)
+    public function show(Request $request, School $school, Course $course, CourseModule $module, ModuleLesson $lesson)
     {
         // Verify course belongs to school
         if ($course->school_id !== $school->id) {
@@ -197,17 +197,17 @@ class ModuleLessonController extends Controller
                 abort(403, 'You must be enrolled in this course to view lessons.');
             }
 
-            return view('school.student.lessons.show', compact('school', 'course', 'module', 'lesson'));
+            return view('school.student.lessons.show', compact('school', 'course', 'module', 'lesson'))->with('isAjax', $request->ajax());
         }
 
         // Instructor view
         if (Auth::guard('instructor')->check()) {
-            return view('school.instructor.lessons.show', compact('school', 'course', 'module', 'lesson'));
+            return view('school.instructor.lessons.show', compact('school', 'course', 'module', 'lesson'))->with('isAjax', $request->ajax());
         }
 
         // Admin view
         if (Auth::guard('admin')->check()) {
-            return view('school.admin.lessons.show', compact('school', 'course', 'module', 'lesson'));
+            return view('school.admin.lessons.show', compact('school', 'course', 'module', 'lesson'))->with('isAjax', $request->ajax());
         }
 
         abort(403);
@@ -216,7 +216,7 @@ class ModuleLessonController extends Controller
     /**
      * Show the form for editing the specified lesson
      */
-    public function edit(School $school, Course $course, CourseModule $module, ModuleLesson $lesson)
+    public function edit(Request $request, School $school, Course $course, CourseModule $module, ModuleLesson $lesson)
     {
         if (!Auth::guard('admin')->check()) {
             abort(403);
@@ -232,7 +232,7 @@ class ModuleLessonController extends Controller
             abort(404);
         }
 
-        return view('school.admin.lessons.edit', compact('school', 'course', 'module', 'lesson'));
+        return view('school.admin.lessons.edit', compact('school', 'course', 'module', 'lesson'))->with('isAjax', $request->ajax());
     }
 
     /**

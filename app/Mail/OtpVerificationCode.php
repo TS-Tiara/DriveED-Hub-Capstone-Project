@@ -11,9 +11,11 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class OtpVerificationCode extends Mailable implements ShouldQueue
+use Illuminate\Mail\Mailables\Address;
+
+class OtpVerificationCode extends Mailable
 {
-    use Queueable, SerializesModels;
+    use SerializesModels;
 
     public function __construct(
         public School $school,
@@ -29,7 +31,10 @@ class OtpVerificationCode extends Mailable implements ShouldQueue
             ? "{$this->school->name} - New Verification Code"
             : "{$this->school->name} - Email Verification Required";
 
-        return new Envelope(subject: $subject);
+        return new Envelope(
+            from: new Address("{$this->school->slug}@driveedhub.com", $this->school->name),
+            subject: $subject
+        );
     }
 
     public function content(): Content

@@ -21,7 +21,7 @@ class InstructorController extends Controller
     /**
      * Display the instructor dashboard.
      */
-    public function dashboard(School $school)
+    public function dashboard(Request $request, School $school)
     {
         $instructor = Auth::guard('instructor')->user();
         $instructor->load('branch');
@@ -93,6 +93,7 @@ class InstructorController extends Controller
             ->get();
 
         return view($school->resolveView('instructor.dashboard'), [
+            'isAjax' => $request->ajax(),
             'school' => $school,
             'instructor' => $instructor,
             'todaysLessons' => $todaysSchedules,
@@ -108,7 +109,7 @@ class InstructorController extends Controller
     // INSTRUCTOR FEATURES
     // ==========================
 
-    public function myStudents(School $school)
+    public function myStudents(Request $request, School $school)
     {
         $instructor = Auth::guard('instructor')->user();
 
@@ -163,13 +164,14 @@ class InstructorController extends Controller
         });
 
         return view($school->resolveView('instructor.students'), [
+            'isAjax' => $request->ajax(),
             'school' => $school,
             'students' => $students,
             'instructor' => $instructor,
         ]);
     }
 
-    public function showStudent(School $school, $id)
+    public function showStudent(Request $request, School $school, $id)
     {
         $instructor = Auth::guard('instructor')->user();
 
@@ -216,6 +218,7 @@ class InstructorController extends Controller
             ->count('*');
 
         return view($school->resolveView('instructor.student-detail'), [
+            'isAjax' => $request->ajax(),
             'school' => $school,
             'student' => $student,
             'sessions' => $sessions,
@@ -262,7 +265,7 @@ class InstructorController extends Controller
         }
     }
 
-    public function mySchedule(School $school)
+    public function mySchedule(Request $request, School $school)
     {
         $instructor = Auth::guard('instructor')->user();
         
@@ -277,6 +280,7 @@ class InstructorController extends Controller
             ->groupBy('date');
 
         return view($school->resolveView('instructor.schedule'), [
+            'isAjax' => $request->ajax(),
             'school' => $school,
             'schedules' => $schedules,
             'instructor' => $instructor,
@@ -286,7 +290,7 @@ class InstructorController extends Controller
     /**
      * Display performance reports for the instructor.
      */
-    public function reports(School $school)
+    public function reports(Request $request, School $school)
     {
         $instructor = Auth::guard('instructor')->user();
 
@@ -392,18 +396,18 @@ class InstructorController extends Controller
             ->whereNotNull('session_grade', 'and')
             ->avg('session_grade');
 
-        return view($school->resolveView('instructor.reports'), compact(
+        return view($school->resolveView('instructor.reports'), array_merge(compact(
             'school', 'instructor', 'totalLessonsCompleted', 'totalHoursTaught', 
             'totalStudentsTaught', 'activeStudents', 'attendanceRate',
             'thisMonthLessons', 'lastMonthLessons', 'lessonsByMonth', 
             'lessonsByStatus', 'topStudents', 'upcomingLessons', 'avgGrade'
-        ));
+        ), ['isAjax' => $request->ajax()]));
     }
 
     /**
      * Display student grades for the instructor.
      */
-    public function grades(School $school)
+    public function grades(Request $request, School $school)
     {
         $instructor = Auth::guard('instructor')->user();
 
@@ -450,17 +454,18 @@ class InstructorController extends Controller
             ->whereNull('session_grade', 'and', false)
             ->count('*');
 
-        return view($school->resolveView('instructor.grades'), compact(
+        return view($school->resolveView('instructor.grades'), array_merge(compact(
             'school', 'instructor', 'students', 'gradedSessions', 'averageGrade', 'pendingGrades'
-        ));
+        ), ['isAjax' => $request->ajax()]));
     }
 
-    public function profile(School $school)
+    public function profile(Request $request, School $school)
     {
         $instructor = Auth::guard('instructor')->user();
         $instructor->load('branch');
         
         return view($school->resolveView('instructor.profile'), [
+            'isAjax' => $request->ajax(),
             'school' => $school,
             'instructor' => $instructor,
         ]);
