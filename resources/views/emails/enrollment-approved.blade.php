@@ -48,7 +48,7 @@
             <p style="margin-top: 25px;">You can now start scheduling your sessions. Login to your account to view available time slots and book your lessons.</p>
 
             <center>
-                <a href="{{ url($school->slug . '/login') }}" class="button">Login to Your Account</a>
+                <a href="{{ route('schools.login', ['school' => $school]) }}" class="button">Login to Your Account</a>
             </center>
 
             <p style="color: #6b7280; font-size: 14px; margin-top: 25px;">
