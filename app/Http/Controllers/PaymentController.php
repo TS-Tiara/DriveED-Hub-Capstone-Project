@@ -7,7 +7,6 @@ use App\Models\GCashSetting;
 use App\Models\Payment;
 use App\Models\School;
 use App\Services\PaymentSubmissionService;
-use App\Services\PaymentVerificationService;
 use App\Services\ReceiptStorageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -224,53 +223,8 @@ class PaymentController extends Controller
         ]);
     }
 
-    /**
-     * Process verification (Approve, Reject, Refund).
-     */
-    public function update(Request $request, School $school, Payment $payment, PaymentVerificationService $verificationService)
-    {
-        abort_if($payment->school_id !== (int)$school->id, 404);
-        $this->authorize('update', $payment);
-
-        $validated = $request->validate([
-            'action' => 'required|in:approve,reject,refund',
-            'reason_code' => [
-                'required_if:action,reject,refund',
-                'nullable',
-                'string',
-                function ($attribute, $value, $fail) use ($request) {
-                    $action = $request->input('action');
-                    if ($action === 'reject') {
-                        $validCodes = ['invalid_reference', 'duplicate_submission', 'insufficient_amount', 'wrong_school', 'no_receipt_image', 'other'];
-                        if (!in_array($value, $validCodes)) $fail("Invalid rejection reason code.");
-                    } elseif ($action === 'refund') {
-                        $validCodes = ['duplicate_payment', 'course_cancelled', 'student_withdrawal', 'overpayment', 'other'];
-                        if (!in_array($value, $validCodes)) $fail("Invalid refund reason code.");
-                    }
-                }
-            ],
-            'reason_note' => 'nullable|string|max:500',
-        ]);
-
-        $admin = Auth::guard('admin')->user();
-        if (!$admin instanceof Admin) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized admin action.'], 403);
-        }
-
-        switch ($validated['action']) {
-            case 'approve':
-                $verificationService->approve($payment, $admin);
-                break;
-            case 'reject':
-                $verificationService->reject($payment, $admin, $validated['reason_code'], $validated['reason_note']);
-                break;
-            case 'refund':
-                $verificationService->refund($payment, $admin, $validated['reason_code'], $validated['reason_note']);
-                break;
-        }
-
-        return response()->json(['success' => true, 'message' => "Payment handled as " . $validated['action']]);
-    }
+    // update() method removed — Payment module is read-only.
+    // All acceptance/rejection is handled exclusively by the Enrollment module.
 
     /**
      * Remove the specified payment.

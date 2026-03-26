@@ -135,13 +135,19 @@ Route::prefix('{school:slug}')
             Route::middleware(['auth:student', 'guest.role', 'nocache'])->group(function (): void {
                     Route::get('/dashboard', [GuestController::class , 'dashboard'])->name('dashboard');
                     Route::get('/courses', [GuestController::class , 'courses'])->name('courses');
-                    Route::post('/enroll/{course}', [GuestController::class , 'enroll'])->name('enroll');
                     Route::post('/upload-license', [GuestController::class , 'uploadLicense'])->name('uploadLicense');
                     Route::get('/enrollment-requests', [GuestController::class , 'enrollmentRequests'])->name('enrollmentRequests');
                     
                     // Guest payment routes
                     Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
                     Route::post('/payments', [PaymentController::class, 'store'])->name('payments.store');
+                }
+                );
+
+                // Enrollment and checkout routes — accessible to both guest AND student roles
+                // (students need to enroll in additional courses after completing one)
+                Route::middleware(['auth:student', 'nocache'])->group(function (): void {
+                    Route::post('/enroll/{course}', [GuestController::class , 'enroll'])->name('enroll');
                     
                     // Enrollment-specific GCash checkout
                     Route::get('/payment/{enrollment_request_id}', [GuestController::class, 'showPayment'])->name('payment.show');
@@ -246,7 +252,7 @@ Route::prefix('{school:slug}')
                         // Payments management (no separate create/edit views - handled via modals)
                         // Statistics route MUST be before the resource to avoid conflict with payments/{payment}
                         Route::get('/payments/statistics', [PaymentController::class , 'statistics'])->name('payments.statistics');
-                        Route::resource('payments', PaymentController::class)->except(['create', 'edit']);
+                        Route::resource('payments', PaymentController::class)->except(['create', 'edit', 'update']);
 
                         // Admin/Secretary management (school_admin only)
                         Route::middleware(['school.admin.only'])->group(function () {
@@ -288,7 +294,7 @@ Route::prefix('{school:slug}')
                             Route::prefix('api')->name('api.')->group(function () {
                                 Route::get('/{enrollmentRequest}', [EnrollmentRequestController::class, 'apiShow'])->name('show');
                                 Route::post('/{enrollmentRequest}/verify-payment', [EnrollmentRequestController::class, 'verifyPayment'])->name('verify-payment');
-                                Route::post('/{enrollmentRequest}/verify-license', [EnrollmentRequestController::class, 'verifyLicense'])->name('verify-license');
+                                Route::post('/{enrollmentRequest}/verify-license', [EnrollmentRequestController::class, 'apiVerifyLicense'])->name('verify-license');
                             });
 
                             // View payment proof
