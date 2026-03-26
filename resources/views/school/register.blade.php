@@ -935,50 +935,38 @@
             <div class="policy-modal-content">
                 <p><strong>Effective Date:</strong> {{ date('F Y') }}</p>
                 <br>
-                <p>{{ $schoolName }} ("we", "us", or "our") respects your privacy and is committed to protecting your personal information. This Data Privacy Policy explains how we collect, use, and safeguard your data.</p>
+                <p>At <strong>{{ $schoolName }}</strong>, we are committed to protecting your privacy in compliance with the Data Privacy Act. This policy explains how we handle your personal information.</p>
                 <br>
                 <h3 class="policy-section-title">1. Information We Collect</h3>
-                <p>We collect the following personal information when you register:</p>
+                <p>To provide quality driving instruction, we collect:</p>
                 <ul class="policy-list">
-                    <li>Full Name</li>
-                    <li>Email Address</li>
-                    <li>Contact Number</li>
-                    <li>Home Address</li>
+                    <li><strong>Identity Data:</strong> Full name, date of birth, and gender.</li>
+                    <li><strong>Contact Data:</strong> Email address, mobile number, and residential address.</li>
+                    <li><strong>Government ID:</strong> Student Permit or Driver’s License details (for enrollment verification).</li>
+                    <li><strong>Technical Data:</strong> IP address and login data when you use the portal.</li>
                 </ul>
                 <br>
-                <h3 class="policy-section-title">2. How We Use Your Information</h3>
-                <p>Your information is used to:</p>
+                <h3 class="policy-section-title">2. Purpose of Data Collection</h3>
+                <p>Your data is used specifically for:</p>
                 <ul class="policy-list">
-                    <li>Process your enrollment and manage your student account</li>
-                    <li>Schedule driving lessons and communicate important updates</li>
-                    <li>Maintain accurate records for regulatory compliance</li>
-                    <li>Improve our services and customer support</li>
+                    <li>Processing your enrollment and LTO (Land Transportation Office) certification.</li>
+                    <li>Scheduling and coordinating theoretical (TDC) and practical (PDC) lessons.</li>
+                    <li>Sending automated session reminders and security codes.</li>
+                    <li>Internal audit and regulatory compliance.</li>
                 </ul>
                 <br>
-                <h3 class="policy-section-title">3. Data Security</h3>
-                <p>We implement industry-standard security measures to protect your data from unauthorized access, alteration, or disclosure. Your password is encrypted and never stored in plain text.</p>
+                <h3 class="policy-section-title">3. Data Retention & Security</h3>
+                <p>We retain your information for as long as it is required to fulfill our services or as mandated by law (typically 5 years for student records). We use encrypted storage and SSL protocols to protect your data from unauthorized access.</p>
                 <br>
-                <h3 class="policy-section-title">4. Data Sharing</h3>
-                <p>We do not sell, rent, or share your personal information with third parties except:</p>
+                <h3 class="policy-section-title">4. Third-Party Disclosure</h3>
+                <p>We do not sell your data. We only share information with:</p>
                 <ul class="policy-list">
-                    <li>When required by law or government authorities</li>
-                    <li>With your explicit consent</li>
-                    <li>To licensed instructors within our driving school for lesson coordination</li>
+                    <li><strong>LTO / Regulatory Bodies:</strong> For legal certification and licensing.</li>
+                    <li><strong>Instructors:</strong> Limited to your name and schedule for lesson coordination.</li>
                 </ul>
                 <br>
                 <h3 class="policy-section-title">5. Your Rights</h3>
-                <p>You have the right to:</p>
-                <ul class="policy-list">
-                    <li>Access and review your personal information</li>
-                    <li>Request corrections to inaccurate data</li>
-                    <li>Request deletion of your account and data</li>
-                    <li>Withdraw consent at any time</li>
-                </ul>
-                <br>
-                <h3 class="policy-section-title">6. Contact Us</h3>
-                <p>For questions or concerns about your data privacy, contact us at:</p>
-                <p class="policy-contact-email"><strong>Email:</strong> {{ $school->contact_email ?? 'privacy@driveedhub.com' }}</p>
-                <p><strong>Phone:</strong> {{ $school->contact_number ?? 'N/A' }}</p>
+                <p>Under the Data Privacy Act, you have the right to access, correct, or request the deletion of your personal data. Contact us at <strong>{{ $school->contact_email ?? 'support@driveedhub.com' }}</strong> for any privacy concerns.</p>
             </div>
             <button type="button" onclick="closePrivacy()" class="policy-modal-btn">I Understand</button>
         </div>
@@ -992,57 +980,41 @@
             <div class="policy-modal-content">
                 <p><strong>Effective Date:</strong> {{ date('F Y') }}</p>
                 <br>
-                <p>By creating an account with {{ $schoolName }}, you agree to the following terms and conditions:</p>
-                <br>
-                <h3 class="policy-section-title">1. Account Registration</h3>
+                <h3 class="policy-section-title">1. Enrollment & Eligibility</h3>
                 <ul class="policy-list">
-                    <li>You must provide accurate and complete information during registration</li>
-                    <li>You are responsible for maintaining the confidentiality of your account credentials</li>
-                    <li>You must be at least 18 years old or have parental consent to register</li>
-                    <li>One person may only maintain one active account</li>
+                    <li>Students must be at least 16 years old for Student Permits or 18 years old for Driver’s Licenses.</li>
+                    <li>All information provided during registration must be truthful and accurate.</li>
                 </ul>
                 <br>
-                <h3 class="policy-section-title">2. Student Obligations</h3>
+                <h3 class="policy-section-title">2. Fees & Refunds</h3>
                 <ul class="policy-list">
-                    <li>Attend scheduled lessons on time or provide advance notice for cancellations</li>
-                    <li>Follow all safety instructions provided by instructors</li>
-                    <li>Treat instructors, staff, and school property with respect</li>
-                    <li>Complete required theoretical and practical training hours</li>
+                    <li><strong>Payment:</strong> Full or partial payment is required before the start of lessons as per the school’s payment policy.</li>
+                    <li><strong>Refunds:</strong> Enrollment fees are generally non-refundable once the course has commenced. Partial refunds may be considered on a case-by-case basis before the first lesson.</li>
                 </ul>
                 <br>
-                <h3 class="policy-section-title">3. Payment and Fees</h3>
+                <h3 class="policy-section-title">3. Attendance & Cancellations</h3>
                 <ul class="policy-list">
-                    <li>All fees must be paid according to the agreed schedule</li>
-                    <li>Late cancellations (less than 24 hours notice) may incur fees</li>
-                    <li>No-shows may result in forfeiture of lesson fees</li>
-                    <li>Refund policies vary by course and will be explained during enrollment</li>
+                    <li><strong>Notice Period:</strong> Cancellations or rescheduling of practical lessons must be made at least <strong>24 hours</strong> in advance.</li>
+                    <li><strong>No-Show Policy:</strong> Failure to attend a scheduled lesson without notice will result in the forfeiture of that session's fee.</li>
+                    <li><strong>Late Policy:</strong> Instructors will wait for 15 minutes. After this, the lesson may be cancelled and marked as a no-show.</li>
                 </ul>
                 <br>
-                <h3 class="policy-section-title">4. Safety and Conduct</h3>
+                <h3 class="policy-section-title">4. Code of Conduct</h3>
                 <ul class="policy-list">
-                    <li>Students must not be under the influence of alcohol or drugs during lessons</li>
-                    <li>Aggressive, abusive, or inappropriate behavior will result in immediate dismissal</li>
-                    <li>Follow all traffic laws and instructor directions during practical lessons</li>
+                    <li>Students must remain sober and not under the influence of any substance during lessons.</li>
+                    <li>Inappropriate behavior toward instructors or staff will result in immediate termination of the enrollment without refund.</li>
+                    <li>Mobile phone usage is strictly prohibited while operating a vehicle.</li>
                 </ul>
                 <br>
-                <h3 class="policy-section-title">5. Liability</h3>
+                <h3 class="policy-section-title">5. Vehicle Liability & Insurance</h3>
                 <ul class="policy-list">
-                    <li>The driving school is not liable for personal injuries except in cases of proven negligence</li>
-                    <li>Students are responsible for any damage to school vehicles caused by reckless behavior</li>
-                    <li>Insurance coverage details will be provided upon enrollment</li>
+                    <li>Our vehicles are fully insured for instructional purposes.</li>
+                    <li>If a vehicle breaks down during a lesson, the session will be rescheduled at no extra cost.</li>
+                    <li>Students are not liable for accidental damages occurring during an instructor-led session, except in cases of gross negligence.</li>
                 </ul>
                 <br>
-                <h3 class="policy-section-title">6. Termination</h3>
-                <p>We reserve the right to terminate your account if you:</p>
-                <ul class="policy-list">
-                    <li>Violate these terms and conditions</li>
-                    <li>Provide false information</li>
-                    <li>Engage in inappropriate or illegal conduct</li>
-                    <li>Fail to make required payments</li>
-                </ul>
-                <br>
-                <h3 class="policy-section-title">7. Changes to Terms</h3>
-                <p>We may update these terms at any time. Continued use of our services constitutes acceptance of updated terms.</p>
+                <h3 class="policy-section-title">6. Certification</h3>
+                <p>Completion of the course does not guarantee passing the LTO examination. The school provides the necessary training and certificates as required by law.</p>
             </div>
             <button type="button" onclick="closeTerms()" class="policy-modal-btn">I Agree</button>
         </div>

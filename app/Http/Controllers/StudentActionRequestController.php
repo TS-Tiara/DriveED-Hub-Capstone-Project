@@ -21,7 +21,7 @@ class StudentActionRequestController extends Controller
      * List student action requests.
      * Secretary: only their branch. School admin: all branches.
      */
-    public function index(School $school)
+    public function index(Request $request, School $school)
     {
         $admin = Auth::guard('admin')->user();
 
@@ -38,9 +38,9 @@ class StudentActionRequestController extends Controller
         $requests = $query->get();
         $branches = Branch::where('school_id', $school->id)->where('is_active', true)->orderBy('name')->get();
 
-        return view('school.admin.student-action-requests.index', compact(
+        return view('school.admin.student-action-requests.index', array_merge(compact(
             'school', 'admin', 'requests', 'branches'
-        ));
+        ), ['isAjax' => $request->ajax()]));
     }
 
     /**

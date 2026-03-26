@@ -85,6 +85,27 @@ class StorageController extends Controller
         return $this->fileResponseFromDisk('public', $gcashSetting->qr_path);
     }
 
+    /**
+     * Serve a payment receipt image securely.
+     */
+    public function streamReceipt(Request $request, School $school)
+    {
+        $path = $request->query('path');
+        abort_unless((bool)$path, 404);
+
+        // Authorization: Must be logged in (student or admin)
+        abort_unless(Auth::guard('student')->check() || Auth::guard('admin')->check(), 403);
+
+        // Ensure the path is within the receipts directory for safety
+        abort_unless(str_starts_with($path, 'receipts/'), 403);
+
+        if (!Storage::disk('local')->exists($path)) {
+            abort(404, 'Receipt file not found.');
+        }
+
+        return $this->fileResponseFromDisk('local', $path);
+    }
+
     private function fileResponseFromDisk(string $diskName, string $path)
     {
         $disk = Storage::disk($diskName);

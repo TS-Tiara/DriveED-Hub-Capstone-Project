@@ -17,7 +17,7 @@ use App\Rules\StrongPassword;
 class InstructorTimeSlotController extends Controller
 {
     // Display available time slots and instructor's selected slots
-    public function index(School $school)
+    public function index(Request $request, School $school)
     {
         $instructor = Auth::guard('instructor')->user();
 
@@ -49,6 +49,7 @@ class InstructorTimeSlotController extends Controller
             'availableSlots' => $availableSlots,
             'mySlots' => $mySlots,
             'instructorCourses' => $instructorCourses,
+            'isAjax' => $request->ajax(),
         ]);
     }
 
@@ -180,7 +181,7 @@ class InstructorTimeSlotController extends Controller
     }
 
     // View instructor's schedule/calendar
-    public function mySchedule(School $school)
+    public function mySchedule(Request $request, School $school)
     {
         $instructor = Auth::guard('instructor')->user();
         abort_unless($instructor && $instructor->school_id === $school->id, 403);
@@ -271,10 +272,11 @@ class InstructorTimeSlotController extends Controller
             'availableSlots' => $availableSlots,
             'groupedAvailableSlots' => $groupedAvailableSlots,
             'instructorSchedule' => $instructorSchedule,
+            'isAjax' => $request->ajax(),
         ]);
     }
 
-    public function profile(School $school)
+    public function profile(Request $request, School $school)
     {
         $instructor = Auth::guard('instructor')->user();
         $instructor->load('branch');
@@ -282,6 +284,7 @@ class InstructorTimeSlotController extends Controller
         return view($school->resolveView('instructor.profile'), [
             'school' => $school,
             'instructor' => $instructor,
+            'isAjax' => $request->ajax(),
         ]);
     }
 

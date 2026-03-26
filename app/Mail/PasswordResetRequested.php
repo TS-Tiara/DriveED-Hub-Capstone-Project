@@ -10,9 +10,11 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class PasswordResetRequested extends Mailable implements ShouldQueue
+use Illuminate\Mail\Mailables\Address;
+
+class PasswordResetRequested extends Mailable
 {
-    use Queueable, SerializesModels;
+    use SerializesModels;
 
     public function __construct(
         public School $school,
@@ -24,6 +26,7 @@ class PasswordResetRequested extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
+            from: new Address("{$this->school->slug}@driveedhub.com", $this->school->name),
             subject: "{$this->school->name} - Password Reset Request",
         );
     }

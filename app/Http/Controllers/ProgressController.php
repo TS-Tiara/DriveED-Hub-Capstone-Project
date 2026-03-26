@@ -15,7 +15,7 @@ class ProgressController extends Controller
     /**
      * Display a listing of progress records.
      */
-    public function index(School $school)
+    public function index(Request $request, School $school)
     {
         $query = Progress::where('school_id', '=', $school->id)
             ->with(['student', 'course']);
@@ -85,7 +85,7 @@ class ProgressController extends Controller
 
         $guard = Auth::guard('admin')->check() ? 'admin' : (Auth::guard('student')->check() ? 'student' : 'instructor');
         $view = "{$guard}.progress";
-        return view($school->resolveView($view), compact('school', 'progresses'));
+        return view($school->resolveView($view), array_merge(compact('school', 'progresses'), ['isAjax' => $request->ajax()]));
     }
 
     /**
@@ -101,7 +101,7 @@ class ProgressController extends Controller
 
         $guard = Auth::guard('admin')->check() ? 'admin' : 'instructor';
         $view = "{$guard}.progress-create";
-        return view($school->resolveView($view), compact('school', 'students', 'courses', 'studentId', 'courseId'));
+        return view($school->resolveView($view), array_merge(compact('school', 'students', 'courses', 'studentId', 'courseId'), ['isAjax' => $request->ajax()]));
     }
 
     /**
@@ -174,7 +174,7 @@ class ProgressController extends Controller
     /**
      * Display the specified progress.
      */
-    public function show(School $school, Progress $progress)
+    public function show(Request $request, School $school, Progress $progress)
     {
         abort_if($progress->school_id !== $school->id, 404);
 
@@ -217,13 +217,13 @@ class ProgressController extends Controller
 
         $guard = Auth::guard('admin')->check() ? 'admin' : (Auth::guard('student')->check() ? 'student' : 'instructor');
         $view = "{$guard}.progress-show";
-        return view($school->resolveView($view), compact('school', 'progress'));
+        return view($school->resolveView($view), array_merge(compact('school', 'progress'), ['isAjax' => $request->ajax()]));
     }
 
     /**
      * Show the form for editing the specified progress.
      */
-    public function edit(School $school, Progress $progress)
+    public function edit(Request $request, School $school, Progress $progress)
     {
         abort_if($progress->school_id !== $school->id, 404);
 
@@ -246,7 +246,7 @@ class ProgressController extends Controller
 
         $guard = Auth::guard('admin')->check() ? 'admin' : 'instructor';
         $view = "{$guard}.progress-edit";
-        return view($school->resolveView($view), compact('school', 'progress', 'students', 'courses'));
+        return view($school->resolveView($view), array_merge(compact('school', 'progress', 'students', 'courses'), ['isAjax' => $request->ajax()]));
     }
 
     /**

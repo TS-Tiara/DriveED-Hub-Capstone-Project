@@ -13,6 +13,7 @@ use App\Http\Requests\StoreEnrollmentRequestRequest;
 use App\Models\Notification;
 use App\Models\Admin;
 use App\Mail\EnrollmentRequestReceived;
+use App\Models\GCashSetting;
 use App\Rules\StrongPassword;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -108,7 +109,7 @@ class GuestController extends Controller
     /**
      * Show guest dashboard (limited access)
      */
-    public function dashboard(School $school)
+    public function dashboard(Request $request, School $school)
     {
         $guest = Auth::guard('student')->user();
         
@@ -131,16 +132,16 @@ class GuestController extends Controller
         $hasSubmittedRequest = $guest->enrollmentRequests()->exists();
         $hasUploadedLicense = !$guest->hasNoLicense();
 
-        return view('school.guest.dashboard', compact(
+        return view('school.guest.dashboard', array_merge(compact(
             'school', 'guest', 'courses', 'hasEnrollment', 'pendingRequest', 'approvedEnrollment',
             'rejectedRequest', 'hasSubmittedRequest', 'hasUploadedLicense'
-        ));
+        ), ['isAjax' => $request->ajax()]));
     }
 
     /**
      * Show courses page for guests
      */
-    public function courses(School $school)
+    public function courses(Request $request, School $school)
     {
         $guest = Auth::guard('student')->user();
         
@@ -180,9 +181,9 @@ class GuestController extends Controller
                 ->get();
         }
 
-        return view('school.guest.courses', compact(
+        return view('school.guest.courses', array_merge(compact(
             'school', 'guest', 'courses', 'enrolledCourseIds', 'enrollmentStatuses', 'branches', 'enableBranches'
-        ));
+        ), ['isAjax' => $request->ajax()]));
     }
 
     /**
@@ -306,14 +307,91 @@ class GuestController extends Controller
         ]);
 
         return redirect()
-            ->route('schools.guest.dashboard', ['school' => $school->slug])
-            ->with('success', 'Enrollment request submitted! An admin will review your request shortly.');
+            ->route('schools.guest.payment.show', [
+                'school' => $school->slug,
+                'enrollment_request_id' => $enrollmentRequest->id
+            ])
+            ->with('success', 'Step 1 of 2 Complete! Please settle your enrollment fee via GCash below.');
+    }
+
+    /**
+     * Show the GCash payment page for a specific enrollment request.
+     */
+    public function showPayment(School $school, $enrollment_request_id)
+    {
+        $guest = Auth::guard('student')->user();
+        if (!$guest || !$guest->isGuest()) {
+            return redirect()->route('schools.login', $school);
+        }
+
+        $enrollmentRequest = EnrollmentRequest::where('id', $enrollment_request_id)
+            ->where('learner_id', $guest->id)
+            ->firstOrFail();
+
+        // Get active GCash settings (fallback to school level if branch-specific is missing)
+        $gcashSetting = GCashSetting::getActiveSetting($school->id, $enrollmentRequest->branch_id);
+
+        return view('school.guest.payment-select', compact('school', 'enrollmentRequest', 'gcashSetting'));
+    }
+
+    /**
+     * Handle payment submission (Reference # and Screenshot)
+     */
+    public function submitPayment(Request $request, School $school, $enrollment_request_id)
+    {
+        $guest = Auth::guard('student')->user();
+        if (!$guest || !$guest->isGuest()) {
+            abort(403);
+        }
+
+        $request->validate([
+            'reference_number' => 'required|string|min:8|max:20',
+            'screenshot' => 'required|image|mimes:jpeg,png,jpg,webp|max:5120',
+        ]);
+
+        $enrollmentRequest = EnrollmentRequest::where('id', $enrollment_request_id)
+            ->where('learner_id', $guest->id)
+            ->firstOrFail();
+
+        try {
+            // Store the screenshot
+            $path = $request->file('screenshot')->store('payment-proofs/' . $school->slug, 'public');
+
+            // Update enrollment request with payment details
+            $enrollmentRequest->update([
+                'payment_method' => 'gcash',
+                'payment_reference' => $request->reference_number,
+                'payment_proof_path' => $path,
+                'payment_status' => 'pending_verification',
+            ]);
+
+            // Notify Admins
+            $admins = Admin::where('school_id', $school->id)->where('status', 'active')->get();
+            foreach ($admins as $admin) {
+                Notification::send(
+                    $admin,
+                    'payment_submitted',
+                    'New Payment Verification Request',
+                    "{$guest->name} has submitted a payment for enrollment #{$enrollmentRequest->id}.",
+                    'payment',
+                    "/{$school->slug}/admin/enrollments"
+                );
+            }
+
+            return redirect()
+                ->route('schools.guest.dashboard', $school->slug)
+                ->with('success', 'Payment details submitted successfully! An admin will verify your payment shortly.');
+
+        } catch (\Exception $e) {
+            Log::error('Payment submission failed: ' . $e->getMessage());
+            return back()->with('error', 'Failed to submit payment details. Please try again or contact support.');
+        }
     }
 
     /**
      * View enrollment requests for the guest
      */
-    public function enrollmentRequests(School $school)
+    public function enrollmentRequests(Request $request, School $school)
     {
         $guest = Auth::guard('student')->user();
 
@@ -326,7 +404,7 @@ class GuestController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return view('school.guest.enrollment-requests', compact('school', 'guest', 'requests'));
+        return view('school.guest.enrollment-requests', array_merge(compact('school', 'guest', 'requests'), ['isAjax' => $request->ajax()]));
     }
 
     /**

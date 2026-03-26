@@ -44,7 +44,7 @@ class TheoreticalCompletionController extends Controller
     /**
      * Unified theoretical training page with tabs: In Training, Mark Completion, Passed
      */
-    public function index()
+    public function index(Request $request)
     {
         $ctx = $this->getSchoolAndGuard();
         $school = $ctx['school'];
@@ -95,17 +95,17 @@ class TheoreticalCompletionController extends Controller
             ->where('has_passed_theoretical', true)
             ->count();
 
-        return view($ctx['viewPrefix'] . '.index', compact(
+        return view($ctx['viewPrefix'] . '.index', array_merge(compact(
             'school', 'activeEnrollments', 'totalInTraining', 'readyToPass',
             'readyEnrollments', 'notReadyEnrollments',
             'passedStudents', 'totalPassed'
-        ));
+        ), ['isAjax' => $request->ajax()]));
     }
 
     /**
      * Show the form for marking a student as passed
      */
-    public function show(School $school, $enrollment)
+    public function show(Request $request, School $school, $enrollment)
     {
         // Check authentication guards
         if (!Auth::guard('admin')->check() && !Auth::guard('instructor')->check()) {
@@ -128,7 +128,7 @@ class TheoreticalCompletionController extends Controller
             ? 'school.admin.theoretical.show'
             : 'school.instructor.theoretical.show';
 
-        return view($viewPath, compact('school', 'enrollment', 'validation'));
+        return view($viewPath, array_merge(compact('school', 'enrollment', 'validation'), ['isAjax' => $request->ajax()]));
     }
 
     /**

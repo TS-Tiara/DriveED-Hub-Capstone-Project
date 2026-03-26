@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
 use App\Models\Student;
 use App\Models\Instructor;
 use App\Models\Booking;
@@ -18,7 +19,7 @@ class ReportController extends Controller
     /**
      * Display unified analytics dashboard
      */
-    public function index(School $school, FinancialService $financialService)
+    public function index(Request $request, School $school, FinancialService $financialService)
     {
         try {
             $admin = auth()->guard('admin')->user();
@@ -29,7 +30,7 @@ class ReportController extends Controller
             $schoolId = $school->id;
 
             // Get time period filter (default: all time)
-            $period = request('period', 'all');
+            $period = $request->input('period', 'all');
             $startDate = null;
             $endDate = now();
 
@@ -299,7 +300,11 @@ class ReportController extends Controller
                 return route($routeName, array_merge(['school' => $school], $parameters));
             });
 
-            return view($school->resolveView('admin.reports.index'), compact('analytics', 'school'));
+            return view($school->resolveView('admin.reports.index'), [
+                'analytics' => $analytics,
+                'school' => $school,
+                'isAjax' => $request->ajax()
+            ]);
         }
         catch (\Exception $e) {
             \App\Models\SystemLog::logError(
