@@ -68,18 +68,18 @@ class EnrollmentRequestController extends Controller
 
         $isAjax = request()->ajax() || request()->header('X-Requested-With') === 'XMLHttpRequest';
 
-        return view('school.admin.enrollment-requests.index', compact(
+        return view('school.admin.enrollment-requests.index', array_merge(compact(
             'school', 'allRequests', 'allRequestsCount',
             'pendingRequestsCount', 'approvedRequestsCount',
             'completedRequestsCount', 'cancelledRequestsCount', 'rejectedRequestsCount',
             'admin', 'branches'
-        ));
+        ), ['isAjax' => $request->ajax()]));
     }
 
     /**
      * Display detailed enrollment information (Admin)
      */
-    public function show(School $school, EnrollmentRequest $enrollmentRequest)
+    public function show(Request $request, School $school, EnrollmentRequest $enrollmentRequest)
     {
         // Security: verify belongs to this school
         abort_if($enrollmentRequest->school_id !== $school->id, 404);
@@ -115,9 +115,9 @@ class EnrollmentRequestController extends Controller
             ->latest('requested_at')
             ->get();
 
-        return view('school.admin.enrollment-requests.show', compact(
+        return view('school.admin.enrollment-requests.show', array_merge(compact(
             'school', 'enrollmentRequest', 'sessionSummary', 'phaseProgressions'
-        ));
+        ), ['isAjax' => $request->ajax()]));
     }
 
     /**
@@ -778,6 +778,33 @@ class EnrollmentRequestController extends Controller
             'student_license_rejection_reason' => null,
         ]);
 
+        // NEW: Check if there's an active enrollment request that can now be approved
+        $latestEnrollment = EnrollmentRequest::where('user_id', $student->id)
+            ->where('status', 'pending')
+            ->latest()
+            ->first();
+
+        if ($latestEnrollment && $latestEnrollment->payment_status === 'paid' && $student->role === 'guest') {
+            $student->promoteToStudent();
+            $latestEnrollment->update([
+                'status' => 'approved',
+                'approved_by' => $admin->id,
+                'approved_at' => now(),
+                'enrolled_at' => now(),
+            ]);
+            $student->update(['is_course_locked' => true]);
+            
+            try {
+                Mail::to($student->email)->send(new EnrollmentApproved($latestEnrollment, $school));
+            } catch (\Exception $e) {
+                Log::warning('Email failed in verifyLicense promotion: ' . $e->getMessage());
+            }
+        }
+
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'License verified successfully!']);
+        }
+
         // Notify the student
         $notificationMessage = "Your student driver's license has been verified. You can now enroll in Practical Driving Courses (PDC).";
 
@@ -995,5 +1022,108 @@ class EnrollmentRequestController extends Controller
         ]);
 
         abort(404, 'License file not found.');
+    }
+
+    /**
+     * Get JSON data for the enrollment verification modal
+     */
+    public function apiShow(School $school, EnrollmentRequest $enrollmentRequest)
+    {
+        $admin = Auth::guard('admin')->user();
+        if (!$admin || $admin->school_id !== (int)$school->id) abort(403);
+        if ($admin->isBranchSecretary() && !$admin->canAccessBranch($enrollmentRequest->branch_id)) abort(403);
+
+        $enrollmentRequest->load(['learner', 'course']);
+
+        return response()->json([
+            'id' => $enrollmentRequest->id,
+            'student_name' => $enrollmentRequest->learner->name,
+            'course_title' => $enrollmentRequest->course->title,
+            'total_price' => number_format($enrollmentRequest->price, 2),
+            // Statuses
+            'status' => $enrollmentRequest->status,
+            'payment_status' => $enrollmentRequest->payment_status,
+            'license_status' => $enrollmentRequest->learner->student_license_status,
+            // Data
+            'reference_number' => $enrollmentRequest->payment_reference,
+            'remarks' => $enrollmentRequest->remarks,
+            // Paths/Routes
+            'license_url' => $enrollmentRequest->learner->student_license_path 
+                ? route('schools.admin.enrollments.view-license', ['school' => $school->slug, 'student' => $enrollmentRequest->learner->id]) 
+                : null,
+            'receipt_url' => $enrollmentRequest->payment_proof_path 
+                ? route('schools.admin.enrollments.view-payment-proof', ['school' => $school->slug, 'enrollmentRequest' => $enrollmentRequest->id]) 
+                : null,
+            // Verification Endpoints
+            'verify_payment_url' => route('schools.admin.api.enrollments.verify-payment', ['school' => $school->slug, 'enrollmentRequest' => $enrollmentRequest->id]),
+            'verify_license_url' => route('schools.admin.api.enrollments.verify-license', ['school' => $school->slug, 'enrollmentRequest' => $enrollmentRequest->id]),
+            'reject_url' => route('schools.admin.api.enrollments.reject', ['school' => $school->slug, 'enrollmentRequest' => $enrollmentRequest->id]),
+        ]);
+    }
+
+    /**
+     * Verify payment via AJAX
+     */
+    public function verifyPayment(Request $request, School $school, EnrollmentRequest $enrollmentRequest)
+    {
+        $admin = Auth::guard('admin')->user();
+        if (!$admin || $admin->school_id !== (int)$school->id) abort(403);
+        if (!$admin->canApproveEnrollments()) abort(403);
+
+        DB::beginTransaction();
+        try {
+            $enrollmentRequest->update([
+                'payment_status' => 'paid',
+                'payment_confirmed_by' => $admin->id,
+                'payment_confirmed_at' => now(),
+            ]);
+
+            // Promote to student if license is also verified and they are a guest
+            $student = $enrollmentRequest->student;
+            if ($student && $student->role === 'guest' && $student->student_license_status === 'verified') {
+                $student->promoteToStudent();
+                
+                // Trigger Enrollment Approval logic (same as bulk/manual approve)
+                $enrollmentRequest->update([
+                    'status' => 'approved',
+                    'approved_by' => $admin->id,
+                    'approved_at' => now(),
+                    'enrolled_at' => now(),
+                ]);
+                $student->update(['is_course_locked' => true]);
+
+                // Send Email
+                try {
+                    Mail::to($student->email)->send(new EnrollmentApproved($enrollmentRequest, $school));
+                } catch (\Exception $e) {
+                    Log::warning('Email failed in verifyPayment: ' . $e->getMessage());
+                }
+            }
+
+            DB::commit();
+            return response()->json(['success' => true, 'message' => 'Payment verified successfully!']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('verifyPayment failed: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Verification failed.'], 500);
+        }
+    }
+
+    /**
+     * View a student's uploaded payment proof
+     */
+    public function viewPaymentProof(Request $request, School $school, EnrollmentRequest $enrollmentRequest)
+    {
+        $admin = Auth::guard('admin')->user();
+        if (!$admin || $admin->school_id !== (int)$school->id) abort(403);
+
+        $path = $enrollmentRequest->payment_proof_path;
+        if (empty($path)) abort(404);
+
+        if (Storage::disk('public')->exists($path)) {
+            return Storage::disk('public')->response($path);
+        }
+
+        abort(404, 'Payment proof file not found.');
     }
 }

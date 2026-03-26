@@ -134,7 +134,7 @@ class CourseController extends Controller
     /**
      * Display the specified course.
      */
-    public function show(School $school, Course $course)
+    public function show(Request $request, School $school, Course $course)
     {
         // Authorization check 
         if (Auth::guard('admin')->check()) {
@@ -176,7 +176,7 @@ class CourseController extends Controller
         $guard = Auth::guard('admin')->check() ? 'admin' : (Auth::guard('student')->check() ? 'student' : 'instructor');
         $view = $guard === 'admin' ? 'admin.course-show' : ($guard === 'student' ? 'student.course-show' : 'instructor.course-show');
 
-        return view($school->resolveView($view), compact('school', 'course', 'canEnroll', 'enrollmentValidation'));
+        return view($school->resolveView($view), array_merge(compact('school', 'course', 'canEnroll', 'enrollmentValidation'), ['isAjax' => $request->ajax()]));
     }
 
     /**

@@ -142,6 +142,10 @@ Route::prefix('{school:slug}')
                     // Guest payment routes
                     Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
                     Route::post('/payments', [PaymentController::class, 'store'])->name('payments.store');
+                    
+                    // Enrollment-specific GCash checkout
+                    Route::get('/payment/{enrollment_request_id}', [GuestController::class, 'showPayment'])->name('payment.show');
+                    Route::post('/payment/{enrollment_request_id}/submit', [GuestController::class, 'submitPayment'])->name('payment.submit');
                 }
                 );
 
@@ -278,6 +282,16 @@ Route::prefix('{school:slug}')
                             Route::get('/student/{student}/view-license', [EnrollmentRequestController::class , 'viewLicense'])->name('viewLicense');
                             Route::post('/student/{student}/verify-license', [EnrollmentRequestController::class , 'verifyLicense'])->name('verifyLicense');
                             Route::post('/student/{student}/reject-license', [EnrollmentRequestController::class , 'rejectLicense'])->name('rejectLicense');
+
+                            // API routes for the Quick-Verify Modal
+                            Route::prefix('api')->name('api.')->group(function () {
+                                Route::get('/{enrollmentRequest}', [EnrollmentRequestController::class, 'apiShow'])->name('show');
+                                Route::post('/{enrollmentRequest}/verify-payment', [EnrollmentRequestController::class, 'verifyPayment'])->name('verify-payment');
+                                Route::post('/{enrollmentRequest}/verify-license', [EnrollmentRequestController::class, 'verifyLicense'])->name('verify-license');
+                            });
+
+                            // View payment proof
+                            Route::get('/{enrollmentRequest}/view-payment-proof', [EnrollmentRequestController::class, 'viewPaymentProof'])->name('view-payment-proof');
                         }
                         );
 

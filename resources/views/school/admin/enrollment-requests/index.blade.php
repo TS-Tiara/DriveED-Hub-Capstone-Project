@@ -403,31 +403,9 @@
         gap: 10px;
     }
 
-    .bulk-actions-bar {
-        display: none;
-        gap: 10px;
-        align-items: center;
-    }
-
-    .bulk-actions-count {
-        font-weight: 600;
-        color: #374151;
-    }
-
-    .bulk-action-btn {
-        padding: 8px 16px;
-    }
-
-    .btn-icon-sm {
-        width: 16px;
-        height: 16px;
-        display: inline;
-    }
-
     .export-actions {
         display: flex;
         gap: 10px;
-        margin-left: auto;
     }
 
     .export-menu-wrap {
@@ -471,15 +449,6 @@
         border-top: 1px solid #e5e7eb;
     }
 
-    .checkbox-col {
-        width: 40px;
-    }
-
-    .row-checkbox {
-        cursor: pointer;
-        width: 18px;
-        height: 18px;
-    }
 
     .empty-state-icon {
         width: 48px;
@@ -709,6 +678,133 @@
             width: 100%;
         }
     }
+
+    /* Unified Verification Modal Layout */
+    .verification-modal-card {
+        background: white;
+        border-radius: 12px;
+        width: min(1200px, 98vw);
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+    
+    .v-modal-header {
+        padding: 16px 24px;
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .v-modal-body {
+        display: flex;
+        overflow-y: auto;
+        padding: 0;
+        flex: 1;
+    }
+    
+    .v-modal-sidebar {
+        width: 300px;
+        background: #fff;
+        border-right: 1px solid #e2e8f0;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .v-modal-content {
+        flex: 1;
+        background: #f1f5f9;
+        display: flex;
+        gap: 2px;
+    }
+    
+    .v-image-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: #1e293b;
+        position: relative;
+    }
+    
+    .v-panel-title {
+        background: rgba(0,0,0,0.5);
+        color: white;
+        padding: 8px 16px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 10;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .v-image-viewer {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+        padding: 40px 20px;
+    }
+    
+    .v-image-viewer img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        border: 2px solid #475569;
+    }
+
+    .v-info-label {
+        font-size: 0.75rem;
+        color: #64748b;
+        text-transform: uppercase;
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+    
+    .v-info-value {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #1e293b;
+        word-break: break-all;
+    }
+    
+    .v-panel-status {
+        font-size: 0.7rem;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-weight: 700;
+    }
+
+    .v-btn-group {
+        display: flex;
+        gap: 10px;
+        margin-top: auto;
+        padding: 20px;
+        background: #f8fafc;
+        border-top: 1px solid #e2e8f0;
+    }
+
+    .v-empty-image {
+        color: #64748b;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+    }
 </style>
 
 <div class="enrollment-requests-container">
@@ -837,27 +933,6 @@
         </div>
     </div>
     
-    <!-- Action Bar with Export and Bulk Operations -->
-    <div class="action-bar-wrapper">
-        <!-- Bulk Operations (Left Side) -->
-        <div id="bulkActionsBar" class="bulk-actions-bar">
-            <span id="selectedCount" class="bulk-actions-count">0 selected</span>
-            <button type="button" class="btn btn-approve bulk-action-btn" onclick="bulkApprove()">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="btn-icon-sm">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                </svg>
-                Approve Selected
-            </button>
-            <button type="button" class="btn btn-reject bulk-action-btn" onclick="bulkReject()">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="btn-icon-sm">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                Reject Selected
-            </button>
-        </div>
-        
-        <!-- Export Buttons (Right Side) -->
-        <div class="export-actions">
             <div class="export-menu-wrap">
                 <button type="button" class="btn btn-primary export-btn" onclick="toggleExportMenu()">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="btn-icon-sm">
@@ -891,9 +966,6 @@
         <table class="requests-table">
             <thead>
                 <tr>
-                    <th class="checkbox-col">
-                        <input type="checkbox" id="selectAll" onchange="toggleSelectAll()" class="row-checkbox">
-                    </th>
                     <th>Learner</th>
                     <th>Experience</th>
                     <th>Course</th>
@@ -909,13 +981,10 @@
                 @foreach($allRequests as $request)
                     <tr data-status="{{ $request->status }}" data-request-id="{{ $request->id }}" data-branch="{{ $request->branchRelation?->name ?? '' }}">
                         <td>
-                            @if($request->status === 'pending')
-                                <input type="checkbox" class="request-checkbox row-checkbox" value="{{ $request->id }}" onchange="updateBulkActions()">
-                            @endif
-                        </td>
-                        <td>
                             <div class="learner-info">
-                                <div class="learner-name">{{ $request->learner->name }}</div>
+                                <div class="learner-name" style="cursor: pointer; color: {{ $primaryColor }};" onclick="openVerificationModal({{ $request->id }})">
+                                    {{ $request->learner->name }}
+                                </div>
                                 <div class="learner-email">{{ $request->learner->email }}</div>
                                 @php $licenseStatus = $request->learner->student_license_status ?? 'none'; @endphp
                                 <div>
@@ -964,7 +1033,11 @@
                             </span>
                         </td>
                         <td>
-                            <a href="{{ school_route('admin.payments.index', ['enrollment_id' => $request->id]) }}" class="payment-badge payment-{{ $request->payment_status }} hover:opacity-80 transition-opacity">
+                            <a href="{{ school_route('admin.payments.index', ['enrollment_id' => $request->id]) }}" 
+                               class="payment-badge payment-{{ $request->payment_status }} hover:opacity-80 transition-opacity"
+                               @if($request->payment_status === 'pending_verification') 
+                               onclick="openVerificationModal({{ $request->id }}); return false;" 
+                               @endif>
                                 {{ ucfirst(str_replace('_', ' ', $request->payment_status)) }}
                             </a>
                         </td>
@@ -1025,7 +1098,9 @@
         <div class="mobile-card" data-status="{{ $request->status }}" data-request-id="{{ $request->id }}" data-branch="{{ $request->branchRelation?->name ?? '' }}">
             <div class="mobile-card-header">
                 <div>
-                    <strong class="mobile-learner-name">{{ $request->learner->name }}</strong>
+                    <strong class="mobile-learner-name" style="cursor: pointer; color: {{ $primaryColor }};" onclick="openVerificationModal({{ $request->id }})">
+                        {{ $request->learner->name }}
+                    </strong>
                     <div class="mobile-learner-email">{{ $request->learner->email }}</div>
                     @php $licenseStatus = $request->learner->student_license_status ?? 'none'; @endphp
                     <span class="license-badge license-{{ $licenseStatus }} license-badge-inline">
@@ -1048,7 +1123,12 @@
             </div>
             <div class="mobile-card-row">
                 <span class="mobile-card-label">Payment</span>
-                <span class="payment-badge payment-{{ $request->payment_status }}">{{ ucfirst(str_replace('_', ' ', $request->payment_status)) }}</span>
+                <span class="payment-badge payment-{{ $request->payment_status }}"
+                      @if($request->payment_status === 'pending_verification') 
+                      onclick="openVerificationModal({{ $request->id }})" 
+                      @endif>
+                    {{ ucfirst(str_replace('_', ' ', $request->payment_status)) }}
+                </span>
             </div>
             <div class="mobile-card-row">
                 <span class="mobile-card-label">Date</span>
@@ -1316,132 +1396,6 @@ document.getElementById('licensePreviewModal').addEventListener('click', functio
     }
 });
 
-// Bulk Operations JavaScript
-function toggleSelectAll() {
-    const selectAll = document.getElementById('selectAll');
-    const checkboxes = document.querySelectorAll('.request-checkbox');
-    checkboxes.forEach(cb => {
-        cb.checked = selectAll.checked;
-    });
-    updateBulkActions();
-}
-
-function updateBulkActions() {
-    const checkboxes = document.querySelectorAll('.request-checkbox:checked');
-    const bulkBar = document.getElementById('bulkActionsBar');
-    const countSpan = document.getElementById('selectedCount');
-    const selectAll = document.getElementById('selectAll');
-    
-    const count = checkboxes.length;
-    countSpan.textContent = `${count} selected`;
-    
-    if (count > 0) {
-        bulkBar.style.display = 'flex';
-    } else {
-        bulkBar.style.display = 'none';
-    }
-    
-    // Update selectAll checkbox state
-    const allCheckboxes = document.querySelectorAll('.request-checkbox');
-    selectAll.checked = allCheckboxes.length > 0 && allCheckboxes.length === count;
-}
-
-function bulkApprove() {
-    const checkboxes = document.querySelectorAll('.request-checkbox:checked');
-    const ids = Array.from(checkboxes).map(cb => cb.value);
-    
-    if (ids.length === 0) {
-        Toast.warning('Please select at least one enrollment request', 'Selection Required');
-        return;
-    }
-    
-    showConfirm({
-        type: 'success',
-        title: 'Bulk Approve Enrollments',
-        message: `Are you sure you want to approve ${ids.length} enrollment request(s)? Selected guests will be promoted to students.`,
-        confirmText: 'Approve All',
-        onConfirm: function() {
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = '{{ route('schools.admin.enrollments.bulkApprove', $school) }}';
-            
-            const csrf = document.createElement('input');
-            csrf.type = 'hidden';
-            csrf.name = '_token';
-            csrf.value = '{{ csrf_token() }}';
-            form.appendChild(csrf);
-            
-            ids.forEach(id => {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = 'enrollment_ids[]';
-                input.value = id;
-                form.appendChild(input);
-            });
-            
-            document.body.appendChild(form);
-            form.submit();
-        }
-    });
-}
-
-function bulkReject() {
-    const checkboxes = document.querySelectorAll('.request-checkbox:checked');
-    const ids = Array.from(checkboxes).map(cb => cb.value);
-    
-    if (ids.length === 0) {
-        Toast.warning('Please select at least one enrollment request', 'Selection Required');
-        return;
-    }
-
-    showConfirm({
-        type: 'danger',
-        title: 'Bulk Reject Enrollments',
-        message: `Are you sure you want to reject ${ids.length} enrollment request(s)?`,
-        confirmText: 'Continue',
-        onConfirm: function() {
-            // Using showConfirm instead of prompt for bulk rejection is better, but maybe we need a textarea modal
-            // For now, let's use a Toast error if they try to proceed without reason IF we can capture it.
-            // Actually, the current showConfirm doesn't support an input field.
-            // I'll suggest to the user that we should add a generic 'Input Modal' or just use the existing Reject Modal for multiple.
-            // But for now, I'll just change alert to Toast.
-            
-            const reason = prompt(`Enter rejection reason for ${ids.length} request(s):`);
-            if (!reason || !reason.trim()) {
-                if (reason !== null) Toast.error('Rejection reason is required');
-                return;
-            }
-
-            const remarks = reason.trim();
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = '{{ route('schools.admin.enrollments.bulkReject', $school) }}';
-
-            const csrf = document.createElement('input');
-            csrf.type = 'hidden';
-            csrf.name = '_token';
-            csrf.value = '{{ csrf_token() }}';
-            form.appendChild(csrf);
-
-            const remarksInput = document.createElement('input');
-            remarksInput.type = 'hidden';
-            remarksInput.name = 'remarks';
-            remarksInput.value = remarks;
-            form.appendChild(remarksInput);
-
-            ids.forEach(id => {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = 'enrollment_ids[]';
-                input.value = id;
-                form.appendChild(input);
-            });
-
-            document.body.appendChild(form);
-            form.submit();
-        }
-    });
-}
 
 // Prevent double-submit on modal forms (reject, cancel, license reject)
 ['rejectForm', 'cancelForm', 'licenseRejectForm'].forEach(function(formId) {
@@ -1469,5 +1423,257 @@ document.addEventListener('click', function(e) {
         menu.style.display = 'none';
     }
 });
+
+/**
+ * Unified Verification Modal Logic
+ */
+let currentEnrollmentId = null;
+
+function openVerificationModal(enrollmentId) {
+    currentEnrollmentId = enrollmentId;
+    const modal = document.getElementById('unifiedVerificationModal');
+    modal.style.display = 'flex';
+    
+    // Show loading state
+    document.getElementById('v-modal-loading').style.display = 'flex';
+    document.getElementById('v-modal-content').style.visibility = 'hidden';
+    
+    fetch(`{{ school_route('admin.enrollments.index') }}/api/${enrollmentId}`)
+        .then(res => res.json())
+        .then(data => {
+            // Update Info Sidebar
+            document.getElementById('v-student-name').textContent = data.student_name;
+            document.getElementById('v-course-title').textContent = data.course_title;
+            document.getElementById('v-price').textContent = '₱' + data.total_price;
+            document.getElementById('v-reference').textContent = data.reference_number || 'N/A';
+            
+            // Update Statuses in Panel Titles
+            updatePanelStatus('license', data.license_status);
+            updatePanelStatus('payment', data.payment_status);
+            
+            // Update Images
+            updatePanelImage('license', data.license_url, 'Student License');
+            updatePanelImage('payment', data.receipt_url, 'GCash Receipt');
+            
+            // Update Action Buttons Visibility
+            const verifyPayBtn = document.getElementById('v-btn-verify-payment');
+            const verifyLicBtn = document.getElementById('v-btn-verify-license');
+            
+            verifyPayBtn.style.display = (data.payment_status === 'pending_verification') ? 'block' : 'none';
+            verifyLicBtn.style.display = (data.license_status === 'pending') ? 'block' : 'none';
+            
+            // Show content
+            document.getElementById('v-modal-loading').style.display = 'none';
+            document.getElementById('v-modal-content').style.visibility = 'visible';
+        })
+        .catch(err => {
+            Toast.error('Failed to load enrollment details.');
+            closeVerificationModal();
+        });
+}
+
+function updatePanelStatus(type, status) {
+    const badge = document.getElementById(`v-${type}-status`);
+    badge.textContent = status.replace('_', ' ').toUpperCase();
+    
+    // Reset classes
+    badge.className = 'v-panel-status';
+    if (status === 'verified' || status === 'paid') badge.classList.add('bg-success', 'text-white');
+    else if (status === 'pending' || status === 'pending_verification') badge.classList.add('bg-warning', 'text-dark');
+    else badge.classList.add('bg-secondary', 'text-white');
+}
+
+function updatePanelImage(type, url, label) {
+    const viewer = document.getElementById(`v-${type}-viewer`);
+    if (url) {
+        viewer.innerHTML = `<img src="${url}" alt="${label}" class="img-fluid" onclick="window.open('${url}', '_blank')">`;
+    } else {
+        viewer.innerHTML = `<div class="v-empty-image"><svg class="icon-24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg><p>No image uploaded</p></div>`;
+    }
+}
+
+function closeVerificationModal() {
+    document.getElementById('unifiedVerificationModal').style.display = 'none';
+    currentEnrollmentId = null;
+}
+
+function verifyPaymentAjax() {
+    if (!currentEnrollmentId) return;
+    
+    const btn = document.getElementById('v-btn-verify-payment');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = 'Verifying...';
+    
+    const url = `{{ school_route('admin.enrollments.index') }}/api/${currentEnrollmentId}/verify-payment`;
+    
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            Toast.success(data.message);
+            updateTableRowStatus(currentEnrollmentId, 'payment', 'paid');
+            // If the message says "automatically approved", we should probably refresh or update status
+            closeVerificationModal();
+        } else {
+            Toast.error(data.message);
+        }
+    })
+    .catch(err => Toast.error('An error occurred during verification.'))
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    });
+}
+
+function verifyLicenseAjax() {
+    if (!currentEnrollmentId) return;
+    
+    const btn = document.getElementById('v-btn-verify-license');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = 'Verifying...';
+    
+    const url = `{{ school_route('admin.enrollments.index') }}/api/${currentEnrollmentId}/verify-license`;
+    
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            Toast.success(data.message);
+            updateTableRowStatus(currentEnrollmentId, 'license', 'verified');
+            closeVerificationModal();
+        } else {
+            Toast.error(data.message);
+        }
+    })
+    .catch(err => Toast.error('An error occurred during verification.'))
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    });
+}
+
+function updateTableRowStatus(id, type, status) {
+    const row = document.querySelector(`tr[data-request-id="${id}"]`);
+    if (!row) return;
+    
+    if (type === 'payment') {
+        const badge = row.querySelector('.payment-badge');
+        if (badge) {
+            badge.className = `payment-badge payment-${status}`;
+            badge.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+        }
+    } else if (type === 'license') {
+        const badge = row.querySelector('.license-badge');
+        if (badge) {
+            badge.className = `license-badge license-${status}`;
+            badge.textContent = 'License: ' + status.charAt(0).toUpperCase() + status.slice(1);
+        }
+        // Also hide the separate license verify/reject buttons in the table
+        const actions = row.querySelector('.license-actions');
+        if (actions) actions.style.display = 'none';
+    }
+}
+
+// Close unified modal when clicking outside
+document.getElementById('unifiedVerificationModal').addEventListener('click', function(e) {
+    if (e.target === this) closeVerificationModal();
+});
 </script>
+
+<!-- Unified Verification Modal -->
+<div id="unifiedVerificationModal" class="action-modal" style="display: none;">
+    <div class="verification-modal-card">
+        <div class="v-modal-header">
+            <h3 class="m-0 font-weight-bold" style="font-size: 1.1rem; color: #1e293b;">Verification Dashboard</h3>
+            <button type="button" onclick="closeVerificationModal()" class="btn-close" style="border:none;background:none;font-size:1.5rem;">&times;</button>
+        </div>
+        
+        <div id="v-modal-loading" style="display:none; flex:1; justify-content:center; align-items:center; flex-direction:column; gap:15px; background: #fff;">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="text-muted">Loading enrollment data...</p>
+        </div>
+
+        <div id="v-modal-content" class="v-modal-body">
+            <!-- Sidebar with Info -->
+            <div class="v-modal-sidebar">
+                <div class="mb-3">
+                    <div class="v-info-label">Learner Name</div>
+                    <div id="v-student-name" class="v-info-value">-</div>
+                </div>
+                <div class="mb-3">
+                    <div class="v-info-label">Enrolled Course</div>
+                    <div id="v-course-title" class="v-info-value">-</div>
+                </div>
+                <div class="mb-3">
+                    <div class="v-info-label">Total Amount</div>
+                    <div id="v-price" class="v-info-value">-</div>
+                </div>
+                <hr class="my-3">
+                <div class="mb-3">
+                    <div class="v-info-label">GCash Reference No.</div>
+                    <div id="v-reference" class="v-info-value" style="font-family: monospace; font-size: 1.1rem; color: #2563eb;">-</div>
+                </div>
+                <div class="mt-auto">
+                    <p class="text-muted small" style="line-height: 1.4;">
+                        <svg class="icon-14 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"></path></svg>
+                        Tip: Zoom into images to verify expiration dates or transaction timestamps.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Main Content: Images Side-by-Side -->
+            <div class="v-modal-content">
+                <!-- Panel 1: Student License -->
+                <div class="v-image-panel">
+                    <div class="v-panel-title">
+                        <span>Identity Document</span>
+                        <span id="v-license-status" class="v-panel-status">PENDING</span>
+                    </div>
+                    <div id="v-license-viewer" class="v-image-viewer">
+                        <!-- Image injected here -->
+                    </div>
+                </div>
+
+                <!-- Panel 2: GCash Receipt -->
+                <div class="v-image-panel">
+                    <div class="v-panel-title">
+                        <span>Payment Receipt</span>
+                        <span id="v-payment-status" class="v-panel-status">PENDING</span>
+                    </div>
+                    <div id="v-payment-viewer" class="v-image-viewer">
+                        <!-- Image injected here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sticky Footer for Actions -->
+        <div class="v-btn-group">
+            <button type="button" onclick="closeVerificationModal()" class="btn btn-secondary" style="background:#e2e8f0; color:#475569;">Close</button>
+            <div class="ms-auto d-flex gap-2">
+                <button type="button" id="v-btn-verify-license" class="btn btn-primary" onclick="verifyLicenseAjax()" style="display:none;">Verify License</button>
+                <button type="button" id="v-btn-verify-payment" class="btn btn-success" style="background: #10b981; border:none; display:none;" onclick="verifyPaymentAjax()">
+                    <svg class="icon-14 me-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    Confirm Payment
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection

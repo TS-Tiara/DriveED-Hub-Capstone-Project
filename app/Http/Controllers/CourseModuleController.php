@@ -25,7 +25,7 @@ class CourseModuleController extends Controller
     /**
      * Display a listing of modules for a specific course
      */
-    public function index(School $school, Course $course)
+    public function index(Request $request, School $school, Course $course)
     {
         $role = $this->resolveAuthRole();
         
@@ -44,13 +44,13 @@ class CourseModuleController extends Controller
             default => abort(403)
         };
         
-        return view($school->resolveView($viewPath), compact('school', 'course', 'modules'));
+        return view($school->resolveView($viewPath), compact('school', 'course', 'modules'))->with('isAjax', $request->ajax());
     }
 
     /**
      * Show the form for creating a new module
      */
-    public function create(School $school, Course $course)
+    public function create(Request $request, School $school, Course $course)
     {
         $role = $this->resolveAuthRole();
         
@@ -58,7 +58,7 @@ class CourseModuleController extends Controller
             abort(403);
         }
         
-        return view($school->resolveView('admin.modules.create'), compact('school', 'course'));
+        return view($school->resolveView('admin.modules.create'), compact('school', 'course'))->with('isAjax', $request->ajax());
     }
 
     /**
@@ -125,7 +125,7 @@ class CourseModuleController extends Controller
     /**
      * Display the specified module with its lessons
      */
-    public function show(School $school, Course $course, CourseModule $module)
+    public function show(Request $request, School $school, Course $course, CourseModule $module)
     {
         $role = $this->resolveAuthRole();
         
@@ -145,13 +145,13 @@ class CourseModuleController extends Controller
             default => abort(403)
         };
         
-        return view($school->resolveView($viewPath), compact('school', 'course', 'module'));
+        return view($school->resolveView($viewPath), compact('school', 'course', 'module'))->with('isAjax', $request->ajax());
     }
 
     /**
      * Show the form for editing the specified module
      */
-    public function edit(School $school, Course $course, CourseModule $module)
+    public function edit(Request $request, School $school, Course $course, CourseModule $module)
     {
         $role = $this->resolveAuthRole();
         
@@ -164,7 +164,7 @@ class CourseModuleController extends Controller
             abort(404);
         }
         
-        return view($school->resolveView('admin.modules.edit'), compact('school', 'course', 'module'));
+        return view($school->resolveView('admin.modules.edit'), compact('school', 'course', 'module'))->with('isAjax', $request->ajax());
     }
 
     /**

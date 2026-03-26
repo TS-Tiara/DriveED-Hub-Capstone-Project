@@ -35,7 +35,7 @@ class AdminController extends Controller
     // ==========================
     // DASHBOARD
     // ==========================
-    public function dashboard(School $school)
+    public function dashboard(Request $request, School $school)
     {
         try {
             $admin = Auth::guard('admin')->user();
@@ -158,6 +158,7 @@ class AdminController extends Controller
                 ->count();
 
             return view($school->resolveView('admin.dashboard'), [
+                'isAjax' => $request->ajax(),
                 'school' => $school,
                 'admin' => $admin,
                 'totalStudents' => $totalStudents,
@@ -688,7 +689,7 @@ class AdminController extends Controller
         return app(ReportController::class)->index($school, app(FinancialService::class));
     }
 
-    public function profile(School $school)
+    public function profile(Request $request, School $school)
     {
         $admin = Auth::guard('admin')->user();
         if (!$admin) {
@@ -696,6 +697,7 @@ class AdminController extends Controller
         }
 
         return view($school->resolveView('admin.profile'), [
+            'isAjax' => $request->ajax(),
             'school' => $school,
             'admin' => $admin,
         ]);
@@ -783,7 +785,7 @@ class AdminController extends Controller
     // INSTRUCTOR REMOVAL REQUESTS
     // ==========================
 
-    public function removalRequests(School $school)
+    public function removalRequests(Request $request, School $school)
     {
         $admin = Auth::guard('admin')->user();
         if (!$admin) {
@@ -814,6 +816,7 @@ class AdminController extends Controller
             ->count();
 
         return view($school->resolveView('admin.removal-requests'), [
+            'isAjax' => $request->ajax(),
             'school' => $school,
             'pendingRequests' => $pendingRequests,
             'processedRequests' => $processedRequests,
@@ -917,7 +920,7 @@ class AdminController extends Controller
     // ==========================
     // SCHOOL SETTINGS
     // ==========================
-    public function settings(School $school)
+    public function settings(Request $request, School $school)
     {
         $admin = Auth::guard('admin')->user();
         if (!$admin) {
@@ -933,6 +936,7 @@ class AdminController extends Controller
         $timezones = \DateTimeZone::listIdentifiers();
 
         return view($school->resolveView('admin.settings'), [
+            'isAjax' => $request->ajax(),
             'school' => $school,
             'gcashSetting' => $gcashSetting,
             'timezones' => $timezones,
@@ -1316,6 +1320,7 @@ class AdminController extends Controller
             ->get();
 
         return view($school->resolveView('admin.schedules'), [
+            'isAjax' => $request->ajax(),
             'school' => $school,
             'currentSchool' => $school,
             'timeslots' => $timeslots,
@@ -1605,7 +1610,7 @@ class AdminController extends Controller
 
         $courses = $query->paginate(10)->withQueryString();
 
-        return view($school->resolveView('admin.courses'), compact('school', 'courses'));
+        return view($school->resolveView('admin.courses'), array_merge(compact('school', 'courses'), ['isAjax' => $request->ajax()]));
     }
 
     /**

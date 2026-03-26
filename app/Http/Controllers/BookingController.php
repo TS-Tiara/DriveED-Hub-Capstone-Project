@@ -17,7 +17,7 @@ class BookingController extends Controller
     /**
      * Display a listing of bookings.
      */
-    public function index(School $school)
+    public function index(Request $request, School $school)
     {
         // Optimize query with selective column loading
         $query = Booking::where('school_id', $school->id)
@@ -75,13 +75,13 @@ class BookingController extends Controller
 
         // Only admin has bookings list view
         $view = 'admin.bookings';
-        return view($school->resolveView($view), compact('school', 'bookings', 'stats'));
+        return view($school->resolveView($view), array_merge(compact('school', 'bookings', 'stats'), ['isAjax' => $request->ajax()]));
     }
 
     /**
      * Show the form for creating a new booking.
      */
-    public function create(School $school)
+    public function create(Request $request, School $school)
     {
         // Get parameters from request
         $timeSlotId = request('time_slot_id');
@@ -116,7 +116,7 @@ class BookingController extends Controller
         $guard = Auth::guard('admin')->check() ? 'admin' : (Auth::guard('student')->check() ? 'student' : 'instructor');
         $view = "{$guard}.booking-create";
         
-        return view($school->resolveView($view), compact(
+        return view($school->resolveView($view), array_merge(compact(
             'school', 
             'courses', 
             'instructors', 
@@ -124,7 +124,7 @@ class BookingController extends Controller
             'timeSlot', 
             'instructorParam', 
             'instructorId'
-        ));
+        ), ['isAjax' => $request->ajax()]));
     }
 
     /**
