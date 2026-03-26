@@ -13,7 +13,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Detect if we are running on Hostinger with a split 'laravel_app' vs 'public_html' structure
+        // If index.php is in public_html and base path is ../laravel_app, we need to fix public_path()
+        if (basename(base_path()) === 'laravel_app') {
+            $this->app->usePublicPath(realpath(base_path('../public_html')));
+        }
     }
 
     /**

@@ -406,6 +406,14 @@
     .export-actions {
         display: flex;
         gap: 10px;
+        margin-left: auto;
+    }
+
+    .btn-icon-sm {
+        width: 16px;
+        height: 16px;
+        display: inline-block;
+        vertical-align: middle;
     }
 
     .export-menu-wrap {
@@ -413,11 +421,13 @@
     }
 
     .export-btn {
-        padding: 8px 16px;
+        padding: 6px 14px;
         background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
         display: flex;
         align-items: center;
         gap: 8px;
+        height: 40px;
+        font-size: 0.9rem;
     }
 
     .export-menu {
@@ -809,10 +819,27 @@
 
 <div class="enrollment-requests-container">
     <!-- Page Header -->
-    <div class="page-header">
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
         <div>
             <h1 class="page-title">Manage Enrollments</h1>
             <p class="page-subtitle">View and manage all enrollment requests and active student enrollments</p>
+        </div>
+        <div class="export-menu-wrap">
+            <button type="button" class="btn btn-primary export-btn" onclick="toggleExportMenu()">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="btn-icon-sm">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                </svg>
+                Export PDF
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="14" height="14">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+            </button>
+            <div id="exportMenu" class="export-menu">
+                <a href="{{ route('schools.admin.exports.enrollments.pdf', ['school' => $school->slug]) }}" class="export-menu-link">All Enrollments</a>
+                <a href="{{ route('schools.admin.exports.enrollments.pdf', ['school' => $school->slug, 'status' => 'pending']) }}" class="export-menu-link with-border">Pending Only</a>
+                <a href="{{ route('schools.admin.exports.enrollments.pdf', ['school' => $school->slug, 'status' => 'approved']) }}" class="export-menu-link with-border">Active Only</a>
+                <a href="{{ route('schools.admin.exports.enrollments.pdf', ['school' => $school->slug, 'status' => 'completed']) }}" class="export-menu-link with-border">Completed Only</a>
+            </div>
         </div>
     </div>
 
@@ -933,33 +960,6 @@
         </div>
     </div>
     
-            <div class="export-menu-wrap">
-                <button type="button" class="btn btn-primary export-btn" onclick="toggleExportMenu()">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="btn-icon-sm">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-                    </svg>
-                    Export PDF
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="14" height="14">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                    </svg>
-                </button>
-                <div id="exportMenu" class="export-menu">
-                    <a href="{{ route('schools.admin.exports.enrollments.pdf', ['school' => $school->slug]) }}" class="export-menu-link">
-                        All Enrollments
-                    </a>
-                    <a href="{{ route('schools.admin.exports.enrollments.pdf', ['school' => $school->slug, 'status' => 'pending']) }}" class="export-menu-link with-border">
-                        Pending Only
-                    </a>
-                    <a href="{{ route('schools.admin.exports.enrollments.pdf', ['school' => $school->slug, 'status' => 'approved']) }}" class="export-menu-link with-border">
-                        Active Only
-                    </a>
-                    <a href="{{ route('schools.admin.exports.enrollments.pdf', ['school' => $school->slug, 'status' => 'completed']) }}" class="export-menu-link with-border">
-                        Completed Only
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
     
     @if($allRequests->count() > 0)
         <div class="table-container">
@@ -982,32 +982,10 @@
                     <tr data-status="{{ $request->status }}" data-request-id="{{ $request->id }}" data-branch="{{ $request->branchRelation?->name ?? '' }}">
                         <td>
                             <div class="learner-info">
-                                <div class="learner-name" style="cursor: pointer; color: {{ $primaryColor }};" onclick="openVerificationModal({{ $request->id }})">
+                                <div class="learner-name" style="color: #374151;">
                                     {{ $request->learner->name }}
                                 </div>
                                 <div class="learner-email">{{ $request->learner->email }}</div>
-                                @php $licenseStatus = $request->learner->student_license_status ?? 'none'; @endphp
-                                <div>
-                                    <span class="license-badge license-{{ $licenseStatus }}">
-                                        License: {{ $licenseStatus === 'none' ? 'No License' : ucfirst($licenseStatus) }}
-                                    </span>
-                                </div>
-                                @if($licenseStatus === 'pending')
-                                    <div class="license-actions">
-                                        <button type="button" class="btn-license-view" onclick="showLicensePreviewModal('{{ route('schools.admin.enrollments.viewLicense', ['school' => $school, 'student' => $request->learner->id]) }}', '{{ addslashes($request->learner->name) }}')">View</button>
-                                        <form method="POST" action="{{ route('schools.admin.enrollments.verifyLicense', ['school' => $school, 'student' => $request->learner->id]) }}" style="display:inline;">
-                                            @csrf
-                                            <button type="button" class="btn-license-verify" onclick="showConfirm({title:'Verify License',message:'Verify this student\'s license?',type:'success',onConfirm:()=>this.closest('form').submit()})">&#10003; Verify</button>
-                                        </form>
-                                        <button type="button" class="btn-license-reject" onclick="showLicenseRejectModal({{ $request->learner->id }}, '{{ addslashes($request->learner->name) }}')">&#10005; Reject</button>
-                                    </div>
-                                @elseif($licenseStatus === 'verified')
-                                    @if($request->learner->student_license_path || $request->learner->student_license_data)
-                                        <div class="license-actions">
-                                            <button type="button" class="btn-license-view" onclick="showLicensePreviewModal('{{ route('schools.admin.enrollments.viewLicense', ['school' => $school, 'student' => $request->learner->id]) }}', '{{ addslashes($request->learner->name) }}')">View License</button>
-                                        </div>
-                                    @endif
-                                @endif
                             </div>
                         </td>
                         <td>
@@ -1033,13 +1011,9 @@
                             </span>
                         </td>
                         <td>
-                            <a href="{{ school_route('admin.payments.index', ['enrollment_id' => $request->id]) }}" 
-                               class="payment-badge payment-{{ $request->payment_status }} hover:opacity-80 transition-opacity"
-                               @if($request->payment_status === 'pending_verification') 
-                               onclick="openVerificationModal({{ $request->id }}); return false;" 
-                               @endif>
+                            <span class="payment-badge payment-{{ $request->payment_status }}">
                                 {{ ucfirst(str_replace('_', ' ', $request->payment_status)) }}
-                            </a>
+                            </span>
                         </td>
                         <td>
                             <div class="date-text">
@@ -1048,8 +1022,15 @@
                             </div>
                         </td>
                         <td>
-                            @if($request->status === 'pending')
-                                <div class="action-buttons">
+                            <div class="action-buttons">
+                                @if(in_array($request->status, ['pending', 'approved']))
+                                    <button type="button" class="btn btn-view" onclick="openVerificationModal({{ $request->id }})" title="Review Enrollment Verification">
+                                        <svg class="icon-14 me-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                                        {{ $request->status === 'pending' ? 'Review & Verify' : 'View Record' }}
+                                    </button>
+                                @endif
+
+                                @if($request->status === 'pending')
                                     <form method="POST" action="{{ route('schools.admin.enrollments.approve', ['school' => $school, 'enrollmentRequest' => $request->id]) }}" class="inline-form" id="approveForm{{ $request->id }}">
                                         @csrf
                                         <button type="button" class="btn btn-approve" onclick="approveRequest({{ $request->id }})">
@@ -1059,9 +1040,7 @@
                                     <button class="btn btn-reject" onclick="showRejectModal({{ $request->id }})">
                                         &#10005; Reject
                                     </button>
-                                </div>
-                            @elseif($request->status === 'approved')
-                                <div class="action-buttons">
+                                @elseif($request->status === 'approved')
                                     <form method="POST" action="{{ route('schools.admin.enrollments.complete', ['school' => $school, 'enrollmentRequest' => $request->id]) }}" class="inline-form" id="completeForm{{ $request->id }}">
                                         @csrf
                                         <button type="button" class="btn btn-approve" onclick="completeEnrollment({{ $request->id }})">
@@ -1071,21 +1050,18 @@
                                     <button class="btn btn-reject" onclick="showCancelModal({{ $request->id }})">
                                         &#10005; Cancel
                                     </button>
-                                </div>
-                            @else
-                                <span class="status-muted">
-                                    {{ ucfirst($request->status) }}
-                                    @if($request->approved_at)
-                                        <br><small>{{ $request->approved_at->format('M d, Y') }}</small>
-                                    @endif
-                                    @if($request->completed_at)
-                                        <br><small>{{ $request->completed_at->format('M d, Y') }}</small>
-                                    @endif
-                                    @if($request->cancelled_at)
-                                        <br><small>{{ $request->cancelled_at->format('M d, Y') }}</small>
-                                    @endif
-                                </span>
-                            @endif
+                                @else
+                                    <span class="status-muted">
+                                        {{ ucfirst($request->status) }}
+                                        @if($request->approved_at)
+                                            <br><small>{{ $request->approved_at->format('M d, Y') }}</small>
+                                        @endif
+                                        @if($request->completed_at)
+                                            <br><small>{{ $request->completed_at->format('M d, Y') }}</small>
+                                        @endif
+                                    </span>
+                                @endif
+                            </div>
                         </td>
                     </tr>
                 @endforeach
@@ -1098,14 +1074,10 @@
         <div class="mobile-card" data-status="{{ $request->status }}" data-request-id="{{ $request->id }}" data-branch="{{ $request->branchRelation?->name ?? '' }}">
             <div class="mobile-card-header">
                 <div>
-                    <strong class="mobile-learner-name" style="cursor: pointer; color: {{ $primaryColor }};" onclick="openVerificationModal({{ $request->id }})">
+                    <strong class="mobile-learner-name" style="color: #374151;">
                         {{ $request->learner->name }}
                     </strong>
                     <div class="mobile-learner-email">{{ $request->learner->email }}</div>
-                    @php $licenseStatus = $request->learner->student_license_status ?? 'none'; @endphp
-                    <span class="license-badge license-{{ $licenseStatus }} license-badge-inline">
-                        License: {{ $licenseStatus === 'none' ? 'No License' : ucfirst($licenseStatus) }}
-                    </span>
                 </div>
                 <span class="status-badge status-{{ $request->status }}">{{ ucfirst($request->status) }}</span>
             </div>
@@ -1123,10 +1095,7 @@
             </div>
             <div class="mobile-card-row">
                 <span class="mobile-card-label">Payment</span>
-                <span class="payment-badge payment-{{ $request->payment_status }}"
-                      @if($request->payment_status === 'pending_verification') 
-                      onclick="openVerificationModal({{ $request->id }})" 
-                      @endif>
+                <span class="payment-badge payment-{{ $request->payment_status }}">
                     {{ ucfirst(str_replace('_', ' ', $request->payment_status)) }}
                 </span>
             </div>
@@ -1134,21 +1103,24 @@
                 <span class="mobile-card-label">Date</span>
                 <span class="mobile-card-value">{{ $request->created_at->timezone($school->timezone ?? 'Asia/Manila')->format('M d, Y h:i A') }}</span>
             </div>
-            @if($request->status === 'pending')
+            @if(in_array($request->status, ['pending', 'approved']))
                 <div class="mobile-card-actions">
-                    <form method="POST" action="{{ route('schools.admin.enrollments.approve', ['school' => $school, 'enrollmentRequest' => $request->id]) }}" class="contents-form" id="mobileApproveForm{{ $request->id }}">
-                        @csrf
-                        <button type="button" class="btn btn-approve" onclick="document.getElementById('approveForm{{ $request->id }}').submit()">&#10003; Approve</button>
-                    </form>
-                    <button class="btn btn-reject" onclick="showRejectModal({{ $request->id }})">&#10005; Reject</button>
-                </div>
-            @elseif($request->status === 'approved')
-                <div class="mobile-card-actions">
-                    <form method="POST" action="{{ route('schools.admin.enrollments.complete', ['school' => $school, 'enrollmentRequest' => $request->id]) }}" class="contents-form" id="mobileCompleteForm{{ $request->id }}">
-                        @csrf
-                        <button type="button" class="btn btn-approve" onclick="completeEnrollment({{ $request->id }})">&#10003; Complete</button>
-                    </form>
-                    <button class="btn btn-reject" onclick="showCancelModal({{ $request->id }})">&#10005; Cancel</button>
+                    <button type="button" class="btn btn-view" onclick="openVerificationModal({{ $request->id }})">
+                        {{ $request->status === 'pending' ? 'Review & Verify' : 'View Record' }}
+                    </button>
+                    @if($request->status === 'pending')
+                        <form method="POST" action="{{ route('schools.admin.enrollments.approve', ['school' => $school, 'enrollmentRequest' => $request->id]) }}" class="contents-form" id="mobileApproveForm{{ $request->id }}">
+                            @csrf
+                            <button type="button" class="btn btn-approve" onclick="document.getElementById('approveForm{{ $request->id }}').submit()">&#10003; Approve</button>
+                        </form>
+                        <button class="btn btn-reject" onclick="showRejectModal({{ $request->id }})">&#10005; Reject</button>
+                    @else
+                        <form method="POST" action="{{ route('schools.admin.enrollments.complete', ['school' => $school, 'enrollmentRequest' => $request->id]) }}" class="contents-form">
+                            @csrf
+                            <button type="button" class="btn btn-approve" onclick="completeEnrollment({{ $request->id }})">&#10003; Complete</button>
+                        </form>
+                        <button class="btn btn-reject" onclick="showCancelModal({{ $request->id }})">&#10005; Cancel</button>
+                    @endif
                 </div>
             @endif
         </div>
@@ -1465,10 +1437,17 @@ function openVerificationModal(enrollmentId) {
             // Show content
             document.getElementById('v-modal-loading').style.display = 'none';
             document.getElementById('v-modal-content').style.visibility = 'visible';
+            document.getElementById('v-modal-content').style.display = 'flex';
         })
         .catch(err => {
-            Toast.error('Failed to load enrollment details.');
-            closeVerificationModal();
+            document.getElementById('v-modal-loading').innerHTML = `
+                <div class="text-danger text-center p-4">
+                    <svg class="icon-24 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <p class="font-weight-bold">Error Loading Data</p>
+                    <p class="small">The record might be missing or there was a connection error.</p>
+                </div>
+            `;
+            setTimeout(closeVerificationModal, 3000);
         });
 }
 
@@ -1488,7 +1467,7 @@ function updatePanelImage(type, url, label) {
     if (url) {
         viewer.innerHTML = `<img src="${url}" alt="${label}" class="img-fluid" onclick="window.open('${url}', '_blank')">`;
     } else {
-        viewer.innerHTML = `<div class="v-empty-image"><svg class="icon-24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg><p>No image uploaded</p></div>`;
+        viewer.innerHTML = `<div class="v-empty-image"><svg class="icon-24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg><p>No Document Found</p></div>`;
     }
 }
 

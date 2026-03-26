@@ -668,25 +668,25 @@ class AdminController extends Controller
     /**
      * Student reports - delegates to unified analytics dashboard
      */
-    public function studentReports(School $school)
+    public function studentReports(Request $request, School $school)
     {
-        return app(ReportController::class)->index($school, app(FinancialService::class));
+        return app(ReportController::class)->index($request, $school, app(FinancialService::class));
     }
 
     /**
      * Instructor reports - delegates to unified analytics dashboard
      */
-    public function instructorReports(School $school)
+    public function instructorReports(Request $request, School $school)
     {
-        return app(ReportController::class)->index($school, app(FinancialService::class));
+        return app(ReportController::class)->index($request, $school, app(FinancialService::class));
     }
 
     /**
      * Logs/system reports - delegates to unified analytics dashboard
      */
-    public function logs(School $school)
+    public function logs(Request $request, School $school)
     {
-        return app(ReportController::class)->index($school, app(FinancialService::class));
+        return app(ReportController::class)->index($request, $school, app(FinancialService::class));
     }
 
     public function profile(Request $request, School $school)

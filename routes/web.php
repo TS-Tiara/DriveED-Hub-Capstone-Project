@@ -154,6 +154,7 @@ Route::prefix('{school:slug}')
                     Route::get('/license/{student}', [\App\Http\Controllers\StorageController::class, 'streamLicense'])->name('storage.license');
                     Route::get('/credential/{enrollment}', [\App\Http\Controllers\StorageController::class, 'streamCredential'])->name('storage.credential');
                     Route::get('/gcash-qr/{gcashSetting}', [\App\Http\Controllers\StorageController::class, 'streamGcashQr'])->name('storage.gcash-qr');
+                    Route::get('/receipt', [\App\Http\Controllers\StorageController::class, 'streamReceipt'])->name('storage.receipt');
                 });
             }
             );

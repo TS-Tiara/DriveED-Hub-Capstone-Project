@@ -19,7 +19,7 @@ class ReceiptStorageService
         $filename = "{$hash}_{$timestamp}.{$extension}";
         
         // Store on private disk
-        $path = $file->storeAs("receipts/{$schoolId}", $filename, 'private');
+        $path = $file->storeAs("receipts/{$schoolId}", $filename, 'local');
         
         return $path;
     }
@@ -31,8 +31,10 @@ class ReceiptStorageService
     {
         if (!$path) return null;
         
-        return Storage::disk('private')->temporaryUrl(
-            $path, now()->addMinutes(15)
-        );
+        // Use our secure streaming route instead of cloud-only temporaryUrl
+        return route('schools.guest.storage.receipt', [
+            'school' => request()->route('school') ?? 'default', 
+            'path' => $path
+        ]);
     }
 }
