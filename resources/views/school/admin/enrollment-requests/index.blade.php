@@ -1280,7 +1280,7 @@ function approveRequest(requestId) {
     showConfirm({
         type: 'success',
         title: 'Approve Enrollment',
-        message: 'Are you sure you want to approve this enrollment request? Note: The student role will be promoted automatically once their first payment is verified.',
+        message: 'Are you sure you want to approve this enrollment? The student role will be promoted to Student immediately.',
         confirmText: 'Approve',
         onConfirm: function() {
             document.getElementById('approveForm' + requestId).submit();
@@ -1431,7 +1431,7 @@ function openVerificationModal(enrollmentId) {
             const verifyPayBtn = document.getElementById('v-btn-verify-payment');
             const verifyLicBtn = document.getElementById('v-btn-verify-license');
             
-            verifyPayBtn.style.display = (data.payment_status === 'pending_verification') ? 'block' : 'none';
+            verifyPayBtn.style.display = (data.payment_status === 'pending') ? 'block' : 'none';
             verifyLicBtn.style.display = (data.license_status === 'pending') ? 'block' : 'none';
             
             // Show content
@@ -1458,7 +1458,7 @@ function updatePanelStatus(type, status) {
     // Reset classes
     badge.className = 'v-panel-status';
     if (status === 'verified' || status === 'paid') badge.classList.add('bg-success', 'text-white');
-    else if (status === 'pending' || status === 'pending_verification') badge.classList.add('bg-warning', 'text-dark');
+    else if (status === 'pending') badge.classList.add('bg-warning', 'text-dark');
     else badge.classList.add('bg-secondary', 'text-white');
 }
 

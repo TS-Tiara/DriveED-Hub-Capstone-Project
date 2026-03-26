@@ -83,7 +83,7 @@
             </ul>
 
             <center>
-                <a href="{{ url($school->slug . '/student/schedule') }}" class="button">View My Schedule</a>
+                <a href="{{ route('schools.student.schedule', ['school' => $school]) }}" class="button">View My Schedule</a>
             </center>
 
             <p style="color: #6b7280; font-size: 14px; margin-top: 25px;">
