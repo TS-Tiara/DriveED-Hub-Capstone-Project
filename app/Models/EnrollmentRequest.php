@@ -40,6 +40,10 @@ class EnrollmentRequest extends Model
         'theoretical_pass_notes',
         // New enrollment fields
         'package_id',
+        'price',
+        'payment_method',
+        'payment_reference',
+        'payment_proof_path',
     ];
 
     protected function casts(): array
@@ -53,6 +57,7 @@ class EnrollmentRequest extends Model
             'theoretical_passed' => 'boolean',
             'theoretical_passed_at' => 'datetime',
             'payment_confirmed_at' => 'datetime',
+            'price' => 'decimal:2',
         ];
     }
 

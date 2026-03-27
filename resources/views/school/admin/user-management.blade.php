@@ -255,9 +255,13 @@
         font-weight: 500;
     }
 
-    .role-student {
+    .role-student, .role-guest {
         background: var(--role-student-bg);
         color: var(--role-student-text);
+    }
+
+    .role-guest {
+        border: 1px dashed var(--role-student-text);
     }
 
     .role-instructor {
@@ -985,7 +989,7 @@
                             </td>
                             <td class="actions-cell">
                                 <div class="actions-group">
-                                @if($user->role === 'student')
+                                @if($user->role === 'student' || $user->role === 'guest')
                                     <button class="btn-action btn-edit" data-action="edit-student" data-id="{{ $user->id }}" data-name="{{ $user->name }}" data-email="{{ $user->email }}" data-contact="{{ $user->contact }}" data-address="{{ $user->address }}" data-branch="{{ $user->branch_id }}">Edit</button>
                                     <button class="btn-action btn-toggle" data-action="toggle-student-status" data-id="{{ $user->id }}" data-status="{{ $user->status }}">
                                         {{ $user->status === 'active' ? 'Deactivate' : 'Activate' }}

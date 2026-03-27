@@ -3019,12 +3019,22 @@
             // Add active class to current nav item
             document.querySelectorAll('.nav-item').forEach(item => {
                 const href = item.getAttribute('href');
-                if (!href) {
-                    return;
-                }
+                if (!href) return;
 
                 const navPath = normalizePath(href);
-                const isCurrent = navPath === currentPath || (currentPath.startsWith(navPath + '/') && navPath !== '/');
+                
+                // Special handling for dashboard links to prevent them from matching all sub-pages
+                // Dashboard links typically end in /admin, /instructor, /student, or /guest
+                const isDashboardLink = navPath.match(/\/(admin|instructor|student|guest)$/);
+                
+                let isCurrent = false;
+                if (isDashboardLink) {
+                    // Dashboard is active ONLY for the exact root path or the explicit /dashboard path
+                    isCurrent = (navPath === currentPath || currentPath === navPath + '/dashboard');
+                } else {
+                    // Other items use prefix matching for sub-pages
+                    isCurrent = (navPath === currentPath || (currentPath.startsWith(navPath + '/') && navPath !== '/'));
+                }
 
                 if (isCurrent) {
                     item.classList.add('active');
