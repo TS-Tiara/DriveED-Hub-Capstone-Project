@@ -1090,9 +1090,15 @@
                             </span>
                         </td>
                         <td>
-                            <span class="payment-badge payment-{{ $request->payment_status }}">
-                                {{ ucfirst(str_replace('_', ' ', $request->payment_status)) }}
-                            </span>
+                            @if($request->payment_status === 'pending' && empty($request->payment_proof_path) && (str_contains(strtolower($request->remarks ?? ''), 'reject') || $request->payments()->where('status', 'rejected')->exists()))
+                                <span class="payment-badge payment-rejected" title="{{ $request->remarks }}">
+                                    Rejected
+                                </span>
+                            @else
+                                <span class="payment-badge payment-{{ $request->payment_status }}">
+                                    {{ ucfirst(str_replace('_', ' ', $request->payment_status)) }}
+                                </span>
+                            @endif
                         </td>
                         <td>
                             <div class="date-text">
@@ -1157,9 +1163,15 @@
             </div>
             <div class="mobile-card-row">
                 <span class="mobile-card-label">Payment</span>
-                <span class="payment-badge payment-{{ $request->payment_status }}">
-                    {{ ucfirst(str_replace('_', ' ', $request->payment_status)) }}
-                </span>
+                @if($request->payment_status === 'pending' && empty($request->payment_proof_path) && (str_contains(strtolower($request->remarks ?? ''), 'reject') || $request->payments()->where('status', 'rejected')->exists()))
+                    <span class="payment-badge payment-rejected" title="{{ $request->remarks }}">
+                        Rejected
+                    </span>
+                @else
+                    <span class="payment-badge payment-{{ $request->payment_status }}">
+                        {{ ucfirst(str_replace('_', ' ', $request->payment_status)) }}
+                    </span>
+                @endif
             </div>
             <div class="mobile-card-row">
                 <span class="mobile-card-label">Date</span>
