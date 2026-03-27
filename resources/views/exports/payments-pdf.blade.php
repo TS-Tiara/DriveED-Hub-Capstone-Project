@@ -34,7 +34,7 @@
 
     <div class="info-box">
         <strong>Total Payments:</strong> {{ $payments->count() }} |
-        <strong>Total Revenue:</strong> ₱{{ number_format($payments->where('status', 'completed')->sum('amount'), 2) }}
+        <strong>Total Revenue:</strong> ₱{{ number_format($payments->whereIn('status', ['completed', 'paid'])->sum('amount'), 2) }}
     </div>
 
     <table style="margin: 15px 0; width: 100%;">

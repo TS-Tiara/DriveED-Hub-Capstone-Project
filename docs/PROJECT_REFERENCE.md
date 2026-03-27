@@ -1,7 +1,7 @@
 # DriveED Hub - Project Reference Guide
 
-**Last Updated:** January 29, 2026  
-**Deadline:** February 20, 2026  
+**Last Updated:** March 27, 2026  
+**Status:** Stabilized (Post-Audit March Rework)  
 **Purpose:** Quick reference for database structure, accounts, views, and development preferences
 
 ---
@@ -10,33 +10,21 @@
 
 | Table Name | Primary Purpose | Key Fields |
 |------------|-----------------|------------|
-| `users` | Laravel default (not used) | id, name, email, password |
-| `schools` | Multi-tenant schools | id, name, slug, timezone, branding (json), settings (json) |
-| `school_settings` | School UI customization | school_id, primary_color, secondary_color, login_* fields |
-| `admins` | Admin users | school_id (null=system), name, email, password, role, failed_login_attempts, locked_until |
-| `instructors` | Instructor users | school_id, name, email, password, license_number, status, availability, failed_login_attempts, locked_until |
-| `students` | Students & Guests | school_id, name, email, password, role (guest/student), status, failed_login_attempts, locked_until |
-| `courses` | Available courses | school_id, title, type (theoretical/practical), price, duration_hours, status |
-| `course_packages` | Course bundles | course_id, name, price, features |
-| `course_modules` | LMS modules | course_id, title, order |
-| `module_lessons` | LMS lessons | module_id, title, content, order |
-| `enrollment_requests` | Course enrollments | school_id, learner_id, course_id, status, theoretical_passed |
-| `enrollments` | Legacy (deprecated) | Use enrollment_requests instead |
-| `session_completions` | Driving sessions | enrollment_id, instructor_id, session_type, hours_completed, start_time, end_time, status |
+| `schools` | Multi-tenant schools | id, name, slug, branding (json), settings (json) |
+| `branches` | School subsidiaries | school_id, name, slug, address, is_active |
+| `admins` | Admin users | school_id, branch_id (null=school admin), name, email, is_active |
+| `instructors` | Instructor users | school_id, name, email, license_number, status, availability |
+| `students` | Students & Guests | school_id, branch_id, name, email, role (guest/student), is_active |
+| `courses` | Available courses | school_id, title, course_type, license_type, price, status |
+| `course_packages` | Course bundles | course_id, name, price, sort_order |
+| `enrollment_requests` | Course enrollments | school_id, learner_id, course_id, status, payment_status, price |
 | `bookings` | Schedule bookings | school_id, student_id, instructor_id, slot_id, status |
-| `time_slots` | Available time slots | school_id, date, start_time, end_time, capacity |
-| `schedule_instructors` | Instructor assignments | time_slot_id, instructor_id, assignment_type |
-| `payments` | Payment records | school_id, student_id, amount, status, payment_method |
-| `progresses` | Student progress | student_id, instructor_id, description, rating |
-| `reports` | Generated reports | school_id, type, data |
+| `payments` | **Read-Only Ledger** | school_id, payer_user_id, amount, method, status, reference |
+| `gcash_settings` | GCash Credentials | school_id, branch_id, gcash_number, qr_path, is_active |
+| `payment_status_logs` | Forensic Audit | payment_id, status, action_by_admin_id, notes |
+| `session_completions` | Driving sessions | enrollment_id, instructor_id, hours_completed, status |
+| `progresses` | Student performance | student_id, instructor_id, description, rating (1-5) |
 | `logs` | Activity logs | school_id, action, description, user_type, user_id |
-| `system_logs` | System-wide logs | message, level, category, school_id, action |
-| `instructor_removal_requests` | Removal requests | instructor_id, reason, status |
-| `registration_requests` | Legacy registrations | Deprecated |
-| `password_reset_tokens` | Password resets | email, token, user_type, school_id |
-| `cache` | Laravel cache | key, value, expiration |
-| `jobs` | Laravel queue | payload, attempts |
-| `sessions` | Laravel sessions | user_id, payload, last_activity |
 
 ---
 
@@ -52,11 +40,11 @@
 | `users.blade.php` | All Users | `/system-admin/users` |
 | `students.blade.php` | All Students | `/system-admin/students` |
 | `instructors.blade.php` | All Instructors | `/system-admin/instructors` |
-| `courses.blade.php` | All Courses | `/system-admin/courses` |
-| `bookings.blade.php` | All Bookings | `/system-admin/bookings` |
-| `payments.blade.php` | All Payments | `/system-admin/payments` |
-| `logs.blade.php` | System Logs | `/system-admin/logs` |
-| `log-detail.blade.php` | Log Detail | `/system-admin/logs/{id}` |
+| `index.blade.php` | All Schools | `/system-admin/schools` |
+| `admins.blade.php` | All Admins | `/system-admin/admins` |
+| `users.blade.php` | All Users | `/system-admin/users` |
+| `logs/index.blade.php` | System Logs | `/system-admin/logs` |
+| `logs/show.blade.php` | Log Detail | `/system-admin/logs/{id}` |
 
 ### School Admin Views (`resources/views/school/admin/`)
 | File | Page Title | URL Pattern |
@@ -65,15 +53,13 @@
 | `user-management.blade.php` | User Management | `/{school}/admin/user-management` |
 | `courses.blade.php` | Courses | `/{school}/admin/courses` |
 | `schedules.blade.php` | Schedules | `/{school}/admin/schedules` |
-| `bookings.blade.php` | Bookings | `/{school}/admin/bookings` |
-| `payments.blade.php` | Payments | `/{school}/admin/payments` |
+| `bookings/index.blade.php` | Bookings | `/{school}/admin/bookings` |
+| `payments/index.blade.php` | Payments | `/{school}/admin/payments` |
 | `settings.blade.php` | School Settings | `/{school}/admin/settings` |
-| `profile.blade.php` | Admin Profile | `/{school}/admin/profile` |
-| `progress.blade.php` | Student Progress | `/{school}/admin/progress` |
-| `removal-requests.blade.php` | Removal Requests | `/{school}/admin/removal-requests` |
-| `enrollment-requests/*.blade.php` | Enrollment Management | `/{school}/admin/enrollments` |
-| `theoretical/*.blade.php` | Theoretical Management | `/{school}/admin/theoretical` |
-| `reports/*.blade.php` | Reports | `/{school}/admin/reports` |
+| `branches/index.blade.php` | Branches | `/{school}/admin/branches` |
+| `enrollments/index.blade.php` | Enrollments | `/{school}/admin/enrollments` |
+| `theoretical/index.blade.php` | Theoretical | `/{school}/admin/theoretical` |
+| `reports/index.blade.php` | Reports | `/{school}/admin/reports` |
 
 ### Instructor Views (`resources/views/school/instructor/`)
 | File | Page Title | URL Pattern |
@@ -115,7 +101,7 @@
 |------|------------|-------------|
 | `login.blade.php` | School Login | `/{school}/login` |
 | `register.blade.php` | Register | `/{school}/register` |
-| `verify-email.blade.php` | Verify Email | `/{school}/verify-email` |
+| `verify-email.blade.php` | OTP Verification | `/{school}/verify-email` |
 | `password/forgot.blade.php` | Forgot Password | `/{school}/forgot-password` |
 | `password/reset.blade.php` | Reset Password | `/{school}/reset-password/{token}` |
 
@@ -207,21 +193,14 @@ timestamps
 ```php
 id                    // bigint primary key
 school_id             // foreign key, nullable (null = system admin)
+branch_id             // foreign key, nullable (Branch Secretary scope)
 name                  // string
-email                 // string, unique (globally unique)
+email                 // string, unique (globally unique for admins)
 password              // string (hashed)
-contact               // string(20), nullable
-profile_picture       // string, nullable
 role                  // string, default 'school_admin'
 is_active             // boolean, default true
-remember_token        // string
 timestamps
 ```
-
-**Key Points:**
-- `school_id` NULL = System Admin (cross-school access)
-- `school_id` set = School Admin (single school)
-- Email is globally unique (not per-school)
 
 ---
 
@@ -232,17 +211,11 @@ school_id                // foreign key, required
 name                     // string
 email                    // string
 password                 // string (hashed)
-contact                  // string, nullable
 license_number           // string, nullable
-bio                      // text, nullable
-profile_picture          // string, nullable
 status                   // string, default 'active'
-course_specializations   // json, nullable
 availability             // enum('available', 'unavailable'), default 'available'
-remember_token           // string
+profile_picture          // string, nullable
 timestamps
-
-UNIQUE: (school_id, email) // Email unique per school
 ```
 
 ---
@@ -251,29 +224,40 @@ UNIQUE: (school_id, email) // Email unique per school
 ```php
 id                    // bigint primary key
 school_id             // foreign key, required
+branch_id             // foreign key, nullable
 name                  // string
 email                 // string
 password              // string (hashed)
 contact               // string, nullable
 address               // string, nullable
-branch                // string, nullable
 location              // string, nullable
 profile_picture       // string, nullable
-status                // string, default 'active'
 role                  // enum('guest', 'student'), default 'guest'
-enrollment_date       // date, nullable
-remember_token        // string
+is_active             // boolean, default true
+status                // string, default 'active'
+
+// Student License (Forensic Documents)
+student_license_path             // string, path to uploaded file
+student_license_status           // string (pending, verified, rejected)
+student_license_verified_by      // foreignId to admins
+student_license_verified_at      // timestamp
+
+// Progress Tracking
+has_passed_theoretical           // boolean, default false
+theoretical_passed_at            // timestamp
+active_enrollment_id             // foreignId to enrollment_requests
+is_course_locked                 // boolean (safety lock)
+
+// Security & Verification
+verification_code                // string(6) OTP
+verification_attempts            // int
+verification_code_expires_at     // timestamp
+email_verified_at                // timestamp
+failed_login_attempts            // int
+locked_until                     // timestamp
+last_login_at                    // timestamp
 timestamps
-
-UNIQUE: (school_id, email) // Email unique per school
 ```
-
-**Key Points:**
-- `role = 'guest'` → Not yet approved, can only see guest dashboard
-- `role = 'student'` → Approved, can access full student features
-- Email is unique per school (can have same email in different schools)
-
-**❌ DOES NOT HAVE:** email_verified_at (removed in migration)
 
 ---
 
@@ -281,36 +265,34 @@ UNIQUE: (school_id, email) // Email unique per school
 ```php
 id                           // bigint primary key
 school_id                    // foreign key, required
+branch_id                    // foreign key, nullable
 learner_id                   // foreign key to students, required
 course_id                    // foreign key to courses, required
+package_id                   // foreign key to course_packages, nullable
 status                       // enum('pending', 'approved', 'completed', 'cancelled', 'rejected')
-requested_at                 // timestamp, nullable
-approved_at                  // timestamp, nullable
-approved_by                  // foreign key to admins, nullable
-remarks                      // text, nullable
-rejection_reason             // text, nullable
-rejected_at                  // timestamp, nullable
-rejected_by                  // foreign key to admins, nullable
-enrolled_at                  // timestamp, nullable
-completed_at                 // timestamp, nullable
-cancelled_at                 // timestamp, nullable
+
+// Financial Snapshot & Feedback
+price                        // decimal(10,2) snapshotted at enrollment
+payment_status               // enum('pending', 'paid', 'partial', 'on_hold')
+payment_method               // string (gcash, on_site)
+payment_reference            // string (Digits only)
+payment_proof_path           // string (Path to screenshot)
+remarks                      // text (Internal timeline)
+
+// Verification Audit
+approved_at                  // timestamp
+approved_by                  // foreign key to admins
+payment_confirmed_at         // timestamp
+payment_confirmed_by         // foreign key to admins
+rejection_reason             // text
+rejected_at                  // timestamp
+
+// Theoretical Phase
 theoretical_passed           // boolean, default false
-theoretical_passed_at        // timestamp, nullable
-theoretical_passed_by        // foreign key to admins, nullable
-theoretical_pass_notes       // text, nullable
+theoretical_passed_at        // timestamp
+theoretical_passed_by        // foreignId to admins
 timestamps
-
-UNIQUE: (learner_id, course_id) // One request per learner per course
 ```
-
-**Critical Note:** Use `learner_id`, NOT `student_id`!
-
-**Status Flow:**
-- `pending` → Guest requests enrollment
-- `approved` → Admin approves, guest becomes student
-- `completed` → Student completes course
-- `cancelled` → Student/admin cancels
-- `rejected` → Admin rejects request
 
 ---
 
@@ -320,19 +302,87 @@ id               // bigint primary key
 school_id        // foreign key, required
 title            // string
 description      // text, nullable
-banner_image     // string, nullable
-features         // text (JSON), nullable
-price            // decimal(10,2), default 0
-duration_hours   // decimal(5,1), default 0
-max_students     // int, nullable
-type             // string, default 'standard' (standard, intensive, refresher)
-vehicle_type     // string, nullable (sedan, suv, manual, automatic)
-status           // string, default 'active' (active, inactive, archived)
-is_featured      // boolean, default false
-sort_order       // int, default 0
+course_type      // enum('theoretical', 'practical')
+license_type     // enum('non_professional', 'professional')
+price            // decimal(10,2)
+hours_required   // decimal(10,2)
+duration_hours   // decimal(5,1)
+vehicle_type     // string (manual, automatic, sedan, suv)
+status           // string (active, inactive, archived)
+is_featured      // boolean
+sort_order       // int
+```
+
+---
+
+### **payments** Table (Read-Only Ledger)
+```php
+id                       // bigint primary key
+school_id                // foreign key, required
+branch_id                // foreign key, nullable
+booking_id               // foreign key (XOR with enrollment_request_id)
+enrollment_request_id    // foreign key (XOR with booking_id)
+
+// Identity (Enforced XOR)
+payer_user_id            // foreign key to students (for registered users)
+guest_identity_token     // string (for guest sessions)
+
+// Forensic Data
+amount                   // decimal(10,2)
+method                   // enum('gcash', 'on_site')
+reference                // string (Raw input)
+normalized_reference     // string (Alphanumeric uppercase for uniqueness)
+or_number                // string (Official Receipt number for on-site)
+proof_of_payment_path    // string (Path to receipt image)
+status                   // enum('pending', 'approved', 'rejected', 'refunded')
+
+// Verification Audit
+received_at              // timestamp
+received_by_admin_id     // foreignId to admins
+refunded_at              // timestamp
+refunded_by_admin_id     // foreignId to admins
 timestamps
 
-INDEX: school_id, status
+UNIQUE: (school_id, normalized_reference)
+```
+
+---
+
+### **gcash_settings** Table
+```php
+id               // bigint primary key
+school_id        // foreign key, required
+branch_id        // foreign key, nullable (null = school-wide default)
+account_name     // string
+gcash_number     // string
+qr_path          // string (Path to QR image)
+is_active        // boolean
+timestamps
+```
+
+---
+
+### **payment_status_logs** Table
+```php
+id                   // bigint primary key
+payment_id           // foreign key, required
+status               // string (The target status)
+action_by_admin_id   // foreign key to admins (null = automated)
+notes                // text
+timestamps
+```
+
+---
+
+### **branches** Table
+```php
+id               // bigint primary key
+school_id        // foreign key, required
+name             // string
+slug             // string (unique per school)
+address          // string, nullable
+is_active        // boolean
+timestamps
 ```
 
 ---
@@ -448,6 +498,16 @@ foreach ($enrollments as $enrollment) {
     Mail::send(...); // If this fails, previous updates remain
 }
 ```
+
+### 6. Payments = Read-Only Ledger
+All payment records are for audit purposes only. **Never** delete a payment. If a payment is invalid, mark its status as `rejected` and provide a `rejection_reason_note`. If a payment is returned, use the `refunded_at` and `refunded_amount` fields.
+
+### 7. Standardized Storage Directive
+All new uploads **MUST** be stored in the architectural root `receipts/` or `student-licenses/` on the `local` disk. 
+- **GCash Receipts**: `receipts/{school_id}/` (via `ReceiptStorageService`)
+- **Student Licenses**: `student-licenses/` (via `StorageController`)
+- **Credentials**: `credentials/` (via `StorageController`)
+- **Legacy**: `screenshots/payments/` on `public` disk (Read-only access only)
 
 ---
 
@@ -606,6 +666,23 @@ function closeModal(modalId) {
 5. **Don't send real emails** in development
 6. **Don't forget to rebuild Vite** after CSS/JS changes: `npm run build`
 7. **Don't use Bootstrap JS** - we use custom JavaScript
+
+---
+
+## 📁 STORAGE ARCHITECTURE (March 27)
+
+### **Directive: Single-Root Standardization**
+All system uploads are being consolidated into a single architectural root for better maintainability and backup isolation.
+
+| Component | Standard Path | Storage Disk | Service / Controller |
+|-----------|---------------|--------------|----------------------|
+| **GCash Receipts** | `receipts/{school_id}/` | `local` | `ReceiptStorageService` |
+| **Licenses** | `student-licenses/` | `local` | `StorageController` |
+| **Credentials** | `credentials/` | `local` | `StorageController` |
+| **Legacy Receipts** | `screenshots/payments/` | `public` | Read-only access |
+
+### **Key Retrieval Rule**
+The `StorageController@streamReceipt` and `EnrollmentRequestController@viewPaymentProof` methods MUST support dual-disk lookups (checking both `local` and `public` disks) to ensure that historical data migrated from previous versions remains accessible.
 
 ---
 

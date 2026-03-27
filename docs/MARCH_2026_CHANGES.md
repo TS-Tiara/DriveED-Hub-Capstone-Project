@@ -144,3 +144,18 @@ Application-wide audit — every controller that returns a dashboard view.
 | Attendance | `PublicAttendanceController.php`, attendance views |
 | Sidebar | Multiple dashboard controllers |
 | Hostinger | `StorageController.php`, `.env`, storage config |
+| Storage Standard | `ReceiptStorageService.php`, `StorageController.php`, `GuestController.php` |
+
+---
+
+## 9. Receipt Access & Standardized Storage (March 27)
+
+### Problem
+- 403 Forbidden errors when viewing GCash receipts.
+- Enrollment Verification Modal failing to load document previews.
+- Inconsistent storage paths across Guest vs Admin modules.
+
+### Fix
+- **Standardized New Uploads:** Used `ReceiptStorageService` in `GuestController` to ensure all new screenshots go to `local/receipts/{school_id}/`.
+- **Robust Retrieval:** Updated `StorageController` and `EnrollmentRequestController` to check both `local` and `public` disks and allow multiple legacy prefixes.
+- **Architectural Directive:** Formalized the "Single-Root Storage" rule in `DEVELOPER_HANDOFF.md` for future AI-agent compliance.

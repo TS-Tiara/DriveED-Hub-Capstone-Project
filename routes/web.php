@@ -294,6 +294,7 @@ Route::prefix('{school:slug}')
                             Route::prefix('api')->name('api.')->group(function () {
                                 Route::get('/{enrollmentRequest}', [EnrollmentRequestController::class, 'apiShow'])->name('show');
                                 Route::post('/{enrollmentRequest}/verify-payment', [EnrollmentRequestController::class, 'verifyPayment'])->name('verify-payment');
+                                Route::post('/{enrollmentRequest}/unified-approve', [EnrollmentRequestController::class, 'unifiedApprove'])->name('unified-approve');
                                 Route::post('/{enrollmentRequest}/verify-license', [EnrollmentRequestController::class, 'apiVerifyLicense'])->name('verify-license');
                             });
 

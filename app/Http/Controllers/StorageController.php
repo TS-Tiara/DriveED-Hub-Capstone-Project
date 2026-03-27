@@ -96,14 +96,25 @@ class StorageController extends Controller
         // Authorization: Must be logged in (student or admin)
         abort_unless(Auth::guard('student')->check() || Auth::guard('admin')->check(), 403);
 
-        // Ensure the path is within the receipts directory for safety
-        abort_unless(str_starts_with($path, 'receipts/'), 403);
+        // Security check: Only allow known storage directories
+        $allowedPrefixes = ['receipts/', 'screenshots/payments/', 'proof_of_payment/'];
+        $isAllowed = false;
+        foreach ($allowedPrefixes as $prefix) {
+            if (str_starts_with($path, $prefix)) {
+                $isAllowed = true;
+                break;
+            }
+        }
+        abort_unless($isAllowed, 403, 'Invalid receipt path.');
 
-        if (!Storage::disk('local')->exists($path)) {
-            abort(404, 'Receipt file not found.');
+        // Try both local and public disks for deployment robustness
+        foreach (['local', 'public'] as $diskName) {
+            if (Storage::disk($diskName)->exists($path)) {
+                return $this->fileResponseFromDisk($diskName, $path);
+            }
         }
 
-        return $this->fileResponseFromDisk('local', $path);
+        abort(404, 'Receipt file not found.');
     }
 
     private function fileResponseFromDisk(string $diskName, string $path)
