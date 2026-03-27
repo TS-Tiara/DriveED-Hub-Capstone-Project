@@ -35,6 +35,14 @@ class EnrollmentRequestController extends Controller
 
         $admin->scopeToBranch($baseQuery);
 
+        // Calculate stats BEFORE filtering
+        $allRequestsCount = (clone $baseQuery)->count();
+        $pendingRequestsCount = (clone $baseQuery)->where('status', 'pending')->count();
+        $approvedRequestsCount = (clone $baseQuery)->where('status', 'approved')->count();
+        $completedRequestsCount = (clone $baseQuery)->where('status', 'completed')->count();
+        $cancelledRequestsCount = (clone $baseQuery)->where('status', 'cancelled')->count();
+        $rejectedRequestsCount = (clone $baseQuery)->where('status', 'rejected')->count();
+
         // Server-side filtering
         if ($request->filled('status') && $request->status !== 'all') {
             $baseQuery->where('status', $request->status);
@@ -46,23 +54,7 @@ class EnrollmentRequestController extends Controller
             });
         }
 
-        $allRequests = (clone $baseQuery)->paginate(20)->withQueryString();
-
-        $allRequestsCount = (clone $baseQuery)->count();
-        $pendingRequestsCount = (clone $baseQuery)->where('status', 'pending')->count();
-        $approvedRequestsCount = (clone $baseQuery)->where('status', 'approved')->count();
-        $completedRequestsCount = (clone $baseQuery)->where('status', 'completed')->count();
-        $cancelledRequestsCount = (clone $baseQuery)->where('status', 'cancelled')->count();
-        $rejectedRequestsCount = (clone $baseQuery)->where('status', 'rejected')->count();
-
-        $stats = [
-            'total' => $allRequestsCount,
-            'pending' => $pendingRequestsCount,
-            'approved' => $approvedRequestsCount,
-            'completed' => $completedRequestsCount,
-            'cancelled' => $cancelledRequestsCount,
-            'rejected' => $rejectedRequestsCount,
-        ];
+        $allRequests = $baseQuery->paginate(20)->withQueryString();
 
         $branches = Branch::where('school_id', $school->id)->where('is_active', true)->orderBy('name')->get();
 
@@ -932,7 +924,10 @@ class EnrollmentRequestController extends Controller
             
             foreach (['public', 'local'] as $disk) {
                 if (Storage::disk($disk)->exists($path)) {
-                    return Storage::disk($disk)->response($path, $student->student_license_filename);
+                    $fullPath = Storage::disk($disk)->path($path);
+                    return response()->file($fullPath, [
+                        'Content-Disposition' => 'inline; filename="' . ($student->student_license_filename ?? basename($path)) . '"',
+                    ]);
                 }
             }
         }
@@ -969,7 +964,8 @@ class EnrollmentRequestController extends Controller
             foreach (['public', 'local'] as $disk) {
                 foreach ($candidates as $candidatePath) {
                     if (Storage::disk($disk)->exists($candidatePath)) {
-                        return Storage::disk($disk)->response($candidatePath);
+                        $fullPath = Storage::disk($disk)->path($candidatePath);
+                        return response()->file($fullPath);
                     }
                 }
             }
@@ -1098,7 +1094,8 @@ class EnrollmentRequestController extends Controller
         if (empty($path)) abort(404);
 
         if (Storage::disk('public')->exists($path)) {
-            return Storage::disk('public')->response($path);
+            $fullPath = Storage::disk('public')->path($path);
+            return response()->file($fullPath);
         }
 
         abort(404, 'Payment proof file not found.');

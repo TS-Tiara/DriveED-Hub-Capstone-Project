@@ -17,6 +17,7 @@ use App\Models\GCashSetting;
 use App\Rules\StrongPassword;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
@@ -249,6 +250,14 @@ class GuestController extends Controller
                 'branch_id' => $request->input('branch_id'),
             ];
 
+            // Snapshot the price
+            if ($request->filled('package_id')) {
+                $package = \App\Models\CoursePackage::find($request->package_id);
+                $data['price'] = $package ? $package->price : $course->price;
+            } else {
+                $data['price'] = $course->price;
+            }
+
             // Handle credential file upload for experienced drivers
             if ($request->hasFile('credential_file')) {
                 $file = $request->file('credential_file');
@@ -345,7 +354,7 @@ class GuestController extends Controller
         }
 
         $request->validate([
-            'reference_number' => 'required|string|min:8|max:20',
+            'reference_number' => 'required|digits:13',
             'screenshot' => 'required|image|mimes:jpeg,png,jpg,webp|max:5120',
         ]);
 
@@ -354,16 +363,34 @@ class GuestController extends Controller
             ->firstOrFail();
 
         try {
+            DB::beginTransaction();
+            
             // Store the screenshot
-            $path = $request->file('screenshot')->store('payment-proofs/' . $school->slug, 'public');
+            $path = $request->file('screenshot')->store('screenshots/payments', 'public');
 
-            // Update enrollment request with payment details
+            // 1. Update the enrollment request direct fields (for fast UI access/admin modal)
             $enrollmentRequest->update([
                 'payment_method' => 'gcash',
                 'payment_reference' => $request->reference_number,
                 'payment_proof_path' => $path,
                 'payment_status' => 'pending',
+                'remarks' => $enrollmentRequest->remarks . "\n[GCash Payment Submitted: " . now()->format('Y-m-d H:i') . "]",
             ]);
+
+            // 2. Create formal payment record (for audit ledger/reports)
+            \App\Models\Payment::create([
+                'school_id' => $school->id,
+                'branch_id' => $enrollmentRequest->branch_id,
+                'payer_user_id' => $enrollmentRequest->learner_id, // Guest uses their student_id
+                'enrollment_request_id' => $enrollmentRequest->id,
+                'amount' => $enrollmentRequest->price,
+                'method' => 'gcash',
+                'reference' => $request->reference_number,
+                'proof_of_payment_path' => $path,
+                'status' => 'pending',
+            ]);
+
+            DB::commit();
 
             // Notify Admins
             $admins = Admin::where('school_id', $school->id)->where('status', 'active')->get();
