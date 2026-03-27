@@ -169,6 +169,13 @@ class EnrollmentRequestController extends Controller
 
             DB::commit();
 
+            if (request()->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Enrollment approved and student account activated.'
+                ]);
+            }
+
             return redirect()
                 ->back()
                 ->with('success', 'Enrollment approved and student account activated.');
@@ -176,6 +183,14 @@ class EnrollmentRequestController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Failed to approve enrollment: ' . $e->getMessage());
+            
+            if (request()->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'An unexpected error occurred while approving the enrollment.'
+                ], 500);
+            }
+
             return redirect()
                 ->back()
                 ->with('error', 'An unexpected error occurred while approving the enrollment. Please try again.');
@@ -189,20 +204,13 @@ class EnrollmentRequestController extends Controller
     {
         $validated = $req->validate([
             'remarks' => ['required', 'string', 'max:1000'],
+            'reject_license' => ['nullable'],
+            'reject_payment' => ['nullable'],
         ]);
 
-        // Security Check 1: Verify the request belongs to this school
-        if ($enrollmentRequest->school_id !== $school->id) {
-            abort(404);
-        }
-
-        // Security Check 2: Verify admin is authenticated and belongs to this school
         $admin = Auth::guard('admin')->user();
-        if (!$admin || $admin->school_id !== $school->id) {
-            abort(403, 'Unauthorized action.');
-        }
+        if (!$admin || $admin->school_id !== (int)$school->id) abort(403);
 
-        // Security Check: Branch secretary permission and access
         if (!$admin->canApproveEnrollments()) {
             abort(403, 'You do not have permission to reject enrollments.');
         }
@@ -210,58 +218,107 @@ class EnrollmentRequestController extends Controller
             abort(403, 'You do not have access to this enrollment request.');
         }
 
-        // Security Check 3: Prevent duplicate rejections
         if ($enrollmentRequest->status === 'rejected') {
-            return redirect()
-                ->back()
-                ->with('error', 'This enrollment request has already been rejected.');
+            if ($req->ajax()) return response()->json(['success' => false, 'message' => 'This enrollment request has already been rejected.'], 422);
+            return redirect()->back()->with('error', 'This enrollment request has already been rejected.');
         }
 
-        // Security Check 4: Don't allow rejecting already approved requests
         if ($enrollmentRequest->status === 'approved') {
-            return redirect()
-                ->back()
-                ->with('error', 'Cannot reject an already approved enrollment request.');
+            if ($req->ajax()) return response()->json(['success' => false, 'message' => 'Cannot reject an already approved enrollment request.'], 422);
+            return redirect()->back()->with('error', 'Cannot reject an already approved enrollment request.');
         }
+
+        $rejectLicense = filter_var($req->reject_license, FILTER_VALIDATE_BOOLEAN);
+        $rejectPayment = filter_var($req->reject_payment, FILTER_VALIDATE_BOOLEAN);
 
         DB::beginTransaction();
         try {
-            // Simply update status and add remarks
-            $enrollmentRequest->update([
-                'status' => 'rejected',
-                'remarks' => $validated['remarks'],
-                'rejected_at' => now(),
-            ]);
-
-            // Send rejection email
-            try {
-                if ($this->transitionUsesChannel('rejected', 'email')) {
-                    Mail::to($enrollmentRequest->learner->email)
-                        ->send(new EnrollmentRejected($enrollmentRequest, $school));
+            if ($rejectLicense || $rejectPayment) {
+                // Partial Rejection Flow
+                if ($rejectLicense) {
+                    $enrollmentRequest->learner->update([
+                        'student_license_status' => 'rejected',
+                        'student_license_rejection_reason' => $validated['remarks']
+                    ]);
                 }
-            } catch (\Exception $e) {
-                Log::warning('Failed to send enrollment rejection email: ' . $e->getMessage());
+                if ($rejectPayment) {
+                    $enrollmentRequest->update([
+                        'payment_status' => 'pending',
+                        'payment_proof_path' => null,
+                        'payment_reference' => null,
+                        'remarks' => $validated['remarks']
+                    ]);
+
+                    // Mark old Payment records as rejected and clear unique reference
+                    // so the guest can re-submit without hitting the unique constraint
+                    $enrollmentRequest->payments()
+                        ->where('status', 'pending')
+                        ->update([
+                            'status' => 'rejected',
+                            'reference' => null,
+                            'normalized_reference' => null,
+                        ]);
+                }
+                $messagePrefix = "Partial rejection processed.";
+            } else {
+                // Full Rejection Flow
+                $enrollmentRequest->update([
+                    'status' => 'rejected',
+                    'remarks' => $validated['remarks'],
+                    'rejected_at' => now(),
+                ]);
+                $messagePrefix = "Enrollment request rejected.";
             }
 
-            // Create in-app notification for the guest
-            $this->sendInAppTransitionNotification(
-                'rejected',
-                $enrollmentRequest->student,
-                'enrollment_rejected',
-                'Enrollment Request Update',
-                "Your enrollment request for {$enrollmentRequest->course->title} was not approved. Check your email for details.",
-                'warning',
-                "/{$school->slug}/guest/enrollment-requests"
-            );
+            // Ensure model state is fresh for email/notification logic
+            $enrollmentRequest->load('learner');
+
+            // Send consolidated email (queued)
+            try {
+                Mail::to($enrollmentRequest->learner->email)
+                    ->queue(new EnrollmentRejected($enrollmentRequest, $school, $validated['remarks'], $rejectLicense, $rejectPayment));
+            } catch (\Exception $e) {
+                Log::warning('Failed to queue enrollment rejection email: ' . $e->getMessage());
+            }
+
+            // In-app notification
+            try {
+                $this->sendInAppTransitionNotification(
+                    'rejected',
+                    $enrollmentRequest->student,
+                    'enrollment_rejected',
+                    'Enrollment Request Update',
+                    "Your enrollment request for {$enrollmentRequest->course->title} was not approved. Check your email for details.",
+                    'warning',
+                    "/{$school->slug}/guest/enrollment-requests"
+                );
+            } catch (\Exception $e) {
+                Log::warning('Failed to send rejection in-app notification: ' . $e->getMessage());
+            }
 
             DB::commit();
 
+            if ($req->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $messagePrefix . ' User notified via email.'
+                ]);
+            }
+
             return redirect()
                 ->back()
-                ->with('success', 'Enrollment request rejected. User remains as Guest.');
+                ->with('success', $messagePrefix . ' User notified via email.');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Failed to reject enrollment: ' . $e->getMessage());
+
+            if ($req->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'An unexpected error occurred while rejecting the enrollment.'
+                ], 500);
+            }
+
             return redirect()
                 ->back()
                 ->with('error', 'An unexpected error occurred while rejecting the enrollment.');
@@ -362,7 +419,12 @@ class EnrollmentRequestController extends Controller
                 }
             }
 
-            DB::commit();
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Enrollment marked as completed successfully.'
+                ]);
+            }
 
             return redirect()
                 ->back()
@@ -370,6 +432,14 @@ class EnrollmentRequestController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Failed to complete enrollment: ' . $e->getMessage());
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'An unexpected error occurred while completing the enrollment.'
+                ], 500);
+            }
+
             return redirect()
                 ->back()
                 ->with('error', 'An unexpected error occurred while completing the enrollment.');
@@ -441,7 +511,12 @@ class EnrollmentRequestController extends Controller
                 }
             }
 
-            DB::commit();
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Enrollment cancelled successfully.'
+                ]);
+            }
 
             return redirect()
                 ->back()
@@ -449,6 +524,14 @@ class EnrollmentRequestController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Failed to cancel enrollment: ' . $e->getMessage());
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'An unexpected error occurred while cancelling the enrollment.'
+                ], 500);
+            }
+
             return redirect()
                 ->back()
                 ->with('error', 'An unexpected error occurred while cancelling the enrollment.');
@@ -820,7 +903,7 @@ class EnrollmentRequestController extends Controller
         try {
             if ($this->transitionUsesChannel('approved', 'email')) {
                 Mail::to($enrollmentRequest->learner->email)
-                    ->send(new EnrollmentApproved($enrollmentRequest, $school));
+                    ->queue(new EnrollmentApproved($enrollmentRequest, $school));
             }
         } catch (\Exception $e) {
             Log::warning('Failed to send enrollment approval email: ' . $e->getMessage());
@@ -892,7 +975,7 @@ class EnrollmentRequestController extends Controller
 
         $actionUrl = $actionRoute ? route($actionRoute, ['school' => $school]) : null;
 
-        Mail::to($student->email)->send(
+        Mail::to($student->email)->queue(
             new LifecycleStatusUpdate(
                 $school,
                 $student->name,
@@ -1005,20 +1088,84 @@ class EnrollmentRequestController extends Controller
             'remarks' => $enrollmentRequest->remarks,
             // Paths/Routes
             'license_url' => $enrollmentRequest->learner->student_license_path 
-                ? route('schools.admin.enrollments.view-license', ['school' => $school->slug, 'student' => $enrollmentRequest->learner->id]) 
+                ? route('schools.admin.enrollments.viewLicense', ['school' => $school->slug, 'student' => $enrollmentRequest->learner->id]) 
                 : null,
             'receipt_url' => $enrollmentRequest->payment_proof_path 
                 ? route('schools.admin.enrollments.view-payment-proof', ['school' => $school->slug, 'enrollmentRequest' => $enrollmentRequest->id]) 
                 : null,
             // Verification Endpoints
-            'verify_payment_url' => route('schools.admin.api.enrollments.verify-payment', ['school' => $school->slug, 'enrollmentRequest' => $enrollmentRequest->id]),
-            'verify_license_url' => route('schools.admin.api.enrollments.verify-license', ['school' => $school->slug, 'enrollmentRequest' => $enrollmentRequest->id]),
+            'verify_payment_url' => route('schools.admin.enrollments.api.verify-payment', ['school' => $school->slug, 'enrollmentRequest' => $enrollmentRequest->id]),
+            'verify_license_url' => route('schools.admin.enrollments.api.verify-license', ['school' => $school->slug, 'enrollmentRequest' => $enrollmentRequest->id]),
             'reject_url' => route('schools.admin.enrollments.reject', ['school' => $school->slug, 'enrollmentRequest' => $enrollmentRequest->id]),
         ]);
     }
 
     /**
-     * Verify payment via AJAX
+     * Unified approval: Verifies payment AND approves enrollment
+     * (Role promotion, course locking, payment completion, and state transition)
+     */
+    public function unifiedApprove(Request $request, School $school, EnrollmentRequest $enrollmentRequest)
+    {
+        $admin = Auth::guard('admin')->user();
+        if (!$admin || $admin->school_id !== (int)$school->id) abort(403);
+        if (!$admin->canApproveEnrollments()) abort(403);
+
+        DB::beginTransaction();
+        try {
+            // 1. Confirm Payment on enrollment request
+            if ($enrollmentRequest->payment_status !== 'paid') {
+                $enrollmentRequest->update([
+                    'payment_status' => 'paid',
+                    'payment_confirmed_by' => $admin->id,
+                    'payment_confirmed_at' => now(),
+                ]);
+            }
+
+            // 2. Mark related Payment records as completed
+            $enrollmentRequest->payments()->where('status', 'pending')->update([
+                'status' => 'completed',
+                'updated_at' => now(),
+            ]);
+
+            // 3. Perform Enrollment Approval (Role Promotion, Course Locking)
+            if ($enrollmentRequest->status !== 'approved') {
+                $this->processApproval($enrollmentRequest, $admin, $school);
+            }
+
+            // 4. Auto-Verify License (if it's still pending)
+            $student = $enrollmentRequest->student;
+            if ($student && $student->student_license_status === 'pending') {
+                $student->update([
+                    'student_license_status' => 'verified',
+                    'student_license_verified_at' => now(),
+                    'student_license_verified_by' => $admin->id,
+                ]);
+            }
+
+            DB::commit();
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true, 
+                    'message' => 'Enrollment fully approved! Student has been activated.'
+                ]);
+            }
+
+            return redirect()->back()->with('success', 'Enrollment fully approved! Student has been activated.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('UnifiedApprove failed: ' . $e->getMessage());
+
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Unified approval failed: ' . $e->getMessage()], 500);
+            }
+
+            return redirect()->back()->with('error', 'Approval failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Verify payment via AJAX (legacy route, kept for backward compatibility)
      */
     public function verifyPayment(Request $request, School $school, EnrollmentRequest $enrollmentRequest)
     {
@@ -1033,9 +1180,6 @@ class EnrollmentRequestController extends Controller
                 'payment_confirmed_by' => $admin->id,
                 'payment_confirmed_at' => now(),
             ]);
-
-            // Role promotion is handled exclusively by the enrollment approval path.
-            // verifyPayment only updates the payment sub-status.
 
             DB::commit();
             return response()->json(['success' => true, 'message' => 'Payment verified successfully!']);
@@ -1091,13 +1235,28 @@ class EnrollmentRequestController extends Controller
         if (!$admin || $admin->school_id !== (int)$school->id) abort(403);
 
         $path = $enrollmentRequest->payment_proof_path;
-        if (empty($path)) abort(404);
+        if (empty($path)) abort(404, 'No payment proof path found for this enrollment.');
 
-        if (Storage::disk('public')->exists($path)) {
-            $fullPath = Storage::disk('public')->path($path);
-            return response()->file($fullPath);
+        // Try both public and local disks for robustness
+        foreach (['public', 'local'] as $diskName) {
+            if (Storage::disk($diskName)->exists($path)) {
+                $fullPath = Storage::disk($diskName)->path($path);
+                
+                // Set appropriate filename for display/download
+                $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+                $filename = "payment-receipt-{$enrollmentRequest->id}.{$extension}";
+
+                return response()->file($fullPath, [
+                    'Content-Disposition' => 'inline; filename="' . $filename . '"',
+                ]);
+            }
         }
 
-        abort(404, 'Payment proof file not found.');
+        Log::warning('Payment proof file not found during admin view', [
+            'enrollment_id' => $enrollmentRequest->id,
+            'path' => $path
+        ]);
+
+        abort(404, 'Payment proof file not found on any configured disk.');
     }
 }
