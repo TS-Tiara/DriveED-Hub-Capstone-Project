@@ -274,6 +274,80 @@
         text-align: center;
     }
 
+    /* Polished Payment Alert */
+    .payment-alert {
+        background: #fffbeb;
+        border-bottom: 2px solid #fef3c7;
+        padding: 24px 30px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        position: relative;
+    }
+    
+    .payment-alert-content {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+    
+    .payment-alert-icon {
+        background: #fef3c7;
+        color: #d97706;
+        width: 48px;
+        height: 48px;
+        min-width: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 14px;
+        font-size: 1.4rem;
+        box-shadow: 0 4px 10px rgba(217, 119, 6, 0.1);
+    }
+    
+    .payment-alert-title {
+        font-weight: 800;
+        color: #92400e;
+        margin: 0 0 4px 0;
+        font-size: 1.1rem;
+        letter-spacing: -0.01em;
+    }
+    
+    .payment-alert-text {
+        color: #78350f;
+        opacity: 0.8;
+        font-size: 0.9rem;
+        margin: 0;
+        line-height: 1.5;
+    }
+    
+    .btn-payment-complete {
+        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+        color: white !important;
+        padding: 12px 28px;
+        border-radius: 12px;
+        font-weight: 700;
+        text-decoration: none;
+        box-shadow: 0 10px 15px -3px rgba(245, 158, 11, 0.2);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border: none;
+    }
+    
+    .btn-payment-complete:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 20px 25px -5px rgba(245, 158, 11, 0.3);
+        filter: brightness(1.05);
+    }
+
+    .btn-payment-complete i {
+        font-size: 1rem;
+    }
+
     /* Status-aware card borders */
     .request-card.status-approved {
         border-left-color: #10b981;
@@ -347,7 +421,17 @@
         height: 20px;
     }
 
-    @media (max-width: 640px) {
+    @media (max-width: 768px) {
+        .payment-alert {
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 20px;
+        }
+        .btn-payment-complete {
+            width: 100%;
+            justify-content: center;
+        }
+        
         .enrollment-timeline {
             padding: 16px 8px 4px;
         }
@@ -408,10 +492,33 @@
                 <div class="request-card status-{{ $request->status }}">
                     <div class="request-card-header">
                         <h3 class="course-title">{{ $request->course->title }}</h3>
-                        <span class="status-badge {{ $request->status }}">
-                            {{ ucfirst($request->status) }}
-                        </span>
+                        <div class="d-flex align-items-center gap-2">
+                            @if($request->status === 'pending' && !$request->payment_proof_path)
+                                <span class="badge bg-danger rounded-pill px-3 py-2" style="font-size: 0.7rem;">ACTION REQUIRED: UNPAID</span>
+                            @endif
+                            <span class="status-badge {{ $request->status }}">
+                                {{ ucfirst($request->status) }}
+                            </span>
+                        </div>
                     </div>
+
+                    @if($request->status === 'pending' && !$request->payment_proof_path)
+                    <div class="payment-alert">
+                        <div class="payment-alert-content">
+                            <div class="payment-alert-icon">
+                                <i class="fas fa-wallet"></i>
+                            </div>
+                            <div>
+                                <h4 class="payment-alert-title">Payment Required to Proceed</h4>
+                                <p class="payment-alert-text">We haven't received your GCash proof yet. Please complete this step to start your course.</p>
+                            </div>
+                        </div>
+                        <a href="{{ route('schools.guest.payment.show', ['school' => $school->slug, 'enrollment_request_id' => $request->id]) }}" 
+                           class="btn-payment-complete">
+                            <i class="fas fa-credit-card"></i>Complete Payment Now
+                        </a>
+                    </div>
+                    @endif
 
                     <!-- Enrollment Timeline -->
                     <div class="enrollment-timeline">
@@ -446,10 +553,17 @@
                                 </div>
                                 <span class="timeline-label done">Reviewed</span>
                             @elseif($request->status === 'pending')
-                                <div class="timeline-dot active">
-                                    <svg class="timeline-icon-sm" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                </div>
-                                <span class="timeline-label active">Under Review</span>
+                                @if(!$request->payment_proof_path)
+                                    <div class="timeline-dot active" style="background: #ef4444; border-color: #ef4444; box-shadow: 0 0 0 4px #ef444430;">
+                                        <i class="fas fa-wallet" style="font-size: 0.7rem;"></i>
+                                    </div>
+                                    <span class="timeline-label active text-danger">Awaiting Payment</span>
+                                @else
+                                    <div class="timeline-dot active">
+                                        <svg class="timeline-icon-sm" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    </div>
+                                    <span class="timeline-label active">Verifying Payment</span>
+                                @endif
                             @else
                                 <div class="timeline-dot waiting">2</div>
                                 <span class="timeline-label">Under Review</span>

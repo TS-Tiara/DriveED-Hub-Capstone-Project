@@ -299,8 +299,13 @@ Route::prefix('{school:slug}')
 
                             // View payment proof
                             Route::get('/{enrollmentRequest}/view-payment-proof', [EnrollmentRequestController::class, 'viewPaymentProof'])->name('view-payment-proof');
-                        }
-                        );
+                        });
+
+
+                        // Safety redirect for singular routes (admin/enrollment/* -> admin/enrollments)
+                        Route::get('/enrollment/{any?}', function ($school, $any = null) {
+                            return redirect()->route('schools.admin.enrollments.index', ['school' => $school]);
+                        })->where('any', '.*');
 
                         // Theoretical training management
                         Route::prefix('theoretical')->name('theoretical.')->group(function () {
