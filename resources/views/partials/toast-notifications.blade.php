@@ -303,6 +303,17 @@
             };
         }
 
+        // Object-style compatibility wrapper (Toast.success, Toast.error, etc.)
+        if (!window.Toast) {
+            window.Toast = {
+                success: function(msg, title, duration) { window.showToast(msg, 'success', duration); },
+                error: function(msg, title, duration) { window.showToast(msg, 'error', duration); },
+                info: function(msg, title, duration) { window.showToast(msg, 'info', duration); },
+                warning: function(msg, title, duration) { window.showToast(msg, 'warning', duration); },
+                danger: function(msg, title, duration) { window.showToast(msg, 'error', duration); }
+            };
+        }
+
         // Initialize from session on load
         document.addEventListener('DOMContentLoaded', function() {
             @if(session('success'))

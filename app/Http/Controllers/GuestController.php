@@ -294,7 +294,7 @@ class GuestController extends Controller
             );
 
             // Notify all admins of this school
-            $admins = Admin::where('school_id', $school->id)->where('status', 'active')->get();
+            $admins = Admin::where('school_id', $school->id)->where('is_active', true)->get();
             foreach ($admins as $admin) {
                 Notification::send(
                     $admin,
@@ -346,7 +346,7 @@ class GuestController extends Controller
     /**
      * Handle payment submission (Reference # and Screenshot)
      */
-    public function submitPayment(Request $request, School $school, $enrollment_request_id)
+    public function submitPayment(Request $request, School $school, $enrollment_request_id, \App\Services\ReceiptStorageService $storageService)
     {
         $guest = Auth::guard('student')->user();
         if (!$guest || !$guest->isGuest()) {
@@ -365,8 +365,8 @@ class GuestController extends Controller
         try {
             DB::beginTransaction();
             
-            // Store the screenshot
-            $path = $request->file('screenshot')->store('screenshots/payments', 'public');
+            // Store the screenshot using standard service (local disk, receipts/ prefix)
+            $path = $storageService->store($request->file('screenshot'), $school->id);
 
             // 1. Update the enrollment request direct fields (for fast UI access/admin modal)
             $enrollmentRequest->update([
@@ -393,7 +393,7 @@ class GuestController extends Controller
             DB::commit();
 
             // Notify Admins
-            $admins = Admin::where('school_id', $school->id)->where('status', 'active')->get();
+            $admins = Admin::where('school_id', $school->id)->where('is_active', true)->get();
             foreach ($admins as $admin) {
                 Notification::send(
                     $admin,
@@ -482,7 +482,7 @@ class GuestController extends Controller
             ]);
 
             // Notify admins about pending license verification
-            $admins = Admin::where('school_id', $school->id)->where('status', 'active')->get();
+            $admins = Admin::where('school_id', $school->id)->where('is_active', true)->get();
             foreach ($admins as $admin) {
                 Notification::send(
                     $admin,

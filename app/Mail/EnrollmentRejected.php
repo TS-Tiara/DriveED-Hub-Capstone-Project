@@ -2,6 +2,8 @@
 
 namespace App\Mail;
 
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
@@ -10,20 +12,26 @@ use App\Models\EnrollmentRequest;
 use App\Models\School;
 use Illuminate\Mail\Mailables\Address;
 
-class EnrollmentRejected extends Mailable
+class EnrollmentRejected extends Mailable implements ShouldQueue
 {
-    use SerializesModels;
+    use Queueable, SerializesModels;
 
     public $enrollment;
     public $school;
+    public $remarks;
+    public $rejectLicense;
+    public $rejectPayment;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(EnrollmentRequest $enrollment, School $school)
+    public function __construct(EnrollmentRequest $enrollment, School $school, $remarks = null, $rejectLicense = false, $rejectPayment = false)
     {
         $this->enrollment = $enrollment;
         $this->school = $school;
+        $this->remarks = $remarks;
+        $this->rejectLicense = (bool) $rejectLicense;
+        $this->rejectPayment = (bool) $rejectPayment;
     }
 
     /**

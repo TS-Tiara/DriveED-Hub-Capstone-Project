@@ -2,6 +2,8 @@
 
 namespace App\Mail;
 
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
@@ -10,9 +12,9 @@ use App\Models\EnrollmentRequest;
 use App\Models\School;
 use Illuminate\Mail\Mailables\Address;
 
-class EnrollmentApproved extends Mailable
+class EnrollmentApproved extends Mailable implements ShouldQueue
 {
-    use SerializesModels;
+    use Queueable, SerializesModels;
 
     public $enrollment;
     public $school;

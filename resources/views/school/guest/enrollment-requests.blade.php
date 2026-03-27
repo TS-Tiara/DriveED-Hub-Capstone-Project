@@ -502,7 +502,41 @@
                         </div>
                     </div>
 
-                    @if($request->status === 'pending' && !$request->payment_proof_path)
+                    @if($request->status === 'pending' && $guest->student_license_status === 'rejected')
+                    <div class="payment-alert" style="background: #fee2e2; border-color: #fecaca; margin-bottom: 0;">
+                        <div class="payment-alert-content">
+                            <div class="payment-alert-icon" style="background: #fecaca; color: #dc2626;">
+                                <i class="fas fa-id-card"></i>
+                            </div>
+                            <div>
+                                <h4 class="payment-alert-title" style="color: #991b1b;">License Document Rejected</h4>
+                                <p class="payment-alert-text" style="color: #7f1d1d;">Your driver's license was not accepted. Please re-upload a clear copy to proceed.</p>
+                            </div>
+                        </div>
+                        <a href="{{ route('schools.guest.dashboard', $school) }}#license-section" 
+                           class="btn-payment-complete" style="background: #ef4444; box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.2);">
+                            <i class="fas fa-upload"></i>Re-upload Now
+                        </a>
+                    </div>
+                    @endif
+
+                    @if($request->status === 'pending' && $request->payment_status === 'rejected')
+                    <div class="payment-alert" style="background: #fff7ed; border-color: #ffedd5; margin-bottom: 0;">
+                        <div class="payment-alert-content">
+                            <div class="payment-alert-icon" style="background: #ffedd5; color: #ea580c;">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div>
+                                <h4 class="payment-alert-title" style="color: #9a3412;">Payment Receipt Rejected</h4>
+                                <p class="payment-alert-text" style="color: #c2410c;">Your payment proof was not accepted. This usually happens if the reference number is incorrect or the receipt is unreadable. Please re-upload to proceed.</p>
+                            </div>
+                        </div>
+                        <a href="{{ route('schools.guest.payment.show', ['school' => $school->slug, 'enrollment_request_id' => $request->id]) }}" 
+                           class="btn-payment-complete" style="background: #f97316; box-shadow: 0 10px 15px -3px rgba(249, 115, 22, 0.2);">
+                            <i class="fas fa-redo"></i>Re-upload Receipt
+                        </a>
+                    </div>
+                    @elseif($request->status === 'pending' && !$request->payment_proof_path)
                     <div class="payment-alert">
                         <div class="payment-alert-content">
                             <div class="payment-alert-icon">

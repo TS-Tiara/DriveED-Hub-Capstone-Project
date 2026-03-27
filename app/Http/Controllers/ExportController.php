@@ -495,12 +495,13 @@ class ExportController extends Controller
                     $enrollments,
                     $completed,
                     $rate,
+                    ucfirst($course->status ?? 'active'),
                 ];
             }
 
             $html = $this->buildExcelHtml(
                 $school->name . ' - Course List',
-                ['Title', 'Price', 'Duration', 'Enrollments', 'Completed', 'Rate'],
+                ['Title', 'Price', 'Duration', 'Enrollments', 'Completed', 'Rate', 'Status'],
                 $rows
             );
 

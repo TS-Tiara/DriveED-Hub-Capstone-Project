@@ -12,9 +12,9 @@ use Illuminate\Queue\SerializesModels;
 
 use Illuminate\Mail\Mailables\Address;
 
-class LifecycleStatusUpdate extends Mailable
+class LifecycleStatusUpdate extends Mailable implements ShouldQueue
 {
-    use SerializesModels;
+    use Queueable, SerializesModels;
 
     public function __construct(
         public School $school,
