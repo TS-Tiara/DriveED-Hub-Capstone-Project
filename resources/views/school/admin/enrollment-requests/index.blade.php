@@ -521,6 +521,7 @@
         border-radius: 8px;
         font-size: 14px;
         font-family: inherit;
+        resize: none;
     }
 
     .action-modal-actions {
@@ -551,7 +552,81 @@
         background: #6b7280;
         color: white;
     }
-    
+
+    /* Action Menu Dropdown */
+    .action-menu-dropdown {
+        position: relative;
+        display: inline-block;
+    }
+
+    .action-menu-btn {
+        background: none;
+        border: none;
+        padding: 4px 8px;
+        cursor: pointer;
+        color: #6b7280;
+        border-radius: 4px;
+        transition: background 0.2s;
+    }
+
+    .action-menu-btn:hover {
+        background: #f3f4f6;
+        color: #111827;
+    }
+
+    .action-menu-content {
+        display: none;
+        position: absolute;
+        right: 0;
+        top: 100%;
+        background-color: white;
+        min-width: 160px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        border-radius: 8px;
+        z-index: 50;
+        border: 1px solid #e5e7eb;
+        overflow: hidden;
+    }
+
+    .action-menu-dropdown.show .action-menu-content {
+        display: block;
+    }
+
+    .action-menu-link {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        color: #374151;
+        text-decoration: none;
+        font-size: 0.85rem;
+        transition: background 0.2s;
+        border: none;
+        background: none;
+        width: 100%;
+        text-align: left;
+        cursor: pointer;
+    }
+
+    .action-menu-link:hover {
+        background-color: #f9fafb;
+        color: #111827;
+    }
+
+    .action-menu-link.text-danger {
+        color: #dc2626;
+    }
+
+    .action-menu-link.text-danger:hover {
+        background-color: #fef2f2;
+    }
+
+    .action-menu-link i, .action-menu-link svg {
+        width: 14px;
+        height: 14px;
+        flex-shrink: 0;
+    }
+
     /* Mobile card layout */
     .mobile-card {
         display: none;
@@ -818,6 +893,25 @@
 </style>
 
 <div class="enrollment-requests-container">
+    <!-- Session Alerts -->
+    @if(session('success'))
+        <div class="alert alert-success" style="padding: 15px; background: #dcfce7; color: #166534; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #22c55e;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <svg class="icon-24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                <span>{{ session('success') }}</span>
+            </div>
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="alert alert-error" style="padding: 15px; background: #fee2e2; color: #991b1b; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #ef4444;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <svg class="icon-24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span>{{ session('error') }}</span>
+            </div>
+        </div>
+    @endif
+
     <!-- Page Header -->
     <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
         <div>
@@ -913,31 +1007,16 @@
                 </div>
             </div>
         </div>
-        <div class="stat-card active {{ request('status') === 'completed' ? 'active' : '' }}" onclick="window.location.href='{{ school_route('admin.enrollments.index', ['status' => 'completed', 'branch' => request('branch')]) }}'">
+        <div class="stat-card danger {{ request('status') === 'rejected' ? 'active' : '' }}" onclick="window.location.href='{{ school_route('admin.enrollments.index', ['status' => 'rejected', 'branch' => request('branch')]) }}'">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
-                        <div class="stat-label">Completed</div>
-                        <div class="stat-value">{{ $completedRequestsCount }}</div>
+                        <div class="stat-label">Rejected</div>
+                        <div class="stat-value">{{ $rejectedRequestsCount }}</div>
                     </div>
                     <div class="stat-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="stat-card inactive {{ request('status') === 'cancelled' ? 'active' : '' }}" onclick="window.location.href='{{ school_route('admin.enrollments.index', ['status' => 'cancelled', 'branch' => request('branch')]) }}'">
-            <div class="stat-content">
-                <div class="stat-header">
-                    <div>
-                        <div class="stat-label">Cancelled</div>
-                        <div class="stat-value">{{ $cancelledRequestsCount }}</div>
-                    </div>
-                    <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
                 </div>
@@ -1011,9 +1090,15 @@
                             </span>
                         </td>
                         <td>
-                            <span class="payment-badge payment-{{ $request->payment_status }}">
-                                {{ ucfirst(str_replace('_', ' ', $request->payment_status)) }}
-                            </span>
+                            @if($request->payment_status === 'pending' && empty($request->payment_proof_path) && (str_contains(strtolower($request->remarks ?? ''), 'reject') || $request->payments()->where('status', 'rejected')->exists()))
+                                <span class="payment-badge payment-rejected" title="{{ $request->remarks }}">
+                                    Rejected
+                                </span>
+                            @else
+                                <span class="payment-badge payment-{{ $request->payment_status }}">
+                                    {{ ucfirst(str_replace('_', ' ', $request->payment_status)) }}
+                                </span>
+                            @endif
                         </td>
                         <td>
                             <div class="date-text">
@@ -1023,43 +1108,26 @@
                         </td>
                         <td>
                             <div class="action-buttons">
-                                @if(in_array($request->status, ['pending', 'approved']))
+                                @if(in_array($request->status, ['pending', 'revision_required']))
                                     <button type="button" class="btn btn-view" onclick="openVerificationModal({{ $request->id }})" title="Review Enrollment Verification">
-                                        <svg class="icon-14 me-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
-                                        {{ $request->status === 'pending' ? 'Review & Verify' : 'View Record' }}
+                                        Review & Verify
                                     </button>
-                                @endif
-
-                                @if($request->status === 'pending')
-                                    <form method="POST" action="{{ route('schools.admin.enrollments.approve', ['school' => $school, 'enrollmentRequest' => $request->id]) }}" class="inline-form" id="approveForm{{ $request->id }}">
+                                    
+                                    <form id="approveForm{{ $request->id }}" method="POST" action="{{ route('schools.admin.enrollments.api.unified-approve', ['school' => $school, 'enrollmentRequest' => $request->id]) }}" style="display:inline;">
                                         @csrf
                                         <button type="button" class="btn btn-approve" onclick="approveRequest({{ $request->id }})">
                                             &#10003; Approve
                                         </button>
                                     </form>
+
                                     <button class="btn btn-reject" onclick="showRejectModal({{ $request->id }})">
                                         &#10005; Reject
                                     </button>
                                 @elseif($request->status === 'approved')
-                                    <form method="POST" action="{{ route('schools.admin.enrollments.complete', ['school' => $school, 'enrollmentRequest' => $request->id]) }}" class="inline-form" id="completeForm{{ $request->id }}">
-                                        @csrf
-                                        <button type="button" class="btn btn-approve" onclick="completeEnrollment({{ $request->id }})">
-                                            &#10003; Complete
-                                        </button>
-                                    </form>
-                                    <button class="btn btn-reject" onclick="showCancelModal({{ $request->id }})">
-                                        &#10005; Cancel
+                                    <button type="button" class="btn btn-view" onclick="openVerificationModal({{ $request->id }})" title="View Enrollment Record">
+                                        View Record
                                     </button>
-                                @else
-                                    <span class="status-muted">
-                                        {{ ucfirst($request->status) }}
-                                        @if($request->approved_at)
-                                            <br><small>{{ $request->approved_at->format('M d, Y') }}</small>
-                                        @endif
-                                        @if($request->completed_at)
-                                            <br><small>{{ $request->completed_at->format('M d, Y') }}</small>
-                                        @endif
-                                    </span>
+                                    <span class="badge bg-success" style="font-size: 0.8rem; padding: 6px 10px;">Active Student</span>
                                 @endif
                             </div>
                         </td>
@@ -1095,9 +1163,15 @@
             </div>
             <div class="mobile-card-row">
                 <span class="mobile-card-label">Payment</span>
-                <span class="payment-badge payment-{{ $request->payment_status }}">
-                    {{ ucfirst(str_replace('_', ' ', $request->payment_status)) }}
-                </span>
+                @if($request->payment_status === 'pending' && empty($request->payment_proof_path) && (str_contains(strtolower($request->remarks ?? ''), 'reject') || $request->payments()->where('status', 'rejected')->exists()))
+                    <span class="payment-badge payment-rejected" title="{{ $request->remarks }}">
+                        Rejected
+                    </span>
+                @else
+                    <span class="payment-badge payment-{{ $request->payment_status }}">
+                        {{ ucfirst(str_replace('_', ' ', $request->payment_status)) }}
+                    </span>
+                @endif
             </div>
             <div class="mobile-card-row">
                 <span class="mobile-card-label">Date</span>
@@ -1105,21 +1179,20 @@
             </div>
             @if(in_array($request->status, ['pending', 'approved']))
                 <div class="mobile-card-actions">
-                    <button type="button" class="btn btn-view" onclick="openVerificationModal({{ $request->id }})">
-                        {{ $request->status === 'pending' ? 'Review & Verify' : 'View Record' }}
-                    </button>
-                    @if($request->status === 'pending')
-                        <form method="POST" action="{{ route('schools.admin.enrollments.approve', ['school' => $school, 'enrollmentRequest' => $request->id]) }}" class="contents-form" id="mobileApproveForm{{ $request->id }}">
+                    @if(in_array($request->status, ['pending', 'revision_required']))
+                        <button type="button" class="btn btn-view" onclick="openVerificationModal({{ $request->id }})">
+                            Review & Verify
+                        </button>
+                        <form id="mobileApproveForm{{ $request->id }}" method="POST" action="{{ route('schools.admin.enrollments.api.unified-approve', ['school' => $school, 'enrollmentRequest' => $request->id]) }}" style="display:inline;">
                             @csrf
-                            <button type="button" class="btn btn-approve" onclick="document.getElementById('approveForm{{ $request->id }}').submit()">&#10003; Approve</button>
+                            <button type="button" class="btn btn-approve" onclick="approveRequest({{ $request->id }})">&#10003; Approve</button>
                         </form>
                         <button class="btn btn-reject" onclick="showRejectModal({{ $request->id }})">&#10005; Reject</button>
-                    @else
-                        <form method="POST" action="{{ route('schools.admin.enrollments.complete', ['school' => $school, 'enrollmentRequest' => $request->id]) }}" class="contents-form">
-                            @csrf
-                            <button type="button" class="btn btn-approve" onclick="completeEnrollment({{ $request->id }})">&#10003; Complete</button>
-                        </form>
-                        <button class="btn btn-reject" onclick="showCancelModal({{ $request->id }})">&#10005; Cancel</button>
+                    @elseif($request->status === 'approved')
+                        <button type="button" class="btn btn-view" onclick="openVerificationModal({{ $request->id }})">
+                            View Record
+                        </button>
+                        <span class="badge bg-success" style="padding: 8px 12px; border-radius: 6px; font-size: 0.8rem;">Active Student</span>
                     @endif
                 </div>
             @endif
@@ -1164,18 +1237,34 @@
 </div>
 
 <!-- Reject Modal -->
-<div id="rejectModal" class="action-modal">
+<div id="rejectModal" class="action-modal modal">
     <div class="action-modal-card">
         <h3 class="action-modal-title">Reject Enrollment Request</h3>
         <form id="rejectForm" method="POST">
             @csrf
             <div class="action-modal-field">
+                <label class="action-modal-label">Selective Rejection (Checklist)</label>
+                <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 10px; padding: 12px; background: #fff5f5; border-radius: 8px; border: 1px solid #fed7d7;">
+                    <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 0.95rem; color: #c53030; font-weight: 500;">
+                        <input type="checkbox" name="reject_license" value="1" style="width: 20px; height: 20px; accent-color: #e53e3e;">
+                        Reject Identity Document (License)
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 0.95rem; color: #c53030; font-weight: 500;">
+                        <input type="checkbox" name="reject_payment" value="1" style="width: 20px; height: 20px; accent-color: #e53e3e;">
+                        Reject Payment Proof
+                    </label>
+                    <p style="font-size: 0.8rem; color: #742a2a; margin: 4px 0 0 0; line-height: 1.4;">
+                        <i class="fas fa-info-circle"></i> If checked, the enrollment stays <strong>Pending</strong> and the student is asked to re-upload. If both are unchecked, the enrollment is <strong>Fully Rejected</strong>.
+                    </p>
+                </div>
+            </div>
+            <div class="action-modal-field">
                 <label for="remarks" class="action-modal-label">
-                    Reason for Rejection *
+                    Feedback Message to Student *
                 </label>
                 <textarea id="remarks" name="remarks" rows="4" required
                     class="action-modal-input"
-                    placeholder="Provide a reason for rejecting this enrollment request..."></textarea>
+                    placeholder="Provide a message explaining what needs to be fixed..."></textarea>
             </div>
             <div class="action-modal-actions">
                 <button type="button" onclick="closeRejectModal()" class="action-modal-btn action-modal-btn-secondary">
@@ -1189,34 +1278,9 @@
     </div>
 </div>
 
-<!-- Cancel Modal -->
-<div id="cancelModal" class="action-modal">
-    <div class="action-modal-card">
-        <h3 class="action-modal-title">Cancel Enrollment</h3>
-        <form id="cancelForm" method="POST">
-            @csrf
-            <div class="action-modal-field">
-                <label for="cancel_remarks" class="action-modal-label">
-                    Reason for Cancellation (optional)
-                </label>
-                <textarea id="cancel_remarks" name="remarks" rows="4"
-                    class="action-modal-input"
-                    placeholder="Provide a reason for cancelling this enrollment..."></textarea>
-            </div>
-            <div class="action-modal-actions">
-                <button type="button" onclick="closeCancelModal()" class="action-modal-btn action-modal-btn-secondary">
-                    Cancel
-                </button>
-                <button type="submit" class="action-modal-btn action-modal-btn-neutral">
-                    Cancel Enrollment
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
 
 <!-- License Reject Modal -->
-<div id="licenseRejectModal" class="action-modal">
+<div id="licenseRejectModal" class="action-modal modal">
     <div class="action-modal-card">
         <h3 class="action-modal-title-tight">Reject Student License</h3>
         <p id="licenseRejectStudentName" class="action-modal-subtitle"></p>
@@ -1269,36 +1333,21 @@ function showRejectModal(requestId) {
     modal.style.display = 'flex';
 }
 
-function showCancelModal(requestId) {
-    const modal = document.getElementById('cancelModal');
-    const form = document.getElementById('cancelForm');
-    form.action = `{{ route('schools.admin.enrollments.cancel', ['school' => $school, 'enrollmentRequest' => ':id']) }}`.replace(':id', requestId);
-    modal.style.display = 'flex';
-}
 
 function approveRequest(requestId) {
     showConfirm({
         type: 'success',
         title: 'Approve Enrollment',
-        message: 'Are you sure you want to approve this enrollment? The student role will be promoted to Student immediately.',
-        confirmText: 'Approve',
+        message: 'This will verify the license, confirm the payment, and officially activate the student account in one step. Proceed?',
+        confirmText: 'Fully Approve Student',
         onConfirm: function() {
-            document.getElementById('approveForm' + requestId).submit();
+            // Submit the approve form (regular POST)
+            var form = document.getElementById('approveForm' + requestId) || document.getElementById('mobileApproveForm' + requestId);
+            if (form) form.submit();
         }
     });
 }
 
-function completeEnrollment(requestId) {
-    showConfirm({
-        type: 'success',
-        title: 'Complete Enrollment',
-        message: 'Are you sure you want to mark this enrollment as completed? The student has finished the course.',
-        confirmText: 'Complete',
-        onConfirm: function() {
-            document.getElementById('completeForm' + requestId).submit();
-        }
-    });
-}
 
 function closeRejectModal() {
     const modal = document.getElementById('rejectModal');
@@ -1306,11 +1355,6 @@ function closeRejectModal() {
     document.getElementById('remarks').value = '';
 }
 
-function closeCancelModal() {
-    const modal = document.getElementById('cancelModal');
-    modal.style.display = 'none';
-    document.getElementById('cancel_remarks').value = '';
-}
 
 // Close modals when clicking outside
 document.getElementById('rejectModal').addEventListener('click', function(e) {
@@ -1319,11 +1363,6 @@ document.getElementById('rejectModal').addEventListener('click', function(e) {
     }
 });
 
-document.getElementById('cancelModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-        closeCancelModal();
-    }
-});
 
 // License Reject Modal
 function showLicenseRejectModal(studentId, studentName) {
@@ -1369,8 +1408,8 @@ document.getElementById('licensePreviewModal').addEventListener('click', functio
 });
 
 
-// Prevent double-submit on modal forms (reject, cancel, license reject)
-['rejectForm', 'cancelForm', 'licenseRejectForm'].forEach(function(formId) {
+// Prevent double-submit on modal forms
+['licenseRejectForm'].forEach(function(formId) {
     var formEl = document.getElementById(formId);
     if (formEl) {
         formEl.addEventListener('submit', function(e) {
@@ -1380,6 +1419,8 @@ document.getElementById('licensePreviewModal').addEventListener('click', functio
         });
     }
 });
+
+// Reject form submits as a normal POST (no AJAX needed)
 
 // Export Menu Toggle
 function toggleExportMenu() {
@@ -1569,14 +1610,19 @@ function updateTableRowStatus(id, type, status) {
     }
 }
 
-// Close unified modal when clicking outside
-document.getElementById('unifiedVerificationModal').addEventListener('click', function(e) {
-    if (e.target === this) closeVerificationModal();
-});
+function rejectFromVerificationModal() {
+    if (!currentEnrollmentId) return;
+    const enrollmentId = currentEnrollmentId;
+    closeVerificationModal();
+    setTimeout(() => {
+        showRejectModal(enrollmentId);
+    }, 100);
+}
+
 </script>
 
 <!-- Unified Verification Modal -->
-<div id="unifiedVerificationModal" class="action-modal" style="display: none;">
+<div id="unifiedVerificationModal" class="action-modal modal" style="display: none;">
     <div class="verification-modal-card">
         <div class="v-modal-header">
             <h3 class="m-0 font-weight-bold" style="font-size: 1.1rem; color: #1e293b;">Verification Dashboard</h3>
@@ -1646,13 +1692,23 @@ document.getElementById('unifiedVerificationModal').addEventListener('click', fu
         <div class="v-btn-group">
             <button type="button" onclick="closeVerificationModal()" class="btn btn-secondary" style="background:#e2e8f0; color:#475569;">Close</button>
             <div class="ms-auto d-flex gap-2">
+                <button type="button" id="v-btn-reject-enrollment" class="btn btn-danger" style="background: #ef4444; border:none;" onclick="rejectFromVerificationModal()">
+                    Reject Enrollment
+                </button>
                 <button type="button" id="v-btn-verify-license" class="btn btn-primary" onclick="verifyLicenseAjax()" style="display:none;">Verify License</button>
                 <button type="button" id="v-btn-verify-payment" class="btn btn-success" style="background: #10b981; border:none; display:none;" onclick="verifyPaymentAjax()">
                     <svg class="icon-14 me-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                    Confirm Payment
+                    Confirm & Approve
                 </button>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+// Close unified modal when clicking outside
+document.getElementById('unifiedVerificationModal')?.addEventListener('click', function(e) {
+    if (e.target === this) closeVerificationModal();
+});
+</script>
 @endsection

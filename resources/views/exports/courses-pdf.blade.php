@@ -47,8 +47,8 @@
     <div class="info-box">
         <strong>Report Summary:</strong> &nbsp;
         Total Courses: {{ $courses->count() }} &nbsp; | &nbsp;
-        Active: {{ $courses->where('is_active', true)->count() }} &nbsp; | &nbsp;
-        Inactive: {{ $courses->where('is_active', false)->count() }}
+        Active: {{ $courses->where('status', 'active')->count() }} &nbsp; | &nbsp;
+        Inactive: {{ $courses->where('status', '!=', 'active')->count() }}
     </div>
 
     @foreach($courses as $course)
@@ -80,8 +80,8 @@
                         <span class="detail-label">Total Hours</span>
                     </td>
                     <td>
-                        <span class="detail-value {{ $course->is_active ? 'status-active' : 'status-inactive' }}">
-                            {{ $course->is_active ? 'ACTIVE' : 'INACTIVE' }}
+                        <span class="detail-value {{ $course->status === 'active' ? 'status-active' : 'status-inactive' }}">
+                            {{ strtoupper($course->status ?? 'ACTIVE') }}
                         </span>
                         <span class="detail-label">Status</span>
                     </td>

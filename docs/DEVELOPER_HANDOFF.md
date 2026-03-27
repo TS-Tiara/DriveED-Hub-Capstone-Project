@@ -209,9 +209,12 @@ A public attendance portal allows event check-in with photo capture. Uses signed
 
 1. **One enrollment at a time** — Students are "course-locked" when enrolled. They can enroll in a new course only after completing or cancelling the current one.
 2. **Enrollment = the only promotion path** — Guest-to-student promotion happens only when an admin approves an enrollment. No other action in the system can change a user's role.
-3. **Payments are history only** — The payment module records and displays transactions. It cannot approve, reject, or refund anything.
-4. **School isolation** — Every query is scoped by school. Cross-school data access is impossible except for system admins.
-5. **No refunds** — The system does not support payment refunds.
+3. **Standardized Storage Directive** — All new payment receipts MUST be stored on the `local` disk under `receipts/{school_id}/`. 
+    - Use `ReceiptStorageService` for all uploads. 
+    - `screenshots/payments/` on the `public` disk is for legacy read-access only.
+4. **Payments are history only** — The payment module records and displays transactions. It cannot approve, reject, or refund anything.
+5. **School isolation** — Every query is scoped by school. Cross-school data access is impossible except for system admins.
+6. **No refunds** — The system does not support payment refunds.
 
 ---
 

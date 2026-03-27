@@ -784,10 +784,17 @@
                 </div>
                 <div class="step-action">
                     @if($step2Done && $pendingRequest)
-                        <span class="step-badge waiting">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-12"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            Under Review
-                        </span>
+                        @if(!$pendingRequest->payment_proof_path)
+                            <a href="{{ route('schools.guest.payment.show', ['school' => $school->slug, 'enrollment_request_id' => $pendingRequest->id]) }}" 
+                               class="btn-step primary" style="background: #ef4444;">
+                                Complete Payment
+                            </a>
+                        @else
+                            <span class="step-badge waiting">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-12"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                Under Review
+                            </span>
+                        @endif
                     @elseif($step2Done && $rejectedRequest && !$pendingRequest)
                         <a href="{{ route('schools.guest.courses', $school) }}" class="btn-step primary">Try Again</a>
                     @elseif($currentStep == 2)
@@ -880,10 +887,16 @@
                 </div>
                 <div class="step-action">
                     @if($pendingRequest && $currentStep == 4)
-                        <span class="step-badge waiting">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-12"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            Awaiting Approval
-                        </span>
+                        @if(!$pendingRequest->payment_proof_path)
+                             <span class="step-badge waiting" style="background: #fee2e2; color: #991b1b;">
+                                Payment Required
+                            </span>
+                        @else
+                            <span class="step-badge waiting">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-12"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                Awaiting Approval
+                            </span>
+                        @endif
                     @endif
                 </div>
             </div>
@@ -909,7 +922,7 @@
             <p class="upgrade-guidance-text">
                 Please log out and log back in to access your full student dashboard with schedules, progress tracking, and more.
             </p>
-            <form method="POST" action="{{ $schoolRoute('logout') }}" class="inline-logout-form">
+            <form method="POST" action="{{ school_route('logout') }}" class="inline-logout-form">
                 @csrf
                 <button type="submit" class="upgrade-guidance-btn">
                     Log Out & Re-login as Student

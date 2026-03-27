@@ -89,7 +89,7 @@ class PaymentController extends Controller
             }
 
             $pendingEnrollments = \App\Models\EnrollmentRequest::where('learner_id', $studentId)
-                ->whereIn('payment_status', ['pending', 'partial', 'on_hold'])
+                ->whereIn('payment_status', ['pending', 'partial', 'on_hold', 'rejected', 'revision_required'])
                 ->with('course')
                 ->get();
 
