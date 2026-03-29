@@ -841,6 +841,8 @@ class AdminController extends Controller
 
         $request->validate([
             'admin_notes' => 'nullable|string|max:500',
+            'notify_students' => 'nullable|boolean',
+            'notification_message' => 'nullable|string|max:1000',
         ]);
 
         // Start transaction
@@ -858,6 +860,39 @@ class AdminController extends Controller
             DB::table('schedule_instructors')
                 ->where('id', $removalRequest->schedule_instructor_id)
                 ->delete();
+
+            // Notify students if requested
+            if ($request->notify_students) {
+                $timeSlot = $removalRequest->timeSlot;
+                $bookings = $timeSlot->bookings()->with('student')->get();
+                $message = $request->notification_message 
+                    ? : "Your instructor for " . Carbon::parse($timeSlot->date)->format('M d, Y') . " at " . Carbon::parse($timeSlot->start_time)->format('g:i A') . " has been changed. Please check your schedule for updates.";
+
+                foreach ($bookings as $booking) {
+                    if ($booking->student) {
+                        \App\Models\Notification::send(
+                            $booking->student,
+                            'session',
+                            'Instructor Changed',
+                            $message,
+                            'warning',
+                            school_route('student.schedule', ['school' => $school->slug])
+                        );
+
+                        // Optional: Send Email (Assuming a Mailable exists or using simple mail)
+                        try {
+                            \Illuminate\Support\Facades\Mail::to($booking->student->email)->send(new \App\Mail\GenericNotification(
+                                'Schedule Update: Instructor Changed',
+                                $message,
+                                'View Schedule',
+                                school_route('student.schedule', ['school' => $school->slug])
+                            ));
+                        } catch (\Exception $e) {
+                            LogFacade::warning("Failed to send removal email to student: " . $e->getMessage());
+                        }
+                    }
+                }
+            }
 
             DB::commit();
 
