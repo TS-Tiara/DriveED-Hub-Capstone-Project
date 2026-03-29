@@ -5,58 +5,110 @@
 @section('content')
 @php
     $settings = $school?->schoolSetting;
-    $primaryColor = $settings?->primary_color ?? '#667eea';
-    $secondaryColor = $settings?->secondary_color ?? '#764ba2';
+    $primaryColor = $settings?->primary_color ?? '#3498db';
+    $secondaryColor = $settings?->secondary_color ?? '#2ecc71';
+    $useGradient = $settings?->use_gradient_header ?? false;
+    $buttonRadius = $settings?->button_border_radius ?? 10;
+    $cardRadius = $settings?->border_radius ?? 12;
+    
+    // Header/Button Primary Style
+    $primaryStyle = $useGradient 
+        ? "linear-gradient(135deg, $primaryColor 0%, $secondaryColor 100%)" 
+        : $primaryColor;
 @endphp
 
-@include('school.admin.partials.admin-styles')
+
+
 
 <style>
-    .schedule-header {
-        margin-bottom: 20px;
-        border-bottom: 3px solid {{ $primaryColor }};
-        padding-bottom: 15px;
+    :root {
+        --primary-color: {{ $primaryColor }};
+        --secondary-color: {{ $secondaryColor }};
+        --primary-gradient: {{ $primaryStyle }};
+        --button-radius: {{ $buttonRadius }}px;
+        --card-radius: {{ $cardRadius }}px;
+        --primary-text: {{ $settings?->button_primary_text ?? '#ffffff' }};
+    }
+
+    /* Container */
+    .admin-container {
+        padding: 20px;
+        margin: 0 auto;
+        max-width: 1600px;
+    }
+
+    /* Page Header */
+    .page-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        flex-wrap: wrap;
-        gap: 15px;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #e5e7eb;
     }
-    
-    .schedule-header h1 {
+
+    .page-header-left {
+        flex: 1;
+    }
+
+    .page-title {
         font-size: 1.5rem;
         font-weight: 600;
-        margin: 0;
         color: #1f2937;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .page-subtitle {
+        color: #6b7280;
+        font-size: 0.875rem;
+        margin-top: 4px;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+
+    /* Standard Card Pattern (Matches Session Logs) */
+    .content-box {
+        background: white;
+        border-radius: var(--card-radius);
+        box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        padding: 20px;
+        margin-bottom: 20px;
     }
     
     .main-toggle {
         display: flex;
-        gap: 0;
-        background: white;
-        border: 2px solid {{ $primaryColor }};
-        border-radius: 8px;
-        overflow: hidden;
+        background: #f3f4f6;
+        padding: 4px;
+        border-radius: calc(var(--button-radius) + 2px);
     }
     
     .main-toggle-btn {
-        padding: 12px 28px;
-        background: white;
-        color: #495057;
+        padding: 10px 24px;
+        background: transparent;
+        color: #6b7280;
         border: none;
         cursor: pointer;
-        font-size: 15px;
+        font-size: 0.95rem;
         font-weight: 600;
-        transition: all 0.3s;
+        border-radius: var(--button-radius);
+        transition: all 0.2s;
     }
     
     .main-toggle-btn.active {
-        background: {{ $primaryColor }};
-        color: white;
+        background: var(--primary-gradient);
+        color: var(--primary-text);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
     }
     
     .main-toggle-btn:hover:not(.active) {
-        background: #f8f9fa;
+        color: #1f2937;
     }
     
     .main-view-section {
@@ -70,8 +122,9 @@
     .schedule-grid {
         display: grid;
         grid-template-columns: 1fr 350px;
-        gap: 20px;
+        gap: 25px;
         align-items: start;
+        margin-top: 20px;
     }
     
     @media (max-width: 992px) {
@@ -84,9 +137,10 @@
     }
     
     .schedule-item {
-        margin-bottom: 12px;
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
+        margin-bottom: 20px;
+        background: white;
+        border-radius: var(--card-radius);
+        box-shadow: 0 1px 4px rgba(0,0,0,0.08);
         overflow: hidden;
     }
     
@@ -168,10 +222,12 @@
     }
     
     .slot-badge {
-        padding: 3px 10px;
-        border-radius: 4px;
-        font-size: 12px;
-        font-weight: 500;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.725rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
     }
     
     .badge-my-slot { background: #d4edda; color: #155724; }
@@ -196,50 +252,71 @@
     }
     
     .btn-leave {
-        display: inline-block;
-        padding: 8px 16px;
-        border-radius: 6px;
-        font-size: 13px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 10px 20px;
+        border-radius: var(--button-radius);
+        font-size: 0.875rem;
         font-weight: 600;
         cursor: pointer;
-        background: #dc3545;
+        background: #ef4444;
         color: white;
         border: none;
+        transition: all 0.2s;
     }
     
-    .btn-leave:hover { background: #c82333; }
+    .btn-leave:hover { 
+        background: #dc2626; 
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+    }
     
     .btn-select {
-        display: inline-block;
-        padding: 8px 16px;
-        border-radius: 6px;
-        font-size: 13px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 10px 20px;
+        border-radius: var(--button-radius);
+        font-size: 0.875rem;
         font-weight: 600;
         cursor: pointer;
-        background: {{ $primaryColor }};
-        color: white;
+        background: var(--primary-gradient);
+        color: var(--primary-text);
         border: none;
+        transition: all 0.2s;
     }
     
-    .btn-select:hover { opacity: 0.9; }
+    .btn-select:hover { 
+        opacity: 0.95; 
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
 
     .btn-select-compact {
         padding: 6px 12px;
     }
     
     .btn-request {
-        display: inline-block;
-        padding: 8px 16px;
-        border-radius: 6px;
-        font-size: 13px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 10px 20px;
+        border-radius: var(--button-radius);
+        font-size: 0.875rem;
         font-weight: 600;
         cursor: pointer;
-        background: #ffc107;
-        color: #000;
+        background: #f59e0b;
+        color: white;
         border: none;
+        transition: all 0.2s;
     }
     
-    .btn-request:hover { background: #e0a800; }
+    .btn-request:hover { 
+        background: #d97706; 
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+    }
 
     .btn-request-disabled {
         opacity: 0.5;
@@ -285,9 +362,9 @@
     
     .sidebar-section {
         background: white;
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
-        padding: 16px;
+        border-radius: var(--card-radius);
+        box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        padding: 20px;
     }
     
     .sidebar-title {
@@ -413,9 +490,18 @@
         width: 100%;
         height: 100%;
         background: rgba(0,0,0,0.5);
-        z-index: 1000;
+        z-index: 10000;
         align-items: center;
         justify-content: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s;
+    }
+    
+    .modal-overlay.active {
+        display: flex !important;
+        opacity: 1;
+        visibility: visible;
     }
     
     .modal-content {
@@ -532,15 +618,116 @@
     .mobile-sidebar-btn {
         display: none;
     }
+    /* Confirmation Modal */
+    .confirm-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 10001;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s;
+    }
+
+    .confirm-modal.active {
+        display: flex !important;
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .confirm-dialog {
+        background: white;
+        border-radius: 16px;
+        max-width: 400px;
+        width: 90%;
+        text-align: center;
+        transform: scale(0.9);
+        transition: transform 0.3s;
+        overflow: hidden;
+        padding-bottom: 0;
+    }
+
+    .confirm-modal.active .confirm-dialog {
+        transform: scale(1);
+    }
+
+    .confirm-icon {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        margin: 30px auto 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+    }
+
+    .confirm-icon.warning { background: #fef3c7; color: #d97706; }
+    .confirm-icon.danger { background: #fee2e2; color: #dc2626; }
+    .confirm-icon.info { background: #dbeafe; color: #2563eb; }
+    .confirm-icon.success { background: #d1fae5; color: #10b981; }
+
+    .confirm-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 10px;
+        padding: 0 30px;
+    }
+
+    .confirm-message {
+        color: #6b7280;
+        font-size: 0.95rem;
+        padding: 0 30px;
+        margin-bottom: 25px;
+        line-height: 1.5;
+    }
+
+    .confirm-actions {
+        display: flex;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .confirm-btn {
+        flex: 1;
+        padding: 16px;
+        border: none;
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .confirm-btn-cancel { background: #f9fafb; color: #6b7280; }
+    .confirm-btn-cancel:hover { background: #f3f4f6; }
+
+    .confirm-btn-confirm { color: white; }
+    .confirm-btn-confirm.warning { background: #f59e0b; }
+    .confirm-btn-confirm.warning:hover { background: #d97706; }
+    .confirm-btn-confirm.danger { background: #ef4444; }
+    .confirm-btn-confirm.danger:hover { background: #dc2626; }
+    .confirm-btn-confirm.success { background: #10b981; }
+    .confirm-btn-confirm.success:hover { background: #059669; }
 </style>
 
 <div class="admin-container">
-    <!-- Header -->
-    <div class="schedule-header">
-        <h1>My Schedule</h1>
-        <div class="main-toggle">
-            <button type="button" class="main-toggle-btn active" onclick="switchMainView('my-slots')">My Slots</button>
-            <button type="button" class="main-toggle-btn" onclick="switchMainView('available')">Available Slots</button>
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="page-header-left">
+            <h1 class="page-title">My Schedule</h1>
+            <p class="page-subtitle">View and manage your assigned and available training slots</p>
+        </div>
+        <div class="header-actions">
+            <div class="main-toggle">
+                <button type="button" class="main-toggle-btn active" onclick="switchMainView('my-slots')">My Slots</button>
+                <button type="button" class="main-toggle-btn" onclick="switchMainView('available')">Available Slots</button>
+            </div>
         </div>
     </div>
     
@@ -605,12 +792,25 @@
                                         
                                         @if(!$hasPendingRequest)
                                         <div class="slot-actions">
-                                            @if($isAdminAssigned)
-                                                <button type="button" class="btn-request {{ !$canRequestRemoval ? 'btn-request-disabled' : '' }}" onclick="showRemovalModal({{ $slot->id }})" {{ !$canRequestRemoval ? 'disabled' : '' }}>
+                                            @php
+                                                $hasAnyBookings = $slotBookings->count() > 0;
+                                                $pivot = $instructor ? $instructor->pivot : null;
+                                                $isGracePeriod = false;
+                                                
+                                                if ($pivot) {
+                                                    $joinTime = \Carbon\Carbon::parse($pivot->created_at);
+                                                    $isGracePeriod = $joinTime->gt(now()->subMinute());
+                                                }
+                                                
+                                                $shouldRequest = $isAdminAssigned || $hasAnyBookings || !$isGracePeriod;
+                                            @endphp
+                                            
+                                            @if($shouldRequest)
+                                                <button type="button" class="btn-request" onclick="showRemovalModal({{ $slot->id }})">
                                                     Request Removal
                                                 </button>
-                                                @if(!$canRequestRemoval)
-                                                    <span class="min-notice-text">(Min {{ $minimumNoticeDays }} days notice)</span>
+                                                @if(!$canRequestRemoval && $isAdminAssigned && !$hasAnyBookings)
+                                                    <span class="min-notice-text">(Short notice)</span>
                                                 @endif
                                             @else
                                                 <button type="button" class="btn-leave" onclick="leaveSlot({{ $slot->id }}, this)">Leave Slot</button>
@@ -798,6 +998,21 @@
     </div>
 </div>
 
+<!-- Confirmation Modal -->
+<div class="confirm-modal" id="confirmModal">
+    <div class="confirm-dialog">
+        <div class="confirm-icon warning" id="confirmIcon">
+            <span id="confirmIconText">!</span>
+        </div>
+        <h3 class="confirm-title" id="confirmTitle">Are you sure?</h3>
+        <p class="confirm-message" id="confirmMessage">This action cannot be undone.</p>
+        <div class="confirm-actions">
+            <button type="button" class="confirm-btn confirm-btn-cancel" onclick="closeConfirmModal()">Cancel</button>
+            <button type="button" class="confirm-btn confirm-btn-confirm warning" id="confirmBtn" onclick="executeConfirm()">Confirm</button>
+        </div>
+    </div>
+</div>
+
 <!-- Removal Request Modal -->
 <div class="modal-overlay" id="removalModal" onclick="if(event.target === this) closeRemovalModal()">
     <div class="modal-content">
@@ -809,7 +1024,7 @@
             <form id="removalForm" method="POST">
                 @csrf
                 <p class="modal-help-text">
-                    Please provide a reason for requesting removal from this admin-assigned time slot.
+                    Please provide a reason for requesting removal from this time slot.
                 </p>
                 <p style="color: #666; margin-bottom: 15px;">
                     This sends a request to admin for review and does not remove you instantly.
@@ -1069,27 +1284,25 @@
     
     // Removal request modal
     function showRemovalModal(slotId) {
-        showConfirm({
-            title: 'Request Removal',
-            message: 'Do you want to submit a removal request for this slot?',
-            type: 'warning',
-            onConfirm: function() {
-                var modal = document.getElementById('removalModal');
-                var form = document.getElementById('removalForm');
-                form.action = '{{ url($school->slug) }}/instructor/timeslots/' + slotId + '/request-removal';
-                modal.style.display = 'flex';
-            }
-        });
+        var modal = document.getElementById('removalModal');
+        var form = document.getElementById('removalForm');
+        form.action = '{{ url($school->slug) }}/instructor/timeslots/' + slotId + '/request-removal';
+        modal.classList.add('active');
+        
+        // Focus the textarea
+        setTimeout(() => {
+            modal.querySelector('textarea[name="reason"]').focus();
+        }, 300);
     }
     
     function closeRemovalModal() {
-        document.getElementById('removalModal').style.display = 'none';
+        document.getElementById('removalModal').classList.remove('active');
     }
 
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             var removalModal = document.getElementById('removalModal');
-            if (removalModal && removalModal.style.display === 'flex') {
+            if (removalModal && removalModal.classList.contains('active')) {
                 closeRemovalModal();
             }
         }
@@ -1151,5 +1364,44 @@
             submitBtn.disabled = false;
         });
     }
+
+    // --- Localized Confirmation System ---
+    let confirmCallback = null;
+
+    function showConfirm(options) {
+        const modal = document.getElementById('confirmModal');
+        const icon = document.getElementById('confirmIcon');
+        const iconText = document.getElementById('confirmIconText');
+        const title = document.getElementById('confirmTitle');
+        const message = document.getElementById('confirmMessage');
+        const btn = document.getElementById('confirmBtn');
+        
+        title.textContent = options.title || 'Are you sure?';
+        message.textContent = options.message || 'This action cannot be undone.';
+        btn.textContent = options.confirmText || 'Confirm';
+        
+        const type = options.type || 'warning';
+        icon.className = `confirm-icon ${type}`;
+        btn.className = `confirm-btn confirm-btn-confirm ${type}`;
+        
+        const icons = { warning: '!', danger: '✕', info: 'i', success: '✓' };
+        iconText.textContent = icons[type] || '!';
+        confirmCallback = options.onConfirm;
+        modal.classList.add('active');
+    }
+
+    function closeConfirmModal() {
+        document.getElementById('confirmModal').classList.remove('active');
+        confirmCallback = null;
+    }
+
+    function executeConfirm() {
+        if (confirmCallback) { try { confirmCallback(); } catch (e) { console.error(e); } }
+        closeConfirmModal();
+    }
+    
+    document.getElementById('confirmModal')?.addEventListener('click', function(e) {
+        if (e.target === this) closeConfirmModal();
+    });
 </script>
 @endsection

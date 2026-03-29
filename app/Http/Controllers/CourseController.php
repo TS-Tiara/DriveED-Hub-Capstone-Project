@@ -88,7 +88,10 @@ class CourseController extends Controller
             'price' => 'nullable|numeric|min:0',
             'duration_hours' => 'nullable|numeric|min:0',
             'max_students' => 'nullable|integer|min:1',
-            'type' => 'nullable|string|max:50',
+            'type' => 'nullable|string|max:50', // This is the 'Standard/Intensive' type
+            'course_type' => 'nullable|in:theoretical,practical', // This is the category
+            'license_type' => 'nullable|string|max:100',
+            'hours_required' => 'nullable|numeric|min:0',
             'vehicle_type' => 'nullable|string|max:100',
             'features' => 'nullable|array',
             'features.*' => 'nullable|string|max:255',
@@ -196,6 +199,9 @@ class CourseController extends Controller
             'duration_hours' => 'nullable|numeric|min:0',
             'max_students' => 'nullable|integer|min:1',
             'type' => 'nullable|string|max:50',
+            'course_type' => 'nullable|in:theoretical,practical',
+            'license_type' => 'nullable|string|max:100',
+            'hours_required' => 'nullable|numeric|min:0',
             'vehicle_type' => 'nullable|string|max:100',
             'features' => 'nullable|array',
             'features.*' => 'nullable|string|max:255',
