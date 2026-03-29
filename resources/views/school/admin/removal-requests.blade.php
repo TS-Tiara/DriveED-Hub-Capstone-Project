@@ -546,8 +546,22 @@
                     The instructor will be removed from the time slot.
                 </p>
                 <div class="form-group">
-                    <label class="form-label">Admin Notes (Optional):</label>
-                    <textarea name="admin_notes" class="form-control" rows="3" placeholder="Add any notes about this approval..."></textarea>
+                    <label class="form-label">Admin Notes (Optional/Internal):</label>
+                    <textarea name="admin_notes" class="form-control" rows="2" placeholder="Internal notes about this approval..."></textarea>
+                </div>
+                <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 600;">
+                        <input type="checkbox" name="notify_students" value="1" id="notifyStudentsToggle" onchange="toggleNotificationMessage()">
+                        Notify affected students via Email & Dashboard
+                    </label>
+                </div>
+                <div id="notificationMessageContainer" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label">Custom Notification Message (Optional):</label>
+                        <textarea name="notification_message" class="form-control" rows="3" placeholder="Explain the change to students..."></textarea>
+                        <small class="text-muted">If empty, a default message will be sent.</small>
+                    </div>
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="btn btn-secondary" onclick="closeApproveModal()">Cancel</button>
@@ -618,6 +632,20 @@
         const modal = document.getElementById('approveModal');
         modal.classList.remove('active');
         document.body.style.overflow = '';
+        
+        // Reset notification fields
+        const toggle = document.getElementById('notifyStudentsToggle');
+        if (toggle) toggle.checked = false;
+        const container = document.getElementById('notificationMessageContainer');
+        if (container) container.style.display = 'none';
+    }
+
+    function toggleNotificationMessage() {
+        const toggle = document.getElementById('notifyStudentsToggle');
+        const container = document.getElementById('notificationMessageContainer');
+        if (toggle && container) {
+            container.style.display = toggle.checked ? 'block' : 'none';
+        }
     }
 
     function showRejectModal(requestId, instructorName) {

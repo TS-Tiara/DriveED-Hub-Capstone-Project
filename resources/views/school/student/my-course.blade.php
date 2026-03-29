@@ -212,36 +212,95 @@
 }
 
 .lesson-item {
-    padding: 12px 20px 12px 35px;
+    padding: 15px 20px;
     border-bottom: 1px solid #f0f1f3;
     display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    font-size: 0.9rem;
-    color: #555;
+    flex-direction: column;
+    gap: 12px;
 }
 
-.lesson-item:last-child {
-    border-bottom: none;
+.lesson-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
 .lesson-number {
     background: {{ $primaryColor }}20;
     color: {{ $primaryColor }};
-    min-width: 24px;
-    height: 24px;
+    min-width: 28px;
+    height: 28px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     font-weight: 600;
     flex-shrink: 0;
 }
 
 .lesson-title {
+    font-weight: 600;
+    color: #1f2937;
+    font-size: 1rem;
+}
+
+.lesson-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-left: 40px;
+}
+
+.action-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
     font-weight: 500;
-    color: #333;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.btn-video {
+    background: #fee2e2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+}
+
+.btn-video:hover {
+    background: #fecaca;
+}
+
+.btn-download {
+    background: #dcfce7;
+    color: #16a34a;
+    border: 1px solid #bbf7d0;
+}
+
+.btn-download:hover {
+    background: #bbf7d0;
+}
+
+.btn-read {
+    background: #f3f4f6;
+    color: #4b5563;
+    border: 1px solid #e5e7eb;
+}
+
+.expiry-warning {
+    background: #fff7ed;
+    border: 1px solid #fb923c;
+    color: #9a3412;
+    padding: 12px 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9rem;
 }
 
 /* Session History */
@@ -420,12 +479,23 @@
     </div>
 
     @if($course)
+        {{-- 24h Expiry Warning for Completed Courses --}}
+        @if($activeEnrollment && $activeEnrollment->status === 'completed')
+            <div class="expiry-warning">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <div>
+                    <strong>Access Limited:</strong> You have completed this course. Your access to these materials will expire in 
+                    {{ \Carbon\Carbon::parse($activeEnrollment->completed_at)->addDay()->diffForHumans() }}.
+                </div>
+            </div>
+        @endif
+
         {{-- Active Course Card --}}
         <div class="course-card">
             <div class="course-header">
                 <h2 class="course-title">{{ $course->title }}</h2>
                 <span class="course-type-badge course-type-{{ $course->course_type ?? 'theoretical' }}">
-                    {{ ucfirst($course->course_type ?? 'Theoretical') }}
+                    {{ $course->course_type === 'theoretical' ? 'Theoretical' : 'Practical' }}
                 </span>
             </div>
 
@@ -498,8 +568,36 @@
                                 <ul class="lesson-list">
                                     @foreach($module->lessons->sortBy('sort_order') as $index => $lesson)
                                         <li class="lesson-item">
-                                            <span class="lesson-number">{{ $index + 1 }}</span>
-                                            <span class="lesson-title">{{ $lesson->title }}</span>
+                                            <div class="lesson-top">
+                                                <span class="lesson-number">{{ $index + 1 }}</span>
+                                                <span class="lesson-title">{{ $lesson->title }}</span>
+                                            </div>
+                                            
+                                            <div class="lesson-actions">
+                                                @if($lesson->video_url)
+                                                    <a href="{{ $lesson->video_url }}" target="_blank" class="action-btn btn-video">
+                                                        <i class="bi bi-play-circle-fill"></i> Watch Video
+                                                    </a>
+                                                @endif
+
+                                                @if(!empty($lesson->attachments))
+                                                    @foreach($lesson->attachments as $attachment)
+                                                        @php 
+                                                            $fileName = is_array($attachment) ? ($attachment['name'] ?? 'Attachment') : basename($attachment);
+                                                            $filePath = is_array($attachment) ? ($attachment['path'] ?? $attachment) : $attachment;
+                                                        @endphp
+                                                        <a href="{{ Storage::url($filePath) }}" target="_blank" class="action-btn btn-download">
+                                                            <i class="bi bi-file-earmark-arrow-down-fill"></i> {{ $fileName }}
+                                                        </a>
+                                                    @endforeach
+                                                @endif
+
+                                                @if($lesson->content)
+                                                    <button type="button" class="action-btn btn-read" onclick="toggleReadModal('{{ addslashes($lesson->title) }}', '{{ addslashes($lesson->content) }}')">
+                                                        <i class="bi bi-book-fill"></i> Read
+                                                    </button>
+                                                @endif
+                                            </div>
                                         </li>
                                     @endforeach
                                 </ul>
@@ -599,9 +697,38 @@
             </div>
         @endif
     @endif
+
+    <!-- Read Lesson Modal -->
+    <div class="modal" id="readLessonModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 9999; align-items: center; justify-content: center; padding: 20px;">
+        <div class="modal-content" style="background: white; border-radius: 15px; max-width: 800px; width: 100%; max-height: 90vh; overflow-y: auto; position: relative; padding: 0;">
+            <div class="modal-header" style="background: {{ $primaryColor }}; color: white; padding: 20px; position: sticky; top: 0; display: flex; justify-content: space-between; align-items: center;">
+                <h3 id="modalLessonTitle" style="margin: 0; font-size: 1.25rem;">Lesson Title</h3>
+                <button type="button" onclick="closeReadModal()" style="background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer;">&times;</button>
+            </div>
+            <div id="modalLessonContent" style="padding: 30px; line-height: 1.8; color: #374151; font-size: 1.1rem;">
+                <!-- Content goes here -->
+            </div>
+            <div style="padding: 20px; border-top: 1px solid #e5e7eb; text-align: right; position: sticky; bottom: 0; background: white;">
+                <button type="button" class="enroll-btn" onclick="closeReadModal()">Close</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
+function toggleReadModal(title, content) {
+    const modal = document.getElementById('readLessonModal');
+    document.getElementById('modalLessonTitle').innerText = title;
+    document.getElementById('modalLessonContent').innerHTML = content.replace(/\n/g, '<br>');
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeReadModal() {
+    const modal = document.getElementById('readLessonModal');
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+}
 function toggleModule(header) {
     const moduleItem = header.closest('.module-item');
     const lessonList = moduleItem.querySelector('.lesson-list');

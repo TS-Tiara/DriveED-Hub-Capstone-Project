@@ -27,6 +27,7 @@ class TimeSlot extends Model
         'end_time',
         'status',
         'max_instructors',
+        'max_students',
         'notes',
     ];
 
@@ -34,6 +35,8 @@ class TimeSlot extends Model
         'date' => 'date',
         'start_time' => 'string',
         'end_time' => 'string',
+        'max_students' => 'integer',
+        'max_instructors' => 'integer',
     ];
 
     public function school()
@@ -68,22 +71,81 @@ class TimeSlot extends Model
         return $this->instructors()->wherePivot('instructor_id', $instructorId)->exists();
     }
 
-    public function isFull(): bool
+    /**
+     * Check if the slot has enough instructors assigned.
+     * This is for ADMIN-side instructor management.
+     */
+    public function isInstructorFull(): bool
     {
         return $this->instructors->count() >= ($this->max_instructors ?? 1);
     }
 
-    // Check if instructors can self-select this slot (has available spots)
-    public function isOpenForSelection(): bool
+    /**
+     * Check if instructors can self-select this slot.
+     */
+    public function isOpenForInstructorSelection(): bool
     {
         return $this->status === 'open' &&
-            $this->instructors->count() < $this->max_instructors;
+            $this->instructors->count() < ($this->max_instructors ?? 0);
     }
 
-    // Get available spots for instructors
-    public function getAvailableSpots(): int
+    /**
+     * Get available spots FOR INSTRUCTORS to join.
+     */
+    public function getAvailableInstructorSpots(): int
     {
         return max(0, ($this->max_instructors ?? 0) - $this->instructors->count());
+    }
+
+    /**
+     * Logic for Student Booking Visibility & Capacity.
+     * 1. 0 Instructors = 0 Visibility/Capacity.
+     * 2. TDC (Theoretical) = max_students (fixed classroom size).
+     * 3. PDC (Practical) = instructors_count (1-on-1 driving).
+     */
+    public function getAvailableStudentSpots(): int
+    {
+        $instructorCount = $this->instructors->count();
+        if ($instructorCount === 0) {
+            return 0;
+        }
+
+        $courseType = $this->course?->course_type ?? 'theoretical';
+        $bookingsCount = $this->bookings->count();
+
+        if ($courseType === 'theoretical') {
+            // Classroom capacity is fixed to max_students once at least 1 instructor joins.
+            return max(0, ($this->max_students ?? 30) - $bookingsCount);
+        }
+
+        // Practical capacity is 1-on-1 with the number of instructors present.
+        return max(0, $instructorCount - $bookingsCount);
+    }
+
+    /**
+     * Scope for Student Booking View.
+     * Ensures students only see slots that have at least one instructor.
+     */
+    public function scopeVisibleToStudents($query)
+    {
+        return $query->whereHas('instructors')
+                     ->where('status', 'open');
+    }
+
+    // Keep legacy method names if they are used elsewhere to prevent breaking.
+    public function getAvailableSpots(): int
+    {
+        return $this->getAvailableInstructorSpots();
+    }
+
+    public function isFull(): bool
+    {
+        return $this->isInstructorFull();
+    }
+
+    public function isOpenForSelection(): bool
+    {
+        return $this->isOpenForInstructorSelection();
     }
 
     // Get count of admin-assigned instructors
