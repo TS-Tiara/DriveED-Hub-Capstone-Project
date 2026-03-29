@@ -1434,7 +1434,7 @@
     <div class="page-header">
         <div>
             <h1 class="page-title">Manage Schedule</h1>
-            <p class="page-subtitle">Dual assignment modes: Open (instructor self-select) or Assigned (admin-controlled)</p>
+            <p class="page-subtitle">Manage TDC and PDC sessions with verified student capacity.</p>
         </div>
         <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 10px;">
             <div class="view-toggle">
@@ -1524,9 +1524,9 @@
                                         {{ \Carbon\Carbon::parse($timeslot->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($timeslot->end_time)->format('g:i A') }}
                                     </div>
                                     <br>
-                                    @if($availableSpots > 0)
+                                    @if($timeslot->getAvailableStudentSpots() > 0)
                                         <span class="badge badge-success">
-                                            {{ $availableSpots }} Spot{{ $availableSpots > 1 ? 's' : '' }} Available
+                                            {{ $timeslot->getAvailableStudentSpots() }} Spot{{ $timeslot->getAvailableStudentSpots() > 1 ? 's' : '' }} Available
                                         </span>
                                     @else
                                         <span class="badge badge-secondary">
@@ -1737,8 +1737,8 @@
                         <select name="course_id" id="createCourseSelect" class="form-control" required>
                             <option value="">-- Select a Course --</option>
                             @foreach($courses as $course)
-                                <option value="{{ $course->id }}">
-                                    {{ $course->title }} ({{ $course->type }})
+                                <option value="{{ $course->id }}" data-type="{{ $course->course_type }}">
+                                    {{ $course->title }} ({{ strtoupper($course->course_type) }})
                                 </option>
                             @endforeach
                         </select>
@@ -1765,10 +1765,16 @@
                     </div>
                 </div>
                 
-                <div class="form-group">
-                    <label class="form-label">Max Instructors (Total Capacity)</label>
-                    <input type="number" name="max_instructors" class="form-control" min="1" max="10" value="3" required>
-                    <small class="text-muted">Maximum number of instructors for this schedule</small>
+                <div class="form-group" id="maxStudentsGroup">
+                    <label class="form-label" id="maxStudentsLabel">Student Capacity (Seats)</label>
+                    <input type="number" name="max_students" id="createMaxStudents" class="form-control" min="1" value="30">
+                    <small class="text-muted" id="maxStudentsHelp">Total number of students allowed to book this classroom session.</small>
+                </div>
+
+                <div class="form-group" id="maxInstructorsGroup">
+                    <label class="form-label">Max Instructors (Capacity)</label>
+                    <input type="number" name="max_instructors" id="createMaxInstructors" class="form-control" min="1" max="10" value="3" required>
+                    <small class="text-muted">Maximum number of instructors allowed to join this slot.</small>
                 </div>
                 
                 <div class="form-group">
@@ -1802,6 +1808,9 @@
                 </div>
             </div>
             <div class="modal-footer">
+                <div id="batchModeAlert" style="display: none; width: 100%; text-align: left; padding: 10px; background: #fff3cd; border: 1px solid #ffeeba; border-radius: 6px; margin-bottom: 10px; font-size: 0.9rem; color: #856404;">
+                    <i class="bi bi-info-circle-fill"></i> <strong>Batch Mode Active:</strong> Since you have selected multiple instructors for a PDC session, the system will create <strong>one separate slot for each instructor</strong>.
+                </div>
                 <button type="button" class="btn btn-secondary" onclick="closeCreateModal()">Cancel</button>
                 <button type="submit" class="btn btn-success">
                     <i class="bi bi-check-circle"></i> Create Schedule
@@ -1894,6 +1903,49 @@
         var createModal = document.getElementById('createModal');
         if(createModal) createModal.style.display = 'none';
     };
+
+    // Course-Driven Smart Form Logic
+    document.addEventListener('DOMContentLoaded', function() {
+        const courseSelect = document.getElementById('createCourseSelect');
+        const maxStudentsGroup = document.getElementById('maxStudentsGroup');
+        const maxInstructorsGroup = document.getElementById('maxInstructorsGroup');
+        const batchModeAlert = document.getElementById('batchModeAlert');
+        const instructorSelect = document.querySelector('select[name="instructor_ids[]"]');
+        const maxInstructorsInput = document.getElementById('createMaxInstructors');
+
+        function updateFormMode() {
+            const selectedOption = courseSelect.options[courseSelect.selectedIndex];
+            if (!selectedOption || !selectedOption.value) return;
+
+            const type = selectedOption.getAttribute('data-type');
+            const selectedInstructors = Array.from(instructorSelect.selectedOptions).length;
+
+            if (type === 'theoretical') {
+                // TDC Mode: Focus on Seating
+                maxStudentsGroup.style.display = 'block';
+                maxInstructorsGroup.style.display = 'block';
+                batchModeAlert.style.display = 'none';
+                maxInstructorsInput.disabled = false;
+            } else {
+                // PDC Mode: Focus on 1-on-1
+                maxStudentsGroup.style.display = 'none';
+                
+                if (selectedInstructors > 1) {
+                    // Batch Multi-Assign Mode active
+                    batchModeAlert.style.display = 'block';
+                    maxInstructorsGroup.style.display = 'none';
+                } else {
+                    batchModeAlert.style.display = 'none';
+                    maxInstructorsGroup.style.display = 'block';
+                    maxInstructorsInput.value = 1;
+                    maxInstructorsInput.disabled = true;
+                }
+            }
+        }
+
+        if (courseSelect) courseSelect.addEventListener('change', updateFormMode);
+        if (instructorSelect) instructorSelect.addEventListener('change', updateFormMode);
+    });
 
     window.openDetailsModal = function() {
         var detailsModal = document.getElementById('detailsModal');
