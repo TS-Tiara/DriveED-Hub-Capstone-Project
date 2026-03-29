@@ -243,9 +243,9 @@ class StudentController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
         
-        // Get available time slots
-        $availableTimeSlots = \App\Models\TimeSlot::where('school_id', $school->id)
-            ->where('status', 'open')
+        // Get available time slots (Only those with instructors assigned)
+        $availableTimeSlots = \App\Models\TimeSlot::visibleToStudents()
+            ->where('school_id', $school->id)
             ->with(['instructors', 'course', 'branch'])
             ->orderBy('date')
             ->orderBy('start_time')
@@ -299,9 +299,16 @@ class StudentController extends Controller
         $student = Auth::guard('student')->user();
         
         // Get active enrollment (student is locked to one course at a time)
+        // Rule: Show if approved (active) OR completed within the last 24 hours.
         $activeEnrollment = EnrollmentRequest::where('learner_id', $student->id)
             ->where('school_id', $school->id)
-            ->where('status', 'approved')
+            ->where(function ($query) {
+                $query->where('status', 'approved')
+                      ->orWhere(function ($q) {
+                          $q->where('status', 'completed')
+                            ->where('completed_at', '>=', Carbon::now()->subDay());
+                      });
+            })
             ->with(['course.modules.lessons', 'sessionCompletions'])
             ->first();
         

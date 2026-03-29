@@ -14,7 +14,7 @@ class AdminTimeSlotController extends Controller
     public function index(Request $request, School $school)
     {
         $admin = Auth::guard('admin')->user();
-        abort_unless($admin, 403);
+        abort_unless((bool)$admin, 403);
 
         $query = TimeSlot::with(['instructors', 'branch'])
             ->where('school_id', '=', $school->id);
@@ -37,10 +37,16 @@ class AdminTimeSlotController extends Controller
         $instructors = $instructorsQuery->orderBy('name')
             ->get(['*']);
 
+        $courses = \App\Models\Course::where('school_id', $school->id)
+            ->where('status', 'active')
+            ->orderBy('title')
+            ->get();
+
         return view($school->resolveView('admin.timeslots'), [
             'school' => $school,
             'timeSlots' => $timeSlots,
             'instructors' => $instructors,
+            'courses' => $courses,
             'isAjax' => $request->ajax(),
         ]);
     }
@@ -89,30 +95,59 @@ class AdminTimeSlotController extends Controller
 
         // Single timeslot creation
         $request->validate([
+            'course_id' => 'required|exists:courses,id',
             'date' => 'required|date|after_or_equal:today',
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
             'max_instructors' => 'required|integer|min:1',
+            'max_students' => 'nullable|integer|min:1',
             'notes' => 'nullable|string|max:500',
-            'instructors' => 'nullable|array',
-            'instructors.*' => 'exists:instructors,id',
+            'instructor_ids' => 'nullable|array',
+            'instructor_ids.*' => 'exists:instructors,id',
         ]);
 
+        $course = \App\Models\Course::findOrFail($request->course_id);
+        $instructorIds = $request->instructor_ids ?? [];
+
+        // PDC (Practical) Batch Logic: Each instructor gets their own 1-on-1 slot
+        if ($course->course_type === 'practical' && count($instructorIds) > 1) {
+            foreach ($instructorIds as $instructorId) {
+                $timeSlot = TimeSlot::create([
+                    'school_id' => $school->id,
+                    'course_id' => $course->id,
+                    'date' => $request->date,
+                    'start_time' => $request->start_time,
+                    'end_time' => $request->end_time,
+                    'max_instructors' => 1, // PDC is 1-on-1 per slot
+                    'max_students' => 1,
+                    'notes' => $request->notes,
+                    'status' => 'open',
+                ]);
+
+                $timeSlot->instructors()->attach($instructorId, [
+                    'school_id' => $school->id,
+                    'assignment_type' => 'admin_assigned',
+                ]);
+            }
+
+            return redirect()->route('schools.admin.timeslots.index', $school)
+                ->with('success', 'Practical slots created for ' . count($instructorIds) . ' instructors!');
+        }
+
+        // Standard logic for TDC or single-instructor PDC
         $timeSlot = TimeSlot::create([
             'school_id' => $school->id,
+            'course_id' => $course->id,
             'date' => $request->date,
             'start_time' => $request->start_time,
             'end_time' => $request->end_time,
             'max_instructors' => $request->max_instructors,
+            'max_students' => $course->course_type === 'theoretical' ? ($request->max_students ?? 30) : 1,
             'notes' => $request->notes,
             'status' => 'open',
         ]);
 
-        if ($request->has('instructors') && is_array($request->instructors)) {
-            $instructorIds = Instructor::where('school_id', $school->id)
-                ->whereIn('id', $request->instructors)
-                ->pluck('id');
-
+        if (!empty($instructorIds)) {
             foreach ($instructorIds as $instructorId) {
                 $timeSlot->instructors()->attach($instructorId, [
                     'school_id' => $school->id,
