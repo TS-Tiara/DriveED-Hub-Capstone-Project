@@ -720,13 +720,13 @@
     <!-- Page Header -->
     <div class="page-header">
         <div class="page-header-left">
-            <h1 class="page-title">My Schedule</h1>
-            <p class="page-subtitle">View and manage your assigned and available training slots</p>
+            <h1 class="page-title">Session Schedule</h1>
+            <p class="page-subtitle">View and manage your assigned training sessions</p>
         </div>
         <div class="header-actions">
             <div class="main-toggle">
-                <button type="button" class="main-toggle-btn active" onclick="switchMainView('my-slots')">My Slots</button>
-                <button type="button" class="main-toggle-btn" onclick="switchMainView('available')">Available Slots</button>
+                <button type="button" class="main-toggle-btn active" onclick="switchMainView('my-slots')">My Sessions</button>
+                <button type="button" class="main-toggle-btn" onclick="switchMainView('available')">Open Sessions</button>
             </div>
         </div>
     </div>

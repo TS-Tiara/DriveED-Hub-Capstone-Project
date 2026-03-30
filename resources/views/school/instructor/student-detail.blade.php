@@ -276,7 +276,7 @@
                 </div>
                 <div class="progress-item">
                     <span class="progress-value">{{ $sessions->count() }}</span>
-                    <span class="progress-label">Total Sessions</span>
+                    <span class="progress-label">Total Histories</span>
                 </div>
             </div>
         </div>
@@ -286,7 +286,7 @@
     <div class="section-header">
         <h2>
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-18"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            Session History for {{ $student->name }}
+            Session Schedule & Logs for {{ $student->name }}
         </h2>
         <p class="section-subtitle">View notes from all instructors to maintain teaching continuity</p>
     </div>
@@ -310,7 +310,9 @@
                                 @if($session['is_mine'])
                                     <span class="my-session-badge">Your Session</span>
                                 @endif
-                                <span class="session-status status-{{ $session['status'] }}">{{ ucfirst($session['status']) }}</span>
+                                <span class="session-status status-{{ $session['status'] === 'done' ? 'no-show' : $session['status'] }}">
+                                    {{ $session['status'] === 'done' ? 'Awaiting Verification' : ucfirst($session['status']) }}
+                                </span>
                             </div>
                         </div>
                         @if($session['notes'])
@@ -328,7 +330,7 @@
             </div>
         @else
             <div class="empty-state">
-                <p>No session history with this student yet</p>
+                <p>No schedules or training logs recorded with this student yet</p>
             </div>
         @endif
     </div>
