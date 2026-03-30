@@ -9,8 +9,10 @@ use App\Models\School;
 use App\Models\Student;
 use App\Models\SystemLog;
 use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class BookingController extends Controller
 {
@@ -451,6 +453,8 @@ class BookingController extends Controller
     {
         abort_if($booking->school_id !== $school->id, 404);
 
+        $isAdmin = Auth::guard('admin')->check();
+        
         // IDOR Guard
         if (Auth::guard('student')->check()) {
             abort_if((int)$booking->student_id !== (int)Auth::guard('student')->id(), 403, 'Unauthorized status update.');
@@ -459,30 +463,102 @@ class BookingController extends Controller
         }
 
         $validated = $request->validate([
-            'status' => 'required|in:scheduled,completed,cancelled,no-show',
+            'status' => 'required|in:scheduled,done,completed,cancelled,no-show',
             'cancellation_reason' => 'nullable|string|max:500',
         ]);
 
+        // Security: Only Admins can set status to 'completed' (The Handshake)
+        if ($validated['status'] === 'completed' && !$isAdmin) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only administrators can officially complete and log training sessions.'
+            ], 403);
+        }
+
+        // Logic: Cannot complete a session that wasn't marked as 'done' by an instructor first (Optional but recommended)
+        if ($validated['status'] === 'completed' && $booking->status !== 'done' && $booking->status !== 'completed') {
+             // We'll allow it for now to avoid blocking admins, but we prefer 'done' -> 'completed'
+        }
+
         // If status is being changed to cancelled, track who cancelled it
         if ($validated['status'] === 'cancelled' && $booking->status !== 'cancelled') {
-            $validated['cancelled_by'] = 'admin';
+            $validated['cancelled_by'] = $isAdmin ? 'admin' : (Auth::guard('instructor')->check() ? 'instructor' : 'student');
             $validated['cancelled_at'] = now();
             if (empty($validated['cancellation_reason'])) {
-                $validated['cancellation_reason'] = 'Cancelled by school administrator';
+                $validated['cancellation_reason'] = 'Cancelled by ' . ($isAdmin ? 'administrator' : 'user');
             }
         }
 
-        $booking->update($validated);
+        DB::beginTransaction();
+        try {
+            $oldStatus = $booking->status;
+            $booking->update($validated);
 
-        if ($request->ajax() || $request->wantsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Schedule status updated successfully',
-                'booking' => $booking
-            ]);
+            // [AUTO-LOGGING LOGIC]
+            // When Admin marks as completed, create the official SessionCompletion record
+            if ($validated['status'] === 'completed' && $oldStatus !== 'completed') {
+                $this->autoLogSession($booking, $school);
+            }
+
+            DB::commit();
+
+            $message = $validated['status'] === 'completed' 
+                ? 'Session verified and officially logged to training history.' 
+                : 'Schedule status updated successfully';
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $message,
+                    'booking' => $booking
+                ]);
+            }
+
+            return back()->with('success', $message);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to update booking status: ' . $e->getMessage());
+            
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Failed to update status: ' . $e->getMessage()], 500);
+            }
+            return back()->with('error', 'Failed to update status.');
+        }
+    }
+
+    /**
+     * Automatically generate a SessionCompletion record from a completed Booking.
+     */
+    private function autoLogSession(Booking $booking, School $school)
+    {
+        $timeSlot = $booking->timeSlot;
+        $course = $booking->course;
+        
+        // Calculate hours from time slot if possible, otherwise fallback to course default
+        $hours = 1.0;
+        if ($timeSlot && $timeSlot->start_time && $timeSlot->end_time) {
+            $start = \Carbon\Carbon::parse($timeSlot->start_time);
+            $end = \Carbon\Carbon::parse($timeSlot->end_time);
+            $hours = round($start->diffInMinutes($end) / 60, 2);
+        } elseif ($booking->package && $booking->package->training_hours) {
+            // If it's a multi-session package, this might just be 1 session of it
+            $hours = 1.0; 
         }
 
-        return back()->with('success', 'Schedule status updated successfully');
+        \App\Models\SessionCompletion::create([
+            'school_id' => $school->id,
+            'enrollment_id' => $booking->enrollment_request_id,
+            'instructor_id' => $booking->instructor_id,
+            'session_type' => ($course && $course->course_type) ? $course->course_type : 'practical',
+            'hours_completed' => $hours,
+            'session_date' => $timeSlot ? $timeSlot->date : ($booking->scheduled_at ? $booking->scheduled_at->toDateString() : now()->toDateString()),
+            'session_time' => $timeSlot ? $timeSlot->start_time : ($booking->scheduled_at ? $booking->scheduled_at->toTimeString() : now()->toTimeString()),
+            'start_time' => $timeSlot ? $timeSlot->start_time : null,
+            'end_time' => $timeSlot ? $timeSlot->end_time : null,
+            'status' => 'completed',
+            'notes' => $booking->instructor_feedback ?? 'Auto-generated from verified schedule.',
+            'logged_by' => $booking->instructor_id, // We link to the instructor who did the work
+        ]);
     }
 
     /**

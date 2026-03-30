@@ -173,8 +173,8 @@
     <!-- Page Header -->
     <div class="page-header">
         <div class="page-header-left">
-            <h1 class="page-title">Student Sessions</h1>
-            <p class="page-subtitle">Manage and track all driving session schedules for {{ $schoolName }}</p>
+            <h1 class="page-title">Session Schedule</h1>
+            <p class="page-subtitle">Verify instructor reports and manage training sessions for {{ $schoolName }}</p>
         </div>
     </div>
 
@@ -244,20 +244,20 @@
                 <div class="stat-detail">Cancelled schedules</div>
             </div>
         </div>
-        <div class="stat-card inactive stat-card-clickable" onclick="filterBookings('pending')">
+        <div class="stat-card inactive stat-card-clickable" onclick="filterBookings('done')">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
-                        <div class="stat-label">Pending</div>
-                        <div class="stat-value">{{ $stats['pending'] }}</div>
+                        <div class="stat-label">Awaiting Verification</div>
+                        <div class="stat-value">{{ $stats['done'] ?? 0 }}</div>
                     </div>
                     <div class="stat-icon">
                         <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
                 </div>
-                <div class="stat-detail">Awaiting confirmation</div>
+                <div class="stat-detail">Marked as Done by Instructor</div>
             </div>
         </div>
     </div>
@@ -269,8 +269,8 @@
             <div class="booking-header">
                 <div class="booking-info">
                     <h3>{{ $booking->course->title ?? 'N/A' }}</h3>
-                    <span class="badge badge-{{ $booking->status === 'completed' ? 'success' : ($booking->status === 'cancelled' ? 'danger' : ($booking->status === 'pending' ? 'warning' : 'info')) }}">
-                        {{ ucfirst($booking->status) }}
+                    <span class="badge badge-{{ $booking->status === 'completed' ? 'success' : ($booking->status === 'done' ? 'warning' : ($booking->status === 'cancelled' ? 'danger' : ($booking->status === 'pending' ? 'warning' : 'info'))) }}">
+                        {{ $booking->status === 'done' ? 'Awaiting Verification' : ucfirst($booking->status) }}
                     </span>
                 </div>
                 <div class="booking-date">
@@ -333,7 +333,10 @@
                 <select class="status-select" onchange="updateStatus({{ $booking->id }}, this.value)">
                     <option value="">Change Status</option>
                     <option value="scheduled" {{ $booking->status == 'scheduled' ? 'selected' : '' }}>Scheduled</option>
-                    <option value="completed" {{ $booking->status == 'completed' ? 'selected' : '' }}>Completed</option>
+                    <option value="done" {{ $booking->status == 'done' ? 'selected' : '' }}>Marked as Done</option>
+                    <optgroup label="Final Audit">
+                        <option value="completed" {{ $booking->status == 'completed' ? 'selected' : '' }}>Verify & Log Session</option>
+                    </optgroup>
                     <option value="cancelled" {{ $booking->status == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
                     <option value="no-show" {{ $booking->status == 'no-show' ? 'selected' : '' }}>No Show</option>
                 </select>

@@ -567,7 +567,7 @@ class InstructorTimeSlotController extends Controller
 
         $validated = $request->validate([
             'attendance_status' => 'sometimes|required|in:attended,late,absent',
-            'session_status' => 'sometimes|required|in:completed,cancelled,rescheduled,no-show',
+            'session_status' => 'sometimes|required|in:done,completed,cancelled,rescheduled,no-show',
             'session_grade' => 'sometimes|nullable|numeric|min:0|max:100',
             'instructor_feedback' => 'sometimes|nullable|string|max:1000',
             'student_feedback' => 'sometimes|nullable|string|max:1000',
@@ -575,8 +575,11 @@ class InstructorTimeSlotController extends Controller
             'cancellation_reason' => 'sometimes|nullable|string|max:500'
         ]);
 
-        $willBeCompleted = ($validated['session_status'] ?? null) === 'completed'
+        $willBeCompleted = ($validated['session_status'] ?? null) === 'done'
+            || ($validated['session_status'] ?? null) === 'completed'
+            || $booking->status === 'done'
             || $booking->status === 'completed'
+            || $booking->session_status === 'done'
             || $booking->session_status === 'completed';
 
         $isUpdatingGrade = array_key_exists('session_grade', $validated);
@@ -632,11 +635,20 @@ class InstructorTimeSlotController extends Controller
         }
 
         try {
+            // [NEW LOGIC] Map session_status to booking main status
+            if (isset($updateData['session_status']) && $updateData['session_status'] === 'done') {
+                $updateData['status'] = Booking::STATUS_DONE;
+            }
+
             $booking->update($updateData);
+
+            $message = ($updateData['status'] ?? null) === Booking::STATUS_DONE 
+                ? 'Lesson marked as done and submitted for admin verification.' 
+                : 'Lesson details updated successfully';
 
             return response()->json([
                 'success' => true,
-                'message' => 'Lesson details updated successfully'
+                'message' => $message
             ]);
         }
         catch (\Exception $e) {

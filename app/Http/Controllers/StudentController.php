@@ -309,7 +309,7 @@ class StudentController extends Controller
                             ->where('completed_at', '>=', Carbon::now()->subDay());
                       });
             })
-            ->with(['course.modules.lessons', 'sessionCompletions'])
+            ->with(['course.modules.lessons', 'sessionCompletions', 'bookings.timeSlot', 'bookings.instructor'])
             ->first();
         
         $approvedRequest = $activeEnrollment;
