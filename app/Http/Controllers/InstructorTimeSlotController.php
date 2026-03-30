@@ -88,9 +88,24 @@ class InstructorTimeSlotController extends Controller
 
             if ($pivot && $pivot->pivot->assignment_type === 'admin_assigned') {
                 if ($isAjax) {
-                    return response()->json(['success' => false, 'message' => 'You cannot leave this slot as it was assigned by an admin.'], 400);
+                    return response()->json(['success' => false, 'message' => 'You cannot leave this slot as it was assigned by an admin. Please use Request Removal instead.'], 400);
                 }
-                return redirect()->back()->with('error', 'You cannot leave this slot as it was assigned by an admin.');
+                return redirect()->back()->with('error', 'You cannot leave this slot as it was assigned by an admin. Please use Request Removal instead.');
+            }
+
+            // [NEW] 1-minute Grace Period & Booking Check
+            $hasBookings = $timeSlot->bookings()->where('instructor_id', $instructor->id)->where('status', '!=', 'cancelled')->exists();
+            $joinTime = \Carbon\Carbon::parse($pivot->pivot->created_at);
+            $isGracePeriod = $joinTime->gt(now()->subMinute());
+
+            if ($hasBookings || !$isGracePeriod) {
+                $reason = $hasBookings ? 'This slot has student bookings.' : 'The 1-minute grace period for self-selected slots has expired.';
+                $message = $reason . ' You must "Request Removal" so the admin can review the request.';
+                
+                if ($isAjax) {
+                    return response()->json(['success' => false, 'message' => $message], 400);
+                }
+                return redirect()->back()->with('error', $message);
             }
 
             try {
@@ -392,12 +407,15 @@ class InstructorTimeSlotController extends Controller
         
         $daysUntilSlot = $now->diffInDays($slotDate, false);
 
+        // [MODIFIED] Relax notice period for emergency testing/real emergencies
+        // If it's short notice, we still allow the REQUEST, but the admin will see the timing.
         if ($daysUntilSlot < $minimumNoticeDays) {
-            $message = "You must request removal at least {$minimumNoticeDays} days before the scheduled time slot. This slot is in {$daysUntilSlot} day(s).";
-            if ($isAjax) {
-                return response()->json(['success' => false, 'message' => $message], 400);
-            }
-            return redirect()->back()->with('error', $message);
+            // Log it or add a flag if needed, but don't block the request creation
+            \Illuminate\Support\Facades\Log::info('Short notice removal request', [
+                'instructor_id' => $instructor->id,
+                'slot_id' => $timeSlot->id,
+                'days_notice' => $daysUntilSlot
+            ]);
         }
 
         // Check if instructor is assigned to this slot
@@ -415,9 +433,11 @@ class InstructorTimeSlotController extends Controller
             return redirect()->back()->with('error', $message);
         }
 
-        // Only allow removal requests for admin-assigned slots
-        if ($pivot->assignment_type !== 'admin_assigned') {
-            $message = 'You can only request removal from admin-assigned slots. Self-selected slots can be left directly.';
+        // [MODIFIED] allow removal requests if bookings exist, even if not adminassigned
+        $hasBookings = $timeSlot->bookings()->where('instructor_id', $instructor->id)->where('status', '!=', 'cancelled')->exists();
+
+        if ($pivot->assignment_type !== 'admin_assigned' && !$hasBookings) {
+            $message = 'You can leave this slot directly as it was self-selected and has no bookings.';
             if ($isAjax) {
                 return response()->json(['success' => false, 'message' => $message], 400);
             }
@@ -547,7 +567,7 @@ class InstructorTimeSlotController extends Controller
 
         $validated = $request->validate([
             'attendance_status' => 'sometimes|required|in:attended,late,absent',
-            'session_status' => 'sometimes|required|in:completed,cancelled,rescheduled,no-show',
+            'session_status' => 'sometimes|required|in:done,completed,cancelled,rescheduled,no-show',
             'session_grade' => 'sometimes|nullable|numeric|min:0|max:100',
             'instructor_feedback' => 'sometimes|nullable|string|max:1000',
             'student_feedback' => 'sometimes|nullable|string|max:1000',
@@ -555,8 +575,11 @@ class InstructorTimeSlotController extends Controller
             'cancellation_reason' => 'sometimes|nullable|string|max:500'
         ]);
 
-        $willBeCompleted = ($validated['session_status'] ?? null) === 'completed'
+        $willBeCompleted = ($validated['session_status'] ?? null) === 'done'
+            || ($validated['session_status'] ?? null) === 'completed'
+            || $booking->status === 'done'
             || $booking->status === 'completed'
+            || $booking->session_status === 'done'
             || $booking->session_status === 'completed';
 
         $isUpdatingGrade = array_key_exists('session_grade', $validated);
@@ -612,11 +635,20 @@ class InstructorTimeSlotController extends Controller
         }
 
         try {
+            // [NEW LOGIC] Map session_status to booking main status
+            if (isset($updateData['session_status']) && $updateData['session_status'] === 'done') {
+                $updateData['status'] = Booking::STATUS_DONE;
+            }
+
             $booking->update($updateData);
+
+            $message = ($updateData['status'] ?? null) === Booking::STATUS_DONE 
+                ? 'Lesson marked as done and submitted for admin verification.' 
+                : 'Lesson details updated successfully';
 
             return response()->json([
                 'success' => true,
-                'message' => 'Lesson details updated successfully'
+                'message' => $message
             ]);
         }
         catch (\Exception $e) {
