@@ -14,6 +14,13 @@ class Booking extends Model
     use HasSchoolScope;
     use HasFactory;
 
+    // Booking Statuses
+    const STATUS_SCHEDULED = 'scheduled';
+    const STATUS_DONE = 'done';           // Marked by Instructor
+    const STATUS_COMPLETED = 'completed'; // Verified by Admin
+    const STATUS_CANCELLED = 'cancelled';
+    const STATUS_NO_SHOW = 'no-show';
+
     protected $fillable = [
         'school_id',
         'branch_id',
@@ -161,5 +168,21 @@ class Booking extends Model
     {
         return $query->where('scheduled_at', '<=', now())
             ->orderBy('scheduled_at', 'desc');
+    }
+
+    /**
+     * Check if the booking is ready for admin validation.
+     */
+    public function isReadyForValidation(): bool
+    {
+        return $this->status === self::STATUS_DONE;
+    }
+
+    /**
+     * Check if the booking is fully completed and logged.
+     */
+    public function isCompleted(): bool
+    {
+        return $this->status === self::STATUS_COMPLETED;
     }
 }

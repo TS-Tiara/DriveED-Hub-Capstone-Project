@@ -530,7 +530,7 @@
                 </div>
                 <div class="stat-box">
                     <div class="stat-value">{{ $sessionCompletions->count() }}</div>
-                    <div class="stat-label">Sessions Logged</div>
+                    <div class="stat-label">Logs Verified</div>
                 </div>
                 <div class="stat-box">
                     <div class="stat-value">{{ max(0, $hoursRequired - $hoursCompleted) }}</div>
@@ -608,12 +608,46 @@
             </div>
         @endif
 
+        {{-- Handshake Status (Schedules & Verification) --}}
+        @php
+            $activeSchedules = ($activeEnrollment && $activeEnrollment->bookings) 
+                ? $activeEnrollment->bookings->whereIn('status', ['scheduled', 'done'])->sortBy('scheduled_at') 
+                : collect();
+        @endphp
+
+        @if($activeSchedules->count() > 0)
+            <div class="course-card">
+                <h3 class="section-title">Session Schedule & Verification</h3>
+                <p class="materials-note">Track your upcoming lessons and their verification status.</p>
+                
+                <div class="sessions-section">
+                    @foreach($activeSchedules as $booking)
+                        <div class="session-item" style="border-left: 4px solid {{ $booking->status === 'done' ? '#f59e0b' : $primaryColor }};">
+                            <div class="session-header">
+                                <span class="session-date">
+                                    {{ \Carbon\Carbon::parse($booking->scheduled_at)->format('M d, Y') }} at {{ \Carbon\Carbon::parse($booking->scheduled_at)->format('g:i A') }}
+                                </span>
+                                <span class="badge" style="background: {{ $booking->status === 'done' ? '#fef3c7' : '#dbeafe' }}; color: {{ $booking->status === 'done' ? '#92400e' : '#1e40af' }}; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">
+                                    {{ $booking->status === 'done' ? 'Reviewing (Instructor Done)' : 'Confirmed' }}
+                                </span>
+                            </div>
+                            <div class="session-details">
+                                <strong>Instructor:</strong> {{ $booking->instructor->name ?? 'TBD' }}<br>
+                                @if($booking->status === 'done')
+                                    <small style="color: #92400e;"><i class="bi bi-clock-history"></i> Awaiting final admin verification to log your hours.</small>
+                                @endif
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
         {{-- Session History --}}
         @if($sessionCompletions->count() > 0)
             <div class="course-card">
-                <h3 class="section-title">Session History</h3>
-                
-                <div class="sessions-section">
+                <h3 class="section-title">Official Training Logs</h3>
+                <p class="materials-note">These are your officially verified and logged training hours.</p>
                     @foreach($sessionCompletions->sortByDesc('session_date')->take(10) as $session)
                         <div class="session-item">
                             <div class="session-header">
