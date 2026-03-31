@@ -28,15 +28,24 @@ class PasswordResetController extends Controller
     }
 
     /**
+     * Show system admin forgot password form
+     */
+    public function showSystemAdminForgotForm()
+    {
+        return view('system-admin.auth.password.forgot');
+    }
+
+    /**
      * Send password reset link
      */
-    public function sendResetLink(Request $request, School $school)
+    public function sendResetLink(Request $request, ?School $school = null)
     {
         $request->validate([
             'email' => 'required|email',
         ]);
 
         $email = strtolower(trim($request->email));
+        $schoolId = $school ? $school->id : 0; // 0 or null represents system-wide
 
         $resetThrottleMessage = $this->getResetThrottleMessage($request, $school, $email);
         if ($resetThrottleMessage !== null) {
@@ -85,12 +94,19 @@ class PasswordResetController extends Controller
         ]);
 
         // Generate reset URL
-        $resetUrl = route('schools.password.reset', [
-            'school' => $school->slug,
-            'token' => $token,
-            'email' => $email,
-            'type' => $userType,
-        ]);
+        if ($school) {
+            $resetUrl = route('schools.password.reset', [
+                'school' => $school->slug,
+                'token' => $token,
+                'email' => $email,
+                'type' => $userType,
+            ]);
+        } else {
+            $resetUrl = route('system-admin.password.reset', [
+                'token' => $token,
+                'email' => $email,
+            ]);
+        }
 
         // Send email
         try {
@@ -116,9 +132,6 @@ class PasswordResetController extends Controller
         }
     }
 
-    /**
-     * Show password reset form
-     */
     public function showResetForm(Request $request, School $school, $token)
     {
         $school->load('schoolSetting');
@@ -132,19 +145,32 @@ class PasswordResetController extends Controller
     }
 
     /**
+     * Show system admin password reset form
+     */
+    public function showSystemAdminResetForm(Request $request, $token)
+    {
+        return view('system-admin.auth.password.reset', [
+            'token' => $token,
+            'email' => $request->email,
+        ]);
+    }
+
+    /**
      * Reset password
      */
-    public function reset(Request $request, School $school)
+    public function reset(Request $request, ?School $school = null)
     {
+        $schoolId = $school ? $school->id : 0;
+
         $request->validate([
             'email' => 'required|email',
             'password' => 'required|min:8|confirmed',
             'token' => 'required',
-            'user_type' => 'required|in:student,admin,instructor',
+            'user_type' => $school ? 'required|in:student,admin,instructor' : 'nullable',
         ]);
 
         $email = strtolower(trim($request->email));
-        $userType = $request->user_type;
+        $userType = $school ? $request->user_type : 'admin';
 
         $updateThrottleMessage = $this->getResetUpdateThrottleMessage($request, $school, $email);
         if ($updateThrottleMessage !== null) {
@@ -155,7 +181,7 @@ class PasswordResetController extends Controller
         $resetRecord = DB::table('password_reset_tokens')
             ->where('email', $email)
             ->where('user_type', $userType)
-            ->where('school_id', $school->id)
+            ->where('school_id', $schoolId)
             ->first();
 
         if (!$resetRecord) {
@@ -191,7 +217,7 @@ class PasswordResetController extends Controller
         DB::table('password_reset_tokens')
             ->where('email', $email)
             ->where('user_type', $userType)
-            ->where('school_id', $school->id)
+            ->where('school_id', $schoolId)
             ->delete();
 
         $this->clearResetUpdateAttemptLimits($request, $school, $email);
@@ -210,7 +236,10 @@ class PasswordResetController extends Controller
             case 'student':
                 return Student::where('email', $email)->where('school_id', $schoolId)->first();
             case 'admin':
-                return Admin::where('email', $email)->where('school_id', $schoolId)->first();
+                return Admin::where('email', $email)
+                    ->where('school_id', $schoolId)
+                    ->where('role', '!=', 'system_admin')
+                    ->first();
             case 'instructor':
                 return Instructor::where('email', $email)->where('school_id', $schoolId)->first();
             default:
@@ -218,16 +247,31 @@ class PasswordResetController extends Controller
         }
     }
 
-    /**
-     * Resolve reset target in a deterministic, school-scoped way.
-     */
-    private function resolveResetTarget(string $email, int $schoolId): array
+    private function resolveResetTarget(string $email, ?int $schoolId): array
     {
+        // System admin case
+        if (!$schoolId || $schoolId === 0) {
+            $user = Admin::where('email', $email)
+                ->whereNull('school_id')
+                ->where('role', 'system_admin')
+                ->first();
+
+            return [
+                'user' => $user,
+                'user_type' => 'admin',
+                'collision' => false,
+                'matched_types' => $user ? ['admin'] : [],
+            ];
+        }
+
         // Deterministic precedence for duplicate-role emails within one school.
         $typePriority = ['admin', 'instructor', 'student'];
 
         $candidates = [
-            'admin' => Admin::where('email', $email)->where('school_id', $schoolId)->first(),
+            'admin' => Admin::where('email', $email)
+                ->where('school_id', $schoolId)
+                ->where('role', '!=', 'system_admin')
+                ->first(),
             'instructor' => Instructor::where('email', $email)->where('school_id', $schoolId)->first(),
             'student' => Student::where('email', $email)->where('school_id', $schoolId)->first(),
         ];
@@ -258,14 +302,16 @@ class PasswordResetController extends Controller
         ];
     }
 
-    private function resetLimiterKeyIpAndEmail(Request $request, School $school, string $email): string
+    private function resetLimiterKeyIpAndEmail(Request $request, ?School $school, string $email): string
     {
-        return 'password-reset:ip-email:' . $school->id . ':' . sha1($email) . ':' . sha1((string) $request->ip());
+        $id = $school ? $school->id : 'global';
+        return 'password-reset:ip-email:' . $id . ':' . sha1($email) . ':' . sha1((string) $request->ip());
     }
 
-    private function resetLimiterKeyEmail(School $school, string $email): string
+    private function resetLimiterKeyEmail(?School $school, string $email): string
     {
-        return 'password-reset:email:' . $school->id . ':' . sha1($email);
+        $id = $school ? $school->id : 'global';
+        return 'password-reset:email:' . $id . ':' . sha1($email);
     }
 
     private function getResetThrottleMessage(Request $request, School $school, string $email): ?string
@@ -291,9 +337,10 @@ class PasswordResetController extends Controller
         RateLimiter::hit($this->resetLimiterKeyEmail($school, $email), 3600);
     }
 
-    private function resetUpdateLimiterKeyIpAndEmail(Request $request, School $school, string $email): string
+    private function resetUpdateLimiterKeyIpAndEmail(Request $request, ?School $school, string $email): string
     {
-        return 'password-update:ip-email:' . $school->id . ':' . sha1($email) . ':' . sha1((string) $request->ip());
+        $id = $school ? $school->id : 'global';
+        return 'password-update:ip-email:' . $id . ':' . sha1($email) . ':' . sha1((string) $request->ip());
     }
 
     private function getResetUpdateThrottleMessage(Request $request, School $school, string $email): ?string
