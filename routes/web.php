@@ -107,6 +107,12 @@ Route::prefix('{school:slug}')
         }
         );
 
+        // Onboarding routes for invited users
+        Route::controller(\App\Http\Controllers\Auth\OnboardingController::class)->group(function (): void {
+            Route::get('/onboard/{token}', 'show')->name('onboarding.show');
+            Route::post('/onboard/{token}', 'submit')->name('onboarding.submit');
+        });
+
         // Password reset routes
         Route::get('/forgot-password', [PasswordResetController::class , 'showForgotForm'])->name('password.request');
         Route::post('/forgot-password', [PasswordResetController::class , 'sendResetLink'])->name('password.email')->middleware('throttle:3,1');
@@ -207,6 +213,12 @@ Route::prefix('{school:slug}')
                     // School settings
                     Route::get('/settings', [AdminController::class , 'settings'])->name('settings');
                     Route::post('/settings', [AdminController::class , 'updateSettings'])->name('settings.update');
+
+                    // Invitation management
+                    Route::name('invitations.')->group(function () {
+                        Route::post('/invitations/{invitation}/resend', [AdminController::class, 'resendInvitation'])->name('resend');
+                        Route::delete('/invitations/{invitation}/cancel', [AdminController::class, 'cancelInvitation'])->name('cancel');
+                    });
 
                     // Branch management
                     Route::get('/branches', [BranchController::class , 'index'])->name('branches.index');

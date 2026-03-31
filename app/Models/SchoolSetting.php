@@ -89,6 +89,8 @@ class SchoolSetting extends Model
         'login_page_bg_opacity',
         'booking_cutoff_hours',
         'alert_threshold_pending',
+        'invitation_expiry_days',
+        'require_instructor_license',
     ];
 
     protected $casts = [
@@ -100,6 +102,8 @@ class SchoolSetting extends Model
         'login_header_shadow' => 'boolean',
         'booking_cutoff_hours' => 'integer',
         'alert_threshold_pending' => 'integer',
+        'invitation_expiry_days' => 'integer',
+        'require_instructor_license' => 'boolean',
         'custom_css' => 'array',
         'additional_settings' => 'array',
     ];

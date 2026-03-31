@@ -30,6 +30,7 @@ class Instructor extends Authenticatable
         'locked_until',
         'last_login_at',
         'address', // Added address field
+        'must_reset_password',
     ];
 
     protected $hidden = [

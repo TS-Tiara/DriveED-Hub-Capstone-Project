@@ -46,23 +46,35 @@ class SmartDrivingSeeder extends Seeder
         SchoolSetting::updateOrCreate(
             ['school_id' => $school->id],
             [
-                'primary_color' => '#3b82f6', 'secondary_color' => '#fbbf24', 'accent_color' => '#1e40af',
-                'button_primary_bg' => '#3b82f6', 'button_style' => 'solid',
-                'role_student_bg' => '#dbeafe', 'role_student_text' => '#1e40af',
-                'role_instructor_bg' => '#e0f2fe', 'role_instructor_text' => '#0369a1',
-                'badge_pending_bg' => '#fbbf24', 'badge_approved_bg' => '#10b981', 'badge_cancelled_bg' => '#ef4444',
-                
-                'use_gradient_header' => false, 'header_text_color' => '#ffffff',
-                'background_type' => 'color', 'background_color' => '#f8fafc',
-                'sidebar_bg_color' => '#ffffff', 'sidebar_text_color' => '#3b82f6',
+                'primary_color' => '#3b82f6',
+                'secondary_color' => '#fbbf24',
+                'accent_color' => '#1e40af',
+                'button_primary_bg' => '#3b82f6',
+                'button_style' => 'solid',
+                'role_student_bg' => '#dbeafe',
+                'role_student_text' => '#1e40af',
+                'role_instructor_bg' => '#e0f2fe',
+                'role_instructor_text' => '#0369a1',
+                'badge_pending_bg' => '#fbbf24',
+                'badge_approved_bg' => '#10b981',
+                'badge_cancelled_bg' => '#ef4444',
+
+                'use_gradient_header' => false,
+                'header_text_color' => '#ffffff',
+                'background_type' => 'color',
+                'background_color' => '#f8fafc',
+                'sidebar_bg_color' => '#ffffff',
+                'sidebar_text_color' => '#3b82f6',
                 'instructor_selection_mode' => 'student_choice',
-                'enable_booking_queue' => true, 'booking_queue_days' => 3, 'enable_branches' => true,
+                'enable_booking_queue' => true,
+                'booking_queue_days' => 3,
+                'enable_branches' => true,
                 'booking_cutoff_hours' => 12,
                 'alert_threshold_pending' => 50,
             ]
         );
 
-        // ── 25 Branches ──
+        // ── 1. INFRASTRUCTURE ──
         $branchList = [
             ['name' => 'Main Branch - Angeles City', 'address' => '123 MacArthur Highway, Angeles City, Pampanga', 'contact_number' => '+63-917-123-4501', 'email' => 'angeles@smartdriving.com'],
             ['name' => 'Clark Branch', 'address' => '45 M.A. Roxas Highway, Clark Freeport Zone, Pampanga', 'contact_number' => '+63-917-123-4502', 'email' => 'clark@smartdriving.com'],
@@ -91,50 +103,80 @@ class SmartDrivingSeeder extends Seeder
             ['name' => 'Balanga Branch', 'address' => '33 Capitol Drive, Balanga City, Bataan', 'contact_number' => '+63-917-123-4525', 'email' => 'balanga@smartdriving.com'],
         ];
         $branches = $this->createBranches($school, $branchList);
-        $this->command->info('   ✓ 25 Branches created');
+        $this->command->info('   ✓ Branches created');
 
-        // ── School Admins (4) ──
+        // ── 2. IDENTITY (All users first) ──
+
+        // Admins
         foreach ([
             ['name' => 'Maria Cristina Santos', 'email' => 'maria.santos@smartdriving.com'],
             ['name' => 'Jose Antonio Reyes', 'email' => 'jose.reyes@smartdriving.com'],
             ['name' => 'Carmen Rosa Villanueva', 'email' => 'carmen.villanueva@smartdriving.com'],
         ] as $a) {
             Admin::updateOrCreate(['email' => $a['email']], [
-                'school_id' => $school->id, 'name' => $a['name'],
-                'password' => $hashedPassword, 'role' => 'school_admin', 'is_active' => true,
+                'school_id' => $school->id,
+                'name' => $a['name'],
+                'password' => $hashedPassword,
+                'role' => 'school_admin',
+                'is_active' => true,
             ]);
         }
         Admin::updateOrCreate(['email' => 'schooladmin@gmail.com'], [
-            'school_id' => $school->id, 'name' => 'Demo School Admin',
-            'password' => $hashedPassword, 'role' => 'school_admin', 'is_active' => true,
+            'school_id' => $school->id,
+            'name' => 'Demo School Admin',
+            'password' => $hashedPassword,
+            'role' => 'school_admin',
+            'is_active' => true,
         ]);
-        $this->command->info('   ✓ 4 School Admins created');
 
-        // ── 25 Branch Managers (1 per branch) ──
+        // Branch Managers
         Admin::updateOrCreate(['email' => 'secretary@gmail.com'], [
-            'school_id' => $school->id, 'branch_id' => $branches[0]->id,
-            'name' => 'Demo Branch Manager', 'password' => $hashedPassword,
-            'role' => 'branch_secretary', 'is_active' => true,
+            'school_id' => $school->id,
+            'branch_id' => $branches[0]->id,
+            'name' => 'Demo Branch Manager',
+            'password' => $hashedPassword,
+            'role' => 'branch_secretary',
+            'is_active' => true,
         ]);
         $managerNames = [
-            'Rosa Marie Lim', 'Fernando Bautista', 'Lorna Aguilar', 'Cecilia Tan',
-            'Eduardo Gomez', 'Myrna Torres', 'Reynaldo Santos', 'Gloria Pascual',
-            'Nestor Cruz', 'Erlinda Ramos', 'Virgilio Lopez', 'Teresita Mendoza',
-            'Danilo Garcia', 'Rosario Flores', 'Arturo Rivera', 'Corazon Hernandez',
-            'Benjamin Dizon', 'Felicidad Navarro', 'Rodolfo Medina', 'Leonora Jimenez',
-            'Gregorio Alvarez', 'Milagros Ruiz', 'Alfredo Sanchez', 'Esperanza Ramirez',
+            'Rosa Marie Lim',
+            'Fernando Bautista',
+            'Lorna Aguilar',
+            'Cecilia Tan',
+            'Eduardo Gomez',
+            'Myrna Torres',
+            'Reynaldo Santos',
+            'Gloria Pascual',
+            'Nestor Cruz',
+            'Erlinda Ramos',
+            'Virgilio Lopez',
+            'Teresita Mendoza',
+            'Danilo Garcia',
+            'Rosario Flores',
+            'Arturo Rivera',
+            'Corazon Hernandez',
+            'Benjamin Dizon',
+            'Felicidad Navarro',
+            'Rodolfo Medina',
+            'Leonora Jimenez',
+            'Gregorio Alvarez',
+            'Milagros Ruiz',
+            'Alfredo Sanchez',
+            'Esperanza Ramirez',
         ];
         foreach ($managerNames as $i => $name) {
             $branchIdx = $i + 1; // branches 1-24
             Admin::updateOrCreate(['email' => $this->makeEmail($name, 'smartdriving.com')], [
-                'school_id' => $school->id, 'branch_id' => $branches[$branchIdx]->id,
-                'name' => $name, 'password' => $hashedPassword,
-                'role' => 'branch_secretary', 'is_active' => true,
+                'school_id' => $school->id,
+                'branch_id' => $branches[$branchIdx]->id,
+                'name' => $name,
+                'password' => $hashedPassword,
+                'role' => 'branch_secretary',
+                'is_active' => true,
             ]);
         }
-        $this->command->info('   ✓ 25 Branch Managers created (1 per branch)');
 
-        // ── 75 Instructors (3 per branch) + 1 demo = 76 ──
+        // Instructors
         $instructors = [];
         $instOffset = 0;
         for ($b = 0; $b < count($branches); $b++) {
@@ -150,7 +192,8 @@ class SmartDrivingSeeder extends Seeder
                         'password' => $hashedPassword,
                         'license_number' => 'LIC-SD-2024-' . str_pad($instOffset + 1, 3, '0', STR_PAD_LEFT),
                         'bio' => 'Experienced driving instructor at Smart Driving School.',
-                        'status' => 'active', 'availability' => 'available',
+                        'status' => 'active',
+                        'availability' => 'available',
                     ]
                 );
                 $instOffset++;
@@ -159,16 +202,19 @@ class SmartDrivingSeeder extends Seeder
         $instructors[] = Instructor::updateOrCreate(
             ['email' => 'instructor@gmail.com'],
             [
-                'school_id' => $school->id, 'branch_id' => $branches[0]->id,
-                'name' => 'Demo Instructor', 'contact' => '+63-917-555-0000',
-                'password' => $hashedPassword, 'license_number' => 'LIC-SD-TEST-001',
+                'school_id' => $school->id,
+                'branch_id' => $branches[0]->id,
+                'name' => 'Demo Instructor',
+                'contact' => '+63-917-555-0000',
+                'password' => $hashedPassword,
+                'license_number' => 'LIC-SD-TEST-001',
                 'bio' => 'Test instructor account for demo purposes.',
-                'status' => 'active', 'availability' => 'available',
+                'status' => 'active',
+                'availability' => 'available',
             ]
         );
-        $this->command->info('   ✓ ' . count($instructors) . ' Instructors created (3 per branch + 1 demo)');
 
-        // ── 200 Students (8 per branch) + 1 demo = 201 ──
+        // Students
         $students = [];
         $stuOffset = 500;
         for ($b = 0; $b < count($branches); $b++) {
@@ -194,33 +240,41 @@ class SmartDrivingSeeder extends Seeder
         $demoStudent = Student::updateOrCreate(
             ['school_id' => $school->id, 'email' => 'student@gmail.com'],
             [
-                'name' => 'Demo Student', 'branch_id' => $branches[0]->id,
-                'contact' => '+63-900-000-0001', 'password' => $hashedPassword,
-                'status' => 'active', 'enrollment_date' => now()->subDays(30),
+                'name' => 'Demo Student',
+                'branch_id' => $branches[0]->id,
+                'contact' => '+63-900-000-0001',
+                'password' => $hashedPassword,
+                'status' => 'active',
+                'enrollment_date' => now()->subDays(30),
             ]
         );
         $demoStudent->role = 'student';
         $demoStudent->save();
         $students[] = $demoStudent;
-        $this->command->info('   ✓ ' . count($students) . ' Students created (8 per branch + 1 demo)');
 
-        // ── Courses ──
+        // Guests
+        $admins = Admin::where('school_id', '=', $school->id)->where('role', '=', 'school_admin')->get()->all();
+        $guests = $this->createGuestsAndEnrollmentRequests($school, [], $admins, 'P@ssw0rd123');
+
+        $this->command->info('   ✓ All user identities created (Admins, Managers, Instructors, Students, Guests)');
+
+        // ── 3. PRODUCTS (Courses) ──
         $courses = $this->createSmartDrivingCourses($school);
-        $this->command->info('   ✓ 3 Courses with packages created');
+        $this->command->info('   ✓ Courses with packages created');
 
-        // ── Time Slots, Bookings, Payments ──
+        // ── 4. INTERACTIONS (Link everything) ──
+
+        // Time Slots, Bookings, Payments
         $this->createTimeSlotsAndAssignments($school, $instructors, $courses, $branches);
         $this->createBookingsAndPayments($school, $students, $instructors, $courses, $branches, 30);
-        $this->command->info('   ✓ Time slots, bookings, and payments created');
 
-        // ── Guests & Enrollment Requests ──
-        $admins = Admin::where('school_id', '=', $school->id)->where('role', '=', 'school_admin')->get()->all();
-        $guests = $this->createGuestsAndEnrollmentRequests($school, $courses, $admins, 'P@ssw0rd123');
-        $this->command->info('   ✓ Guest students and enrollment requests created');
+        // Link guests to courses
+        $this->createGuestsAndEnrollmentRequests($school, $courses, $admins, 'P@ssw0rd123');
 
-        // ── Notifications ──
+        // Notifications
         $this->createSampleNotifications($school, $students, $instructors, $admins, $guests);
-        $this->command->info('   ✓ Sample notifications created');
+
+        $this->command->info('   ✓ Interactions created (Slots, Bookings, Enrollment Requests)');
     }
 
     private function createSmartDrivingCourses(School $school): array
