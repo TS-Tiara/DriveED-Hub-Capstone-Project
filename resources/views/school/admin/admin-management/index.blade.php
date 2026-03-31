@@ -486,7 +486,7 @@
             <p class="page-subtitle">Manage administrators and branch secretaries for {{ $schoolName }}</p>
         </div>
         <button class="btn-create" onclick="openCreateModal()">
-            <i class="bi bi-plus-lg"></i> Add Administrator
+            <i class="bi bi-plus-lg"></i> Invite Administrator
         </button>
     </div>
 
@@ -596,7 +596,7 @@
 <div class="modal-overlay" id="createModal">
     <div class="modal-content">
         <div class="modal-header">
-            <h5><i class="bi bi-person-plus"></i> Add Administrator</h5>
+            <h5><i class="bi bi-person-plus"></i> Invite Administrator</h5>
             <button class="btn-close-modal" onclick="closeCreateModal()">&times;</button>
         </div>
         <form action="{{ route('schools.admin.admin-management.store', $school) }}" method="POST">
@@ -609,14 +609,7 @@
                 <div class="form-group">
                     <label for="create_email">Email Address</label>
                     <input type="email" id="create_email" name="email" required placeholder="Enter email address" value="{{ old('email') }}">
-                </div>
-                <div class="form-group">
-                    <label for="create_password">Password</label>
-                    <input type="password" id="create_password" name="password" required placeholder="Enter password" minlength="8">
-                </div>
-                <div class="form-group">
-                    <label for="create_password_confirmation">Confirm Password</label>
-                    <input type="password" id="create_password_confirmation" name="password_confirmation" required placeholder="Confirm password" minlength="8">
+                    <p class="form-hint">An invitation link will be sent to this email for the user to set their password.</p>
                 </div>
                 <div class="form-group">
                     <label for="create_contact">Contact Number</label>
@@ -648,7 +641,7 @@
             <div class="modal-footer">
                 <button type="button" class="btn-secondary" onclick="closeCreateModal()">Cancel</button>
                 <button type="submit" class="btn-primary">
-                    <i class="bi bi-check-lg"></i> Create Administrator
+                    <i class="bi bi-send"></i> Send Invitation
                 </button>
             </div>
         </form>
