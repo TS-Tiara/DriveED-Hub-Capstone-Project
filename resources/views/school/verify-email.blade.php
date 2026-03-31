@@ -1,12 +1,17 @@
+@php
+    $settings = $school?->schoolSetting;
+    $primaryColor = $settings?->primary_color ?? '#2563eb';
+    $secondaryColor = $settings?->secondary_color ?? '#f59e0b';
+    $headerHeight = $settings?->login_header_height ?? 60;
+    $schoolNameSize = $settings?->login_school_name_size ?? 24;
+    $welcomeSize = $settings?->login_welcome_size ?? 16;
+    $logoSize = $settings?->login_logo_size ?? 40;
+    $schoolName = $school->name ?? 'DriveEd Hub';
+@endphp
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
-    @php
-        $school = $school ?? $currentSchool ?? null;
-        $settings = $school?->schoolSetting;
-        $schoolName = $school->name ?? 'DriveEd Hub';
-    @endphp
     @include('partials.school-auth-header')
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $schoolName }} - Email Verification</title>
