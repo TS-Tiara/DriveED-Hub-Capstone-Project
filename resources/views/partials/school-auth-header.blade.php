@@ -4,7 +4,7 @@
     $settings = $school?->schoolSetting;
     
     // School branding
-    $schoolName = $school->name ?? 'DriveEd Hub';
+    $schoolName = $school?->name ?? 'DriveEd Hub';
     
     // Get custom colors from school settings or use defaults
     $primaryColor = $settings?->primary_color ?? '#2563eb';
@@ -43,6 +43,19 @@
         $headerBackground = "linear-gradient(135deg, {$primaryColor} 0%, {$secondaryColor} 100%)";
     } else {
         $headerBackground = $primaryColor;
+    }
+
+    // Page Background Settings (shared across all auth pages)
+    $pageBgType = $settings?->login_page_bg_type ?? 'color';
+    $pageBgColor = $settings?->login_page_bg_color ?? '#f5f5f5';
+    $pageBgImage = $settings?->login_page_bg_image;
+    $pageBgOpacity = $settings?->login_page_bg_opacity ?? 100;
+    
+    // Generate page background
+    if ($pageBgType === 'image' && $pageBgImage) {
+        $pageBackground = "url('" . asset('storage/' . $pageBgImage) . "')";
+    } else {
+        $pageBackground = $pageBgColor;
     }
 @endphp
 
