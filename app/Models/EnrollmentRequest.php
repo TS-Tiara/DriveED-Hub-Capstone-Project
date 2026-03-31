@@ -37,7 +37,8 @@ class EnrollmentRequest extends Model
         'theoretical_passed',
         'theoretical_passed_at',
         'theoretical_passed_by',
-        'theoretical_pass_notes',
+        'cancellation_requested',
+        'cancellation_reason',
         // New enrollment fields
         'package_id',
         'price',
