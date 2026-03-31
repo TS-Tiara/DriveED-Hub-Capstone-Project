@@ -262,11 +262,25 @@ class AuthController extends Controller
             Auth::guard('instructor')->login($instructor, $remember);
             $request->session()->regenerate();
 
+            // Check for forced password reset
+            if ($instructor->must_reset_password) {
+                SystemLog::logInfo(
+                    "Instructor forced to reset password: {$instructor->name}",
+                    'authentication',
+                    ['instructor_id' => $instructor->id, 'email' => $instructor->email],
+                    $school->id,
+                    'force_password_reset_triggered'
+                );
+
+                return redirect()->route('schools.password.force-reset', $school)
+                    ->with('info', 'Please set a new password for your account to continue.');
+            }
+
             // Log successful instructor login
             SystemLog::logInfo(
                 "Instructor logged in: {$instructor->name}",
                 'authentication',
-            ['instructor_id' => $instructor->id, 'email' => $instructor->email],
+                ['instructor_id' => $instructor->id, 'email' => $instructor->email],
                 $school->id,
                 'instructor_login'
             );
@@ -383,6 +397,20 @@ class AuthController extends Controller
             Auth::guard('student')->login($student, $remember);
             $request->session()->regenerate();
 
+            // Check for forced password reset
+            if ($student->must_reset_password) {
+                SystemLog::logInfo(
+                    "Student forced to reset password: {$student->name}",
+                    'authentication',
+                    ['student_id' => $student->id, 'email' => $student->email],
+                    $school->id,
+                    'force_password_reset_triggered'
+                );
+
+                return redirect()->route('schools.password.force-reset', $school)
+                    ->with('info', 'Please set a new password for your account to continue.');
+            }
+
             // Log successful student/guest login
             $userType = $student->role === 'guest' ? 'Guest' : 'Student';
             SystemLog::logInfo(
@@ -468,42 +496,58 @@ class AuthController extends Controller
 
     public function showForceResetForm(School $school)
     {
-        $admin = Auth::guard('admin')->user();
-        if (!$admin || !$admin->must_reset_password) {
-            return redirect()->route('schools.admin.dashboard', $school);
+        $user = Auth::guard('admin')->user() 
+             ?? Auth::guard('instructor')->user() 
+             ?? Auth::guard('student')->user();
+
+        if (!$user || !$user->must_reset_password) {
+            // Re-route to their respective dashboard if they don't need reset
+            if (Auth::guard('admin')->check()) return redirect()->route('schools.admin.dashboard', $school);
+            if (Auth::guard('instructor')->check()) return redirect()->route('schools.instructor.dashboard', $school);
+            if (Auth::guard('student')->check()) return redirect()->route('schools.student.dashboard', $school);
+            return redirect()->route('schools.login', $school);
         }
 
         return view($school->resolveView('password.force-reset'), [
             'school' => $school,
-            'admin' => $admin,
+            'user' => $user,
         ]);
     }
 
     public function handleForceReset(Request $request, School $school)
     {
-        $admin = Auth::guard('admin')->user();
-        if (!$admin || !$admin->must_reset_password) {
-            return redirect()->route('schools.admin.dashboard', $school);
+        $guard = Auth::guard('admin')->check() ? 'admin' : (Auth::guard('instructor')->check() ? 'instructor' : 'student');
+        $user = Auth::guard($guard)->user();
+
+        if (!$user || !$user->must_reset_password) {
+             return redirect()->route('schools.login', $school);
         }
 
         $request->validate([
-            'password' => 'required|string|min:8|confirmed',
+            'password' => ['required', 'string', 'confirmed', new \App\Rules\StrongPassword()],
         ]);
 
-        $admin->update([
-            'password' => bcrypt($request->password),
+        $user->update([
+            'password' => Hash::make($request->password),
             'must_reset_password' => false,
         ]);
 
         SystemLog::logInfo(
-            "Admin completed forced password reset: {$admin->name}",
+            "User completed forced password reset: {$user->name}",
             'authentication',
-            ['admin_id' => $admin->id, 'email' => $admin->email],
+            ['user_id' => $user->id, 'email' => $user->email, 'guard' => $guard],
             $school->id,
             'force_password_reset_completed'
         );
 
-        return redirect()->route('schools.admin.dashboard', $school)
+        // Redirect based on guard
+        $routes = [
+            'admin' => 'schools.admin.dashboard',
+            'instructor' => 'schools.instructor.dashboard',
+            'student' => $user->role === 'guest' ? 'schools.guest.dashboard' : 'schools.student.dashboard'
+        ];
+
+        return redirect()->route($routes[$guard], $school)
             ->with('success', 'Your password has been updated successfully. Welcome to the portal!');
     }
 

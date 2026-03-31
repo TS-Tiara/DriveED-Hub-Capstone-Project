@@ -109,15 +109,30 @@ trait HandlesSchoolSeeding
             $date = now()->addDays($day)->format('Y-m-d');
             if (now()->addDays($day)->dayOfWeek == 0) continue;
             foreach ($courses as $course) {
-                $sc = rand(4, min(6, count($times)));
+                $sc = rand(2, min(4, count($times))); // Fewer slots per course per day to avoid overlap overload
                 $ds = array_rand($times, $sc);
                 if (!is_array($ds)) $ds = [$ds];
                 foreach ($ds as $si) {
                     $branch = $branches[$bi % count($branches)];
                     $bi++;
-                    $ts = TimeSlot::create(['school_id' => $school->id, 'branch_id' => $branch->id, 'course_id' => $course->id, 'date' => $date, 'start_time' => $times[$si][0], 'end_time' => $times[$si][1], 'status' => 'open', 'max_instructors' => 1]);
+                    $ts = TimeSlot::create([
+                        'school_id' => $school->id, 
+                        'branch_id' => $branch->id, 
+                        'course_id' => $course->id, 
+                        'date' => $date, 
+                        'start_time' => $times[$si][0], 
+                        'end_time' => $times[$si][1], 
+                        'status' => 'open', 
+                        'max_instructors' => 1,
+                        'max_students' => rand(1, 4), // Added max students capacity
+                    ]);
                     if (!empty($instructors)) {
-                        ScheduleInstructor::create(['time_slot_id' => $ts->id, 'instructor_id' => $instructors[array_rand($instructors)]->id, 'school_id' => $school->id, 'assignment_type' => 'admin_assigned']);
+                        ScheduleInstructor::create([
+                            'time_slot_id' => $ts->id, 
+                            'instructor_id' => $instructors[array_rand($instructors)]->id, 
+                            'school_id' => $school->id, 
+                            'assignment_type' => 'admin_assigned'
+                        ]);
                     }
                 }
             }
@@ -178,7 +193,7 @@ trait HandlesSchoolSeeding
         $slug = $school->slug;
         $guestData = [
             ['name' => 'Elena Joy Reyes', 'email' => "guest1@{$slug}.test", 'license_status' => 'none', 'enrollment_status' => 'pending'],
-            ['name' => 'Mark Anthony Dizon', 'email' => "guest2@{$slug}.test", 'license_status' => 'pending', 'enrollment_status' => 'pending'],
+            ['name' => 'Mark Anthony Dizon', 'email' => "guest2@{$slug}.test", 'license_status' => 'pending', 'enrollment_status' => 'pending', 'cancellation' => true],
             ['name' => 'Jamie Lyn Pascual', 'email' => "guest3@{$slug}.test", 'license_status' => 'verified', 'enrollment_status' => 'rejected'],
             ['name' => 'Carlo Miguel Bautista', 'email' => "guest4@{$slug}.test", 'license_status' => 'none', 'enrollment_status' => null],
         ];
@@ -186,16 +201,47 @@ trait HandlesSchoolSeeding
         foreach ($guestData as $g) {
             $guest = Student::updateOrCreate(
                 ['school_id' => $school->id, 'email' => $g['email']],
-                ['name' => $g['name'], 'contact' => '+63-9' . rand(10, 99) . '-' . rand(100, 999) . '-' . rand(1000, 9999), 'password' => $password, 'status' => 'active', 'student_license_status' => $g['license_status'], 'student_license_verified_at' => $g['license_status'] === 'verified' ? now()->subDays(5) : null]
+                [
+                    'name' => $g['name'], 
+                    'contact' => '+63-9' . rand(10, 99) . '-' . rand(100, 999) . '-' . rand(1000, 9999), 
+                    'password' => $password, 
+                    'status' => 'active', 
+                    'student_license_status' => $g['license_status'], 
+                    'student_license_verified_at' => $g['license_status'] === 'verified' ? now()->subDays(5) : null
+                ]
             );
             $guest->role = 'guest';
             $guest->save();
             $guests[] = $guest;
+
             if ($g['enrollment_status'] && !empty($courses)) {
                 $course = $courses[array_rand($courses)];
-                $ed = ['school_id' => $school->id, 'learner_id' => $guest->id, 'course_id' => $course->id, 'status' => $g['enrollment_status'], 'payment_status' => 'pending', 'experience_level' => 'new_driver', 'requested_license_type' => $course->license_type ?? 'non_professional'];
+                $package = CoursePackage::where('course_id', '=', $course->id)->first();
+                
+                $ed = [
+                    'school_id' => $school->id, 
+                    'learner_id' => $guest->id, 
+                    'course_id' => $course->id, 
+                    'status' => $g['enrollment_status'], 
+                    'payment_status' => 'pending', 
+                    'experience_level' => 'new_driver', 
+                    'requested_license_type' => $course->license_type ?? 'non_professional',
+                    'price' => $package ? $package->price : 0, // Added price support
+                    'payment_method' => 'gcash', // Sample payment method
+                    'payment_reference' => 'REF-' . strtoupper(\Illuminate\Support\Str::random(10)), // Sample reference
+                ];
+
+                if (isset($g['cancellation']) && $g['cancellation']) {
+                    $ed['cancellation_requested'] = true;
+                    $ed['cancellation_reason'] = 'The student changed their mind about the schedule.';
+                }
+
                 if ($g['enrollment_status'] === 'rejected') $ed['remarks'] = 'Incomplete documentation. Please re-submit with valid credentials.';
-                if ($g['enrollment_status'] === 'approved' && !empty($admins)) { $ed['approved_by'] = $admins[0]->id; $ed['approved_at'] = now()->subDays(2); $ed['enrolled_at'] = now()->subDays(2); }
+                if ($g['enrollment_status'] === 'approved' && !empty($admins)) { 
+                    $ed['approved_by'] = $admins[0]->id; 
+                    $ed['approved_at'] = now()->subDays(2); 
+                    $ed['enrolled_at'] = now()->subDays(2); 
+                }
                 EnrollmentRequest::updateOrCreate(['school_id' => $school->id, 'learner_id' => $guest->id, 'course_id' => $course->id], $ed);
             }
         }

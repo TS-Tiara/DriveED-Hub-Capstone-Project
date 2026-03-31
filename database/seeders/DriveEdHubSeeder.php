@@ -46,49 +46,66 @@ class DriveEdHubSeeder extends Seeder
         SchoolSetting::updateOrCreate(
             ['school_id' => $school->id],
             [
-                'primary_color' => '#667eea', 'secondary_color' => '#764ba2', 'accent_color' => '#1e40af',
-                'button_primary_bg' => '#667eea', 'button_style' => 'gradient',
-                'use_gradient_header' => true, 'background_type' => 'gradient', 'background_color' => '#f8fafc',
-                'role_student_bg' => '#ede9fe', 'role_student_text' => '#5b21b6',
-                'role_instructor_bg' => '#f3e8ff', 'role_instructor_text' => '#6b21a8',
-                
+                'primary_color' => '#667eea',
+                'secondary_color' => '#764ba2',
+                'accent_color' => '#1e40af',
+                'button_primary_bg' => '#667eea',
+                'button_style' => 'gradient',
+                'use_gradient_header' => true,
+                'background_type' => 'gradient',
+                'background_color' => '#f8fafc',
+                'role_student_bg' => '#ede9fe',
+                'role_student_text' => '#5b21b6',
+                'role_instructor_bg' => '#f3e8ff',
+                'role_instructor_text' => '#6b21a8',
+
                 'header_text_color' => '#ffffff',
-                'sidebar_bg_color' => '#ffffff', 'sidebar_text_color' => '#667eea',
+                'sidebar_bg_color' => '#ffffff',
+                'sidebar_text_color' => '#667eea',
                 'instructor_selection_mode' => 'admin_assigned',
-                'enable_booking_queue' => true, 'booking_queue_days' => 3, 'enable_branches' => true,
+                'enable_booking_queue' => true,
+                'booking_queue_days' => 3,
+                'enable_branches' => true,
                 'booking_cutoff_hours' => 12,
                 'alert_threshold_pending' => 50,
             ]
         );
 
-        // ── 2 Branches ──
+        // ── 1. INFRASTRUCTURE ──
         $branches = $this->createBranches($school, [
             ['name' => 'Main Campus - Clark', 'address' => '789 Del Pilar Street, Clark Freeport Zone, Pampanga', 'contact_number' => '+63-919-345-6789', 'email' => 'clark@drivedhub.com'],
             ['name' => 'Balibago Branch', 'address' => '456 Fields Avenue, Balibago, Angeles City, Pampanga', 'contact_number' => '+63-919-345-6790', 'email' => 'balibago@drivedhub.com'],
         ]);
-        $this->command->info('   ✓ 2 Branches created');
+        $this->command->info('   ✓ Branches created');
 
-        // ── 1 School Admin ──
+        // ── 2. IDENTITY (All users first) ──
+
+        // Admins
         $admin = Admin::updateOrCreate(['email' => 'admin@gmail.com'], [
-            'school_id' => $school->id, 'name' => 'Antonio Francisco Reyes',
-            'password' => $hashedPassword, 'role' => 'school_admin', 'is_active' => true,
+            'school_id' => $school->id,
+            'name' => 'Antonio Francisco Reyes',
+            'password' => $hashedPassword,
+            'role' => 'school_admin',
+            'is_active' => true,
         ]);
-        $this->command->info('   ✓ 1 School Admin created');
-
-        // ── 2 Branch Managers (1 per branch) ──
         Admin::updateOrCreate(['email' => 'manager.clark@drivedhub.com'], [
-            'school_id' => $school->id, 'branch_id' => $branches[0]->id,
-            'name' => 'Patricia Lyn Mendoza', 'password' => $hashedPassword,
-            'role' => 'branch_secretary', 'is_active' => true,
+            'school_id' => $school->id,
+            'branch_id' => $branches[0]->id,
+            'name' => 'Patricia Lyn Mendoza',
+            'password' => $hashedPassword,
+            'role' => 'branch_secretary',
+            'is_active' => true,
         ]);
         Admin::updateOrCreate(['email' => 'manager.balibago@drivedhub.com'], [
-            'school_id' => $school->id, 'branch_id' => $branches[1]->id,
-            'name' => 'Gabriel Marco Santos', 'password' => $hashedPassword,
-            'role' => 'branch_secretary', 'is_active' => true,
+            'school_id' => $school->id,
+            'branch_id' => $branches[1]->id,
+            'name' => 'Gabriel Marco Santos',
+            'password' => $hashedPassword,
+            'role' => 'branch_secretary',
+            'is_active' => true,
         ]);
-        $this->command->info('   ✓ 2 Branch Managers created (1 per branch)');
 
-        // ── 4 Instructors (2 per branch) ──
+        // Instructors
         $dhInstructors = [
             ['name' => 'Ricardo Antonio Cruz', 'email' => 'ricardo.cruz@drivedhub.com', 'contact' => '+63-919-777-3001', 'license' => 'LIC-DH-2024-001', 'bio' => 'Senior Instructor specializing in Manual Transmission and Motorcycle training. 8 years experience.', 'branch' => 0],
             ['name' => 'Maria Victoria Santos', 'email' => 'maria.santos@drivedhub.com', 'contact' => '+63-919-777-3002', 'license' => 'LIC-DH-2024-002', 'bio' => 'Expert in Automatic Transmission and Practical Driving. Certified defensive driving instructor.', 'branch' => 0],
@@ -100,39 +117,47 @@ class DriveEdHubSeeder extends Seeder
             $instructors[] = Instructor::updateOrCreate(
                 ['email' => $inst['email']],
                 [
-                    'school_id' => $school->id, 'branch_id' => $branches[$inst['branch']]->id,
-                    'name' => $inst['name'], 'contact' => $inst['contact'],
-                    'password' => $hashedPassword, 'license_number' => $inst['license'],
-                    'bio' => $inst['bio'], 'status' => 'active', 'availability' => 'available',
+                    'school_id' => $school->id,
+                    'branch_id' => $branches[$inst['branch']]->id,
+                    'name' => $inst['name'],
+                    'contact' => $inst['contact'],
+                    'password' => $hashedPassword,
+                    'license_number' => $inst['license'],
+                    'bio' => $inst['bio'],
+                    'status' => 'active',
+                    'availability' => 'available',
                 ]
             );
         }
-        $this->command->info('   ✓ 4 Instructors created (2 per branch)');
 
-        // ── 5 Courses (3 PDC + 2 TDC) ──
-        $courses = $this->createDriveEdHubCourses($school);
-        $this->command->info('   ✓ 5 Courses with packages created');
-
-        // ── 10 Students (5 per branch) ──
+        // Students
         $students = $this->createDriveEdHubStudents($school, $branches, $hashedPassword);
-        $this->command->info('   ✓ ' . count($students) . ' Students created (5 per branch)');
 
-        // ── Time Slots ──
-        $this->createTimeSlotsAndAssignments($school, $instructors, $courses, $branches);
-        $this->command->info('   ✓ Time slots created');
-
-        // ── Bookings & Payments ──
-        $this->createBookingsAndPayments($school, $students, $instructors, $courses, $branches, 10);
-        $this->command->info('   ✓ Bookings and payments created');
-
-        // ── 5 Guests (2 enrolled, 3 not enrolled) ──
+        // Guests (Base records only, enrollment logic separated later or handled in createDriveEdHubGuests)
         $admins_arr = [$admin];
-        $guests = $this->createDriveEdHubGuests($school, $courses, $admins_arr, $branches, $hashedPassword);
-        $this->command->info('   ✓ 5 Guest students created (2 enrolled, 3 not enrolled)');
+        $guests = $this->createDriveEdHubGuests($school, [], $admins_arr, $branches, $hashedPassword, true); // Pass true to only create users
 
-        // ── Notifications ──
+        $this->command->info('   ✓ All user identities created (Admins, Instructors, Students, Guests)');
+
+        // ── 3. PRODUCTS (Courses) ──
+        $courses = $this->createDriveEdHubCourses($school);
+        $this->command->info('   ✓ Courses with packages created');
+
+        // ── 4. INTERACTIONS (Link everything) ──
+
+        // Course assignments for guests (completing the creation)
+        $this->createDriveEdHubGuests($school, $courses, $admins_arr, $branches, $hashedPassword, false);
+
+        // Time Slots & Assignments
+        $this->createTimeSlotsAndAssignments($school, $instructors, $courses, $branches);
+
+        // Bookings & Payments
+        $this->createBookingsAndPayments($school, $students, $instructors, $courses, $branches, 10);
+
+        // Notifications
         $this->createSampleNotifications($school, $students, $instructors, $admins_arr, $guests);
-        $this->command->info('   ✓ Notifications created');
+
+        $this->command->info('   ✓ Interactions created (Slots, Bookings, Enrollment Requests)');
     }
 
     private function createDriveEdHubCourses(School $school): array
@@ -206,10 +231,13 @@ class DriveEdHubSeeder extends Seeder
             $student = Student::updateOrCreate(
                 ['school_id' => $school->id, 'email' => $s['email']],
                 [
-                    'name' => $s['name'], 'branch_id' => $branches[$i % count($branches)]->id,
+                    'name' => $s['name'],
+                    'branch_id' => $branches[$i % count($branches)]->id,
                     'contact' => '+63-9' . rand(10, 99) . '-' . rand(100, 999) . '-' . rand(1000, 9999),
-                    'password' => $password, 'status' => 'active',
-                    'experience_level' => $s['level'], 'enrollment_date' => now()->subDays(rand(7, 60)),
+                    'password' => $password,
+                    'status' => 'active',
+                    'experience_level' => $s['level'],
+                    'enrollment_date' => now()->subDays(rand(7, 60)),
                 ]
             );
             $student->role = 'student';
@@ -219,77 +247,78 @@ class DriveEdHubSeeder extends Seeder
         return $students;
     }
 
-    private function createDriveEdHubGuests(School $school, array $courses, array $admins, array $branches, string $password): array
+    private function createDriveEdHubGuests(School $school, array $courses, array $admins, array $branches, string $password, bool $onlyUsers = false): array
     {
         $guests = [];
 
-        // Guest 1 – Enrolled (approved, PDC)
-        $g1 = Student::updateOrCreate(
-            ['school_id' => $school->id, 'email' => 'guest.enrolled1@drivedhub.test'],
-            ['name' => 'Elena Joy Reyes', 'contact' => '+63-919-800-1001', 'password' => $password, 'status' => 'active', 'student_license_status' => 'verified', 'student_license_verified_at' => now()->subDays(10), 'experience_level' => 'new_driver']
-        );
-        $g1->role = 'guest';
-        $g1->save();
-        $guests[] = $g1;
-        if (!empty($courses)) {
-            \App\Models\EnrollmentRequest::updateOrCreate(
-                ['school_id' => $school->id, 'learner_id' => $g1->id, 'course_id' => $courses[0]->id],
-                ['status' => 'approved', 'payment_status' => 'paid', 'experience_level' => 'new_driver', 'requested_license_type' => 'non_professional', 'approved_by' => $admins[0]->id ?? null, 'approved_at' => now()->subDays(5), 'enrolled_at' => now()->subDays(5), 'branch_id' => $branches[0]->id]
-            );
-        }
+        // Definition of guests to create
+        $guestData = [
+            'guest.enrolled1@drivedhub.test' => ['name' => 'Elena Joy Reyes', 'license' => 'verified', 'exp' => 'new_driver', 'course_idx' => 0, 'status' => 'approved', 'pay' => 'paid'],
+            'guest.enrolled2@drivedhub.test' => ['name' => 'Mark Anthony Dizon', 'license' => 'verified', 'exp' => 'experienced', 'course_idx' => 3, 'status' => 'approved', 'pay' => 'paid', 'cancellation' => true],
+            'guest.new1@drivedhub.test' => ['name' => 'Jamie Lyn Pascual', 'license' => 'none', 'exp' => 'new_driver'],
+            'guest.pending@drivedhub.test' => ['name' => 'Carlo Miguel Bautista', 'license' => 'pending', 'exp' => 'new_driver', 'course_idx' => 1, 'status' => 'pending', 'pay' => 'pending'],
+            'guest.rejected@drivedhub.test' => ['name' => 'Angelica Mae Soriano', 'license' => 'none', 'exp' => 'new_driver', 'course_idx' => 2, 'status' => 'rejected', 'pay' => 'pending'],
+        ];
 
-        // Guest 2 – Enrolled (approved, TDC)
-        $g2 = Student::updateOrCreate(
-            ['school_id' => $school->id, 'email' => 'guest.enrolled2@drivedhub.test'],
-            ['name' => 'Mark Anthony Dizon', 'contact' => '+63-919-800-1002', 'password' => $password, 'status' => 'active', 'student_license_status' => 'verified', 'student_license_verified_at' => now()->subDays(8), 'experience_level' => 'experienced']
-        );
-        $g2->role = 'guest';
-        $g2->save();
-        $guests[] = $g2;
-        if (count($courses) > 3) {
-            \App\Models\EnrollmentRequest::updateOrCreate(
-                ['school_id' => $school->id, 'learner_id' => $g2->id, 'course_id' => $courses[3]->id],
-                ['status' => 'approved', 'payment_status' => 'paid', 'experience_level' => 'experienced', 'requested_license_type' => 'non_professional', 'approved_by' => $admins[0]->id ?? null, 'approved_at' => now()->subDays(3), 'enrolled_at' => now()->subDays(3), 'branch_id' => $branches[1]->id]
+        foreach ($guestData as $email => $data) {
+            $g = Student::updateOrCreate(
+                ['school_id' => $school->id, 'email' => $email],
+                [
+                    'name' => $data['name'],
+                    'contact' => '+63-919-800-' . rand(1000, 9999),
+                    'password' => $password,
+                    'status' => 'active',
+                    'student_license_status' => $data['license'],
+                    'student_license_verified_at' => $data['license'] === 'verified' ? now()->subDays(10) : null,
+                    'experience_level' => $data['exp']
+                ]
             );
-        }
+            $g->role = 'guest';
+            $g->save();
+            $guests[] = $g;
 
-        // Guest 3 – NOT enrolled (no request)
-        $g3 = Student::updateOrCreate(
-            ['school_id' => $school->id, 'email' => 'guest.new1@drivedhub.test'],
-            ['name' => 'Jamie Lyn Pascual', 'contact' => '+63-919-800-1003', 'password' => $password, 'status' => 'active', 'student_license_status' => 'none', 'experience_level' => 'new_driver']
-        );
-        $g3->role = 'guest';
-        $g3->save();
-        $guests[] = $g3;
+            // If we're only creating users, skip the interaction logic
+            if ($onlyUsers)
+                continue;
 
-        // Guest 4 – NOT enrolled (pending request)
-        $g4 = Student::updateOrCreate(
-            ['school_id' => $school->id, 'email' => 'guest.pending@drivedhub.test'],
-            ['name' => 'Carlo Miguel Bautista', 'contact' => '+63-919-800-1004', 'password' => $password, 'status' => 'active', 'student_license_status' => 'pending', 'experience_level' => 'new_driver']
-        );
-        $g4->role = 'guest';
-        $g4->save();
-        $guests[] = $g4;
-        if (!empty($courses)) {
-            \App\Models\EnrollmentRequest::updateOrCreate(
-                ['school_id' => $school->id, 'learner_id' => $g4->id, 'course_id' => $courses[1]->id],
-                ['status' => 'pending', 'payment_status' => 'pending', 'experience_level' => 'new_driver', 'requested_license_type' => 'non_professional']
-            );
-        }
+            // Interaction logic (Enrollment Requests)
+            if (isset($data['course_idx']) && isset($courses[$data['course_idx']])) {
+                $course = $courses[$data['course_idx']];
+                $package = CoursePackage::where('course_id', '=', $course->id)->first();
 
-        // Guest 5 – NOT enrolled (rejected)
-        $g5 = Student::updateOrCreate(
-            ['school_id' => $school->id, 'email' => 'guest.rejected@drivedhub.test'],
-            ['name' => 'Angelica Mae Soriano', 'contact' => '+63-919-800-1005', 'password' => $password, 'status' => 'active', 'student_license_status' => 'none', 'experience_level' => 'new_driver']
-        );
-        $g5->role = 'guest';
-        $g5->save();
-        $guests[] = $g5;
-        if (count($courses) > 2) {
-            \App\Models\EnrollmentRequest::updateOrCreate(
-                ['school_id' => $school->id, 'learner_id' => $g5->id, 'course_id' => $courses[2]->id],
-                ['status' => 'rejected', 'payment_status' => 'pending', 'experience_level' => 'new_driver', 'requested_license_type' => 'non_professional', 'remarks' => 'Incomplete documentation. Please re-submit with valid student license.']
-            );
+                $branch = $branches[rand(0, count($branches) - 1)];
+
+                $ed = [
+                    'status' => $data['status'],
+                    'payment_status' => $data['pay'],
+                    'experience_level' => $data['exp'],
+                    'requested_license_type' => 'non_professional',
+                    'branch_id' => $branch->id,
+                    'price' => $package ? $package->price : 0,
+                    'payment_method' => 'gcash',
+                    'payment_reference' => 'DH-REF-' . strtoupper(\Illuminate\Support\Str::random(8)),
+                ];
+
+                if (isset($data['cancellation']) && $data['cancellation']) {
+                    $ed['cancellation_requested'] = true;
+                    $ed['cancellation_reason'] = 'Conflict with work schedule.';
+                }
+
+                if ($data['status'] === 'approved' && !empty($admins)) {
+                    $ed['approved_by'] = $admins[0]->id;
+                    $ed['approved_at'] = now()->subDays(5);
+                    $ed['enrolled_at'] = now()->subDays(5);
+                }
+
+                if ($data['status'] === 'rejected') {
+                    $ed['remarks'] = 'Incomplete documentation. Please re-submit with valid student license.';
+                }
+
+                \App\Models\EnrollmentRequest::updateOrCreate(
+                    ['school_id' => $school->id, 'learner_id' => $g->id, 'course_id' => $course->id],
+                    $ed
+                );
+            }
         }
 
         return $guests;
