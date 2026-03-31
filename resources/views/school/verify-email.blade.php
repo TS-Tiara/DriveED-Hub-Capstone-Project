@@ -16,6 +16,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $schoolName }} - Email Verification</title>
     <style>
+        :root {
+            --primary-color: {{ $primaryColor }};
+            --secondary-color: {{ $secondaryColor }};
+            --header-height: {{ $headerHeight }}px;
+        }
         * {
             margin: 0;
             padding: 0;
