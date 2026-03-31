@@ -18,15 +18,7 @@
             position: relative;
         }
 
-        .main-content {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: calc(100vh - {{ $headerHeight }}px);
-            margin-top: {{ $headerHeight }}px;
-            padding: 15px;
-        }
-
+        /* Login Page Specific Styles */
         .login-container {
             background: rgba(255, 255, 255, 0.98);
             padding: 35px;
@@ -141,7 +133,7 @@
         }
 
         .password-toggle-btn:focus-visible {
-            outline: 2px solid {{ $primaryColor }};
+            outline: 2px solid var(--primary-color);
             outline-offset: 2px;
         }
 
@@ -218,7 +210,7 @@
             @if($settings->use_gradient_header ?? false)
                 background: linear-gradient(135deg, {{ $settings->primary_color ?? '#3b82f6' }} 0%, {{ $settings->secondary_color ?? '#2563eb' }} 100%);
             @else
-                background: {{ $settings->primary_color ?? '#3b82f6' }};
+                background: var(--primary-color);
             @endif
             color: white;
             border: none;
@@ -433,22 +425,9 @@
             font-size: 12px;
         }
 
-        @media (max-width: 360px) {
-            .login-header {
-                height: {{ max(42, $headerHeight - 18) }}px;
-                padding: 0 10px;
-            }
-            
-            .header-school-name {
-                font-size: {{ max(14, $schoolNameSize - 10) }}px;
-            }
-            
-            .header-logo .logo-image {
-                height: {{ max(24, $logoSize - 16) }}px;
-            }
-
+        @media (max-width: 480px) {
             .login-container {
-                padding: 10px 14px;
+                padding: 20px 25px;
             }
 
             .login-title {

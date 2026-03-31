@@ -177,6 +177,9 @@
 
     /* Page Background & Branding Variables (fixed scope) */
     :root {
+        --primary-color: {{ $primaryColor }};
+        --secondary-color: {{ $secondaryColor }};
+        --header-height: {{ $headerHeight }}px;
         --primary-gradient: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $primaryColor }}dd 100%);
         --secondary-gradient: linear-gradient(135deg, {{ $secondaryColor }} 0%, {{ $secondaryColor }}dd 100%);
         --school-bg: url('{{ $backgroundImage }}');
@@ -197,6 +200,35 @@
         @endif
         opacity: {{ $pageBgOpacity / 100 }};
         z-index: -1;
+    }
+
+    /* Standard Main Content Layout for Auth Pages */
+    .main-content {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: calc(100vh - {{ $headerHeight }}px);
+        margin-top: {{ $headerHeight }}px;
+        padding: 15px;
+        position: relative;
+        z-index: 10;
+        box-sizing: border-box;
+    }
+
+    /* Mobile Header Adjustments */
+    @media (max-width: 480px) {
+        .login-header {
+            height: {{ max(42, $headerHeight - 12) }}px;
+            padding: 0 10px;
+        }
+        
+        .header-school-name {
+            font-size: {{ max(14, $schoolNameSize - 10) }}px;
+        }
+        
+        .header-logo .logo-image {
+            height: {{ max(24, $logoSize - 16) }}px;
+        }
     }
 </style>
 

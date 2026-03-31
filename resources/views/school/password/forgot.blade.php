@@ -13,16 +13,6 @@
             overflow: hidden;
             position: relative;
         }
-        .main-content {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding-top: {{ $headerHeight + 20 }}px;
-            padding-bottom: 40px;
-            position: relative;
-            z-index: 10;
-        }
         .login-container {
             background: rgba(255, 255, 255, 0.98);
             padding: 35px;
@@ -48,27 +38,26 @@
             font-size: 14px;
             background: rgba(255, 255, 255, 0.9);
         }
-        input[type="email"]:focus { outline: none; border-color: {{ $primaryColor }}; box-shadow: 0 0 0 3px {{ $primaryColor }}20; }
+        input[type="email"]:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2); }
         .login-button {
             width: 100%;
             padding: 14px;
-            background: {{ $primaryColor }};
+            background: var(--primary-color);
             color: white;
             border: none;
             border-radius: 8px;
             font-size: 15px;
             font-weight: 600;
             cursor: pointer;
-            transition: opacity 0.2s;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
         }
-        .login-button:hover { opacity: 0.9; }
         .back-link { margin-top: 25px; padding-top: 15px; border-top: 1px solid #e5e7eb; }
         .back-link a { color: #2563eb; text-decoration: none; font-size: 13px; font-weight: 600; }
         .back-link a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
-
     <div class="main-content">
         <div class="login-container">
             <h2 class="login-title">Forgot Password</h2>

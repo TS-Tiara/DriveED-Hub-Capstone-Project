@@ -25,17 +25,7 @@
             overflow-x: hidden;
         }
 
-        .container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding-top: {{ $headerHeight + 20 }}px;
-            padding-bottom: 40px;
-            position: relative;
-            z-index: 10;
-        }
-
+        /* Registration Page Specific Styles */
         .registration-card {
             background: rgba(255, 255, 255, 0.98);
             padding: 35px;
@@ -119,7 +109,7 @@
         }
 
         .password-toggle-btn:focus-visible {
-            outline: 2px solid {{ $primaryColor }};
+            outline: 2px solid var(--primary-color);
             outline-offset: 2px;
         }
 
@@ -225,7 +215,7 @@
         }
 
         .modal-icon-close:focus-visible {
-            outline: 2px solid {{ $primaryColor }};
+            outline: 2px solid var(--primary-color);
             outline-offset: 2px;
             border-radius: 6px;
         }
@@ -252,7 +242,7 @@
         }
 
         .policy-link {
-            color: {{ $primaryColor }};
+            color: var(--primary-color);
             text-decoration: underline;
         }
 
@@ -290,7 +280,7 @@
 
         .policy-modal-title {
             margin-bottom: 16px;
-            color: {{ $primaryColor }};
+            color: var(--primary-color);
         }
 
         .policy-modal-content {
@@ -315,7 +305,7 @@
 
         .policy-modal-btn {
             margin-top: 20px;
-            background: {{ $primaryColor }};
+            background: var(--primary-color);
             color: white;
             border: none;
             padding: 10px 24px;
@@ -514,19 +504,12 @@
             }
         }
     </style>
-    <style>
-        :root {
-            --school-bg: url('{{ $backgroundImage }}');
-            --primary-gradient: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $primaryColor }}dd 100%);
-            --secondary-gradient: linear-gradient(135deg, {{ $secondaryColor }} 0%, {{ $secondaryColor }}dd 100%);
-        }
-    </style>
 </head>
 <body>
 
     @include('partials.school-auth-header')
 
-    <div class="container">
+    <div class="main-content">
         <div class="registration-card">
             <h2>Create Your Account</h2>
             <p class="subtitle">Register to browse courses and start your driving journey</p>
