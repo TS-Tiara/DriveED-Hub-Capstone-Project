@@ -157,6 +157,30 @@
         opacity: 0.9;
         margin-top: 2px;
     }
+
+    /* Page Background & Branding Variables (fixed scope) */
+    :root {
+        --primary-gradient: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $primaryColor }}dd 100%);
+        --secondary-gradient: linear-gradient(135deg, {{ $secondaryColor }} 0%, {{ $secondaryColor }}dd 100%);
+        --school-bg: url('{{ $backgroundImage }}');
+    }
+
+    body::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        @if($pageBgType === 'image' && $pageBgImage)
+        background: {{ $pageBackground }} no-repeat center center fixed;
+        background-size: cover;
+        @else
+        background: {{ $pageBackground }};
+        @endif
+        opacity: {{ $pageBgOpacity / 100 }};
+        z-index: -1;
+    }
 </style>
 
 <nav class="login-header login-header-{{ $headerLayout }}">

@@ -54,7 +54,7 @@ class PasswordResetController extends Controller
                 ->withInput($request->only('email'));
         }
 
-        $resolved = $this->resolveResetTarget($email, $school->id);
+        $resolved = $this->resolveResetTarget($email, $school?->id);
 
         if (!$resolved['user']) {
             $this->registerResetAttempt($request, $school, $email);
