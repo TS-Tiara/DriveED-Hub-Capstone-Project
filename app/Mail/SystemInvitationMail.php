@@ -22,11 +22,11 @@ class SystemInvitationMail extends Mailable
     /**
      * Create a new message instance.
      */
-    public function __construct(Invitation $invitation, $temporaryPassword = null)
+    public function __construct(Invitation $invitation, School $school, $temporaryPassword = null)
     {
         $this->invitation = $invitation;
+        $this->school = $school;
         $this->temporaryPassword = $temporaryPassword;
-        $this->school = $invitation->school;
     }
 
     /**

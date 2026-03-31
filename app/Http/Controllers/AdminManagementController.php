@@ -104,7 +104,7 @@ class AdminManagementController extends Controller
             ]);
 
             // Send Invitation Mail
-            Mail::to($invitation->email)->send(new SystemInvitationMail($invitation));
+            Mail::to($invitation->email)->send(new SystemInvitationMail($invitation, $school));
 
             $roleLabel = $validated['role'] === Admin::ROLE_BRANCH_SECRETARY ? 'Branch Secretary' : 'School Admin';
 

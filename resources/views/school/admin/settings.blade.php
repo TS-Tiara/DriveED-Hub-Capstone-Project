@@ -943,10 +943,6 @@
                             Controls how instructors are assigned to student schedules
                         </small>
                     </div>
-                    </div>
-                </div>
-
-                    </div>
                 </div>
 
                 <!-- Onboarding & Security Settings -->
@@ -983,13 +979,13 @@
                     </div>
                     
                     <div class="section-inputs">
-                    <div class="form-group">
-                        <label class="form-label">Instructor Removal Notice Days</label>
-                        <input type="number" class="number-input" name="instructor_removal_notice_days" value="{{ old('instructor_removal_notice_days', $school->instructor_removal_notice_days ?? 7) }}" min="0" max="30">
-                        <small class="text-muted help-text-block">
-                            Minimum days notice required for instructor schedule removal requests
-                        </small>
-                    </div>
+                        <div class="form-group">
+                            <label class="form-label">Instructor Removal Notice Days</label>
+                            <input type="number" class="number-input" name="instructor_removal_notice_days" value="{{ old('instructor_removal_notice_days', $school->instructor_removal_notice_days ?? 7) }}" min="0" max="30">
+                            <small class="text-muted help-text-block">
+                                Minimum days notice required for instructor schedule removal requests
+                            </small>
+                        </div>
                     </div>
                 </div>
 
@@ -1822,6 +1818,81 @@
                             <span class="opacity-value">{{ old('login_page_bg_opacity', $settings->login_page_bg_opacity ?? 100) }}%</span>
                         </div>
                         <small class="opacity-help">Lower values make the background more transparent</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Invitations & Onboarding Tab -->
+            <div class="tab-content" id="tab-invitations">
+                <div class="form-section">
+                    <div class="section-header">
+                        <h3 class="section-title">Pending Invitations</h3>
+                    </div>
+                    
+                    <div class="section-inputs">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Recipient</th>
+                                        <th>Role</th>
+                                        <th>Status</th>
+                                        <th>Sent At</th>
+                                        <th>Expires At</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($pendingInvitations as $invitation)
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex flex-column">
+                                                    <span class="font-weight-bold">{{ $invitation->name }}</span>
+                                                    <small class="text-muted">{{ $invitation->email }}</small>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="badge" style="background-color: {{ $invitation->role === 'student' ? ($settings->role_student_bg ?? '#dbeafe') : ($settings->role_instructor_bg ?? '#e0f2fe') }}; color: {{ $invitation->role === 'student' ? ($settings->role_student_text ?? '#1e40af') : ($settings->role_instructor_text ?? '#0369a1') }};">
+                                                    {{ ucfirst($invitation->role) }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                @if($invitation->isExpired())
+                                                    <span class="badge bg-danger">Expired</span>
+                                                @else
+                                                    <span class="badge bg-warning">Pending</span>
+                                                @endif
+                                            </td>
+                                            <td>{{ $invitation->created_at->format('M d, Y H:i') }}</td>
+                                            <td>{{ $invitation->expires_at->format('M d, Y H:i') }}</td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <form action="{{ route('schools.admin.invitations.resend', ['school' => $school, 'invitation' => $invitation]) }}" method="POST" class="d-inline">
+                                                        @csrf
+                                                        <button type="submit" class="btn btn-sm btn-outline-primary" title="Resend Invitation">
+                                                            <i class="fas fa-sync"></i>
+                                                        </button>
+                                                    </form>
+                                                    <form action="{{ route('schools.admin.invitations.cancel', ['school' => $school, 'invitation' => $invitation]) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to cancel this invitation?')">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Cancel Invitation">
+                                                            <i class="fas fa-times"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="6" class="text-center py-4 text-muted">
+                                                No pending invitations found.
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
