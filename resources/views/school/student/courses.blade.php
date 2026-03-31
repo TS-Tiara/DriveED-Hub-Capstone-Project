@@ -23,6 +23,11 @@
         margin-bottom: 20px;
         border-bottom: 4px solid {{ $primaryColor }};
         padding-bottom: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
     }
     
     .courses-header h1 {
@@ -30,6 +35,71 @@
         font-weight: 400;
         margin: 0;
         color: #1a202c;
+    }
+
+    /* ── Controls Bar ── */
+    .controls-bar {
+        background: white;
+        padding: 16px 20px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 25px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        border: 1px solid #e5e7eb;
+        flex-wrap: wrap;
+    }
+
+    .search-wrapper {
+        flex: 1;
+        min-width: 250px;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        outline: none;
+        transition: border-color 0.2s;
+    }
+
+    .search-input:focus { border-color: {{ $primaryColor }}; }
+
+    .filter-group {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .filter-select {
+        padding: 10px 32px 10px 12px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        background: white;
+        font-size: 0.875rem;
+        cursor: pointer;
+        outline: none;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        transition: border-color 0.2s;
+        min-width: 150px;
+    }
+
+    .filter-select:focus { border-color: {{ $primaryColor }}; }
+
+    .btn-filter-apply {
+        padding: 10px 20px;
+        background: {{ $primaryColor }};
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
     }
     
     .courses-grid {
@@ -403,10 +473,38 @@
         <h1>Available Courses</h1>
     </div>
 
+    <!-- Controls Bar -->
+    <form action="{{ $schoolRoute('student.courses.index') }}" method="GET" class="controls-bar">
+        <div class="search-wrapper">
+            <input type="text" name="search" class="search-input" value="{{ request('search') }}" placeholder="Search courses by title...">
+        </div>
+        <div class="filter-group">
+            <select name="course_type" class="filter-select" onchange="this.form.submit()">
+                <option value="">All Types</option>
+                <option value="theoretical" {{ request('course_type') == 'theoretical' ? 'selected' : '' }}>Theoretical</option>
+                <option value="practical" {{ request('course_type') == 'practical' ? 'selected' : '' }}>Practical</option>
+            </select>
+            <select name="license_type" class="filter-select" onchange="this.form.submit()">
+                <option value="">All Licenses</option>
+                <option value="non_professional" {{ request('license_type') == 'non_professional' ? 'selected' : '' }}>Non-Professional</option>
+                <option value="professional" {{ request('license_type') == 'professional' ? 'selected' : '' }}>Professional</option>
+            </select>
+            <select name="sort" class="filter-select" onchange="this.form.submit()">
+                <option value="newest" {{ request('sort', 'newest') == 'newest' ? 'selected' : '' }}>Newest First</option>
+                <option value="price_low" {{ request('sort') == 'price_low' ? 'selected' : '' }}>Lowest Price</option>
+                <option value="price_high" {{ request('sort') == 'price_high' ? 'selected' : '' }}>Highest Price</option>
+                <option value="popularity" {{ request('sort') == 'popularity' ? 'selected' : '' }}>Most Popular</option>
+                <option value="title_asc" {{ request('sort') == 'title_asc' ? 'selected' : '' }}>Title (A-Z)</option>
+                <option value="title_desc" {{ request('sort') == 'title_desc' ? 'selected' : '' }}>Title (Z-A)</option>
+            </select>
+            <noscript>
+                <button type="submit" class="btn-filter-apply">Apply</button>
+            </noscript>
+        </div>
+    </form>
+
     <div class="courses-grid">
-        @php $activeCourses = $courses->where('status', 'active'); @endphp
-        
-        @forelse($activeCourses as $course)
+        @forelse($courses as $course)
         <div class="course-card">
             <div class="course-banner">
                 @if($course->banner_image && file_exists(public_path($course->banner_image)))
@@ -521,6 +619,17 @@
         </div>
         @endforelse
     </div>
+
+    @if($courses->hasPages())
+        <div class="table-footer" style="margin-top: 25px; padding: 20px; background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+            <div class="pagination-info" style="font-size: 0.875rem; color: #6b7280; font-weight: 500;">
+                Showing {{ $courses->firstItem() }} to {{ $courses->lastItem() }} of {{ $courses->total() }} courses
+            </div>
+            <div class="pagination-links">
+                {{ $courses->appends(request()->query())->links() }}
+            </div>
+        </div>
+    @endif
 </div>
 
 <script>

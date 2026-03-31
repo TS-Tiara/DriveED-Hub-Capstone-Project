@@ -380,7 +380,7 @@
             <button onclick="closeEnrollModal()" class="text-2xl font-bold opacity-70 hover:opacity-100">&times;</button>
         </div>
         <div class="modal-body">
-            <form action="{{ route('schools.guest.enroll', ['school' => $school->slug, 'course' => $course->id]) }}" method="POST" enctype="multipart/form-data">
+            <form action="{{ route('schools.student.enroll', ['school' => $school->slug, 'course' => $course->id]) }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 
                 @if($course->packages && $course->packages->count() > 0)
