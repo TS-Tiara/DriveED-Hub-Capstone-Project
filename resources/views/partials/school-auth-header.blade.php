@@ -4,7 +4,7 @@
     $settings = $school?->schoolSetting;
     
     // School branding
-    $schoolName = $school->name ?? 'DriveEd Hub';
+    $schoolName = $school?->name ?? 'DriveEd Hub';
     
     // Get custom colors from school settings or use defaults
     $primaryColor = $settings?->primary_color ?? '#2563eb';
@@ -21,6 +21,7 @@
     $schoolNameSize = $settings?->login_school_name_size ?? 24;
     $welcomeText = $welcomeText ?? $settings?->login_welcome_text ?? 'Welcome to ' . $schoolName . '!';
     $subtitleText = $subtitleText ?? null;
+
     $showWelcomeText = $settings?->login_show_welcome_text ?? false;
     $welcomePosition = $settings?->login_welcome_position ?? 'right';
     $welcomeSize = $settings?->login_welcome_size ?? 16;
@@ -44,6 +45,22 @@
     } else {
         $headerBackground = $primaryColor;
     }
+
+    // Page Background Settings (shared across all auth pages)
+    $pageBgType = $settings?->login_page_bg_type ?? 'color';
+    $pageBgColor = $settings?->login_page_bg_color ?? '#f5f5f5';
+    $pageBgImage = $settings?->login_page_bg_image;
+    $pageBgOpacity = $settings?->login_page_bg_opacity ?? 100;
+    
+    // Generate page background
+    if ($pageBgType === 'image' && $pageBgImage) {
+        $pageBackground = "url('" . asset('storage/' . $pageBgImage) . "')";
+    } else {
+        $pageBackground = $pageBgColor;
+    }
+
+    // Backward compatibility for existing views
+    $backgroundImage = $pageBgImage ? asset('storage/' . $pageBgImage) : '';
 @endphp
 
 <style>
