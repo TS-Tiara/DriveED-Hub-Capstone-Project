@@ -162,7 +162,7 @@
         <div class="login-container">
             <div class="welcome-badge">First-Time Setup</div>
             <h2 class="login-title">Secure Your Account</h2>
-            <p class="login-subtitle">Welcome, <strong>{{ $admin->name }}</strong>. For security reasons, you must change your temporary password before accessing the dashboard.</p>
+            <p class="login-subtitle">Welcome, <strong>{{ $user->name }}</strong>. For security reasons, you must change your temporary password before accessing the dashboard.</p>
 
 
 
