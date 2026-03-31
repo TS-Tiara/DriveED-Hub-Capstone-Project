@@ -137,6 +137,7 @@ Route::prefix('{school:slug}')
                     Route::get('/courses', [GuestController::class , 'courses'])->name('courses');
                     Route::post('/upload-license', [GuestController::class , 'uploadLicense'])->name('uploadLicense');
                     Route::get('/enrollment-requests', [GuestController::class , 'enrollmentRequests'])->name('enrollmentRequests');
+                    Route::post('/enrollment-requests/{enrollmentRequest}/cancel-request', [GuestController::class, 'requestCancellation'])->name('enrollmentRequests.cancelRequest');
                     
                     // Guest payment routes
                     Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
@@ -482,6 +483,7 @@ Route::prefix('{school:slug}')
                     // Student courses
                     Route::get('/courses', [CourseController::class , 'index'])->name('courses.index');
                     Route::get('/courses/{course}', [CourseController::class , 'show'])->name('courses.show');
+                    Route::post('/enroll/{course}', [StudentController::class, 'enroll'])->name('enroll');
 
                     // Booking queue management (used in schedule page)
                     Route::post('/bookings', [BookingController::class , 'store'])->name('bookings.store');

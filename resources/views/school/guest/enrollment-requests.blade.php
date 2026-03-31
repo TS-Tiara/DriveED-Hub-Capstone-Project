@@ -496,6 +496,20 @@
                             @if($request->status === 'pending' && !$request->payment_proof_path)
                                 <span class="badge bg-danger rounded-pill px-3 py-2" style="font-size: 0.7rem;">ACTION REQUIRED: UNPAID</span>
                             @endif
+                            
+                            @if($request->status === 'pending' && !$request->cancellation_requested)
+                                <button type="button" 
+                                        class="btn btn-outline-danger btn-sm rounded-pill px-3 open-cancel-modal" 
+                                        data-course-title="{{ $request->course->title }}"
+                                        data-cancel-url="{{ route('schools.guest.enrollmentRequests.cancelRequest', ['school' => $school->slug, 'enrollmentRequest' => $request->id]) }}">
+                                    <i class="fas fa-times me-1"></i> Request Cancel
+                                </button>
+                            @elseif($request->status === 'pending' && $request->cancellation_requested)
+                                <span class="badge bg-warning text-dark rounded-pill px-3 py-2" style="font-size: 0.7rem;">
+                                    <i class="fas fa-clock me-1"></i> CANCELLATION PENDING
+                                </span>
+                            @endif
+
                             <span class="status-badge {{ $request->status }}">
                                 {{ ucfirst($request->status) }}
                             </span>
@@ -748,12 +762,67 @@
         @endif
     </div>
 </div>
+
+<!-- Request Cancel Modal -->
+<div class="modal fade" id="cancelRequestModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-danger text-white border-0 py-3">
+                <h5 class="modal-title fw-bold">
+                    <i class="fas fa-exclamation-triangle me-2"></i> Request Cancellation
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="cancelRequestForm" method="POST" action="">
+                @csrf
+                <div class="modal-body p-4">
+                    <p class="text-secondary mb-4">
+                        You are requesting to cancel your enrollment for 
+                        <strong id="cancelCourseTitle" class="text-dark"></strong>.
+                        Please provide a reason to help us understand why.
+                    </p>
+                    <div class="form-group mb-0">
+                        <label class="form-label fw-bold">Cancellation Reason <span class="text-danger">*</span></label>
+                        <textarea name="cancellation_reason" class="form-control" rows="3" required placeholder="E.g., I registered by mistake, or I prefer another schedule."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 p-4 pt-0 bg-light">
+                    <button type="button" class="btn btn-light fw-bold px-4" data-bs-dismiss="modal">Keep Application</button>
+                    <button type="submit" class="btn btn-danger fw-bold px-4 shadow-sm">
+                        Submit Request
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        // Timeline animations
         document.querySelectorAll('.timeline-connector-fill[data-width]').forEach(function (connector) {
             const value = parseFloat(connector.getAttribute('data-width'));
             const width = Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : 0;
             connector.style.width = width + '%';
+        });
+
+        // Use event delegation for the cancel buttons to avoid 'this' issues with icons
+        document.addEventListener('click', function(e) {
+            const btn = e.target.closest('.open-cancel-modal');
+            if (btn) {
+                const url = btn.getAttribute('data-cancel-url');
+                const title = btn.getAttribute('data-course-title');
+                
+                console.log('Opening cancel modal for:', title, 'URL:', url);
+                
+                document.getElementById('cancelCourseTitle').textContent = title;
+                const form = document.getElementById('cancelRequestForm');
+                form.action = url;
+                
+                const cancelModalEl = document.getElementById('cancelRequestModal');
+                const modal = bootstrap.Modal.getOrCreateInstance(cancelModalEl);
+                modal.show();
+            }
         });
     });
 </script>
