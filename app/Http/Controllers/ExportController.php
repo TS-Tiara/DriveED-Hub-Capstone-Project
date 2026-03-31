@@ -14,6 +14,7 @@ use App\Models\Booking;
 use App\Models\SessionCompletion;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class ExportController extends Controller
@@ -434,17 +435,69 @@ class ExportController extends Controller
     /**
      * Export courses as PDF
      */
-    public function coursesPdf(School $school)
+    public function coursesPdf(School $school, Request $request)
     {
         $admin = Auth::guard('admin')->user();
         if (!$admin || $admin->school_id !== $school->id) {
             abort(403);
         }
 
-        $courses = Course::where('school_id', $school->id)
-            ->with(['packages'])
-            ->orderBy('title')
-            ->cursor();
+        $query = Course::where('school_id', $school->id)
+            ->with(['packages']);
+
+        $sort = $request->get('sort', 'title');
+
+        switch ($sort) {
+            case 'title_asc':
+            case 'title':
+                $query->orderBy('title', 'asc');
+                break;
+            case 'title_desc':
+                $query->orderBy('title', 'desc');
+                break;
+            case 'price_low':
+                $query->select('courses.*')
+                    ->leftJoinSub(
+                        DB::table('course_packages')
+                            ->select('course_id', DB::raw('MIN(price) as min_price'))
+                            ->groupBy('course_id'),
+                        'package_prices',
+                        'courses.id', '=', 'package_prices.course_id'
+                    )
+                    ->orderBy('package_prices.min_price', 'asc');
+                break;
+            case 'price_high':
+                $query->select('courses.*')
+                    ->leftJoinSub(
+                        DB::table('course_packages')
+                            ->select('course_id', DB::raw('MAX(price) as max_price'))
+                            ->groupBy('course_id'),
+                        'package_prices',
+                        'courses.id', '=', 'package_prices.course_id'
+                    )
+                    ->orderBy('package_prices.max_price', 'desc');
+                break;
+            case 'popularity':
+                $query->withCount(['bookings' => function($q) {
+                    $q->whereIn('status', [
+                        Booking::STATUS_SCHEDULED, 
+                        Booking::STATUS_DONE, 
+                        Booking::STATUS_COMPLETED
+                    ]);
+                }])->orderBy('bookings_count', 'desc');
+                break;
+            case 'oldest':
+                $query->orderBy('created_at', 'asc');
+                break;
+            case 'newest':
+                $query->orderBy('sort_order')->orderBy('created_at', 'desc');
+                break;
+            default:
+                $query->orderBy('title', 'asc');
+                break;
+        }
+
+        $courses = $query->cursor();
 
         try {
             $pdf = Pdf::loadView('exports.courses-pdf', [

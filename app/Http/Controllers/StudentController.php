@@ -15,9 +15,140 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Carbon\Carbon;
+use App\Http\Requests\StoreEnrollmentRequestRequest;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\EnrollmentRequestReceived;
+use App\Models\Notification;
+use App\Models\Admin;
 
 class StudentController extends Controller
 {
+    /**
+     * Handle enrollment request for Active Students (Bypasses Guest lock)
+     */
+    public function enroll(StoreEnrollmentRequestRequest $request, School $school, Course $course)
+    {
+        Log::info('Student Enroll method called', [
+            'school' => $school->id,
+            'course' => $course->id,
+            'user' => Auth::guard('student')->user()?->id
+        ]);
+
+        $student = Auth::guard('student')->user();
+
+        // Ensure the course belongs to this school
+        if ($course->school_id !== $school->id) {
+            abort(403, 'This course does not belong to this school.');
+        }
+
+        // PDC (Practical Driving Course) requires a verified Student Driver's License
+        if ($course->isPractical() && !$student->hasVerifiedLicense()) {
+            Log::warning('Student attempted PDC enrollment without verified license', [
+                'user' => $student->id,
+                'course' => $course->id,
+                'license_status' => $student->student_license_status
+            ]);
+            return redirect()->back()->with('error', 'Practical Driving Courses (PDC) require a verified Student Driver\'s License. Please complete a TDC first and upload your license.');
+        }
+
+        // Check if already enrolled for this course (excluding previous rejections/cancellations)
+        $existingRequest = EnrollmentRequest::where('learner_id', $student->id)
+            ->where('course_id', $course->id)
+            ->whereNotIn('status', ['rejected', 'cancelled'])
+            ->first();
+
+        if ($existingRequest) {
+            if (in_array($existingRequest->status, ['pending', 'approved'])) {
+                return redirect()->back()->with('warning', 'You already have an active enrollment request for this course.');
+            }
+        }
+
+        try {
+            $data = [
+                'school_id' => $school->id,
+                'learner_id' => $student->id,
+                'course_id' => $course->id,
+                'status' => 'pending',
+                'payment_status' => 'pending',
+                'requested_license_type' => $course->license_type ?? 'non_professional',
+                'experience_level' => $request->experience_level,
+                'package_id' => $request->input('package_id'),
+                'remarks' => $request->notes,
+                'location' => $request->location ?? $student->location,
+                'branch_id' => $request->input('branch_id'),
+            ];
+
+            // Snapshot the price
+            if ($request->filled('package_id')) {
+                $package = \App\Models\CoursePackage::find($request->package_id);
+                $data['price'] = $package ? $package->price : $course->price;
+            } else {
+                $data['price'] = $course->price;
+            }
+
+            // Handle credential file upload for experienced drivers
+            if ($request->hasFile('credential_file')) {
+                $file = $request->file('credential_file');
+                $path = $file->store('credentials', 'local');
+                $data['credentials_file_path'] = $path;
+            }
+
+            $enrollmentRequest = EnrollmentRequest::create($data);
+        } catch (\Exception $e) {
+            Log::error('Failed to create student enrollment request', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return redirect()->back()->with('error', 'Failed to submit enrollment request. Please try again.');
+        }
+
+        try {
+            // Send confirmation email
+            Mail::to($student->email)
+                ->send(new EnrollmentRequestReceived($enrollmentRequest, $school));
+        } catch (\Exception $e) {
+            Log::warning('Failed to send student enrollment received email: ' . $e->getMessage());
+        }
+
+        try {
+            // Create in-app notification for the student
+            Notification::send(
+                $student,
+                'enrollment_received',
+                'Enrollment Request Submitted',
+                "Your enrollment request for {$course->title} has been submitted and is under review.",
+                'enrollment',
+                "/{$school->slug}/student/my-course" // Redirects to my course
+            );
+
+            // Notify all admins of this school
+            $admins = Admin::where('school_id', $school->id)->where('is_active', true)->get();
+            foreach ($admins as $admin) {
+                Notification::send(
+                    $admin,
+                    'new_enrollment_request',
+                    'New Course Enrollment',
+                    "Active Student {$student->name} has requested enrollment in {$course->title}.",
+                    'enrollment',
+                    "/{$school->slug}/admin/enrollments"
+                );
+            }
+        } catch (\Exception $e) {
+            Log::warning('Student enrollment created but notification dispatch failed: ' . $e->getMessage());
+        }
+
+        Log::info('Student enrollment request created successfully', [
+            'student_id' => $student->id,
+            'course_id' => $course->id,
+            'experience_level' => $request->experience_level
+        ]);
+
+        return redirect()
+            ->route('schools.student.my-course', $school)
+            ->with('success', 'Your enrollment request has been submitted successfully.');
+    }
+
     public function dashboard(Request $request, School $school)
     {
         $student = Auth::guard('student')->user();
@@ -338,17 +469,17 @@ class StudentController extends Controller
             $course = $activeEnrollment->course;
             $completions = $activeEnrollment->sessionCompletions ?? collect();
             $hoursCompleted = $completions->where('status', 'completed')->sum('hours_completed');
-            $hoursRequired = $course->hours_required ?? $course->duration_hours ?? 0;
+            $hoursRequired = $course ? ($course->hours_required ?? $course->duration_hours ?? 0) : 0;
             $progressPercentage = $hoursRequired > 0 ? min(100, round(($hoursCompleted / $hoursRequired) * 100)) : 0;
-            $modules = $course->modules ?? collect();
+            $modules = $course ? ($course->modules ?? collect()) : collect();
             $sessionCompletions = $completions;
         } elseif ($approvedRequest) {
             $course = $approvedRequest->course;
             $completions = $approvedRequest->sessionCompletions ?? collect();
             $hoursCompleted = $completions->where('status', 'completed')->sum('hours_completed');
-            $hoursRequired = $course->hours_required ?? $course->duration_hours ?? 0;
+            $hoursRequired = $course ? ($course->hours_required ?? $course->duration_hours ?? 0) : 0;
             $progressPercentage = $hoursRequired > 0 ? min(100, round(($hoursCompleted / $hoursRequired) * 100)) : 0;
-            $modules = $course->modules ?? collect();
+            $modules = $course ? ($course->modules ?? collect()) : collect();
             $sessionCompletions = $completions;
         }
         

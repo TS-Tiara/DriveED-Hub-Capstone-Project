@@ -1605,21 +1605,33 @@ class AdminController extends Controller
                 break;
             case 'price_low':
                 $query->select('courses.*')
-                    ->leftJoin('course_packages', 'courses.id', '=', 'course_packages.course_id')
-                    ->selectRaw('MIN(course_packages.price) as min_price')
-                    ->groupBy('courses.id')
-                    ->orderBy('min_price', 'asc');
+                    ->leftJoinSub(
+                        DB::table('course_packages')
+                            ->select('course_id', DB::raw('MIN(price) as min_price'))
+                            ->groupBy('course_id'),
+                        'package_prices',
+                        'courses.id', '=', 'package_prices.course_id'
+                    )
+                    ->orderBy('package_prices.min_price', 'asc');
                 break;
             case 'price_high':
                 $query->select('courses.*')
-                    ->leftJoin('course_packages', 'courses.id', '=', 'course_packages.course_id')
-                    ->selectRaw('MAX(course_packages.price) as max_price')
-                    ->groupBy('courses.id')
-                    ->orderBy('max_price', 'desc');
+                    ->leftJoinSub(
+                        DB::table('course_packages')
+                            ->select('course_id', DB::raw('MAX(price) as max_price'))
+                            ->groupBy('course_id'),
+                        'package_prices',
+                        'courses.id', '=', 'package_prices.course_id'
+                    )
+                    ->orderBy('package_prices.max_price', 'desc');
                 break;
             case 'popularity':
                 $query->withCount(['bookings' => function($q) {
-                    $q->whereIn('status', ['confirmed', 'in_progress', 'completed']);
+                    $q->whereIn('status', [
+                        \App\Models\Booking::STATUS_SCHEDULED, 
+                        \App\Models\Booking::STATUS_DONE, 
+                        \App\Models\Booking::STATUS_COMPLETED
+                    ]);
                 }])->orderBy('bookings_count', 'desc');
                 break;
             case 'status':

@@ -133,15 +133,50 @@ class InstructorController extends Controller
             ->toArray();
 
         $assignedStudentIds = array_unique(array_merge($bookingStudentIds, $sessionStudentIds));
+        $instructorId = $instructor->id;
 
         // AUD-003 Fix: Only get students assigned to this instructor to prevent PII leakage
-        $students = Student::where('school_id', '=', $school->id)
-            ->whereIn('id', $assignedStudentIds, 'and', false)
-            ->with(['progresses.course', 'bookings' => function ($query) use ($instructor) {
-            $query->where('instructor_id', '=', $instructor->id, 'and')
+        $query = Student::where('school_id', '=', $school->id)
+            ->whereIn('id', $assignedStudentIds, 'and', false);
+
+        // Apply Search
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        // Apply Status Filter
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('status', '=', $request->status);
+        }
+
+        // Apply Assignment Filter
+        if ($request->filled('assignment') && $request->assignment === 'unassigned') {
+            $query->whereRaw('1 = 0');
+        }
+
+        $sort = $request->get('sort', 'name-asc');
+        switch ($sort) {
+            case 'name-asc':
+                $query->orderBy('name', 'asc');
+                break;
+            case 'name-desc':
+                $query->orderBy('name', 'desc');
+                break;
+            default:
+                $query->orderBy('name', 'asc');
+                break;
+        }
+
+        $students = $query->with(['progresses.course', 'bookings' => function ($query) use ($instructorId) {
+            $query->where('instructor_id', '=', $instructorId, 'and')
                 ->orderBy('scheduled_at', 'desc');
         }])
-            ->paginate(10, ['*']);
+            ->paginate(12)
+            ->withQueryString();
 
         // Add computed data for each student
         $students->getCollection()->each(function ($student) use ($assignedStudentIds) {

@@ -8,6 +8,7 @@ use App\Models\Student;
 use App\Support\EnrollmentValidator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class CourseController extends Controller
@@ -15,23 +16,80 @@ class CourseController extends Controller
     /**
      * Display a listing of courses.
      */
-    public function index(School $school)
+    public function index(Request $request, School $school)
     {
-        $courses = Course::where('school_id', '=', $school->id)
-            ->with('packages', 'modules')
-            ->when(request('status'), function ($query, $status) {
-            return $query->where('status', '=', $status);
-        })
-            ->when(request('course_type'), function ($query, $type) {
-            return $query->where('course_type', '=', $type);
-        })
-            ->when(request('license_type'), function ($query, $license) {
-            return $query->where('license_type', '=', $license);
-        })
-            ->orderBy('sort_order')
-            ->orderBy('is_featured', 'desc')
-            ->latest()
-            ->paginate(10);
+        $query = Course::where('school_id', '=', $school->id)
+            ->with(['packages', 'modules']);
+
+        // Filtering
+        if ($request->filled('search')) {
+            $query->where('title', 'like', '%' . $request->search . '%');
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        } else {
+            $query->where('status', 'active');
+        }
+
+        if ($request->filled('course_type')) {
+            $query->where('course_type', $request->course_type);
+        }
+
+        if ($request->filled('license_type')) {
+            $query->where('license_type', $request->license_type);
+        }
+
+        // Sorting
+        $sort = $request->get('sort', 'newest');
+        switch ($sort) {
+            case 'price_low':
+                $query->select('courses.*')
+                    ->leftJoinSub(
+                        DB::table('course_packages')
+                            ->select('course_id', DB::raw('MIN(price) as min_price'))
+                            ->groupBy('course_id'),
+                        'package_prices',
+                        'courses.id', '=', 'package_prices.course_id'
+                    )
+                    ->orderBy('package_prices.min_price', 'asc');
+                break;
+            case 'price_high':
+                $query->select('courses.*')
+                    ->leftJoinSub(
+                        DB::table('course_packages')
+                            ->select('course_id', DB::raw('MAX(price) as max_price'))
+                            ->groupBy('course_id'),
+                        'package_prices',
+                        'courses.id', '=', 'package_prices.course_id'
+                    )
+                    ->orderBy('package_prices.max_price', 'desc');
+                break;
+            case 'popularity':
+                $query->withCount(['bookings' => function($q) {
+                    $q->whereIn('status', [
+                        \App\Models\Booking::STATUS_SCHEDULED,
+                        \App\Models\Booking::STATUS_DONE,
+                        \App\Models\Booking::STATUS_COMPLETED
+                    ]);
+                }])->orderBy('bookings_count', 'desc');
+                break;
+            case 'oldest':
+                $query->orderBy('created_at', 'asc');
+                break;
+            case 'title_asc':
+                $query->orderBy('title', 'asc');
+                break;
+            case 'title_desc':
+                $query->orderBy('title', 'desc');
+                break;
+            case 'newest':
+            default:
+                $query->orderBy('is_featured', 'desc')->orderBy('created_at', 'desc');
+                break;
+        }
+
+        $courses = $query->paginate(12);
 
         // Only return JSON if explicitly requested via Accept header
         if (request()->expectsJson()) {

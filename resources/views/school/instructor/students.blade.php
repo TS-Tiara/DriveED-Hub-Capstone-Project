@@ -361,32 +361,30 @@
     </div>
 
     <!-- Controls Bar -->
-    <div class="controls-bar">
+    <form action="{{ $schoolRoute('instructor.students.index') }}" method="GET" class="controls-bar">
         <div class="search-wrapper">
-            <input type="text" class="search-input" id="searchInput" 
-                   placeholder="Search students by name or email..." onkeyup="filterStudents()">
+            <input type="text" name="search" class="search-input" id="searchInput" 
+                   placeholder="Search students by name or email..." value="{{ request('search') }}">
         </div>
-        <select class="filter-select" id="assignmentFilter" onchange="filterStudents()">
-            <option value="all">All Students</option>
-            <option value="assigned">My Students</option>
-            <option value="unassigned">Other Students</option>
+        <select class="filter-select" name="assignment" id="assignmentFilter" onchange="this.form.submit()">
+            <option value="all" {{ request('assignment') == 'all' ? 'selected' : '' }}>All Students</option>
+            <option value="assigned" {{ request('assignment') == 'assigned' ? 'selected' : '' }}>My Students</option>
+            <option value="unassigned" {{ request('assignment') == 'unassigned' ? 'selected' : '' }}>Other Students</option>
         </select>
-        <select class="filter-select" id="statusFilter" onchange="filterStudents()">
-            <option value="all">All Status</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
+        <select class="filter-select" name="status" id="statusFilter" onchange="this.form.submit()">
+            <option value="all" {{ request('status') == 'all' ? 'selected' : '' }}>All Status</option>
+            <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
+            <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
         </select>
-        <select class="filter-select" id="sortFilter" onchange="sortStudents()">
-            <option value="assigned-first">My Students First</option>
-            <option value="name-asc">Name (A-Z)</option>
-            <option value="name-desc">Name (Z-A)</option>
-            <option value="progress-desc">Progress (High-Low)</option>
-            <option value="progress-asc">Progress (Low-High)</option>
+        <select class="filter-select" name="sort" id="sortFilter" onchange="this.form.submit()">
+            <option value="name-asc" {{ request('sort') == 'name-asc' ? 'selected' : '' }}>Name (A-Z)</option>
+            <option value="name-desc" {{ request('sort') == 'name-desc' ? 'selected' : '' }}>Name (Z-A)</option>
+            <option value="progress-desc" {{ request('sort') == 'progress-desc' ? 'selected' : '' }}>Progress (High-Low)</option>
         </select>
         <div class="view-count">
-            Showing <span id="showingCount">{{ $totalStudents }}</span> students
+            Showing {{ $students->count() }} of {{ $students->total() }} students
         </div>
-    </div>
+    </form>
 
     <!-- Students Grid -->
     <div class="students-grid" id="studentsGrid">
@@ -438,6 +436,7 @@
 </div>
 
 <script>
+// Toggle Export Menu
 function toggleExportMenu() {
     document.getElementById('exportMenu').classList.toggle('show');
 }
@@ -448,67 +447,6 @@ document.addEventListener('click', function(e) {
         if (menu) menu.classList.remove('show');
     }
 });
-
-function filterStudents() {
-    const searchInput = document.getElementById('searchInput').value.toLowerCase();
-    const statusFilter = document.getElementById('statusFilter').value;
-    const assignmentFilter = document.getElementById('assignmentFilter').value;
-    const cards = document.querySelectorAll('.student-card');
-    let visibleCount = 0;
-
-    cards.forEach(card => {
-        const name = card.dataset.name;
-        const email = card.dataset.email;
-        const status = card.dataset.status;
-        const isAssigned = card.dataset.assigned === 'true';
-
-        const matchesSearch = name.includes(searchInput) || email.includes(searchInput);
-        const matchesStatus = statusFilter === 'all' || status === statusFilter;
-        const matchesAssignment = assignmentFilter === 'all' || 
-                                 (assignmentFilter === 'assigned' && isAssigned) ||
-                                 (assignmentFilter === 'unassigned' && !isAssigned);
-
-        if (matchesSearch && matchesStatus && matchesAssignment) {
-            card.style.display = 'block';
-            visibleCount++;
-        } else {
-            card.style.display = 'none';
-        }
-    });
-
-    document.getElementById('showingCount').textContent = visibleCount;
-}
-
-function sortStudents() {
-    const sortBy = document.getElementById('sortFilter').value;
-    const grid = document.getElementById('studentsGrid');
-    const cards = Array.from(document.querySelectorAll('.student-card'));
-
-    cards.sort((a, b) => {
-        const aAssigned = a.dataset.assigned === 'true';
-        const bAssigned = b.dataset.assigned === 'true';
-
-        switch(sortBy) {
-            case 'assigned-first':
-                if (aAssigned === bAssigned) {
-                    return a.dataset.name.localeCompare(b.dataset.name);
-                }
-                return aAssigned ? -1 : 1;
-            case 'name-asc':
-                return a.dataset.name.localeCompare(b.dataset.name);
-            case 'name-desc':
-                return b.dataset.name.localeCompare(a.dataset.name);
-            case 'progress-desc':
-                return parseFloat(b.dataset.progress) - parseFloat(a.dataset.progress);
-            case 'progress-asc':
-                return parseFloat(a.dataset.progress) - parseFloat(b.dataset.progress);
-            default:
-                return 0;
-        }
-    });
-
-    cards.forEach(card => grid.appendChild(card));
-}
 </script>
 
 @endsection

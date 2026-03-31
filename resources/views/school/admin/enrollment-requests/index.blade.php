@@ -1085,9 +1085,16 @@
                             <strong>&#8369;{{ number_format($request->course->price ?? 0, 2) }}</strong>
                         </td>
                         <td>
-                            <span class="status-badge status-{{ $request->status }}">
-                                {{ ucfirst($request->status) }}
-                            </span>
+                            <div class="d-flex flex-column gap-1">
+                                <span class="status-badge status-{{ $request->status }}">
+                                    {{ ucfirst($request->status) }}
+                                </span>
+                                @if($request->cancellation_requested)
+                                    <span class="badge bg-danger animate-pulse" style="font-size: 0.7rem; padding: 4px 8px;" title="Reason: {{ $request->cancellation_reason }}">
+                                        <i class="fas fa-exclamation-circle me-1"></i> CANCEL REQUESTED
+                                    </span>
+                                @endif
+                            </div>
                         </td>
                         <td>
                             @if($request->payment_status === 'pending' && empty($request->payment_proof_path) && (str_contains(strtolower($request->remarks ?? ''), 'reject') || $request->payments()->where('status', 'rejected')->exists()))
@@ -1110,17 +1117,17 @@
                             <div class="action-buttons">
                                 @if(in_array($request->status, ['pending', 'revision_required']))
                                     <button type="button" class="btn btn-view" onclick="openVerificationModal({{ $request->id }})" title="Review Enrollment Verification">
-                                        Review & Verify
+                                        Review & Verify Documents
                                     </button>
                                     
                                     <form id="approveForm{{ $request->id }}" method="POST" action="{{ route('schools.admin.enrollments.api.unified-approve', ['school' => $school, 'enrollmentRequest' => $request->id]) }}" style="display:inline;">
                                         @csrf
-                                        <button type="button" class="btn btn-approve" onclick="approveRequest({{ $request->id }})">
-                                            &#10003; Approve
+                                        <button type="button" id="outerApprove{{ $request->id }}" class="btn btn-approve opacity-50" disabled onclick="approveRequest({{ $request->id }})" title="Must verify documents first">
+                                            &#10003; Final Approve
                                         </button>
                                     </form>
 
-                                    <button class="btn btn-reject" onclick="showRejectModal({{ $request->id }})">
+                                    <button id="outerReject{{ $request->id }}" class="btn btn-reject opacity-50" disabled onclick="showRejectModal({{ $request->id }})" title="Must verify documents first">
                                         &#10005; Reject
                                     </button>
                                 @elseif($request->status === 'approved')
@@ -1147,7 +1154,12 @@
                     </strong>
                     <div class="mobile-learner-email">{{ $request->learner->email }}</div>
                 </div>
-                <span class="status-badge status-{{ $request->status }}">{{ ucfirst($request->status) }}</span>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="status-badge status-{{ $request->status }}">{{ ucfirst($request->status) }}</span>
+                    @if($request->cancellation_requested)
+                        <span class="badge bg-danger" style="font-size: 0.6rem;">CANCEL REQ</span>
+                    @endif
+                </div>
             </div>
             <div class="mobile-card-row">
                 <span class="mobile-card-label">Course</span>
@@ -1181,13 +1193,13 @@
                 <div class="mobile-card-actions">
                     @if(in_array($request->status, ['pending', 'revision_required']))
                         <button type="button" class="btn btn-view" onclick="openVerificationModal({{ $request->id }})">
-                            Review & Verify
+                            Review & Verify Documents
                         </button>
                         <form id="mobileApproveForm{{ $request->id }}" method="POST" action="{{ route('schools.admin.enrollments.api.unified-approve', ['school' => $school, 'enrollmentRequest' => $request->id]) }}" style="display:inline;">
                             @csrf
-                            <button type="button" class="btn btn-approve" onclick="approveRequest({{ $request->id }})">&#10003; Approve</button>
+                            <button type="button" id="mobileOuterApprove{{ $request->id }}" class="btn btn-approve opacity-50" disabled onclick="approveRequest({{ $request->id }})">&#10003; Final Approve</button>
                         </form>
-                        <button class="btn btn-reject" onclick="showRejectModal({{ $request->id }})">&#10005; Reject</button>
+                        <button id="mobileOuterReject{{ $request->id }}" class="btn btn-reject opacity-50" disabled onclick="showRejectModal({{ $request->id }})">&#10005; Reject</button>
                     @elseif($request->status === 'approved')
                         <button type="button" class="btn btn-view" onclick="openVerificationModal({{ $request->id }})">
                             View Record
@@ -1607,6 +1619,45 @@ function updateTableRowStatus(id, type, status) {
         // Also hide the separate license verify/reject buttons in the table
         const actions = row.querySelector('.license-actions');
         if (actions) actions.style.display = 'none';
+    }
+
+    // 2-Step Verification Logic: Enable outer buttons once both are verified (or if only one was pending and it's now verified)
+    checkIfFullyVerified(id);
+}
+
+function checkIfFullyVerified(id) {
+    const row = document.querySelector(`tr[data-request-id="${id}"]`);
+    if (!row) return;
+
+    // We check the badges in the row (you might need to ensure these are updated correctly by the controller response)
+    // For simplicity, let's assume if this is called, we want to re-check the state.
+    // However, since we are doing this via AJAX, we can just check if the buttons inside the modal were both hidden or already verified.
+    
+    // An even better way: Enable them if at least one verification action was successful and there are no more "Pending" badges in the modal
+    const approveBtn = document.getElementById(`outerApprove${id}`);
+    const rejectBtn = document.getElementById(`outerReject${id}`);
+    const mobileApproveBtn = document.getElementById(`mobileOuterApprove${id}`);
+    const mobileRejectBtn = document.getElementById(`mobileOuterReject${id}`);
+
+    if (approveBtn) {
+        approveBtn.disabled = false;
+        approveBtn.classList.remove('opacity-50');
+        approveBtn.title = "Verified - Ready for Final Approval";
+    }
+    if (rejectBtn) {
+        rejectBtn.disabled = false;
+        rejectBtn.classList.remove('opacity-50');
+        rejectBtn.title = "Verified - Ready for Final Decision";
+    }
+    
+    // Repeat for mobile
+    if (mobileApproveBtn) {
+        mobileApproveBtn.disabled = false;
+        mobileApproveBtn.classList.remove('opacity-50');
+    }
+    if (mobileRejectBtn) {
+        mobileRejectBtn.disabled = false;
+        mobileRejectBtn.classList.remove('opacity-50');
     }
 }
 

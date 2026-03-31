@@ -221,18 +221,16 @@ class GuestController extends Controller
             return redirect()->back()->with('error', 'Practical Driving Courses (PDC) require a verified Student Driver\'s License. Please complete a TDC first and upload your license.');
         }
 
-        // Check if already enrolled for this course (including previous rejections/cancellations)
+        // Check if already enrolled for this course (excluding previous rejections/cancellations)
         $existingRequest = EnrollmentRequest::where('learner_id', $guest->id)
             ->where('course_id', $course->id)
+            ->whereNotIn('status', ['rejected', 'cancelled'])
             ->first();
 
         if ($existingRequest) {
             if (in_array($existingRequest->status, ['pending', 'approved'])) {
                 return redirect()->back()->with('warning', 'You already have an active enrollment request for this course.');
             }
-            
-            // If they have a rejected or cancelled request, they should contact admin rather than hitting a DB error
-            return redirect()->back()->with('error', 'You have a previous application for this course with status: ' . ucfirst($existingRequest->status) . '. Please contact the administrator if you wish to re-enroll.');
         }
 
         try {
@@ -432,6 +430,48 @@ class GuestController extends Controller
             ->get();
 
         return view('school.guest.enrollment-requests', array_merge(compact('school', 'guest', 'requests'), ['isAjax' => $request->ajax()]));
+    }
+
+    /**
+     * Handle guest cancellation request
+     */
+    public function requestCancellation(Request $request, School $school, EnrollmentRequest $enrollmentRequest)
+    {
+        $guest = Auth::guard('student')->user();
+
+        // Security check
+        if ($enrollmentRequest->learner_id !== $guest->id) {
+            abort(403);
+        }
+
+        // Must be status pending
+        if ($enrollmentRequest->status !== 'pending') {
+            return redirect()->back()->with('error', 'Only pending enrollment requests can be cancelled.');
+        }
+
+        $request->validate([
+            'cancellation_reason' => 'required|string|max:1000',
+        ]);
+
+        $enrollmentRequest->update([
+            'cancellation_requested' => true,
+            'cancellation_reason' => $request->cancellation_reason
+        ]);
+
+        // Optional: Notify admins here
+        $admins = Admin::where('school_id', $school->id)->where('is_active', true)->get();
+        foreach ($admins as $admin) {
+            Notification::send(
+                $admin,
+                'enrollment_cancellation_requested',
+                'Cancellation Requested',
+                "{$guest->name} has requested to cancel their enrollment for {$enrollmentRequest->course->title}.",
+                'enrollment',
+                "/{$school->slug}/admin/enrollments"
+            );
+        }
+
+        return redirect()->back()->with('success', 'Your cancellation request has been submitted to the admin for review.');
     }
 
     /**

@@ -1334,7 +1334,7 @@
         </div>
         <div class="header-actions">
             <div class="export-buttons">
-                <a href="{{ $schoolRoute('admin.exports.courses.pdf') }}" class="btn-export btn-export-pdf">
+                <a href="{{ $schoolRoute('admin.exports.courses.pdf', ['sort' => request('sort', 'newest')]) }}" class="btn-export btn-export-pdf">
                     Export PDF
                 </a>
             </div>
