@@ -26,22 +26,6 @@
             overflow: hidden;
             position: relative;
         }
-        body::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            @if($pageBgType === 'image' && $pageBgImage)
-            background: {{ $pageBackground }} no-repeat center center fixed;
-            background-size: cover;
-            @else
-            background: {{ $pageBackground }};
-            @endif
-            opacity: {{ $pageBgOpacity / 100 }};
-            z-index: -1;
-        }
         .main-content {
             display: flex;
             justify-content: center;
