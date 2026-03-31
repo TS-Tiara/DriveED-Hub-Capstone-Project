@@ -58,6 +58,12 @@ Route::prefix('system-admin')->name('system-admin.')->group(function () {
     Route::get('/login', [SystemAdminController::class , 'showLogin'])->name('login');
     Route::post('/login', [SystemAdminController::class , 'login'])->name('login.submit')->middleware('throttle:5,1');
 
+    // Password reset routes (no auth required)
+    Route::get('/forgot-password', [PasswordResetController::class , 'showSystemAdminForgotForm'])->name('password.request');
+    Route::post('/forgot-password', [PasswordResetController::class , 'sendResetLink'])->name('password.email')->middleware('throttle:3,1');
+    Route::get('/reset-password/{token}', [PasswordResetController::class , 'showSystemAdminResetForm'])->name('password.reset');
+    Route::post('/reset-password', [PasswordResetController::class , 'reset'])->name('password.update')->middleware('throttle:5,1');
+
     // Protected routes (system admin only)
     Route::middleware(['system.admin', 'nocache'])->group(function () {
             Route::get('/', [SystemAdminController::class , 'dashboard'])->name('dashboard');

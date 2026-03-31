@@ -233,9 +233,15 @@
                     @enderror
                 </div>
 
-                <div class="form-group remember-group">
+                <div class="form-group remember-group" style="margin-bottom: 15px;">
                     <input type="checkbox" name="remember" id="remember" class="remember-checkbox">
                     <label for="remember" class="remember-label">Remember me on this browser</label>
+                </div>
+
+                <div style="text-align: right; margin-bottom: 25px;">
+                    <a href="{{ route('system-admin.password.request') }}" style="color: #4b5563; text-decoration: none; font-size: 0.85rem; font-weight: 500;">
+                        Forgot Password?
+                    </a>
                 </div>
 
                 <button type="submit" class="btn">
