@@ -6,10 +6,14 @@ use App\Models\Admin;
 use App\Models\Branch;
 use App\Models\School;
 use App\Models\SystemLog;
+use App\Models\Invitation;
+use App\Mail\SystemInvitationMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
 
 class AdminManagementController extends Controller
@@ -64,9 +68,10 @@ class AdminManagementController extends Controller
                 'required',
                 'email',
                 'max:255',
-                Rule::unique('admins', 'email'),
+                Rule::unique('admins', 'email')->where('school_id', $school->id),
+                Rule::unique('students', 'email')->where('school_id', $school->id),
+                Rule::unique('instructors', 'email')->where('school_id', $school->id),
             ],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
             'contact' => ['nullable', 'string', 'max:20', 'regex:/^[0-9]+$/'],
             'role' => ['required', 'in:school_admin,branch_secretary'],
             'branch_id' => ['required_if:role,branch_secretary', 'nullable', 'exists:branches,id'],
@@ -83,39 +88,46 @@ class AdminManagementController extends Controller
             }
         }
 
-        $newAdmin = Admin::create([
-            'school_id' => $school->id,
-            'branch_id' => $validated['role'] === Admin::ROLE_BRANCH_SECRETARY ? $validated['branch_id'] : null,
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => bcrypt($validated['password']),
-            'must_reset_password' => true, // Force reset on first login
-            'role' => $validated['role'],
-            'contact' => $validated['contact'] ?? null,
-            'is_active' => true,
-        ]);
-
-        $roleLabel = $validated['role'] === Admin::ROLE_BRANCH_SECRETARY ? 'Branch Secretary' : 'School Admin';
-
+        DB::beginTransaction();
         try {
+            $invitation = Invitation::create([
+                'school_id' => $school->id,
+                'branch_id' => $validated['role'] === Admin::ROLE_BRANCH_SECRETARY ? $validated['branch_id'] : null,
+                'email' => trim($validated['email']),
+                'role' => $validated['role'],
+                'token' => \Illuminate\Support\Str::random(40),
+                'payload' => [
+                    'name' => trim($validated['name']),
+                    'contact' => trim((string)($validated['contact'] ?? '')),
+                ],
+                'expires_at' => now()->addDays($school->schoolSetting->invitation_expiry_days ?? 7),
+            ]);
+
+            // Send Invitation Mail
+            Mail::to($invitation->email)->send(new SystemInvitationMail($invitation));
+
+            $roleLabel = $validated['role'] === Admin::ROLE_BRANCH_SECRETARY ? 'Branch Secretary' : 'School Admin';
+
             SystemLog::logInfo(
-                "New {$roleLabel} '{$newAdmin->name}' created by {$admin->name}",
+                "Invitation sent to {$roleLabel}: {$invitation->email}",
                 'admin',
                 [
-                    'new_admin_id' => $newAdmin->id,
-                    'role' => $newAdmin->role,
-                    'branch_id' => $newAdmin->branch_id,
-                    'created_by' => $admin->id,
+                    'role' => $invitation->role,
+                    'branch_id' => $invitation->branch_id,
+                    'invited_by' => $admin->id,
                 ],
                 $school->id,
-                'admin_created'
+                'admin_invited'
             );
-        } catch (\Exception $e) {
-            // Logging failure should not crash the response
-            Log::error("Failed to log admin creation in AdminManagementController: " . $e->getMessage());
-        }
 
-        return redirect()->back()->with('success', "{$roleLabel} '{$newAdmin->name}' has been created successfully.");
+            DB::commit();
+
+            return redirect()->back()->with('success', "Invitation successfully sent to {$invitation->email}.");
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Failed to send admin invitation in AdminManagementController: " . $e->getMessage());
+            return redirect()->back()->with('error', 'Unable to send invitation at this time.');
+        }
     }
 
     /**

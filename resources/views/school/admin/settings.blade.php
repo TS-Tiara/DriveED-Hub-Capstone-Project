@@ -858,6 +858,9 @@
             <button type="button" class="tab-btn" onclick="switchTab('colors')" data-tab="colors">
                 Colors & Branding
             </button>
+            <button type="button" class="tab-btn" onclick="switchTab('invitations')" data-tab="invitations">
+                Invitations & Onboarding
+            </button>
         </div>
     </div>
 
@@ -940,6 +943,36 @@
                             Controls how instructors are assigned to student schedules
                         </small>
                     </div>
+                    </div>
+                </div>
+
+                    </div>
+                </div>
+
+                <!-- Onboarding & Security Settings -->
+                <div class="form-section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <h3 class="section-title">Onboarding & Security</h3>
+                    </div>
+                    
+                    <div class="section-inputs">
+                        <div class="form-group">
+                            <label class="form-label">Invitation Expiry (Days)</label>
+                            <input type="number" class="number-input" name="invitation_expiry_days" value="{{ old('invitation_expiry_days', $settings->invitation_expiry_days ?? 7) }}" min="1" max="30">
+                            <small class="text-muted help-text-block">
+                                Number of days an invitation link remains valid after being sent (1-30 days)
+                            </small>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">
+                                <input type="checkbox" name="require_instructor_license" value="1" {{ old('require_instructor_license', $settings->require_instructor_license ?? true) ? 'checked' : '' }} class="checkbox-inline">
+                                Mandatory Instructor License
+                            </label>
+                            <small class="text-muted help-text-block">
+                                When enabled, instructors MUST provide a license number during account setup
+                            </small>
+                        </div>
                     </div>
                 </div>
 

@@ -941,12 +941,12 @@
                     </div>
                 </div>
                 <button class="btn-create" onclick="openCreateStudentModal()">
-                    <svg class="icon-18" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
-                    Add Student
+                    <svg class="icon-18" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                    Invite Student
                 </button>
                 <button class="btn-create" onclick="openCreateInstructorModal()">
-                    <svg class="icon-18" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
-                    Add Instructor
+                    <svg class="icon-18" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                    Invite Instructor
                 </button>
             </div>
         </div>
@@ -1032,31 +1032,28 @@
     </div>
 </div>
 
-<!-- CREATE STUDENT MODAL -->
+<!-- INVITE STUDENT MODAL -->
 <div id="createStudentModal" class="modal">
     <div class="modal-content">
-        <h3>Create New Student</h3>
+        <h3>Invite New Student</h3>
         <form method="POST" action="{{ school_route('admin.storeAccount') }}">
             @csrf
             <div class="form-group">
                 <label>Name:</label>
-                <input type="text" name="name" required>
+                <input type="text" name="name" placeholder="Enter student's full name" required>
             </div>
             <div class="form-group">
                 <label>Email:</label>
-                <input type="email" name="email" required>
-            </div>
-            <div class="form-group">
-                <label>Password:</label>
-                <input type="password" name="password" required>
+                <input type="email" name="email" placeholder="student@example.com" required>
+                <p style="font-size: 0.8rem; color: #6b7280; margin-top: 4px;">An invitation link will be sent to this email.</p>
             </div>
             <div class="form-group">
                 <label>Contact:</label>
-                <input type="text" name="contact">
+                <input type="text" name="contact" placeholder="09123456789">
             </div>
             <div class="form-group">
                 <label>Address:</label>
-                <input type="text" name="address">
+                <input type="text" name="address" placeholder="Enter address (optional)">
             </div>
             @if(isset($branches) && $branches->count() > 0)
             <div class="form-group">
@@ -1072,7 +1069,7 @@
             <input type="hidden" name="role" value="student">
             <div class="modal-buttons">
                 <button type="button" class="btn-cancel" onclick="closeCreateStudentModal()">Cancel</button>
-                <button type="submit" class="btn-create">Save</button>
+                <button type="submit" class="btn-submit">Send Invitation</button>
             </div>
         </form>
     </div>
@@ -1120,31 +1117,28 @@
     </div>
 </div>
 
-<!-- CREATE INSTRUCTOR MODAL -->
+<!-- INVITE INSTRUCTOR MODAL -->
 <div id="createInstructorModal" class="modal">
     <div class="modal-content">
-        <h3>Create New Instructor</h3>
+        <h3>Invite New Instructor</h3>
         <form method="POST" action="{{ school_route('admin.storeAccount') }}">
             @csrf
             <div class="form-group">
                 <label>Name:</label>
-                <input type="text" name="name" required>
+                <input type="text" name="name" placeholder="Enter instructor's full name" required>
             </div>
             <div class="form-group">
                 <label>Email:</label>
-                <input type="email" name="email" required>
-            </div>
-            <div class="form-group">
-                <label>Password:</label>
-                <input type="password" name="password" required>
+                <input type="email" name="email" placeholder="instructor@example.com" required>
+                <p style="font-size: 0.8rem; color: #6b7280; margin-top: 4px;">An invitation link will be sent to this email.</p>
             </div>
             <div class="form-group">
                 <label>Contact:</label>
-                <input type="text" name="contact">
+                <input type="text" name="contact" placeholder="09123456789">
             </div>
             <div class="form-group">
                 <label>License Number:</label>
-                <input type="text" name="license_number">
+                <input type="text" name="license_number" placeholder="Enter license number" required>
             </div>
             @if(isset($branches) && $branches->count() > 0)
             <div class="form-group">
@@ -1160,7 +1154,7 @@
             <input type="hidden" name="role" value="instructor">
             <div class="modal-buttons">
                 <button type="button" class="btn-cancel" onclick="closeCreateInstructorModal()">Cancel</button>
-                <button type="submit" class="btn-create">Save</button>
+                <button type="submit" class="btn-submit">Send Invitation</button>
             </div>
         </form>
     </div>
