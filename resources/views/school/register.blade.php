@@ -2,25 +2,13 @@
 <html>
 <head>
     @php
+        $settings = $school?->schoolSetting;
         $welcomeText = $settings?->register_welcome_text ?? 'Student Registration';
         $subtitleText = $settings?->register_subtitle_text;
     @endphp
 
     @include('partials.school-auth-header')
 
-    @php
-        // Page background
-        $pageBgType = $settings?->login_page_bg_type ?? 'color';
-        $pageBgColor = $settings?->login_page_bg_color ?? '#f5f5f5';
-        $pageBgImage = $settings?->login_page_bg_image;
-        $pageBgOpacity = $settings?->login_page_bg_opacity ?? 100;
-        
-        if ($pageBgType === 'image' && $pageBgImage) {
-            $pageBackground = "url('" . asset('storage/' . $pageBgImage) . "')";
-        } else {
-            $pageBackground = $pageBgColor;
-        }
-    @endphp
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>{{ $schoolName }} - Guest Registration</title>
     <style>
