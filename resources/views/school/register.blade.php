@@ -2,6 +2,7 @@
 <html>
 <head>
     @php
+        $settings = $school?->schoolSetting;
         $welcomeText = $settings?->register_welcome_text ?? 'Student Registration';
         $subtitleText = $settings?->register_subtitle_text;
     @endphp
