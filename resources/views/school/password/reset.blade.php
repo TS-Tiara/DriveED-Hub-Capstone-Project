@@ -6,10 +6,12 @@
     $schoolNameSize = $settings?->login_school_name_size ?? 24;
     $welcomeSize = $settings?->login_welcome_size ?? 16;
     $logoSize = $settings?->login_logo_size ?? 40;
+    $schoolName = $school?->name ?? 'DriveEd Hub';
 @endphp
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     @include('partials.school-auth-header')
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
