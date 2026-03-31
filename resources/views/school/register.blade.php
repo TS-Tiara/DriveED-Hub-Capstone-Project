@@ -6,10 +6,20 @@
     $schoolNameSize = $settings?->login_school_name_size ?? 24;
     $welcomeSize = $settings?->login_welcome_size ?? 16;
     $logoSize = $settings?->login_logo_size ?? 40;
+    $schoolName = $school?->name ?? 'DriveEd Hub';
 @endphp
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
+    @include('partials.school-auth-header')
+
+    <style>
+        :root {
+            --primary-color: {{ $primaryColor }};
+            --secondary-color: {{ $secondaryColor }};
+        }
+
     @php
         $settings = $school?->schoolSetting;
         $welcomeText = $settings?->register_welcome_text ?? 'Student Registration';

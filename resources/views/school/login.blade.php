@@ -1,4 +1,14 @@
-@include('partials.school-branding-logic')
+@php
+    // Self-contained branding logic to avoid scoping issues 
+    $settings = $school?->schoolSetting;
+    $primaryColor = $settings?->primary_color ?? '#2563eb';
+    $secondaryColor = $settings?->secondary_color ?? '#f59e0b';
+    $headerHeight = $settings?->login_header_height ?? 60;
+    $schoolNameSize = $settings?->login_school_name_size ?? 24;
+    $welcomeSize = $settings?->login_welcome_size ?? 16;
+    $logoSize = $settings?->login_logo_size ?? 40;
+    $schoolName = $school?->name ?? 'DriveEd Hub';
+@endphp
 <!DOCTYPE html>
 <html>
 <head>
@@ -6,6 +16,11 @@
     @include('partials.school-auth-header')
 
     <style>
+        :root {
+            --primary-color: {{ $primaryColor }};
+            --secondary-color: {{ $secondaryColor }};
+            --header-height: {{ $headerHeight }}px;
+        }
         * {
             margin: 0;
             padding: 0;
@@ -54,7 +69,7 @@
             transform: translateX(-50%);
             width: 50px;
             height: 3px;
-            background: var(--secondary-gradient);
+            background: linear-gradient(135deg, var(--secondary-color) 0%, var(--secondary-color)dd 100%);
             border-radius: 2px;
         }
 
@@ -146,6 +161,7 @@
             stroke-width: 2;
             stroke-linecap: round;
             stroke-linejoin: round;
+            filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));
         }
 
         .password-toggle-btn .icon-eye-off {
@@ -164,7 +180,7 @@
         input[type="password"]:focus,
         .password-input-wrap input:focus {
             outline: none;
-            border-color: #2563eb;
+            border-color: var(--primary-color);
             box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
             background: white;
         }
@@ -190,28 +206,27 @@
         .remember-me input[type="checkbox"] {
             width: 14px;
             height: 14px;
-            accent-color: #2563eb;
+            accent-color: var(--primary-color);
         }
 
         .forgot-password {
-            color: #3b82f6;
+            color: var(--primary-color);
             text-decoration: none;
             font-weight: 500;
             font-size: 12px;
         }
 
         .forgot-password:hover {
-            color: #1d4ed8;
+            opacity: 0.8;
             text-decoration: underline;
         }
 
         .login-button {
             width: 100%;
             padding: 10px;
-            @if($settings->use_gradient_header ?? false)
-                background: linear-gradient(135deg, {{ $settings->primary_color ?? '#3b82f6' }} 0%, {{ $settings->secondary_color ?? '#2563eb' }} 100%);
-            @else
-                background: var(--primary-color);
+            background: var(--primary-color);
+            @if($settings?->use_gradient_header ?? false)
+                background: linear-gradient(135deg, {{ $settings?->primary_color ?? '#3b82f6' }} 0%, {{ $settings?->secondary_color ?? '#2563eb' }} 100%);
             @endif
             color: white;
             border: none;
