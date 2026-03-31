@@ -374,7 +374,7 @@ class AdminController extends Controller
             ]);
 
             // Send Invitation Mail
-            Mail::to($invitation->email)->send(new SystemInvitationMail($invitation));
+            Mail::to($invitation->email)->send(new SystemInvitationMail($invitation, $school));
 
             SystemLog::logInfo(
                 "Invitation sent to " . ($request->role === 'instructor' ? 'instructor' : 'student') . ": {$invitation->email}",
@@ -2069,7 +2069,7 @@ class AdminController extends Controller
                 'created_at' => now() // Refresh timestamp for visual clarity in dashboard
             ]);
 
-            \Illuminate\Support\Facades\Mail::to($invitation->email)->send(new \App\Mail\SystemInvitationMail($invitation));
+            \Illuminate\Support\Facades\Mail::to($invitation->email)->send(new \App\Mail\SystemInvitationMail($invitation, $school));
 
             return redirect()->back()->with('success', 'Invitation resent successfully.');
         } catch (\Exception $e) {
