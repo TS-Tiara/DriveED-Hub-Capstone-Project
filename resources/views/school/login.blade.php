@@ -1,3 +1,4 @@
+@include('partials.school-branding-logic')
 <!DOCTYPE html>
 <html>
 <head>

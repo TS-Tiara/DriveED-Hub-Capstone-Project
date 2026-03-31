@@ -1,3 +1,12 @@
+@php
+    $settings = $school?->schoolSetting;
+    $primaryColor = $settings?->primary_color ?? '#2563eb';
+    $secondaryColor = $settings?->secondary_color ?? '#f59e0b';
+    $headerHeight = $settings?->login_header_height ?? 60;
+    $schoolNameSize = $settings?->login_school_name_size ?? 24;
+    $welcomeSize = $settings?->login_welcome_size ?? 16;
+    $logoSize = $settings?->login_logo_size ?? 40;
+@endphp
 <!DOCTYPE html>
 <html>
 <head>
@@ -6,6 +15,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>{{ $schoolName }} - Forgot Password</title>
     <style>
+        :root {
+            --primary-color: {{ $primaryColor }};
+            --secondary-color: {{ $secondaryColor }};
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
