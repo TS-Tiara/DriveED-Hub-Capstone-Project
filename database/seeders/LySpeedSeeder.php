@@ -46,23 +46,35 @@ class LySpeedSeeder extends Seeder
         SchoolSetting::updateOrCreate(
             ['school_id' => $school->id],
             [
-                'primary_color' => '#8B0000', 'secondary_color' => '#ffffff', 'accent_color' => '#B22222',
-                'button_primary_bg' => '#8B0000', 'button_style' => 'solid',
-                'use_gradient_header' => false, 'background_type' => 'color', 'background_color' => '#f8fafc',
-                'role_student_bg' => '#fee2e2', 'role_student_text' => '#991b1b',
-                'role_instructor_bg' => '#fef2f2', 'role_instructor_text' => '#7f1d1d',
-                'badge_pending_bg' => '#f59e0b', 'badge_approved_bg' => '#10b981', 'badge_cancelled_bg' => '#dc2626',
-                
+                'primary_color' => '#8B0000',
+                'secondary_color' => '#ffffff',
+                'accent_color' => '#B22222',
+                'button_primary_bg' => '#8B0000',
+                'button_style' => 'solid',
+                'use_gradient_header' => false,
+                'background_type' => 'color',
+                'background_color' => '#f8fafc',
+                'role_student_bg' => '#fee2e2',
+                'role_student_text' => '#991b1b',
+                'role_instructor_bg' => '#fef2f2',
+                'role_instructor_text' => '#7f1d1d',
+                'badge_pending_bg' => '#f59e0b',
+                'badge_approved_bg' => '#10b981',
+                'badge_cancelled_bg' => '#dc2626',
+
                 'header_text_color' => '#ffffff',
-                'sidebar_bg_color' => '#ffffff', 'sidebar_text_color' => '#8B0000',
+                'sidebar_bg_color' => '#ffffff',
+                'sidebar_text_color' => '#8B0000',
                 'instructor_selection_mode' => 'student_choice',
-                'enable_booking_queue' => true, 'booking_queue_days' => 2, 'enable_branches' => true,
+                'enable_booking_queue' => true,
+                'booking_queue_days' => 2,
+                'enable_branches' => true,
                 'booking_cutoff_hours' => 12,
                 'alert_threshold_pending' => 50,
             ]
         );
 
-        // ── 10 Branches ──
+        // ── 1. INFRASTRUCTURE ──
         $branchList = [
             ['name' => 'Main Branch - San Fernando', 'address' => '456 Jose Abad Santos Ave, San Fernando, Pampanga', 'contact_number' => '+63-918-234-5601', 'email' => 'sanfernando@lyspeed.com'],
             ['name' => 'Guagua Branch', 'address' => '321 San Nicolas, Guagua, Pampanga', 'contact_number' => '+63-918-234-5602', 'email' => 'guagua@lyspeed.com'],
@@ -76,42 +88,58 @@ class LySpeedSeeder extends Seeder
             ['name' => 'Magalang Branch', 'address' => '38 Magalang-Concepcion Rd, Magalang, Pampanga', 'contact_number' => '+63-918-234-5610', 'email' => 'magalang@lyspeed.com'],
         ];
         $branches = $this->createBranches($school, $branchList);
-        $this->command->info('   ✓ 10 Branches created');
+        $this->command->info('   ✓ Branches created');
 
-        // ── School Admins (3) ──
+        // ── 2. IDENTITY (All users first) ──
+
+        // Admins
         foreach ([
             ['name' => 'Carlos Miguel Villanueva', 'email' => 'carlos.villanueva@lyspeed.com'],
             ['name' => 'Elena Rose Gonzales', 'email' => 'elena.gonzales@lyspeed.com'],
         ] as $a) {
             Admin::updateOrCreate(['email' => $a['email']], [
-                'school_id' => $school->id, 'name' => $a['name'],
-                'password' => $hashedPassword, 'role' => 'school_admin', 'is_active' => true,
+                'school_id' => $school->id,
+                'name' => $a['name'],
+                'password' => $hashedPassword,
+                'role' => 'school_admin',
+                'is_active' => true,
             ]);
         }
         Admin::updateOrCreate(['email' => 'lyspeed.admin@gmail.com'], [
-            'school_id' => $school->id, 'name' => 'LySpeed Demo Admin',
-            'password' => $hashedPassword, 'role' => 'school_admin', 'is_active' => true,
+            'school_id' => $school->id,
+            'name' => 'LySpeed Demo Admin',
+            'password' => $hashedPassword,
+            'role' => 'school_admin',
+            'is_active' => true,
         ]);
-        $this->command->info('   ✓ 3 School Admins created');
 
-        // ── 10 Branch Managers (1 per branch) ──
+        // Branch Managers
         $lsManagerNames = [
-            'Angelina Reyes', 'Benito Aquino', 'Cristina Dela Cruz', 'Dominador Ocampo',
-            'Evelyn Pangilinan', 'Florante Manansala', 'Gilda Cunanan', 'Honesto David',
-            'Imelda Lugtu', 'Josefino Pineda',
+            'Angelina Reyes',
+            'Benito Aquino',
+            'Cristina Dela Cruz',
+            'Dominador Ocampo',
+            'Evelyn Pangilinan',
+            'Florante Manansala',
+            'Gilda Cunanan',
+            'Honesto David',
+            'Imelda Lugtu',
+            'Josefino Pineda',
         ];
         foreach ($lsManagerNames as $i => $name) {
             Admin::updateOrCreate(['email' => $this->makeEmail($name, 'lyspeed.com')], [
-                'school_id' => $school->id, 'branch_id' => $branches[$i]->id,
-                'name' => $name, 'password' => $hashedPassword,
-                'role' => 'branch_secretary', 'is_active' => true,
+                'school_id' => $school->id,
+                'branch_id' => $branches[$i]->id,
+                'name' => $name,
+                'password' => $hashedPassword,
+                'role' => 'branch_secretary',
+                'is_active' => true,
             ]);
         }
-        $this->command->info('   ✓ 10 Branch Managers created (1 per branch)');
 
-        // ── 30 Instructors (3 per branch) + 1 demo = 31 ──
+        // Instructors
         $instructors = [];
-        $instOffset = 200; // different pool range from Smart Driving
+        $instOffset = 200;
         for ($b = 0; $b < count($branches); $b++) {
             for ($j = 0; $j < 3; $j++) {
                 $name = $this->nameAt($instOffset);
@@ -125,7 +153,8 @@ class LySpeedSeeder extends Seeder
                         'password' => $hashedPassword,
                         'license_number' => 'LIC-LS-2024-' . str_pad($instOffset - 199, 3, '0', STR_PAD_LEFT),
                         'bio' => 'Professional driving instructor at LySpeed Driving School.',
-                        'status' => 'active', 'availability' => 'available',
+                        'status' => 'active',
+                        'availability' => 'available',
                     ]
                 );
                 $instOffset++;
@@ -134,16 +163,19 @@ class LySpeedSeeder extends Seeder
         $instructors[] = Instructor::updateOrCreate(
             ['email' => 'lyspeed.instructor@gmail.com'],
             [
-                'school_id' => $school->id, 'branch_id' => $branches[0]->id,
-                'name' => 'LySpeed Demo Instructor', 'contact' => '+63-918-666-0000',
-                'password' => $hashedPassword, 'license_number' => 'LIC-LS-TEST-001',
+                'school_id' => $school->id,
+                'branch_id' => $branches[0]->id,
+                'name' => 'LySpeed Demo Instructor',
+                'contact' => '+63-918-666-0000',
+                'password' => $hashedPassword,
+                'license_number' => 'LIC-LS-TEST-001',
                 'bio' => 'Test instructor account for demo purposes.',
-                'status' => 'active', 'availability' => 'available',
+                'status' => 'active',
+                'availability' => 'available',
             ]
         );
-        $this->command->info('   ✓ ' . count($instructors) . ' Instructors created (3 per branch + 1 demo)');
 
-        // ── 80 Students (8 per branch) + 1 demo = 81 ──
+        // Students
         $students = [];
         $stuOffset = 1000;
         for ($b = 0; $b < count($branches); $b++) {
@@ -169,33 +201,41 @@ class LySpeedSeeder extends Seeder
         $demoStudent = Student::updateOrCreate(
             ['school_id' => $school->id, 'email' => 'lyspeed.student@gmail.com'],
             [
-                'name' => 'LySpeed Demo Student', 'branch_id' => $branches[0]->id,
-                'contact' => '+63-918-999-0001', 'password' => $hashedPassword,
-                'status' => 'active', 'enrollment_date' => now()->subDays(30),
+                'name' => 'LySpeed Demo Student',
+                'branch_id' => $branches[0]->id,
+                'contact' => '+63-918-999-0001',
+                'password' => $hashedPassword,
+                'status' => 'active',
+                'enrollment_date' => now()->subDays(30),
             ]
         );
         $demoStudent->role = 'student';
         $demoStudent->save();
         $students[] = $demoStudent;
-        $this->command->info('   ✓ ' . count($students) . ' Students created (8 per branch + 1 demo)');
 
-        // ── Courses ──
+        // Guests
+        $admins = Admin::where('school_id', '=', $school->id)->where('role', '=', 'school_admin')->get()->all();
+        $guests = $this->createGuestsAndEnrollmentRequests($school, [], $admins, 'P@ssw0rd123');
+
+        $this->command->info('   ✓ All user identities created (Admins, Managers, Instructors, Students, Guests)');
+
+        // ── 3. PRODUCTS (Courses) ──
         $courses = $this->createLySpeedCourses($school);
-        $this->command->info('   ✓ 3 Courses with packages created');
+        $this->command->info('   ✓ Courses with packages created');
 
-        // ── Time Slots, Bookings, Payments ──
+        // ── 4. INTERACTIONS (Link everything) ──
+
+        // Time Slots, Bookings, Payments
         $this->createTimeSlotsAndAssignments($school, $instructors, $courses, $branches);
         $this->createBookingsAndPayments($school, $students, $instructors, $courses, $branches, 18);
-        $this->command->info('   ✓ Time slots, bookings, and payments created');
 
-        // ── Guests & Enrollment Requests ──
-        $admins = Admin::where('school_id', '=', $school->id)->where('role', '=', 'school_admin')->get()->all();
-        $guests = $this->createGuestsAndEnrollmentRequests($school, $courses, $admins, 'P@ssw0rd123');
-        $this->command->info('   ✓ Guest students and enrollment requests created');
+        // Link guests to courses
+        $this->createGuestsAndEnrollmentRequests($school, $courses, $admins, 'P@ssw0rd123');
 
-        // ── Notifications ──
+        // Notifications
         $this->createSampleNotifications($school, $students, $instructors, $admins, $guests);
-        $this->command->info('   ✓ Sample notifications created');
+
+        $this->command->info('   ✓ Interactions created (Slots, Bookings, Enrollment Requests)');
     }
 
     private function createLySpeedCourses(School $school): array

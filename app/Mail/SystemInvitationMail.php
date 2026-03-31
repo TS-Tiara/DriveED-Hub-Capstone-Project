@@ -1,0 +1,61 @@
+<?php
+
+namespace App\Mail;
+
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Content;
+use Illuminate\Mail\Mailables\Envelope;
+use Illuminate\Queue\SerializesModels;
+use App\Models\Invitation;
+use App\Models\School;
+
+class SystemInvitationMail extends Mailable
+{
+    use Queueable, SerializesModels;
+
+    public $invitation;
+    public $temporaryPassword;
+    public $school;
+
+    /**
+     * Create a new message instance.
+     */
+    public function __construct(Invitation $invitation, $temporaryPassword = null)
+    {
+        $this->invitation = $invitation;
+        $this->temporaryPassword = $temporaryPassword;
+        $this->school = $invitation->school;
+    }
+
+    /**
+     * Get the message envelope.
+     */
+    public function envelope(): Envelope
+    {
+        return new Envelope(
+            subject: "Invitation to Join " . $this->school->name,
+        );
+    }
+
+    /**
+     * Get the message content definition.
+     */
+    public function content(): Content
+    {
+        return new Content(
+            view: 'mail.invitation',
+        );
+    }
+
+    /**
+     * Get the attachments for the message.
+     *
+     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
+     */
+    public function attachments(): array
+    {
+        return [];
+    }
+}

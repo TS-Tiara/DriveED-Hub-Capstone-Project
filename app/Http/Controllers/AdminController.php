@@ -7,6 +7,8 @@ use App\Models\Admin;
 use App\Models\Branch;
 use App\Models\EnrollmentRequest;
 use App\Models\GCashSetting;
+use App\Models\Invitation;
+use App\Mail\SystemInvitationMail;
 use App\Models\Instructor;
 use App\Models\InstructorRemovalRequest;
 use App\Models\Log;
@@ -16,6 +18,7 @@ use App\Models\School;
 use App\Models\SchoolSetting;
 use App\Models\Student;
 use App\Models\SystemLog;
+use Illuminate\Support\Facades\Mail;
 use App\Http\Controllers\ReportController;
 use App\Services\FinancialService;
 use App\Models\TimeSlot;
@@ -338,95 +341,62 @@ class AdminController extends Controller
                     'email',
                     Rule::unique('students', 'email')->where('school_id', $school->id),
                     Rule::unique('instructors', 'email')->where('school_id', $school->id),
+                    Rule::unique('admins', 'email')->where('school_id', $school->id),
                     'regex:/@(gmail\.com|yahoo\.com)$/i',
                 ],
-                'password' => 'required|string|min:6',
                 'contact' => ['nullable', 'string', 'max:13', 'regex:/^(09\d{9}|\+639\d{9})$/'],
                 'role' => 'required|in:student,instructor',
                 'branch_id' => 'nullable|exists:branches,id',
+                'license_number' => ($request->role === 'instructor' && ($school->schoolSetting->require_instructor_license ?? true)) ? 'required|string|max:50' : 'nullable|string|max:50',
             ]);
 
             // Branch Secretary Scope Check
-            if ($admin->isBranchSecretary()) {
-                if ($request->branch_id && (int)$request->branch_id !== (int)$admin->branch_id) {
-                    return back()->withInput()->with('error', 'You can only create accounts for your assigned branch.');
-                }
-                // Enforce branch_id if not provided
-                $validated['branch_id'] = $admin->branch_id;
+            $branchId = $request->branch_id ?? $admin->branch_id;
+            if ($admin->isBranchSecretary() && (int)$branchId !== (int)$admin->branch_id) {
+                return back()->withInput()->with('error', 'You can only invite users to your assigned branch.');
             }
 
-            $data = [
+            DB::beginTransaction();
+
+            // Create Invitation instead of User
+            $invitation = Invitation::create([
                 'school_id' => $school->id,
-                'name' => trim($request->name),
+                'branch_id' => $branchId,
                 'email' => trim($request->email),
-                'contact' => trim((string)$request->contact),
-                'password' => $request->password, // Cast handles hashing
-                'must_reset_password' => true, // Force reset on login
-            ];
+                'role' => $request->role,
+                'token' => \Illuminate\Support\Str::random(40),
+                'payload' => [
+                    'name' => trim($request->name),
+                    'contact' => trim((string)$request->contact),
+                    'license_number' => $request->role === 'instructor' ? trim($request->license_number) : null,
+                ],
+                'expires_at' => now()->addDays($school->schoolSetting->invitation_expiry_days ?? 7),
+            ]);
 
-            if ($request->role === 'student') {
-                $user = Student::create(array_merge($data, [
-                    'address' => $request->address ?? null,
-                    'status' => 'active',
-                    'branch_id' => $admin->isBranchSecretary() ? $admin->branch_id : $request->branch_id,
-                ]));
+            // Send Invitation Mail
+            Mail::to($invitation->email)->send(new SystemInvitationMail($invitation));
 
-                $user->role = 'student';
-                $user->save();
+            SystemLog::logInfo(
+                "Invitation sent to " . ($request->role === 'instructor' ? 'instructor' : 'student') . ": {$invitation->email}",
+                'database',
+                ['role' => $request->role, 'branch_id' => $branchId, 'invited_by' => $admin->name],
+                $school->id,
+                'invite_user'
+            );
 
-                $successMessage = 'Student created successfully!';
+            DB::commit();
 
-                // Log student creation
-                SystemLog::logInfo(
-                    "New student created: {$user->name}",
-                    'database',
-                ['student_id' => $user->id, 'email' => $user->email, 'created_by' => $admin->name ?? 'System'],
-                    $school->id,
-                    'create_student'
-                );
-            }
-            else {
-                $user = Instructor::create(array_merge($data, [
-                    'license_number' => $request->license_number ?? null,
-                    'status' => 'active',
-                    'availability' => 'available',
-                    'branch_id' => $admin->isBranchSecretary() ? $admin->branch_id : $request->branch_id,
-                    'address' => $request->address ?? null, // Restored address field
-                ]));
+            return redirect()->route('schools.admin.userManagement', $school)
+                ->with('success', "Invitation successfully sent to {$invitation->email}. They will receive an email to set up their account.");
 
-                $successMessage = 'Instructor created successfully!';
-
-                // Log instructor creation
-                SystemLog::logInfo(
-                    "New instructor created: {$user->name}",
-                    'database',
-                ['instructor_id' => $user->id, 'email' => $user->email, 'created_by' => $admin->name ?? 'System'],
-                    $school->id,
-                    'create_instructor'
-                );
-            }
-
-            // Redirect back to the referring page or default to create account
-            $referrer = request()->headers->get('referer');
-            if ($referrer && str_contains($referrer, 'user-management')) {
-                return redirect()->route('schools.admin.userManagement', $school)
-                    ->with('success', $successMessage);
-            }
-
-            return redirect()
-                ->route('schools.admin.userManagement', $school)
-                ->with('success', $successMessage);
-        }
-        catch (\Illuminate\Validation\ValidationException $e) {
-            throw $e;
-        }
-        catch (\Exception $e) {
-            SystemLog::logError('Failed to create account: ' . $e->getMessage(), 'database', $e, [
+        } catch (\Exception $e) {
+            DB::rollBack();
+            SystemLog::logError('Failed to send invitation: ' . $e->getMessage(), 'database', $e, [
                 'school_id' => $school->id,
                 'email' => $request->get('email'),
                 'role' => $request->get('role')
-            ], $school->id, 'create_account');
-            return back()->withInput()->with('error', 'Unable to create account at this time. Please try again later.');
+            ], $school->id, 'create_invitation');
+            return back()->withInput()->with('error', 'Unable to send invitation at this time. Please try again later.');
         }
     }
 
@@ -967,14 +937,18 @@ class AdminController extends Controller
         $gcashSetting = GCashSetting::where('school_id', $school->id)
             ->whereNull('branch_id')
             ->first();
-
         $timezones = \DateTimeZone::listIdentifiers();
+        $pendingInvitations = Invitation::where('school_id', $school->id)
+            ->whereNull('used_at')
+            ->orderBy('created_at', 'desc')
+            ->get();
 
         return view($school->resolveView('admin.settings'), [
             'isAjax' => $request->ajax(),
             'school' => $school,
             'gcashSetting' => $gcashSetting,
             'timezones' => $timezones,
+            'pendingInvitations' => $pendingInvitations,
         ]);
     }
 
@@ -1070,6 +1044,8 @@ class AdminController extends Controller
                 'booking_cutoff_hours' => 'required|integer|min:0|max:168',
                 'alert_threshold_pending' => 'required|integer|min:0|max:999',
                 'timezone' => 'required|string|timezone',
+                'invitation_expiry_days' => 'required|integer|min:1|max:30',
+                'require_instructor_license' => 'nullable|boolean',
             ], [
                 'instructor_removal_notice_days.required' => 'Minimum notice period is required.',
                 'instructor_removal_notice_days.integer' => 'Notice period must be a number.',
@@ -1177,6 +1153,8 @@ class AdminController extends Controller
                 'enable_booking_queue' => $request->has('enable_booking_queue'),
                 'booking_queue_days' => $request->booking_queue_days ?? 3,
                 'contact_email' => $request->contact_email,
+                'invitation_expiry_days' => $request->invitation_expiry_days ?? 7,
+                'require_instructor_license' => $request->has('require_instructor_license'),
                 // Login page settings
                 'login_header_layout' => $request->login_header_layout ?? 'horizontal',
                 'login_logo_image' => $request->login_logo_image,
@@ -2033,6 +2011,70 @@ class AdminController extends Controller
                 'instructor_id' => $id
             ]);
             return back()->with('error', 'Unable to delete instructor record at this time.');
+        }
+    }
+
+    /**
+     * Cancel a pending invitation
+     */
+    public function cancelInvitation(School $school, Invitation $invitation)
+    {
+        try {
+            $admin = Auth::guard('admin')->user();
+            if (!$admin || !$admin->isSchoolAdmin()) {
+                abort(403, 'Unauthorized action.');
+            }
+
+            if ($invitation->school_id !== $school->id) {
+                abort(404);
+            }
+
+            if ($invitation->isUsed()) {
+                return redirect()->back()->with('error', 'Cannot cancel an invitation that has already been used.');
+            }
+
+            $invitation->delete();
+
+            return redirect()->back()->with('success', 'Invitation cancelled successfully.');
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Invitation cancellation failed: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to cancel invitation.');
+        }
+    }
+
+    /**
+     * Resend a pending invitation
+     */
+    public function resendInvitation(School $school, Invitation $invitation)
+    {
+        try {
+            $admin = Auth::guard('admin')->user();
+            if (!$admin || !$admin->isSchoolAdmin()) {
+                abort(403, 'Unauthorized action.');
+            }
+
+            if ($invitation->school_id !== $school->id) {
+                abort(404);
+            }
+
+            if ($invitation->isUsed()) {
+                return redirect()->back()->with('error', 'Cannot resend an invitation that has already been used.');
+            }
+
+            // Extend expiry if it was already expired or close to it
+            $settings = $school->schoolSetting;
+            $expiryDays = $settings->invitation_expiry_days ?? 7;
+            $invitation->update([
+                'expires_at' => now()->addDays($expiryDays),
+                'created_at' => now() // Refresh timestamp for visual clarity in dashboard
+            ]);
+
+            \Illuminate\Support\Facades\Mail::to($invitation->email)->send(new \App\Mail\SystemInvitationMail($invitation));
+
+            return redirect()->back()->with('success', 'Invitation resent successfully.');
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Invitation resend failed: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to resend invitation.');
         }
     }
 }
