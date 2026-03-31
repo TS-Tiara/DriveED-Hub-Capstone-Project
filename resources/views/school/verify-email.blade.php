@@ -6,41 +6,8 @@
         $school = $school ?? $currentSchool ?? null;
         $settings = $school?->schoolSetting;
         $schoolName = $school->name ?? 'DriveEd Hub';
-        $primaryColor = $settings?->primary_color ?? '#2563eb';
-        $secondaryColor = $settings?->secondary_color ?? '#f59e0b';
-        
-        // Header settings
-        $headerLayout = $settings?->login_header_layout ?? 'horizontal';
-        $logoImage = $settings?->login_logo_image;
-        $logoPosition = $settings?->login_logo_position ?? 'left';
-        $logoSize = $settings?->login_logo_size ?? 40;
-        $schoolNameText = $settings?->login_school_name_text ?? $schoolName;
-        $showSchoolName = $settings?->login_show_school_name ?? true;
-        $headerHeight = $settings?->login_header_height ?? 60;
-        $headerTextColor = $settings?->login_header_text_color ?? '#ffffff';
-        $headerShadow = $settings?->login_header_shadow ?? true;
-        $useGradient = $settings?->use_gradient_header ?? false;
-        
-        // Page background
-        $pageBgType = $settings?->login_page_bg_type ?? 'color';
-        $pageBgColor = $settings?->login_page_bg_color ?? '#f5f5f5';
-        $pageBgImage = $settings?->login_page_bg_image;
-        $pageBgOpacity = $settings?->login_page_bg_opacity ?? 100;
-        
-        // Generate header background
-        if ($useGradient) {
-            $headerBackground = "linear-gradient(135deg, {$primaryColor} 0%, {$secondaryColor} 100%)";
-        } else {
-            $headerBackground = $primaryColor;
-        }
-        
-        // Generate page background
-        if ($pageBgType === 'image' && $pageBgImage) {
-            $pageBackground = "url('" . asset('storage/' . $pageBgImage) . "')";
-        } else {
-            $pageBackground = $pageBgColor;
-        }
     @endphp
+    @include('partials.school-auth-header')
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $schoolName }} - Email Verification</title>
     <style>
@@ -57,69 +24,13 @@
             overflow-x: hidden;
         }
 
-        body::before {
-            content: "";
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            @if($pageBgType === 'image' && $pageBgImage)
-            background: {{ $pageBackground }} no-repeat center center fixed;
-            background-size: cover;
-            @else
-            background: {{ $pageBackground }};
-            @endif
-            opacity: {{ $pageBgOpacity / 100 }};
-            z-index: -1;
-        }
-
-        /* Header */
-        .login-header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            width: 100%;
-            height: {{ $headerHeight }}px;
-            background: {{ $headerBackground }};
-            color: {{ $headerTextColor }};
-            z-index: 1000;
-            @if($headerShadow)
-            box-shadow: 0 3px 20px rgba(0,0,0,0.15);
-            @endif
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0 25px;
-        }
-
-        .header-content {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        @if($logoImage)
-        .header-logo {
-            height: {{ $logoSize }}px;
-            width: auto;
-        }
-        @endif
-
-        .header-school-name {
-            font-size: {{ $schoolNameSize ?? 24 }}px;
-            font-weight: 600;
-            color: {{ $headerTextColor }};
-        }
-
         /* Main container with top padding for fixed header */
         .verify-wrapper {
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: {{ $headerHeight + 40 }}px 20px 40px;
+            padding: calc(var(--header-height) + 40px) 20px 40px;
         }
 
         .verify-container {
@@ -139,7 +50,7 @@
         .verify-icon {
             width: 80px;
             height: 80px;
-            background: {{ $primaryColor }};
+            background: var(--primary-color);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -165,7 +76,7 @@
             border-radius: 8px;
             text-align: center;
             font-weight: 600;
-            color: {{ $primaryColor }};
+            color: var(--primary-color);
             margin-bottom: 24px;
         }
 
@@ -194,7 +105,7 @@
 
         input[type="text"]:focus {
             outline: none;
-            border-color: {{ $primaryColor }};
+            border-color: var(--primary-color);
         }
 
         .error {
@@ -218,7 +129,7 @@
         .submit-btn {
             width: 100%;
             padding: 14px;
-            background: {{ $primaryColor }};
+            background: var(--primary-color);
             color: white;
             border: none;
             border-radius: 8px;
@@ -253,7 +164,7 @@
         .resend-btn {
             background: none;
             border: none;
-            color: {{ $primaryColor }};
+            color: var(--primary-color);
             font-weight: 600;
             cursor: pointer;
             text-decoration: underline;
@@ -564,19 +475,7 @@
     </style>
 </head>
 <body>
-    <!-- Header -->
-    <div class="login-header">
-        <div class="header-content">
-            @if($logoImage && $showSchoolName)
-                <img src="{{ asset('storage/' . $logoImage) }}" alt="{{ $schoolName }}" class="header-logo">
-            @endif
-            @if($showSchoolName)
-                <span class="header-school-name">{{ $schoolNameText }}</span>
-            @endif
-        </div>
-    </div>
-
-    <div class="verify-wrapper">
+    <div class="main-content">
         <div class="verify-container">
         <div class="verify-header">
             <div class="verify-icon"></div>

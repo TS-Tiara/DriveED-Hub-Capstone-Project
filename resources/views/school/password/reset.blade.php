@@ -13,16 +13,6 @@
             overflow: hidden;
             position: relative;
         }
-        .main-content {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding-top: {{ $headerHeight + 20 }}px;
-            padding-bottom: 40px;
-            position: relative;
-            z-index: 10;
-        }
         .login-container {
             background: rgba(255, 255, 255, 0.98);
             padding: 35px;
@@ -32,6 +22,7 @@
             text-align: center;
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.3);
+            position: relative;
         }
         .login-title { font-size: 22px; font-weight: bold; color: #1f2937; margin-bottom: 25px; }
         .alert { padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; text-align: left; }
@@ -47,11 +38,11 @@
             background: rgba(255, 255, 255, 0.9);
         }
         input[type="email"]:disabled { background: #f3f4f6; color: #6b7280; }
-        input[type="password"]:focus { outline: none; border-color: {{ $primaryColor }}; box-shadow: 0 0 0 3px {{ $primaryColor }}20; }
+        input[type="password"]:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2); }
         .login-button {
             width: 100%;
             padding: 14px;
-            background: {{ $primaryColor }};
+            background: var(--primary-color);
             color: white;
             border: none;
             border-radius: 8px;
