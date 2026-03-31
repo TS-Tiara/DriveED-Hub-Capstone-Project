@@ -7,25 +7,13 @@
     $welcomeSize = $settings?->login_welcome_size ?? 16;
     $logoSize = $settings?->login_logo_size ?? 40;
     $schoolName = $school?->name ?? 'DriveEd Hub';
+    $welcomeText = $settings?->register_welcome_text ?? 'Student Registration';
+    $subtitleText = $settings?->register_subtitle_text;
 @endphp
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
-    @include('partials.school-auth-header')
-
-    <style>
-        :root {
-            --primary-color: {{ $primaryColor }};
-            --secondary-color: {{ $secondaryColor }};
-        }
-
-    @php
-        $settings = $school?->schoolSetting;
-        $welcomeText = $settings?->register_welcome_text ?? 'Student Registration';
-        $subtitleText = $settings?->register_subtitle_text;
-    @endphp
-
     @include('partials.school-auth-header')
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -199,10 +187,10 @@
         .submit-btn {
             width: 100%;
             padding: 10px;
-            @if($settings->use_gradient_header ?? false)
-                background: linear-gradient(135deg, {{ $settings->primary_color ?? '#2563eb' }} 0%, {{ $settings->secondary_color ?? '#1e40af' }} 100%);
+            @if($settings?->use_gradient_header ?? false)
+                background: linear-gradient(135deg, {{ $settings?->primary_color ?? '#2563eb' }} 0%, {{ $settings?->secondary_color ?? '#1e40af' }} 100%);
             @else
-                background: {{ $settings->primary_color ?? '#2563eb' }};
+                background: {{ $settings?->primary_color ?? '#2563eb' }};
             @endif
             color: white;
             border: none;
