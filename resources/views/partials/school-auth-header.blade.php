@@ -21,6 +21,7 @@
     $schoolNameSize = $settings?->login_school_name_size ?? 24;
     $welcomeText = $welcomeText ?? $settings?->login_welcome_text ?? 'Welcome to ' . $schoolName . '!';
     $subtitleText = $subtitleText ?? null;
+
     $showWelcomeText = $settings?->login_show_welcome_text ?? false;
     $welcomePosition = $settings?->login_welcome_position ?? 'right';
     $welcomeSize = $settings?->login_welcome_size ?? 16;
@@ -57,6 +58,9 @@
     } else {
         $pageBackground = $pageBgColor;
     }
+
+    // Backward compatibility for existing views
+    $backgroundImage = $pageBgImage ? asset('storage/' . $pageBgImage) : '';
 @endphp
 
 <style>
