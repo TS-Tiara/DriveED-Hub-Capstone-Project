@@ -1,37 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-    @php
-        $school = $school ?? $currentSchool ?? null;
-        $slug = $school?->slug ?? 'default';
-        $settings = $school?->schoolSetting;
-        
-        // School branding
-        $schoolName = $school->name ?? 'DriveEd Hub';
-        
-        // Custom colors
-        $primaryColor = $settings?->primary_color ?? '#2563eb';
-        $secondaryColor = $settings?->secondary_color ?? '#f59e0b';
-        
-        // Header settings
-        $headerHeight = $settings?->login_header_height ?? 60;
-        $headerTextColor = $settings?->login_header_text_color ?? '#ffffff';
-        $headerShadow = $settings?->login_header_shadow ?? true;
-        $headerBgType = $settings?->login_header_bg_type ?? 'gradient';
-        $headerBgColor = $settings?->login_header_bg_color;
-        $headerBgImage = $settings?->login_header_bg_image;
-        $useGradient = $settings?->use_gradient_header ?? false;
+    @include('partials.school-auth-header')
 
-        if ($headerBgType === 'solid' && $headerBgColor) {
-            $headerBackground = $headerBgColor;
-        } elseif ($headerBgType === 'image' && $headerBgImage) {
-            $headerBackground = "url('" . asset('storage/' . $headerBgImage) . "')";
-        } elseif ($useGradient) {
-            $headerBackground = "linear-gradient(135deg, {$primaryColor} 0%, {$secondaryColor} 100%)";
-        } else {
-            $headerBackground = $primaryColor;
-        }
-        
+    @php
         // Page background
         $pageBgType = $settings?->login_page_bg_type ?? 'color';
         $pageBgColor = $settings?->login_page_bg_color ?? '#f5f5f5';
@@ -70,27 +42,15 @@
             opacity: {{ $pageBgOpacity / 100 }};
             z-index: -1;
         }
-        .login-header {
-            position: fixed;
-            top: 0; left: 0; right: 0;
-            height: {{ $headerHeight }}px;
-            background: {{ $headerBackground }};
-            color: {{ $headerTextColor }};
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0 25px;
-            @if($headerShadow) box-shadow: 0 3px 20px rgba(0,0,0,0.15); @endif
-        }
-        .header-school-name { font-size: 20px; font-weight: 600; text-shadow: 0 1px 3px rgba(0,0,0,0.3); }
         .main-content {
             display: flex;
             justify-content: center;
             align-items: center;
-            height: calc(100vh - {{ $headerHeight }}px);
-            margin-top: {{ $headerHeight }}px;
-            padding: 15px;
+            min-height: 100vh;
+            padding-top: {{ $headerHeight + 20 }}px;
+            padding-bottom: 40px;
+            position: relative;
+            z-index: 10;
         }
         .login-container {
             background: rgba(255, 255, 255, 0.98);
@@ -140,9 +100,6 @@
     </style>
 </head>
 <body>
-    <nav class="login-header">
-        <div class="header-school-name">{{ $schoolName }}</div>
-    </nav>
 
     <div class="main-content">
         <div class="login-container">
