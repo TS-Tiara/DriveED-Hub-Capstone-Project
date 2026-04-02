@@ -18,16 +18,16 @@
     .admin-mgmt-container {
         padding: 20px;
         margin: 0 auto;
-        max-width: 1200px;
+        max-width: 1600px;
     }
 
     .page-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 20px;
+        margin-bottom: 30px;
         padding-bottom: 15px;
-        border-bottom: 3px solid {{ $primaryColor }};
+        border-bottom: 3px solid {{ $primaryColor }}40;
     }
 
     .page-title {
@@ -43,8 +43,157 @@
         margin-top: 5px;
     }
 
+    /* Statistics Cards - Standardized */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 24px;
+        border-radius: 16px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        border-left: 5px solid transparent;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    .stat-card.active {
+        border-left-color: {{ $primaryColor }};
+    }
+
+    .stat-card.active::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: {{ $primaryColor }}08;
+    }
+
+    .stat-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    .stat-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 12px;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #111827;
+        line-height: 1;
+    }
+
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    /* Card Variants */
+    .stat-card.admins { border-left-color: #3b82f6; }
+    .stat-card.admins .stat-icon { background: #eff6ff; color: #1d4ed8; }
+    
+    .stat-card.managers { border-left-color: #10b981; }
+    .stat-card.managers .stat-icon { background: #ecfdf5; color: #047857; }
+    
+    .stat-card.total { border-left-color: #6366f1; }
+    .stat-card.total .stat-icon { background: #eef2ff; color: #4338ca; }
+
+    /* Action Bar */
+    .action-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        padding: 20px;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    }
+
+    .search-wrapper {
+        position: relative;
+        flex: 1;
+        max-width: 450px;
+        display: flex;
+        align-items: center;
+    }
+
+    .search-wrapper input {
+        width: 100% !important;
+        padding: 10px 16px 10px 42px !important;
+        border: 2px solid {{ $primaryColor }}15 !important;
+        border-radius: 12px !important;
+        font-size: 0.95rem !important;
+        transition: all 0.2s !important;
+        background: {{ $primaryColor }}05 !important;
+        color: #1f2937 !important;
+        height: 40px !important;
+        display: block !important;
+        outline: none !important;
+    }
+
+    .search-wrapper input:focus {
+        border-color: {{ $primaryColor }} !important;
+        background: white !important;
+        box-shadow: 0 0 0 4px {{ $primaryColor }}10 !important;
+    }
+
+    .search-wrapper .search-icon {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: {{ $primaryColor }}80;
+        font-size: 1.1rem;
+        z-index: 10;
+        pointer-events: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 18px;
+    }
+    
+    .action-controls {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-shrink: 0;
+    }
+
     .btn-create {
-        padding: 12px 24px;
+        height: 40px;
+        padding: 0 16px;
         @if($useGradient)
             background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
         @else
@@ -60,86 +209,112 @@
         display: flex;
         align-items: center;
         gap: 8px;
+        box-shadow: 0 4px 12px {{ $primaryColor }}20;
     }
 
     .btn-create:hover {
         transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        box-shadow: 0 6px 16px {{ $primaryColor }}30;
+        filter: brightness(1.05);
     }
 
-    /* Alert Messages */
-    .alert {
-        padding: 15px 20px;
-        margin-bottom: 20px;
-        border-radius: 10px;
+    .btn-create svg {
+        width: 18px !important;
+        height: 18px !important;
+        flex-shrink: 0;
+    }
+
+    /* Export Dropdown - Symmetric with User Management */
+    .export-dropdown {
+        position: relative;
+    }
+
+    .btn-export-trigger {
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        animation: slideIn 0.3s ease;
-    }
-
-    .alert-success {
-        background: #d4edda;
-        color: #155724;
-        border-left: 4px solid #28a745;
-    }
-
-    .alert-error {
-        background: #f8d7da;
-        color: #721c24;
-        border-left: 4px solid #dc3545;
-    }
-
-    .close-btn {
-        background: none;
-        border: none;
-        font-size: 1.5rem;
+        gap: 8px;
+        height: 40px;
+        padding: 0 16px;
+        background: white;
+        color: {{ $primaryColor }};
+        border: 2px solid {{ $primaryColor }}20;
+        border-radius: 12px;
+        font-size: 0.9rem;
+        font-weight: 600;
         cursor: pointer;
-        color: inherit;
-        opacity: 0.6;
+        transition: all 0.2s;
     }
 
-    .close-btn:hover {
-        opacity: 1;
+    .btn-export-trigger:hover {
+        border-color: {{ $primaryColor }};
+        background: {{ $primaryColor }}05;
+        transform: translateY(-1px);
     }
 
-    @keyframes slideIn {
+    .export-dropdown-menu {
+        position: absolute;
+        top: calc(100% + 8px);
+        right: 0;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        border: 1px solid {{ $primaryColor }}15;
+        width: 220px;
+        z-index: 50;
+        display: none;
+        padding: 8px;
+    }
+
+    .export-dropdown-menu.show {
+        display: block;
+        animation: dropdownIn 0.2s ease-out;
+    }
+
+    @keyframes dropdownIn {
         from { opacity: 0; transform: translateY(-10px); }
         to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Empty State */
-    .empty-state {
-        text-align: center;
-        padding: 60px 20px;
-        background: white;
-        border-radius: 16px;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    .export-dropdown-menu a {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        color: #4b5563;
+        text-decoration: none;
+        font-size: 0.9rem;
+        border-radius: 8px;
+        transition: background 0.2s;
     }
 
-    .empty-state i {
-        font-size: 4rem;
-        color: {{ $primaryColor }};
-        opacity: 0.3;
-        margin-bottom: 20px;
+    .export-dropdown-menu a:hover {
+        background: #f9fafb;
     }
 
-    .empty-state h3 {
-        font-size: 1.5rem;
-        color: #374151;
-        margin-bottom: 10px;
+    .export-dropdown-menu .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
     }
 
-    .empty-state p {
-        color: #6b7280;
-        font-size: 1rem;
+    .export-dropdown-menu .dot.pdf { background: #ef4444; }
+    .export-dropdown-menu .dot.excel { background: #10b981; }
+
+    .dropdown-header {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #9ca3af;
+        text-transform: uppercase;
+        padding: 8px 12px 4px;
+        letter-spacing: 0.05em;
     }
 
-    /* Table */
+    /* Table Styles Refresh */
     .admin-table-card {
         background: white;
-        border-radius: 16px;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        border-radius: 20px;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        border: 1px solid #f3f4f6;
         overflow: hidden;
     }
 
@@ -166,40 +341,27 @@
         letter-spacing: 0.5px;
     }
 
-    .admin-table tbody tr {
-        border-bottom: 1px solid #e5e7eb;
-        transition: background 0.2s;
-    }
-
-    .admin-table tbody tr:hover {
-        background: #f9fafb;
-    }
-
-    .admin-table tbody td {
-        padding: 14px 18px;
-        font-size: 0.95rem;
-        color: #374151;
-        vertical-align: middle;
-    }
-
-    .admin-name {
+    /* Badges & Actions - Color Theory */
+    .role-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 5px 14px;
+        border-radius: 20px;
+        font-size: 0.85rem;
         font-weight: 600;
-        color: #1f2937;
     }
 
-    .muted-dash {
-        color: #9ca3af;
+    .role-school-admin {
+        background: {{ $primaryColor }}15;
+        color: {{ $primaryColor }};
     }
 
-    .inline-form {
-        display: inline;
+    .role-branch-secretary {
+        background: {{ $secondaryColor }}15;
+        color: {{ $secondaryColor }};
     }
 
-    .branch-group-hidden {
-        display: none;
-    }
-
-    /* Badges */
     .status-badge {
         display: inline-flex;
         align-items: center;
@@ -220,45 +382,6 @@
         color: #991b1b;
     }
 
-    .role-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        padding: 5px 14px;
-        border-radius: 20px;
-        font-size: 0.85rem;
-        font-weight: 600;
-    }
-
-    .role-school-admin {
-        background: #dbeafe;
-        color: #1e40af;
-    }
-
-    .role-branch-secretary {
-        background: #d1fae5;
-        color: #065f46;
-    }
-
-    .you-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        padding: 5px 14px;
-        border-radius: 20px;
-        font-size: 0.85rem;
-        font-weight: 600;
-        background: #fef3c7;
-        color: #92400e;
-    }
-
-    /* Action Buttons */
-    .action-buttons {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-    }
-
     .btn-action {
         padding: 8px 14px;
         border: none;
@@ -273,21 +396,15 @@
     }
 
     .btn-edit {
-        background: #e0e7ff;
-        color: #3730a3;
+        background: {{ $primaryColor }}10;
+        color: {{ $primaryColor }};
     }
 
-    .btn-edit:hover {
-        background: #c7d2fe;
-    }
+    .btn-edit:hover { background: {{ $primaryColor }}20; }
 
     .btn-toggle {
         background: #fef3c7;
         color: #92400e;
-    }
-
-    .btn-toggle:hover {
-        background: #fde68a;
     }
 
     .btn-delete {
@@ -295,153 +412,6 @@
         color: #991b1b;
     }
 
-    .btn-delete:hover {
-        background: #fecaca;
-    }
-
-    /* Modal */
-    .modal-overlay {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        z-index: 1000;
-        align-items: center;
-        justify-content: center;
-        padding: 20px;
-    }
-
-    .modal-overlay.active {
-        display: flex;
-    }
-
-    .modal-content {
-        background: white;
-        border-radius: 16px;
-        width: 100%;
-        max-width: 600px;
-        max-height: 90vh;
-        overflow-y: auto;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        animation: modalSlide 0.3s ease;
-    }
-
-    @keyframes modalSlide {
-        from { opacity: 0; transform: translateY(-30px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    .modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 20px 25px;
-        border-bottom: 1px solid #e5e7eb;
-    }
-
-    .modal-header h5 {
-        font-size: 1.25rem;
-        font-weight: 600;
-        color: #1f2937;
-        margin: 0;
-    }
-
-    .btn-close-modal {
-        background: none;
-        border: none;
-        font-size: 1.5rem;
-        cursor: pointer;
-        color: #6b7280;
-        padding: 5px;
-        line-height: 1;
-    }
-
-    .btn-close-modal:hover {
-        color: #1f2937;
-    }
-
-    .modal-body {
-        padding: 25px;
-    }
-
-    .form-group {
-        margin-bottom: 20px;
-    }
-
-    .form-group label {
-        display: block;
-        font-weight: 600;
-        color: #374151;
-        margin-bottom: 6px;
-        font-size: 0.9rem;
-    }
-
-    .form-group input,
-    .form-group select {
-        width: 100%;
-        padding: 10px 14px;
-        border: 2px solid #e5e7eb;
-        border-radius: 8px;
-        font-size: 0.95rem;
-        transition: border-color 0.2s;
-        box-sizing: border-box;
-    }
-
-    .form-group input:focus,
-    .form-group select:focus {
-        outline: none;
-        border-color: {{ $primaryColor }};
-        box-shadow: 0 0 0 3px {{ $primaryColor }}20;
-    }
-
-    .form-hint {
-        font-size: 0.8rem;
-        color: #9ca3af;
-        margin-top: 4px;
-    }
-
-    .modal-footer {
-        display: flex;
-        justify-content: flex-end;
-        gap: 10px;
-        padding: 15px 25px;
-        border-top: 1px solid #e5e7eb;
-    }
-
-    .btn-secondary {
-        padding: 10px 20px;
-        background: #f3f4f6;
-        color: #374151;
-        border: none;
-        border-radius: 8px;
-        font-size: 0.95rem;
-        font-weight: 500;
-        cursor: pointer;
-        transition: background 0.2s;
-    }
-
-    .btn-secondary:hover {
-        background: #e5e7eb;
-    }
-
-    .btn-primary {
-        padding: 10px 20px;
-        @if($useGradient)
-            background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
-        @else
-            background: {{ $primaryColor }};
-        @endif
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-size: 0.95rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
 
     .btn-primary:hover {
         transform: translateY(-1px);
@@ -452,6 +422,219 @@
         color: #dc3545;
         font-size: 0.85rem;
         margin-top: 4px;
+    }
+
+    /* High-Design Modal Styles - Glassmorphism & Symmetrical Constraints */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(8px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        animation: fadeInOverlay 0.3s ease;
+    }
+
+    .modal-overlay.active {
+        display: flex;
+    }
+
+    @keyframes fadeInOverlay {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    .modal-content {
+        background: white;
+        width: 600px;
+        min-width: 600px;
+        max-width: 92%;
+        border-radius: 16px;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+        animation: modalScaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    @keyframes modalScaleIn {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+    }
+
+    .modal-header {
+        @if($useGradient)
+            background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
+        @else
+            background: {{ $primaryColor }};
+        @endif
+        color: white !important;
+        padding: 32px !important;
+        border-bottom: none !important;
+        position: relative;
+    }
+
+    .modal-header h5 {
+        font-size: 1.75rem !important;
+        font-weight: 600 !important;
+        color: white !important;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .btn-close-modal {
+        position: absolute;
+        top: 25px;
+        right: 25px;
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        color: white;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 1.2rem;
+        z-index: 10;
+    }
+
+    .modal-body {
+        padding: 32px !important;
+        background: white;
+    }
+
+    .modal-footer {
+        padding: 24px 32px 32px;
+        display: flex;
+        gap: 12px;
+        background: white;
+        border-top: 1px solid #f3f4f6;
+    }
+
+    /* Premium Export - Red Design */
+    .btn-export-trigger {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 18px;
+        background: #ef4444;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        transition: all 0.2s;
+        cursor: pointer;
+        height: 42px;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+    }
+
+    .btn-export-trigger:hover {
+        background: #dc2626;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+    }
+
+    .btn-export-trigger svg {
+        color: white;
+        width: 18px !important;
+        height: 18px !important;
+    }
+
+    .export-dropdown-menu {
+        backdrop-filter: blur(12px) !important;
+        background: rgba(255, 255, 255, 0.9) !important;
+        border: 1px solid rgba(0, 0, 0, 0.05) !important;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15) !important;
+    }
+
+    /* High-Design Form Logic - Missing Sync */
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: {{ $primaryColor }}cc;
+        margin-bottom: 8px;
+    }
+
+    .form-group input, 
+    .form-group select, 
+    .form-group textarea {
+        width: 100%;
+        padding: 10px 16px;
+        border: 2px solid {{ $primaryColor }}15;
+        border-radius: 12px;
+        font-size: 0.95rem;
+        transition: all 0.2s;
+        background: {{ $primaryColor }}05;
+    }
+
+    .form-group input:focus, 
+    .form-group select:focus {
+        outline: none;
+        border-color: {{ $primaryColor }};
+        background: white;
+        box-shadow: 0 0 0 4px {{ $primaryColor }}15;
+    }
+
+    .form-hint {
+        font-size: 0.8rem;
+        color: {{ $primaryColor }}70;
+        margin-top: 6px;
+    }
+
+    /* Restoring Compact Buttons */
+    .btn-secondary, .btn-primary {
+        height: 40px !important;
+        padding: 0 16px !important;
+        border-radius: 10px !important;
+        font-size: 0.9rem !important;
+        font-weight: 600 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 8px !important;
+        border: none !important;
+        cursor: pointer !important;
+        transition: all 0.2s !important;
+        color: white !important;
+        white-space: nowrap !important;
+        flex: 0 0 auto !important; /* Prevent expansion */
+    }
+
+    .btn-secondary {
+        background: #94a3b8 !important; /* Themed slate-400 */
+        box-shadow: 0 4px 12px rgba(148, 163, 184, 0.2) !important;
+    }
+
+    .modal-header h5 svg {
+        width: 48px !important;
+        height: 48px !important;
+        margin-bottom: 5px;
+    }
+
+    .modal-footer {
+        padding: 24px 32px 32px;
+        display: flex;
+        gap: 12px;
+        background: white;
+        border-top: 1px solid {{ $primaryColor }}08;
+        justify-content: flex-end;
+        align-items: center;
     }
 
     /* Responsive */
@@ -476,43 +659,89 @@
     {{-- Page Header --}}
     <div class="page-header">
         <div>
-            <h1 class="page-title"><i class="bi bi-shield-lock" style="margin-right: 15px;"></i>Admin & Secretary Management</h1>
-            <p class="page-subtitle">Manage school administrators and branch secretaries for {{ $schoolName }}</p>
+            <h1 class="page-title">School Admin & Branch Managers Management</h1>
+            <p class="page-subtitle">Manage school administrators and branch managers for {{ $schoolName }}</p>
         </div>
-        <div class="header-actions">
-            <button class="btn-create" onclick="openInviteModal()">
-                <i class="bi bi-envelope-plus"></i> Invite Administrator
+        <div class="header-actions" style="display: flex; gap: 10px; align-items: center;">
+            <button class="btn-create" onclick="openCreateModal('school_admin')">
+                <svg class="icon-18" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                Invite Admin
+            </button>
+            <button class="btn-create" onclick="openCreateModal('branch_secretary')" style="background: {{ $secondaryColor }}; box-shadow: 0 4px 12px {{ $secondaryColor }}30;">
+                <svg class="icon-18" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                Invite Manager
             </button>
         </div>
     </div>
-
     {{-- Admin Count Cards --}}
-    <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
-        <div class="stat-card" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); display: flex; align-items: center; gap: 15px;">
-            <div style="width: 45px; height: 45px; border-radius: 10px; background: #dbeafe; color: #1e40af; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
-                <i class="bi bi-person-badge"></i>
-            </div>
-            <div>
-                <div style="font-size: 0.85rem; color: #6b7280; font-weight: 500;">School Admins</div>
-                <div style="font-size: 1.25rem; font-weight: 700; color: #1f2937;">{{ $admins->where('role', 'school_admin')->count() }}</div>
-            </div>
-        </div>
-        <div class="stat-card" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); display: flex; align-items: center; gap: 15px;">
-            <div style="width: 45px; height: 45px; border-radius: 10px; background: #d1fae5; color: #065f46; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
-                <i class="bi bi-briefcase"></i>
-            </div>
-            <div>
-                <div style="font-size: 0.85rem; color: #6b7280; font-weight: 500;">Branch Secretaries</div>
-                <div style="font-size: 1.25rem; font-weight: 700; color: #1f2937;">{{ $admins->where('role', 'branch_secretary')->count() }}</div>
+    <div class="stats-grid">
+        <div class="stat-card admins active" onclick="filterAdmins('school_admin', this)">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">School Admins</div>
+                        <div class="stat-value">{{ $admins->where('role', 'school_admin')->count() }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                </div>
+                <div style="font-size: 0.85rem; color: #6b7280;">Full system access</div>
             </div>
         </div>
-        <div class="stat-card" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); display: flex; align-items: center; gap: 15px;">
-            <div style="width: 45px; height: 45px; border-radius: 10px; background: #fef3c7; color: #92400e; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
-                <i class="bi bi-people"></i>
+        
+        <div class="stat-card managers" onclick="filterAdmins('branch_secretary', this)">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">Branch Managers</div>
+                        <div class="stat-value">{{ $admins->where('role', 'branch_secretary')->count() }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bi bi-person-workspace"></i>
+                    </div>
+                </div>
+                <div style="font-size: 0.85rem; color: #6b7280;">Location-specific access</div>
             </div>
-            <div>
-                <div style="font-size: 0.85rem; color: #6b7280; font-weight: 500;">Total Staff</div>
-                <div style="font-size: 1.25rem; font-weight: 700; color: #1f2937;">{{ $admins->count() }}</div>
+        </div>
+
+        <div class="stat-card total" onclick="filterAdmins('all', this)">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">Total Staff</div>
+                        <div class="stat-value">{{ $admins->count() }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bi bi-people"></i>
+                    </div>
+                </div>
+                <div style="font-size: 0.85rem; color: #6b7280;">All management accounts</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="action-bar" style="margin-top: 20px; background: #fff; padding: 20px; border-radius: 16px; border: 1px solid {{ $primaryColor }}10; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+        <div class="search-wrapper">
+            <i class="bi bi-search search-icon"></i>
+            <input type="text" id="adminSearch" placeholder="Search by name, email, or role..." onkeyup="filterAdminTable()">
+        </div>
+        <div class="action-controls">
+            <div class="export-dropdown" id="adminExportDropdown">
+                <button class="btn-export-trigger" onclick="toggleAdminExportDropdown()">
+                    <svg class="icon-18" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    Export
+                    <svg class="chevron icon-14" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </button>
+                <div class="export-dropdown-menu" id="adminExportMenu">
+                    <div class="dropdown-header">Administrators</div>
+                    <a href="{{ school_route('admin.exports.admins.pdf') }}">
+                        <span class="dot pdf" style="background: #ef4444;"></span> Export PDF
+                    </a>
+                    <a href="{{ school_route('admin.exports.admins.excel') }}">
+                        <span class="dot excel" style="background: #10b981;"></span> Export Excel
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -548,7 +777,7 @@
                             </span>
                         @else
                             <span class="role-badge role-branch-secretary">
-                                <i class="bi bi-person-badge"></i> Branch Secretary
+                                <i class="bi bi-person-badge"></i> Branch Manager
                             </span>
                         @endif
                     </td>
@@ -614,7 +843,7 @@
     <div class="empty-state">
         <i class="bi bi-people"></i>
         <h3>No Administrators Found</h3>
-        <p>Get started by adding your first administrator or branch secretary.</p>
+        <p>Get started by adding your first administrator or branch manager.</p>
     </div>
     @endif
 </div>
@@ -623,7 +852,9 @@
 <div class="modal-overlay" id="createModal">
     <div class="modal-content">
         <div class="modal-header">
-            <h5><i class="bi bi-person-plus"></i> Invite Administrator</h5>
+            <h5>
+                <span id="modalTitle">Invite Staff Member</span>
+            </h5>
             <button class="btn-close-modal" onclick="closeCreateModal()">&times;</button>
         </div>
         <form action="{{ route('schools.admin.admin-management.store', $school) }}" method="POST">
@@ -642,13 +873,8 @@
                     <label for="create_contact">Contact Number</label>
                     <input type="text" id="create_contact" name="contact" placeholder="Enter contact number" value="{{ old('contact') }}" inputmode="numeric" pattern="[0-9]*" autocomplete="tel" maxlength="15">
                 </div>
-                <div class="form-group">
-                    <label for="create_role">Role</label>
-                    <select id="create_role" name="role" required onchange="toggleBranchField('create')">
-                        <option value="school_admin" {{ old('role') === 'school_admin' ? 'selected' : '' }}>School Admin</option>
-                        <option value="branch_secretary" {{ old('role') === 'branch_secretary' ? 'selected' : '' }}>Branch Secretary</option>
-                    </select>
-                </div>
+                <input type="hidden" id="create_role" name="role" value="{{ old('role', 'school_admin') }}">
+                
                 <div class="form-group branch-group-hidden" id="create_branch_group">
                     <label for="create_branch_id">Assign to Branch</label>
                     <select id="create_branch_id" name="branch_id">
@@ -667,8 +893,8 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn-secondary" onclick="closeCreateModal()">Cancel</button>
-                <button type="submit" class="btn-primary">
-                    <i class="bi bi-send"></i> Send Invitation
+                <button type="submit" class="btn-primary" style="background: {{ $primaryColor }};">
+                    Send Invitation
                 </button>
             </div>
         </form>
@@ -679,7 +905,9 @@
 <div class="modal-overlay" id="editModal">
     <div class="modal-content">
         <div class="modal-header">
-            <h5><i class="bi bi-pencil-square"></i> Edit Administrator</h5>
+            <h5>
+                Edit Administrator
+            </h5>
             <button class="btn-close-modal" onclick="closeEditModal()">&times;</button>
         </div>
         <form id="editForm" method="POST">
@@ -707,13 +935,8 @@
                     <label for="edit_contact">Contact Number</label>
                     <input type="text" id="edit_contact" name="contact" placeholder="Enter contact number" inputmode="numeric" pattern="[0-9]*" autocomplete="tel" maxlength="15">
                 </div>
-                <div class="form-group">
-                    <label for="edit_role">Role</label>
-                    <select id="edit_role" name="role" required onchange="toggleBranchField('edit')">
-                        <option value="school_admin">School Admin</option>
-                        <option value="branch_secretary">Branch Secretary</option>
-                    </select>
-                </div>
+                <input type="hidden" id="edit_role" name="role">
+                
                 <div class="form-group branch-group-hidden" id="edit_branch_group">
                     <label for="edit_branch_id">Assign to Branch</label>
                     <select id="edit_branch_id" name="branch_id">
@@ -728,8 +951,8 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn-secondary" onclick="closeEditModal()">Cancel</button>
-                <button type="submit" class="btn-primary">
-                    <i class="bi bi-check-lg"></i> Update Administrator
+                <button type="submit" class="btn-primary" style="background: {{ $primaryColor }};">
+                    Update Administrator
                 </button>
             </div>
         </form>
@@ -751,6 +974,25 @@
         enforceNumericOnly(document.getElementById('edit_contact'));
     });
 
+    function toggleAdminExportDropdown() {
+        const dropdown = document.getElementById('adminExportMenu');
+        dropdown.classList.toggle('show');
+        
+        // Close on outside click
+        const closeDropdown = (e) => {
+            if (!e.target.closest('.export-dropdown')) {
+                dropdown.classList.remove('show');
+                document.removeEventListener('click', closeDropdown);
+            }
+        };
+        
+        setTimeout(() => {
+            if (dropdown.classList.contains('show')) {
+                document.addEventListener('click', closeDropdown);
+            }
+        }, 10);
+    }
+
     // Toggle branch field visibility based on role selection
     function toggleBranchField(prefix) {
         const roleSelect = document.getElementById(prefix + '_role');
@@ -768,7 +1010,16 @@
     }
 
     // Create Modal
-    function openCreateModal() {
+    function openCreateModal(role) {
+        if (role) {
+            document.getElementById('create_role').value = role;
+            const titleElem = document.getElementById('modalTitle');
+            if (role === 'school_admin') {
+                titleElem.innerText = 'Invite School Admin';
+            } else if (role === 'branch_secretary') {
+                titleElem.innerText = 'Invite Branch Manager';
+            }
+        }
         document.getElementById('createModal').classList.add('active');
         toggleBranchField('create');
     }
@@ -827,7 +1078,45 @@
         }
     });
 
-    // Initialize branch field visibility on page load (for old input)
+    // Administrative Filtration & Search
+    function filterAdmins(role, element) {
+        // Toggle card active state
+        document.querySelectorAll('.stat-card').forEach(card => card.classList.remove('active'));
+        if (element) element.classList.add('active');
+
+        const rows = document.querySelectorAll('.admin-table tbody tr');
+        rows.forEach(row => {
+            if (role === 'all') {
+                row.style.display = '';
+            } else {
+                const rowRole = row.querySelector('.role-badge').classList.contains('role-school-admin') ? 'school_admin' : 'branch_secretary';
+                row.style.display = rowRole === role ? '' : 'none';
+            }
+        });
+    }
+
+    function filterAdminTable() {
+        const input = document.getElementById('adminSearch');
+        const filter = input.value.toLowerCase();
+        const rows = document.querySelectorAll('.admin-table tbody tr');
+
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(filter) ? '' : 'none';
+        });
+    }
+
+    function toggleAdminExportDropdown() {
+        document.getElementById('adminExportMenu').classList.toggle('show');
+    }
+
+    // Close export dropdown when clicking outside
+    window.addEventListener('click', function(e) {
+        if (!e.target.closest('#adminExportDropdown')) {
+            document.getElementById('adminExportMenu').classList.remove('show');
+        }
+    });
+
     document.addEventListener('DOMContentLoaded', function() {
         toggleBranchField('create');
     });

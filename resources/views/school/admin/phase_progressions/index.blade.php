@@ -141,7 +141,6 @@
     <div class="page-header">
         <div class="page-header-left">
             <h1 class="page-title">
-                <i class="bi bi-arrow-up-right-circle"></i>
                 Phase Progressions
             </h1>
             <p class="page-subtitle">Monitor and approve student transitions between training phases (e.g., Theoretical to Practical). Ensure all curriculum prerequisites and assessments are verified before granting progression to the next learning stage.</p>
