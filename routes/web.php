@@ -193,7 +193,7 @@ Route::prefix('{school:slug}')
                     Route::post('/instructors', [AdminController::class , 'storeAccount'])->name('instructors.store');
                     Route::put('/instructors/{id}', [AdminController::class , 'updateInstructor'])->name('instructors.update');
                     Route::patch('/instructors/{id}/toggle-status', [AdminController::class , 'toggleInstructorStatus'])->name('instructors.toggleStatus');
-                    Route::patch('/instructors/{id}/availability', [AdminController::class , 'toggleAvailability'])->name('userManagement.toggleAvailability');
+                    Route::patch('/instructors/{id}/availability', [AdminController::class , 'toggleAvailability'])->name('instructors.availability');
 
                     // Schedule management (unified system: admin creates, can pre-assign, instructors self-select remaining spots)
                     Route::get('/schedules', [AdminController::class , 'schedules'])->name('schedules');
@@ -252,25 +252,21 @@ Route::prefix('{school:slug}')
                             Route::get('/students/pdf', [ExportController::class , 'studentsPdf'])->name('students.pdf');
                             Route::get('/students/excel', [ExportController::class , 'studentsExcel'])->name('students.excel');
                             Route::get('/enrollments/pdf', [ExportController::class , 'enrollmentsPdf'])->name('enrollments.pdf');
-                            Route::get('/enrollments/excel', [ExportController::class, 'enrollmentsExcel'])->name('enrollments.excel');
                             Route::get('/student/{student}/progress/pdf', [ExportController::class , 'studentProgressPdf'])->name('student.progress.pdf');
                             Route::get('/instructors/pdf', [ExportController::class , 'instructorsPdf'])->name('instructors.pdf');
                             Route::get('/instructors/excel', [ExportController::class , 'instructorsExcel'])->name('instructors.excel');
                             Route::get('/schedules/pdf', [ExportController::class , 'schedulesPdf'])->name('schedules.pdf');
                             Route::get('/payments/pdf', [ExportController::class , 'paymentsPdf'])->name('payments.pdf');
                             Route::get('/payments/excel', [ExportController::class , 'paymentsExcel'])->name('payments.excel');
-                            Route::get('/verify-session-completion/excel', [ExportController::class , 'bookingsExcel'])->name('verify-session-completion.excel');
+                            Route::get('/bookings/excel', [ExportController::class , 'bookingsExcel'])->name('bookings.excel');
                             Route::get('/courses/excel', [ExportController::class , 'coursesExcel'])->name('courses.excel');
                             Route::get('/courses/pdf', [ExportController::class , 'coursesPdf'])->name('courses.pdf');
                         }
                         );
 
-                        // Verify Session Completion management (matches page title)
-                        Route::resource('verify-session-completion', BookingController::class)
-                            ->names('verify-session-completion')
-                            ->parameters(['verify-session-completion' => 'booking'])
-                            ->except(['create', 'edit']);
-                        Route::patch('/verify-session-completion/{booking}/status', [BookingController::class , 'updateStatus'])->name('verify-session-completion.updateStatus');
+                        // Bookings management (no separate create/edit views - handled via modals)
+                        Route::resource('bookings', BookingController::class)->except(['create', 'edit']);
+                        Route::patch('/bookings/{booking}/status', [BookingController::class , 'updateStatus'])->name('bookings.updateStatus');
 
                         // Payments management (no separate create/edit views - handled via modals)
                         // Statistics route MUST be before the resource to avoid conflict with payments/{payment}

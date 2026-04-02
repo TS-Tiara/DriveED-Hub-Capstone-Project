@@ -14,15 +14,15 @@
 <style>
     .courses-container {
         padding: 20px;
-        margin: 0 auto;
-        max-width: 1400px;
+        margin: 20px auto;
+        max-width: 1600px;
     }
 
     .page-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 20px;
+        margin-bottom: 30px;
         padding-bottom: 15px;
         border-bottom: 3px solid {{ $settings->primary_color }};
     }
@@ -32,6 +32,9 @@
         font-weight: 600;
         color: #1f2937;
         margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 15px;
     }
     
     .page-subtitle {
@@ -1323,7 +1326,10 @@
     <!-- Page Header -->
     <div class="page-header">
         <div>
-            <h1 class="page-title"><i class="bi bi-mortarboard-fill" style="margin-right: 15px;"></i>Courses Management</h1>
+            <h1 class="page-title">
+                <i class="bi bi-mortarboard-fill"></i>
+            Courses Management
+            </h1>
             <p class="page-subtitle">Manage courses, packages, and pricing for {{ $schoolName }}</p>
         </div>
         <div class="header-actions">
@@ -1356,6 +1362,7 @@
                 </button>
             </div>
             <button class="btn-create" onclick="openCreateModal()">
+                <i class="bi bi-plus-circle-fill"></i>
                 <i class="bi bi-plus-circle"></i> Create New Course
             </button>
         </div>
