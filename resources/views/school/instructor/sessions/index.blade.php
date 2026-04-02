@@ -1,6 +1,6 @@
 @extends($isAjax ?? false ? 'layouts.ajax' : 'layouts.app')
 
-@section('title', 'Session Completions')
+@section('title', 'Training Logs')
 
 @section('content')
 @php
@@ -383,8 +383,8 @@
     <!-- Page Header -->
     <div class="page-header">
         <div class="page-header-left">
-            <h1 class="page-title">Session Completions</h1>
-            <p class="page-subtitle">View and manage verified session completions</p>
+            <h1 class="page-title">Training Logs</h1>
+            <p class="page-subtitle">View and manage verified training logs</p>
         </div>
         <div class="header-actions">
             <div class="export-dropdown">
@@ -407,7 +407,7 @@
                 <svg class="icon-18" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                 </svg>
-                Log New Session
+                Submit Training Report
             </a>
         </div>
     </div>
@@ -491,7 +491,7 @@
     <!-- Sessions Table -->
     <div class="sessions-table-wrapper">
         <div class="table-header">
-            <h2 class="table-title">Session Completions</h2>
+            <h2 class="table-title">Training Logs</h2>
             <span class="table-session-count">{{ $totalSessions }} {{ Str::plural('session', $totalSessions) }}</span>
         </div>
 
@@ -602,13 +602,13 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
                     </svg>
                 </div>
-                <h3>No session completions yet</h3>
-                <p>Start logging your training sessions to track teaching progress.</p>
+                <h3>No training logs yet</h3>
+                <p>Start submitting your driving training reports to track your teaching progress.</p>
                 <a href="{{ school_route('instructor.sessions.create') }}" class="btn-first-session">
                     <svg class="icon-18" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                     </svg>
-                    Log First Session
+                    Submit First Training Report
                 </a>
             </div>
         @endif

@@ -55,10 +55,7 @@ class StudentActionRequestController extends Controller
         }
 
         $validated = $request->validate([
-            'student_id' => [
-                'nullable',
-                Rule::exists('students', 'id')->where('school_id', $school->id)
-            ],
+            'student_id' => ['nullable', 'exists:students,id'],
             'student_name' => ['required_without:student_id', 'nullable', 'string', 'max:255'],
             'student_email' => ['required_without:student_id', 'nullable', 'email', 'max:255'],
             'student_contact' => ['nullable', 'string', 'max:20', 'regex:/^[0-9]+$/'],
@@ -117,10 +114,7 @@ class StudentActionRequestController extends Controller
         }
 
         $validated = $request->validate([
-            'student_id' => [
-                'required',
-                Rule::exists('students', 'id')->where('school_id', $school->id)
-            ],
+            'student_id' => ['required', 'exists:students,id'],
             'reason' => ['required', 'string', 'max:1000'],
         ]);
 
@@ -166,7 +160,6 @@ class StudentActionRequestController extends Controller
      */
     public function approve(Request $request, School $school, StudentActionRequest $actionRequest)
     {
-        /** @var Admin $admin */
         $admin = Auth::guard('admin')->user();
 
         if (!$admin->isSchoolAdmin()) {
@@ -256,7 +249,6 @@ class StudentActionRequestController extends Controller
      */
     public function deny(Request $request, School $school, StudentActionRequest $actionRequest)
     {
-        /** @var Admin $admin */
         $admin = Auth::guard('admin')->user();
 
         if (!$admin->isSchoolAdmin()) {

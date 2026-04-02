@@ -1,6 +1,6 @@
 @extends($isAjax ?? false ? 'layouts.ajax' : 'layouts.app')
 
-@section('title', 'Session Logs')
+@section('title', 'Student Progress')
 
 @section('content')
 @php
@@ -23,7 +23,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 30px;
     padding-bottom: 15px;
     border-bottom: 3px solid {{ $primaryColor }};
 }
@@ -359,34 +359,9 @@
 <div class="progress-container">
     <!-- Page Header -->
     <div class="page-header">
-        <div class="page-header-left">
-            <h1 class="page-title">
-                <i class="bi bi-journal-text"></i>
-                Session Logs
-            </h1>
-            <p class="page-subtitle">Track comprehensive student training hours, session grades, and curriculum completion for {{ $schoolName }}</p>
-        </div>
-    </div>
-
-    {{-- Session Logs Stats --}}
-    <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 25px;">
-        <div class="stat-card" style="background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 20px; border-left: 5px solid {{ $primaryColor }};">
-            <div style="width: 50px; height: 50px; border-radius: 12px; background: #eff6ff; color: #2563eb; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
-                <i class="bi bi-people-fill"></i>
-            </div>
-            <div>
-                <div style="font-size: 0.9rem; color: #64748b; font-weight: 500;">Students Tracked</div>
-                <div style="font-size: 1.5rem; font-weight: 700; color: #1e293b;">{{ $progresses->total() }}</div>
-            </div>
-        </div>
-        <div class="stat-card" style="background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 20px; border-left: 5px solid #10b981;">
-            <div style="width: 50px; height: 50px; border-radius: 12px; background: #ecfdf5; color: #059669; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
-                <i class="bi bi-book-half"></i>
-            </div>
-            <div>
-                <div style="font-size: 0.9rem; color: #64748b; font-weight: 500;">Active Courses</div>
-                <div style="font-size: 1.5rem; font-weight: 700; color: #1e293b;">{{ $progresses->unique('course_id')->count() }}</div>
-            </div>
+        <div>
+            <h1 class="page-title">Student Progress</h1>
+            <p class="page-subtitle">Track student training progress and session attendance for {{ $schoolName }}</p>
         </div>
     </div>
 
