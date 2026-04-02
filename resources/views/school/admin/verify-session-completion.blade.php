@@ -193,56 +193,56 @@
     <!-- Statistics Cards (Consolidated 4-card View) -->
     <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px;">
         <!-- Awaiting Verification (Priority Focus) -->
-        <div class="stat-card stat-card-clickable" id="card-done" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); cursor: pointer;" onclick="filterBookings('done', this)">
+        <div class="stat-card stat-card-clickable" id="card-done" style="border-left: 5px solid #f59e0b; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); cursor: pointer;" onclick="filterBookings('done', this)">
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div>
-                    <div style="color: #94a3b8; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Awaiting Verification</div>
+                    <div style="color: #6b7280; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Awaiting Verification</div>
                     <div style="font-size: 2rem; font-weight: 700; color: #1f2937;">{{ $awaitingVerificationCount }}</div>
-                    <div style="color: #94a3b8; font-size: 0.8rem; margin-top: 5px;">Marked as Done by Instructor</div>
+                    <div style="color: #f59e0b; font-size: 0.8rem; margin-top: 5px;">Marked as Done by Instructor</div>
                 </div>
-                <div style="background: #f1f5f9; color: #64748b; width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+                <div style="background: rgba(245, 158, 11, 0.1); color: #f59e0b; width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
                     <i class="bi bi-clock-history"></i>
                 </div>
             </div>
         </div>
 
         <!-- Verified Sessions (Success State) -->
-        <div class="stat-card stat-card-clickable" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); cursor: pointer;" onclick="filterBookings('completed', this)">
+        <div class="stat-card stat-card-clickable" style="border-left: 5px solid #10b981; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); cursor: pointer;" onclick="filterBookings('completed', this)">
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div>
-                    <div style="color: #94a3b8; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Verified Sessions</div>
+                    <div style="color: #6b7280; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Verified Sessions</div>
                     <div style="font-size: 2rem; font-weight: 700; color: #1f2937;">{{ $verifiedSessionsCount }}</div>
-                    <div style="color: #94a3b8; font-size: 0.8rem; margin-top: 5px;">Successfully finalized logs</div>
+                    <div style="color: #10b981; font-size: 0.8rem; margin-top: 5px;">Successfully finalized logs</div>
                 </div>
-                <div style="background: #f1f5f9; color: #64748b; width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+                <div style="background: rgba(16, 185, 129, 0.1); color: #10b981; width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
                     <i class="bi bi-patch-check-fill"></i>
                 </div>
             </div>
         </div>
 
         <!-- Flagged Issues (Error/Warning State) -->
-        <div class="stat-card stat-card-clickable" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); cursor: pointer;" onclick="filterBookings('flagged', this)">
+        <div class="stat-card stat-card-clickable" style="border-left: 5px solid #ef4444; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); cursor: pointer;" onclick="filterBookings('flagged', this)">
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div>
-                    <div style="color: #94a3b8; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Flagged Issues</div>
+                    <div style="color: #6b7280; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Flagged Issues</div>
                     <div style="font-size: 2rem; font-weight: 700; color: #1f2937;">{{ $flaggedIssuesCount }}</div>
-                    <div style="color: #94a3b8; font-size: 0.8rem; margin-top: 5px;">Cancelled or no-show logs</div>
+                    <div style="color: #ef4444; font-size: 0.8rem; margin-top: 5px;">Cancelled or no-show logs</div>
                 </div>
-                <div style="background: #f1f5f9; color: #64748b; width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+                <div style="background: rgba(239, 68, 68, 0.1); color: #ef4444; width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
                     <i class="bi bi-exclamation-triangle"></i>
                 </div>
             </div>
         </div>
 
         <!-- Booking Requests (Initialization State) -->
-        <div class="stat-card stat-card-clickable" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); cursor: pointer;" onclick="filterBookings('pending', this)">
+        <div class="stat-card stat-card-clickable" style="border-left: 5px solid #3b82f6; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); cursor: pointer;" onclick="filterBookings('pending', this)">
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div>
-                    <div style="color: #94a3b8; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Booking Requests</div>
+                    <div style="color: #6b7280; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Booking Requests</div>
                     <div style="font-size: 2rem; font-weight: 700; color: #1f2937;">{{ $pendingRequestsCount }}</div>
-                    <div style="color: #94a3b8; font-size: 0.8rem; margin-top: 5px;">New schedule approvals pending</div>
+                    <div style="color: #3b82f6; font-size: 0.8rem; margin-top: 5px;">New schedule approvals pending</div>
                 </div>
-                <div style="background: #f1f5f9; color: #64748b; width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+                <div style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
                     <i class="bi bi-envelope-paper"></i>
                 </div>
             </div>
