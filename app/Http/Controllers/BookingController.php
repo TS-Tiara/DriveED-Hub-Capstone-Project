@@ -64,13 +64,15 @@ class BookingController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        // Calculate consolidated counts for the focused 4-card verification view
+        // Calculate consolidated counts for the focused 5-card verification view
+        $allSessionsCount = (clone $statsQuery)->count();
         $pendingRequestsCount = (clone $statsQuery)->where('status', 'pending')->count();
         $awaitingVerificationCount = (clone $statsQuery)->where('status', 'done')->count();
         $verifiedSessionsCount = (clone $statsQuery)->where('status', 'completed')->count();
         $flaggedIssuesCount = (clone $statsQuery)->whereIn('status', ['cancelled', 'no_show', 'no-show'])->count();
 
         $stats = [
+            'all' => $allSessionsCount,
             'pending' => $pendingRequestsCount,
             'done' => $awaitingVerificationCount,
             'completed' => $verifiedSessionsCount,
@@ -87,7 +89,7 @@ class BookingController extends Controller
 
         // Only admin has bookings list view
         $view = 'admin.verify-session-completion';
-        return view($school->resolveView($view), array_merge(compact('school', 'bookings', 'stats', 'pendingRequestsCount', 'awaitingVerificationCount', 'verifiedSessionsCount', 'flaggedIssuesCount'), ['isAjax' => $request->ajax()]));
+        return view($school->resolveView($view), array_merge(compact('school', 'bookings', 'stats', 'allSessionsCount', 'pendingRequestsCount', 'awaitingVerificationCount', 'verifiedSessionsCount', 'flaggedIssuesCount'), ['isAjax' => $request->ajax()]));
     }
 
     /**
