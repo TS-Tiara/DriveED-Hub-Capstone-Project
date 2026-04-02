@@ -7,6 +7,7 @@ use App\Models\Instructor;
 use App\Models\School;
 use App\Models\TimeSlot;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class AdminTimeSlotController extends Controller
 {
@@ -95,7 +96,10 @@ class AdminTimeSlotController extends Controller
 
         // Single timeslot creation
         $request->validate([
-            'course_id' => 'required|exists:courses,id',
+            'course_id' => [
+                'required',
+                Rule::exists('courses', 'id')->where('school_id', $school->id)
+            ],
             'date' => 'required|date|after_or_equal:today',
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
@@ -103,10 +107,12 @@ class AdminTimeSlotController extends Controller
             'max_students' => 'nullable|integer|min:1',
             'notes' => 'nullable|string|max:500',
             'instructor_ids' => 'nullable|array',
-            'instructor_ids.*' => 'exists:instructors,id',
+            'instructor_ids.*' => [
+                Rule::exists('instructors', 'id')->where('school_id', $school->id)
+            ],
         ]);
 
-        $course = \App\Models\Course::findOrFail($request->course_id);
+        $course = $school->courses()->findOrFail($request->course_id);
         $instructorIds = $request->instructor_ids ?? [];
 
         // PDC (Practical) Batch Logic: Each instructor gets their own 1-on-1 slot
@@ -169,7 +175,9 @@ class AdminTimeSlotController extends Controller
 
         $request->validate([
             'instructors' => 'nullable|array',
-            'instructors.*' => 'exists:instructors,id',
+            'instructors.*' => [
+                Rule::exists('instructors', 'id')->where('school_id', $school->id)
+            ],
         ]);
 
         $requestedInstructorIds = $request->instructors ?? [];

@@ -21,21 +21,11 @@ class FinancialService
         }
 
         if ($startDate) {
-            $query->where(function($q) use ($startDate) {
-                $q->where('received_at', '>=', $startDate)
-                  ->orWhere(function($sq) use ($startDate) {
-                      $sq->where('status', '=', 'pending')->where('paid_on', '>=', $startDate);
-                  });
-            });
+            $query->where('received_at', '>=', $startDate);
         }
         
         if ($endDate) {
-            $query->where(function($q) use ($endDate) {
-                $q->where('received_at', '<=', $endDate)
-                  ->orWhere(function($sq) use ($endDate) {
-                      $sq->where('status', 'pending')->where('paid_on', '<=', $endDate);
-                  });
-            });
+            $query->where('received_at', '<=', $endDate);
         }
 
         $stats = (clone $query)

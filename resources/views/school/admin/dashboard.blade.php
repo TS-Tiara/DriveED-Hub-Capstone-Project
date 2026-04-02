@@ -153,6 +153,45 @@
         margin-bottom: 20px;
     }
 
+    .trend-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .trend-chevron {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.3s ease;
+    }
+
+    .trend-chevron svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .trend-card-header.collapsed .trend-chevron {
+        transform: rotate(-90deg);
+    }
+
+    .trend-card-body {
+        max-height: 520px;
+        overflow: hidden;
+        transition: max-height 0.3s ease, padding 0.3s ease, opacity 0.2s ease;
+        opacity: 1;
+    }
+
+    .trend-card-body.collapsed {
+        max-height: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+        opacity: 0;
+    }
+
     .pending-badge {
         display: inline-block;
         background: #ef4444;
@@ -228,12 +267,6 @@
                 </div>
                 <div class="stat-detail">
                     <strong>{{ $activeStudents }}</strong> Active · <strong>{{ $inactiveStudents }}</strong> Inactive
-                    @if(isset($studentGrowth))
-                        <br>
-                        <span class="growth-indicator {{ $studentGrowth >= 0 ? 'growth-positive' : 'growth-negative' }}">
-                            {{ $studentGrowth >= 0 ? '↑' : '↓' }} {{ abs($studentGrowth) }}% this month
-                        </span>
-                    @endif
                 </div>
             </div>
         </a>
@@ -253,12 +286,6 @@
                 </div>
                 <div class="stat-detail">
                     <strong>{{ $availableInstructors }}</strong> Available · <strong>{{ $activeInstructors }}</strong> Active
-                    @if(isset($instructorGrowth))
-                        <br>
-                        <span class="growth-indicator {{ $instructorGrowth >= 0 ? 'growth-positive' : 'growth-negative' }}">
-                            {{ $instructorGrowth >= 0 ? '↑' : '↓' }} {{ abs($instructorGrowth) }}% this month
-                        </span>
-                    @endif
                 </div>
             </div>
         </a>
@@ -314,22 +341,7 @@
             </div>
         </a>
 
-        <a href="{{ school_route('admin.reports.index') }}" class="stat-card success stat-card-link" onclick="loadContent(this.href); return false;">
-            <div class="stat-content">
-                <div class="stat-header">
-                    <div>
-                        <div class="stat-label">Monthly Revenue</div>
-                        <div class="stat-value">&#8369;{{ number_format($monthlyRevenue, 2) }}</div>
-                    </div>
-                    <div class="stat-icon">
-                        <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
-                </div>
-                <div class="stat-detail">Cash received this month</div>
-            </div>
-        </a>
+
     </div>
 
     <!-- Quick Actions -->
@@ -426,8 +438,22 @@
 
     <!-- Enrollment Trend Chart -->
     <div class="content-card">
-        <div class="content-card-header">Student Enrollment Trend (Last 30 Days)</div>
-        <div class="content-card-body">
+        <div
+            class="content-card-header trend-card-header"
+            id="enrollmentTrendHeader"
+            role="button"
+            tabindex="0"
+            aria-expanded="true"
+            aria-controls="enrollmentTrendBody"
+        >
+            <span>Student Enrollment Trend (Last 12 Months)</span>
+            <span class="trend-chevron" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+                </svg>
+            </span>
+        </div>
+        <div class="content-card-body trend-card-body" id="enrollmentTrendBody">
             <div class="chart-container">
                 <canvas id="enrollmentChart"></canvas>
             </div>
@@ -441,7 +467,7 @@
 <script>
     // Enrollment Trend Chart
     const enrollmentData = @json($enrollmentData);
-    const labels = enrollmentData.map(item => item.date);
+    const labels = enrollmentData.map(item => item.month);
     const data = enrollmentData.map(item => item.count);
 
     const ctx = document.getElementById('enrollmentChart').getContext('2d');
@@ -478,6 +504,27 @@
             }
         }
     });
+
+    const enrollmentTrendHeader = document.getElementById('enrollmentTrendHeader');
+    const enrollmentTrendBody = document.getElementById('enrollmentTrendBody');
+
+    if (enrollmentTrendHeader && enrollmentTrendBody) {
+        const toggleEnrollmentTrend = function () {
+            enrollmentTrendBody.classList.toggle('collapsed');
+            enrollmentTrendHeader.classList.toggle('collapsed');
+
+            const isExpanded = !enrollmentTrendBody.classList.contains('collapsed');
+            enrollmentTrendHeader.setAttribute('aria-expanded', isExpanded.toString());
+        };
+
+        enrollmentTrendHeader.addEventListener('click', toggleEnrollmentTrend);
+        enrollmentTrendHeader.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                toggleEnrollmentTrend();
+            }
+        });
+    }
 </script>
 
 @endsection
