@@ -381,23 +381,15 @@
                 <tbody>
                     @forelse($payments as $payment)
                     <tr data-status="{{ $payment->status }}" id="payment-row-{{ $payment->id }}">
-                        <td>
-                            {{ $payment->received_at ? $payment->received_at->format('M d, Y') : 
-                               ($payment->paid_on ? $payment->paid_on->format('M d, Y') : 
-                               $payment->created_at->format('M d, Y')) }}
-                        </td>
+                        <td>{{ $payment->paid_on ? $payment->paid_on->format('M d, Y') : 'N/A' }}</td>
                         <td><strong>{{ $payment->payer->name ?? 'Guest' }}</strong></td>
                         <td>{{ $payment->booking->course->title ?? $payment->enrollmentRequest->course->title ?? 'N/A' }}</td>
                         <td class="amount-cell">₱{{ number_format($payment->amount, 2) }}</td>
                         <td>
-                            <div style="display: flex; flex-direction: column; gap: 6px; align-items: flex-start;">
-                                <span class="method-badge" style="margin-bottom: 2px;">{{ ucfirst($payment->method ?? 'N/A') }}</span>
-                                @if($payment->proof_url)
-                                    <a href="{{ $payment->proof_url }}" target="_blank" class="text-xs text-blue-600 hover:underline" style="display: inline-flex; align-items: center; gap: 4px; font-weight: 500;">
-                                        <i class="bi bi-receipt"></i> View Receipt
-                                    </a>
-                                @endif
-                            </div>
+                            <span class="method-badge">{{ ucfirst($payment->method ?? 'N/A') }}</span>
+                            @if($payment->proof_url)
+                                <br><a href="{{ $payment->proof_url }}" target="_blank" class="text-xs text-blue-600 hover:underline">View Receipt</a>
+                            @endif
                         </td>
                         <td class="reference-cell">
                             {{ $payment->reference ?? $payment->or_number ?? '-' }}
@@ -438,7 +430,7 @@
         <div class="payment-mobile-card" data-status="{{ $payment->status }}">
             <div class="mobile-card-header">
                 <strong>{{ $payment->booking->student->name ?? 'N/A' }}</strong>
-                <span class="badge badge-{{ in_array($payment->status, ['completed', 'approved']) ? 'success' : ($payment->status === 'pending' ? 'warning' : 'danger') }}">{{ ucfirst($payment->status) }}</span>
+                <span class="badge badge-{{ $payment->status === 'completed' ? 'success' : ($payment->status === 'pending' ? 'warning' : 'danger') }}">{{ ucfirst($payment->status) }}</span>
             </div>
             <div class="card-row">
                 <span class="card-label">Course</span>
@@ -454,11 +446,7 @@
             </div>
             <div class="card-row">
                 <span class="card-label">Date</span>
-                <span class="card-val">
-                    {{ $payment->received_at ? $payment->received_at->format('M d, Y') : 
-                       ($payment->paid_on ? $payment->paid_on->format('M d, Y') : 
-                       $payment->created_at->format('M d, Y')) }}
-                </span>
+                <span class="card-val">{{ $payment->paid_on ? $payment->paid_on->format('M d, Y') : 'N/A' }}</span>
             </div>
         </div>
         @empty

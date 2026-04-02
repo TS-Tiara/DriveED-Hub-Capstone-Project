@@ -20,10 +20,10 @@
 @include('school.admin.partials.admin-styles')
 
 <style>
-    .admin-mgmt-container {
+    .user-management-container {
         padding: 20px;
-        margin: 0 auto;
-        max-width: 1200px;
+        margin: 20px auto;
+        max-width: 1600px;
     }
     
     .page-header {
@@ -365,21 +365,20 @@
     
     .modal-content {
         width: 600px;
-        min-width: 600px;
         max-width: 92%;
         border-radius: 16px;
         box-shadow: 0 25px 50px rgba(0,0,0,0.4);
-        animation: fadeIn 0.2s ease-out;
+        animation: slideDown 0.3s ease;
     }
     
-    @keyframes fadeIn {
+    @keyframes slideDown {
         from {
             opacity: 0;
-            transform: scale(0.98);
+            transform: translateY(-50px);
         }
         to {
             opacity: 1;
-            transform: scale(1);
+            transform: translateY(0);
         }
     }
     
@@ -505,10 +504,100 @@
         color: #6b7280;
     }
     
-    .pagination-title {
+    /* Export Dropdown */
+    .export-dropdown {
+        position: relative;
+        display: inline-block;
+    }
+
+    .btn-export-trigger {
+        padding: 10px 18px;
+        border: none;
+        border-radius: 8px;
         font-size: 0.9rem;
-        margin-bottom: 5px;
-        color: #6b7280;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--header-gradient);
+        color: white;
+        box-shadow: var(--brand-shadow);
+    }
+
+    .btn-export-trigger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px var(--brand-shadow);
+    }
+
+    .btn-export-trigger svg {
+        transition: transform 0.2s;
+    }
+
+    .export-dropdown.open .btn-export-trigger svg.chevron {
+        transform: rotate(180deg);
+    }
+
+    .export-dropdown-menu {
+        display: none;
+        position: absolute;
+        top: calc(100% + 6px);
+        right: 0;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        border: 1px solid #e5e7eb;
+        min-width: 220px;
+        z-index: 100;
+        overflow: hidden;
+        animation: dropdownFadeIn 0.15s ease;
+    }
+
+    @keyframes dropdownFadeIn {
+        from { opacity: 0; transform: translateY(-6px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .export-dropdown.open .export-dropdown-menu {
+        display: block;
+    }
+
+    .export-dropdown-menu .dropdown-header {
+        padding: 10px 16px 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #9ca3af;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .export-dropdown-menu .dropdown-divider {
+        height: 1px;
+        background: #f3f4f6;
+        margin: 4px 0;
+    }
+
+    .export-dropdown-menu a {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 16px;
+        font-size: 0.88rem;
+        color: #374151;
+        text-decoration: none;
+        transition: background 0.15s;
+    }
+
+    .export-dropdown-menu a:hover {
+        background: #f9fafb;
+    }
+
+    .export-dropdown-menu a .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
     }
 
     .export-dropdown-menu a .dot.pdf  { background: #ef4444; }
@@ -516,7 +605,7 @@
     
     /* Mobile Responsive Styles */
     @media (max-width: 768px) {
-        .admin-mgmt-container {
+        .user-management-container {
             padding: 15px;
             margin: 10px auto;
         }
@@ -650,7 +739,7 @@
     }
     
     @media (max-width: 480px) {
-        .admin-mgmt-container {
+        .user-management-container {
             padding: 10px;
             margin: 5px auto;
         }
@@ -710,7 +799,7 @@
     /* Pagination styles are inherited from shared admin-styles */
 </style>
 
-<div class="admin-mgmt-container">
+<div class="user-management-container">
     <!-- Page Header -->
     <div class="page-header">
         <div class="page-header-left">
@@ -899,64 +988,21 @@
                                 </span>
                             </td>
                             <td class="actions-cell">
-                                <div class="action-buttons" style="display: flex; gap: 8px; justify-content: flex-start;">
-                                    {{-- Global Edit Button --}}
-                                    @if($user->role === 'student' || $user->role === 'guest')
-                                        <button type="button" class="btn-action btn-info js-edit-user" 
-                                            data-role="student"
-                                            data-id="{{ $user->id }}" 
-                                            data-name="{{ $user->name }}" 
-                                            data-email="{{ $user->email }}" 
-                                            data-contact="{{ $user->contact }}" 
-                                            data-address="{{ $user->address }}" 
-                                            data-branch="{{ $user->branch_id }}"
-                                            title="Edit Student">
-                                            <i class="bi bi-pencil-square"></i>
-                                        </button>
-                                    @elseif($user->role === 'instructor')
-                                        <button type="button" class="btn-action btn-info js-edit-user" 
-                                            data-role="instructor"
-                                            data-id="{{ $user->id }}" 
-                                            data-name="{{ $user->name }}" 
-                                            data-email="{{ $user->email }}" 
-                                            data-contact="{{ $user->contact }}" 
-                                            data-license="{{ $user->license_number }}" 
-                                            data-branch="{{ $user->branch_id }}"
-                                            title="Edit Instructor">
-                                            <i class="bi bi-pencil-square"></i>
-                                        </button>
-                                    @endif
-
-                                    {{-- Global Status Toggle --}}
-                                    @php
-                                        $toggleRoute = '';
-                                        if($user->role === 'student' || $user->role === 'guest') {
-                                            $toggleRoute = route('schools.admin.students.toggleStatus', [$school, $user->id]);
-                                        } elseif($user->role === 'instructor') {
-                                            $toggleRoute = route('schools.admin.instructors.toggleStatus', [$school, $user->id]);
-                                        }
-                                    @endphp
-
-                                    @if($toggleRoute)
-                                        <form action="{{ $toggleRoute }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to change this account\'s status?')">
-                                            @csrf
-                                            @method('PATCH')
-                                            <button type="submit" class="btn-action {{ $user->status === 'active' ? 'btn-warning' : 'btn-success' }}" title="{{ $user->status === 'active' ? 'Deactivate' : 'Activate' }}">
-                                                <i class="bi {{ $user->status === 'active' ? 'bi-pause-circle' : 'bi-play-circle' }}"></i>
-                                            </button>
-                                        </form>
-                                    @endif
-
-                                    {{-- Instructor Specific Availability --}}
-                                    @if($user->role === 'instructor')
-                                        <form action="{{ school_route('admin.userManagement.toggleAvailability', [$user->id]) }}" method="POST" style="display:inline;">
-                                            @csrf
-                                            @method('PATCH')
-                                            <button type="submit" class="btn-action {{ $user->availability === 'available' ? 'btn-secondary' : 'btn-primary' }}" title="{{ $user->availability === 'available' ? 'Mark Unavailable' : 'Mark Available' }}">
-                                                <i class="bi {{ $user->availability === 'available' ? 'bi-person-dash' : 'bi-person-check' }}"></i>
-                                            </button>
-                                        </form>
-                                    @endif
+                                <div class="actions-group">
+                                @if($user->role === 'student' || $user->role === 'guest')
+                                    <button class="btn-action btn-edit" data-action="edit-student" data-id="{{ $user->id }}" data-name="{{ $user->name }}" data-email="{{ $user->email }}" data-contact="{{ $user->contact }}" data-address="{{ $user->address }}" data-branch="{{ $user->branch_id }}">Edit</button>
+                                    <button class="btn-action btn-toggle" data-action="toggle-student-status" data-id="{{ $user->id }}" data-status="{{ $user->status }}">
+                                        {{ $user->status === 'active' ? 'Deactivate' : 'Activate' }}
+                                    </button>
+                                @else
+                                    <button class="btn-action btn-edit" data-action="edit-instructor" data-id="{{ $user->id }}" data-name="{{ $user->name }}" data-email="{{ $user->email }}" data-contact="{{ $user->contact }}" data-license="{{ $user->license_number }}" data-branch="{{ $user->branch_id }}">Edit</button>
+                                    <button class="btn-action btn-toggle" data-action="toggle-instructor-status" data-id="{{ $user->id }}" data-status="{{ $user->status }}">
+                                        {{ $user->status === 'active' ? 'Deactivate' : 'Activate' }}
+                                    </button>
+                                    <button class="btn-action btn-toggle" data-action="toggle-instructor-availability" data-id="{{ $user->id }}" data-availability="{{ $user->availability }}">
+                                        {{ $user->availability === 'available' ? 'Mark Unavailable' : 'Mark Available' }}
+                                    </button>
+                                @endif
                                 </div>
                             </td>
                         </tr>
@@ -978,9 +1024,7 @@
                         Showing {{ $users->firstItem() ?? 0 }}-{{ $users->lastItem() ?? 0 }} of {{ $users->total() }} users
                     </h4>
                     @if($users->hasPages())
-                     <div class="admin-pagination-wrapper">
                         {!! $users->links('vendor.pagination.drivingapp') !!}
-                    </div>
                     @endif
                 </div>
             </div>
@@ -1266,33 +1310,25 @@
     }
 
     // Close dropdown when clicking outside
-        const btn = e.target.closest('.js-edit-user');
-        if (btn) {
-            const role = btn.dataset.role;
-            if (role === 'student') {
-                editStudent(
-                    btn.dataset.id, 
-                    btn.dataset.name, 
-                    btn.dataset.email, 
-                    btn.dataset.contact, 
-                    btn.dataset.address, 
-                    btn.dataset.branch
-                );
-            } else if (role === 'instructor') {
-                editInstructor(
-                    btn.dataset.id, 
-                    btn.dataset.name, 
-                    btn.dataset.email, 
-                    btn.dataset.contact, 
-                    btn.dataset.license, 
-                    btn.dataset.branch
-                );
-            }
-        }
-
+    document.addEventListener('click', function(e) {
         const dropdown = document.getElementById('exportDropdown');
         if (dropdown && !dropdown.contains(e.target)) {
             dropdown.classList.remove('open');
+        }
+
+        const btn = e.target.closest('[data-action]');
+        if (!btn) return;
+        const action = btn.dataset.action;
+        if (action === 'edit-student') {
+            editStudent(btn.dataset.id, btn.dataset.name, btn.dataset.email, btn.dataset.contact, btn.dataset.address, btn.dataset.branch);
+        } else if (action === 'toggle-student-status') {
+            toggleStudentStatus(btn.dataset.id, btn.dataset.status);
+        } else if (action === 'edit-instructor') {
+            editInstructor(btn.dataset.id, btn.dataset.name, btn.dataset.email, btn.dataset.contact, btn.dataset.license, btn.dataset.branch);
+        } else if (action === 'toggle-instructor-status') {
+            toggleInstructorStatus(btn.dataset.id, btn.dataset.status);
+        } else if (action === 'toggle-instructor-availability') {
+            toggleInstructorAvailability(btn.dataset.id, btn.dataset.availability);
         }
     });
     
