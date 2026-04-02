@@ -994,17 +994,19 @@ class SystemAdminController extends Controller
             }
 
             if ($request->filled('date_from')) {
-                $query->whereDate('created_at', '>=', $request->date_from);
+                $query->whereDate('received_at', '>=', $request->date_from);
             }
 
             if ($request->filled('date_to')) {
-                $query->whereDate('created_at', '<=', $request->date_to);
+                $query->whereDate('received_at', '<=', $request->date_to);
             }
 
-            $payments = $query->orderBy('created_at', 'desc')->paginate(50);
+            $payments = $query->orderBy('received_at', 'desc')
+                ->orderBy('created_at', 'desc')
+                ->paginate(50);
             $schools = School::orderBy('name')->get();
 
-            $totalPaid = Payment::where('status', 'paid')->sum('amount');
+            $totalPaid = Payment::where('status', 'approved')->sum('amount');
             $totalPending = Payment::where('status', 'pending')->sum('amount');
 
             return view('system-admin.payments', compact('payments', 'schools', 'totalPaid', 'totalPending'));

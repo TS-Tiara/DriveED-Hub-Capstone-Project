@@ -1,6 +1,6 @@
 @extends($isAjax ?? false ? 'layouts.ajax' : 'layouts.app')
 
-@section('title', 'Student Sessions')
+@section('title', 'Verify Session Completion')
 
 @section('content')
 @php
@@ -25,22 +25,8 @@
         padding: 25px;
         box-shadow: 0 2px 12px rgba(0,0,0,0.08);
         transition: all 0.3s ease;
-        border-left: 4px solid {{ $primaryColor }};
         position: relative;
         overflow: hidden;
-    }
-
-    .booking-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        right: 0;
-        width: 120px;
-        height: 120px;
-        background: {{ $primaryColor }};
-        border-radius: 50%;
-        opacity: 0.05;
-        transition: all 0.3s ease;
     }
 
     .booking-header {
@@ -101,6 +87,12 @@
     .detail-value {
         color: #1f2937;
         font-weight: 500;
+    }
+
+    .bookings-container {
+        padding: 20px;
+        margin: 0 auto;
+        max-width: 1200px;
     }
 
     .booking-actions {
@@ -171,93 +163,88 @@
 
 
     <!-- Page Header -->
-    <div class="page-header">
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
         <div class="page-header-left">
-            <h1 class="page-title">Session Schedule</h1>
-            <p class="page-subtitle">Verify instructor reports and manage training sessions for {{ $schoolName }}</p>
+            <h1 class="page-title">Verify Session Completion</h1>
+            <p class="page-subtitle">Verify instructor-logged sessions and manage training completion logs for {{ $schoolName }}</p>
+        </div>
+        {{-- Unified Export Dropdown --}}
+        <div class="export-dropdown" id="bookingExport">
+            <button type="button" class="btn-export-trigger" onclick="this.parentElement.classList.toggle('open')">
+                <i class="bi bi-download"></i>
+                Export Report
+                <i class="bi bi-chevron-down chevron"></i>
+            </button>
+            <div class="export-dropdown-menu">
+                <div class="dropdown-header">Export Options</div>
+                <a href="{{ route('schools.admin.exports.verify-session-completion.excel', ['school' => $school->slug]) }}">
+                    <i class="bi bi-file-earmark-excel-fill" style="color: #10b981;"></i> Full Export (Excel)
+                </a>
+                <div class="dropdown-header" style="font-size: 0.65rem; color: #94a3b8;">Format help</div>
+                <div style="padding: 10px 16px; font-size: 0.8rem; color: #64748b; line-height: 1.4;">
+                    Export contains all verified and pending completions for the current branch.
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Statistics Cards (clickable - serve as filters) -->
-    <div class="stats-grid">
-        <div class="stat-card total stat-card-clickable" onclick="filterBookings('all')">
-            <div class="stat-content">
-                <div class="stat-header">
-                    <div>
-                        <div class="stat-label">All Sessions</div>
-                        <div class="stat-value">{{ $stats['total'] }}</div>
-                    </div>
-                    <div class="stat-icon">
-                        <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                    </div>
+
+
+    <!-- Statistics Cards (Consolidated 4-card View) -->
+    <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px;">
+        <!-- Awaiting Verification (Priority Focus) -->
+        <div class="stat-card stat-card-clickable" id="card-done" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); cursor: pointer;" onclick="filterBookings('done', this)">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <div style="color: #94a3b8; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Awaiting Verification</div>
+                    <div style="font-size: 2rem; font-weight: 700; color: #1f2937;">{{ $awaitingVerificationCount }}</div>
+                    <div style="color: #94a3b8; font-size: 0.8rem; margin-top: 5px;">Marked as Done by Instructor</div>
                 </div>
-                <div class="stat-detail">Total schedule records</div>
+                <div style="background: #f1f5f9; color: #64748b; width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+                    <i class="bi bi-clock-history"></i>
+                </div>
             </div>
         </div>
-        <div class="stat-card active stat-card-clickable" onclick="filterBookings('scheduled')">
-            <div class="stat-content">
-                <div class="stat-header">
-                    <div>
-                        <div class="stat-label">Scheduled</div>
-                        <div class="stat-value">{{ $stats['scheduled'] }}</div>
-                    </div>
-                    <div class="stat-icon">
-                        <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                    </div>
+
+        <!-- Verified Sessions (Success State) -->
+        <div class="stat-card stat-card-clickable" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); cursor: pointer;" onclick="filterBookings('completed', this)">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <div style="color: #94a3b8; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Verified Sessions</div>
+                    <div style="font-size: 2rem; font-weight: 700; color: #1f2937;">{{ $verifiedSessionsCount }}</div>
+                    <div style="color: #94a3b8; font-size: 0.8rem; margin-top: 5px;">Successfully finalized logs</div>
                 </div>
-                <div class="stat-detail">Upcoming sessions</div>
+                <div style="background: #f1f5f9; color: #64748b; width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+                    <i class="bi bi-patch-check-fill"></i>
+                </div>
             </div>
         </div>
-        <div class="stat-card growth stat-card-clickable" onclick="filterBookings('completed')">
-            <div class="stat-content">
-                <div class="stat-header">
-                    <div>
-                        <div class="stat-label">Completed</div>
-                        <div class="stat-value">{{ $stats['completed'] }}</div>
-                    </div>
-                    <div class="stat-icon">
-                        <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
+
+        <!-- Flagged Issues (Error/Warning State) -->
+        <div class="stat-card stat-card-clickable" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); cursor: pointer;" onclick="filterBookings('flagged', this)">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <div style="color: #94a3b8; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Flagged Issues</div>
+                    <div style="font-size: 2rem; font-weight: 700; color: #1f2937;">{{ $flaggedIssuesCount }}</div>
+                    <div style="color: #94a3b8; font-size: 0.8rem; margin-top: 5px;">Cancelled or no-show logs</div>
                 </div>
-                <div class="stat-detail">Finished sessions</div>
+                <div style="background: #f1f5f9; color: #64748b; width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
             </div>
         </div>
-        <div class="stat-card danger stat-card-clickable" onclick="filterBookings('cancelled')">
-            <div class="stat-content">
-                <div class="stat-header">
-                    <div>
-                        <div class="stat-label">Cancelled</div>
-                        <div class="stat-value">{{ $stats['cancelled'] }}</div>
-                    </div>
-                    <div class="stat-icon">
-                        <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
+
+        <!-- Booking Requests (Initialization State) -->
+        <div class="stat-card stat-card-clickable" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); cursor: pointer;" onclick="filterBookings('pending', this)">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <div style="color: #94a3b8; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Booking Requests</div>
+                    <div style="font-size: 2rem; font-weight: 700; color: #1f2937;">{{ $pendingRequestsCount }}</div>
+                    <div style="color: #94a3b8; font-size: 0.8rem; margin-top: 5px;">New schedule approvals pending</div>
                 </div>
-                <div class="stat-detail">Cancelled schedules</div>
-            </div>
-        </div>
-        <div class="stat-card inactive stat-card-clickable" onclick="filterBookings('done')">
-            <div class="stat-content">
-                <div class="stat-header">
-                    <div>
-                        <div class="stat-label">Awaiting Verification</div>
-                        <div class="stat-value">{{ $stats['done'] ?? 0 }}</div>
-                    </div>
-                    <div class="stat-icon">
-                        <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
+                <div style="background: #f1f5f9; color: #64748b; width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+                    <i class="bi bi-envelope-paper"></i>
                 </div>
-                <div class="stat-detail">Marked as Done by Instructor</div>
             </div>
         </div>
     </div>
@@ -309,10 +296,7 @@
                     <span class="detail-value">{{ $booking->package->training_hours }} hours</span>
                 </div>
                 @endif
-                <div class="detail-item">
-                    <span class="detail-label">Price</span>
-                    <span class="detail-value detail-value-amount">₱{{ number_format($booking->total_amount, 2) }}</span>
-                </div>
+
                 <div class="detail-item">
                     <span class="detail-label">Payment</span>
                     <span class="detail-value">
@@ -360,23 +344,34 @@
         @endforelse
     </div>
     <div class="mt-4">
-        {{ $bookings->links() }}
+        <div class="admin-pagination-wrapper">
+            {{ $bookings->links('vendor.pagination.drivingapp') }}
+        </div>
     </div>
 </div>
 
 <script>
 const schoolSlug = '{{ $school->slug }}';
 
-function filterBookings(status) {
+function filterBookings(status, el) {
+    // Quiet UI: No persistent border/shadow after click per user request
+    // We only perform the list filtering logic
     const cards = document.querySelectorAll('.booking-card');
     
     cards.forEach(card => {
         const cardStatus = card.dataset.status;
-        if (status === 'all' || cardStatus === status) {
-            card.style.display = 'block';
+        
+        let match = false;
+        if (status === 'all') {
+            match = true;
+        } else if (status === 'flagged') {
+            // Flagged covers both cancelled and no-show
+            match = (cardStatus === 'cancelled' || cardStatus === 'no-show');
         } else {
-            card.style.display = 'none';
+            match = (cardStatus === status);
         }
+
+        card.style.display = match ? 'block' : 'none';
     });
 }
 
@@ -389,7 +384,7 @@ function updateStatus(bookingId, status) {
         message: `Are you sure you want to change this schedule status to "${status}"?`,
         confirmText: 'Yes, Update Status',
         onConfirm: () => {
-            fetch(`/${schoolSlug}/admin/bookings/${bookingId}/status`, {
+            fetch(`/${schoolSlug}/admin/verify-session-completion/${bookingId}/status`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -419,5 +414,7 @@ function updateStatus(bookingId, status) {
 function createPayment(bookingId) {
     window.location.href = `/${schoolSlug}/admin/payments?booking_id=${bookingId}`;
 }
+
+
 </script>
 @endsection

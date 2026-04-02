@@ -112,7 +112,7 @@ class AdminTimeSlotController extends Controller
             ],
         ]);
 
-        $course = \App\Models\Course::findOrFail($request->course_id);
+        $course = $school->courses()->findOrFail($request->course_id);
         $instructorIds = $request->instructor_ids ?? [];
 
         // PDC (Practical) Batch Logic: Each instructor gets their own 1-on-1 slot

@@ -20,9 +20,13 @@ class BookingController extends Controller
     /**
      * Display a listing of bookings.
      */
-    public function index(Request $request, School $school)
+    public function index(School $school, Request $request)
     {
-        // Optimize query with selective column loading
+        $admin = Auth::guard('admin')->user();
+        if (!$admin || $admin->school_id !== $school->id) {
+            abort(403);
+        }
+
         $query = Booking::where('school_id', $school->id)
             ->with([
                 'student:id,name,email,contact,branch_id',
@@ -60,12 +64,17 @@ class BookingController extends Controller
             ->paginate(15)
             ->withQueryString();
 
+        // Calculate consolidated counts for the focused 4-card verification view
+        $pendingRequestsCount = (clone $statsQuery)->where('status', 'pending')->count();
+        $awaitingVerificationCount = (clone $statsQuery)->where('status', 'done')->count();
+        $verifiedSessionsCount = (clone $statsQuery)->where('status', 'completed')->count();
+        $flaggedIssuesCount = (clone $statsQuery)->whereIn('status', ['cancelled', 'no_show', 'no-show'])->count();
+
         $stats = [
-            'total' => (clone $statsQuery)->count(),
-            'scheduled' => (clone $statsQuery)->whereIn('status', ['scheduled', 'confirmed'])->count(),
-            'completed' => (clone $statsQuery)->where('status', 'completed')->count(),
-            'cancelled' => (clone $statsQuery)->whereIn('status', ['cancelled', 'no_show', 'no-show'])->count(),
-            'pending' => (clone $statsQuery)->where('status', 'pending')->count(),
+            'pending' => $pendingRequestsCount,
+            'done' => $awaitingVerificationCount,
+            'completed' => $verifiedSessionsCount,
+            'flagged' => $flaggedIssuesCount,
         ];
 
         // Only return JSON if explicitly requested via Accept header
@@ -77,8 +86,8 @@ class BookingController extends Controller
         }
 
         // Only admin has bookings list view
-        $view = 'admin.bookings';
-        return view($school->resolveView($view), array_merge(compact('school', 'bookings', 'stats'), ['isAjax' => $request->ajax()]));
+        $view = 'admin.verify-session-completion';
+        return view($school->resolveView($view), array_merge(compact('school', 'bookings', 'stats', 'pendingRequestsCount', 'awaitingVerificationCount', 'verifiedSessionsCount', 'flaggedIssuesCount'), ['isAjax' => $request->ajax()]));
     }
 
     /**
@@ -90,26 +99,26 @@ class BookingController extends Controller
         $timeSlotId = request('time_slot_id');
         $instructorParam = request('instructor');
         $instructorId = request('instructor_id');
-        
+
         // Load time slot if provided
         $timeSlot = null;
         if ($timeSlotId) {
             $timeSlot = \App\Models\TimeSlot::with('course', 'instructors')->find($timeSlotId);
         }
-        
+
         // Select only necessary columns for dropdown lists
         $courses = Course::where('school_id', $school->id)
             ->where('status', 'active')
             ->select('id', 'title', 'duration_hours', 'price', 'description')
             ->orderBy('title')
             ->get();
-            
+
         $instructors = Instructor::where('school_id', $school->id)
             ->where('status', 'active')
             ->select('id', 'name', 'email', 'availability')
             ->orderBy('name')
             ->get();
-            
+
         $students = Student::where('school_id', $school->id)
             ->where('status', 'active')
             ->select('id', 'name', 'email', 'contact')
@@ -118,14 +127,14 @@ class BookingController extends Controller
 
         $guard = Auth::guard('admin')->check() ? 'admin' : (Auth::guard('student')->check() ? 'student' : 'instructor');
         $view = "{$guard}.booking-create";
-        
+
         return view($school->resolveView($view), array_merge(compact(
-            'school', 
-            'courses', 
-            'instructors', 
-            'students', 
-            'timeSlot', 
-            'instructorParam', 
+            'school',
+            'courses',
+            'instructors',
+            'students',
+            'timeSlot',
+            'instructorParam',
             'instructorId'
         ), ['isAjax' => $request->ajax()]));
     }
@@ -160,21 +169,21 @@ class BookingController extends Controller
         // Layer 2: Fail-Closed Retrieval
         $student = $school->students()->findOrFail($validated['student_id']);
         $course = $school->courses()->findOrFail($validated['course_id']);
-        
+
         if (!empty($validated['instructor_id'])) {
             $instructor = $school->instructors()->findOrFail($validated['instructor_id']);
         }
-        
+
         if (!empty($validated['time_slot_id'])) {
             $timeSlot = $school->timeSlots()->findOrFail($validated['time_slot_id']);
         }
 
         $validated['school_id'] = $school->id;
-        
+
         // Get school settings and timezone with defensive fallback
         $settings = $school->schoolSetting;
         $schoolTimezone = $school->timezone;
-        
+
         // Defensive: Validate timezone source to avoid Carbon exceptions
         try {
             if (!$schoolTimezone || !in_array($schoolTimezone, \DateTimeZone::listIdentifiers())) {
@@ -200,25 +209,25 @@ class BookingController extends Controller
             }
             return back()->withErrors(['scheduled_at' => $message]);
         }
-        
+
         // 2. Advance Booking Check (Days)
         $scheduledDate = $scheduledAt->copy()->startOfDay();
         $minBookingDate = $now->copy()->addDays($advanceBookingDays)->startOfDay();
-        
+
         if ($scheduledDate->lt($minBookingDate)) {
-            $message = $advanceBookingDays > 0 
+            $message = $advanceBookingDays > 0
                 ? "Schedules must be made at least {$advanceBookingDays} day(s) in advance."
                 : "Cannot schedule in the past.";
-                
+
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json(['success' => false, 'message' => $message], 422);
             }
             return back()->withErrors(['scheduled_at' => $message]);
         }
-        
+
         // Set initial status based on queue setting
         $validated['status'] = $queueEnabled ? 'pending' : 'scheduled';
-        
+
         // Set booking_date
         $validated['booking_date'] = $validated['scheduled_at'];
 
@@ -228,7 +237,7 @@ class BookingController extends Controller
             if ($timeSlot) {
                 // Combine time slot date and start time for precise cutoff check
                 $slotStartTime = \Carbon\Carbon::parse($timeSlot->date->format('Y-m-d') . ' ' . $timeSlot->start_time, $schoolTimezone);
-                
+
                 // 1. Hard Cutoff Check (Hours) for Time Slot
                 if ($now->copy()->addHours($bookingCutoffHours)->gt($slotStartTime)) {
                     $message = "This time slot is now closed for bookings (cutoff: {$bookingCutoffHours} hour(s)).";
@@ -241,10 +250,10 @@ class BookingController extends Controller
                 // 2. Advance Booking Check (Days) for Time Slot
                 $slotDate = $slotStartTime->copy()->startOfDay();
                 if ($slotDate->lt($minBookingDate)) {
-                    $message = $advanceBookingDays > 0 
+                    $message = $advanceBookingDays > 0
                         ? "Schedules must be made at least {$advanceBookingDays} day(s) in advance."
                         : "Cannot schedule in the past.";
-                        
+
                     if ($request->ajax() || $request->wantsJson()) {
                         return response()->json(['success' => false, 'message' => $message], 422);
                     }
@@ -252,12 +261,12 @@ class BookingController extends Controller
                 }
 
                 $validated['booking_date'] = $timeSlot->date;
-                
+
                 // Override course_id with time slot's course if available
                 if ($timeSlot->course_id) {
                     $validated['course_id'] = $timeSlot->course_id;
                 }
-                
+
                 // Check if time slot is still available
                 if ($timeSlot->status !== 'open') {
                     if ($request->ajax() || $request->wantsJson()) {
@@ -268,13 +277,13 @@ class BookingController extends Controller
                     }
                     return back()->withErrors(['time_slot' => 'This time slot is no longer available.']);
                 }
-                
+
                 // Check for conflicts with existing bookings
                 $conflict = \App\Models\Booking::where('student_id', $validated['student_id'])
                     ->where('time_slot_id', $validated['time_slot_id'])
                     ->whereIn('status', ['pending', 'scheduled', 'confirmed'])
                     ->exists();
-                    
+
                 if ($conflict) {
                     if ($request->ajax() || $request->wantsJson()) {
                         return response()->json([
@@ -284,12 +293,12 @@ class BookingController extends Controller
                     }
                     return back()->withErrors(['time_slot' => 'You already have a schedule for this time slot.']);
                 }
-                
+
                 // Auto-assign instructor if not provided
                 if (empty($validated['instructor_id'])) {
                     // Get instructors assigned to this time slot
                     $assignedInstructors = $timeSlot->instructors;
-                    
+
                     if ($assignedInstructors->isNotEmpty()) {
                         // Find instructor with least bookings for this slot (load balancing)
                         $instructorBookingCounts = [];
@@ -300,11 +309,11 @@ class BookingController extends Controller
                                 ->count();
                             $instructorBookingCounts[$instructor->id] = $count;
                         }
-                        
+
                         // Get instructor with minimum bookings
                         $minBookings = min($instructorBookingCounts);
                         $availableInstructors = array_keys(array_filter($instructorBookingCounts, fn($count) => $count === $minBookings));
-                        
+
                         // Randomly pick one if multiple have same count
                         $validated['instructor_id'] = $availableInstructors[array_rand($availableInstructors)];
                     }
@@ -344,7 +353,7 @@ class BookingController extends Controller
             ], 201);
         }
 
-        $message = $queueEnabled 
+        $message = $queueEnabled
             ? 'Schedule added to your queue! It will be confirmed automatically in ' . ($settings->booking_queue_days ?? 3) . ' days.'
             : 'Schedule created successfully';
 
@@ -361,9 +370,9 @@ class BookingController extends Controller
 
         // IDOR Guard: Check if student is the owner or instructor is assigned
         if (Auth::guard('student')->check()) {
-            abort_if((int)$booking->student_id !== (int)Auth::guard('student')->id(), 403, 'Unauthorized access to booking details.');
+            abort_if((int) $booking->student_id !== (int) Auth::guard('student')->id(), 403, 'Unauthorized access to booking details.');
         } elseif (Auth::guard('instructor')->check()) {
-            abort_if((int)$booking->instructor_id !== (int)Auth::guard('instructor')->id(), 403, 'Unauthorized access to booking details.');
+            abort_if((int) $booking->instructor_id !== (int) Auth::guard('instructor')->id(), 403, 'Unauthorized access to booking details.');
         }
 
         $booking->load(['student', 'instructor', 'course', 'payment']);
@@ -384,9 +393,9 @@ class BookingController extends Controller
 
         // IDOR Guard: Only admin or the student owner can update (students usually cancel via status)
         if (Auth::guard('student')->check()) {
-            abort_if((int)$booking->student_id !== (int)Auth::guard('student')->id(), 403, 'Unauthorized update attempt.');
+            abort_if((int) $booking->student_id !== (int) Auth::guard('student')->id(), 403, 'Unauthorized update attempt.');
         } elseif (Auth::guard('instructor')->check()) {
-            abort_if((int)$booking->instructor_id !== (int)Auth::guard('instructor')->id(), 403, 'Instructors cannot update bookings directly.');
+            abort_if((int) $booking->instructor_id !== (int) Auth::guard('instructor')->id(), 403, 'Instructors cannot update bookings directly.');
         }
 
         $validated = $request->validate([
@@ -422,7 +431,7 @@ class BookingController extends Controller
             if (empty($validated['cancellation_reason'])) {
                 $validated['cancellation_reason'] = 'Cancelled by school administrator';
             }
-            
+
             // Log booking cancellation
             SystemLog::logInfo(
                 "Booking cancelled by admin for student: {$booking->student->name}",
@@ -449,7 +458,7 @@ class BookingController extends Controller
             ]);
         }
 
-        return redirect()->route('schools.admin.bookings.show', [$school->slug, $booking->id])
+        return redirect()->route('schools.admin.verify-session-completion.show', [$school->slug, $booking->id])
             ->with('success', 'Schedule updated successfully');
     }
 
@@ -473,7 +482,7 @@ class BookingController extends Controller
             $school->id,
             'delete_booking'
         );
-        
+
         $booking->delete();
 
         if ($request->ajax() || $request->wantsJson()) {
@@ -483,7 +492,7 @@ class BookingController extends Controller
             ]);
         }
 
-        return redirect()->route('schools.admin.bookings.index', $school->slug)
+        return redirect()->route('schools.admin.verify-session-completion.index', $school->slug)
             ->with('success', 'Schedule deleted successfully');
     }
 
@@ -495,12 +504,12 @@ class BookingController extends Controller
         abort_if($booking->school_id !== $school->id, 404);
 
         $isAdmin = Auth::guard('admin')->check();
-        
+
         // IDOR Guard
         if (Auth::guard('student')->check()) {
-            abort_if((int)$booking->student_id !== (int)Auth::guard('student')->id(), 403, 'Unauthorized status update.');
+            abort_if((int) $booking->student_id !== (int) Auth::guard('student')->id(), 403, 'Unauthorized status update.');
         } elseif (Auth::guard('instructor')->check()) {
-            abort_if((int)$booking->instructor_id !== (int)Auth::guard('instructor')->id(), 403, 'Unauthorized status update.');
+            abort_if((int) $booking->instructor_id !== (int) Auth::guard('instructor')->id(), 403, 'Unauthorized status update.');
         }
 
         $validated = $request->validate([
@@ -517,8 +526,16 @@ class BookingController extends Controller
         }
 
         // Logic: Cannot complete a session that wasn't marked as 'done' by an instructor first (Optional but recommended)
-        if ($validated['status'] === 'completed' && $booking->status !== 'done' && $booking->status !== 'completed') {
-             // We'll allow it for now to avoid blocking admins, but we prefer 'done' -> 'completed'
+        if ($validated['status'] === 'completed') {
+            if (!$booking->enrollment_request_id) {
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json([
+                        'success' => false, 
+                        'message' => 'Cannot complete booking: This student has no linked enrollment request.'
+                    ], 422);
+                }
+                return back()->with('error', 'Cannot complete booking: This student has no linked enrollment request.');
+            }
         }
 
         // If status is being changed to cancelled, track who cancelled it
@@ -543,8 +560,8 @@ class BookingController extends Controller
 
             DB::commit();
 
-            $message = $validated['status'] === 'completed' 
-                ? 'Session verified and officially logged to training history.' 
+            $message = $validated['status'] === 'completed'
+                ? 'Session verified and officially logged to training history.'
                 : 'Schedule status updated successfully';
 
             if ($request->ajax() || $request->wantsJson()) {
@@ -559,7 +576,7 @@ class BookingController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Failed to update booking status: ' . $e->getMessage());
-            
+
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json(['success' => false, 'message' => 'Failed to update status: ' . $e->getMessage()], 500);
             }
@@ -572,18 +589,21 @@ class BookingController extends Controller
      */
     private function autoLogSession(Booking $booking, School $school)
     {
+        // Fail-Closed Guard (Secondary check, primary is in updateStatus)
+        if (!$booking->enrollment_request_id) {
+            Log::warning("Session auto-log skipped: Enrollment Request ID missing for Booking #{$booking->id}");
+            return;
+        }
+
         $timeSlot = $booking->timeSlot;
         $course = $booking->course;
-        
+
         // Calculate hours from time slot if possible, otherwise fallback to course default
         $hours = 1.0;
         if ($timeSlot && $timeSlot->start_time && $timeSlot->end_time) {
             $start = \Carbon\Carbon::parse($timeSlot->start_time);
             $end = \Carbon\Carbon::parse($timeSlot->end_time);
             $hours = round($start->diffInMinutes($end) / 60, 2);
-        } elseif ($booking->package && $booking->package->training_hours) {
-            // If it's a multi-session package, this might just be 1 session of it
-            $hours = 1.0; 
         }
 
         \App\Models\SessionCompletion::create([
@@ -598,7 +618,7 @@ class BookingController extends Controller
             'end_time' => $timeSlot ? $timeSlot->end_time : null,
             'status' => 'completed',
             'notes' => $booking->instructor_feedback ?? 'Auto-generated from verified schedule.',
-            'logged_by' => $booking->instructor_id, // We link to the instructor who did the work
+            'logged_by' => Auth::id() ?? $booking->instructor_id,
         ]);
     }
 
@@ -618,7 +638,7 @@ class BookingController extends Controller
         }
 
         $booking->update(['status' => 'scheduled']);
-        
+
         // Log booking confirmation
         SystemLog::logInfo(
             "Booking confirmed for student: {$booking->student->name}",

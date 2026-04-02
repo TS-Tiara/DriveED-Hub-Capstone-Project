@@ -567,8 +567,11 @@
         border: none;
         cursor: pointer;
         font-size: 14px;
-        font-weight: 500;
+        font-weight: 600;
         transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
     
     .view-btn.active {
@@ -578,6 +581,29 @@
     
     .view-btn:hover:not(.active) {
         background: #e5e7eb;
+    }
+    
+    /* Standardized Calendar Nav Buttons */
+    .calendar-nav .nav-btn {
+        padding: 10px 20px;
+        background: white;
+        color: #374151;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .calendar-nav .nav-btn:hover {
+        border-color: {{ $primaryColor }};
+        color: {{ $primaryColor }};
+        background: rgba(var(--primary-rgb), 0.05);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     }
     
     .view-content {
@@ -1431,25 +1457,30 @@
 </style>
 
 <div class="timeslots-container">
-    <div class="page-header">
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 3px solid var(--primary-color);">
         <div>
             <h1 class="page-title">Manage Schedule</h1>
             <p class="page-subtitle">Manage TDC and PDC sessions with verified student capacity.</p>
         </div>
-        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 10px;">
-            <div class="view-toggle">
-                <button type="button" class="view-btn active" data-view-toggle="list" onclick="switchView('list')">List View</button>
-                <button type="button" class="view-btn" data-view-toggle="calendar" onclick="switchView('calendar')">Calendar View</button>
-            </div>
-            <div style="display: flex; gap: 10px;">
-                <button type="button" id="createScheduleBtn" class="btn btn-success btn-create" onclick="openCreateModal(); return false;">
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 15px;">
+            {{-- Primary Actions (Above Tabs) --}}
+            <div style="display: flex; gap: 12px;">
+                <button type="button" id="createScheduleBtn" class="btn btn-success" onclick="openCreateModal(); return false;" style="display: flex; align-items: center; gap: 8px; padding: 10px 20px; font-weight: 600; border-radius: 8px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);">
                     <i class="bi bi-calendar-plus"></i> Create Schedule
                 </button>
-                <div class="export-buttons" style="margin-top: 0;">
-                    <a href="{{ school_route('admin.exports.schedules.pdf') }}" class="btn-export btn-export-pdf">
-                        Export PDF
-                    </a>
-                </div>
+                <a href="{{ school_route('admin.exports.schedules.pdf') }}" class="btn btn-info" style="display: flex; align-items: center; gap: 8px; padding: 10px 20px; font-weight: 600; border-radius: 8px; background: {{ $primaryColor }}; color: white; text-decoration: none; box-shadow: 0 4px 12px {{ $primaryColor }}40;">
+                    <i class="bi bi-file-earmark-pdf-fill" style="color: #ff4d4d;"></i> Export PDF
+                </a>
+            </div>
+
+            {{-- View Toggle (Below Actions) --}}
+            <div class="view-toggle" style="box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                <button type="button" class="view-btn active" data-view-toggle="list" onclick="switchView('list')">
+                    <i class="bi bi-list-ul"></i> List View
+                </button>
+                <button type="button" class="view-btn" data-view-toggle="calendar" onclick="switchView('calendar')">
+                    <i class="bi bi-calendar3"></i> Calendar View
+                </button>
             </div>
         </div>
     </div>
@@ -1980,6 +2011,7 @@
     window.switchView = function(view) {
         const listView = document.getElementById('list-view');
         const calendarView = document.getElementById('calendar-view');
+        const filterWrap = document.querySelector('.filter-wrap');
         const viewBtns = document.querySelectorAll('.view-btn');
 
         if (!listView || !calendarView || viewBtns.length === 0) return;
@@ -1989,12 +2021,14 @@
         if (view === 'list') {
             listView.classList.add('active');
             calendarView.classList.remove('active');
+            if (filterWrap) filterWrap.style.display = 'block';
             const listBtn = document.querySelector('.view-btn[data-view-toggle="list"]');
             if (listBtn) listBtn.classList.add('active');
             localStorage.setItem('adminTimeslotsView', 'list');
         } else {
             listView.classList.remove('active');
             calendarView.classList.add('active');
+            if (filterWrap) filterWrap.style.display = 'none';
             const calendarBtn = document.querySelector('.view-btn[data-view-toggle="calendar"]');
             if (calendarBtn) calendarBtn.classList.add('active');
             localStorage.setItem('adminTimeslotsView', 'calendar');
@@ -2432,6 +2466,38 @@
             }
         });
     };
+
+    // TDC vs PDC Seat Toggle Logic
+    const courseSelect = document.getElementById('createCourseSelect');
+    const maxStudentsGroup = document.getElementById('maxStudentsGroup');
+    const maxStudentsInput = document.getElementById('createMaxStudents');
+
+    if (courseSelect) {
+        courseSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            if (!selectedOption) return;
+
+            const courseType = selectedOption.getAttribute('data-type');
+            
+            if (courseType === 'practical') {
+                // Hide for PDC and force value to 1
+                maxStudentsGroup.style.display = 'none';
+                maxStudentsInput.value = 1;
+            } else {
+                // Show for TDC (Theoretical)
+                maxStudentsGroup.style.display = 'block';
+                // If it was forced to 1, reset to a sensible default for TDC
+                if (maxStudentsInput.value == 1) {
+                    maxStudentsInput.value = 30;
+                }
+            }
+        });
+
+        // Trigger on load for pre-selected values
+        if (courseSelect.value) {
+            courseSelect.dispatchEvent(new Event('change'));
+        }
+    }
 </script>
 
 @endsection

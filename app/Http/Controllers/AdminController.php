@@ -92,22 +92,33 @@ class AdminController extends Controller
             // Get today's date for filtering
             $today = Carbon::today();
 
-            // Calculate enrollment trend (last 30 days) - Optimized with single query
-            $enrollmentCounts = $admin->scopeToBranch(Student::where('school_id', $school->id))
-                ->where('created_at', '>=', Carbon::today()->subDays(30))
+            // Calculate enrollment trend (last 12 months, grouped monthly)
+            $trendStart = Carbon::now()->startOfMonth()->subMonths(11);
+
+            // Keep DATE() grouping in SQL for database compatibility, then bucket to month in PHP.
+            $dailyEnrollmentCounts = $admin->scopeToBranch(Student::where('school_id', $school->id))
+                ->where('created_at', '>=', $trendStart)
                 ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
                 ->groupBy('date')
                 ->orderBy('date', 'asc')
-                ->get()
-                ->pluck('count', 'date');
+                ->get();
+
+            $monthlyEnrollmentCounts = $dailyEnrollmentCounts
+                ->groupBy(function ($row) {
+                    return Carbon::parse($row->date)->format('Y-m');
+                })
+                ->map(function ($rows) {
+                    return (int) $rows->sum('count');
+                });
 
             $enrollmentData = [];
-            for ($i = 29; $i >= 0; $i--) {
-                $date = Carbon::today()->subDays($i)->format('Y-m-d');
-                $displayDate = Carbon::today()->subDays($i)->format('M d');
+            for ($i = 11; $i >= 0; $i--) {
+                $month = Carbon::now()->startOfMonth()->subMonths($i);
+                $monthKey = $month->format('Y-m');
+
                 $enrollmentData[] = [
-                    'date' => $displayDate,
-                    'count' => $enrollmentCounts[$date] ?? 0
+                    'month' => $month->format('M Y'),
+                    'count' => $monthlyEnrollmentCounts->get($monthKey, 0),
                 ];
             }
 
@@ -695,7 +706,7 @@ class AdminController extends Controller
                 ],
                 'contact' => ['nullable', 'string', 'max:20', 'regex:/^(09\d{9}|\+639\d{9})$/'],
                 'current_password' => 'nullable|string|min:6',
-                'new_password' => 'nullable|string|min:6|confirmed',
+                'new_password' => ['nullable', 'confirmed', new StrongPassword()],
             ]);
 
             $data = $request->only(['name', 'email', 'contact']);
@@ -1377,6 +1388,7 @@ class AdminController extends Controller
                 Rule::exists('instructors', 'id')->where('school_id', $school->id)
             ],
             'max_instructors' => 'nullable|integer|min:1',
+            'max_students' => 'nullable|integer|min:1',
             'notes' => 'nullable|string',
         ]);
 
@@ -1389,6 +1401,21 @@ class AdminController extends Controller
             abort(403, 'You do not have permission to create schedules for this branch.');
         }
 
+        // Layer 3: Type Enforcement
+        $maxStudents = $validated['max_students'] ?? 1;
+        if ($course->isPractical()) {
+            $maxStudents = 1;
+        }
+
+        // Layer 3: Safe Normalization
+        $maxInstructors = (int) ($validated['max_instructors'] ?? 1);
+        $maxStudents = (int) ($validated['max_students'] ?? 1);
+
+        // Force PDC to 1-on-1 (QoL Implementation)
+        if ($course->isPractical()) {
+            $maxStudents = 1;
+        }
+
         $schedule = \App\Models\TimeSlot::create([
             'school_id' => $school->id,
             'branch_id' => $branchId,
@@ -1396,7 +1423,8 @@ class AdminController extends Controller
             'date' => $validated['date'],
             'start_time' => $validated['start_time'],
             'end_time' => $validated['end_time'],
-            'max_instructors' => $validated['max_instructors'] ?? 1,
+            'max_instructors' => $maxInstructors,
+            'max_students' => $maxStudents,
             'notes' => $validated['notes'] ?? null,
             'status' => 'open',
         ]);
@@ -1415,7 +1443,7 @@ class AdminController extends Controller
             }
 
             // Check if not exceeding max capacity
-            if ($instructors->count() > $validated['max_instructors']) {
+            if ($instructors->count() > $maxInstructors) {
                 $schedule->delete(); // Changed $timeslot to $schedule
                 return redirect()->back()->with('error', 'Cannot assign more instructors than max capacity.');
             }
@@ -1428,7 +1456,7 @@ class AdminController extends Controller
                 ]);
             }
 
-            $availableSpots = $validated['max_instructors'] - $instructors->count();
+            $availableSpots = $maxInstructors - $instructors->count();
             $message = 'Schedule created with ' . $instructors->count() . ' instructor(s) assigned.';
 
             if ($availableSpots > 0) {
@@ -1439,7 +1467,7 @@ class AdminController extends Controller
         }
 
         // No instructors assigned - all spots available
-        return redirect()->back()->with('success', 'Schedule created! ' . $validated['max_instructors'] . ' spot(s) available for instructor self-selection.');
+        return redirect()->back()->with('success', 'Schedule created! ' . $maxInstructors . ' spot(s) available for instructor self-selection.');
     }
 
     /**
