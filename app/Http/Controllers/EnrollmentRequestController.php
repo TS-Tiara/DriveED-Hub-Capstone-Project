@@ -331,9 +331,8 @@ class EnrollmentRequestController extends Controller
      */
     public function updatePaymentStatus(Request $request, School $school, EnrollmentRequest $enrollmentRequest)
     {
-        
         $validated = $request->validate([
-            'payment_status' => ['required', 'in:pending,on_hold,paid'],
+            'payment_status' => ['required', 'in:pending,on_hold,paid,partial,rejected,revision_required'],
             'payment_notes' => ['nullable', 'string', 'max:1000'],
         ]);
 

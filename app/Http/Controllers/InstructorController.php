@@ -14,6 +14,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use App\Rules\StrongPassword;
 use Illuminate\Support\Facades\Log;
 
 class InstructorController extends Controller
@@ -520,7 +521,7 @@ class InstructorController extends Controller
             'contact' => 'nullable|string|max:20|regex:/^[0-9]+$/',
             'license_number' => 'nullable|string|max:50',
             'current_password' => 'nullable|required_with:new_password',
-            'new_password' => 'nullable|string|min:6|confirmed',
+            'new_password' => ['nullable', 'string', 'confirmed', new StrongPassword()],
         ]);
 
         if ($request->filled('new_password')) {

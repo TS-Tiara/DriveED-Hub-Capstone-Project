@@ -318,7 +318,8 @@ class ExportController extends Controller
             $query->where('status', $request->status);
         }
 
-        $payments = $query->orderByRaw('COALESCE(received_at, paid_on) DESC')
+        $payments = $query->whereNotNull('received_at')
+            ->orderBy('received_at', 'desc')
             ->orderBy('created_at', 'desc')
             ->limit(500)
             ->cursor();
@@ -356,7 +357,8 @@ class ExportController extends Controller
                     return $q->where('branch_id', $admin->branch_id);
                 }, null)
                 ->with(['booking.course', 'enrollmentRequest.course', 'payer'])
-                ->orderByRaw('COALESCE(received_at, paid_on) DESC')
+                ->whereNotNull('received_at')
+                ->orderBy('received_at', 'desc')
                 ->orderBy('created_at', 'desc')
                 ->limit(1000)
                 ->cursor();
@@ -364,7 +366,7 @@ class ExportController extends Controller
             $rows = [];
             foreach ($payments as $payment) {
                 $rows[] = [
-                    $payment->received_at ? $payment->received_at->format('M d, Y') : ($payment->paid_on ? $payment->paid_on->format('M d, Y') : 'N/A'),
+                    $payment->received_at ? $payment->received_at->format('M d, Y') : 'N/A',
                     $payment->payer->name ?? 'N/A',
                     $payment->booking->course->title ?? $payment->enrollmentRequest->course->title ?? 'N/A',
                     'PHP ' . number_format($payment->amount, 2),
