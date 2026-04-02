@@ -843,8 +843,10 @@
 <div class="customization-container">
     <!-- Page Header -->
     <div class="page-header">
-        <h1 class="page-title">School Customization</h1>
-        <p class="page-subtitle">Personalize your school's appearance with colors, styles, and branding</p>
+        <div class="page-header-left">
+            <h1 class="page-title">School Customization</h1>
+            <p class="page-subtitle">Personalize your school's appearance with colors, styles, and branding</p>
+        </div>
     </div>
 
 

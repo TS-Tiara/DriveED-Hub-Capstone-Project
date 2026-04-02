@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use App\Rules\StrongPassword;
 use Illuminate\Validation\Rule;
 
 class AdminManagementController extends Controller
@@ -162,7 +163,7 @@ class AdminManagementController extends Controller
                 'max:255',
                 Rule::unique('admins', 'email')->ignore($targetAdmin->id),
             ],
-            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
+            'password' => ['nullable', 'string', 'confirmed', new StrongPassword()],
             'contact' => ['nullable', 'string', 'max:20', 'regex:/^[0-9]+$/'],
             'role' => ['required', 'in:school_admin,branch_secretary'],
             'branch_id' => ['required_if:role,branch_secretary', 'nullable', 'exists:branches,id'],
