@@ -31,7 +31,7 @@ class FinancialService
         $stats = (clone $query)
             ->select(
                 DB::raw("SUM(CASE WHEN status = 'approved' THEN amount ELSE 0 END) as gross_revenue"),
-                DB::raw("SUM(CASE WHEN status = 'refunded' THEN refunded_amount ELSE 0 END) as total_refunded"),
+                DB::raw("SUM(CASE WHEN status = 'refunded' THEN amount ELSE 0 END) as total_refunded"),
                 DB::raw("SUM(CASE WHEN status = 'pending' THEN amount ELSE 0 END) as pending_amount"),
                 DB::raw("COUNT(CASE WHEN status = 'approved' THEN 1 END) as approved_count"),
                 DB::raw("COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_count"),
