@@ -23,7 +23,7 @@
     .admin-mgmt-container {
         padding: 20px;
         margin: 0 auto;
-        max-width: 1200px;
+        max-width: 1600px;
     }
     
     .page-header {
@@ -1266,6 +1266,7 @@
     }
 
     // Close dropdown when clicking outside
+    document.addEventListener('click', function (e) {
         const btn = e.target.closest('.js-edit-user');
         if (btn) {
             const role = btn.dataset.role;
