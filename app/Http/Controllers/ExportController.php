@@ -90,6 +90,54 @@ class ExportController extends Controller
     }
 
     /**
+     * Export enrollment requests as Excel (styled HTML format)
+     */
+    public function enrollmentsExcel(School $school, Request $request)
+    {
+        try {
+            $admin = Auth::guard('admin')->user();
+            if (!$admin || $admin->school_id !== $school->id) {
+                abort(403);
+            }
+
+            set_time_limit(120);
+
+            $query = EnrollmentRequest::where('school_id', $school->id)
+                ->with(['learner', 'course']);
+
+            if ($request->has('status') && $request->status !== 'all') {
+                $query->where('status', $request->status);
+            }
+
+            $enrollments = $query->orderBy('created_at', 'desc')->limit(1000)->cursor();
+
+            $rows = [];
+            foreach ($enrollments as $enrollment) {
+                $rows[] = [
+                    $enrollment->created_at->format('M d, Y'),
+                    $enrollment->learner->name ?? 'N/A',
+                    $enrollment->course->title ?? 'N/A',
+                    'PHP ' . number_format($enrollment->price, 2),
+                    ucfirst($enrollment->status),
+                    $enrollment->payment_status ? ucfirst($enrollment->payment_status) : 'Unpaid',
+                    $enrollment->reviewed_at ? Carbon::parse($enrollment->reviewed_at)->format('M d, Y') : 'Pending',
+                ];
+            }
+
+            $html = $this->buildExcelHtml(
+                $school->name . ' - Enrollment Requests',
+                ['Date', 'Student', 'Course', 'Price', 'Status', 'Payment', 'Reviewed At'],
+                $rows
+            );
+
+            return $this->excelResponse($html, $school->slug . '_enrollments_' . date('Y-m-d') . '.xls');
+        } catch (\Exception $e) {
+            \App\Models\SystemLog::logError('Excel Export Error (enrollmentsExcel): ' . $e->getMessage(), 'database', $e, ['school_id' => $school->id], $school->id, 'export_enrollments_excel');
+            return back()->with('error', 'Failed to generate Excel file.');
+        }
+    }
+
+    /**
      * Export student progress report as PDF
      */
     public function studentProgressPdf(School $school, Student $student)

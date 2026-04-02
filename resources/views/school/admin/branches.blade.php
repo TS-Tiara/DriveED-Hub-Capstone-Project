@@ -27,7 +27,7 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 30px;
+        margin-bottom: 20px;
         padding-bottom: 15px;
         border-bottom: 3px solid {{ $primaryColor }};
     }
@@ -490,19 +490,15 @@
     {{-- Page Header --}}
     <div class="page-header">
         <div>
-            <h1 class="page-title">
-                <i class="bi bi-building"></i>
-                Branch Management
-            </h1>
-            <p class="page-subtitle">Manage your school's branch locations</p>
+            <h1 class="page-title">Branch Management</h1>
+            <p class="page-subtitle">Manage school locations and verify branch-specific operational metrics for {{ $schoolName }}</p>
         </div>
-        <button class="btn-create" onclick="openBranchModal()">
-            <i class="bi bi-plus-lg"></i> Add Branch
-        </button>
+        <div class="header-actions">
+            <button class="btn-create" onclick="openBranchModal()">
+                <i class="bi bi-plus-circle"></i> Add Branch
+            </button>
+        </div>
     </div>
-
-
-
     {{-- Stats --}}
     <div class="branch-stats">
         <div class="stat-card">

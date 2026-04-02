@@ -34,14 +34,14 @@ class BookingFactory extends Factory
 
     public function scheduled(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn(array $attributes) => [
             'status' => 'scheduled',
         ]);
     }
 
     public function completed(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn(array $attributes) => [
             'status' => 'completed',
             'booking_date' => fake()->dateTimeBetween('-30 days', 'yesterday'),
             'attendance_status' => 'present',
@@ -50,7 +50,7 @@ class BookingFactory extends Factory
 
     public function cancelled(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn(array $attributes) => [
             'status' => 'cancelled',
             'cancelled_at' => now(),
             'cancellation_reason' => fake()->sentence(),
@@ -59,7 +59,7 @@ class BookingFactory extends Factory
 
     public function paid(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn(array $attributes) => [
             'payment_status' => 'paid',
         ]);
     }

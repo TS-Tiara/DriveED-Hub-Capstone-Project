@@ -17,7 +17,7 @@
 <style>
     .admin-mgmt-container {
         padding: 20px;
-        margin: 20px auto;
+        margin: 0 auto;
         max-width: 1200px;
     }
 
@@ -25,7 +25,7 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 30px;
+        margin-bottom: 20px;
         padding-bottom: 15px;
         border-bottom: 3px solid {{ $primaryColor }};
     }
@@ -35,9 +35,6 @@
         font-weight: 600;
         color: #1f2937;
         margin: 0;
-        display: flex;
-        align-items: center;
-        gap: 15px;
     }
 
     .page-subtitle {
@@ -56,7 +53,7 @@
         color: white;
         border: none;
         border-radius: 10px;
-        font-size: 1rem;
+        font-size: 0.95rem;
         font-weight: 600;
         cursor: pointer;
         transition: all 0.3s;
@@ -479,15 +476,45 @@
     {{-- Page Header --}}
     <div class="page-header">
         <div>
-            <h1 class="page-title">
-                <i class="bi bi-people-fill"></i>
-                Admin & Secretary Management
-            </h1>
-            <p class="page-subtitle">Manage administrators and branch secretaries for {{ $schoolName }}</p>
+            <h1 class="page-title"><i class="bi bi-shield-lock" style="margin-right: 15px;"></i>Admin & Secretary Management</h1>
+            <p class="page-subtitle">Manage school administrators and branch secretaries for {{ $schoolName }}</p>
         </div>
-        <button class="btn-create" onclick="openCreateModal()">
-            <i class="bi bi-plus-lg"></i> Invite Administrator
-        </button>
+        <div class="header-actions">
+            <button class="btn-create" onclick="openInviteModal()">
+                <i class="bi bi-envelope-plus"></i> Invite Administrator
+            </button>
+        </div>
+    </div>
+
+    {{-- Admin Count Cards --}}
+    <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+        <div class="stat-card" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); display: flex; align-items: center; gap: 15px;">
+            <div style="width: 45px; height: 45px; border-radius: 10px; background: #dbeafe; color: #1e40af; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+                <i class="bi bi-person-badge"></i>
+            </div>
+            <div>
+                <div style="font-size: 0.85rem; color: #6b7280; font-weight: 500;">School Admins</div>
+                <div style="font-size: 1.25rem; font-weight: 700; color: #1f2937;">{{ $admins->where('role', 'school_admin')->count() }}</div>
+            </div>
+        </div>
+        <div class="stat-card" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); display: flex; align-items: center; gap: 15px;">
+            <div style="width: 45px; height: 45px; border-radius: 10px; background: #d1fae5; color: #065f46; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+                <i class="bi bi-briefcase"></i>
+            </div>
+            <div>
+                <div style="font-size: 0.85rem; color: #6b7280; font-weight: 500;">Branch Secretaries</div>
+                <div style="font-size: 1.25rem; font-weight: 700; color: #1f2937;">{{ $admins->where('role', 'branch_secretary')->count() }}</div>
+            </div>
+        </div>
+        <div class="stat-card" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); display: flex; align-items: center; gap: 15px;">
+            <div style="width: 45px; height: 45px; border-radius: 10px; background: #fef3c7; color: #92400e; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+                <i class="bi bi-people"></i>
+            </div>
+            <div>
+                <div style="font-size: 0.85rem; color: #6b7280; font-weight: 500;">Total Staff</div>
+                <div style="font-size: 1.25rem; font-weight: 700; color: #1f2937;">{{ $admins->count() }}</div>
+            </div>
+        </div>
     </div>
 
     {{-- Flash Messages --}}

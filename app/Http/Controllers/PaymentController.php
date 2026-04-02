@@ -272,8 +272,15 @@ class PaymentController extends Controller
 
         $payment->delete();
 
-        return redirect()->route('schools.admin.payments.index', $school->slug)
-            ->with('success', 'Payment deleted successfully');
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment record deleted successfully.'
+            ]);
+        }
+
+        return redirect()->route('schools.admin.payments.index', $school)
+            ->with('success', 'Payment record deleted successfully.');
     }
 
     /**

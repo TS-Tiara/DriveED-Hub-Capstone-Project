@@ -119,6 +119,12 @@
         color: {{ $primaryColor }};
     }
 
+    .admin-container {
+        padding: 20px;
+        margin: 0 auto;
+        max-width: 1400px;
+    }
+
     .modal-action-row {
         display: flex;
         gap: 12px;
@@ -135,15 +141,16 @@
     <div class="page-header">
         <div class="page-header-left">
             <h1 class="page-title">
+                <i class="bi bi-arrow-up-right-circle"></i>
                 Phase Progressions
             </h1>
-            <p class="page-subtitle">Review and manage student phase transition requests</p>
+            <p class="page-subtitle">Monitor and approve student transitions between training phases (e.g., Theoretical to Practical). Ensure all curriculum prerequisites and assessments are verified before granting progression to the next learning stage.</p>
         </div>
     </div>
 
     <!-- Stats Summary -->
     <div class="stats-grid">
-        <div class="stat-card pending glow">
+        <div class="stat-card">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -193,7 +200,6 @@
 
     <!-- Requests Table -->
     <div class="content-card">
-        <div class="content-card-header">Progression Requests</div>
         <div class="content-card-body content-card-body-no-padding">
             <div class="table-overflow-wrap">
                 <table class="admin-table">

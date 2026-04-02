@@ -330,7 +330,7 @@
             </div>
         @else
             <div class="empty-state">
-                <p>No schedules or training logs recorded with this student yet</p>
+                <p>No schedules or session completions recorded with this student yet</p>
             </div>
         @endif
     </div>
