@@ -112,14 +112,10 @@ class TheoreticalCompletionController extends Controller
             abort(403, 'Unauthorized');
         }
 
-        // Fetch enrollment manually since route binding isn't working with multiple parameters
-        $enrollment = EnrollmentRequest::with(['learner', 'course', 'sessionCompletions'])
+        // Layer 2: Fail-Closed Retrieval
+        $enrollment = $school->enrollmentRequests()
+            ->with(['learner', 'course', 'sessionCompletions'])
             ->findOrFail($enrollment);
-
-        // Verify enrollment belongs to this school
-        if ($enrollment->course->school_id !== $school->id) {
-            abort(404);
-        }
 
         // Validate if student can be marked as passed
         $validation = $this->validateCanPassTheoretical($enrollment);
@@ -176,6 +172,7 @@ class TheoreticalCompletionController extends Controller
     public function markAsPassed(Request $request)
     {
         $ctx = $this->getSchoolAndGuard();
+        $school = $ctx['school'];
         $user = Auth::guard($ctx['guard'])->user();
 
         if (!$user) {
@@ -189,7 +186,9 @@ class TheoreticalCompletionController extends Controller
             'notes' => 'nullable|string|max:1000'
         ]);
 
-        $enrollment = EnrollmentRequest::with(['learner', 'course'])->findOrFail($request->enrollment_id);
+        $enrollment = $school->enrollmentRequests()
+            ->with(['learner', 'course'])
+            ->findOrFail($request->enrollment_id);
 
         // Verify it's a theoretical course
         if ($enrollment->course->course_type !== 'theoretical') {

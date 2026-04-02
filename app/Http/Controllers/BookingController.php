@@ -8,6 +8,7 @@ use App\Models\Instructor;
 use App\Models\School;
 use App\Models\Student;
 use App\Models\SystemLog;
+use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Auth;
@@ -135,14 +136,38 @@ class BookingController extends Controller
     public function store(Request $request, School $school)
     {
         $validated = $request->validate([
-            'student_id' => 'required|exists:students,id',
-            'course_id' => 'required|exists:courses,id',
-            'instructor_id' => 'nullable|exists:instructors,id',
-            'time_slot_id' => 'nullable|exists:time_slots,id',
+            'student_id' => [
+                'required',
+                Rule::exists('students', 'id')->where('school_id', $school->id)
+            ],
+            'course_id' => [
+                'required',
+                Rule::exists('courses', 'id')->where('school_id', $school->id)
+            ],
+            'instructor_id' => [
+                'nullable',
+                Rule::exists('instructors', 'id')->where('school_id', $school->id)
+            ],
+            'time_slot_id' => [
+                'nullable',
+                Rule::exists('time_slots', 'id')->where('school_id', $school->id)
+            ],
             'scheduled_at' => 'required|date|after:now',
             'notes' => 'nullable|string',
             'status' => 'nullable|in:scheduled,completed,cancelled,no-show',
         ]);
+
+        // Layer 2: Fail-Closed Retrieval
+        $student = $school->students()->findOrFail($validated['student_id']);
+        $course = $school->courses()->findOrFail($validated['course_id']);
+        
+        if (!empty($validated['instructor_id'])) {
+            $instructor = $school->instructors()->findOrFail($validated['instructor_id']);
+        }
+        
+        if (!empty($validated['time_slot_id'])) {
+            $timeSlot = $school->timeSlots()->findOrFail($validated['time_slot_id']);
+        }
 
         $validated['school_id'] = $school->id;
         
@@ -365,14 +390,30 @@ class BookingController extends Controller
         }
 
         $validated = $request->validate([
-            'student_id' => 'required|exists:students,id',
-            'course_id' => 'required|exists:courses,id',
-            'instructor_id' => 'nullable|exists:instructors,id',
+            'student_id' => [
+                'required',
+                Rule::exists('students', 'id')->where('school_id', $school->id)
+            ],
+            'course_id' => [
+                'required',
+                Rule::exists('courses', 'id')->where('school_id', $school->id)
+            ],
+            'instructor_id' => [
+                'nullable',
+                Rule::exists('instructors', 'id')->where('school_id', $school->id)
+            ],
             'scheduled_at' => 'required|date',
             'notes' => 'nullable|string',
             'status' => 'nullable|in:scheduled,completed,cancelled,no-show',
             'cancellation_reason' => 'nullable|string|max:500',
         ]);
+
+        // Layer 2: Fail-Closed Retrieval
+        $student = $school->students()->findOrFail($validated['student_id']);
+        $course = $school->courses()->findOrFail($validated['course_id']);
+        if (!empty($validated['instructor_id'])) {
+            $instructor = $school->instructors()->findOrFail($validated['instructor_id']);
+        }
 
         // If status is being changed to cancelled, track who cancelled it
         if (isset($validated['status']) && $validated['status'] === 'cancelled' && $booking->status !== 'cancelled') {

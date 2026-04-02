@@ -43,13 +43,15 @@ class StudentController extends Controller
         }
 
         // PDC (Practical Driving Course) requires a verified Student Driver's License
-        if ($course->isPractical() && !$student->hasVerifiedLicense()) {
-            Log::warning('Student attempted PDC enrollment without verified license', [
+        /** @var \App\Models\Student $student */
+        $canEnroll = \App\Support\EnrollmentValidator::canEnrollInCourse($student, $course);
+        if (!$canEnroll['allowed']) {
+            Log::warning('Student enrollment blocked', [
                 'user' => $student->id,
                 'course' => $course->id,
-                'license_status' => $student->student_license_status
+                'message' => $canEnroll['message']
             ]);
-            return redirect()->back()->with('error', 'Practical Driving Courses (PDC) require a verified Student Driver\'s License. Please complete a TDC first and upload your license.');
+            return redirect()->back()->with('error', $canEnroll['message']);
         }
 
         // Check if already enrolled for this course (excluding previous rejections/cancellations)

@@ -23,6 +23,7 @@ use App\Http\Controllers\ReportController;
 use App\Services\FinancialService;
 use App\Models\TimeSlot;
 use App\Models\PhaseProgression;
+use App\Rules\StrongPassword;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
@@ -133,23 +134,21 @@ class AdminController extends Controller
             $pendingEnrollments = $admin->scopeToBranch(EnrollmentRequest::where('school_id', $school->id))->where('status', 'pending')->count();
             $pendingProgressions = $admin->scopeToBranch(PhaseProgression::where('school_id', $school->id))->where('status', 'pending')->count();
 
-            // Calculate monthly revenue (completed payments paid_on this month)
+            // Calculate monthly revenue (approved payments received this month) - F-004 Remediation
             try {
-                $hasReceivedAt = Schema::hasColumn('payments', 'received_at');
-                $hasRefundedAt = Schema::hasColumn('payments', 'refunded_at');
+                $monthlyRevenue = $admin->scopeToBranch(Payment::where('school_id', $school->id))
+                    ->where('status', '=', 'approved')
+                    ->whereNotNull('received_at')
+                    ->whereBetween('received_at', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()])
+                    ->sum('amount');
+                
+                $monthlyRefunds = $admin->scopeToBranch(Payment::where('school_id', $school->id))
+                    ->where('status', '=', 'refunded')
+                    ->whereNotNull('refunded_at')
+                    ->whereBetween('refunded_at', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()])
+                    ->sum('refunded_amount');
 
-                if ($hasReceivedAt && $hasRefundedAt) {
-                    $monthlyRevenue = $admin->scopeToBranch(Payment::where('school_id', $school->id))
-                        ->where('status', '=', 'approved')
-                        ->whereBetween('received_at', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()])
-                        ->sum('amount')
-                        - $admin->scopeToBranch(Payment::where('school_id', $school->id))
-                        ->where('status', '=', 'refunded')
-                        ->whereBetween('refunded_at', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()])
-                        ->sum('refunded_amount');
-                } else {
-                    $monthlyRevenue = 0;
-                }
+                $monthlyRevenue = max(0, $monthlyRevenue - $monthlyRefunds);
             } catch (\Exception $e) {
                 LogFacade::warning("Dashboard revenue calculation failed, falling back to 0: " . $e->getMessage());
                 $monthlyRevenue = 0;
@@ -346,7 +345,10 @@ class AdminController extends Controller
                 ],
                 'contact' => ['nullable', 'string', 'max:13', 'regex:/^(09\d{9}|\+639\d{9})$/'],
                 'role' => 'required|in:student,instructor',
-                'branch_id' => 'nullable|exists:branches,id',
+                'branch_id' => [
+                    'nullable',
+                    Rule::exists('branches', 'id')->where('school_id', $school->id)
+                ],
                 'license_number' => ($request->role === 'instructor' && ($school->schoolSetting->require_instructor_license ?? true)) ? 'required|string|max:50' : 'nullable|string|max:50',
             ]);
 
@@ -431,10 +433,10 @@ class AdminController extends Controller
                 ],
                 'contact' => ['nullable', 'string', 'max:13', 'regex:/^(09\d{9}|\+639\d{9})$/'],
                 'address' => 'nullable|string|max:255',
-                'password' => 'nullable|string|min:6',
+                'password' => ['nullable', 'string', new StrongPassword()],
                 'branch_id' => [
                     'nullable',
-                    'exists:branches,id',
+                    Rule::exists('branches', 'id')->where('school_id', $school->id),
                     function ($attribute, $value, $fail) use ($admin) {
                         if ($admin->isBranchSecretary() && !empty($value) && (int)$value !== (int)$admin->branch_id) {
                             $fail('You can only assign students to your own branch.');
@@ -543,10 +545,10 @@ class AdminController extends Controller
                 ],
                 'contact' => ['nullable', 'string', 'max:13', 'regex:/^(09\d{9}|\+639\d{9})$/'],
                 'license_number' => 'nullable|string|max:50',
-                'password' => 'nullable|string|min:6',
+                'password' => ['nullable', 'string', new StrongPassword()],
                 'branch_id' => [
                     'nullable',
-                    'exists:branches,id',
+                    Rule::exists('branches', 'id')->where('school_id', $school->id),
                     function ($attribute, $value, $fail) use ($admin) {
                         if ($admin->isBranchSecretary() && !empty($value) && (int)$value !== (int)$admin->branch_id) {
                             $fail('You can only assign instructors to your own branch.');
@@ -1362,13 +1364,24 @@ class AdminController extends Controller
             'date' => 'required|date|after_or_equal:today',
             'start_time' => 'required',
             'end_time' => 'required|after:start_time',
-            'course_id' => 'required|exists:courses,id',
-            'branch_id' => 'nullable|exists:branches,id',
+            'course_id' => [
+                'required',
+                Rule::exists('courses', 'id')->where('school_id', $school->id)
+            ],
+            'branch_id' => [
+                'nullable',
+                Rule::exists('branches', 'id')->where('school_id', $school->id)
+            ],
             'instructor_ids' => 'nullable|array',
-            'instructor_ids.*' => 'exists:instructors,id',
+            'instructor_ids.*' => [
+                Rule::exists('instructors', 'id')->where('school_id', $school->id)
+            ],
             'max_instructors' => 'nullable|integer|min:1',
             'notes' => 'nullable|string',
         ]);
+
+        // Layer 2: Fail-Closed Retrieval
+        $course = $school->courses()->findOrFail($validated['course_id']);
 
         // Branch-level authorization
         $branchId = $validated['branch_id'] ?? $admin->branch_id;
@@ -1450,7 +1463,9 @@ class AdminController extends Controller
             $validated = $request->validate([
                 'notes' => 'nullable|string|max:500',
                 'instructor_ids' => 'nullable|array',
-                'instructor_ids.*' => 'exists:instructors,id',
+                'instructor_ids.*' => [
+                    Rule::exists('instructors', 'id')->where('school_id', $school->id)
+                ],
             ]);
 
             DB::beginTransaction();
