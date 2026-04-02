@@ -40,6 +40,9 @@
         font-weight: 600;
         color: #1f2937;
         margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
     }
 
     .page-subtitle {
@@ -447,7 +450,6 @@
     }
 
     .btn-success:hover {
-        opacity: 0.9;
         color: white;
     }
 
@@ -458,17 +460,6 @@
 
     .btn-warning:hover {
         color: white;
-        opacity: 0.9;
-    }
-
-    .btn-info {
-        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-        color: white;
-    }
-
-    .btn-info:hover {
-        color: white;
-        opacity: 0.9;
     }
 
     .btn-danger {
@@ -1520,180 +1511,92 @@ document.addEventListener('DOMContentLoaded', function() {
     .custom-select-trigger { width: 100%; }
 }
 
-/* â”€â”€ Compact Pagination Styling (Standardized) â”€â”€ */
-.admin-pagination-wrapper .ds-pagination-nav {
+/* â”€â”€ Compact Pagination Styling â”€â”€ */
+nav[role="navigation"] {
     display: flex;
     justify-content: flex-end;
     align-items: center;
-    margin-top: 25px;
-    padding-top: 20px;
-    border-top: 1px solid #f3f4f6;
 }
 
-.admin-pagination-wrapper .ds-pagination-wrap {
+nav[role="navigation"] > div {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
 }
 
-.admin-pagination-wrapper .ds-page-btn {
+nav[role="navigation"] > div:first-child {
+    display: none;
+}
+
+nav[role="navigation"] span[aria-current="page"] span,
+nav[role="navigation"] a {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 36px;
-    height: 36px;
-    padding: 0 10px;
-    font-size: 0.875rem;
-    font-weight: 600;
-    border-radius: 8px;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border-radius: 6px;
     text-decoration: none;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    background: #f9fafb;
-    color: #4b5563;
-    border: 1px solid #e5e7eb;
+    transition: all 0.15s ease;
 }
 
-.admin-pagination-wrapper .ds-page-btn:hover:not(.is-disabled) {
-    background: #f3f4f6;
-    border-color: #d1d5db;
-    color: #111827;
-    transform: translateY(-1px);
-}
-
-.admin-pagination-wrapper .ds-page-btn.is-active {
+nav[role="navigation"] span[aria-current="page"] span {
     background: {{ $primaryColor }};
     color: white;
-    border-color: {{ $primaryColor }};
-    box-shadow: 0 4px 12px {{ $primaryColor }}40;
 }
 
-.admin-pagination-wrapper .ds-page-btn.is-disabled {
-    background: #fdfdfd;
-    color: #d1d5db;
-    cursor: not-allowed;
-    border-color: #f3f4f6;
+nav[role="navigation"] a {
+    background: #f3f4f6;
+    color: #374151;
 }
 
-.admin-pagination-wrapper .ds-page-ellipsis {
+nav[role="navigation"] a:hover {
+    background: #e5e7eb;
+    color: #1f2937;
+}
+
+nav[role="navigation"] svg {
+    width: 14px !important;
+    height: 14px !important;
+}
+
+nav[role="navigation"] span[aria-disabled="true"] {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 36px;
-    height: 36px;
-    color: #9ca3af;
-    font-size: 0.875rem;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    background: #f9fafb;
+    color: #d1d5db;
+    border-radius: 6px;
+    cursor: not-allowed;
 }
 
-@media (max-width: 640px) {
-    .admin-pagination-wrapper .ds-pagination-nav {
-        justify-content: center;
-    }
+nav[role="navigation"] span[aria-disabled="true"] svg {
+    width: 14px !important;
+    height: 14px !important;
 }
 
-/* Export Dropdown - Unified Global Component */
-.export-dropdown {
-    position: relative;
-    display: inline-block;
-}
-
-.btn-export-trigger {
-    padding: 10px 18px;
-    border: none;
-    border-radius: 8px;
-    font-size: 0.95rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    display: flex;
+nav[role="navigation"] span:not([aria-current]):not([aria-disabled]) {
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    background: {{ $useGradient ? "linear-gradient(135deg, $primaryColor 0%, $secondaryColor 100%)" : $primaryColor }};
-    color: white;
-    box-shadow: 0 4px 14px {{ $primaryColor }}40;
-}
-
-.btn-export-trigger:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px {{ $primaryColor }}60;
-    opacity: 0.95;
-}
-
-.btn-export-trigger .chevron {
-    transition: transform 0.3s ease;
+    min-width: 32px;
+    height: 32px;
     font-size: 0.85rem;
+    color: #6b7280;
 }
 
-.export-dropdown.open .chevron {
-    transform: rotate(180deg);
-}
-
-.export-dropdown-menu {
-    display: none;
-    position: absolute;
-    top: calc(100% + 8px);
-    right: 0;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 15px 50px rgba(0,0,0,0.18);
-    border: 1px solid #eef2f6;
-    min-width: 260px;
-    z-index: 2000;
-    overflow: hidden;
-    transform-origin: top right;
-    animation: dropdownPopIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-@keyframes dropdownPopIn {
-    from { opacity: 0; transform: scale(0.95) translateY(-10px); }
-    to { opacity: 1; transform: scale(1) translateY(0); }
-}
-
-.export-dropdown.open .export-dropdown-menu {
-    display: block;
-}
-
-.export-dropdown-menu .dropdown-header {
-    padding: 14px 18px 10px;
-    font-size: 0.75rem;
-    font-weight: 800;
-    color: #94a3b8;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    background: #f8fafc;
-    border-bottom: 1px solid #f1f5f9;
-}
-
-.export-dropdown-menu a {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 14px 18px;
-    font-size: 0.9rem;
-    color: #334155;
-    text-decoration: none;
-    transition: all 0.2s ease;
-    border-bottom: 1px solid #f8fafc;
-}
-
-.export-dropdown-menu a:last-child {
-    border-bottom: none;
-}
-
-.export-dropdown-menu a:hover {
-    background: #fdfdfd;
-    color: {{ $primaryColor }};
-    padding-left: 22px;
-}
-
-.export-dropdown-menu a i {
-    font-size: 1.25rem;
-    width: 24px;
-    text-align: center;
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05));
-}
-
-.dropdown-divider-top {
-    border-top: 5px solid #f8fafc;
+@media (min-width: 640px) {
+    nav[role="navigation"] > div:first-child {
+        display: block;
+        font-size: 0.82rem;
+        color: #6b7280;
+        margin-right: 16px;
+    }
 }
 </style>

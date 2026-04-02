@@ -34,16 +34,18 @@ class EnrollmentValidator
                 ];
             }
 
-            if (!$student->hasVerifiedLicense()) {
-                return [
-                    'allowed' => false,
-                    'message' => "You must have a verified student driver's license to enroll in practical courses. Please upload your license from your dashboard."
-                ];
-            }
+            /* 
+             if (!$student->hasVerifiedLicense()) {
+             return [
+             'allowed' => false,
+             'message' => 'You must have a verified student driver\'s license to enroll in practical courses. Please upload your license from your dashboard.'
+             ];
+             }
+             */
 
             return [
                 'allowed' => true,
-                'message' => 'You can proceed with enrollment.'
+                'message' => 'You can proceed with enrollment. Note: A verified license will be required before you can book driving sessions.'
             ];
         }
 

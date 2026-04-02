@@ -10,7 +10,7 @@
 @section('content')
 <div class="stats-grid stats-grid-two">
     <div class="stat-card">
-        <h3>Total Approved</h3>
+        <h3>Total Paid</h3>
         <div class="value payments-value-paid">₱{{ number_format($totalPaid, 2) }}</div>
     </div>
     <div class="stat-card">
@@ -41,13 +41,13 @@
                     <td>{{ $payment->booking->student->name ?? 'N/A' }}</td>
                     <td><strong>₱{{ number_format($payment->amount, 2) }}</strong></td>
                     <td>
-                        <span class="badge {{ $payment->status === 'approved' ? 'badge-success' : 'badge-warning' }}">
+                        <span class="badge {{ $payment->status === 'paid' ? 'badge-success' : 'badge-warning' }}">
                             {{ ucfirst($payment->status) }}
                         </span>
                     </td>
-                    <td>{{ ucfirst($payment->method ?? 'N/A') }}</td>
+                    <td>{{ $payment->payment_method ?? 'N/A' }}</td>
                     <td>{{ $payment->school->name }}</td>
-                    <td>{{ $payment->received_at ? $payment->received_at->format('M d, Y') : 'N/A' }}</td>
+                    <td>{{ $payment->created_at->format('M d, Y') }}</td>
                 </tr>
                 @endforeach
             </tbody>

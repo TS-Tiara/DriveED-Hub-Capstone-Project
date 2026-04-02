@@ -4,7 +4,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title') - {{ $schoolName ?? 'Driving School' }}</title>
 
@@ -1947,16 +1946,16 @@
                     <div class="nav-category-header" onclick="toggleCategory(this)" role="button" aria-expanded="false"
                         tabindex="0"
                         onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleCategory(this)}">
-                        <span>Session Management</span>
+                        <span>Scheduling &amp; Sessions</span>
                         <span class="nav-category-arrow">&#9660;</span>
                     </div>
                     <div class="nav-category-items">
                         <a href="{{ school_route('admin.schedules', [], $currentSchool) }}" class="nav-item"
                             data-page="schedules">Manage Schedule</a>
-                        <a href="{{ school_route('admin.verify-session-completion.index', [], $currentSchool) }}" class="nav-item"
-                            data-page="verify-session-completion">Verify Session Completion</a>
+                        <a href="{{ school_route('admin.bookings.index', [], $currentSchool) }}" class="nav-item"
+                            data-page="bookings">Student Sessions</a>
                         <a href="{{ school_route('admin.sessions.index', [], $currentSchool) }}" class="nav-item"
-                            data-page="session-completions">Session Completions</a>
+                            data-page="session-completions">Training Logs</a>
                         <a href="{{ school_route('admin.phase-progressions.index', [], $currentSchool) }}" class="nav-item"
                             data-page="phase-progressions">Phase Progressions</a>
                     </div>
@@ -2007,7 +2006,7 @@
                 <a href="{{ $schoolRoute('instructor.students.index') }}" class="nav-item" data-page="students">My
                     Students</a>
                 <a href="{{ $schoolRoute('instructor.sessions.index') }}" class="nav-item" data-page="sessions">
-                    Session Completions
+                    Training Logs
                 </a>
                 <a href="{{ $schoolRoute('instructor.grades') }}" class="nav-item" data-page="grades">Grades</a>
 
@@ -2365,8 +2364,7 @@
             'admin/enrollments': 'Enrollments',
             'admin/theoretical': 'Theoretical Training',
             'admin/schedules': 'Manage Schedule',
-            'admin/verify-session-completion': 'Verify Session Completion',
-            'admin/sessions': 'Session Completions',
+            'admin/bookings': 'Student Sessions',
             'admin/phase-progressions': 'Phase Progressions',
             'admin/payments': 'Payments',
             'admin/reports': 'Reports & Analytics',
@@ -2378,7 +2376,7 @@
             'instructor/dashboard': 'Dashboard',
             'instructor/my-schedule': 'My Schedule',
             'instructor/students': 'My Students',
-            'instructor/sessions': 'Session Completions',
+            'instructor/sessions': 'Training Logs',
             'instructor/grades': 'Grades',
             'instructor/theoretical': 'Theoretical Training',
             // Student pages

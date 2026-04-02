@@ -16,7 +16,7 @@
 <style>
     .enrollment-requests-container {
         padding: 20px;
-        margin: 0 auto;
+        margin: 20px auto;
         max-width: 1600px;
     }
     
@@ -918,30 +918,21 @@
             <h1 class="page-title">Manage Enrollments</h1>
             <p class="page-subtitle">View and manage all enrollment requests and active student enrollments</p>
         </div>
-        <div class="export-dropdown" id="enrollmentExport">
-            <button type="button" class="btn-export-trigger" onclick="this.parentElement.classList.toggle('open')">
-                <i class="bi bi-download"></i>
-                Export Report
-                <i class="bi bi-chevron-down chevron"></i>
+        <div class="export-menu-wrap">
+            <button type="button" class="btn btn-primary export-btn" onclick="toggleExportMenu()">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="btn-icon-sm">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                </svg>
+                Export PDF
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="14" height="14">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
             </button>
-            <div class="export-dropdown-menu">
-                <div class="dropdown-header">Export Options</div>
-                <a href="{{ route('schools.admin.exports.enrollments.pdf', ['school' => $school->slug]) }}">
-                    <i class="bi bi-file-earmark-pdf-fill" style="color: #ff4d4d;"></i> All Enrollments (PDF)
-                </a>
-                <a href="{{ route('schools.admin.exports.enrollments.pdf', ['school' => $school->slug, 'status' => 'pending']) }}" class="dropdown-divider-top">
-                    <i class="bi bi-clock-history" style="color: #f59e0b;"></i> Pending Only (PDF)
-                </a>
-                <a href="{{ route('schools.admin.exports.enrollments.pdf', ['school' => $school->slug, 'status' => 'approved']) }}">
-                    <i class="bi bi-check-circle-fill" style="color: #10b981;"></i> Active Only (PDF)
-                </a>
-                <a href="{{ route('schools.admin.exports.enrollments.pdf', ['school' => $school->slug, 'status' => 'completed']) }}">
-                    <i class="bi bi-flag-fill" style="color: #3b82f6;"></i> Completed Only (PDF)
-                </a>
-                <div class="dropdown-header">Spreadsheet</div>
-                <a href="{{ route('schools.admin.exports.enrollments.excel', ['school' => $school->slug]) }}">
-                    <i class="bi bi-file-earmark-excel-fill" style="color: #10b981;"></i> Full Export (Excel)
-                </a>
+            <div id="exportMenu" class="export-menu">
+                <a href="{{ route('schools.admin.exports.enrollments.pdf', ['school' => $school->slug]) }}" class="export-menu-link">All Enrollments</a>
+                <a href="{{ route('schools.admin.exports.enrollments.pdf', ['school' => $school->slug, 'status' => 'pending']) }}" class="export-menu-link with-border">Pending Only</a>
+                <a href="{{ route('schools.admin.exports.enrollments.pdf', ['school' => $school->slug, 'status' => 'approved']) }}" class="export-menu-link with-border">Active Only</a>
+                <a href="{{ route('schools.admin.exports.enrollments.pdf', ['school' => $school->slug, 'status' => 'completed']) }}" class="export-menu-link with-border">Completed Only</a>
             </div>
         </div>
     </div>
@@ -953,7 +944,9 @@
     </div>
     @endif
 
-    @if($branches->count() > 0 && !$admin->isBranchSecretary())
+    @if($branches->count() > 0)
+    <div class="mb-3 branch-filter-wrap">
+    @if($branches->count() > 0)
     <div class="mb-3 branch-filter-wrap">
         <select id="branchFilter" class="form-select branch-filter-select" onchange="window.location.href = '{{ school_route('admin.enrollments.index') }}?branch=' + encodeURIComponent(this.value) + '&status={{ request('status', 'all') }}'">
             <option value="">All Branches</option>
@@ -961,6 +954,8 @@
                 <option value="{{ $branch->name }}" {{ request('branch') === $branch->name ? 'selected' : '' }}>{{ $branch->name }}</option>
             @endforeach
         </select>
+    </div>
+    @endif
     </div>
     @endif
 
@@ -1007,6 +1002,21 @@
                     <div class="stat-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="stat-card danger {{ request('status') === 'rejected' ? 'active' : '' }}" onclick="window.location.href='{{ school_route('admin.enrollments.index', ['status' => 'rejected', 'branch' => request('branch')]) }}'">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">Rejected</div>
+                        <div class="stat-value">{{ $rejectedRequestsCount }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
                 </div>
@@ -1202,28 +1212,26 @@
         @endforeach
 
         @if($allRequests->hasPages())
-            <div class="admin-pagination-wrapper">
-                <div style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
-                    <div style="color: #6b7280; font-size: 0.9rem;">
-                        Showing {{ $allRequests->firstItem() ?? 0 }} to {{ $allRequests->lastItem() ?? 0 }} of {{ $allRequests->total() }} results
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        @if($allRequests->onFirstPage())
-                            <span style="padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 8px; color: #9ca3af; background: #f9fafb;">Previous</span>
-                        @else
-                            <a href="{{ $allRequests->previousPageUrl() }}" style="padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 8px; color: #374151; text-decoration: none; background: white;">Previous</a>
-                        @endif
+            <div style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <div style="color: #6b7280; font-size: 0.9rem;">
+                    Showing {{ $allRequests->firstItem() ?? 0 }} to {{ $allRequests->lastItem() ?? 0 }} of {{ $allRequests->total() }} results
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    @if($allRequests->onFirstPage())
+                        <span style="padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 8px; color: #9ca3af; background: #f9fafb;">Previous</span>
+                    @else
+                        <a href="{{ $allRequests->previousPageUrl() }}" style="padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 8px; color: #374151; text-decoration: none; background: white;">Previous</a>
+                    @endif
 
-                        <span style="padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 8px; color: #374151; background: #f9fafb;">
-                            Page {{ $allRequests->currentPage() }} of {{ $allRequests->lastPage() }}
-                        </span>
+                    <span style="padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 8px; color: #374151; background: #f9fafb;">
+                        Page {{ $allRequests->currentPage() }} of {{ $allRequests->lastPage() }}
+                    </span>
 
-                        @if($allRequests->hasMorePages())
-                            <a href="{{ $allRequests->nextPageUrl() }}" style="padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 8px; color: #374151; text-decoration: none; background: white;">Next</a>
-                        @else
-                            <span style="padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 8px; color: #9ca3af; background: #f9fafb;">Next</span>
-                        @endif
-                    </div>
+                    @if($allRequests->hasMorePages())
+                        <a href="{{ $allRequests->nextPageUrl() }}" style="padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 8px; color: #374151; text-decoration: none; background: white;">Next</a>
+                    @else
+                        <span style="padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 8px; color: #9ca3af; background: #f9fafb;">Next</span>
+                    @endif
                 </div>
             </div>
         @endif

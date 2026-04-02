@@ -17,7 +17,7 @@
 <style>
     .admin-mgmt-container {
         padding: 20px;
-        margin: 0 auto;
+        margin: 20px auto;
         max-width: 1600px;
     }
 
@@ -35,6 +35,9 @@
         font-weight: 600;
         color: #1f2937;
         margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 15px;
     }
 
     .page-subtitle {
@@ -202,7 +205,7 @@
         color: white;
         border: none;
         border-radius: 10px;
-        font-size: 0.95rem;
+        font-size: 1rem;
         font-weight: 600;
         cursor: pointer;
         transition: all 0.3s;
@@ -744,6 +747,9 @@
                 </div>
             </div>
         </div>
+        <button class="btn-create" onclick="openCreateModal()">
+            <i class="bi bi-plus-lg"></i> Invite Administrator
+        </button>
     </div>
 
     {{-- Flash Messages --}}
