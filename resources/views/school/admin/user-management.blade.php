@@ -1310,7 +1310,31 @@
     }
 
     // Close dropdown when clicking outside
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
+        const btn = e.target.closest('.js-edit-user');
+        if (btn) {
+            const role = btn.dataset.role;
+            if (role === 'student') {
+                editStudent(
+                    btn.dataset.id, 
+                    btn.dataset.name, 
+                    btn.dataset.email, 
+                    btn.dataset.contact, 
+                    btn.dataset.address, 
+                    btn.dataset.branch
+                );
+            } else if (role === 'instructor') {
+                editInstructor(
+                    btn.dataset.id, 
+                    btn.dataset.name, 
+                    btn.dataset.email, 
+                    btn.dataset.contact, 
+                    btn.dataset.license, 
+                    btn.dataset.branch
+                );
+            }
+        }
+
         const dropdown = document.getElementById('exportDropdown');
         if (dropdown && !dropdown.contains(e.target)) {
             dropdown.classList.remove('open');

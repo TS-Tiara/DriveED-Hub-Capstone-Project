@@ -20,7 +20,7 @@
     .branches-container {
         padding: 20px;
         margin: 20px auto;
-        max-width: 1200px;
+        max-width: 1600px;
     }
 
     .page-header {
@@ -37,9 +37,6 @@
         font-weight: 600;
         color: #1f2937;
         margin: 0;
-        display: flex;
-        align-items: center;
-        gap: 15px;
     }
 
     .page-subtitle {
@@ -48,8 +45,159 @@
         margin-top: 5px;
     }
 
+    /* Statistics Cards - Standardized */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 24px;
+        border-radius: 16px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        border-left: 5px solid transparent;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    .stat-card.active {
+        border-left-color: {{ $primaryColor }};
+    }
+
+    .stat-card.active::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: {{ $primaryColor }}08;
+    }
+
+    .stat-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    .stat-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 12px;
+    }
+
+    .stat-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #111827;
+        line-height: 1;
+    }
+
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    /* Card Variants */
+    .stat-card.total { border-left-color: #6366f1; }
+    .stat-card.total .stat-icon { background: #eef2ff; color: #4338ca; }
+    
+    .stat-card.active-branches { border-left-color: #10b981; }
+    .stat-card.active-branches .stat-icon { background: #ecfdf5; color: #047857; }
+    
+    .stat-card.students { border-left-color: #f59e0b; }
+    .stat-card.students .stat-icon { background: #fffbeb; color: #b45309; }
+
+    .stat-card.instructors { border-left-color: #ec4899; }
+    .stat-card.instructors .stat-icon { background: #fdf2f8; color: #be185d; }
+
+    /* Action Bar */
+    .action-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        padding: 20px;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    }
+
+    .search-box {
+        position: relative;
+        flex: 1;
+        max-width: 450px;
+    }
+
+    .search-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+        flex: 1;
+        max-width: 450px;
+    }
+
+    .search-wrapper input {
+        width: 100% !important;
+        padding: 10px 16px 10px 42px !important;
+        border: 2px solid {{ $primaryColor }}15 !important;
+        border-radius: 12px !important;
+        font-size: 0.95rem !important;
+        transition: all 0.2s !important;
+        background: {{ $primaryColor }}05 !important;
+        color: #1f2937 !important;
+        height: 40px !important;
+        display: block !important;
+        outline: none !important;
+    }
+
+    .search-wrapper input:focus {
+        border-color: {{ $primaryColor }} !important;
+        background: white !important;
+        box-shadow: 0 0 0 4px {{ $primaryColor }}10 !important;
+    }
+
+    .search-wrapper .search-icon {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: {{ $primaryColor }}80;
+        font-size: 1.1rem;
+        z-index: 10;
+        pointer-events: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 18px;
+    }
+
     .btn-create {
-        padding: 12px 24px;
+        height: 40px;
+        padding: 0 16px;
         @if($useGradient)
             background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
         @else
@@ -58,91 +206,41 @@
         color: white;
         border: none;
         border-radius: 10px;
-        font-size: 1rem;
+        font-size: 0.95rem;
         font-weight: 600;
         cursor: pointer;
         transition: all 0.3s;
         display: flex;
         align-items: center;
         gap: 8px;
+        box-shadow: 0 4px 12px {{ $primaryColor }}20;
+        height: 40px;
     }
 
     .btn-create:hover {
         transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        box-shadow: 0 6px 16px {{ $primaryColor }}30;
+        filter: brightness(1.05);
+    }
+    
+    .btn-create svg {
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
     }
 
-    /* Alert Messages */
-    .alert {
-        padding: 15px 20px;
-        margin-bottom: 20px;
-        border-radius: 10px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        animation: slideIn 0.3s ease;
-    }
-
-    .alert-success {
-        background: #d4edda;
-        color: #155724;
-        border-left: 4px solid #28a745;
-    }
-
-    .alert-error {
-        background: #f8d7da;
-        color: #721c24;
-        border-left: 4px solid #dc3545;
-    }
-
-    .close-btn {
-        background: none;
-        border: none;
-        font-size: 1.5rem;
-        cursor: pointer;
-        color: inherit;
-        opacity: 0.6;
-    }
-
-    .close-btn:hover {
-        opacity: 1;
-    }
-
-    @keyframes slideIn {
-        from { opacity: 0; transform: translateY(-10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* Empty State */
-    .empty-state {
-        text-align: center;
-        padding: 60px 20px;
+    /* Branch Table card */
+    .branch-table-card {
         background: white;
-        border-radius: 16px;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-    }
-
-    .empty-state i {
-        font-size: 4rem;
-        color: {{ $primaryColor }};
-        opacity: 0.3;
-        margin-bottom: 20px;
-    }
-
-    .empty-state h3 {
-        font-size: 1.5rem;
-        color: #374151;
-        margin-bottom: 10px;
-    }
-
-    .empty-state p {
-        color: #6b7280;
-        font-size: 1rem;
+        border-radius: 20px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        border: 1px solid {{ $primaryColor }}10;
+        overflow: hidden;
     }
 
     .contact-email {
         font-size: 0.85rem;
-        color: #6b7280;
+        color: {{ $primaryColor }}80;
     }
 
     .required-mark {
@@ -153,8 +251,9 @@
     .branch-table-card {
         background: white;
         border-radius: 16px;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        box-shadow: 0 2px 12px {{ $primaryColor }}10;
         overflow: hidden;
+        border: 1px solid {{ $primaryColor }}08;
     }
 
     .branch-table {
@@ -247,21 +346,15 @@
     }
 
     .btn-edit {
-        background: #e0e7ff;
-        color: #3730a3;
+        background: {{ $primaryColor }}15;
+        color: {{ $primaryColor }};
     }
 
-    .btn-edit:hover {
-        background: #c7d2fe;
-    }
+    .btn-edit:hover { background: {{ $primaryColor }}25; }
 
     .btn-toggle {
         background: #fef3c7;
         color: #92400e;
-    }
-
-    .btn-toggle:hover {
-        background: #fde68a;
     }
 
     .btn-delete {
@@ -269,163 +362,157 @@
         color: #991b1b;
     }
 
-    .btn-delete:hover {
-        background: #fecaca;
-    }
 
-    /* Stats Row */
-    .branch-stats {
-        display: flex;
-        gap: 15px;
-        margin-bottom: 25px;
-    }
-
-    .stat-card {
-        flex: 1;
-        background: white;
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-        display: flex;
-        align-items: center;
-        gap: 15px;
-    }
-
-    .stat-icon {
-        width: 50px;
-        height: 50px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.4rem;
-        @if($useGradient)
-            background: linear-gradient(135deg, {{ $primaryColor }}20 0%, {{ $secondaryColor }}20 100%);
-            color: {{ $primaryColor }};
-        @else
-            background: {{ $primaryColor }}20;
-            color: {{ $primaryColor }};
-        @endif
-    }
-
-    .stat-value {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #1f2937;
-    }
-
-    .stat-label {
-        font-size: 0.85rem;
-        color: #6b7280;
-    }
-
-    /* Modal */
-    .modal {
-        display: none;
+    /* High-Design Modal Styles - Glassmorphism & Symmetrical Constraints */
+    .modal-overlay {
         position: fixed;
         top: 0;
         left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        z-index: 1000;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(8px);
+        display: none;
         align-items: center;
         justify-content: center;
-        padding: 20px;
+        z-index: 1000;
+        animation: fadeInOverlay 0.3s ease;
+    }
+
+    .modal-overlay.active {
+        display: flex;
+    }
+
+    @keyframes fadeInOverlay {
+        from { opacity: 0; }
+        to { opacity: 1; }
     }
 
     .modal-content {
         background: white;
+        width: 600px;
+        min-width: 600px;
+        max-width: 92%;
         border-radius: 16px;
-        width: 100%;
-        max-width: 600px;
-        max-height: 90vh;
-        overflow-y: auto;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        animation: modalSlide 0.3s ease;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+        animation: modalScaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        flex-shrink: 0; /* Extra safety for layout integrity */
     }
 
-    @keyframes modalSlide {
-        from { opacity: 0; transform: translateY(-30px); }
-        to { opacity: 1; transform: translateY(0); }
+    @keyframes modalScaleIn {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
     }
 
     .modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 20px 25px;
-        border-bottom: 1px solid #e5e7eb;
+        @if($useGradient)
+            background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
+        @else
+            background: {{ $primaryColor }};
+        @endif
+        color: white !important;
+        padding: 32px !important;
+        border-bottom: none !important;
+        position: relative;
     }
 
     .modal-header h5 {
-        font-size: 1.25rem;
-        font-weight: 600;
-        color: #1f2937;
+        font-size: 1.75rem !important;
+        font-weight: 600 !important;
+        color: white !important;
         margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
     }
 
     .btn-close-modal {
-        background: none;
+        position: absolute;
+        top: 25px;
+        right: 25px;
+        background: rgba(255, 255, 255, 0.2);
         border: none;
-        font-size: 1.5rem;
+        color: white;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         cursor: pointer;
-        color: #6b7280;
-        padding: 5px;
+        transition: all 0.2s;
+        font-size: 1.2rem;
+        z-index: 10;
         line-height: 1;
     }
 
     .btn-close-modal:hover {
-        color: #1f2937;
+        background: rgba(255, 255, 255, 0.3);
+        transform: rotate(90deg);
     }
 
     .modal-body {
-        padding: 25px;
-    }
-
-    .form-group {
-        margin-bottom: 20px;
-    }
-
-    .form-group label {
-        display: block;
-        font-weight: 600;
-        color: #374151;
-        margin-bottom: 6px;
-        font-size: 0.9rem;
-    }
-
-    .form-group input,
-    .form-group textarea {
-        width: 100%;
-        padding: 10px 14px;
-        border: 2px solid #e5e7eb;
-        border-radius: 8px;
-        font-size: 0.95rem;
-        transition: border-color 0.2s;
-        box-sizing: border-box;
-    }
-
-    .form-group input:focus,
-    .form-group textarea:focus {
-        outline: none;
-        border-color: {{ $primaryColor }};
-        box-shadow: 0 0 0 3px {{ $primaryColor }}20;
-    }
-
-    .form-hint {
-        font-size: 0.8rem;
-        color: #9ca3af;
-        margin-top: 4px;
+        padding: 32px !important;
+        background: white;
+        max-height: 70vh;
+        overflow-y: auto;
     }
 
     .modal-footer {
+        padding: 24px 32px 32px;
         display: flex;
+        gap: 12px;
+        background: white;
+        border-top: 1px solid {{ $primaryColor }}08;
         justify-content: flex-end;
-        gap: 10px;
-        padding: 15px 25px;
-        border-top: 1px solid #e5e7eb;
     }
+
+    .btn-secondary, .btn-primary {
+        height: 40px !important;
+        padding: 0 16px !important;
+        border-radius: 10px !important;
+        font-size: 0.9rem !important;
+        font-weight: 600 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 8px !important;
+        border: none !important;
+        cursor: pointer !important;
+        transition: all 0.2s !important;
+        color: white !important;
+        white-space: nowrap !important;
+        flex: 0 0 auto !important;
+    }
+
+    .btn-secondary {
+        background: #94a3b8 !important; /* Themed slate-400 */
+        box-shadow: 0 4px 12px rgba(148, 163, 184, 0.25) !important;
+    }
+
+    .btn-primary:hover, .btn-secondary:hover {
+        transform: translateY(-1px);
+        filter: brightness(1.05);
+    }
+
+    .btn-primary svg, .btn-secondary svg {
+        width: 18px !important;
+        height: 18px !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* Close modal animation */
+    @keyframes dropdownSlide {
+        from { opacity: 0; transform: translateY(-5px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .icon-18 { width: 18px; height: 18px; }
+    .icon-14 { width: 14px; height: 14px; }
+    .icon-24 { width: 24px; height: 24px; }
 
     .btn-secondary {
         padding: 10px 20px;
@@ -464,7 +551,45 @@
         box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
     }
 
-    /* Responsive */
+    .form-group {
+        margin-bottom: 24px;
+    }
+
+    .form-group label {
+        display: block;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: {{ $primaryColor }}cc;
+        margin-bottom: 8px;
+    }
+
+    .form-group input, 
+    .form-group textarea,
+    .form-group select {
+        width: 100%;
+        padding: 10px 16px;
+        border: 2px solid {{ $primaryColor }}15;
+        border-radius: 12px;
+        font-size: 0.95rem;
+        transition: all 0.2s;
+        background: {{ $primaryColor }}05;
+        color: #1f2937;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: {{ $primaryColor }};
+        background: white;
+        box-shadow: 0 0 0 4px {{ $primaryColor }}15;
+    }
+
+    .form-hint {
+        font-size: 0.8rem;
+        color: {{ $primaryColor }}70;
+        margin-top: 6px;
+    }
     @media (max-width: 768px) {
         .page-header {
             flex-direction: column;
@@ -490,47 +615,90 @@
     {{-- Page Header --}}
     <div class="page-header">
         <div>
-            <h1 class="page-title">
-                <i class="bi bi-building"></i>
-                Branch Management
-            </h1>
-            <p class="page-subtitle">Manage your school's branch locations</p>
+            <h1 class="page-title">Branch Management</h1>
+            <p class="page-subtitle">Manage school locations and verify branch-specific operational metrics for {{ $schoolName }}</p>
+        </div>
+        <div class="header-actions">
+            <button class="btn-create" onclick="openBranchModal()">
+                <svg class="icon-18" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+                Add Branch
+            </button>
         </div>
         <button class="btn-create" onclick="openBranchModal()">
             <i class="bi bi-plus-lg"></i> Add Branch
         </button>
     </div>
 
+    {{-- Stats Grid --}}
+    <div class="stats-grid">
+        <div class="stat-card total active" onclick="filterBranches('all', this)">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">Total Branches</div>
+                        <div class="stat-value">{{ $totalBranchesCount }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bi bi-building"></i>
+                    </div>
+                </div>
+                <div style="font-size: 0.85rem; color: #6b7280;">Global school locations</div>
+            </div>
+        </div>
 
+        <div class="stat-card active-branches" onclick="filterBranches('active', this)">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">Active</div>
+                        <div class="stat-value">{{ $activeBranchesCount }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                </div>
+                <div style="font-size: 0.85rem; color: #6b7280;">Operating branches</div>
+            </div>
+        </div>
 
-    {{-- Stats --}}
-    <div class="branch-stats">
-        <div class="stat-card">
-            <div class="stat-icon"><i class="bi bi-building"></i></div>
-            <div>
-                <div class="stat-value">{{ $totalBranchesCount }}</div>
-                <div class="stat-label">Total Branches</div>
+        <div class="stat-card students" onclick="filterBranches('students', this)">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">Students</div>
+                        <div class="stat-value">{{ $branches->sum('students_count') }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bi bi-people"></i>
+                    </div>
+                </div>
+                <div style="font-size: 0.85rem; color: #6b7280;">Total student body</div>
             </div>
         </div>
-        <div class="stat-card">
-            <div class="stat-icon"><i class="bi bi-check-circle"></i></div>
-            <div>
-                <div class="stat-value">{{ $activeBranchesCount }}</div>
-                <div class="stat-label">Active Branches</div>
+
+        <div class="stat-card instructors" onclick="filterBranches('instructors', this)">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">Instructors</div>
+                        <div class="stat-value">{{ $branches->sum('instructors_count') }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bi bi-person-badge"></i>
+                    </div>
+                </div>
+                <div style="font-size: 0.85rem; color: #6b7280;">Teaching staff pool</div>
             </div>
         </div>
-        <div class="stat-card">
-            <div class="stat-icon"><i class="bi bi-people"></i></div>
-            <div>
-                <div class="stat-value">{{ $branches->sum('students_count') }}</div>
-                <div class="stat-label">Students Assigned</div>
-            </div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon"><i class="bi bi-person-badge"></i></div>
-            <div>
-                <div class="stat-value">{{ $branches->sum('instructors_count') }}</div>
-                <div class="stat-label">Instructors Assigned</div>
+    </div>
+
+    {{-- Action Bar - Moved below cards --}}
+    <div class="action-bar-container" style="margin-top: 20px; background: #fff; padding: 20px; border-radius: 16px; border: 1px solid {{ $primaryColor }}15; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+        <div class="search-box">
+            <label class="control-label" style="display: block; font-size: 0.82rem; font-weight: 600; color: #4b5563; margin-bottom: 8px;">Search Branches</label>
+            <div class="search-wrapper">
+                <i class="bi bi-search search-icon"></i>
+                <input type="text" id="branchSearch" placeholder="Search by name, slug, or address..." onkeyup="filterBranchTable()">
             </div>
         </div>
     </div>
@@ -615,10 +783,12 @@
 </div>
 
 {{-- Create/Edit Branch Modal --}}
-<div class="modal" id="branchModal">
+<div class="modal-overlay" id="branchModal">
     <div class="modal-content">
         <div class="modal-header">
-            <h5 id="branchModalTitle">Add New Branch</h5>
+            <h5 id="branchModalTitle">
+                <span id="branchModalTitleText">Add New Branch</span>
+            </h5>
             <button class="btn-close-modal" onclick="closeBranchModal()">&times;</button>
         </div>
         <form id="branchForm" method="POST" action="{{ route('schools.admin.branches.store', $school) }}">
@@ -636,11 +806,11 @@
                 </div>
                 <div class="form-group">
                     <label for="branchContact">Contact Number</label>
-                    <input type="text" id="branchContact" name="contact_number" placeholder="e.g. 09xx-xxx-xxxx" inputmode="numeric" pattern="[0-9]*" autocomplete="tel" maxlength="15">
+                    <input type="text" id="branchContact" name="contact_number" placeholder="09xx-xxx-xxxx" inputmode="numeric" pattern="[0-9]*" autocomplete="tel" maxlength="15">
                 </div>
                 <div class="form-group">
                     <label for="branchEmail">Email</label>
-                    <input type="email" id="branchEmail" name="email" placeholder="e.g. branch@school.com">
+                    <input type="email" id="branchEmail" name="email" placeholder="branch@school.com">
                 </div>
                 <div class="form-group">
                     <label for="branchSortOrder">Sort Order</label>
@@ -650,7 +820,9 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn-secondary" onclick="closeBranchModal()">Cancel</button>
-                <button type="submit" class="btn-primary" id="branchSubmitBtn">Create Branch</button>
+                <button type="submit" class="btn-primary" id="branchSubmitBtn" style="background: {{ $primaryColor }};">
+                    <span id="branchSubmitBtnText">Create Branch</span>
+                </button>
             </div>
         </form>
     </div>
@@ -674,8 +846,8 @@
     });
 
     function openBranchModal() {
-        document.getElementById('branchModalTitle').textContent = 'Add New Branch';
-        document.getElementById('branchSubmitBtn').textContent = 'Create Branch';
+        document.getElementById('branchModalTitleText').textContent = 'Add New Branch';
+        document.getElementById('branchSubmitBtnText').textContent = 'Create Branch';
         document.getElementById('branchForm').action = branchesBaseUrl;
         document.getElementById('branchMethod').value = 'POST';
 
@@ -685,12 +857,12 @@
         document.getElementById('branchEmail').value = '';
         document.getElementById('branchSortOrder').value = '0';
 
-        document.getElementById('branchModal').style.display = 'flex';
+        document.getElementById('branchModal').classList.add('active');
     }
 
     function editBranch(branch) {
-        document.getElementById('branchModalTitle').textContent = 'Edit Branch';
-        document.getElementById('branchSubmitBtn').textContent = 'Save Changes';
+        document.getElementById('branchModalTitleText').textContent = 'Edit Branch';
+        document.getElementById('branchSubmitBtnText').textContent = 'Save Changes';
         document.getElementById('branchForm').action = branchesBaseUrl + '/' + branch.id;
         document.getElementById('branchMethod').value = 'PUT';
 
@@ -700,11 +872,11 @@
         document.getElementById('branchEmail').value = branch.email || '';
         document.getElementById('branchSortOrder').value = branch.sort_order || 0;
 
-        document.getElementById('branchModal').style.display = 'flex';
+        document.getElementById('branchModal').classList.add('active');
     }
 
     function closeBranchModal() {
-        document.getElementById('branchModal').style.display = 'none';
+        document.getElementById('branchModal').classList.remove('active');
     }
 
     function toggleBranch(branchId, isActive) {
@@ -766,6 +938,43 @@
         });
     }
 
+    // Branch Filtration & Search
+    function filterBranches(status, element) {
+        // Toggle card active state
+        document.querySelectorAll('.stat-card').forEach(card => card.classList.remove('active'));
+        if (element) element.classList.add('active');
+
+        const rows = document.querySelectorAll('.branch-table tbody tr');
+        rows.forEach(row => {
+            if (status === 'all') {
+                row.style.display = '';
+            } else if (status === 'active' || status === 'inactive') {
+                const isActive = row.querySelector('.status-badge').classList.contains('status-active');
+                if (status === 'active') {
+                    row.style.display = isActive ? '' : 'none';
+                } else {
+                    row.style.display = !isActive ? '' : 'none';
+                }
+            } else if (status === 'students') {
+                // If filtering by students, just show all (or could filter by branches having > 0 students)
+                row.style.display = '';
+            } else if (status === 'instructors') {
+                row.style.display = '';
+            }
+        });
+    }
+
+    function filterBranchTable() {
+        const input = document.getElementById('branchSearch');
+        const filter = input.value.toLowerCase();
+        const rows = document.querySelectorAll('.branch-table tbody tr');
+
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(filter) ? '' : 'none';
+        });
+    }
+
     // Close modal on Escape key
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') closeBranchModal();
@@ -776,5 +985,4 @@
         if (e.target === this) closeBranchModal();
     });
 </script>
-
 @endsection
