@@ -1326,10 +1326,7 @@
     <!-- Page Header -->
     <div class="page-header">
         <div>
-            <h1 class="page-title">
-                <i class="bi bi-mortarboard-fill"></i>
-            Courses Management
-            </h1>
+            <h1 class="page-title">Courses Management</h1>
             <p class="page-subtitle">Manage courses, packages, and pricing for {{ $schoolName }}</p>
         </div>
         <div class="header-actions">
