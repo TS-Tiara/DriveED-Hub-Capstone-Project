@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
-use App\Rules\StrongPassword;
 use App\Models\School;
 use App\Models\Student;
 use App\Models\Admin;
@@ -165,7 +164,7 @@ class PasswordResetController extends Controller
 
         $request->validate([
             'email' => 'required|email',
-            'password' => ['required', 'confirmed', new StrongPassword()],
+            'password' => 'required|min:8|confirmed',
             'token' => 'required',
             'user_type' => $school ? 'required|in:student,admin,instructor' : 'nullable',
         ]);

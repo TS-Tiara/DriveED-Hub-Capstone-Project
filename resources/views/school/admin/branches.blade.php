@@ -624,6 +624,9 @@
                 Add Branch
             </button>
         </div>
+        <button class="btn-create" onclick="openBranchModal()">
+            <i class="bi bi-plus-lg"></i> Add Branch
+        </button>
     </div>
 
     {{-- Stats Grid --}}
