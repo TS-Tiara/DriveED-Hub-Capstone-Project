@@ -116,16 +116,15 @@ class ReportController extends Controller
 
             // Course revenue - ONE bulk query (Corrected Axis: paid_on + Enrollment Fees)
             $courseRevenue = collect();
-            // Course revenue - ONE bulk query (Corrected Axis: approved + received_at) - F-005 Remediation
             try {
-                $dateColumn = 'payments.received_at';
+                $hasReceivedAt = \Illuminate\Support\Facades\Schema::hasColumn('payments', 'received_at');
+                $dateColumn = $hasReceivedAt ? 'payments.received_at' : 'payments.paid_on';
 
                 $courseRevenueFromBookings = DB::table('payments')
                     ->join('bookings', 'payments.booking_id', '=', 'bookings.id')
                     ->where('bookings.school_id', $schoolId)
                     ->when($admin->isBranchSecretary(), fn($q) => $q->where('bookings.branch_id', $admin->branch_id))
                     ->where('payments.status', 'approved')
-                    ->whereNotNull($dateColumn)
                     ->when($startDate, fn($q) => $q->whereBetween($dateColumn, [$startDate, $endDate]))
                     ->selectRaw('bookings.course_id, SUM(payments.amount) as total_revenue')
                     ->groupBy('bookings.course_id')
@@ -136,7 +135,6 @@ class ReportController extends Controller
                     ->where('enrollment_requests.school_id', $schoolId)
                     ->when($admin->isBranchSecretary(), fn($q) => $q->where('enrollment_requests.branch_id', $admin->branch_id))
                     ->where('payments.status', 'approved')
-                    ->whereNotNull($dateColumn)
                     ->when($startDate, fn($q) => $q->whereBetween($dateColumn, [$startDate, $endDate]))
                     ->selectRaw('enrollment_requests.course_id, SUM(payments.amount) as total_revenue')
                     ->groupBy('enrollment_requests.course_id')
@@ -147,6 +145,7 @@ class ReportController extends Controller
                     $courseRevenue[$courseId] = ($courseRevenue[$courseId] ?? 0) + $amount;
                 }
             } catch (\Exception $e) {
+                // Fallback to empty revenue if schema is out of sync or column missing
                 \Illuminate\Support\Facades\Log::warning('Course revenue query failed: ' . $e->getMessage());
             }
 

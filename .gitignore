@@ -43,7 +43,6 @@ Thumbs.db
 /tests/Browser/screenshots/**/*.webp
 
 /tests
-/docs
 /routes.json
 /routes_list.txt
 /routes_utf8.json
