@@ -1190,6 +1190,7 @@ class AdminController extends Controller
                 'register_welcome_text' => $request->register_welcome_text ?? 'Student Registration',
                 'register_subtitle_text' => $request->register_subtitle_text,
                 'login_page_bg_color' => $request->login_page_bg_color ?? '#f5f5f5',
+                'login_page_bg_type' => $request->login_page_bg_type ?? 'color',
                 'login_page_bg_image' => $loginBgImagePath,
                 'login_page_bg_opacity' => $request->login_page_bg_opacity ?? 100,
                 'booking_cutoff_hours' => $request->booking_cutoff_hours ?? 0,
@@ -1242,7 +1243,7 @@ class AdminController extends Controller
                     'qr_path' => $qrPath,
                     'is_active' => $request->has('gcash_enabled')
                         ? $request->boolean('gcash_enabled')
-                        : (bool) ($gcashSetting->is_active ?? true),
+                        : (bool) ($gcashSetting->is_active ?? false),
                 ]);
 
                 $gcashSetting->save();

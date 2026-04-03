@@ -1218,6 +1218,8 @@
 
 <script>
     const schoolSlug = '{{ $school->slug }}';
+    const studentBaseUrl = '/{{ $school->slug }}/admin/students';
+    const instructorBaseUrl = '/{{ $school->slug }}/admin/instructors';
 
     function hardenUserManagementActionForms() {
         const actionForms = document.querySelectorAll('form[data-no-ajax][action*="/toggle-status"], form[data-no-ajax][action*="/availability"]');

@@ -146,6 +146,11 @@ class School extends Model
         return $this->hasMany(\App\Models\Branch::class);
     }
 
+    public function invitations()
+    {
+        return $this->hasMany(\App\Models\Invitation::class);
+    }
+
     public function resolveView(string $view): string
     {
         $sluggedView = $this->slug . '.' . $view;
