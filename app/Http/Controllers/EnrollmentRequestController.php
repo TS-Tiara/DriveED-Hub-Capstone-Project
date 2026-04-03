@@ -27,6 +27,7 @@ class EnrollmentRequestController extends Controller
      */
     public function index(Request $request, School $school)
     {
+        /** @var \App\Models\Admin $admin */
         $admin = Auth::guard('admin')->user();
 
         $baseQuery = EnrollmentRequest::where('school_id', $school->id)
@@ -49,7 +50,7 @@ class EnrollmentRequestController extends Controller
         }
 
         if ($request->filled('branch')) {
-            $baseQuery->whereHas('branchRelation', function($q) use ($request) {
+            $baseQuery->whereHas('branchRelation', function ($q) use ($request) {
                 $q->where('name', $request->branch);
             });
         }
@@ -61,10 +62,16 @@ class EnrollmentRequestController extends Controller
         $isAjax = request()->ajax() || request()->header('X-Requested-With') === 'XMLHttpRequest';
 
         return view('school.admin.enrollment-requests.index', array_merge(compact(
-            'school', 'allRequests', 'allRequestsCount',
-            'pendingRequestsCount', 'approvedRequestsCount',
-            'completedRequestsCount', 'cancelledRequestsCount', 'rejectedRequestsCount',
-            'admin', 'branches'
+            'school',
+            'allRequests',
+            'allRequestsCount',
+            'pendingRequestsCount',
+            'approvedRequestsCount',
+            'completedRequestsCount',
+            'cancelledRequestsCount',
+            'rejectedRequestsCount',
+            'admin',
+            'branches'
         ), ['isAjax' => $request->ajax()]));
     }
 
@@ -76,6 +83,7 @@ class EnrollmentRequestController extends Controller
         // Security: verify belongs to this school
         abort_if($enrollmentRequest->school_id !== $school->id, 404);
 
+        /** @var \App\Models\Admin $admin */
         $admin = Auth::guard('admin')->user();
         if (!$admin || $admin->school_id !== $school->id) {
             abort(403, 'Unauthorized action.');
@@ -108,7 +116,10 @@ class EnrollmentRequestController extends Controller
             ->get();
 
         return view('school.admin.enrollment-requests.show', array_merge(compact(
-            'school', 'enrollmentRequest', 'sessionSummary', 'phaseProgressions'
+            'school',
+            'enrollmentRequest',
+            'sessionSummary',
+            'phaseProgressions'
         ), ['isAjax' => $request->ajax()]));
     }
 
@@ -123,6 +134,7 @@ class EnrollmentRequestController extends Controller
         }
 
         // Security Check 2: Verify admin is authenticated and belongs to this school
+        /** @var \App\Models\Admin $admin */
         $admin = Auth::guard('admin')->user();
         if (!$admin || $admin->school_id !== $school->id) {
             abort(403, 'Unauthorized action.');
@@ -179,11 +191,11 @@ class EnrollmentRequestController extends Controller
             return redirect()
                 ->back()
                 ->with('success', 'Enrollment approved and student account activated.');
-                
+
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Failed to approve enrollment: ' . $e->getMessage());
-            
+
             if (request()->ajax()) {
                 return response()->json([
                     'success' => false,
@@ -208,8 +220,10 @@ class EnrollmentRequestController extends Controller
             'reject_payment' => ['nullable'],
         ]);
 
+        /** @var \App\Models\Admin $admin */
         $admin = Auth::guard('admin')->user();
-        if (!$admin || $admin->school_id !== (int)$school->id) abort(403);
+        if (!$admin || $admin->school_id !== (int) $school->id)
+            abort(403);
 
         if (!$admin->canApproveEnrollments()) {
             abort(403, 'You do not have permission to reject enrollments.');
@@ -219,12 +233,14 @@ class EnrollmentRequestController extends Controller
         }
 
         if ($enrollmentRequest->status === 'rejected') {
-            if ($req->ajax()) return response()->json(['success' => false, 'message' => 'This enrollment request has already been rejected.'], 422);
+            if ($req->ajax())
+                return response()->json(['success' => false, 'message' => 'This enrollment request has already been rejected.'], 422);
             return redirect()->back()->with('error', 'This enrollment request has already been rejected.');
         }
 
         if ($enrollmentRequest->status === 'approved') {
-            if ($req->ajax()) return response()->json(['success' => false, 'message' => 'Cannot reject an already approved enrollment request.'], 422);
+            if ($req->ajax())
+                return response()->json(['success' => false, 'message' => 'Cannot reject an already approved enrollment request.'], 422);
             return redirect()->back()->with('error', 'Cannot reject an already approved enrollment request.');
         }
 
@@ -331,16 +347,18 @@ class EnrollmentRequestController extends Controller
      */
     public function updatePaymentStatus(Request $request, School $school, EnrollmentRequest $enrollmentRequest)
     {
-        
         $validated = $request->validate([
-            'payment_status' => ['required', 'in:pending,on_hold,paid'],
+            'payment_status' => ['required', 'in:pending,on_hold,paid,partial,rejected,revision_required'],
             'payment_notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
         // Security Check etc... (skipped for brevity in replace, but keeping logic)
+        /** @var \App\Models\Admin $admin */
         $admin = Auth::guard('admin')->user();
-        if (!$admin || $admin->school_id !== (int)$school->id) abort(403);
-        if ($admin->isBranchSecretary() && !$admin->canAccessBranch($enrollmentRequest->branch_id)) abort(403);
+        if (!$admin || $admin->school_id !== (int) $school->id)
+            abort(403);
+        if ($admin->isBranchSecretary() && !$admin->canAccessBranch($enrollmentRequest->branch_id))
+            abort(403);
 
         DB::beginTransaction();
         try {
@@ -372,6 +390,7 @@ class EnrollmentRequestController extends Controller
             abort(404);
         }
 
+        /** @var \App\Models\Admin $admin */
         $admin = Auth::guard('admin')->user();
         if (!$admin || $admin->school_id !== $school->id) {
             abort(403, 'Unauthorized action.');
@@ -460,6 +479,7 @@ class EnrollmentRequestController extends Controller
             abort(404);
         }
 
+        /** @var \App\Models\Admin $admin */
         $admin = Auth::guard('admin')->user();
         if (!$admin || $admin->school_id !== $school->id) {
             abort(403, 'Unauthorized action.');
@@ -552,6 +572,7 @@ class EnrollmentRequestController extends Controller
             abort(404);
         }
 
+        /** @var \App\Models\Admin $admin */
         $admin = Auth::guard('admin')->user();
         if (!$admin || $admin->school_id !== $school->id) {
             abort(403, 'Unauthorized action.');
@@ -637,12 +658,12 @@ class EnrollmentRequestController extends Controller
                 }
 
                 // Skip if not belonging to this school
-                if ((int)$enrollment->school_id !== (int)$school->id) {
+                if ((int) $enrollment->school_id !== (int) $school->id) {
                     continue;
                 }
 
                 // Skip finalized states (defense-in-depth against crafted requests)
-                if (in_array((string)$enrollment->status, ['approved', 'rejected', 'cancelled'], true)) {
+                if (in_array((string) $enrollment->status, ['approved', 'rejected', 'cancelled'], true)) {
                     continue;
                 }
 
@@ -671,7 +692,7 @@ class EnrollmentRequestController extends Controller
             return redirect()
                 ->back()
                 ->with('success', "Successfully approved {$approved} enrollment request(s).");
-                
+
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Bulk approval failed: ' . $e->getMessage());
@@ -709,12 +730,12 @@ class EnrollmentRequestController extends Controller
                 }
 
                 // Skip if not belonging to this school
-                if ((int)$enrollment->school_id !== (int)$school->id) {
+                if ((int) $enrollment->school_id !== (int) $school->id) {
                     continue;
                 }
 
                 // Skip if already rejected or approved
-                if (in_array((string)$enrollment->status, ['rejected', 'approved'])) {
+                if (in_array((string) $enrollment->status, ['rejected', 'approved'])) {
                     continue;
                 }
 
@@ -752,7 +773,7 @@ class EnrollmentRequestController extends Controller
             return redirect()
                 ->back()
                 ->with('success', "Successfully rejected {$rejected} enrollment request(s).");
-                
+
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Bulk rejection failed: ' . $e->getMessage());
@@ -992,6 +1013,7 @@ class EnrollmentRequestController extends Controller
      */
     public function viewLicense(Request $request, School $school, Student $student)
     {
+        /** @var \App\Models\Admin $admin */
         $admin = Auth::guard('admin')->user();
         if (!$admin || $admin->school_id !== $school->id) {
             abort(403, 'Unauthorized action.');
@@ -1004,7 +1026,7 @@ class EnrollmentRequestController extends Controller
         // 1. Direct Disk Check (Public then Local)
         if (!empty($student->student_license_path)) {
             $path = $student->student_license_path;
-            
+
             foreach (['public', 'local'] as $disk) {
                 if (Storage::disk($disk)->exists($path)) {
                     $fullPath = Storage::disk($disk)->path($path);
@@ -1068,9 +1090,12 @@ class EnrollmentRequestController extends Controller
      */
     public function apiShow(School $school, EnrollmentRequest $enrollmentRequest)
     {
+        /** @var \App\Models\Admin $admin */
         $admin = Auth::guard('admin')->user();
-        if (!$admin || $admin->school_id !== (int)$school->id) abort(403);
-        if ($admin->isBranchSecretary() && !$admin->canAccessBranch($enrollmentRequest->branch_id)) abort(403);
+        if (!$admin || $admin->school_id !== (int) $school->id)
+            abort(403);
+        if ($admin->isBranchSecretary() && !$admin->canAccessBranch($enrollmentRequest->branch_id))
+            abort(403);
 
         $enrollmentRequest->load(['learner', 'course']);
 
@@ -1087,11 +1112,11 @@ class EnrollmentRequestController extends Controller
             'reference_number' => $enrollmentRequest->payment_reference,
             'remarks' => $enrollmentRequest->remarks,
             // Paths/Routes
-            'license_url' => $enrollmentRequest->learner->student_license_path 
-                ? route('schools.admin.enrollments.viewLicense', ['school' => $school->slug, 'student' => $enrollmentRequest->learner->id]) 
+            'license_url' => $enrollmentRequest->learner->student_license_path
+                ? route('schools.admin.enrollments.viewLicense', ['school' => $school->slug, 'student' => $enrollmentRequest->learner->id])
                 : null,
-            'receipt_url' => $enrollmentRequest->payment_proof_path 
-                ? route('schools.admin.enrollments.view-payment-proof', ['school' => $school->slug, 'enrollmentRequest' => $enrollmentRequest->id]) 
+            'receipt_url' => $enrollmentRequest->payment_proof_path
+                ? route('schools.admin.enrollments.view-payment-proof', ['school' => $school->slug, 'enrollmentRequest' => $enrollmentRequest->id])
                 : null,
             // Verification Endpoints
             'verify_payment_url' => route('schools.admin.enrollments.api.verify-payment', ['school' => $school->slug, 'enrollmentRequest' => $enrollmentRequest->id]),
@@ -1106,9 +1131,12 @@ class EnrollmentRequestController extends Controller
      */
     public function unifiedApprove(Request $request, School $school, EnrollmentRequest $enrollmentRequest)
     {
+        /** @var \App\Models\Admin $admin */
         $admin = Auth::guard('admin')->user();
-        if (!$admin || $admin->school_id !== (int)$school->id) abort(403);
-        if (!$admin->canApproveEnrollments()) abort(403);
+        if (!$admin || $admin->school_id !== (int) $school->id)
+            abort(403);
+        if (!$admin->canApproveEnrollments())
+            abort(403);
 
         DB::beginTransaction();
         try {
@@ -1121,9 +1149,10 @@ class EnrollmentRequestController extends Controller
                 ]);
             }
 
-            // 2. Mark related Payment records as completed
+            // 2. Mark related Payment records as approved (Payment Domain Alignment)
             $enrollmentRequest->payments()->where('status', 'pending')->update([
-                'status' => 'completed',
+                'status' => 'approved',
+                'received_at' => now(),
                 'updated_at' => now(),
             ]);
 
@@ -1146,7 +1175,7 @@ class EnrollmentRequestController extends Controller
 
             if ($request->ajax()) {
                 return response()->json([
-                    'success' => true, 
+                    'success' => true,
                     'message' => 'Enrollment fully approved! Student has been activated.'
                 ]);
             }
@@ -1169,9 +1198,12 @@ class EnrollmentRequestController extends Controller
      */
     public function verifyPayment(Request $request, School $school, EnrollmentRequest $enrollmentRequest)
     {
+        /** @var \App\Models\Admin $admin */
         $admin = Auth::guard('admin')->user();
-        if (!$admin || $admin->school_id !== (int)$school->id) abort(403);
-        if (!$admin->canApproveEnrollments()) abort(403);
+        if (!$admin || $admin->school_id !== (int) $school->id)
+            abort(403);
+        if (!$admin->canApproveEnrollments())
+            abort(403);
 
         DB::beginTransaction();
         try {
@@ -1179,6 +1211,13 @@ class EnrollmentRequestController extends Controller
                 'payment_status' => 'paid',
                 'payment_confirmed_by' => $admin->id,
                 'payment_confirmed_at' => now(),
+            ]);
+
+            // Sync related Payment records (F-001 Lifecycle Parity)
+            $enrollmentRequest->payments()->where('status', 'pending')->update([
+                'status' => 'approved',
+                'received_at' => now(),
+                'updated_at' => now(),
             ]);
 
             DB::commit();
@@ -1196,9 +1235,12 @@ class EnrollmentRequestController extends Controller
      */
     public function apiVerifyLicense(Request $request, School $school, EnrollmentRequest $enrollmentRequest)
     {
+        /** @var \App\Models\Admin $admin */
         $admin = Auth::guard('admin')->user();
-        if (!$admin || $admin->school_id !== (int)$school->id) abort(403);
-        if (!$admin->canApproveEnrollments()) abort(403);
+        if (!$admin || $admin->school_id !== (int) $school->id)
+            abort(403);
+        if (!$admin->canApproveEnrollments())
+            abort(403);
 
         $student = $enrollmentRequest->student;
         if (!$student) {
@@ -1231,17 +1273,20 @@ class EnrollmentRequestController extends Controller
      */
     public function viewPaymentProof(Request $request, School $school, EnrollmentRequest $enrollmentRequest)
     {
+        /** @var \App\Models\Admin $admin */
         $admin = Auth::guard('admin')->user();
-        if (!$admin || $admin->school_id !== (int)$school->id) abort(403);
+        if (!$admin || $admin->school_id !== (int) $school->id)
+            abort(403);
 
         $path = $enrollmentRequest->payment_proof_path;
-        if (empty($path)) abort(404, 'No payment proof path found for this enrollment.');
+        if (empty($path))
+            abort(404, 'No payment proof path found for this enrollment.');
 
         // Try both public and local disks for robustness
         foreach (['public', 'local'] as $diskName) {
             if (Storage::disk($diskName)->exists($path)) {
                 $fullPath = Storage::disk($diskName)->path($path);
-                
+
                 // Set appropriate filename for display/download
                 $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
                 $filename = "payment-receipt-{$enrollmentRequest->id}.{$extension}";

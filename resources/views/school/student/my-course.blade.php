@@ -646,7 +646,7 @@
         {{-- Session History --}}
         @if($sessionCompletions->count() > 0)
             <div class="course-card">
-                <h3 class="section-title">Official Training Logs</h3>
+                <h3 class="section-title">Official Session Completions</h3>
                 <p class="materials-note">These are your officially verified and logged training hours.</p>
                     @foreach($sessionCompletions->sortByDesc('session_date')->take(10) as $session)
                         <div class="session-item">
