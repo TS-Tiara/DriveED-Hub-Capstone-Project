@@ -8,6 +8,7 @@ use App\Models\Payment;
 use App\Models\School;
 use App\Services\PaymentSubmissionService;
 use App\Services\ReceiptStorageService;
+use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -128,8 +129,14 @@ class PaymentController extends Controller
         $validated = $request->validate([
             'method' => 'required|in:gcash,on_site',
             'amount' => 'required|numeric|min:1',
-            'booking_id' => 'nullable|exists:bookings,id',
-            'enrollment_request_id' => 'nullable|exists:enrollment_requests,id',
+            'booking_id' => [
+                'nullable',
+                Rule::exists('bookings', 'id')->where('school_id', $school->id)
+            ],
+            'enrollment_request_id' => [
+                'nullable',
+                Rule::exists('enrollment_requests', 'id')->where('school_id', $school->id)
+            ],
             
             // GCash fields
             'reference' => 'required_if:method,gcash|nullable|string|max:120',
@@ -149,12 +156,13 @@ class PaymentController extends Controller
         $data['payer_user_id'] = $studentId;
 
         // Determine branch and check ownership
+        // Layer 2: Fail-Closed Retrieval
         if (!empty($validated['booking_id'])) {
-            $booking = \App\Models\Booking::findOrFail($validated['booking_id']);
+            $booking = $school->bookings()->findOrFail($validated['booking_id']);
             if (!$isAdmin && (int)$booking->student_id !== (int)$studentId) abort(403);
             $data['branch_id'] = $booking->branch_id;
         } else {
-            $enrollment = \App\Models\EnrollmentRequest::findOrFail($validated['enrollment_request_id']);
+            $enrollment = $school->enrollmentRequests()->findOrFail($validated['enrollment_request_id']);
             if (!$isAdmin && (int)$enrollment->learner_id !== (int)$studentId) abort(403);
             $data['branch_id'] = $enrollment->branch_id;
         }
@@ -173,6 +181,17 @@ class PaymentController extends Controller
 
         if ($request->expectsJson()) {
             return response()->json(['success' => true, 'message' => 'Payment submitted for verification.', 'payment' => $payment], 201);
+        }
+
+        // F-008: Role-Aware Explicit Redirects
+        if (Auth::guard('admin')->check()) {
+            return redirect()->route('schools.admin.payments.index', $school->slug)->with('success', 'Payment submitted successfully.');
+        } elseif (Auth::guard('student')->check()) {
+            // Check if user is a guest role student
+            if (Auth::guard('student')->user()->isGuest()) {
+                return redirect()->route('schools.guest.payments.index', $school->slug)->with('success', 'Payment submitted successfully.');
+            }
+            return redirect()->route('schools.student.payments.index', $school->slug)->with('success', 'Payment submitted successfully.');
         }
 
         return redirect()->back()->with('success', 'Payment submitted successfully.');
@@ -229,9 +248,10 @@ class PaymentController extends Controller
     /**
      * Remove the specified payment.
      */
-    public function destroy(Request $request, School $school, Payment $payment)
+    public function destroy(Request $request, School $school, $id)
     {
-        abort_if($payment->school_id !== $school->id, 404);
+        // Layer 2: Fail-Closed Retrieval
+        $payment = $school->payments()->findOrFail($id);
 
         // Security: Branch secretary restriction
         $admin = Auth::guard('admin')->user();
@@ -255,12 +275,12 @@ class PaymentController extends Controller
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Payment deleted successfully'
+                'message' => 'Payment record deleted successfully.'
             ]);
         }
 
-        return redirect()->route('payments.index', $school->slug)
-            ->with('success', 'Payment deleted successfully');
+        return redirect()->route('schools.admin.payments.index', $school)
+            ->with('success', 'Payment record deleted successfully.');
     }
 
     /**

@@ -23,6 +23,7 @@ use App\Http\Controllers\ReportController;
 use App\Services\FinancialService;
 use App\Models\TimeSlot;
 use App\Models\PhaseProgression;
+use App\Rules\StrongPassword;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
@@ -91,22 +92,33 @@ class AdminController extends Controller
             // Get today's date for filtering
             $today = Carbon::today();
 
-            // Calculate enrollment trend (last 30 days) - Optimized with single query
-            $enrollmentCounts = $admin->scopeToBranch(Student::where('school_id', $school->id))
-                ->where('created_at', '>=', Carbon::today()->subDays(30))
+            // Calculate enrollment trend (last 12 months, grouped monthly)
+            $trendStart = Carbon::now()->startOfMonth()->subMonths(11);
+
+            // Keep DATE() grouping in SQL for database compatibility, then bucket to month in PHP.
+            $dailyEnrollmentCounts = $admin->scopeToBranch(Student::where('school_id', $school->id))
+                ->where('created_at', '>=', $trendStart)
                 ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
                 ->groupBy('date')
                 ->orderBy('date', 'asc')
-                ->get()
-                ->pluck('count', 'date');
+                ->get();
+
+            $monthlyEnrollmentCounts = $dailyEnrollmentCounts
+                ->groupBy(function ($row) {
+                    return Carbon::parse($row->date)->format('Y-m');
+                })
+                ->map(function ($rows) {
+                    return (int) $rows->sum('count');
+                });
 
             $enrollmentData = [];
-            for ($i = 29; $i >= 0; $i--) {
-                $date = Carbon::today()->subDays($i)->format('Y-m-d');
-                $displayDate = Carbon::today()->subDays($i)->format('M d');
+            for ($i = 11; $i >= 0; $i--) {
+                $month = Carbon::now()->startOfMonth()->subMonths($i);
+                $monthKey = $month->format('Y-m');
+
                 $enrollmentData[] = [
-                    'date' => $displayDate,
-                    'count' => $enrollmentCounts[$date] ?? 0
+                    'month' => $month->format('M Y'),
+                    'count' => $monthlyEnrollmentCounts->get($monthKey, 0),
                 ];
             }
 
@@ -133,23 +145,21 @@ class AdminController extends Controller
             $pendingEnrollments = $admin->scopeToBranch(EnrollmentRequest::where('school_id', $school->id))->where('status', 'pending')->count();
             $pendingProgressions = $admin->scopeToBranch(PhaseProgression::where('school_id', $school->id))->where('status', 'pending')->count();
 
-            // Calculate monthly revenue (completed payments paid_on this month)
+            // Calculate monthly revenue (approved payments received this month) - F-004 Remediation
             try {
-                $hasReceivedAt = Schema::hasColumn('payments', 'received_at');
-                $hasRefundedAt = Schema::hasColumn('payments', 'refunded_at');
+                $monthlyRevenue = $admin->scopeToBranch(Payment::where('school_id', $school->id))
+                    ->where('status', '=', 'approved')
+                    ->whereNotNull('received_at')
+                    ->whereBetween('received_at', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()])
+                    ->sum('amount');
+                
+                $monthlyRefunds = $admin->scopeToBranch(Payment::where('school_id', $school->id))
+                    ->where('status', '=', 'refunded')
+                    ->whereNotNull('refunded_at')
+                    ->whereBetween('refunded_at', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()])
+                    ->sum('refunded_amount');
 
-                if ($hasReceivedAt && $hasRefundedAt) {
-                    $monthlyRevenue = $admin->scopeToBranch(Payment::where('school_id', $school->id))
-                        ->where('status', '=', 'approved')
-                        ->whereBetween('received_at', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()])
-                        ->sum('amount')
-                        - $admin->scopeToBranch(Payment::where('school_id', $school->id))
-                        ->where('status', '=', 'refunded')
-                        ->whereBetween('refunded_at', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()])
-                        ->sum('refunded_amount');
-                } else {
-                    $monthlyRevenue = 0;
-                }
+                $monthlyRevenue = max(0, $monthlyRevenue - $monthlyRefunds);
             } catch (\Exception $e) {
                 LogFacade::warning("Dashboard revenue calculation failed, falling back to 0: " . $e->getMessage());
                 $monthlyRevenue = 0;
@@ -346,7 +356,10 @@ class AdminController extends Controller
                 ],
                 'contact' => ['nullable', 'string', 'max:13', 'regex:/^(09\d{9}|\+639\d{9})$/'],
                 'role' => 'required|in:student,instructor',
-                'branch_id' => 'nullable|exists:branches,id',
+                'branch_id' => [
+                    'nullable',
+                    Rule::exists('branches', 'id')->where('school_id', $school->id)
+                ],
                 'license_number' => ($request->role === 'instructor' && ($school->schoolSetting->require_instructor_license ?? true)) ? 'required|string|max:50' : 'nullable|string|max:50',
             ]);
 
@@ -431,10 +444,10 @@ class AdminController extends Controller
                 ],
                 'contact' => ['nullable', 'string', 'max:13', 'regex:/^(09\d{9}|\+639\d{9})$/'],
                 'address' => 'nullable|string|max:255',
-                'password' => 'nullable|string|min:6',
+                'password' => ['nullable', 'string', new StrongPassword()],
                 'branch_id' => [
                     'nullable',
-                    'exists:branches,id',
+                    Rule::exists('branches', 'id')->where('school_id', $school->id),
                     function ($attribute, $value, $fail) use ($admin) {
                         if ($admin->isBranchSecretary() && !empty($value) && (int)$value !== (int)$admin->branch_id) {
                             $fail('You can only assign students to your own branch.');
@@ -543,10 +556,10 @@ class AdminController extends Controller
                 ],
                 'contact' => ['nullable', 'string', 'max:13', 'regex:/^(09\d{9}|\+639\d{9})$/'],
                 'license_number' => 'nullable|string|max:50',
-                'password' => 'nullable|string|min:6',
+                'password' => ['nullable', 'string', new StrongPassword()],
                 'branch_id' => [
                     'nullable',
-                    'exists:branches,id',
+                    Rule::exists('branches', 'id')->where('school_id', $school->id),
                     function ($attribute, $value, $fail) use ($admin) {
                         if ($admin->isBranchSecretary() && !empty($value) && (int)$value !== (int)$admin->branch_id) {
                             $fail('You can only assign instructors to your own branch.');
@@ -693,7 +706,7 @@ class AdminController extends Controller
                 ],
                 'contact' => ['nullable', 'string', 'max:20', 'regex:/^(09\d{9}|\+639\d{9})$/'],
                 'current_password' => 'nullable|string|min:6',
-                'new_password' => 'nullable|string|min:6|confirmed',
+                'new_password' => ['nullable', 'confirmed', new StrongPassword()],
             ]);
 
             $data = $request->only(['name', 'email', 'contact']);
@@ -1362,18 +1375,45 @@ class AdminController extends Controller
             'date' => 'required|date|after_or_equal:today',
             'start_time' => 'required',
             'end_time' => 'required|after:start_time',
-            'course_id' => 'required|exists:courses,id',
-            'branch_id' => 'nullable|exists:branches,id',
+            'course_id' => [
+                'required',
+                Rule::exists('courses', 'id')->where('school_id', $school->id)
+            ],
+            'branch_id' => [
+                'nullable',
+                Rule::exists('branches', 'id')->where('school_id', $school->id)
+            ],
             'instructor_ids' => 'nullable|array',
-            'instructor_ids.*' => 'exists:instructors,id',
+            'instructor_ids.*' => [
+                Rule::exists('instructors', 'id')->where('school_id', $school->id)
+            ],
             'max_instructors' => 'nullable|integer|min:1',
+            'max_students' => 'nullable|integer|min:1',
             'notes' => 'nullable|string',
         ]);
+
+        // Layer 2: Fail-Closed Retrieval
+        $course = $school->courses()->findOrFail($validated['course_id']);
 
         // Branch-level authorization
         $branchId = $validated['branch_id'] ?? $admin->branch_id;
         if (!$admin->canAccessBranch($branchId)) {
             abort(403, 'You do not have permission to create schedules for this branch.');
+        }
+
+        // Layer 3: Type Enforcement
+        $maxStudents = $validated['max_students'] ?? 1;
+        if ($course->isPractical()) {
+            $maxStudents = 1;
+        }
+
+        // Layer 3: Safe Normalization
+        $maxInstructors = (int) ($validated['max_instructors'] ?? 1);
+        $maxStudents = (int) ($validated['max_students'] ?? 1);
+
+        // Force PDC to 1-on-1 (QoL Implementation)
+        if ($course->isPractical()) {
+            $maxStudents = 1;
         }
 
         $schedule = \App\Models\TimeSlot::create([
@@ -1383,7 +1423,8 @@ class AdminController extends Controller
             'date' => $validated['date'],
             'start_time' => $validated['start_time'],
             'end_time' => $validated['end_time'],
-            'max_instructors' => $validated['max_instructors'] ?? 1,
+            'max_instructors' => $maxInstructors,
+            'max_students' => $maxStudents,
             'notes' => $validated['notes'] ?? null,
             'status' => 'open',
         ]);
@@ -1402,7 +1443,7 @@ class AdminController extends Controller
             }
 
             // Check if not exceeding max capacity
-            if ($instructors->count() > $validated['max_instructors']) {
+            if ($instructors->count() > $maxInstructors) {
                 $schedule->delete(); // Changed $timeslot to $schedule
                 return redirect()->back()->with('error', 'Cannot assign more instructors than max capacity.');
             }
@@ -1415,7 +1456,7 @@ class AdminController extends Controller
                 ]);
             }
 
-            $availableSpots = $validated['max_instructors'] - $instructors->count();
+            $availableSpots = $maxInstructors - $instructors->count();
             $message = 'Schedule created with ' . $instructors->count() . ' instructor(s) assigned.';
 
             if ($availableSpots > 0) {
@@ -1426,7 +1467,7 @@ class AdminController extends Controller
         }
 
         // No instructors assigned - all spots available
-        return redirect()->back()->with('success', 'Schedule created! ' . $validated['max_instructors'] . ' spot(s) available for instructor self-selection.');
+        return redirect()->back()->with('success', 'Schedule created! ' . $maxInstructors . ' spot(s) available for instructor self-selection.');
     }
 
     /**
@@ -1450,7 +1491,9 @@ class AdminController extends Controller
             $validated = $request->validate([
                 'notes' => 'nullable|string|max:500',
                 'instructor_ids' => 'nullable|array',
-                'instructor_ids.*' => 'exists:instructors,id',
+                'instructor_ids.*' => [
+                    Rule::exists('instructors', 'id')->where('school_id', $school->id)
+                ],
             ]);
 
             DB::beginTransaction();
