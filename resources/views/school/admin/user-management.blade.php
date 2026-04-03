@@ -285,15 +285,71 @@
         padding: 6px 12px;
         margin: 0;
         border: none;
+        border: 1px solid transparent;
         border-radius: 6px;
         cursor: pointer;
         font-size: 0.9rem;
+        font-weight: 600;
         transition: all 0.2s;
         display: inline-flex;
         align-items: center;
         justify-content: center;
+        gap: 6px;
         line-height: 1.2;
         white-space: nowrap;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-start;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .action-buttons form {
+        margin: 0;
+        display: inline-flex;
+    }
+
+    .action-buttons .btn-action {
+        padding: 8px 12px;
+        border-radius: 10px;
+    }
+
+    .action-buttons .btn-info {
+        background: #e8efff;
+        color: #2563eb;
+        border-color: #c7d2fe;
+    }
+
+    .action-buttons .btn-warning {
+        background: #fef3c7;
+        color: #b45309;
+        border-color: #fde68a;
+    }
+
+    .action-buttons .btn-success {
+        background: #dcfce7;
+        color: #166534;
+        border-color: #bbf7d0;
+    }
+
+    .action-buttons .btn-secondary {
+        background: #ffe4e6;
+        color: #be123c;
+        border-color: #fecdd3;
+    }
+
+    .action-buttons .btn-primary {
+        background: #dbeafe;
+        color: #1d4ed8;
+        border-color: #bfdbfe;
+    }
+
+    .action-buttons .btn-action:hover {
+        transform: translateY(-1px);
+        filter: brightness(0.98);
     }
 
     .actions-cell {
@@ -899,7 +955,7 @@
                                 </span>
                             </td>
                             <td class="actions-cell">
-                                <div class="action-buttons" style="display: flex; gap: 8px; justify-content: flex-start;">
+                                <div class="action-buttons">
                                     {{-- Global Edit Button --}}
                                     @if($user->role === 'student' || $user->role === 'guest')
                                         <button type="button" class="btn-action btn-info js-edit-user" 
@@ -912,6 +968,7 @@
                                             data-branch="{{ $user->branch_id }}"
                                             title="Edit Student">
                                             <i class="bi bi-pencil-square"></i>
+                                            <span>Edit</span>
                                         </button>
                                     @elseif($user->role === 'instructor')
                                         <button type="button" class="btn-action btn-info js-edit-user" 
@@ -924,6 +981,7 @@
                                             data-branch="{{ $user->branch_id }}"
                                             title="Edit Instructor">
                                             <i class="bi bi-pencil-square"></i>
+                                            <span>Edit</span>
                                         </button>
                                     @endif
 
@@ -938,24 +996,24 @@
                                     @endphp
 
                                     @if($toggleRoute)
-                                        <form action="{{ $toggleRoute }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to change this account\'s status?')">
-                                            @csrf
-                                            @method('PATCH')
-                                            <button type="submit" class="btn-action {{ $user->status === 'active' ? 'btn-warning' : 'btn-success' }}" title="{{ $user->status === 'active' ? 'Deactivate' : 'Activate' }}">
-                                                <i class="bi {{ $user->status === 'active' ? 'bi-pause-circle' : 'bi-play-circle' }}"></i>
-                                            </button>
-                                        </form>
+                                        <button type="button" 
+                                            class="btn-action {{ $user->status === 'active' ? 'btn-warning' : 'btn-success' }}" 
+                                            onclick="unifiedToggle({{ $user->id }}, 'status', '{{ $user->status }}', '{{ $user->role }}')"
+                                            title="{{ $user->status === 'active' ? 'Deactivate' : 'Activate' }}">
+                                            <i class="bi {{ $user->status === 'active' ? 'bi-pause-circle' : 'bi-play-circle' }}"></i>
+                                            <span>{{ $user->status === 'active' ? 'Deactivate' : 'Activate' }}</span>
+                                        </button>
                                     @endif
 
                                     {{-- Instructor Specific Availability --}}
                                     @if($user->role === 'instructor')
-                                        <form action="{{ school_route('admin.userManagement.toggleAvailability', [$user->id]) }}" method="POST" style="display:inline;">
-                                            @csrf
-                                            @method('PATCH')
-                                            <button type="submit" class="btn-action {{ $user->availability === 'available' ? 'btn-secondary' : 'btn-primary' }}" title="{{ $user->availability === 'available' ? 'Mark Unavailable' : 'Mark Available' }}">
-                                                <i class="bi {{ $user->availability === 'available' ? 'bi-person-dash' : 'bi-person-check' }}"></i>
-                                            </button>
-                                        </form>
+                                        <button type="button" 
+                                            class="btn-action {{ $user->availability === 'available' ? 'btn-secondary' : 'btn-primary' }}" 
+                                            onclick="unifiedToggle({{ $user->id }}, 'availability', '{{ $user->availability }}', '{{ $user->role }}')"
+                                            title="{{ $user->availability === 'available' ? 'Mark Unavailable' : 'Mark Available' }}">
+                                            <i class="bi {{ $user->availability === 'available' ? 'bi-person-dash' : 'bi-person-check' }}"></i>
+                                            <span>{{ $user->availability === 'available' ? 'Unavailable' : 'Available' }}</span>
+                                        </button>
                                     @endif
                                 </div>
                             </td>
@@ -1159,11 +1217,38 @@
 </div>
 
 <script>
-    const studentBaseUrl = '{{ $schoolUrl("admin/students") }}';
-    const instructorBaseUrl = '{{ $schoolUrl("admin/instructors") }}';
+    const schoolSlug = '{{ $school->slug }}';
+
+    function hardenUserManagementActionForms() {
+        const actionForms = document.querySelectorAll('form[data-no-ajax][action*="/toggle-status"], form[data-no-ajax][action*="/availability"]');
+        if (!actionForms.length) {
+            return;
+        }
+
+        let pageToken = '';
+
+        actionForms.forEach(form => {
+            form.classList.add('native-form');
+            form.setAttribute('data-no-ajax', '1');
+            form.setAttribute('data-no-submit-guard', '1');
+
+            const tokenInput = form.querySelector('input[name="_token"]');
+            if (!pageToken && tokenInput && tokenInput.value) {
+                pageToken = tokenInput.value;
+            }
+        });
+
+        if (pageToken) {
+            const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+            if (csrfMeta && csrfMeta.getAttribute('content') !== pageToken) {
+                csrfMeta.setAttribute('content', pageToken);
+            }
+        }
+    }
 
     // Initialize user management page
     function initializeUserManagementPage() {
+        hardenUserManagementActionForms();
         console.log('User Management page initialized');
     }
 
@@ -1301,36 +1386,84 @@
         Toast.info('Student details view coming soon!', 'Feature Info');
     }
     
-    function toggleStudentStatus(id, currentStatus) {
-        const action = currentStatus === 'active' ? 'deactivate' : 'activate';
+    function unifiedToggle(id, type, currentValue, role) {
+        const action = (type === 'status') 
+            ? (currentValue === 'active' ? 'Deactivate' : 'Activate')
+            : (currentValue === 'available' ? 'Mark Unavailable' : 'Mark Available');
+
+        const typeLabel = (type === 'status') ? 'Account Status' : 'Availability';
+
         showConfirm({
-            type: currentStatus === 'active' ? 'warning' : 'success',
-            title: `${currentStatus === 'active' ? 'Deactivate' : 'Activate'} Student`,
-            message: `Are you sure you want to ${action} this student account?`,
-            confirmText: `Yes, ${action.charAt(0).toUpperCase() + action.slice(1)}`,
+            type: (currentValue === 'active' || currentValue === 'available') ? 'warning' : 'success',
+            title: `${action} ${role.charAt(0).toUpperCase() + role.slice(1)}`,
+            message: `Are you sure you want to ${action.toLowerCase()} this ${role}'s ${typeLabel.toLowerCase()}?`,
+            confirmText: `Yes, ${action}`,
             onConfirm: () => {
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = `${studentBaseUrl}/${id}/toggle-status`;
+                // Get fresh token from meta tag
+                const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
                 
-                const csrfInput = document.createElement('input');
-                csrfInput.type = 'hidden';
-                csrfInput.name = '_token';
-                csrfInput.value = '{{ csrf_token() }}';
-                
-                const methodInput = document.createElement('input');
-                methodInput.type = 'hidden';
-                methodInput.name = '_method';
-                methodInput.value = 'PATCH';
-                
-                form.appendChild(csrfInput);
-                form.appendChild(methodInput);
-                document.body.appendChild(form);
-                form.submit();
+                // Determine correct route (Relative paths for Hostinger/CORS safety)
+                let url = '';
+                if (type === 'availability') {
+                    url = '/' + schoolSlug + '/admin/instructors/' + id + '/availability';
+                } else {
+                    const basePart = (role === 'instructor') ? 'instructors' : 'students';
+                    url = '/' + schoolSlug + '/admin/' + basePart + '/' + id + '/toggle-status';
+                }
+
+                fetch(url, {
+                    method: 'PATCH',
+                    redirect: 'manual', // <--- PREVENT 405 error by stopping automatic PATCH follow
+                    headers: {
+                        'X-CSRF-TOKEN': token,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(async response => {
+                    // Check for session timeouts (419/401)
+                    if (response.status === 419 || response.status === 401) {
+                        showConfirm({
+                            type: 'error',
+                            title: 'Session Expired',
+                            message: 'Your session has timed out. Please refresh and log in again.',
+                            confirmText: 'Log In Again',
+                            onConfirm: () => window.location.reload()
+                        });
+                        return;
+                    }
+
+                    // SUCCESS: In 'manual' mode, status 0 or 302 means the PATCH worked and Laravel is redirecting "Back"
+                    // Status 0 (opaque redirect) or ok (200) both mean SUCCESS here.
+                    if (response.ok || response.status === 0 || response.status === 302) {
+                        Toast.success(`${typeLabel} updated successfully!`);
+                        
+                        try {
+                            // CLEAN REFRESH: Manually trigger a fresh GET request to reload the table
+                            if (typeof loadContent === 'function') {
+                                loadContent(window.location.pathname);
+                            } else {
+                                window.location.reload();
+                            }
+                        } catch (refreshErr) {
+                            console.warn('Silent refresh error:', refreshErr);
+                            window.location.reload();
+                        }
+                    } else {
+                        const error = new Error(`Server error`);
+                        error.status = response.status;
+                        throw error;
+                    }
+                })
+                .catch(error => {
+                    console.error('Toggle error:', error);
+                    // Forensic Reporting: No more "Unknown" if we have a status
+                    const detail = error.status ? `(Status ${error.status})` : `(${error.message})`;
+                    Toast.error('Failed to update ' + detail + '. Please refresh and try again.');
+                });
             }
         });
     }
-    
+
     // Instructor Modal Functions
     function openCreateInstructorModal() {
         document.getElementById('createInstructorModal').style.display = 'flex';
@@ -1360,66 +1493,6 @@
         Toast.info('Instructor details view coming soon!', 'Feature Info');
     }
     
-    function toggleInstructorStatus(id, currentStatus) {
-        const action = currentStatus === 'active' ? 'deactivate' : 'activate';
-        showConfirm({
-            type: currentStatus === 'active' ? 'warning' : 'success',
-            title: `${currentStatus === 'active' ? 'Deactivate' : 'Activate'} Instructor`,
-            message: `Are you sure you want to ${action} this instructor account?`,
-            confirmText: `Yes, ${action.charAt(0).toUpperCase() + action.slice(1)}`,
-            onConfirm: () => {
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = `${instructorBaseUrl}/${id}/toggle-status`;
-                
-                const csrfInput = document.createElement('input');
-                csrfInput.type = 'hidden';
-                csrfInput.name = '_token';
-                csrfInput.value = '{{ csrf_token() }}';
-                
-                const methodInput = document.createElement('input');
-                methodInput.type = 'hidden';
-                methodInput.name = '_method';
-                methodInput.value = 'PATCH';
-                
-                form.appendChild(csrfInput);
-                form.appendChild(methodInput);
-                document.body.appendChild(form);
-                form.submit();
-            }
-        });
-    }
-    
-    function toggleInstructorAvailability(id, currentAvailability) {
-        const action = currentAvailability === 'available' ? 'unavailable' : 'available';
-        showConfirm({
-            type: 'info',
-            title: 'Change Availability',
-            message: `Mark this instructor as ${action}?`,
-            confirmText: `Yes, Mark ${action.charAt(0).toUpperCase() + action.slice(1)}`,
-            onConfirm: () => {
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = `${instructorBaseUrl}/${id}/availability`;
-                
-                const csrfInput = document.createElement('input');
-                csrfInput.type = 'hidden';
-                csrfInput.name = '_token';
-                csrfInput.value = '{{ csrf_token() }}';
-                
-                const methodInput = document.createElement('input');
-                methodInput.type = 'hidden';
-                methodInput.name = '_method';
-                methodInput.value = 'PATCH';
-                
-                form.appendChild(csrfInput);
-                form.appendChild(methodInput);
-                document.body.appendChild(form);
-                form.submit();
-            }
-        });
-    }
-    
     // Close modal when clicking outside
     window.onclick = function(e) {
         if (e.target.classList.contains('modal')) {
@@ -1427,16 +1500,6 @@
         }
     }
     
-    // Check for session flash messages and trigger toast notifications if available
-    document.addEventListener('DOMContentLoaded', function() {
-        @if(session('success'))
-            showToast('success', "{{ session('success') }}");
-        @endif
-        
-        @if(session('error'))
-            showToast('error', "{{ session('error') }}");
-        @endif
-    });
 </script>
 
 @endsection
