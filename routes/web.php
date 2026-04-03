@@ -251,8 +251,6 @@ Route::prefix('{school:slug}')
                             Route::prefix('exports')->name('exports.')->group(function () {
                             Route::get('/students/pdf', [ExportController::class , 'studentsPdf'])->name('students.pdf');
                             Route::get('/students/excel', [ExportController::class , 'studentsExcel'])->name('students.excel');
-                            Route::get('/admins/pdf', [ExportController::class , 'adminsPdf'])->name('admins.pdf');
-                            Route::get('/admins/excel', [ExportController::class , 'adminsExcel'])->name('admins.excel');
                             Route::get('/enrollments/pdf', [ExportController::class , 'enrollmentsPdf'])->name('enrollments.pdf');
                             Route::get('/student/{student}/progress/pdf', [ExportController::class , 'studentProgressPdf'])->name('student.progress.pdf');
                             Route::get('/instructors/pdf', [ExportController::class , 'instructorsPdf'])->name('instructors.pdf');
