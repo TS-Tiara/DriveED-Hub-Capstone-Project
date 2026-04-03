@@ -11,6 +11,28 @@ class SystemLog extends Model
 {
     use HasFactory;
 
+    private const ALLOWED_CATEGORIES = [
+        'database',
+        'validation',
+        'authentication',
+        'authorization',
+        'file_upload',
+        'email',
+        'payment',
+        'api',
+        'system',
+        'booking',
+        'schedule',
+        'user_management',
+        'course',
+        'other',
+    ];
+
+    private const CATEGORY_ALIASES = [
+        'admin' => 'user_management',
+        'enrollment' => 'user_management',
+    ];
+
     protected $fillable = [
         'school_id',
         'user_id',
@@ -157,12 +179,14 @@ class SystemLog extends Model
             $context['actor_name'] = $user->name ?? null;
         }
 
+        $normalizedCategory = self::normalizeCategory($category, $context);
+
         $log = self::create([
             'school_id' => $schoolId ?? ($user->school_id ?? null),
             'user_id' => null, // Always null - our users aren't in the 'users' table
             'user_type' => $guardName ?? 'system',
             'level' => $level,
-            'category' => $category,
+            'category' => $normalizedCategory,
             'action' => $action,
             'message' => self::maskPii($message),
             'exception_class' => $exception ? get_class($exception) : null,
@@ -180,6 +204,23 @@ class SystemLog extends Model
         }
 
         return $log;
+    }
+
+    private static function normalizeCategory(string $category, array &$context): string
+    {
+        $normalized = strtolower(trim($category));
+
+        if (isset(self::CATEGORY_ALIASES[$normalized])) {
+            $context['log_category_original'] = $category;
+            return self::CATEGORY_ALIASES[$normalized];
+        }
+
+        if (in_array($normalized, self::ALLOWED_CATEGORIES, true)) {
+            return $normalized;
+        }
+
+        $context['log_category_original'] = $category;
+        return 'other';
     }
 
     private static function getCurrentGuardName(): ?string

@@ -111,7 +111,7 @@ class AdminManagementController extends Controller
 
             SystemLog::logInfo(
                 "Invitation sent to {$roleLabel}: {$invitation->email}",
-                'admin',
+                'user_management',
                 [
                     'role' => $invitation->role,
                     'branch_id' => $invitation->branch_id,
@@ -196,7 +196,7 @@ class AdminManagementController extends Controller
 
         SystemLog::logInfo(
             "Admin '{$targetAdmin->name}' updated by {$admin->name}",
-            'admin',
+            'user_management',
         [
             'admin_id' => $targetAdmin->id,
             'new_role' => $targetAdmin->role,
@@ -241,7 +241,7 @@ class AdminManagementController extends Controller
 
         SystemLog::logInfo(
             "Admin '{$targetAdmin->name}' {$statusLabel} by {$admin->name}",
-            'admin',
+            'user_management',
         [
             'admin_id' => $targetAdmin->id,
             'new_status' => $targetAdmin->is_active,
@@ -283,7 +283,7 @@ class AdminManagementController extends Controller
 
         SystemLog::logInfo(
             "Admin '{$name}' (role: {$role}) deleted by {$admin->name}",
-            'admin',
+            'user_management',
         [
             'deleted_admin_name' => $name,
             'deleted_role' => $role,
