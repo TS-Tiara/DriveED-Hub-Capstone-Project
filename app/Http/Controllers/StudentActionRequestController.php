@@ -91,7 +91,7 @@ class StudentActionRequestController extends Controller
 
         SystemLog::logInfo(
             "Branch secretary {$admin->name} requested to add a student to branch",
-            'enrollment',
+            'user_management',
             [
                 'branch_id' => $admin->branch_id,
                 'student_id' => $validated['student_id'] ?? null,
@@ -147,7 +147,7 @@ class StudentActionRequestController extends Controller
 
         SystemLog::logInfo(
             "Branch secretary {$admin->name} requested to remove student {$student->name} from branch",
-            'enrollment',
+            'user_management',
             [
                 'branch_id' => $admin->branch_id,
                 'student_id' => $student->id,
@@ -231,7 +231,7 @@ class StudentActionRequestController extends Controller
 
             SystemLog::logInfo(
                 "Central admin {$admin->name} approved student {$actionRequest->action} request #{$actionRequest->id}",
-                'enrollment',
+                'user_management',
                 [
                     'request_id' => $actionRequest->id,
                     'action' => $actionRequest->action,
@@ -290,7 +290,7 @@ class StudentActionRequestController extends Controller
 
         SystemLog::logInfo(
             "Central admin {$admin->name} denied student {$actionRequest->action} request #{$actionRequest->id}",
-            'enrollment',
+            'user_management',
             [
                 'request_id' => $actionRequest->id,
                 'action' => $actionRequest->action,

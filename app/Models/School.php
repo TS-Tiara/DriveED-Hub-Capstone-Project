@@ -35,6 +35,12 @@ class School extends Model
         return $this->hasMany(Admin::class);
     }
 
+    // Alias used by scoped route model binding for {targetAdmin}.
+    public function targetAdmins()
+    {
+        return $this->admins();
+    }
+
     public function instructors()
     {
         return $this->hasMany(Instructor::class);
