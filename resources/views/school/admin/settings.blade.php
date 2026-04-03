@@ -88,31 +88,115 @@
         border-radius: 2px;
     }
 
-    /* Tab Styles */
+    /* Settings Navigation */
     .tab-btn {
-        padding: 12px 24px;
-        background: #f9fafb;
-        border: 2px solid transparent;
-        color: #6b7280;
-        border-radius: 8px;
-        font-size: 14px;
+        padding: 8px 14px;
+        background: rgba(249, 250, 251, var(--settings-nav-control-opacity, 1));
+        border: 1px solid #d1d5db;
+        color: #374151;
+        border-radius: 999px;
+        font-size: 13px;
         font-weight: 600;
         cursor: pointer;
-        transition: all 0.3s;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    .tab-btn:hover {
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+        transform: translateY(-1px);
     }
 
     .tab-btn.active {
-        background: var(--header-gradient);
+        background: rgba(var(--primary-rgb), var(--settings-nav-control-opacity, 1));
         color: white;
         border-color: var(--primary-color);
     }
 
-    .tab-content {
-        display: none;
+    .settings-nav-toolbar {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        transition: gap 0.2s ease;
     }
 
-    .tab-content.active {
-        display: block;
+    .settings-nav-tools {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        transition: gap 0.2s ease;
+    }
+
+    .settings-search-wrap {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 260px;
+        flex: 1;
+    }
+
+    .settings-search-input {
+        width: 100%;
+        padding: 8px 10px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 13px;
+        color: #111827;
+        background: rgba(255, 255, 255, var(--settings-nav-control-opacity, 1));
+        transition: padding 0.2s ease, font-size 0.2s ease;
+    }
+
+    .settings-search-input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.12);
+    }
+
+    .nav-action-btn {
+        padding: 8px 10px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, var(--settings-nav-control-opacity, 1));
+        color: #374151;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .nav-action-btn:hover {
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+    }
+
+    .settings-dirty-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 10px;
+        border-radius: 999px;
+        background: rgba(245, 158, 11, 0.12);
+        color: #92400e;
+        border: 1px solid rgba(245, 158, 11, 0.4);
+        font-size: 12px;
+        font-weight: 700;
+        transition: padding 0.2s ease, font-size 0.2s ease;
+    }
+
+    .settings-dirty-indicator::before {
+        content: '';
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: #f59e0b;
     }
 
     .preview-toggle {
@@ -338,16 +422,16 @@
         font-size: 0.85rem;
     }
 
-    .section-save-divider {
-        margin-top: 30px;
-        padding-top: 20px;
-        border-top: 2px solid #e5e7eb;
-    }
-
     .login-intro-text {
         color: #6b7280;
         font-size: 0.9rem;
         margin-bottom: 20px;
+    }
+
+    .login-subsection {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 2px solid #e5e7eb;
     }
 
     .save-button {
@@ -392,6 +476,28 @@
         background: var(--btn-primary-bg);
         color: var(--btn-primary-text);
         border-color: var(--btn-primary-bg);
+    }
+
+    .floating-actions {
+        position: fixed;
+        right: 24px;
+        bottom: 24px;
+        z-index: 120;
+        width: min(280px, calc(100vw - 32px));
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 0;
+        border: none;
+        background: transparent;
+        backdrop-filter: none;
+        box-shadow: none;
+    }
+
+    .floating-actions .save-button,
+    .floating-actions .reset-button {
+        width: 100%;
+        margin-top: 0;
     }
 
     /* Preview Area */
@@ -539,17 +645,146 @@
     }
 
     .tabs-container-frame {
-        margin-bottom: 30px;
-        background: white;
+        --settings-nav-opacity: 1;
+        --settings-nav-control-opacity: 1;
+        margin-bottom: 24px;
+        background: rgba(255, 255, 255, var(--settings-nav-opacity));
         border-radius: 12px;
-        padding: 8px;
+        padding: 12px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        border: 1px solid #e5e7eb;
+        box-sizing: border-box;
+        position: relative;
+        z-index: 95;
+        transition: padding 0.2s ease, top 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+        backdrop-filter: saturate(140%) blur(3px);
+        -webkit-backdrop-filter: saturate(140%) blur(3px);
+    }
+
+    .tabs-container-frame.is-pinned {
+        position: fixed;
+        top: var(--settings-sticky-top, 104px);
+        left: var(--settings-nav-left, 0px);
+        width: var(--settings-nav-width, 100%);
+        z-index: 995;
+    }
+
+    .settings-nav-spacer {
+        display: none;
+        height: 0;
+    }
+
+    .settings-nav-spacer.active {
+        display: block;
+    }
+
+    #section-operations,
+    #section-branding,
+    #section-auth {
+        scroll-margin-top: 190px;
+    }
+
+    .settings-group {
+        margin-bottom: 28px;
+    }
+
+    .settings-group:last-of-type {
+        margin-bottom: 0;
+    }
+
+    .settings-group-header {
+        margin-bottom: 16px;
+        padding: 12px 14px;
+        border: 1px solid #e5e7eb;
+        border-left: 4px solid var(--primary-color);
+        border-radius: 10px;
+        background: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        cursor: pointer;
+        user-select: none;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .settings-group-header:hover {
+        border-color: rgba(var(--primary-rgb), 0.45);
+        box-shadow: 0 2px 8px rgba(var(--primary-rgb), 0.12);
+    }
+
+    .settings-group-header-content {
+        flex: 1;
+    }
+
+    .settings-group-toggle {
+        width: 26px;
+        height: 26px;
+        border-radius: 999px;
+        border: 1px solid #d1d5db;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #6b7280;
+        background: #ffffff;
+        flex-shrink: 0;
+    }
+
+    .settings-group-toggle::before {
+        content: '▼';
+        font-size: 11px;
+        line-height: 1;
+        transition: transform 0.2s ease;
+    }
+
+    .settings-group.collapsed .settings-group-toggle::before {
+        transform: rotate(-90deg);
+    }
+
+    .settings-group.collapsed > :not(.settings-group-header) {
+        display: none;
+    }
+
+    .settings-group.collapsed {
+        margin-bottom: 16px;
+    }
+
+    .settings-group-title {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 700;
+        color: #111827;
+    }
+
+    .settings-group-note {
+        margin: 4px 0 0 0;
+        font-size: 0.85rem;
+        color: #6b7280;
+    }
+
+    .operations-subsection {
+        margin-bottom: 20px;
+        padding: 0 0 16px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .operations-subsection:last-child {
+        margin-bottom: 0;
+        padding-bottom: 0;
+        border-bottom: none;
+    }
+
+    .operations-subsection .section-header {
+        margin-bottom: 12px;
     }
 
     .tabs-row {
         display: flex;
         gap: 8px;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 2px;
+        scrollbar-width: thin;
     }
 
     .preview-buttons-row {
@@ -828,6 +1063,34 @@
             padding: 10px;
         }
 
+        .tabs-container-frame {
+            padding: 10px;
+        }
+
+        .settings-nav-tools {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .settings-search-wrap {
+            min-width: 0;
+        }
+
+        .nav-action-btn {
+            width: 100%;
+        }
+
+        .settings-dirty-indicator {
+            justify-content: center;
+        }
+
+        .floating-actions {
+            right: 12px;
+            left: 12px;
+            width: auto;
+            bottom: 12px;
+        }
+
         .preview-panel {
             width: 100%;
             top: 0;
@@ -849,32 +1112,44 @@
         </div>
     </div>
 
+    <!-- Section Navigation -->
+    <div class="tabs-container tabs-container-frame" id="settingsNavigation">
+        <div class="settings-nav-toolbar">
+            <div class="tabs tabs-row" id="settingsNavLinks">
+                <a class="tab-btn active" href="#section-operations" data-nav-link data-section-id="section-operations">Operations</a>
+                <a class="tab-btn" href="#section-branding" data-nav-link data-section-id="section-branding">Branding</a>
+                <a class="tab-btn" href="#section-auth" data-nav-link data-section-id="section-auth">Login & Signup</a>
+            </div>
 
-
-    <!-- Tab Navigation -->
-    <div class="tabs-container tabs-container-frame">
-        <div class="tabs tabs-row">
-            <button type="button" class="tab-btn active" onclick="switchTab('general')" data-tab="general">
-                General Settings
-            </button>
-            <button type="button" class="tab-btn" onclick="switchTab('colors')" data-tab="colors">
-                Colors & Branding
-            </button>
-            <button type="button" class="tab-btn" onclick="switchTab('invitations')" data-tab="invitations">
-                Invitations & Onboarding
-            </button>
+            <div class="settings-nav-tools">
+                <div class="settings-search-wrap">
+                    <input type="search" id="settingsNavSearch" class="settings-search-input" placeholder="Jump to a section (e.g. operations, branding, login)">
+                    <button type="button" class="nav-action-btn" id="settingsNavSearchBtn">Go</button>
+                </div>
+                <button type="button" class="nav-action-btn" onclick="expandAllSettingsSections()">Expand All</button>
+                <button type="button" class="nav-action-btn" onclick="collapseAllSettingsSections()">Collapse All</button>
+                <span class="settings-dirty-indicator" id="settingsDirtyIndicator" hidden>Unsaved changes</span>
+            </div>
         </div>
     </div>
+    <div id="settingsNavSpacer" class="settings-nav-spacer" aria-hidden="true"></div>
 
     <!-- Settings Card -->
     <div class="settings-card">
-        <form method="POST" action="{{ route('schools.admin.settings.update', $school) }}" id="settingsForm" enctype="multipart/form-data">
+        <form method="POST" action="{{ route('schools.admin.settings.update', $school) }}" id="settingsForm" enctype="multipart/form-data" class="native-form" data-no-ajax="1" data-no-submit-guard="1">
             @csrf
 
-            <!-- General Settings Tab -->
-            <div class="tab-content active" id="tab-general">
+            <!-- Operations -->
+            <section id="section-operations" class="settings-group" data-nav-section>
+                <div class="settings-group-header" onclick="toggleSettingsGroup(this)" role="button" aria-expanded="true" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleSettingsGroup(this)}">
+                    <div class="settings-group-header-content">
+                        <h2 class="settings-group-title">Operations</h2>
+                        <p class="settings-group-note">Scheduling, onboarding, staffing, alerts, email, payments, and invitations.</p>
+                    </div>
+                    <span class="settings-group-toggle" aria-hidden="true"></span>
+                </div>
                 <!-- Scheduling & Timezone Settings -->
-                <div class="form-section">
+                <div class="operations-subsection" id="section-scheduling" data-nav-section>
                     <div class="section-header" onclick="toggleSection(this)">
                         <h3 class="section-title">Scheduling & Timezone</h3>
                     </div>
@@ -948,7 +1223,7 @@
                 </div>
 
                 <!-- Onboarding & Security Settings -->
-                <div class="form-section">
+                <div class="operations-subsection" id="section-onboarding" data-nav-section>
                     <div class="section-header" onclick="toggleSection(this)">
                         <h3 class="section-title">Onboarding & Security</h3>
                     </div>
@@ -975,7 +1250,7 @@
                 </div>
 
                 <!-- Staff Settings -->
-                <div class="form-section">
+                <div class="operations-subsection" id="section-staff" data-nav-section>
                     <div class="section-header" onclick="toggleSection(this)">
                         <h3 class="section-title">Staff Settings</h3>
                     </div>
@@ -992,7 +1267,7 @@
                 </div>
 
                 <!-- Operational Alerts -->
-                <div class="form-section">
+                <div class="operations-subsection" id="section-operational-alerts" data-nav-section>
                     <div class="section-header" onclick="toggleSection(this)">
                         <h3 class="section-title">Operational Alerts</h3>
                     </div>
@@ -1009,7 +1284,7 @@
                 </div>
 
                 <!-- Email Settings -->
-                <div class="form-section">
+                <div class="operations-subsection" id="section-email" data-nav-section>
                     <div class="section-header" onclick="toggleSection(this)">
                         <h3 class="section-title">Email Settings</h3>
                     </div>
@@ -1026,7 +1301,7 @@
                 </div>
 
                 <!-- Payment Settings -->
-                <div class="form-section">
+                <div class="operations-subsection" id="section-payments" data-nav-section>
                     <div class="section-header" onclick="toggleSection(this)">
                         <h3 class="section-title">Payment Settings (GCash)</h3>
                     </div>
@@ -1034,7 +1309,7 @@
                     <div class="section-inputs">
                     <div class="form-group">
                         <label class="form-label">
-                            <input type="checkbox" name="gcash_enabled" value="1" {{ old('gcash_enabled', $gcashSetting->is_active ?? true) ? 'checked' : '' }} class="checkbox-inline">
+                            <input type="checkbox" name="gcash_enabled" value="1" {{ old('gcash_enabled', $gcashSetting?->is_active ?? false) ? 'checked' : '' }} class="checkbox-inline">
                             Enable GCash payment option for students
                         </label>
                     </div>
@@ -1069,7 +1344,7 @@
                 </div>
 
                 <!-- UI Settings -->
-                <div class="form-section">
+                <div class="operations-subsection" id="section-ui" data-nav-section>
                     <div class="section-header" onclick="toggleSection(this)">
                         <h3 class="section-title">UI Settings</h3>
                     </div>
@@ -1082,18 +1357,86 @@
                     </div>
                 </div>
 
-                <!-- Save Button for General Settings -->
-                <div class="section-save-divider">
-                    <button type="submit" class="save-button">Save Changes</button>
-                    <button type="button" class="reset-button" onclick="resetToDefaults()">↺ Reset to Defaults</button>
+                <!-- Pending Invitations -->
+                <div class="operations-subsection" id="section-invitations" data-nav-section>
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <h3 class="section-title">Pending Invitations</h3>
+                    </div>
+
+                    <div class="section-inputs">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Recipient</th>
+                                        <th>Role</th>
+                                        <th>Status</th>
+                                        <th>Sent At</th>
+                                        <th>Expires At</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($pendingInvitations as $invitation)
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex flex-column">
+                                                    <span class="font-weight-bold">{{ $invitation->name }}</span>
+                                                    <small class="text-muted">{{ $invitation->email }}</small>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="badge" style="background-color: {{ $invitation->role === 'student' ? ($settings->role_student_bg ?? '#dbeafe') : ($settings->role_instructor_bg ?? '#e0f2fe') }}; color: {{ $invitation->role === 'student' ? ($settings->role_student_text ?? '#1e40af') : ($settings->role_instructor_text ?? '#0369a1') }};">
+                                                    {{ ucfirst($invitation->role) }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                @if($invitation->isExpired())
+                                                    <span class="badge bg-danger">Expired</span>
+                                                @else
+                                                    <span class="badge bg-warning">Pending</span>
+                                                @endif
+                                            </td>
+                                            <td>{{ $invitation->created_at->format('M d, Y H:i') }}</td>
+                                            <td>{{ $invitation->expires_at->format('M d, Y H:i') }}</td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button type="button" class="btn btn-sm btn-outline-primary" title="Resend Invitation" onclick="submitInvitationAction('{{ route('schools.admin.invitations.resend', ['school' => $school, 'invitation' => $invitation]) }}', 'POST')">
+                                                        <i class="fas fa-sync"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" title="Cancel Invitation" onclick="submitInvitationAction('{{ route('schools.admin.invitations.cancel', ['school' => $school, 'invitation' => $invitation]) }}', 'DELETE', 'Are you sure you want to cancel this invitation?')">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="6" class="text-center py-4 text-muted">
+                                                No pending invitations found.
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
+
+            </section>
+
+            <!-- Colors & Branding -->
+            <section id="section-branding" class="settings-group" data-nav-section>
+            <div class="settings-group-header" onclick="toggleSettingsGroup(this)" role="button" aria-expanded="true" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleSettingsGroup(this)}">
+                <div class="settings-group-header-content">
+                    <h2 class="settings-group-title">Branding</h2>
+                    <p class="settings-group-note">Theme colors, UI components, badges, and role visuals.</p>
+                </div>
+                <span class="settings-group-toggle" aria-hidden="true"></span>
             </div>
 
-            <!-- Colors & Branding Tab -->
-            <div class="tab-content" id="tab-colors">
-
             <!-- Primary Colors -->
-            <div class="form-section">
+            <div class="form-section" id="section-primary-colors" data-nav-section>
                 <div class="section-header" onclick="toggleSection(this)">
                     <h3 class="section-title">Primary Colors</h3>
                     <button type="button" class="preview-toggle" onclick="event.stopPropagation(); showPreview('colors')">
@@ -1214,7 +1557,7 @@
             </div>
 
             <!-- Sidebar Colors -->
-            <div class="form-section">
+            <div class="form-section" id="section-sidebar" data-nav-section>
                 <div class="section-header" onclick="toggleSection(this)">
                     <h3 class="section-title">Sidebar</h3>
                     <button type="button" class="preview-toggle" onclick="event.stopPropagation(); showPreview('sidebar')">
@@ -1268,7 +1611,7 @@
             </div>
 
             <!-- Button Colors -->
-            <div class="form-section">
+            <div class="form-section" id="section-buttons" data-nav-section>
                 <div class="section-header" onclick="toggleSection(this)">
                     <h3 class="section-title">Buttons</h3>
                     <button type="button" class="preview-toggle" onclick="event.stopPropagation(); showPreview('buttons')">
@@ -1345,7 +1688,7 @@
             </div>
 
             <!-- Modal Colors -->
-            <div class="form-section">
+            <div class="form-section" id="section-modals" data-nav-section>
                 <div class="section-header" onclick="toggleSection(this)">
                     <h3 class="section-title">Modals</h3>
                     <button type="button" class="preview-toggle" onclick="event.stopPropagation(); showPreview('modal')">
@@ -1392,7 +1735,7 @@
             </div>
 
             <!-- Calendar & Header Colors -->
-            <div class="form-section">
+            <div class="form-section" id="section-calendar" data-nav-section>
                 <div class="section-header" onclick="toggleSection(this)">
                     <h3 class="section-title">Calendar & Header</h3>
                     <button type="button" class="preview-toggle" onclick="event.stopPropagation(); showPreview('calendar')">
@@ -1496,7 +1839,7 @@
             </div>
 
             <!-- Badge Colors -->
-            <div class="form-section">
+            <div class="form-section" id="section-badges" data-nav-section>
                 <div class="section-header" onclick="toggleSection(this)">
                     <h3 class="section-title">Status Badges</h3>
                     <button type="button" class="preview-toggle" onclick="event.stopPropagation(); showPreview('badges')">
@@ -1548,7 +1891,7 @@
             </div>
 
             <!-- Role Branding -->
-            <div class="form-section">
+            <div class="form-section" id="section-roles" data-nav-section>
                 <div class="section-header" onclick="toggleSection(this)">
                     <h3 class="section-title">Role Branding</h3>
                     <button type="button" class="preview-toggle" onclick="event.stopPropagation(); showPreview('roles')">
@@ -1606,8 +1949,18 @@
                 </div>
             </div>
 
+            </section>
+
             <!-- Login/Signup Header Customization -->
-            <div class="form-section">
+            <section id="section-auth" class="settings-group" data-nav-section>
+            <div class="settings-group-header" onclick="toggleSettingsGroup(this)" role="button" aria-expanded="true" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleSettingsGroup(this)}">
+                <div class="settings-group-header-content">
+                    <h2 class="settings-group-title">Login & Signup</h2>
+                    <p class="settings-group-note">Header layout, welcome copy, and page background customization.</p>
+                </div>
+                <span class="settings-group-toggle" aria-hidden="true"></span>
+            </div>
+            <div class="form-section" id="section-login-header" data-nav-section>
                 <div class="section-header" onclick="toggleSection(this)">
                     <h3 class="section-title">Login/Signup Header Customization</h3>
                 </div>
@@ -1779,170 +2132,464 @@
                             Visit your login page at <code class="login-preview-note-code">/{{ $school->slug }}/login</code> to see your customizations in action!
                         </p>
                     </div>
-                </div>
-            </div>
 
-            <!-- Login/Signup Page Background Customization -->
-            <div class="setting-section">
-                <div class="section-header">Login/Signup Page Background</div>
-                <div class="section-body">
-                    <div class="form-group">
-                        <label class="form-label">Background Type</label>
-                        <select name="login_page_bg_type" class="form-select" id="loginBgType" onchange="toggleLoginBgOptions()">
-                            <option value="color" {{ old('login_page_bg_type', $settings->login_page_bg_type ?? 'color') === 'color' ? 'selected' : '' }}>Solid Color</option>
-                            <option value="image" {{ old('login_page_bg_type', $settings->login_page_bg_type ?? 'color') === 'image' ? 'selected' : '' }}>Background Image</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group" id="loginBgColorGroup">
-                        <label class="form-label">Background Color</label>
-                        <div class="color-input-group">
-                            <input type="color" class="color-picker" name="login_page_bg_color" value="{{ old('login_page_bg_color', $settings->login_page_bg_color ?? '#f5f5f5') }}">
-                            <input type="text" class="color-text" value="{{ old('login_page_bg_color', $settings->login_page_bg_color ?? '#f5f5f5') }}" readonly>
+                    <!-- Login/Signup Page Background Customization -->
+                    <div class="login-subsection" id="section-login-background" data-nav-section>
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <h3 class="section-title">Login/Signup Page Background</h3>
                         </div>
-                    </div>
 
-                    <div class="form-group bg-image-group-hidden" id="loginBgImageGroup">
-                        <label class="form-label">Background Image</label>
-                        <input type="file" class="form-control" name="login_page_bg_image" accept="image/*">
-                        @if($settings && $settings->login_page_bg_image)
-                            <div class="current-bg-wrap">
-                                <img src="{{ asset('storage/' . $settings->login_page_bg_image) }}" class="current-bg-image">
-                                <p class="current-bg-caption">Current background image</p>
+                        <div class="section-inputs">
+                            <div class="form-group">
+                                <label class="form-label">Background Type</label>
+                                <select name="login_page_bg_type" class="form-select" id="loginBgType" onchange="toggleLoginBgOptions()">
+                                    <option value="color" {{ old('login_page_bg_type', $settings->login_page_bg_type ?? 'color') === 'color' ? 'selected' : '' }}>Solid Color</option>
+                                    <option value="image" {{ old('login_page_bg_type', $settings->login_page_bg_type ?? 'color') === 'image' ? 'selected' : '' }}>Background Image</option>
+                                </select>
                             </div>
-                        @endif
-                    </div>
 
-                    <div class="form-group">
-                        <label class="form-label">Background Opacity (%)</label>
-                        <div class="opacity-control-row">
-                            <input type="range" class="form-range opacity-range" name="login_page_bg_opacity" value="{{ old('login_page_bg_opacity', $settings->login_page_bg_opacity ?? 100) }}" min="0" max="100" oninput="this.nextElementSibling.textContent = this.value + '%'">
-                            <span class="opacity-value">{{ old('login_page_bg_opacity', $settings->login_page_bg_opacity ?? 100) }}%</span>
-                        </div>
-                        <small class="opacity-help">Lower values make the background more transparent</small>
-                    </div>
-                </div>
-            </div>
+                            <div class="form-group" id="loginBgColorGroup">
+                                <label class="form-label">Background Color</label>
+                                <div class="color-input-group">
+                                    <input type="color" class="color-picker" name="login_page_bg_color" value="{{ old('login_page_bg_color', $settings->login_page_bg_color ?? '#f5f5f5') }}">
+                                    <input type="text" class="color-text" value="{{ old('login_page_bg_color', $settings->login_page_bg_color ?? '#f5f5f5') }}" readonly>
+                                </div>
+                            </div>
 
-            <!-- Invitations & Onboarding Tab -->
-            <div class="tab-content" id="tab-invitations">
-                <div class="form-section">
-                    <div class="section-header">
-                        <h3 class="section-title">Pending Invitations</h3>
-                    </div>
-                    
-                    <div class="section-inputs">
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Recipient</th>
-                                        <th>Role</th>
-                                        <th>Status</th>
-                                        <th>Sent At</th>
-                                        <th>Expires At</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse($pendingInvitations as $invitation)
-                                        <tr>
-                                            <td>
-                                                <div class="d-flex flex-column">
-                                                    <span class="font-weight-bold">{{ $invitation->name }}</span>
-                                                    <small class="text-muted">{{ $invitation->email }}</small>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <span class="badge" style="background-color: {{ $invitation->role === 'student' ? ($settings->role_student_bg ?? '#dbeafe') : ($settings->role_instructor_bg ?? '#e0f2fe') }}; color: {{ $invitation->role === 'student' ? ($settings->role_student_text ?? '#1e40af') : ($settings->role_instructor_text ?? '#0369a1') }};">
-                                                    {{ ucfirst($invitation->role) }}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                @if($invitation->isExpired())
-                                                    <span class="badge bg-danger">Expired</span>
-                                                @else
-                                                    <span class="badge bg-warning">Pending</span>
-                                                @endif
-                                            </td>
-                                            <td>{{ $invitation->created_at->format('M d, Y H:i') }}</td>
-                                            <td>{{ $invitation->expires_at->format('M d, Y H:i') }}</td>
-                                            <td>
-                                                <div class="btn-group">
-                                                    <form action="{{ route('schools.admin.invitations.resend', ['school' => $school, 'invitation' => $invitation]) }}" method="POST" class="d-inline">
-                                                        @csrf
-                                                        <button type="submit" class="btn btn-sm btn-outline-primary" title="Resend Invitation">
-                                                            <i class="fas fa-sync"></i>
-                                                        </button>
-                                                    </form>
-                                                    <form action="{{ route('schools.admin.invitations.cancel', ['school' => $school, 'invitation' => $invitation]) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to cancel this invitation?')">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Cancel Invitation">
-                                                            <i class="fas fa-times"></i>
-                                                        </button>
-                                                    </form>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="6" class="text-center py-4 text-muted">
-                                                No pending invitations found.
-                                            </td>
-                                        </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
+                            <div class="form-group bg-image-group-hidden" id="loginBgImageGroup">
+                                <label class="form-label">Background Image</label>
+                                <input type="file" class="form-control" name="login_page_bg_image" accept="image/*">
+                                @if($settings && $settings->login_page_bg_image)
+                                    <div class="current-bg-wrap">
+                                        <img src="{{ asset('storage/' . $settings->login_page_bg_image) }}" class="current-bg-image">
+                                        <p class="current-bg-caption">Current background image</p>
+                                    </div>
+                                @endif
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Background Opacity (%)</label>
+                                <div class="opacity-control-row">
+                                    <input type="range" class="form-range opacity-range" name="login_page_bg_opacity" value="{{ old('login_page_bg_opacity', $settings->login_page_bg_opacity ?? 100) }}" min="0" max="100" oninput="this.nextElementSibling.textContent = this.value + '%'">
+                                    <span class="opacity-value">{{ old('login_page_bg_opacity', $settings->login_page_bg_opacity ?? 100) }}%</span>
+                                </div>
+                                <small class="opacity-help">Lower values make the background more transparent</small>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
+            </section>
 
-            <button type="submit" class="save-button">Save Changes</button>
-            <button type="button" class="reset-button" onclick="resetToDefaults()">↺ Reset to Defaults</button>
+            <div class="floating-actions">
+                <button type="submit" class="save-button">Save Changes</button>
+                <button type="button" class="reset-button" onclick="resetToDefaults()">↺ Reset to Defaults</button>
+            </div>
         </form>
     </div>
 </div>
 
 <script>
-let currentPreview = null;
+var settingsCurrentPreview = null;
+var settingsFormDirty = false;
+var settingsNavScrollTicking = false;
+var settingsNavigationBound = false;
+var settingsNavPinStart = 0;
+var settingsNavMaxTransparency = 0.6;
+var settingsNavControlMaxTransparency = 0.3;
+var settingsNavFadeDistance = 220;
+
+function setSettingsDirty(isDirty) {
+    settingsFormDirty = !!isDirty;
+    const indicator = document.getElementById('settingsDirtyIndicator');
+    if (indicator) {
+        indicator.hidden = !settingsFormDirty;
+    }
+}
+
+function updateSettingsStickyTopOffset() {
+    const navigation = document.getElementById('settingsNavigation');
+    if (!navigation) {
+        return;
+    }
+
+    const topbar = document.querySelector('.topbar');
+    const breadcrumb = document.getElementById('breadcrumbBar');
+    const topbarBottom = topbar ? topbar.getBoundingClientRect().bottom : 0;
+    const breadcrumbBottom = breadcrumb ? breadcrumb.getBoundingClientRect().bottom : 0;
+    const fixedStackBottom = Math.max(topbarBottom, breadcrumbBottom);
+    const stickyTop = Math.max(8, Math.ceil(fixedStackBottom + 8));
+
+    navigation.style.setProperty('--settings-sticky-top', stickyTop + 'px');
+}
+
+function measureSettingsNavigationLayout() {
+    const navigation = document.getElementById('settingsNavigation');
+    const spacer = document.getElementById('settingsNavSpacer');
+    if (!navigation || !spacer) {
+        return;
+    }
+
+    const wasPinned = navigation.classList.contains('is-pinned');
+    if (wasPinned) {
+        navigation.classList.remove('is-pinned');
+        spacer.classList.remove('active');
+        spacer.style.height = '0px';
+    }
+
+    const rect = navigation.getBoundingClientRect();
+    settingsNavPinStart = rect.top + window.pageYOffset;
+    navigation.style.setProperty('--settings-nav-left', rect.left + 'px');
+    navigation.style.setProperty('--settings-nav-width', rect.width + 'px');
+
+    if (wasPinned) {
+        navigation.classList.add('is-pinned');
+        spacer.classList.add('active');
+        spacer.style.height = navigation.offsetHeight + 'px';
+        updatePinnedSettingsNavigationGeometry();
+    }
+}
+
+function updatePinnedSettingsNavigationGeometry() {
+    const navigation = document.getElementById('settingsNavigation');
+    const spacer = document.getElementById('settingsNavSpacer');
+    if (!navigation || !spacer || !navigation.classList.contains('is-pinned')) {
+        return;
+    }
+
+    const referenceRect = spacer.getBoundingClientRect();
+    navigation.style.setProperty('--settings-nav-left', referenceRect.left + 'px');
+    navigation.style.setProperty('--settings-nav-width', referenceRect.width + 'px');
+}
+
+function setSettingsNavigationPinned(shouldPin) {
+    const navigation = document.getElementById('settingsNavigation');
+    const spacer = document.getElementById('settingsNavSpacer');
+    if (!navigation || !spacer) {
+        return;
+    }
+
+    if (shouldPin === navigation.classList.contains('is-pinned')) {
+        if (shouldPin) {
+            updatePinnedSettingsNavigationGeometry();
+        }
+        return;
+    }
+
+    navigation.classList.toggle('is-pinned', shouldPin);
+    spacer.classList.toggle('active', shouldPin);
+    spacer.style.height = shouldPin ? (navigation.offsetHeight + 'px') : '0px';
+
+    if (shouldPin) {
+        updatePinnedSettingsNavigationGeometry();
+    }
+}
+
+function updateSettingsNavigationPinState() {
+    const navigation = document.getElementById('settingsNavigation');
+    if (!navigation) {
+        return;
+    }
+
+    const stickyTop = parseInt(window.getComputedStyle(navigation).getPropertyValue('--settings-sticky-top'), 10) || 104;
+    const shouldPin = (window.pageYOffset + stickyTop) >= settingsNavPinStart;
+    setSettingsNavigationPinned(shouldPin);
+}
+
+function updateSettingsNavigationTransparency() {
+    const navigation = document.getElementById('settingsNavigation');
+    if (!navigation) {
+        return;
+    }
+
+    const scrollY = window.pageYOffset || document.documentElement.scrollTop || 0;
+    const fadeProgress = Math.min(1, Math.max(0, scrollY / settingsNavFadeDistance));
+    const navOpacity = 1 - (settingsNavMaxTransparency * fadeProgress);
+    const controlOpacity = 1 - (settingsNavControlMaxTransparency * fadeProgress);
+    navigation.style.setProperty('--settings-nav-opacity', navOpacity.toFixed(3));
+    navigation.style.setProperty('--settings-nav-control-opacity', controlOpacity.toFixed(3));
+}
+
+function getSettingsNavOffset() {
+    const navigation = document.getElementById('settingsNavigation');
+    const navHeight = navigation ? navigation.offsetHeight : 0;
+    const stickyTop = navigation
+        ? (parseInt(window.getComputedStyle(navigation).getPropertyValue('--settings-sticky-top'), 10) || 0)
+        : 0;
+    return stickyTop + navHeight + 12;
+}
+
+function setActiveSettingsNavLink(sectionId) {
+    document.querySelectorAll('[data-nav-link]').forEach(link => {
+        link.classList.toggle('active', link.dataset.sectionId === sectionId);
+    });
+}
+
+function scrollToSettingsSection(sectionId, behavior = 'smooth') {
+    ensureSettingsGroupExpandedForSection(sectionId);
+
+    const target = document.getElementById(sectionId);
+    if (!target) {
+        return;
+    }
+
+    const targetTop = target.getBoundingClientRect().top + window.pageYOffset;
+    const scrollTo = Math.max(0, targetTop - getSettingsNavOffset());
+    window.scrollTo({ top: scrollTo, behavior: behavior });
+}
+
+function updateSettingsNavFromScroll() {
+    const navLinks = Array.from(document.querySelectorAll('[data-nav-link]'));
+    if (!navLinks.length) {
+        return;
+    }
+
+    const offset = window.pageYOffset + getSettingsNavOffset() + 12;
+    let activeSectionId = navLinks[0].dataset.sectionId;
+
+    navLinks.forEach(link => {
+        const sectionId = link.dataset.sectionId;
+        const section = document.getElementById(sectionId);
+        if (!section) {
+            return;
+        }
+
+        const sectionTop = section.getBoundingClientRect().top + window.pageYOffset;
+        if (offset >= sectionTop) {
+            activeSectionId = sectionId;
+        }
+    });
+
+    setActiveSettingsNavLink(activeSectionId);
+}
+
+function handleSettingsNavScroll() {
+    if (settingsNavScrollTicking) {
+        return;
+    }
+
+    settingsNavScrollTicking = true;
+    window.requestAnimationFrame(function() {
+        updateSettingsNavigationTransparency();
+        updateSettingsNavigationPinState();
+        updateSettingsNavFromScroll();
+        settingsNavScrollTicking = false;
+    });
+}
+
+function jumpToSettingsSectionFromSearch() {
+    const searchInput = document.getElementById('settingsNavSearch');
+    if (!searchInput) {
+        return;
+    }
+
+    const query = searchInput.value.trim().toLowerCase();
+    if (!query) {
+        return;
+    }
+
+    const navLinks = Array.from(document.querySelectorAll('[data-nav-link]'));
+    let match = navLinks.find(link => link.textContent.toLowerCase().includes(query));
+
+    if (!match) {
+        match = navLinks.find(link => {
+            const target = document.getElementById(link.dataset.sectionId);
+            return target && target.textContent.toLowerCase().includes(query);
+        });
+    }
+
+    if (match) {
+        const sectionId = match.dataset.sectionId;
+        scrollToSettingsSection(sectionId);
+        setActiveSettingsNavLink(sectionId);
+        return;
+    }
+
+    if (window.Toast && typeof window.Toast.info === 'function') {
+        window.Toast.info('No matching settings section found.');
+    }
+}
+
+function toggleSettingsGroup(header, forceExpanded = null) {
+    const group = header ? header.closest('.settings-group') : null;
+    if (!group) {
+        return;
+    }
+
+    const expand = forceExpanded === null
+        ? group.classList.contains('collapsed')
+        : !!forceExpanded;
+
+    group.classList.toggle('collapsed', !expand);
+    header.setAttribute('aria-expanded', expand ? 'true' : 'false');
+}
+
+function ensureSettingsGroupExpandedForSection(sectionId) {
+    const section = document.getElementById(sectionId);
+    if (!section) {
+        return;
+    }
+
+    const group = section.classList.contains('settings-group') ? section : section.closest('.settings-group');
+    if (!group || !group.classList.contains('collapsed')) {
+        return;
+    }
+
+    const groupHeader = group.querySelector(':scope > .settings-group-header');
+    if (groupHeader) {
+        toggleSettingsGroup(groupHeader, true);
+    } else {
+        group.classList.remove('collapsed');
+    }
+}
+
+function expandAllSettingsSections() {
+    document.querySelectorAll('.settings-group .settings-group-header').forEach(header => {
+        toggleSettingsGroup(header, true);
+    });
+
+    document.querySelectorAll('.form-section .section-inputs, .operations-subsection .section-inputs, .login-subsection .section-inputs').forEach(inputs => {
+        inputs.classList.remove('collapsed');
+    });
+}
+
+function collapseAllSettingsSections() {
+    document.querySelectorAll('.settings-group .settings-group-header').forEach(header => {
+        toggleSettingsGroup(header, false);
+    });
+
+    document.querySelectorAll('.form-section .section-inputs, .operations-subsection .section-inputs, .login-subsection .section-inputs').forEach(inputs => {
+        inputs.classList.add('collapsed');
+    });
+}
+
+function initializeSettingsNavigation() {
+    updateSettingsStickyTopOffset();
+    measureSettingsNavigationLayout();
+
+    const navLinks = document.querySelectorAll('[data-nav-link]');
+    navLinks.forEach(link => {
+        if (link.dataset.navBound === '1') {
+            return;
+        }
+
+        link.dataset.navBound = '1';
+        link.addEventListener('click', function(event) {
+            event.preventDefault();
+            const sectionId = this.dataset.sectionId;
+            if (!sectionId) {
+                return;
+            }
+
+            scrollToSettingsSection(sectionId);
+            setActiveSettingsNavLink(sectionId);
+        });
+    });
+
+    const searchInput = document.getElementById('settingsNavSearch');
+    const searchBtn = document.getElementById('settingsNavSearchBtn');
+
+    if (searchBtn && searchBtn.dataset.navBound !== '1') {
+        searchBtn.dataset.navBound = '1';
+        searchBtn.addEventListener('click', jumpToSettingsSectionFromSearch);
+    }
+
+    if (searchInput && searchInput.dataset.navBound !== '1') {
+        searchInput.dataset.navBound = '1';
+        searchInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                jumpToSettingsSectionFromSearch();
+            }
+        });
+    }
+
+    if (!settingsNavigationBound) {
+        settingsNavigationBound = true;
+        window.addEventListener('scroll', handleSettingsNavScroll, { passive: true });
+        window.addEventListener('resize', function() {
+            updateSettingsStickyTopOffset();
+            measureSettingsNavigationLayout();
+            handleSettingsNavScroll();
+        });
+    }
+
+    updateSettingsNavigationTransparency();
+    updateSettingsNavigationPinState();
+    updateSettingsNavFromScroll();
+}
+
+function initializeSettingsDirtyTracking() {
+    const settingsForm = document.getElementById('settingsForm');
+    if (!settingsForm || settingsForm.dataset.dirtyBound === '1') {
+        return;
+    }
+
+    settingsForm.dataset.dirtyBound = '1';
+    const markDirty = function() { setSettingsDirty(true); };
+
+    settingsForm.addEventListener('input', markDirty);
+    settingsForm.addEventListener('change', markDirty);
+    settingsForm.addEventListener('submit', function() {
+        setSettingsDirty(false);
+    });
+}
+
+function initializeSettingsPageUI() {
+    toggleLoginBgOptions();
+    toggleBackgroundOptions();
+    initializeSettingsNavigation();
+    initializeSettingsDirtyTracking();
+}
 
 // Toggle login background options based on type
 function toggleLoginBgOptions() {
-    const bgType = document.getElementById('loginBgType').value;
-    document.getElementById('loginBgColorGroup').style.display = bgType === 'color' ? 'block' : 'none';
-    document.getElementById('loginBgImageGroup').style.display = bgType === 'image' ? 'block' : 'none';
+    const bgTypeSelect = document.getElementById('loginBgType');
+    const bgColorGroup = document.getElementById('loginBgColorGroup');
+    const bgImageGroup = document.getElementById('loginBgImageGroup');
+    if (!bgTypeSelect || !bgColorGroup || !bgImageGroup) {
+        return;
+    }
+
+    const bgType = bgTypeSelect.value;
+    bgColorGroup.style.display = bgType === 'color' ? 'block' : 'none';
+    bgImageGroup.style.display = bgType === 'image' ? 'block' : 'none';
 }
 
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', function() {
-    toggleLoginBgOptions();
-});
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeSettingsPageUI);
+} else {
+    initializeSettingsPageUI();
+}
 
-// Tab switching function
-function switchTab(tabName) {
-    // Hide all tab contents
-    document.querySelectorAll('.tab-content').forEach(content => {
-        content.classList.remove('active');
-    });
-    
-    // Remove active class from all tab buttons
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    
-    // Show selected tab content
-    const selectedTab = document.getElementById('tab-' + tabName);
-    if (selectedTab) {
-        selectedTab.classList.add('active');
+function submitInvitationAction(actionUrl, method, confirmMessage = null) {
+    if (confirmMessage && !confirm(confirmMessage)) {
+        return;
     }
-    
-    // Add active class to selected tab button
-    const selectedBtn = document.querySelector(`[data-tab="${tabName}"]`);
-    if (selectedBtn) {
-        selectedBtn.classList.add('active');
+
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = actionUrl;
+    form.classList.add('native-form');
+    form.setAttribute('data-no-ajax', '1');
+    form.setAttribute('data-no-submit-guard', '1');
+
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = '_token';
+    csrfInput.value = '{{ csrf_token() }}';
+    form.appendChild(csrfInput);
+
+    if (method && method.toUpperCase() !== 'POST') {
+        const methodInput = document.createElement('input');
+        methodInput.type = 'hidden';
+        methodInput.name = '_method';
+        methodInput.value = method.toUpperCase();
+        form.appendChild(methodInput);
     }
+
+    document.body.appendChild(form);
+    form.submit();
 }
 
 // Toggle section collapse
@@ -1968,11 +2615,11 @@ function showPreview(type) {
     if (previewArea.classList.contains('active')) {
         previewArea.classList.remove('active');
         toggleButton.classList.remove('active');
-        currentPreview = null;
+        settingsCurrentPreview = null;
     } else {
         previewArea.classList.add('active');
         toggleButton.classList.add('active');
-        currentPreview = type;
+        settingsCurrentPreview = type;
         updatePreview();
     }
     
@@ -1992,7 +2639,7 @@ function closePreview(type) {
         btn.classList.remove('active');
     });
     
-    currentPreview = null;
+    settingsCurrentPreview = null;
 }
 
 // Update text input when color picker changes
@@ -2005,7 +2652,7 @@ document.querySelectorAll('.color-picker').forEach(picker => {
 
 // Update preview in real-time
 function updatePreview() {
-    if (!currentPreview) return;
+    if (!settingsCurrentPreview) return;
     
     // Background
     const backgroundType = document.getElementById('background_type').value;
@@ -2231,19 +2878,17 @@ function resetToDefaults() {
                 picker.nextElementSibling.value = picker.value;
             });
             
-            if (currentPreview) {
+            if (settingsCurrentPreview) {
                 updatePreview();
             }
+
+            setSettingsDirty(true);
             
             Toast.success('Settings have been reset to defaults');
         }
     });
 }
 
-// Initialize background type toggle on page load
-document.addEventListener('DOMContentLoaded', function() {
-    toggleBackgroundOptions();
-});
 </script>
 
 @endsection

@@ -2964,7 +2964,7 @@
         }
 
         // Helper function to reload current page content
-        function reloadCurrentPage() {
+        function reloadCurrentPage(delay = 500) {
             setTimeout(() => {
                 const path = window.location.pathname;
 
@@ -2977,7 +2977,7 @@
                 }
 
                 loadContent(path);
-            }, 500); // Small delay to show notification
+            }, delay); // Small delay to show notification
         }
 
         // Test function for the universal AJAX system
