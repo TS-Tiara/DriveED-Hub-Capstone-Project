@@ -22,6 +22,7 @@ class TimeSlot extends Model
         'school_id',
         'branch_id',
         'course_id',
+        'session_type',
         'date',
         'start_time',
         'end_time',
@@ -110,10 +111,14 @@ class TimeSlot extends Model
             return 0;
         }
 
-        $courseType = $this->course?->course_type ?? 'theoretical';
+        $sessionType = $this->session_type;
+        if (!in_array($sessionType, ['theoretical', 'practical'], true)) {
+            $sessionType = ($this->course?->course_type === 'practical') ? 'practical' : 'theoretical';
+        }
+
         $bookingsCount = $this->bookings->count();
 
-        if ($courseType === 'theoretical') {
+        if ($sessionType === 'theoretical') {
             // Classroom capacity is fixed to max_students once at least 1 instructor joins.
             return max(0, ($this->max_students ?? 30) - $bookingsCount);
         }

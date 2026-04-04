@@ -819,6 +819,51 @@
         box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
     }
 
+    .form-control.is-invalid {
+        border-color: #ef4444;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+    }
+
+    .field-error {
+        margin-top: 6px;
+        color: #b91c1c;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .modal-error-summary {
+        margin-bottom: 18px;
+        padding: 12px 14px;
+        border: 1px solid #fecaca;
+        border-left: 4px solid #ef4444;
+        background: #fef2f2;
+        border-radius: 8px;
+    }
+
+    .modal-error-summary strong {
+        color: #991b1b;
+        display: block;
+        margin-bottom: 6px;
+    }
+
+    .modal-error-summary ul {
+        margin: 0;
+        padding-left: 18px;
+        color: #b91c1c;
+        font-size: 0.85rem;
+    }
+
+    .required-note {
+        margin-bottom: 14px;
+        padding: 10px 12px;
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: 8px;
+        color: #1e3a8a;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
     textarea.form-control {
         resize: vertical;
         min-height: 100px;
@@ -908,10 +953,22 @@
         box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     }
 
-    .empty-state i {
+    .empty-state > i {
         font-size: 5rem;
         color: #cbd5e0;
         margin-bottom: 20px;
+    }
+
+    .empty-state .btn-create {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+    }
+
+    .empty-state .btn-create i {
+        font-size: 1rem;
+        margin-bottom: 0;
     }
 
     .empty-state p {
@@ -1398,7 +1455,12 @@
                         <div class="course-header">
                             <div>
                                 <h3 class="course-title">{{ $course->title }}</h3>
-                                <span class="course-type">{{ $course->type }}</span>
+                                @if($course->course_type)
+                                    <span class="course-type">{{ ucfirst($course->course_type) }}</span>
+                                @endif
+                                @if($course->type && strcasecmp((string) $course->type, (string) ($course->course_type ?? '')) !== 0)
+                                    <span class="course-type">{{ $course->type }}</span>
+                                @endif
                                 @if($course->vehicle_type)
                                     <span class="course-type course-type-vehicle">{{ $course->vehicle_type }}</span>
                                 @endif
@@ -1500,7 +1562,12 @@
                             <div class="course-list-title-section">
                                 <h3 class="course-title course-title-list">{{ $course->title }}</h3>
                                 <div class="course-list-meta">
-                                    <span class="course-type">{{ $course->type }}</span>
+                                    @if($course->course_type)
+                                        <span class="course-type">{{ ucfirst($course->course_type) }}</span>
+                                    @endif
+                                    @if($course->type && strcasecmp((string) $course->type, (string) ($course->course_type ?? '')) !== 0)
+                                        <span class="course-type">{{ $course->type }}</span>
+                                    @endif
                                     @if($course->vehicle_type)
                                         <span class="course-type course-type-vehicle">{{ $course->vehicle_type }}</span>
                                     @endif
@@ -1606,28 +1673,53 @@
         <form id="courseForm" method="POST" enctype="multipart/form-data">
             @csrf
             <input type="hidden" name="_method" id="courseMethod" value="POST">
+            <input type="hidden" name="course_id" id="courseId" value="{{ old('course_id') }}">
             
             <div class="modal-body">
+                <div class="required-note">Fields marked with * are required. All other fields are optional.</div>
+
+                <div class="modal-error-summary" id="courseModalErrorSummary" style="display: none;"></div>
+
+                @if($errors->any())
+                    <div class="modal-error-summary" id="courseModalServerErrorSummary">
+                        <strong>Please fix the following:</strong>
+                        <ul>
+                            @foreach($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
                 <div class="form-group">
                     <label class="form-label">Course Title *</label>
-                    <input type="text" name="title" id="courseTitle" class="form-control" required placeholder="e.g., Transitional Driving Programs">
+                    <input type="text" name="title" id="courseTitle" class="form-control @error('title') is-invalid @enderror" value="{{ old('title') }}" required placeholder="e.g., Transitional Driving Programs">
+                    @error('title')
+                        <div class="field-error">{{ $message }}</div>
+                    @enderror
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Description</label>
-                    <textarea name="description" id="courseDescription" class="form-control" rows="4" placeholder="Describe the course details..."></textarea>
+                    <label class="form-label">Description (Optional)</label>
+                    <textarea name="description" id="courseDescription" class="form-control @error('description') is-invalid @enderror" rows="4" placeholder="Describe the course details...">{{ old('description') }}</textarea>
+                    @error('description')
+                        <div class="field-error">{{ $message }}</div>
+                    @enderror
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Banner Image (Max 2MB)</label>
-                    <input type="file" name="banner_image" id="courseBanner" class="form-control" accept=".jpg,.jpeg,.png,.webp" onchange="previewImage(this)">
+                    <label class="form-label">Banner Image (Optional, Max 2MB)</label>
+                    <input type="file" name="banner_image" id="courseBanner" class="form-control @error('banner_image') is-invalid @enderror" accept=".jpg,.jpeg,.png,.webp" onchange="previewImage(this)">
                     <img id="imagePreview" class="image-preview">
                     <small class="banner-help-text">Recommended size: 1200x400px for best results</small>
+                    @error('banner_image')
+                        <div class="field-error">{{ $message }}</div>
+                    @enderror
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">Course Type *</label>
-                    <select name="type" id="courseType" class="form-control" required>
+                    <select name="type" id="courseType" class="form-control @error('type') is-invalid @enderror" required>
                         <option value="standard">Standard</option>
                         <option value="intensive">Intensive</option>
                         <option value="refresher">Refresher</option>
@@ -1635,66 +1727,97 @@
                         <option value="defensive">Defensive Driving</option>
                         <option value="advanced">Advanced</option>
                     </select>
+                    @error('type')
+                        <div class="field-error">{{ $message }}</div>
+                    @enderror
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Vehicle Type</label>
-                    <select name="vehicle_type" id="courseVehicleType" class="form-control">
+                    <label class="form-label">Vehicle Type (Optional)</label>
+                    <select name="vehicle_type" id="courseVehicleType" class="form-control @error('vehicle_type') is-invalid @enderror">
                         <option value="">Select vehicle type</option>
                         <option value="Sedan">Sedan (Vios / Mirage)</option>
                         <option value="SUV">SUV (Innova / L300)</option>
                         <option value="Hi-Lux">Hi-Lux (Pick-up Truck)</option>
                         <option value="Montero">Montero / Fortuner</option>
+                        <option value="Motor">Motor (Motorcycle)</option>
                     </select>
+                    @error('vehicle_type')
+                        <div class="field-error">{{ $message }}</div>
+                    @enderror
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Course Features</label>
+                    <label class="form-label">Course Features (Optional)</label>
                     <div id="featuresContainer">
                         <div class="feature-input-group">
-                            <input type="text" name="features[]" class="form-control" placeholder="e.g., UP TO 23 HOURS OF DRIVING LESSONS">
+                            <input type="text" name="features[]" class="form-control {{ $errors->has('features') || $errors->has('features.*') ? 'is-invalid' : '' }}" placeholder="e.g., UP TO 23 HOURS OF DRIVING LESSONS" value="{{ old('features.0') }}">
                             <button type="button" class="btn-remove-feature" onclick="removeFeature(this)">−</button>
                         </div>
                     </div>
                     <button type="button" class="btn-add-feature" onclick="addFeature()">+ Add Feature</button>
+                    @if($errors->has('features') || $errors->has('features.*'))
+                        <div class="field-error">{{ $errors->first('features') ?: $errors->first('features.*') }}</div>
+                    @endif
                 </div>
 
                 <div class="form-grid-two">
                     <div class="form-group">
-                        <label class="form-label">Course Category</label>
-                        <select name="course_type" id="courseCourseType" class="form-control">
+                        <label class="form-label">Course Category (Optional)</label>
+                        <select name="course_type" id="courseCourseType" class="form-control @error('course_type') is-invalid @enderror">
                             <option value="">Select category</option>
                             <option value="theoretical">Theoretical</option>
                             <option value="practical">Practical</option>
+                            <option value="combo">Combo</option>
                         </select>
+                        @error('course_type')
+                            <div class="field-error">{{ $message }}</div>
+                        @enderror
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">License Type</label>
-                        <select name="license_type" id="courseLicenseType" class="form-control">
+                        <label class="form-label">License Type (Optional)</label>
+                        <select name="license_type" id="courseLicenseType" class="form-control @error('license_type') is-invalid @enderror">
                             <option value="">Select license type</option>
                             <option value="non_professional">Non-Professional</option>
                             <option value="professional">Professional</option>
                         </select>
+                        @error('license_type')
+                            <div class="field-error">{{ $message }}</div>
+                        @enderror
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Hours Required</label>
-                    <input type="number" name="hours_required" id="courseHoursRequired" class="form-control" placeholder="e.g., 15" min="1" max="500" step="0.5">
+                    <label class="form-label">Hours Required (Optional)</label>
+                    <input type="number" name="hours_required" id="courseHoursRequired" class="form-control @error('hours_required') is-invalid @enderror" placeholder="e.g., 15" min="1" max="500" step="1" value="{{ old('hours_required') }}">
+                    @error('hours_required')
+                        <div class="field-error">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Price (₱) *</label>
+                    <input type="number" name="price" id="coursePrice" class="form-control @error('price') is-invalid @enderror" required placeholder="0.00" min="0" step="0.01" value="{{ old('price') }}">
+                    @error('price')
+                        <div class="field-error">{{ $message }}</div>
+                    @enderror
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">Status *</label>
-                    <select name="status" id="courseStatus" class="form-control" required>
+                    <select name="status" id="courseStatus" class="form-control @error('status') is-invalid @enderror" required>
                         <option value="active">Active</option>
                         <option value="inactive">Inactive</option>
                     </select>
+                    @error('status')
+                        <div class="field-error">{{ $message }}</div>
+                    @enderror
                 </div>
 
                 <div class="form-check">
                     <input type="checkbox" name="is_featured" id="courseFeatured">
-                    <label for="courseFeatured" class="form-label form-label-inline">Mark as Featured Course</label>
+                    <label for="courseFeatured" class="form-label form-label-inline">Mark as Featured Course (Optional)</label>
                 </div>
             </div>
 
@@ -1718,9 +1841,6 @@
         </div>
         <div class="modal-footer preview-modal-footer">
             <button type="button" class="btn btn-secondary course-modal-btn" onclick="closePreviewModal()">Close</button>
-            <button type="button" class="btn btn-primary course-modal-btn" onclick="closePreviewAndEdit()">
-                <i class="bi bi-pencil-fill"></i> Edit Course
-            </button>
         </div>
     </div>
 </div>
@@ -1801,11 +1921,167 @@
     let currentCourseId = null;
     let currentPackageId = null;
 
+    function clearCourseFormValidation() {
+        const form = document.getElementById('courseForm');
+        if (!form) return;
+
+        form.querySelectorAll('.form-control.is-invalid').forEach(input => input.classList.remove('is-invalid'));
+        form.querySelectorAll('.field-error.dynamic').forEach(error => error.remove());
+
+        const dynamicSummary = document.getElementById('courseModalErrorSummary');
+        if (dynamicSummary) {
+            dynamicSummary.style.display = 'none';
+            dynamicSummary.innerHTML = '';
+        }
+
+        const serverSummary = document.getElementById('courseModalServerErrorSummary');
+        if (serverSummary) {
+            serverSummary.style.display = 'none';
+        }
+    }
+
+    function renderCourseFormErrors(errors = {}, summaryMessage = 'Please fix the following:') {
+        clearCourseFormValidation();
+
+        const form = document.getElementById('courseForm');
+        const summary = document.getElementById('courseModalErrorSummary');
+        if (!form || !summary) return;
+
+        const messages = [];
+        Object.values(errors).forEach(fieldErrors => {
+            if (Array.isArray(fieldErrors)) {
+                fieldErrors.forEach(msg => messages.push(String(msg)));
+            } else if (fieldErrors) {
+                messages.push(String(fieldErrors));
+            }
+        });
+
+        if (messages.length > 0) {
+            const title = document.createElement('strong');
+            title.textContent = summaryMessage;
+
+            const list = document.createElement('ul');
+            messages.forEach(msg => {
+                const li = document.createElement('li');
+                li.textContent = msg;
+                list.appendChild(li);
+            });
+
+            summary.innerHTML = '';
+            summary.appendChild(title);
+            summary.appendChild(list);
+            summary.style.display = 'block';
+        }
+
+        Object.entries(errors).forEach(([field, fieldErrors]) => {
+            const firstError = Array.isArray(fieldErrors) ? fieldErrors[0] : fieldErrors;
+            if (!firstError) return;
+
+            let input = null;
+            if (field === 'features' || field.startsWith('features.')) {
+                input = form.querySelector('#featuresContainer input[name="features[]"]');
+            } else {
+                input = form.querySelector(`[name="${field}"]`);
+            }
+
+            if (!input) return;
+
+            input.classList.add('is-invalid');
+            const group = input.closest('.form-group') || input.parentElement;
+            if (!group) return;
+
+            if (!group.querySelector(`.field-error.dynamic[data-field="${field}"]`)) {
+                const errorEl = document.createElement('div');
+                errorEl.className = 'field-error dynamic';
+                errorEl.dataset.field = field;
+                errorEl.textContent = String(firstError);
+                group.appendChild(errorEl);
+            }
+        });
+
+        document.getElementById('courseModal').style.display = 'flex';
+    }
+
+    function initCourseFormSubmitHandler() {
+        const form = document.getElementById('courseForm');
+        if (!form || form.dataset.ajaxBound === '1') return;
+
+        form.dataset.ajaxBound = '1';
+
+        form.addEventListener('submit', async function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            clearCourseFormValidation();
+
+            const submitButton = form.querySelector('button[type="submit"]');
+            const originalButtonHtml = submitButton ? submitButton.innerHTML : '';
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.textContent = 'Saving...';
+            }
+
+            try {
+                const formData = new FormData(form);
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                    },
+                    body: formData,
+                    credentials: 'same-origin',
+                });
+
+                let payload = {};
+                try {
+                    payload = await response.json();
+                } catch (e) {
+                    payload = {};
+                }
+
+                if (response.ok) {
+                    if (window.showToast) {
+                        window.showToast(payload.message || 'Course saved successfully.', 'success');
+                    }
+
+                    if (window.loadPage) {
+                        window.loadPage(window.location.pathname + window.location.search);
+                    } else {
+                        window.location.reload();
+                    }
+
+                    return;
+                }
+
+                if (response.status === 422 && payload.errors) {
+                    renderCourseFormErrors(payload.errors, payload.message || 'Please fix the following:');
+                    return;
+                }
+
+                if (window.showToast) {
+                    window.showToast(payload.message || 'Unable to save course at this time.', 'error', 7000);
+                }
+            } catch (error) {
+                if (window.showToast) {
+                    window.showToast('Unable to save course at this time.', 'error', 7000);
+                }
+            } finally {
+                if (submitButton) {
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = originalButtonHtml;
+                }
+            }
+        }, true);
+    }
+
     // Course Modal Functions
     function openCreateModal() {
+        clearCourseFormValidation();
         document.getElementById('courseModalTitle').textContent = 'Create New Course';
         document.getElementById('courseForm').action = '{{ route("schools.admin.courses.store", $school) }}';
         document.getElementById('courseMethod').value = 'POST';
+        document.getElementById('courseId').value = '';
         document.getElementById('courseForm').reset();
         document.getElementById('imagePreview').style.display = 'none';
         document.getElementById('courseModal').style.display = 'flex';
@@ -1815,9 +2091,12 @@
         const course = coursesData.find(c => c.id === courseId);
         if (!course) return;
 
+        clearCourseFormValidation();
+
         document.getElementById('courseModalTitle').textContent = 'Edit Course';
         document.getElementById('courseForm').action = `{{ url($school->slug . '/admin/courses') }}/${courseId}`;
         document.getElementById('courseMethod').value = 'PUT';
+        document.getElementById('courseId').value = courseId;
         
         document.getElementById('courseTitle').value = course.title || '';
         document.getElementById('courseDescription').value = course.description || '';
@@ -1826,6 +2105,7 @@
         document.getElementById('courseCourseType').value = course.course_type || '';
         document.getElementById('courseLicenseType').value = course.license_type || '';
         document.getElementById('courseHoursRequired').value = course.hours_required || '';
+        document.getElementById('coursePrice').value = course.price || '';
         document.getElementById('courseStatus').value = course.status || 'active';
         document.getElementById('courseFeatured').checked = course.is_featured || false;
 
@@ -2107,11 +2387,43 @@
         currentCourseId = null;
     }
 
-    function closePreviewAndEdit() {
-        if (currentCourseId) {
-            closePreviewModal();
-            setTimeout(() => openEditModal(currentCourseId), 200);
+    function openCourseModalFromValidation(oldData) {
+        clearCourseFormValidation();
+
+        const isEditMode = String(oldData.method || 'POST').toUpperCase() === 'PUT' && oldData.course_id;
+
+        document.getElementById('courseModalTitle').textContent = isEditMode ? 'Edit Course' : 'Create New Course';
+        document.getElementById('courseForm').action = isEditMode
+            ? `{{ url($school->slug . '/admin/courses') }}/${oldData.course_id}`
+            : '{{ route("schools.admin.courses.store", $school) }}';
+        document.getElementById('courseMethod').value = isEditMode ? 'PUT' : 'POST';
+        document.getElementById('courseId').value = oldData.course_id || '';
+
+        document.getElementById('courseTitle').value = oldData.title || '';
+        document.getElementById('courseDescription').value = oldData.description || '';
+        document.getElementById('courseType').value = oldData.type || 'standard';
+        document.getElementById('courseVehicleType').value = oldData.vehicle_type || '';
+        document.getElementById('courseCourseType').value = oldData.course_type || '';
+        document.getElementById('courseLicenseType').value = oldData.license_type || '';
+        document.getElementById('courseHoursRequired').value = oldData.hours_required || '';
+        document.getElementById('coursePrice').value = oldData.price || '';
+        document.getElementById('courseStatus').value = oldData.status || 'active';
+        document.getElementById('courseFeatured').checked = !!oldData.is_featured;
+
+        const featuresContainer = document.getElementById('featuresContainer');
+        featuresContainer.innerHTML = '';
+        const restoredFeatures = Array.isArray(oldData.features)
+            ? oldData.features.filter(feature => feature !== null && String(feature).trim() !== '')
+            : [];
+
+        if (restoredFeatures.length > 0) {
+            restoredFeatures.forEach(feature => addFeature(String(feature)));
+        } else {
+            addFeature();
         }
+
+        document.getElementById('imagePreview').style.display = 'none';
+        document.getElementById('courseModal').style.display = 'flex';
     }
 
     // View Toggle Functions
@@ -2152,11 +2464,33 @@
 
     // Restore view preference on load
     document.addEventListener('DOMContentLoaded', function() {
+        initCourseFormSubmitHandler();
+
         const savedView = localStorage.getItem('coursesView');
         if (savedView && savedView !== 'cards') {
             switchView(savedView);
         }
+
+        @if($errors->any())
+            openCourseModalFromValidation({
+                method: @json(old('_method', 'POST')),
+                course_id: @json(old('course_id')),
+                title: @json(old('title')),
+                description: @json(old('description')),
+                type: @json(old('type', 'standard')),
+                vehicle_type: @json(old('vehicle_type')),
+                course_type: @json(old('course_type')),
+                license_type: @json(old('license_type')),
+                hours_required: @json(old('hours_required')),
+                price: @json(old('price')),
+                status: @json(old('status', 'active')),
+                is_featured: @json((bool) old('is_featured')),
+                features: @json(old('features', [])),
+            });
+        @endif
     });
+
+    initCourseFormSubmitHandler();
 
     // Auto-hide alerts
     setTimeout(() => {

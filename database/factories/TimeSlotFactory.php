@@ -18,6 +18,7 @@ class TimeSlotFactory extends Factory
         return [
             'school_id' => School::factory(),
             'course_id' => Course::factory(),
+            'session_type' => fake()->randomElement(['theoretical', 'practical']),
             'date' => fake()->dateTimeBetween('now', '+30 days')->format('Y-m-d'),
             'start_time' => sprintf('%02d:00:00', $startHour),
             'end_time' => sprintf('%02d:00:00', $startHour + 1),

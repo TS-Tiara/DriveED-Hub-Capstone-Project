@@ -25,6 +25,28 @@ class EnrollmentValidator
             ];
         }
 
+        // Combo courses: must satisfy both theoretical completion and verified license.
+        if (($course->course_type ?? null) === 'combo') {
+            if (!$student->hasPassedTheoretical()) {
+                return [
+                    'allowed' => false,
+                    'message' => 'You must complete and pass a theoretical course before enrolling in combo courses.'
+                ];
+            }
+
+            if (!$student->hasVerifiedLicense()) {
+                return [
+                    'allowed' => false,
+                    'message' => "You must have a verified student driver's license to enroll in combo courses. Please upload your license from your dashboard."
+                ];
+            }
+
+            return [
+                'allowed' => true,
+                'message' => 'You can proceed with combo enrollment.'
+            ];
+        }
+
         // Practical courses: Must have passed theoretical first
         if ($course->isPractical()) {
             if (!$student->hasPassedTheoretical()) {
@@ -70,8 +92,8 @@ class EnrollmentValidator
             ];
         }
 
-        // If applying for practical course
-        if ($course->isPractical()) {
+        // Practical and combo enrollments require prior theoretical completion for new drivers.
+        if (in_array(($course->course_type ?? null), ['practical', 'combo'], true)) {
             // New drivers cannot apply for practical courses
             if ($data['experience_level'] === 'new_driver') {
                 return [

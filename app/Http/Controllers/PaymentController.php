@@ -153,19 +153,27 @@ class PaymentController extends Controller
 
         $data = $validated;
         $data['school_id'] = $school->id;
-        $data['payer_user_id'] = $studentId;
+        $linkedPayerId = $studentId;
 
         // Determine branch and check ownership
         // Layer 2: Fail-Closed Retrieval
         if (!empty($validated['booking_id'])) {
             $booking = $school->bookings()->findOrFail($validated['booking_id']);
-            if (!$isAdmin && (int)$booking->student_id !== (int)$studentId) abort(403);
+            $linkedPayerId = (int) $booking->student_id;
+            if (!$isAdmin && $linkedPayerId !== (int) $studentId) {
+                abort(403);
+            }
             $data['branch_id'] = $booking->branch_id;
         } else {
             $enrollment = $school->enrollmentRequests()->findOrFail($validated['enrollment_request_id']);
-            if (!$isAdmin && (int)$enrollment->learner_id !== (int)$studentId) abort(403);
+            $linkedPayerId = (int) $enrollment->learner_id;
+            if (!$isAdmin && $linkedPayerId !== (int) $studentId) {
+                abort(403);
+            }
             $data['branch_id'] = $enrollment->branch_id;
         }
+
+        $data['payer_user_id'] = $linkedPayerId;
 
         if ($validated['method'] === 'gcash') {
             // Store receipt securely

@@ -786,8 +786,8 @@
                     @if($step2Done && $pendingRequest)
                         @if(!$pendingRequest->payment_proof_path)
                             <a href="{{ route('schools.guest.payment.show', ['school' => $school->slug, 'enrollment_request_id' => $pendingRequest->id]) }}" 
-                               class="btn-step primary" style="background: #ef4444;">
-                                Complete Payment
+                               class="btn-step primary">
+                                Submit Payment Details
                             </a>
                         @else
                             <span class="step-badge waiting">
@@ -888,8 +888,8 @@
                 <div class="step-action">
                     @if($pendingRequest && $currentStep == 4)
                         @if(!$pendingRequest->payment_proof_path)
-                             <span class="step-badge waiting" style="background: #fee2e2; color: #991b1b;">
-                                Payment Required
+                             <span class="step-badge waiting" style="background: #fef3c7; color: #92400e; border: 1px solid #fde68a;">
+                                Awaiting Payment
                             </span>
                         @else
                             <span class="step-badge waiting">

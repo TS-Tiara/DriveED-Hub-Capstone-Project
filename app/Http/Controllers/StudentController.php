@@ -54,6 +54,16 @@ class StudentController extends Controller
             return redirect()->back()->with('error', $canEnroll['message']);
         }
 
+        // School-scoped single-active guard (single active enrollment per school).
+        $hasActiveEnrollment = EnrollmentRequest::where('learner_id', $student->id)
+            ->where('school_id', $school->id)
+            ->where('status', 'approved')
+            ->exists();
+
+        if ($hasActiveEnrollment) {
+            return redirect()->back()->with('error', 'You already have an active course in this school. Complete or cancel it before enrolling in another course.');
+        }
+
         // Check if already enrolled for this course (excluding previous rejections/cancellations)
         $existingRequest = EnrollmentRequest::where('learner_id', $student->id)
             ->where('course_id', $course->id)
@@ -119,9 +129,9 @@ class StudentController extends Controller
                 $student,
                 'enrollment_received',
                 'Enrollment Request Submitted',
-                "Your enrollment request for {$course->title} has been submitted and is under review.",
+                "Your enrollment request for {$course->title} has been submitted. Proceed to Payments to upload your receipt.",
                 'enrollment',
-                "/{$school->slug}/student/my-course" // Redirects to my course
+                "/{$school->slug}/student/payments?enrollment_id={$enrollmentRequest->id}"
             );
 
             // Notify all admins of this school
@@ -147,8 +157,8 @@ class StudentController extends Controller
         ]);
 
         return redirect()
-            ->route('schools.student.my-course', $school)
-            ->with('success', 'Your enrollment request has been submitted successfully.');
+            ->route('schools.student.payments.index', ['school' => $school->slug, 'enrollment_id' => $enrollmentRequest->id])
+            ->with('success', 'Your enrollment request has been submitted. Please upload your payment receipt to continue approval.');
     }
 
     public function dashboard(Request $request, School $school)
@@ -342,12 +352,14 @@ class StudentController extends Controller
         
         // Get enrolled course IDs (approved enrollment requests)
         $enrolledCourseIds = \App\Models\EnrollmentRequest::where('learner_id', $student->id)
+            ->where('school_id', $school->id)
             ->where('status', 'approved')
             ->pluck('course_id')
             ->toArray();
 
         // Get all bookings
         $allBookings = Booking::where('student_id', $student->id)
+            ->where('school_id', $school->id)
             ->with(['course', 'instructor', 'timeSlot'])
             ->orderBy('booking_date')
             ->get();
@@ -372,6 +384,7 @@ class StudentController extends Controller
         
         // Get enrollment requests
         $enrollmentRequests = \App\Models\EnrollmentRequest::where('learner_id', $student->id)
+            ->where('school_id', $school->id)
             ->with(['course'])
             ->orderBy('created_at', 'desc')
             ->get();
