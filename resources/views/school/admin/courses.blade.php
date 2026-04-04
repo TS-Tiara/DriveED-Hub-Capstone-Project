@@ -1676,7 +1676,7 @@
             <input type="hidden" name="course_id" id="courseId" value="{{ old('course_id') }}">
             
             <div class="modal-body">
-                <div class="required-note">Fields marked with * are required. All other fields are optional.</div>
+                <div class="required-note">Fields marked with * are required.</div>
 
                 <div class="modal-error-summary" id="courseModalErrorSummary" style="display: none;"></div>
 
@@ -1763,8 +1763,8 @@
 
                 <div class="form-grid-two">
                     <div class="form-group">
-                        <label class="form-label">Course Category (Optional)</label>
-                        <select name="course_type" id="courseCourseType" class="form-control @error('course_type') is-invalid @enderror">
+                        <label class="form-label">Course Category *</label>
+                        <select name="course_type" id="courseCourseType" class="form-control @error('course_type') is-invalid @enderror" required>
                             <option value="">Select category</option>
                             <option value="theoretical">Theoretical</option>
                             <option value="practical">Practical</option>
@@ -1776,8 +1776,8 @@
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">License Type (Optional)</label>
-                        <select name="license_type" id="courseLicenseType" class="form-control @error('license_type') is-invalid @enderror">
+                        <label class="form-label">License Type *</label>
+                        <select name="license_type" id="courseLicenseType" class="form-control @error('license_type') is-invalid @enderror" required>
                             <option value="">Select license type</option>
                             <option value="non_professional">Non-Professional</option>
                             <option value="professional">Professional</option>
@@ -1789,8 +1789,8 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Hours Required (Optional)</label>
-                    <input type="number" name="hours_required" id="courseHoursRequired" class="form-control @error('hours_required') is-invalid @enderror" placeholder="e.g., 15" min="1" max="500" step="1" value="{{ old('hours_required') }}">
+                    <label class="form-label">Hours Required *</label>
+                    <input type="number" name="hours_required" id="courseHoursRequired" class="form-control @error('hours_required') is-invalid @enderror" required placeholder="e.g., 15" min="1" max="500" step="1" value="{{ old('hours_required') }}">
                     @error('hours_required')
                         <div class="field-error">{{ $message }}</div>
                     @enderror

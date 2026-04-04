@@ -1696,11 +1696,11 @@ class AdminController extends Controller
                 'title' => 'required|string|max:255',
                 'description' => 'nullable|string',
                 'banner_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048|dimensions:max_width=4000,max_height=4000',
-                'type' => 'nullable|string',
+                'type' => 'required|string',
                 'vehicle_type' => 'nullable|string',
-                'course_type' => 'nullable|in:theoretical,practical,combo',
-                'license_type' => 'nullable|in:non_professional,professional',
-                'hours_required' => 'nullable|numeric|min:1|max:500',
+                'course_type' => 'required|in:theoretical,practical,combo',
+                'license_type' => 'required|in:non_professional,professional',
+                'hours_required' => 'required|numeric|min:1|max:500',
                 'price' => 'required|numeric|min:0',
                 'status' => 'nullable|in:active,inactive',
                 'is_featured' => 'nullable',
@@ -1723,13 +1723,6 @@ class AdminController extends Controller
             if (isset($validated['features'])) {
                 $validated['features'] = array_filter($validated['features']);
             }
-
-            // Apply schema-safe defaults for optional fields before insert.
-            $validated['type'] = $validated['type'] ?? 'standard';
-            $validated['course_type'] = $validated['course_type'] ?? 'theoretical';
-            $validated['license_type'] = $validated['license_type'] ?? 'non_professional';
-            $validated['hours_required'] = $validated['hours_required'] ?? 8;
-            $validated['status'] = $validated['status'] ?? 'active';
 
             $course = \App\Models\Course::create($validated);
 
@@ -1782,11 +1775,11 @@ class AdminController extends Controller
                 'title' => 'required|string|max:255',
                 'description' => 'nullable|string',
                 'banner_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048|dimensions:max_width=4000,max_height=4000',
-                'type' => 'nullable|string',
+                'type' => 'required|string',
                 'vehicle_type' => 'nullable|string',
-                'course_type' => 'nullable|in:theoretical,practical,combo',
-                'license_type' => 'nullable|in:non_professional,professional',
-                'hours_required' => 'nullable|numeric|min:1|max:500',
+                'course_type' => 'required|in:theoretical,practical,combo',
+                'license_type' => 'required|in:non_professional,professional',
+                'hours_required' => 'required|numeric|min:1|max:500',
                 'price' => 'required|numeric|min:0',
                 'status' => 'nullable|in:active,inactive',
                 'is_featured' => 'nullable',
@@ -1813,13 +1806,6 @@ class AdminController extends Controller
             if (isset($validated['features'])) {
                 $validated['features'] = array_filter($validated['features']);
             }
-
-            // Preserve current values when optional fields are cleared in the form.
-            $validated['type'] = $validated['type'] ?? ($course->type ?? 'standard');
-            $validated['course_type'] = $validated['course_type'] ?? ($course->course_type ?? 'theoretical');
-            $validated['license_type'] = $validated['license_type'] ?? ($course->license_type ?? 'non_professional');
-            $validated['hours_required'] = $validated['hours_required'] ?? ($course->hours_required ?? 8);
-            $validated['status'] = $validated['status'] ?? ($course->status ?? 'active');
 
             $course->update($validated);
 
