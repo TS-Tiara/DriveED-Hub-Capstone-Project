@@ -148,6 +148,14 @@ class Course extends Model
     }
 
     /**
+     * Check if course is combo (theoretical + practical).
+     */
+    public function isCombo(): bool
+    {
+        return $this->course_type === 'combo';
+    }
+
+    /**
      * Get license type display name
      */
     public function getLicenseTypeDisplayAttribute(): string
@@ -167,6 +175,7 @@ class Course extends Model
         return match ($this->course_type) {
                 'theoretical' => 'Theoretical',
                 'practical' => 'Practical',
+            'combo' => 'Combo',
                 default => $this->course_type,
             };
     }

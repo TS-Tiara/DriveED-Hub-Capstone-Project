@@ -151,6 +151,14 @@ class BookingController extends Controller
                 'required',
                 Rule::exists('students', 'id')->where('school_id', $school->id)
             ],
+            'enrollment_request_id' => [
+                'required',
+                Rule::exists('enrollment_requests', 'id')->where(function ($query) use ($school, $request) {
+                    $query->where('school_id', $school->id)
+                        ->where('learner_id', $request->input('student_id'))
+                        ->where('status', 'approved');
+                })
+            ],
             'course_id' => [
                 'required',
                 Rule::exists('courses', 'id')->where('school_id', $school->id)
@@ -171,6 +179,10 @@ class BookingController extends Controller
         // Layer 2: Fail-Closed Retrieval
         $student = $school->students()->findOrFail($validated['student_id']);
         $course = $school->courses()->findOrFail($validated['course_id']);
+
+        if (Auth::guard('student')->check() && (int) Auth::guard('student')->id() !== (int) $validated['student_id']) {
+            abort(403, 'Unauthorized booking attempt for another student.');
+        }
 
         if (!empty($validated['instructor_id'])) {
             $instructor = $school->instructors()->findOrFail($validated['instructor_id']);
@@ -321,6 +333,22 @@ class BookingController extends Controller
                     }
                 }
             }
+        }
+
+        $effectiveCourseId = (int) $validated['course_id'];
+        $hasMatchingEnrollment = $school->enrollmentRequests()
+            ->where('id', $validated['enrollment_request_id'])
+            ->where('learner_id', $validated['student_id'])
+            ->where('course_id', $effectiveCourseId)
+            ->where('status', 'approved')
+            ->exists();
+
+        if (!$hasMatchingEnrollment) {
+            $message = 'The selected enrollment record does not match this learner and lesson course.';
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $message], 422);
+            }
+            return back()->withErrors(['enrollment_request_id' => $message]);
         }
 
         $booking = DB::transaction(function () use ($validated, $school, $queueEnabled) {
@@ -600,6 +628,11 @@ class BookingController extends Controller
         $timeSlot = $booking->timeSlot;
         $course = $booking->course;
 
+        $sessionType = $timeSlot?->session_type;
+        if (!in_array($sessionType, ['theoretical', 'practical'], true)) {
+            $sessionType = ($course && $course->course_type === 'practical') ? 'practical' : 'theoretical';
+        }
+
         // Calculate hours from time slot if possible, otherwise fallback to course default
         $hours = 1.0;
         if ($timeSlot && $timeSlot->start_time && $timeSlot->end_time) {
@@ -612,7 +645,7 @@ class BookingController extends Controller
             'school_id' => $school->id,
             'enrollment_id' => $booking->enrollment_request_id,
             'instructor_id' => $booking->instructor_id,
-            'session_type' => ($course && $course->course_type) ? $course->course_type : 'practical',
+            'session_type' => $sessionType,
             'hours_completed' => $hours,
             'session_date' => $timeSlot ? $timeSlot->date : ($booking->scheduled_at ? $booking->scheduled_at->toDateString() : now()->toDateString()),
             'session_time' => $timeSlot ? $timeSlot->start_time : ($booking->scheduled_at ? $booking->scheduled_at->toTimeString() : now()->toTimeString()),

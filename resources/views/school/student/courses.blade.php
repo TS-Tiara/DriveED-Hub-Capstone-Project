@@ -483,6 +483,7 @@
                 <option value="">All Types</option>
                 <option value="theoretical" {{ request('course_type') == 'theoretical' ? 'selected' : '' }}>Theoretical</option>
                 <option value="practical" {{ request('course_type') == 'practical' ? 'selected' : '' }}>Practical</option>
+                <option value="combo" {{ request('course_type') == 'combo' ? 'selected' : '' }}>Combo</option>
             </select>
             <select name="license_type" class="filter-select" onchange="this.form.submit()">
                 <option value="">All Licenses</option>

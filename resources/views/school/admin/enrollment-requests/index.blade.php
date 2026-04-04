@@ -1048,14 +1048,18 @@
             </thead>
             <tbody>
                 @foreach($allRequests as $request)
+                    @php
+                        $displayFee = (float) ($request->price ?? 0);
+                        if ($displayFee <= 0) {
+                            $displayFee = (float) ($request->package->price ?? ($request->course->price ?? 0));
+                        }
+                    @endphp
                     <tr data-status="{{ $request->status }}" data-request-id="{{ $request->id }}" data-branch="{{ $request->branchRelation?->name ?? '' }}">
                         <td>
                             <div class="learner-info">
-                                <div class="learner-name" style="color: #374151;">
-                                    {{ $request->learner->name }}
-                                </div>
-                                <div class="learner-email">{{ $request->learner->email }}</div>
+                                <strong>{{ $request->learner->name }}</strong>
                             </div>
+                            <div class="learner-email">{{ $request->learner->email }}</div>
                         </td>
                         <td>
                             @if($request->experience_level === 'experienced')
@@ -1072,7 +1076,7 @@
                         </td>
                         <td>{{ $request->branchRelation?->name ?: '—' }}</td>
                         <td>
-                            <strong>&#8369;{{ number_format($request->course->price ?? 0, 2) }}</strong>
+                            <strong>&#8369;{{ number_format($displayFee, 2) }}</strong>
                         </td>
                         <td>
                             <div class="d-flex flex-column gap-1">
@@ -1136,6 +1140,12 @@
         
         {{-- Mobile card view --}}
         @foreach($allRequests as $request)
+        @php
+            $displayFee = (float) ($request->price ?? 0);
+            if ($displayFee <= 0) {
+                $displayFee = (float) ($request->package->price ?? ($request->course->price ?? 0));
+            }
+        @endphp
         <div class="mobile-card" data-status="{{ $request->status }}" data-request-id="{{ $request->id }}" data-branch="{{ $request->branchRelation?->name ?? '' }}">
             <div class="mobile-card-header">
                 <div>
@@ -1161,7 +1171,7 @@
             </div>
             <div class="mobile-card-row">
                 <span class="mobile-card-label">Fee</span>
-                <span class="mobile-card-value">&#8369;{{ number_format($request->course->price ?? 0, 2) }}</span>
+                <span class="mobile-card-value">&#8369;{{ number_format($displayFee, 2) }}</span>
             </div>
             <div class="mobile-card-row">
                 <span class="mobile-card-label">Payment</span>
@@ -1462,6 +1472,8 @@ function openVerificationModal(enrollmentId) {
             document.getElementById('v-student-name').textContent = data.student_name;
             document.getElementById('v-course-title').textContent = data.course_title;
             document.getElementById('v-price').textContent = '₱' + data.total_price;
+            const paymentMethod = data.payment_method === 'on_site' ? 'on_site' : 'gcash';
+            document.getElementById('v-reference-label').textContent = paymentMethod === 'on_site' ? 'OR Number' : 'GCash Reference No.';
             document.getElementById('v-reference').textContent = data.reference_number || 'N/A';
             
             // Update Statuses in Panel Titles
@@ -1470,7 +1482,7 @@ function openVerificationModal(enrollmentId) {
             
             // Update Images
             updatePanelImage('license', data.license_url, 'Student License');
-            updatePanelImage('payment', data.receipt_url, 'GCash Receipt');
+            updatePanelImage('payment', data.receipt_url, paymentMethod === 'on_site' ? 'On-site Receipt' : 'GCash Receipt');
             
             // Update Action Buttons Visibility
             const verifyPayBtn = document.getElementById('v-btn-verify-payment');
@@ -1694,7 +1706,7 @@ function rejectFromVerificationModal() {
                 </div>
                 <hr class="my-3">
                 <div class="mb-3">
-                    <div class="v-info-label">GCash Reference No.</div>
+                    <div id="v-reference-label" class="v-info-label">GCash Reference No.</div>
                     <div id="v-reference" class="v-info-value" style="font-family: monospace; font-size: 1.1rem; color: #2563eb;">-</div>
                 </div>
                 <div class="mt-auto">

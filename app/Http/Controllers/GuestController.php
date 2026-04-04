@@ -112,6 +112,7 @@ class GuestController extends Controller
      */
     public function dashboard(Request $request, School $school)
     {
+        /** @var \App\Models\Student|null $guest */
         $guest = Auth::guard('student')->user();
         
         // Ensure user is a guest
@@ -145,6 +146,7 @@ class GuestController extends Controller
     public function courses(Request $request, School $school)
     {
         /** @var Student $guest */
+        /** @var \App\Models\Student|null $guest */
         $guest = Auth::guard('student')->user();
         
         $courses = Course::where('school_id', $school->id)
@@ -199,6 +201,7 @@ class GuestController extends Controller
             'user' => Auth::guard('student')->user()?->id
         ]);
 
+        /** @var \App\Models\Student|null $guest */
         $guest = Auth::guard('student')->user();
 
         // Ensure the course belongs to this school
@@ -321,11 +324,11 @@ class GuestController extends Controller
                 'school' => $school->slug,
                 'enrollment_request_id' => $enrollmentRequest->id
             ])
-            ->with('success', 'Step 1 of 2 Complete! Please settle your enrollment fee via GCash below.');
+            ->with('success', 'Step 1 of 2 Complete! Please submit your payment details below.');
     }
 
     /**
-     * Show the GCash payment page for a specific enrollment request.
+     * Show the guest payment page for a specific enrollment request.
      */
     public function showPayment(School $school, $enrollment_request_id)
     {
@@ -354,9 +357,15 @@ class GuestController extends Controller
             abort(403);
         }
 
+        $method = $request->input('payment_method', 'gcash');
+        $isOnSite = $method === 'on_site';
+
         $request->validate([
-            'reference_number' => 'required|digits:13',
+            'payment_method' => 'required|in:gcash,on_site',
+            'reference_number' => $isOnSite ? 'required|regex:/^[0-9]{1,15}$/' : 'required|digits:13',
             'screenshot' => 'required|image|mimes:jpeg,png,jpg,webp|max:5120',
+        ], [
+            'reference_number.regex' => 'The OR number must be 1 to 15 digits.',
         ]);
 
         $enrollmentRequest = EnrollmentRequest::where('id', $enrollment_request_id)
@@ -369,27 +378,37 @@ class GuestController extends Controller
             // Store the screenshot using standard service (local disk, receipts/ prefix)
             $path = $storageService->store($request->file('screenshot'), $school->id);
 
+            $paymentNote = $isOnSite ? 'On-site OR Submitted' : 'GCash Payment Submitted';
+            $existingRemarks = $enrollmentRequest->remarks ? rtrim($enrollmentRequest->remarks) . "\n" : '';
+
             // 1. Update the enrollment request direct fields (for fast UI access/admin modal)
             $enrollmentRequest->update([
-                'payment_method' => 'gcash',
+                'payment_method' => $method,
                 'payment_reference' => $request->reference_number,
                 'payment_proof_path' => $path,
                 'payment_status' => 'pending',
-                'remarks' => $enrollmentRequest->remarks . "\n[GCash Payment Submitted: " . now()->format('Y-m-d H:i') . "]",
+                'remarks' => $existingRemarks . '[' . $paymentNote . ': ' . now()->format('Y-m-d H:i') . ']',
             ]);
 
             // 2. Create formal payment record (for audit ledger/reports)
-            \App\Models\Payment::create([
+            $paymentData = [
                 'school_id' => $school->id,
                 'branch_id' => $enrollmentRequest->branch_id,
                 'payer_user_id' => $enrollmentRequest->learner_id, // Guest uses their student_id
                 'enrollment_request_id' => $enrollmentRequest->id,
                 'amount' => $enrollmentRequest->price,
-                'method' => 'gcash',
-                'reference' => $request->reference_number,
+                'method' => $method,
                 'proof_of_payment_path' => $path,
                 'status' => 'pending',
-            ]);
+            ];
+
+            if ($isOnSite) {
+                $paymentData['or_number'] = $request->reference_number;
+            } else {
+                $paymentData['reference'] = $request->reference_number;
+            }
+
+            \App\Models\Payment::create($paymentData);
 
             DB::commit();
 
@@ -555,6 +574,7 @@ class GuestController extends Controller
     public function showVerificationForm(School $school)
     {
         // Allow authenticated guests to verify if they haven't yet
+        /** @var \App\Models\Student|null $guest */
         $guest = Auth::guard('student')->user();
         
         if ($guest && $guest->isGuest() && !$guest->hasVerifiedEmail()) {
@@ -593,6 +613,7 @@ class GuestController extends Controller
 
         // Try to get email from session first, then from authenticated user
         $email = session('verification_email');
+        /** @var \App\Models\Student|null $guest */
         $guest = Auth::guard('student')->user();
         
         if (!$email && $guest && $guest->isGuest()) {

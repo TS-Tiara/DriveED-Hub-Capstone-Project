@@ -8,7 +8,7 @@
         <!-- Modern Balanced Header -->
         <div class="text-center mb-4">
             <h1 class="h3 fw-bold mb-1">Complete Enrollment</h1>
-            <p class="text-muted mb-0">Securely settle your payment via GCash</p>
+            <p class="text-muted mb-0">Choose GCash or pay in person, then submit your receipt details</p>
         </div>
 
         <div class="row g-4 justify-content-center align-items-stretch">
@@ -32,10 +32,10 @@
                     <div class="card-body p-4">
                         <div class="d-flex align-items-center gap-3 mb-4">
                             <div class="step-num text-white rounded-circle d-flex align-items-center justify-content-center fw-bold small" style="width: 28px; height: 28px; background: var(--primary-color);">1</div>
-                            <h2 class="h5 fw-bold mb-0">Transfer to GCash</h2>
+                            <h2 class="h5 fw-bold mb-0" id="instructionHeading">Transfer to GCash</h2>
                         </div>
 
-                        <div class="row g-4 align-items-center">
+                        <div class="row g-4 align-items-center" id="gcashInstructionBlock">
                             <!-- QR Section - Stacked on Mobile -->
                             <div class="col-md-5 text-center">
                                 <div class="qr-container p-2 bg-white border rounded-3 shadow-xs mx-auto" style="max-width: 165px;">
@@ -71,8 +71,23 @@
                             </div>
                         </div>
 
+                        <div class="d-none" id="onsiteInstructionBlock">
+                            <div class="p-4 rounded-4" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+                                <div class="d-flex align-items-start gap-3">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; background: #ecfeff; color: #0891b2; flex-shrink: 0;">
+                                        <i class="fas fa-receipt"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="h6 fw-bold mb-2">Pay at the School Office</h3>
+                                        <p class="small text-muted mb-1">Complete your payment in person, then upload a clear photo of your official receipt.</p>
+                                        <p class="small text-muted mb-0">Use the receipt OR number when submitting this form.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="mt-4 p-3 bg-info bg-opacity-10 border border-info border-opacity-25 rounded-3">
-                            <p class="small mb-0 text-info-emphasis fw-medium text-center">
+                            <p class="small mb-0 text-info-emphasis fw-medium text-center" id="instructionNote">
                                 <i class="fas fa-info-circle me-1"></i> Use exact amount for faster verification.
                             </p>
                         </div>
@@ -91,18 +106,34 @@
 
                         <form action="{{ route('schools.guest.payment.submit', ['school' => $school->slug, 'enrollment_request_id' => $enrollmentRequest->id]) }}" method="POST" enctype="multipart/form-data" id="paymentForm">
                             @csrf
-                            <input type="hidden" name="payment_method" value="gcash">
+                            @php($selectedMethod = old('payment_method', 'gcash'))
+                            <input type="hidden" name="payment_method" id="paymentMethodInput" value="{{ $selectedMethod }}">
 
                             <div class="mb-4">
-                                <label class="form-label small fw-bold text-dark mb-2">Transaction Reference Number</label>
-                                <input type="text" name="reference_number" class="form-control form-control-lg rounded-3 border-light-subtle py-2 fs-6 @error('reference_number') is-invalid @enderror" placeholder="13-digit number" required value="{{ old('reference_number') }}" maxlength="13" minlength="13" pattern="[0-9]*" inputmode="numeric">
+                                <label class="form-label small fw-bold text-dark mb-2">Choose Payment Method</label>
+                                <div class="payment-method-tabs d-flex gap-2">
+                                    <button type="button" class="btn payment-method-tab" data-payment-method="gcash">
+                                        <i class="fas fa-mobile-alt me-1"></i> GCash
+                                    </button>
+                                    <button type="button" class="btn payment-method-tab" data-payment-method="on_site">
+                                        <i class="fas fa-store me-1"></i> Pay in Person
+                                    </button>
+                                </div>
+                                @error('payment_method')
+                                    <div class="text-danger small mt-1">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label small fw-bold text-dark mb-2" id="referenceLabel">{{ $selectedMethod === 'on_site' ? 'Official Receipt (OR) Number' : 'Transaction Reference Number' }}</label>
+                                <input type="text" name="reference_number" id="referenceInput" class="form-control form-control-lg rounded-3 border-light-subtle py-2 fs-6 @error('reference_number') is-invalid @enderror" placeholder="{{ $selectedMethod === 'on_site' ? '1 to 15 digit OR number' : '13-digit number' }}" required value="{{ old('reference_number') }}" maxlength="{{ $selectedMethod === 'on_site' ? 15 : 13 }}" minlength="{{ $selectedMethod === 'on_site' ? 1 : 13 }}" pattern="{{ $selectedMethod === 'on_site' ? '[0-9]{1,15}' : '[0-9]{13}' }}" inputmode="numeric">
                                 @error('reference_number')
                                     <div class="invalid-feedback small">{{ $message }}</div>
                                 @enderror
                             </div>
 
                             <div class="mb-4">
-                                <label class="form-label small fw-bold text-dark mb-2">Upload GCash Receipt (Screenshot)</label>
+                                <label class="form-label small fw-bold text-dark mb-2" id="screenshotLabel">{{ $selectedMethod === 'on_site' ? 'Upload Official Receipt Photo' : 'Upload GCash Receipt (Screenshot)' }}</label>
                                 <div class="upload-area p-4 border-2 border-dashed rounded-4 text-center cursor-pointer position-relative" id="dropZone" style="border-color: #e2e8f0; transition: all 0.2s; background: #f8fafc;">
                                     <input type="file" name="screenshot" id="screenshotInput" class="position-absolute w-100 h-100 opacity-0 cursor-pointer" style="left:0; top:0; z-index:2;" accept="image/*" required>
                                     <div class="upload-preview d-none mb-1">
@@ -173,6 +204,23 @@
         background: var(--primary-color) !important;
         color: white !important;
     }
+
+    .payment-method-tab {
+        flex: 1;
+        border: 1px solid #d1d5db;
+        background: #ffffff;
+        color: #475569;
+        font-weight: 700;
+        border-radius: 999px;
+        padding: 0.55rem 0.9rem;
+        transition: all 0.2s;
+    }
+
+    .payment-method-tab.active {
+        border-color: var(--primary-color);
+        background: rgba(59, 130, 246, 0.12);
+        color: var(--primary-color);
+    }
     
     .hover-brand:hover { color: var(--primary-color) !important; }
     
@@ -207,6 +255,58 @@ function copyToClipboard(text, btn) {
         }, 20000); // 20 seconds for verification time or just long enough
     });
 }
+
+const paymentMethodInput = document.getElementById('paymentMethodInput');
+const paymentMethodTabs = document.querySelectorAll('.payment-method-tab');
+const referenceInput = document.getElementById('referenceInput');
+const referenceLabel = document.getElementById('referenceLabel');
+const screenshotLabel = document.getElementById('screenshotLabel');
+const instructionHeading = document.getElementById('instructionHeading');
+const instructionNote = document.getElementById('instructionNote');
+const gcashInstructionBlock = document.getElementById('gcashInstructionBlock');
+const onsiteInstructionBlock = document.getElementById('onsiteInstructionBlock');
+
+function applyPaymentMethod(method) {
+    const selectedMethod = method === 'on_site' ? 'on_site' : 'gcash';
+
+    paymentMethodInput.value = selectedMethod;
+
+    paymentMethodTabs.forEach((tab) => {
+        tab.classList.toggle('active', tab.dataset.paymentMethod === selectedMethod);
+    });
+
+    const isOnSite = selectedMethod === 'on_site';
+    gcashInstructionBlock.classList.toggle('d-none', isOnSite);
+    onsiteInstructionBlock.classList.toggle('d-none', !isOnSite);
+
+    if (isOnSite) {
+        instructionHeading.textContent = 'Pay in Person';
+        instructionNote.innerHTML = '<i class="fas fa-info-circle me-1"></i> Upload a clear receipt photo and enter the OR number from your official receipt.';
+        referenceLabel.textContent = 'Official Receipt (OR) Number';
+        screenshotLabel.textContent = 'Upload Official Receipt Photo';
+
+        referenceInput.placeholder = '1 to 15 digit OR number';
+        referenceInput.maxLength = 15;
+        referenceInput.minLength = 1;
+        referenceInput.pattern = '[0-9]{1,15}';
+    } else {
+        instructionHeading.textContent = 'Transfer to GCash';
+        instructionNote.innerHTML = '<i class="fas fa-info-circle me-1"></i> Use exact amount for faster verification.';
+        referenceLabel.textContent = 'Transaction Reference Number';
+        screenshotLabel.textContent = 'Upload GCash Receipt (Screenshot)';
+
+        referenceInput.placeholder = '13-digit number';
+        referenceInput.maxLength = 13;
+        referenceInput.minLength = 13;
+        referenceInput.pattern = '[0-9]{13}';
+    }
+}
+
+paymentMethodTabs.forEach((tab) => {
+    tab.addEventListener('click', () => applyPaymentMethod(tab.dataset.paymentMethod));
+});
+
+applyPaymentMethod(paymentMethodInput.value || 'gcash');
 
 document.getElementById('screenshotInput').addEventListener('change', function(e) {
     const fileName = e.target.files[0]?.name || 'Click or drag receipt here';
