@@ -114,20 +114,30 @@ class CourseController extends Controller
 
         // For student view, pass enrollment status per course so cards can show badges
         $enrollmentStatuses = [];
+        $enrollmentDetails = [];
         if ($guard === 'student') {
             $student = Auth::guard('student')->user();
             if ($student) {
                 $requests = \App\Models\EnrollmentRequest::where('learner_id', '=', $student->id)
                     ->where('school_id', '=', $school->id)
                     ->whereIn('status', ['pending', 'approved', 'completed'])
-                    ->get(['course_id', 'status']);
+                    ->orderBy('created_at', 'desc')
+                    ->get(['course_id', 'status', 'payment_status', 'payment_proof_path']);
                 foreach ($requests as $req) {
+                    if (array_key_exists($req->course_id, $enrollmentStatuses)) {
+                        continue;
+                    }
+
                     $enrollmentStatuses[$req->course_id] = $req->status;
+                    $enrollmentDetails[$req->course_id] = [
+                        'payment_status' => $req->payment_status,
+                        'has_payment_proof' => !empty($req->payment_proof_path),
+                    ];
                 }
             }
         }
 
-        return view($school->resolveView($view), compact('school', 'courses', 'instructors', 'isAjax', 'enrollmentStatuses'));
+        return view($school->resolveView($view), compact('school', 'courses', 'instructors', 'isAjax', 'enrollmentStatuses', 'enrollmentDetails'));
     }
 
     /**
@@ -146,10 +156,10 @@ class CourseController extends Controller
             'price' => 'nullable|numeric|min:0',
             'duration_hours' => 'nullable|numeric|min:0',
             'max_students' => 'nullable|integer|min:1',
-            'type' => 'nullable|string|max:50', // This is the 'Standard/Intensive' type
-            'course_type' => 'nullable|in:theoretical,practical', // This is the category
-            'license_type' => 'nullable|string|max:100',
-            'hours_required' => 'nullable|numeric|min:0',
+            'type' => 'required|string|max:50', // This is the 'Standard/Intensive' type
+            'course_type' => 'required|in:theoretical,practical,combo', // This is the category
+            'license_type' => 'required|string|max:100',
+            'hours_required' => 'required|numeric|min:1',
             'vehicle_type' => 'nullable|string|max:100',
             'features' => 'nullable|array',
             'features.*' => 'nullable|string|max:255',
@@ -256,10 +266,10 @@ class CourseController extends Controller
             'price' => 'nullable|numeric|min:0',
             'duration_hours' => 'nullable|numeric|min:0',
             'max_students' => 'nullable|integer|min:1',
-            'type' => 'nullable|string|max:50',
-            'course_type' => 'nullable|in:theoretical,practical',
-            'license_type' => 'nullable|string|max:100',
-            'hours_required' => 'nullable|numeric|min:0',
+            'type' => 'required|string|max:50',
+            'course_type' => 'required|in:theoretical,practical,combo',
+            'license_type' => 'required|string|max:100',
+            'hours_required' => 'required|numeric|min:1',
             'vehicle_type' => 'nullable|string|max:100',
             'features' => 'nullable|array',
             'features.*' => 'nullable|string|max:255',

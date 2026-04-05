@@ -1593,6 +1593,13 @@
                     <button class="collapse-btn mobile-queue-btn" onclick="toggleQueuePopup()">My Schedule</button>
                 </div>
             </div>
+
+            @php
+                $approvedEnrollmentByCourse = collect($enrollmentRequests ?? [])
+                    ->where('status', 'approved')
+                    ->keyBy('course_id')
+                    ->map(fn($enrollment) => $enrollment->id);
+            @endphp
             
             @forelse($groupedAvailableSchedules as $date => $dateSchedules)
                 @php
@@ -1612,10 +1619,12 @@
                             @php
                                 $isEnrolledInCourse = empty($enrolledCourseIds) || in_array($timeSlot->course_id, $enrolledCourseIds);
                                 $courseName = $timeSlot->course->title ?? 'Driving Lesson';
+                                $linkedEnrollmentRequestId = $approvedEnrollmentByCourse->get($timeSlot->course_id);
                             @endphp
                                <div class="available-schedule-card {{ !$isEnrolledInCourse ? 'is-hidden' : '' }}" 
                                  data-course-id="{{ $timeSlot->course_id ?? '' }}" 
                                  data-course-name="{{ $courseName }}"
+                                 data-enrollment-request-id="{{ $linkedEnrollmentRequestId ?? '' }}"
                                  data-branch-id="{{ $timeSlot->branch_id ?? '' }}"
                                  data-date="{{ $date }}"
                                  data-start-time="{{ \Carbon\Carbon::parse($timeSlot->start_time)->format('H:i') }}"
@@ -1655,7 +1664,7 @@
                                                 <span class="course-badge">{{ $timeSlot->course->vehicle_type ?? 'Manual' }}</span>
                                             @endif
                                             <div class="booking-status booking-status-inline">
-                                                {{ $timeSlot->getAvailableSpots() }} {{ $timeSlot->getAvailableSpots() === 1 ? 'spot' : 'spots' }} available
+                                                {{ $timeSlot->getAvailableStudentSpots() }} {{ $timeSlot->getAvailableStudentSpots() === 1 ? 'spot' : 'spots' }} available
                                             </div>
                                             <button class="book-now-btn book-now-btn-inline book-now-btn-disabled" id="book-btn-{{ $timeSlot->id }}" onclick="bookTimeSlot({{ $timeSlot->id }})" disabled>
                                                 Schedule Lesson
@@ -1668,7 +1677,7 @@
                                                 <span class="course-badge">{{ $timeSlot->course->vehicle_type ?? 'Manual' }}</span>
                                             @endif
                                             <div class="booking-status booking-status-inline">
-                                                {{ $timeSlot->getAvailableSpots() }} {{ $timeSlot->getAvailableSpots() === 1 ? 'spot' : 'spots' }} available
+                                                {{ $timeSlot->getAvailableStudentSpots() }} {{ $timeSlot->getAvailableStudentSpots() === 1 ? 'spot' : 'spots' }} available
                                             </div>
                                             <button class="book-now-btn book-now-btn-inline" onclick="bookTimeSlotAuto({{ $timeSlot->id }})">
                                                 Schedule Now
@@ -1681,7 +1690,7 @@
                                                 <span class="course-badge">{{ $timeSlot->course->vehicle_type ?? 'Manual' }}</span>
                                             @endif
                                             <div class="booking-status booking-status-inline">
-                                                {{ $timeSlot->getAvailableSpots() }} {{ $timeSlot->getAvailableSpots() === 1 ? 'spot' : 'spots' }} available
+                                                {{ $timeSlot->getAvailableStudentSpots() }} {{ $timeSlot->getAvailableStudentSpots() === 1 ? 'spot' : 'spots' }} available
                                             </div>
                                             <button class="book-now-btn book-now-btn-inline" onclick="bookTimeSlotAdmin({{ $timeSlot->id }})">
                                                 Request Schedule
@@ -2081,9 +2090,15 @@
         const date = timeSlotCard.getAttribute('data-date');
         const startTime = timeSlotCard.getAttribute('data-start-time');
         const endTime = timeSlotCard.getAttribute('data-end-time');
+        const enrollmentRequestId = timeSlotCard.getAttribute('data-enrollment-request-id');
         const instructorName = select.options[select.selectedIndex].text;
+
+        if (!enrollmentRequestId) {
+            showNotification('This schedule cannot be booked because no active enrollment is linked to this course.', 'error');
+            return;
+        }
         
-        openBookingModal(timeSlotId, courseId, courseName, selectedValue, instructorName, date, startTime, endTime);
+        openBookingModal(timeSlotId, courseId, courseName, selectedValue, instructorName, date, startTime, endTime, enrollmentRequestId);
     }
     
     function bookTimeSlotAuto(timeSlotId) {
@@ -2094,8 +2109,14 @@
         const date = timeSlotCard.getAttribute('data-date');
         const startTime = timeSlotCard.getAttribute('data-start-time');
         const endTime = timeSlotCard.getAttribute('data-end-time');
+        const enrollmentRequestId = timeSlotCard.getAttribute('data-enrollment-request-id');
+
+        if (!enrollmentRequestId) {
+            showNotification('This schedule cannot be booked because no active enrollment is linked to this course.', 'error');
+            return;
+        }
         
-        openBookingModal(timeSlotId, courseId, courseName, null, 'Auto-assigned by system', date, startTime, endTime);
+        openBookingModal(timeSlotId, courseId, courseName, null, 'Auto-assigned by system', date, startTime, endTime, enrollmentRequestId);
     }
     
     function bookTimeSlotAdmin(timeSlotId) {
@@ -2106,8 +2127,14 @@
         const date = timeSlotCard.getAttribute('data-date');
         const startTime = timeSlotCard.getAttribute('data-start-time');
         const endTime = timeSlotCard.getAttribute('data-end-time');
+        const enrollmentRequestId = timeSlotCard.getAttribute('data-enrollment-request-id');
+
+        if (!enrollmentRequestId) {
+            showNotification('This schedule cannot be booked because no active enrollment is linked to this course.', 'error');
+            return;
+        }
         
-        openBookingModal(timeSlotId, courseId, courseName, null, 'Will be assigned by admin', date, startTime, endTime);
+        openBookingModal(timeSlotId, courseId, courseName, null, 'Will be assigned by admin', date, startTime, endTime, enrollmentRequestId);
     }
     
     function updateBookButton(timeSlotId) {
@@ -2138,6 +2165,7 @@
                 <input type="hidden" name="student_id" value="{{ Auth::guard('student')->id() }}">
                 <input type="hidden" name="time_slot_id" id="modal_time_slot_id">
                 <input type="hidden" name="course_id" id="modal_course_id">
+                <input type="hidden" name="enrollment_request_id" id="modal_enrollment_request_id">
                 <input type="hidden" name="instructor_id" id="modal_instructor_id">
 
                 <div class="form-group">
@@ -2562,10 +2590,16 @@
 </style>
 
 <script>
-function openBookingModal(timeSlotId, courseId, courseName, instructorId, instructorName, date, startTime, endTime) {
+function openBookingModal(timeSlotId, courseId, courseName, instructorId, instructorName, date, startTime, endTime, enrollmentRequestId) {
+    if (!enrollmentRequestId) {
+        showNotification('Missing enrollment linkage for this schedule.', 'error');
+        return;
+    }
+
     // Set hidden fields
     document.getElementById('modal_time_slot_id').value = timeSlotId;
     document.getElementById('modal_course_id').value = courseId;
+    document.getElementById('modal_enrollment_request_id').value = enrollmentRequestId;
     document.getElementById('modal_instructor_id').value = instructorId || '';
     
     // Set display fields

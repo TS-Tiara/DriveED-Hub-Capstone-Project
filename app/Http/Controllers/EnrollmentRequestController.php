@@ -31,7 +31,7 @@ class EnrollmentRequestController extends Controller
         $admin = Auth::guard('admin')->user();
 
         $baseQuery = EnrollmentRequest::where('school_id', $school->id)
-            ->with(['learner', 'course', 'approvedBy', 'branchRelation'])
+            ->with(['learner', 'course', 'package', 'approvedBy', 'branchRelation'])
             ->orderBy('created_at', 'desc');
 
         $admin->scopeToBranch($baseQuery);
@@ -173,6 +173,25 @@ class EnrollmentRequestController extends Controller
             return redirect()
                 ->back()
                 ->with('error', 'This student is already enrolled in an active course. They must complete or cancel their current enrollment first.');
+        }
+
+        // Idempotent school-scoped single-active guard.
+        $hasOtherActiveEnrollment = EnrollmentRequest::where('school_id', $school->id)
+            ->where('learner_id', $enrollmentRequest->learner_id)
+            ->where('status', 'approved')
+            ->where('id', '!=', $enrollmentRequest->id)
+            ->exists();
+
+        if ($hasOtherActiveEnrollment) {
+            return redirect()
+                ->back()
+                ->with('error', 'This student already has an active enrollment in this school.');
+        }
+
+        if ($enrollmentRequest->payment_status !== 'paid') {
+            return redirect()
+                ->back()
+                ->with('error', 'Cannot approve enrollment before payment verification. Verify payment first.');
         }
 
         DB::beginTransaction();
@@ -366,7 +385,7 @@ class EnrollmentRequestController extends Controller
                 'payment_status' => $validated['payment_status'],
                 'payment_confirmed_by' => $validated['payment_status'] === 'paid' ? $admin->id : $enrollmentRequest->payment_confirmed_by,
                 'payment_confirmed_at' => $validated['payment_status'] === 'paid' ? now() : $enrollmentRequest->payment_confirmed_at,
-                'payment_confirmation_notes' => $validated['payment_notes'],
+                'payment_confirmation_notes' => $validated['payment_notes'] ?? null,
             ]);
 
             // Role promotion is handled exclusively by the enrollment approval path.
@@ -651,6 +670,7 @@ class EnrollmentRequestController extends Controller
         DB::beginTransaction();
         try {
             foreach ($request->enrollment_ids as $id) {
+                /** @var \App\Models\EnrollmentRequest|null $enrollment */
                 $enrollment = EnrollmentRequest::find($id);
 
                 if (!$enrollment instanceof EnrollmentRequest) {
@@ -679,6 +699,11 @@ class EnrollmentRequestController extends Controller
 
                 // Skip if student is locked to another course
                 if ($student->is_course_locked) {
+                    continue;
+                }
+
+                // Strict two-step gate: only verified/paid enrollments can be approved.
+                if ((string) $enrollment->payment_status !== 'paid') {
                     continue;
                 }
 
@@ -725,7 +750,7 @@ class EnrollmentRequestController extends Controller
             foreach ($request->enrollment_ids as $id) {
                 $enrollment = EnrollmentRequest::find($id);
 
-                if (!$enrollment) {
+                if (!$enrollment instanceof EnrollmentRequest) {
                     continue;
                 }
 
@@ -904,6 +929,17 @@ class EnrollmentRequestController extends Controller
      */
     private function processApproval(EnrollmentRequest $enrollmentRequest, $admin, School $school): void
     {
+        $hasOtherActiveEnrollment = EnrollmentRequest::where('school_id', $school->id)
+            ->where('learner_id', $enrollmentRequest->learner_id)
+            ->where('status', 'approved')
+            ->where('id', '!=', $enrollmentRequest->id)
+            ->lockForUpdate()
+            ->exists();
+
+        if ($hasOtherActiveEnrollment) {
+            throw new \RuntimeException('Single-active rule violation: student already has another approved enrollment.');
+        }
+
         $enrollmentRequest->update([
             'status' => 'approved',
             'approved_by' => $admin->id,
@@ -1097,18 +1133,24 @@ class EnrollmentRequestController extends Controller
         if ($admin->isBranchSecretary() && !$admin->canAccessBranch($enrollmentRequest->branch_id))
             abort(403);
 
-        $enrollmentRequest->load(['learner', 'course']);
+        $enrollmentRequest->load(['learner', 'course', 'package']);
+
+        $displayPrice = (float) ($enrollmentRequest->price ?? 0);
+        if ($displayPrice <= 0) {
+            $displayPrice = (float) ($enrollmentRequest->package->price ?? ($enrollmentRequest->course->price ?? 0));
+        }
 
         return response()->json([
             'id' => $enrollmentRequest->id,
             'student_name' => $enrollmentRequest->learner->name,
             'course_title' => $enrollmentRequest->course->title,
-            'total_price' => number_format($enrollmentRequest->price, 2),
+            'total_price' => number_format($displayPrice, 2),
             // Statuses
             'status' => $enrollmentRequest->status,
             'payment_status' => $enrollmentRequest->payment_status,
             'license_status' => $enrollmentRequest->learner->student_license_status,
             // Data
+            'payment_method' => $enrollmentRequest->payment_method,
             'reference_number' => $enrollmentRequest->payment_reference,
             'remarks' => $enrollmentRequest->remarks,
             // Paths/Routes
@@ -1137,31 +1179,49 @@ class EnrollmentRequestController extends Controller
             abort(403);
         if (!$admin->canApproveEnrollments())
             abort(403);
+        if ($enrollmentRequest->school_id !== (int) $school->id)
+            abort(404);
+        if ($admin->isBranchSecretary() && !$admin->canAccessBranch($enrollmentRequest->branch_id))
+            abort(403);
+
+        $hasOtherActiveEnrollment = EnrollmentRequest::where('school_id', $school->id)
+            ->where('learner_id', $enrollmentRequest->learner_id)
+            ->where('status', 'approved')
+            ->where('id', '!=', $enrollmentRequest->id)
+            ->exists();
+
+        if ($hasOtherActiveEnrollment) {
+            $message = 'Cannot approve: learner already has another active enrollment in this school.';
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'message' => $message], 422);
+            }
+            return redirect()->back()->with('error', $message);
+        }
+
+        if ($enrollmentRequest->payment_status !== 'paid') {
+            $message = 'Cannot approve enrollment before payment verification. Verify payment first.';
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'message' => $message], 422);
+            }
+            return redirect()->back()->with('error', $message);
+        }
 
         DB::beginTransaction();
         try {
-            // 1. Confirm Payment on enrollment request
-            if ($enrollmentRequest->payment_status !== 'paid') {
-                $enrollmentRequest->update([
-                    'payment_status' => 'paid',
-                    'payment_confirmed_by' => $admin->id,
-                    'payment_confirmed_at' => now(),
-                ]);
-            }
-
-            // 2. Mark related Payment records as approved (Payment Domain Alignment)
+            // Keep payment record lifecycle aligned when approval occurs post-verification.
             $enrollmentRequest->payments()->where('status', 'pending')->update([
                 'status' => 'approved',
+                'received_by_admin_id' => $admin->id,
                 'received_at' => now(),
                 'updated_at' => now(),
             ]);
 
-            // 3. Perform Enrollment Approval (Role Promotion, Course Locking)
+            // Perform Enrollment Approval (Role Promotion, Course Locking)
             if ($enrollmentRequest->status !== 'approved') {
                 $this->processApproval($enrollmentRequest, $admin, $school);
             }
 
-            // 4. Auto-Verify License (if it's still pending)
+            // Auto-verify license (if it's still pending).
             $student = $enrollmentRequest->student;
             if ($student && $student->student_license_status === 'pending') {
                 $student->update([
@@ -1204,6 +1264,29 @@ class EnrollmentRequestController extends Controller
             abort(403);
         if (!$admin->canApproveEnrollments())
             abort(403);
+        if ($enrollmentRequest->school_id !== (int) $school->id)
+            abort(404);
+        if ($admin->isBranchSecretary() && !$admin->canAccessBranch($enrollmentRequest->branch_id))
+            abort(403);
+
+        $hasLegacyProof = !empty($enrollmentRequest->payment_proof_path)
+            && $enrollmentRequest->payment_status !== 'rejected';
+
+        $hasValidPaymentProof = $enrollmentRequest->payments()
+            ->whereNotNull('proof_of_payment_path')
+            ->where('proof_of_payment_path', '!=', '')
+            ->where(function ($query) {
+                $query->whereNull('status')
+                    ->orWhere('status', '!=', 'rejected');
+            })
+            ->exists();
+
+        if (!$hasLegacyProof && !$hasValidPaymentProof) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Verification rejected: no valid non-rejected payment proof found.'
+            ], 422);
+        }
 
         DB::beginTransaction();
         try {
@@ -1216,6 +1299,7 @@ class EnrollmentRequestController extends Controller
             // Sync related Payment records (F-001 Lifecycle Parity)
             $enrollmentRequest->payments()->where('status', 'pending')->update([
                 'status' => 'approved',
+                'received_by_admin_id' => $admin->id,
                 'received_at' => now(),
                 'updated_at' => now(),
             ]);
