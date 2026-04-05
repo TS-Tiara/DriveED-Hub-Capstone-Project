@@ -346,6 +346,77 @@ class StudentController extends Controller
         ]);
     }
 
+    /**
+     * Handle student driver's license upload
+     */
+    public function uploadLicense(Request $request, School $school)
+    {
+        /** @var \App\Models\Student|null $student */
+        $student = Auth::guard('student')->user();
+
+        if (!$student || !$student->isStudent() || (int) $student->school_id !== (int) $school->id) {
+            abort(403, 'Only active students can upload a license.');
+        }
+
+        $request->validate([
+            'student_license' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
+        ], [
+            'student_license.required' => 'Please select a file to upload.',
+            'student_license.mimes' => 'File must be PDF, JPG, or PNG format.',
+            'student_license.max' => 'File size must not exceed 5MB.',
+        ]);
+
+        try {
+            // Delete old file if re-uploading
+            if ($student->student_license_path) {
+                Storage::disk('local')->delete($student->student_license_path);
+            }
+
+            $uploadedFile = $request->file('student_license');
+            $path = $uploadedFile->store('student-licenses', 'local');
+
+            $student->update([
+                'student_license_path' => $path,
+                'student_license_data' => null,
+                'student_license_mime_type' => $uploadedFile->getMimeType(),
+                'student_license_filename' => $uploadedFile->getClientOriginalName(),
+                'student_license_status' => 'pending',
+                'student_license_verified_at' => null,
+                'student_license_verified_by' => null,
+                'student_license_rejection_reason' => null,
+            ]);
+
+            Log::info('Student license uploaded to disk', [
+                'student_id' => $student->id,
+                'school_id' => $school->id,
+                'path' => $path,
+            ]);
+
+            // Notify admins about pending license verification
+            $admins = Admin::where('school_id', $school->id)->where('is_active', true)->get();
+            foreach ($admins as $admin) {
+                Notification::send(
+                    $admin,
+                    'license_uploaded',
+                    'License Pending Review',
+                    "{$student->name} has uploaded a student driver's license for verification.",
+                    'license',
+                    "/{$school->slug}/admin/enrollments"
+                );
+            }
+
+            return redirect()->back()->with('success', 'License uploaded successfully! It will be reviewed by an admin.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            Log::error('Failed to upload student license', [
+                'error' => $e->getMessage(),
+                'student_id' => $student->id,
+            ]);
+            return redirect()->back()->with('error', 'Failed to upload license. Please try again.');
+        }
+    }
+
     public function schedule(Request $request, School $school)
     {
         $student = Auth::guard('student')->user();

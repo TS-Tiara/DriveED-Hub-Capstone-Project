@@ -457,19 +457,23 @@
         background: rgba(0, 0, 0, 0.5);
         z-index: 1000;
         justify-content: center;
-        align-items: center;
+        align-items: flex-start;
+        overflow-y: auto;
+        padding: 20px 12px;
+        overscroll-behavior: contain;
     }
     
     .modal-dialog {
         max-width: 600px;
-        width: 90%;
+        width: 100%;
+        margin: 0 auto;
     }
     
     .modal-content {
         background: white;
         border-radius: 12px;
         box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-        max-height: 90vh;
+        max-height: calc(100vh - 40px);
         overflow: hidden;
         display: flex;
         flex-direction: column;
@@ -518,7 +522,9 @@
     .modal-body {
         padding: 25px;
         overflow-y: auto;
+        min-height: 0;
         flex: 1;
+        -webkit-overflow-scrolling: touch;
     }
     
     .modal-footer {
@@ -762,10 +768,10 @@
                     </div>
                 @else
                     <div class="course-info">
-                        @if($course->duration_hours)
+                        @if($course->hours_required || $course->duration_hours)
                         <div class="info-row">
                             <span class="info-label">Duration</span>
-                            <span class="info-value">{{ $course->duration_hours }} hours</span>
+                            <span class="info-value">{{ $course->hours_required ?? $course->duration_hours }} hours</span>
                         </div>
                         @endif
                         @if($course->price > 0)

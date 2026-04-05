@@ -1307,12 +1307,14 @@
                     </div>
 
                     <div class="section-inputs">
+                    {{--
                     <div class="form-group">
                         <label class="form-label">
                             <input type="checkbox" name="gcash_enabled" value="1" {{ old('gcash_enabled', $gcashSetting?->is_active ?? false) ? 'checked' : '' }} class="checkbox-inline">
                             Enable GCash payment option for students
                         </label>
                     </div>
+                    --}}
 
                     <div class="form-group">
                         <label class="form-label">GCash Account Name</label>

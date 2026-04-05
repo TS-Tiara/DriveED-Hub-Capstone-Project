@@ -416,12 +416,61 @@ nav[role="navigation"] span:not([aria-current]):not([aria-disabled]) {
                 <select id="paymentTypeSelect" name="payment_target" required style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 1rem;" onchange="updatePaymentTarget()">
                     <option value="" disabled selected>Select what you are paying for...</option>
                     @foreach($pendingEnrollments ?? [] as $enrollment)
-                        <option value="enrollment_{{ $enrollment->id }}">Enrollment Request: {{ $enrollment->course->title ?? 'Course' }}</option>
+                        @php
+                            $enrollmentPaymentStatus = (string) ($enrollment->payment_status ?? 'pending');
+                            $hasLegacySubmissionData = !empty($enrollment->payment_reference) || !empty($enrollment->payment_proof_path);
+                            $hasActivePaymentRecord = ((int) ($enrollment->active_payment_records_count ?? 0)) > 0;
+                            $isRevisionStatus = in_array($enrollmentPaymentStatus, ['rejected', 'revision_required'], true);
+                            $isAwaitingReview = in_array($enrollmentPaymentStatus, ['pending', 'on_hold', 'partial'], true)
+                                && ($hasLegacySubmissionData || $hasActivePaymentRecord);
+                            $isAlreadyResubmitted = $isRevisionStatus && $hasActivePaymentRecord;
+                            $isEnrollmentClosed = in_array((string) ($enrollment->status ?? ''), ['cancelled', 'rejected'], true) && !$isRevisionStatus;
+                            $isPaidStatus = $enrollmentPaymentStatus === 'paid';
+                            $isEnrollmentOptionDisabled = $isPaidStatus || $isAwaitingReview || $isAlreadyResubmitted || $isEnrollmentClosed;
+
+                            $enrollmentStateLabel = 'Ready for Upload';
+                            if ($isPaidStatus) {
+                                $enrollmentStateLabel = 'Paid';
+                            } elseif ($isAwaitingReview || $isAlreadyResubmitted) {
+                                $enrollmentStateLabel = 'Under Review';
+                            } elseif ($isRevisionStatus) {
+                                $enrollmentStateLabel = 'Needs Update';
+                            } elseif ($isEnrollmentClosed) {
+                                $enrollmentStateLabel = 'Enrollment Closed';
+                            }
+                        @endphp
+                        <option value="enrollment_{{ $enrollment->id }}" @disabled($isEnrollmentOptionDisabled)>
+                            Enrollment Request: {{ $enrollment->course->title ?? 'Course' }} ({{ $enrollmentStateLabel }})
+                        </option>
                     @endforeach
                     @foreach($pendingBookings ?? [] as $booking)
-                        <option value="booking_{{ $booking->id }}">Booking: {{ $booking->course->title ?? 'Course' }}</option>
+                        @php
+                            $bookingPaymentStatus = (string) ($booking->payment_status ?? 'pending');
+                            $hasBookingActivePayment = ((int) ($booking->active_payment_record_count ?? 0)) > 0;
+                            $isBookingRevisionStatus = in_array($bookingPaymentStatus, ['rejected', 'revision_required'], true);
+                            $isBookingAwaitingReview = in_array($bookingPaymentStatus, ['pending', 'on_hold', 'partial'], true)
+                                && $hasBookingActivePayment;
+                            $isBookingAlreadyResubmitted = $isBookingRevisionStatus && $hasBookingActivePayment;
+                            $isBookingPaidStatus = $bookingPaymentStatus === 'paid';
+                            $isBookingOptionDisabled = $isBookingPaidStatus || $isBookingAwaitingReview || $isBookingAlreadyResubmitted;
+
+                            $bookingStateLabel = 'Ready for Upload';
+                            if ($isBookingPaidStatus) {
+                                $bookingStateLabel = 'Paid';
+                            } elseif ($isBookingAwaitingReview || $isBookingAlreadyResubmitted) {
+                                $bookingStateLabel = 'Under Review';
+                            } elseif ($isBookingRevisionStatus) {
+                                $bookingStateLabel = 'Needs Update';
+                            }
+                        @endphp
+                        <option value="booking_{{ $booking->id }}" @disabled($isBookingOptionDisabled)>
+                            Booking: {{ $booking->course->title ?? 'Course' }} ({{ $bookingStateLabel }})
+                        </option>
                     @endforeach
                 </select>
+                <p style="font-size: 0.75rem; color: #6b7280; margin-top: 6px; margin-bottom: 0;">
+                    Only items marked "Ready for Upload" or "Needs Update" can accept a new payment submission.
+                </p>
             </div>
 
             <input type="hidden" id="enrollment_request_id" name="enrollment_request_id" value="">

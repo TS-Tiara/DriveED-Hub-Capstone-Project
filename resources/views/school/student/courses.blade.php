@@ -372,6 +372,24 @@
         text-align: center;
         font-weight: 600;
     }
+
+    .pending-status-note {
+        background: #eff6ff;
+        color: #1d4ed8;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 0.82rem;
+        margin-bottom: 10px;
+        text-align: center;
+        font-weight: 600;
+        border: 1px solid #bfdbfe;
+    }
+
+    .pending-status-note.alert {
+        background: #fee2e2;
+        color: #b91c1c;
+        border-color: #fecaca;
+    }
     
     .btn-enroll {
         width: 100%;
@@ -506,6 +524,48 @@
 
     <div class="courses-grid">
         @forelse($courses as $course)
+        @php
+            $enrollStatus = $enrollmentStatuses[$course->id] ?? null;
+            $enrollDetail = $enrollmentDetails[$course->id] ?? null;
+            $enrollmentBadgeText = null;
+            $pendingButtonText = 'Enrollment Pending';
+            $pendingStatusNote = null;
+            $pendingStatusNoteClass = '';
+
+            if ($enrollStatus === 'pending') {
+                $paymentStatus = $enrollDetail['payment_status'] ?? 'pending';
+                $hasPaymentProof = (bool) ($enrollDetail['has_payment_proof'] ?? false);
+
+                if (!$hasPaymentProof) {
+                    $enrollmentBadgeText = 'Payment Needed';
+                    $pendingButtonText = 'Awaiting Payment';
+                    $pendingStatusNote = 'Action needed: upload your payment proof to continue.';
+                    $pendingStatusNoteClass = 'alert';
+                }
+                elseif (in_array($paymentStatus, ['rejected', 'revision_required'], true)) {
+                    $enrollmentBadgeText = 'Payment Update Needed';
+                    $pendingButtonText = 'Payment Update Needed';
+                    $pendingStatusNote = 'Your payment submission needs correction before approval.';
+                    $pendingStatusNoteClass = 'alert';
+                }
+                elseif ($paymentStatus === 'paid') {
+                    $enrollmentBadgeText = 'Pending Approval';
+                    $pendingButtonText = 'Pending Approval';
+                    $pendingStatusNote = 'Payment verified. Waiting for school approval.';
+                }
+                else {
+                    $enrollmentBadgeText = 'Payment Review';
+                    $pendingButtonText = 'Payment Under Review';
+                    $pendingStatusNote = 'Your payment submission is currently being reviewed.';
+                }
+            }
+            elseif ($enrollStatus === 'approved') {
+                $enrollmentBadgeText = 'Currently Enrolled';
+            }
+            elseif ($enrollStatus === 'completed') {
+                $enrollmentBadgeText = 'Completed';
+            }
+        @endphp
         <div class="course-card">
             <div class="course-banner">
                 @if($course->banner_image && file_exists(public_path($course->banner_image)))
@@ -519,10 +579,9 @@
                 @if($course->is_featured)
                     <span class="featured-badge">Featured</span>
                 @endif
-                @if(isset($enrollmentStatuses[$course->id]))
-                    @php $enrollStatus = $enrollmentStatuses[$course->id]; @endphp
+                @if($enrollStatus)
                     <span class="enrollment-status-badge status-{{ $enrollStatus }}">
-                        {{ $enrollStatus === 'pending' ? 'Pending Request' : ($enrollStatus === 'approved' ? 'Currently Enrolled' : 'Completed') }}
+                        {{ $enrollmentBadgeText }}
                     </span>
                 @endif
             </div>
@@ -583,7 +642,7 @@
                     <div class="course-info">
                         <div class="info-row">
                             <span class="info-label">Duration</span>
-                            <span class="info-value">{{ $course->duration_hours }} hours</span>
+                            <span class="info-value">{{ $course->hours_required ?? $course->duration_hours ?? 0 }} hours</span>
                         </div>
                         <div class="info-row">
                             <span class="info-label">Price</span>
@@ -592,11 +651,14 @@
                     </div>
                 @endif
 
-                @if(isset($enrollmentStatuses[$course->id]) && $enrollmentStatuses[$course->id] === 'approved')
+                @if($enrollStatus === 'approved')
                     <button class="btn-enroll btn-enroll-approved" disabled>Currently Enrolled</button>
-                @elseif(isset($enrollmentStatuses[$course->id]) && $enrollmentStatuses[$course->id] === 'pending')
-                    <button class="btn-enroll btn-enroll-pending" disabled>Enrollment Pending</button>
-                @elseif(isset($enrollmentStatuses[$course->id]) && $enrollmentStatuses[$course->id] === 'completed')
+                @elseif($enrollStatus === 'pending')
+                    @if($pendingStatusNote)
+                        <div class="pending-status-note {{ $pendingStatusNoteClass }}">{{ $pendingStatusNote }}</div>
+                    @endif
+                    <button class="btn-enroll btn-enroll-pending" disabled>{{ $pendingButtonText }}</button>
+                @elseif($enrollStatus === 'completed')
                     <button class="btn-enroll" onclick="bookCourse({{ $course->id }})">View Course</button>
                 @elseif($course->isFull())
                     <div class="course-warning">Course is currently full</div>

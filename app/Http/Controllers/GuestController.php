@@ -18,6 +18,7 @@ use App\Rules\StrongPassword;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
@@ -217,7 +218,8 @@ class GuestController extends Controller
 
         // PDC (Practical Driving Course) requires a verified Student Driver's License
         /** @var \App\Models\Student $guest */
-        $canEnroll = \App\Support\EnrollmentValidator::canEnrollInCourse($guest, $course);
+        $isUploadingLicense = $request->hasFile('credential_file');
+        $canEnroll = \App\Support\EnrollmentValidator::canEnrollInCourse($guest, $course, $isUploadingLicense);
         if (!$canEnroll['allowed']) {
             Log::warning('Guest enrollment blocked', [
                 'user' => $guest->id,
@@ -343,8 +345,9 @@ class GuestController extends Controller
 
         // Get active GCash settings (fallback to school level if branch-specific is missing)
         $gcashSetting = GCashSetting::getActiveSetting($school->id, $enrollmentRequest->branch_id);
+        $paymentConcierge = $this->buildEnrollmentPaymentConcierge($enrollmentRequest);
 
-        return view('school.guest.payment-select', compact('school', 'enrollmentRequest', 'gcashSetting'));
+        return view('school.guest.payment-select', compact('school', 'enrollmentRequest', 'gcashSetting', 'paymentConcierge'));
     }
 
     /**
@@ -355,6 +358,20 @@ class GuestController extends Controller
         $guest = Auth::guard('student')->user();
         if (!$guest || !$guest->isGuest()) {
             abort(403);
+        }
+
+        $enrollmentRequest = EnrollmentRequest::where('id', $enrollment_request_id)
+            ->where('learner_id', $guest->id)
+            ->firstOrFail();
+
+        $paymentConcierge = $this->buildEnrollmentPaymentConcierge($enrollmentRequest);
+        if (!$paymentConcierge['allow_submission']) {
+            return redirect()
+                ->route('schools.guest.payment.show', [
+                    'school' => $school->slug,
+                    'enrollment_request_id' => $enrollmentRequest->id,
+                ])
+                ->with($this->resolveGuestFlashKey($paymentConcierge['level']), $paymentConcierge['message']);
         }
 
         $method = $request->input('payment_method', 'gcash');
@@ -368,17 +385,32 @@ class GuestController extends Controller
             'reference_number.regex' => 'The OR number must be 1 to 15 digits.',
         ]);
 
-        $enrollmentRequest = EnrollmentRequest::where('id', $enrollment_request_id)
-            ->where('learner_id', $guest->id)
-            ->firstOrFail();
+        $path = null;
+        $isRevisionMode = !empty($paymentConcierge['revision_mode']);
 
         try {
             DB::beginTransaction();
+
+            // For revision flow, retire old non-approved references so the learner can reuse the same receipt reference.
+            if ($isRevisionMode) {
+                $enrollmentRequest->payments()
+                    ->whereIn('status', ['pending', 'on_hold', 'rejected'])
+                    ->update([
+                        'status' => 'rejected',
+                        'reference' => null,
+                        'normalized_reference' => null,
+                        'or_number' => null,
+                        'normalized_or_number' => null,
+                        'updated_at' => now(),
+                    ]);
+            }
             
             // Store the screenshot using standard service (local disk, receipts/ prefix)
             $path = $storageService->store($request->file('screenshot'), $school->id);
 
-            $paymentNote = $isOnSite ? 'On-site OR Submitted' : 'GCash Payment Submitted';
+            $paymentNote = $isOnSite
+                ? ($isRevisionMode ? 'On-site OR Re-Submitted' : 'On-site OR Submitted')
+                : ($isRevisionMode ? 'GCash Payment Re-Submitted' : 'GCash Payment Submitted');
             $existingRemarks = $enrollmentRequest->remarks ? rtrim($enrollmentRequest->remarks) . "\n" : '';
 
             // 1. Update the enrollment request direct fields (for fast UI access/admin modal)
@@ -427,12 +459,163 @@ class GuestController extends Controller
 
             return redirect()
                 ->route('schools.guest.dashboard', $school->slug)
-                ->with('success', 'Payment details submitted successfully! An admin will verify your payment shortly.');
+                ->with('success', $isRevisionMode
+                    ? 'Updated payment details submitted. An admin will review your update shortly.'
+                    : 'Payment details submitted successfully! An admin will verify your payment shortly.');
 
+        } catch (QueryException $e) {
+            DB::rollBack();
+
+            if ($path) {
+                Storage::disk('local')->delete($path);
+            }
+
+            $friendlyMessage = $this->friendlyPaymentErrorMessage($e, $method);
+            if ($friendlyMessage) {
+                return redirect()
+                    ->route('schools.guest.payment.show', [
+                        'school' => $school->slug,
+                        'enrollment_request_id' => $enrollmentRequest->id,
+                    ])
+                    ->withInput()
+                    ->with('error', $friendlyMessage);
+            }
+
+            Log::error('Payment submission query failed', [
+                'enrollment_request_id' => $enrollmentRequest->id,
+                'student_id' => $guest->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return redirect()
+                ->route('schools.guest.payment.show', [
+                    'school' => $school->slug,
+                    'enrollment_request_id' => $enrollmentRequest->id,
+                ])
+                ->withInput()
+                ->with('error', 'Failed to submit payment details. Please check your reference number and try again.');
         } catch (\Exception $e) {
-            Log::error('Payment submission failed: ' . $e->getMessage());
-            return back()->with('error', 'Failed to submit payment details. Please try again or contact support.');
+            DB::rollBack();
+
+            if ($path) {
+                Storage::disk('local')->delete($path);
+            }
+
+            Log::error('Payment submission failed', [
+                'enrollment_request_id' => $enrollmentRequest->id,
+                'student_id' => $guest->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return redirect()
+                ->route('schools.guest.payment.show', [
+                    'school' => $school->slug,
+                    'enrollment_request_id' => $enrollmentRequest->id,
+                ])
+                ->withInput()
+                ->with('error', 'Failed to submit payment details. Please try again or contact support.');
         }
+    }
+
+    private function buildEnrollmentPaymentConcierge(EnrollmentRequest $enrollmentRequest): array
+    {
+        $enrollmentStatus = (string) $enrollmentRequest->status;
+        $paymentStatus = (string) ($enrollmentRequest->payment_status ?? 'pending');
+
+        $hasLegacySubmissionData = !empty($enrollmentRequest->payment_reference)
+            || !empty($enrollmentRequest->payment_proof_path);
+
+        $activePaymentStatuses = $enrollmentRequest->payments()
+            ->whereIn('status', ['pending', 'approved'])
+            ->pluck('status');
+
+        $hasPendingPaymentRecord = $activePaymentStatuses->contains('pending');
+        $hasApprovedPaymentRecord = $activePaymentStatuses->contains('approved');
+        $hasActivePaymentRecord = $hasPendingPaymentRecord || $hasApprovedPaymentRecord;
+
+        if (in_array($enrollmentStatus, ['cancelled', 'rejected'], true)
+            && !in_array($paymentStatus, ['rejected', 'revision_required'], true)) {
+            return [
+                'allow_submission' => false,
+                'revision_mode' => false,
+                'level' => 'error',
+                'message' => 'This enrollment request is no longer active, so payment submission is disabled.',
+            ];
+        }
+
+        if ($paymentStatus === 'paid' || $hasApprovedPaymentRecord) {
+            return [
+                'allow_submission' => false,
+                'revision_mode' => false,
+                'level' => 'success',
+                'message' => 'Your payment has already been verified. No need to submit again.',
+            ];
+        }
+
+        if (in_array($paymentStatus, ['rejected', 'revision_required'], true)) {
+            if ($hasActivePaymentRecord) {
+                return [
+                    'allow_submission' => false,
+                    'revision_mode' => false,
+                    'level' => 'info',
+                    'message' => 'Your updated payment is already submitted and waiting for admin review.',
+                ];
+            }
+
+            return [
+                'allow_submission' => true,
+                'revision_mode' => true,
+                'level' => 'warning',
+                'message' => 'Your previous payment needs revision. Please submit an updated receipt now.',
+            ];
+        }
+
+        if (in_array($paymentStatus, ['pending', 'on_hold', 'partial'], true)
+            && ($hasLegacySubmissionData || $hasActivePaymentRecord)) {
+            return [
+                'allow_submission' => false,
+                'revision_mode' => false,
+                'level' => 'info',
+                'message' => 'Payment details are already submitted and currently under review.',
+            ];
+        }
+
+        return [
+            'allow_submission' => true,
+            'revision_mode' => false,
+            'level' => 'info',
+            'message' => '',
+        ];
+    }
+
+    private function resolveGuestFlashKey(string $level): string
+    {
+        return match ($level) {
+            'error' => 'error',
+            'success' => 'success',
+            default => 'info',
+        };
+    }
+
+    private function friendlyPaymentErrorMessage(QueryException $e, string $method): ?string
+    {
+        $message = $e->getMessage();
+
+        if (str_contains($message, 'payments_gcash_global_unique')
+            || ($method === 'gcash' && str_contains($message, 'normalized_reference'))) {
+            return 'That GCash reference number is already used in this school. Please double-check the number or use a different reference.';
+        }
+
+        if (str_contains($message, 'payments_onsite_branch_unique')
+            || ($method === 'on_site' && str_contains($message, 'normalized_or_number'))) {
+            return 'That official receipt number is already recorded for this branch. Please check the OR number and try again.';
+        }
+
+        if (str_contains($message, 'Duplicate entry') || str_contains($message, 'Integrity constraint violation')) {
+            return 'Payment submission was blocked because this reference already exists. Please verify the number and submit again.';
+        }
+
+        return null;
     }
 
     /**
@@ -455,7 +638,7 @@ class GuestController extends Controller
     }
 
     /**
-     * Handle guest cancellation request
+     * Handle guest withdrawal request for a pending enrollment request
      */
     public function requestCancellation(Request $request, School $school, EnrollmentRequest $enrollmentRequest)
     {
@@ -468,7 +651,7 @@ class GuestController extends Controller
 
         // Must be status pending
         if ($enrollmentRequest->status !== 'pending') {
-            return redirect()->back()->with('error', 'Only pending enrollment requests can be cancelled.');
+            return redirect()->back()->with('error', 'Only pending enrollment requests can be withdrawn.');
         }
 
         $request->validate([
@@ -486,14 +669,14 @@ class GuestController extends Controller
             Notification::send(
                 $admin,
                 'enrollment_cancellation_requested',
-                'Cancellation Requested',
-                "{$guest->name} has requested to cancel their enrollment for {$enrollmentRequest->course->title}.",
+                'Withdrawal Requested',
+                "{$guest->name} has requested to withdraw their enrollment request for {$enrollmentRequest->course->title}.",
                 'enrollment',
                 "/{$school->slug}/admin/enrollments"
             );
         }
 
-        return redirect()->back()->with('success', 'Your cancellation request has been submitted to the admin for review.');
+        return redirect()->back()->with('success', 'Your withdrawal request has been submitted to the admin for review.');
     }
 
     /**

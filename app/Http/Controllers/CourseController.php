@@ -114,20 +114,30 @@ class CourseController extends Controller
 
         // For student view, pass enrollment status per course so cards can show badges
         $enrollmentStatuses = [];
+        $enrollmentDetails = [];
         if ($guard === 'student') {
             $student = Auth::guard('student')->user();
             if ($student) {
                 $requests = \App\Models\EnrollmentRequest::where('learner_id', '=', $student->id)
                     ->where('school_id', '=', $school->id)
                     ->whereIn('status', ['pending', 'approved', 'completed'])
-                    ->get(['course_id', 'status']);
+                    ->orderBy('created_at', 'desc')
+                    ->get(['course_id', 'status', 'payment_status', 'payment_proof_path']);
                 foreach ($requests as $req) {
+                    if (array_key_exists($req->course_id, $enrollmentStatuses)) {
+                        continue;
+                    }
+
                     $enrollmentStatuses[$req->course_id] = $req->status;
+                    $enrollmentDetails[$req->course_id] = [
+                        'payment_status' => $req->payment_status,
+                        'has_payment_proof' => !empty($req->payment_proof_path),
+                    ];
                 }
             }
         }
 
-        return view($school->resolveView($view), compact('school', 'courses', 'instructors', 'isAjax', 'enrollmentStatuses'));
+        return view($school->resolveView($view), compact('school', 'courses', 'instructors', 'isAjax', 'enrollmentStatuses', 'enrollmentDetails'));
     }
 
     /**

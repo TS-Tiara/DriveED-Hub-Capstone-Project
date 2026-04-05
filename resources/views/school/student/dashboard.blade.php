@@ -757,7 +757,7 @@
                         </div>
                         <div class="progress-stat">
                             <span class="progress-stat-label">Hours</span>
-                            <span class="progress-stat-value">{{ $hoursCompleted }}/{{ $requiredHours }} hrs</span>
+                            <span class="progress-stat-value">{{ $hoursCompleted }}/{{ $requiredHours ?? $course->hours_required ?? 0 }} hrs</span>
                         </div>
                         <div class="progress-stat">
                             <span class="progress-stat-label">TDC Status</span>
@@ -913,7 +913,7 @@
                 </div>
                 <div class="info-row">
                     <span class="info-label">Hours</span>
-                    <span class="info-value">{{ $hoursCompleted }}/{{ $requiredHours }} hrs</span>
+                    <span class="info-value">{{ $hoursCompleted }}/{{ $requiredHours ?? $course->hours_required ?? 0 }} hrs</span>
                 </div>
                 <div class="progress-bar-wrapper">
                     <div class="progress-bar-container">

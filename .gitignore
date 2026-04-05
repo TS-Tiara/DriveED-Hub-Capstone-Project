@@ -61,3 +61,5 @@ Thumbs.db
 /railway.json
 /.env.*
 !.env.example
+/public
+/tmp

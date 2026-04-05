@@ -462,6 +462,84 @@
             align-items: flex-start;
         }
     }
+
+    .withdraw-modal .modal-content {
+        max-width: 560px;
+        width: calc(100% - 24px);
+        border-radius: 12px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
+    }
+
+    .withdraw-modal .modal-header {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: #ffffff;
+        padding: 16px 20px;
+        border: 0;
+    }
+
+    .withdraw-modal .modal-title {
+        margin: 0;
+        font-size: 1.05rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .withdraw-modal-close {
+        border: 0;
+        background: transparent;
+        color: #ffffff;
+        font-size: 1.6rem;
+        line-height: 1;
+        cursor: pointer;
+        opacity: 0.85;
+    }
+
+    .withdraw-modal-close:hover {
+        opacity: 1;
+    }
+
+    .withdraw-modal .modal-body {
+        padding: 20px;
+    }
+
+    .withdraw-modal .modal-footer {
+        padding: 16px 20px;
+        border-top: 1px solid #e5e7eb;
+        background: #f8fafc;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+    .withdraw-modal-btn {
+        border: 0;
+        border-radius: 8px;
+        padding: 10px 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .withdraw-modal-btn.secondary {
+        background: #e5e7eb;
+        color: #111827;
+    }
+
+    .withdraw-modal-btn.secondary:hover {
+        background: #d1d5db;
+    }
+
+    .withdraw-modal-btn.danger {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: #ffffff;
+        box-shadow: 0 8px 15px -3px rgba(239, 68, 68, 0.2);
+    }
+
+    .withdraw-modal-btn.danger:hover {
+        filter: brightness(1.05);
+    }
 </style>
 
 <div class="enrollment-requests-container">
@@ -481,6 +559,22 @@
                     $isRejected = $request->status === 'rejected';
                     $isCancelled = $request->status === 'cancelled';
                     $isCompleted = $request->status === 'completed';
+                    $statusBadgeLabel = ucfirst($request->status);
+
+                    if ($request->status === 'pending') {
+                        if (!$request->payment_proof_path) {
+                            $statusBadgeLabel = 'Payment Needed';
+                        }
+                        elseif (in_array($request->payment_status, ['rejected', 'revision_required'], true)) {
+                            $statusBadgeLabel = 'Payment Update Needed';
+                        }
+                        elseif ($request->payment_status === 'paid') {
+                            $statusBadgeLabel = 'Pending Approval';
+                        }
+                        else {
+                            $statusBadgeLabel = 'Payment Review';
+                        }
+                    }
                     
                     // Progress percentage for the connector line
                     if ($isCompleted) $connectorWidth = 100;
@@ -491,7 +585,7 @@
                 @endphp
                 <div class="request-card status-{{ $request->status }}">
                     <div class="request-card-header">
-                        <h3 class="course-title">{{ $request->course->title }}</h3>
+                        <h3 class="course-title">{{ $request->course->title ?? 'Selected Course' }}</h3>
                         <div class="d-flex align-items-center gap-2">
                             @if($request->status === 'pending' && !$request->payment_proof_path)
                                 <span class="badge bg-danger rounded-pill px-3 py-2" style="font-size: 0.7rem;">ACTION REQUIRED: UNPAID</span>
@@ -500,18 +594,18 @@
                             @if($request->status === 'pending' && !$request->cancellation_requested)
                                 <button type="button" 
                                         class="btn btn-outline-danger btn-sm rounded-pill px-3 open-cancel-modal" 
-                                        data-course-title="{{ $request->course->title }}"
+                                        data-course-title="{{ $request->course->title ?? 'this request' }}"
                                         data-cancel-url="{{ route('schools.guest.enrollmentRequests.cancelRequest', ['school' => $school->slug, 'enrollmentRequest' => $request->id]) }}">
-                                    <i class="fas fa-times me-1"></i> Request Cancel
+                                    <i class="fas fa-times me-1"></i> Withdraw Request
                                 </button>
                             @elseif($request->status === 'pending' && $request->cancellation_requested)
                                 <span class="badge bg-warning text-dark rounded-pill px-3 py-2" style="font-size: 0.7rem;">
-                                    <i class="fas fa-clock me-1"></i> CANCELLATION PENDING
+                                    <i class="fas fa-clock me-1"></i> WITHDRAWAL PENDING
                                 </span>
                             @endif
 
                             <span class="status-badge {{ $request->status }}">
-                                {{ ucfirst($request->status) }}
+                                {{ $statusBadgeLabel }}
                             </span>
                         </div>
                     </div>
@@ -606,6 +700,16 @@
                                         <i class="fas fa-wallet" style="font-size: 0.7rem;"></i>
                                     </div>
                                     <span class="timeline-label active text-danger">Awaiting Payment</span>
+                                @elseif(in_array($request->payment_status, ['rejected', 'revision_required'], true))
+                                    <div class="timeline-dot active" style="background: #ef4444; border-color: #ef4444; box-shadow: 0 0 0 4px #ef444430;">
+                                        <i class="fas fa-exclamation-triangle" style="font-size: 0.7rem;"></i>
+                                    </div>
+                                    <span class="timeline-label active text-danger">Payment Needs Update</span>
+                                @elseif($request->payment_status === 'paid')
+                                    <div class="timeline-dot active">
+                                        <svg class="timeline-icon-sm" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                    </div>
+                                    <span class="timeline-label active">Pending Approval</span>
                                 @else
                                     <div class="timeline-dot active">
                                         <svg class="timeline-icon-sm" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -704,15 +808,15 @@
                                     <span>
                                         @php
                                             $course = $request->course;
-                                            $isPractical = false;
-                                            if ($course) {
-                                                if (method_exists($course, 'isPractical')) {
-                                                    $isPractical = $course->isPractical();
-                                                } else {
-                                                    $isPractical = in_array(strtolower($course->course_type ?? $course->type ?? ''), ['practical', 'pdc']);
-                                                }
+                                            $courseType = strtolower($course->course_type ?? $course->type ?? '');
+                                            
+                                            if ($courseType === 'combo') {
+                                                $courseTypeLabel = 'Combo';
+                                            } elseif (in_array($courseType, ['practical', 'pdc'])) {
+                                                $courseTypeLabel = 'PDC';
+                                            } else {
+                                                $courseTypeLabel = 'TDC';
                                             }
-                                            $courseTypeLabel = $isPractical ? 'PDC' : 'TDC';
                                         @endphp
                                         <span class="detail-label">Course Type:</span> {{ $courseTypeLabel }}
                                     </span>
@@ -763,42 +867,42 @@
     </div>
 </div>
 
-<!-- Request Cancel Modal -->
-<div class="modal fade" id="cancelRequestModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-danger text-white border-0 py-3">
-                <h5 class="modal-title fw-bold">
-                    <i class="fas fa-exclamation-triangle me-2"></i> Request Cancellation
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form id="cancelRequestForm" method="POST" action="">
-                @csrf
-                <div class="modal-body p-4">
-                    <p class="text-secondary mb-4">
-                        You are requesting to cancel your enrollment for 
-                        <strong id="cancelCourseTitle" class="text-dark"></strong>.
-                        Please provide a reason to help us understand why.
-                    </p>
-                    <div class="form-group mb-0">
-                        <label class="form-label fw-bold">Cancellation Reason <span class="text-danger">*</span></label>
-                        <textarea name="cancellation_reason" class="form-control" rows="3" required placeholder="E.g., I registered by mistake, or I prefer another schedule."></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer border-0 p-4 pt-0 bg-light">
-                    <button type="button" class="btn btn-light fw-bold px-4" data-bs-dismiss="modal">Keep Application</button>
-                    <button type="submit" class="btn btn-danger fw-bold px-4 shadow-sm">
-                        Submit Request
-                    </button>
-                </div>
-            </form>
+<!-- Withdraw Request Modal -->
+<div class="modal-overlay withdraw-modal" id="cancelRequestModal" aria-hidden="true">
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="cancelRequestModalTitle">
+        <div class="modal-header">
+            <h5 class="modal-title" id="cancelRequestModalTitle">
+                <i class="fas fa-exclamation-triangle"></i> Withdraw Enrollment Request
+            </h5>
+            <button type="button" class="withdraw-modal-close" data-cancel-modal-close aria-label="Close">&times;</button>
         </div>
+        <form id="cancelRequestForm" method="POST" action="">
+            @csrf
+            <div class="modal-body">
+                <p style="color: #4b5563; margin-bottom: 16px;">
+                    You are requesting to withdraw your enrollment request for 
+                    <strong id="cancelCourseTitle" style="color: #111827;"></strong>.
+                    Please provide a reason to help us understand why.
+                </p>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label" style="font-weight: 700;">Withdrawal Reason <span style="color: #dc2626;">*</span></label>
+                    <textarea name="cancellation_reason" class="form-control" rows="3" required placeholder="E.g., I registered by mistake, or I prefer another schedule."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="withdraw-modal-btn secondary" data-cancel-modal-close>Keep Application</button>
+                <button type="submit" class="withdraw-modal-btn danger">Submit Withdrawal</button>
+            </div>
+        </form>
     </div>
 </div>
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        const cancelModalEl = document.getElementById('cancelRequestModal');
+        const cancelForm = document.getElementById('cancelRequestForm');
+        const cancelCourseTitleEl = document.getElementById('cancelCourseTitle');
+
         // Timeline animations
         document.querySelectorAll('.timeline-connector-fill[data-width]').forEach(function (connector) {
             const value = parseFloat(connector.getAttribute('data-width'));
@@ -806,22 +910,52 @@
             connector.style.width = width + '%';
         });
 
-        // Use event delegation for the cancel buttons to avoid 'this' issues with icons
+        function openCancelModal(url, title) {
+            if (!cancelModalEl || !cancelForm || !cancelCourseTitleEl || !url) {
+                return;
+            }
+
+            cancelCourseTitleEl.textContent = title || 'this request';
+            cancelForm.action = url;
+            cancelModalEl.classList.add('active');
+            cancelModalEl.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeCancelModal() {
+            if (!cancelModalEl) {
+                return;
+            }
+
+            cancelModalEl.classList.remove('active');
+            cancelModalEl.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+        }
+
+        // Use event delegation so icon clicks and button clicks both work.
         document.addEventListener('click', function(e) {
-            const btn = e.target.closest('.open-cancel-modal');
-            if (btn) {
-                const url = btn.getAttribute('data-cancel-url');
-                const title = btn.getAttribute('data-course-title');
-                
-                console.log('Opening cancel modal for:', title, 'URL:', url);
-                
-                document.getElementById('cancelCourseTitle').textContent = title;
-                const form = document.getElementById('cancelRequestForm');
-                form.action = url;
-                
-                const cancelModalEl = document.getElementById('cancelRequestModal');
-                const modal = bootstrap.Modal.getOrCreateInstance(cancelModalEl);
-                modal.show();
+            const openBtn = e.target.closest('.open-cancel-modal');
+            if (openBtn) {
+                openCancelModal(
+                    openBtn.getAttribute('data-cancel-url'),
+                    openBtn.getAttribute('data-course-title')
+                );
+                return;
+            }
+
+            if (e.target.closest('[data-cancel-modal-close]')) {
+                closeCancelModal();
+                return;
+            }
+
+            if (cancelModalEl && e.target === cancelModalEl) {
+                closeCancelModal();
+            }
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && cancelModalEl && cancelModalEl.classList.contains('active')) {
+                closeCancelModal();
             }
         });
     });

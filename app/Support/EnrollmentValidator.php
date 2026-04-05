@@ -13,9 +13,10 @@ class EnrollmentValidator
      * 
      * @param Student $student
      * @param Course $course
+        * @param bool $isUploadingLicense True when the current enrollment request includes a license/credential upload
      * @return array ['allowed' => bool, 'message' => string]
      */
-    public static function canEnrollInCourse(Student $student, Course $course): array
+        public static function canEnrollInCourse(Student $student, Course $course, bool $isUploadingLicense = false): array
     {
         // Theoretical courses: Anyone can enroll
         if ($course->isTheoretical()) {
@@ -25,47 +26,42 @@ class EnrollmentValidator
             ];
         }
 
-        // Combo courses: must satisfy both theoretical completion and verified license.
+        // Combo courses: allow enrollment without prerequisites.
+        // Practical-phase checks are enforced at scheduling/booking stage.
         if (($course->course_type ?? null) === 'combo') {
-            if (!$student->hasPassedTheoretical()) {
-                return [
-                    'allowed' => false,
-                    'message' => 'You must complete and pass a theoretical course before enrolling in combo courses.'
-                ];
-            }
-
-            if (!$student->hasVerifiedLicense()) {
-                return [
-                    'allowed' => false,
-                    'message' => "You must have a verified student driver's license to enroll in combo courses. Please upload your license from your dashboard."
-                ];
-            }
-
             return [
                 'allowed' => true,
-                'message' => 'You can proceed with combo enrollment.'
+                'message' => 'You can proceed with combo enrollment. Practical sessions unlock once required steps are completed.'
             ];
         }
 
-        // Practical courses: Must have passed theoretical first
+        // Practical courses: submitted/pending license can enroll,
+        // but practical scheduling is still guarded later in booking flow.
         if ($course->isPractical()) {
-            if (!$student->hasPassedTheoretical()) {
+            if ($student->hasSubmittedLicense() || $isUploadingLicense) {
                 return [
-                    'allowed' => false,
-                    'message' => 'You must complete and pass a theoretical course before enrolling in practical courses.'
+                    'allowed' => true,
+                    'message' => 'You can proceed with enrollment.'
                 ];
             }
 
-            if (!$student->hasVerifiedLicense()) {
+            if ($student->isLicenseRejected()) {
                 return [
                     'allowed' => false,
-                    'message' => "You must have a verified student driver's license to enroll in practical courses. Please upload your license from your dashboard."
+                    'message' => "Your submitted student driver's license was rejected. Please re-upload from your dashboard before enrolling in practical courses."
+                ];
+            }
+
+            if (!$student->hasPassedTheoretical()) {
+                return [
+                    'allowed' => false,
+                    'message' => "To enroll in practical courses, upload your student driver's license or complete a theoretical course first."
                 ];
             }
 
             return [
-                'allowed' => true,
-                'message' => 'You can proceed with enrollment.'
+                'allowed' => false,
+                'message' => "You must upload your student driver's license from your dashboard before enrolling in practical courses."
             ];
         }
 
@@ -92,28 +88,8 @@ class EnrollmentValidator
             ];
         }
 
-        // Practical and combo enrollments require prior theoretical completion for new drivers.
-        if (in_array(($course->course_type ?? null), ['practical', 'combo'], true)) {
-            // New drivers cannot apply for practical courses
-            if ($data['experience_level'] === 'new_driver') {
-                return [
-                    'valid' => false,
-                    'message' => 'New drivers must complete a theoretical course first. Please apply for a theoretical course.'
-                ];
-            }
-
-        // Experienced drivers on practical courses - credential upload is now optional
-        /* 
-         if ($data['experience_level'] === 'experienced') {
-         if (empty($data['credentials_file_path'])) {
-         return [
-         'valid' => false,
-         'message' => 'Please upload proof of your theoretical completion certificate.'
-         ];
-         }
-         }
-         */
-        }
+        // Combo and practical eligibility prerequisites are enforced in booking-stage logic.
+        // Enrollment request itself remains open to allow phased progression.
 
         return [
             'valid' => true,

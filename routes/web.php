@@ -507,6 +507,7 @@ Route::prefix('{school:slug}')
                     // Student courses
                     Route::get('/courses', [CourseController::class , 'index'])->name('courses.index');
                     Route::get('/courses/{course}', [CourseController::class , 'show'])->name('courses.show');
+                    Route::post('/upload-license', [StudentController::class, 'uploadLicense'])->name('uploadLicense');
                     Route::post('/enroll/{course}', [StudentController::class, 'enroll'])->name('enroll');
 
                     // Booking queue management (used in schedule page)

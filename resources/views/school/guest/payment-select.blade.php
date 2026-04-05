@@ -3,6 +3,17 @@
 @section('title', 'Complete Your Enrollment')
 
 @section('content')
+@php
+    $paymentConcierge = $paymentConcierge ?? ['allow_submission' => true, 'level' => 'info', 'message' => ''];
+    $allowPaymentSubmission = (bool) ($paymentConcierge['allow_submission'] ?? true);
+    $conciergeLevel = $paymentConcierge['level'] ?? 'info';
+    $conciergeAlertClass = match($conciergeLevel) {
+        'error' => 'danger',
+        'success' => 'success',
+        'warning' => 'warning',
+        default => 'info',
+    };
+@endphp
 <div class="checkout-container py-3 py-md-5">
     <div class="container">
         <!-- Modern Balanced Header -->
@@ -104,6 +115,12 @@
                             <h2 class="h5 fw-bold mb-0">Submit Proof</h2>
                         </div>
 
+                        @if(!empty($paymentConcierge['message']))
+                            <div class="alert alert-{{ $conciergeAlertClass }} border-0 shadow-sm mb-4" role="alert">
+                                {{ $paymentConcierge['message'] }}
+                            </div>
+                        @endif
+
                         <form action="{{ route('schools.guest.payment.submit', ['school' => $school->slug, 'enrollment_request_id' => $enrollmentRequest->id]) }}" method="POST" enctype="multipart/form-data" id="paymentForm">
                             @csrf
                             @php($selectedMethod = old('payment_method', 'gcash'))
@@ -112,10 +129,10 @@
                             <div class="mb-4">
                                 <label class="form-label small fw-bold text-dark mb-2">Choose Payment Method</label>
                                 <div class="payment-method-tabs d-flex gap-2">
-                                    <button type="button" class="btn payment-method-tab" data-payment-method="gcash">
+                                    <button type="button" class="btn payment-method-tab" data-payment-method="gcash" @disabled(!$allowPaymentSubmission)>
                                         <i class="fas fa-mobile-alt me-1"></i> GCash
                                     </button>
-                                    <button type="button" class="btn payment-method-tab" data-payment-method="on_site">
+                                    <button type="button" class="btn payment-method-tab" data-payment-method="on_site" @disabled(!$allowPaymentSubmission)>
                                         <i class="fas fa-store me-1"></i> Pay in Person
                                     </button>
                                 </div>
@@ -126,7 +143,7 @@
 
                             <div class="mb-4">
                                 <label class="form-label small fw-bold text-dark mb-2" id="referenceLabel">{{ $selectedMethod === 'on_site' ? 'Official Receipt (OR) Number' : 'Transaction Reference Number' }}</label>
-                                <input type="text" name="reference_number" id="referenceInput" class="form-control form-control-lg rounded-3 border-light-subtle py-2 fs-6 @error('reference_number') is-invalid @enderror" placeholder="{{ $selectedMethod === 'on_site' ? '1 to 15 digit OR number' : '13-digit number' }}" required value="{{ old('reference_number') }}" maxlength="{{ $selectedMethod === 'on_site' ? 15 : 13 }}" minlength="{{ $selectedMethod === 'on_site' ? 1 : 13 }}" pattern="{{ $selectedMethod === 'on_site' ? '[0-9]{1,15}' : '[0-9]{13}' }}" inputmode="numeric">
+                                <input type="text" name="reference_number" id="referenceInput" class="form-control form-control-lg rounded-3 border-light-subtle py-2 fs-6 @error('reference_number') is-invalid @enderror" placeholder="{{ $selectedMethod === 'on_site' ? '1 to 15 digit OR number' : '13-digit number' }}" required value="{{ old('reference_number') }}" maxlength="{{ $selectedMethod === 'on_site' ? 15 : 13 }}" minlength="{{ $selectedMethod === 'on_site' ? 1 : 13 }}" pattern="{{ $selectedMethod === 'on_site' ? '[0-9]{1,15}' : '[0-9]{13}' }}" inputmode="numeric" @disabled(!$allowPaymentSubmission)>
                                 @error('reference_number')
                                     <div class="invalid-feedback small">{{ $message }}</div>
                                 @enderror
@@ -135,7 +152,7 @@
                             <div class="mb-4">
                                 <label class="form-label small fw-bold text-dark mb-2" id="screenshotLabel">{{ $selectedMethod === 'on_site' ? 'Upload Official Receipt Photo' : 'Upload GCash Receipt (Screenshot)' }}</label>
                                 <div class="upload-area p-4 border-2 border-dashed rounded-4 text-center cursor-pointer position-relative" id="dropZone" style="border-color: #e2e8f0; transition: all 0.2s; background: #f8fafc;">
-                                    <input type="file" name="screenshot" id="screenshotInput" class="position-absolute w-100 h-100 opacity-0 cursor-pointer" style="left:0; top:0; z-index:2;" accept="image/*" required>
+                                    <input type="file" name="screenshot" id="screenshotInput" class="position-absolute w-100 h-100 opacity-0 cursor-pointer" style="left:0; top:0; z-index:2;" accept="image/*" required @disabled(!$allowPaymentSubmission)>
                                     <div class="upload-preview d-none mb-1">
                                         <img src="" class="img-thumbnail" style="max-height: 120px;">
                                     </div>
@@ -149,9 +166,14 @@
                                 @enderror
                             </div>
 
-                            <button type="submit" class="btn btn-primary d-flex align-items-center justify-content-center gap-2 w-100 py-3 fw-bold rounded-4 shadow-sm border-0 transition-all ripple btn-payment-submit">
-                                <i class="fas fa-check-circle"></i> Submit Payment Details
+                            <button type="submit" class="btn btn-primary d-flex align-items-center justify-content-center gap-2 w-100 py-3 fw-bold rounded-4 shadow-sm border-0 transition-all ripple btn-payment-submit" @disabled(!$allowPaymentSubmission)>
+                                <i class="fas {{ $allowPaymentSubmission ? 'fa-check-circle' : 'fa-lock' }}"></i>
+                                {{ $allowPaymentSubmission ? 'Submit Payment Details' : 'Submission Locked' }}
                             </button>
+
+                            @if(!$allowPaymentSubmission)
+                                <p class="small text-muted text-center mt-2 mb-0">If this status looks wrong, contact your school admin for assistance.</p>
+                            @endif
                             
                             <div class="mt-4 text-center">
                                 <a href="{{ route('schools.guest.dashboard', ['school' => $school->slug]) }}" class="text-muted small text-decoration-none hover-brand fw-medium">
