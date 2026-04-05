@@ -3,15 +3,20 @@
 namespace App\Http\Controllers;
 
 use App\Models\Admin;
+use App\Models\Booking;
+use App\Models\EnrollmentRequest;
 use App\Models\GCashSetting;
 use App\Models\Payment;
 use App\Models\School;
 use App\Services\PaymentSubmissionService;
 use App\Services\ReceiptStorageService;
+use Illuminate\Database\QueryException;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
@@ -89,14 +94,24 @@ class PaymentController extends Controller
                 ]);
             }
 
-            $pendingEnrollments = \App\Models\EnrollmentRequest::where('learner_id', $studentId)
+            $pendingEnrollments = EnrollmentRequest::where('learner_id', $studentId)
                 ->whereIn('payment_status', ['pending', 'partial', 'on_hold', 'rejected', 'revision_required'])
                 ->with('course')
+                ->withCount([
+                    'payments as active_payment_records_count' => function ($query) {
+                        $query->whereIn('status', ['pending', 'approved']);
+                    }
+                ])
                 ->get();
 
-            $pendingBookings = \App\Models\Booking::where('student_id', $studentId)
-                ->whereIn('payment_status', ['pending', 'partial', 'on_hold'])
+            $pendingBookings = Booking::where('student_id', $studentId)
+                ->whereIn('payment_status', ['pending', 'partial', 'on_hold', 'rejected', 'revision_required'])
                 ->with('course')
+                ->withCount([
+                    'payment as active_payment_record_count' => function ($query) {
+                        $query->whereIn('status', ['pending', 'approved']);
+                    }
+                ])
                 ->get();
         }
 
@@ -148,12 +163,25 @@ class PaymentController extends Controller
 
         // Forensic XOR Linkage check
         if (empty($validated['booking_id']) && empty($validated['enrollment_request_id'])) {
-            return response()->json(['success' => false, 'message' => 'Payment must be linked to a booking or enrollment.'], 422);
+            return $this->paymentErrorResponse(
+                $request,
+                'Payment must be linked to a booking or enrollment.',
+                422,
+                'error'
+            );
         }
 
         $data = $validated;
         $data['school_id'] = $school->id;
         $linkedPayerId = $studentId;
+        $enrollment = null;
+        $booking = null;
+        $paymentConcierge = [
+            'allow_submission' => true,
+            'revision_mode' => false,
+            'level' => 'info',
+            'message' => '',
+        ];
 
         // Determine branch and check ownership
         // Layer 2: Fail-Closed Retrieval
@@ -164,6 +192,7 @@ class PaymentController extends Controller
                 abort(403);
             }
             $data['branch_id'] = $booking->branch_id;
+            $paymentConcierge = $this->buildBookingPaymentConcierge($booking);
         } else {
             $enrollment = $school->enrollmentRequests()->findOrFail($validated['enrollment_request_id']);
             $linkedPayerId = (int) $enrollment->learner_id;
@@ -171,38 +200,298 @@ class PaymentController extends Controller
                 abort(403);
             }
             $data['branch_id'] = $enrollment->branch_id;
+            $paymentConcierge = $this->buildEnrollmentPaymentConcierge($enrollment);
+        }
+
+        if (!$paymentConcierge['allow_submission']) {
+            return $this->blockedPaymentResponse($request, $paymentConcierge);
         }
 
         $data['payer_user_id'] = $linkedPayerId;
+        $storedProofPath = null;
 
-        if ($validated['method'] === 'gcash') {
-            // Store receipt securely
-            $data['proof_of_payment_path'] = $storageService->store($request->file('proof_of_payment'), $school->id);
-            $payment = $submissionService->submitGcash($data);
-        } else {
-            // On-site usually recorded by Admin
-            if (!$isAdmin) abort(403, 'Students cannot record on-site payments.');
-            $data['received_by_admin_id'] = Auth::guard('admin')->id();
-            $data['received_at'] = now();
-            $payment = $submissionService->submitOnsite($data);
+        try {
+            if ($validated['method'] === 'gcash') {
+                // Store receipt securely
+                $storedProofPath = $storageService->store($request->file('proof_of_payment'), $school->id);
+                $data['proof_of_payment_path'] = $storedProofPath;
+
+                // For revision flow, retire old references so a corrected re-upload can reuse the same reference.
+                if (!empty($paymentConcierge['revision_mode']) && $enrollment instanceof EnrollmentRequest) {
+                    $enrollment->payments()
+                        ->whereIn('status', ['pending', 'on_hold', 'rejected'])
+                        ->update([
+                            'status' => 'rejected',
+                            'reference' => null,
+                            'normalized_reference' => null,
+                            'or_number' => null,
+                            'normalized_or_number' => null,
+                            'updated_at' => now(),
+                        ]);
+                }
+
+                $payment = $submissionService->submitGcash($data);
+            } else {
+                // On-site usually recorded by Admin
+                if (!$isAdmin)
+                    abort(403, 'Students cannot record on-site payments.');
+                $data['received_by_admin_id'] = Auth::guard('admin')->id();
+                $data['received_at'] = now();
+                $payment = $submissionService->submitOnsite($data);
+            }
+        } catch (QueryException $e) {
+            if ($storedProofPath) {
+                Storage::disk('local')->delete($storedProofPath);
+            }
+
+            $friendlyMessage = $this->friendlyPaymentErrorMessage($e, (string) $validated['method']);
+            if ($friendlyMessage) {
+                return $this->paymentErrorResponse($request, $friendlyMessage, 422, 'warning');
+            }
+
+            Log::error('Payment submission query failed', [
+                'school_id' => $school->id,
+                'student_id' => $studentId,
+                'enrollment_request_id' => $validated['enrollment_request_id'] ?? null,
+                'booking_id' => $validated['booking_id'] ?? null,
+                'method' => $validated['method'] ?? null,
+                'error' => $e->getMessage(),
+            ]);
+
+            return $this->paymentErrorResponse(
+                $request,
+                'Payment submission failed. Please verify your reference number and try again.',
+                422,
+                'error'
+            );
+        } catch (\Exception $e) {
+            if ($storedProofPath) {
+                Storage::disk('local')->delete($storedProofPath);
+            }
+
+            Log::error('Payment submission failed', [
+                'school_id' => $school->id,
+                'student_id' => $studentId,
+                'enrollment_request_id' => $validated['enrollment_request_id'] ?? null,
+                'booking_id' => $validated['booking_id'] ?? null,
+                'method' => $validated['method'] ?? null,
+                'error' => $e->getMessage(),
+            ]);
+
+            return $this->paymentErrorResponse(
+                $request,
+                'Payment submission failed. Please try again or contact support.',
+                422,
+                'error'
+            );
         }
 
+        $successMessage = !empty($paymentConcierge['revision_mode'])
+            ? 'Updated payment details submitted for verification.'
+            : 'Payment submitted for verification.';
+
         if ($request->expectsJson()) {
-            return response()->json(['success' => true, 'message' => 'Payment submitted for verification.', 'payment' => $payment], 201);
+            return response()->json(['success' => true, 'message' => $successMessage, 'payment' => $payment], 201);
         }
 
         // F-008: Role-Aware Explicit Redirects
         if (Auth::guard('admin')->check()) {
-            return redirect()->route('schools.admin.payments.index', $school->slug)->with('success', 'Payment submitted successfully.');
+            return redirect()->route('schools.admin.payments.index', $school->slug)->with('success', $successMessage);
         } elseif (Auth::guard('student')->check()) {
             // Check if user is a guest role student
             if (Auth::guard('student')->user()->isGuest()) {
-                return redirect()->route('schools.guest.payments.index', $school->slug)->with('success', 'Payment submitted successfully.');
+                return redirect()->route('schools.guest.payments.index', $school->slug)->with('success', $successMessage);
             }
-            return redirect()->route('schools.student.payments.index', $school->slug)->with('success', 'Payment submitted successfully.');
+            return redirect()->route('schools.student.payments.index', $school->slug)->with('success', $successMessage);
         }
 
-        return redirect()->back()->with('success', 'Payment submitted successfully.');
+        return redirect()->back()->with('success', $successMessage);
+    }
+
+    private function buildEnrollmentPaymentConcierge(EnrollmentRequest $enrollment): array
+    {
+        $enrollmentStatus = (string) $enrollment->status;
+        $paymentStatus = (string) ($enrollment->payment_status ?? 'pending');
+
+        $hasLegacySubmissionData = !empty($enrollment->payment_reference)
+            || !empty($enrollment->payment_proof_path);
+
+        $activePaymentStatuses = $enrollment->payments()
+            ->whereIn('status', ['pending', 'approved'])
+            ->pluck('status');
+
+        $hasPendingPaymentRecord = $activePaymentStatuses->contains('pending');
+        $hasApprovedPaymentRecord = $activePaymentStatuses->contains('approved');
+        $hasActivePaymentRecord = $hasPendingPaymentRecord || $hasApprovedPaymentRecord;
+
+        if (in_array($enrollmentStatus, ['cancelled', 'rejected'], true)
+            && !in_array($paymentStatus, ['rejected', 'revision_required'], true)) {
+            return [
+                'allow_submission' => false,
+                'revision_mode' => false,
+                'level' => 'error',
+                'message' => 'This enrollment request is no longer active, so payment submission is disabled.',
+            ];
+        }
+
+        if ($paymentStatus === 'paid' || $hasApprovedPaymentRecord) {
+            return [
+                'allow_submission' => false,
+                'revision_mode' => false,
+                'level' => 'success',
+                'message' => 'Payment is already verified for this enrollment. No need to submit again.',
+            ];
+        }
+
+        if (in_array($paymentStatus, ['rejected', 'revision_required'], true)) {
+            if ($hasActivePaymentRecord) {
+                return [
+                    'allow_submission' => false,
+                    'revision_mode' => false,
+                    'level' => 'warning',
+                    'message' => 'Your updated payment is already submitted and waiting for admin review.',
+                ];
+            }
+
+            return [
+                'allow_submission' => true,
+                'revision_mode' => true,
+                'level' => 'info',
+                'message' => 'Your previous payment needs revision. Submit an updated receipt to continue.',
+            ];
+        }
+
+        if (in_array($paymentStatus, ['pending', 'on_hold', 'partial'], true)
+            && ($hasLegacySubmissionData || $hasActivePaymentRecord)) {
+            return [
+                'allow_submission' => false,
+                'revision_mode' => false,
+                'level' => 'warning',
+                'message' => 'Payment details for this enrollment are already submitted and currently under review.',
+            ];
+        }
+
+        return [
+            'allow_submission' => true,
+            'revision_mode' => false,
+            'level' => 'info',
+            'message' => '',
+        ];
+    }
+
+    private function buildBookingPaymentConcierge(Booking $booking): array
+    {
+        $paymentStatus = (string) ($booking->payment_status ?? 'pending');
+
+        $activePaymentStatuses = Payment::where('school_id', $booking->school_id)
+            ->where('booking_id', $booking->id)
+            ->whereIn('status', ['pending', 'approved'])
+            ->pluck('status');
+
+        $hasPendingPaymentRecord = $activePaymentStatuses->contains('pending');
+        $hasApprovedPaymentRecord = $activePaymentStatuses->contains('approved');
+
+        if ($paymentStatus === 'paid' || $hasApprovedPaymentRecord) {
+            return [
+                'allow_submission' => false,
+                'revision_mode' => false,
+                'level' => 'success',
+                'message' => 'Payment is already verified for this booking. No need to submit again.',
+            ];
+        }
+
+        if (in_array($paymentStatus, ['rejected', 'revision_required'], true)) {
+            if ($hasPendingPaymentRecord) {
+                return [
+                    'allow_submission' => false,
+                    'revision_mode' => false,
+                    'level' => 'warning',
+                    'message' => 'Your updated booking payment is already submitted and waiting for admin review.',
+                ];
+            }
+
+            return [
+                'allow_submission' => true,
+                'revision_mode' => true,
+                'level' => 'info',
+                'message' => 'Your booking payment needs revision. Submit an updated receipt to continue.',
+            ];
+        }
+
+        if (in_array($paymentStatus, ['pending', 'on_hold', 'partial'], true) && $hasPendingPaymentRecord) {
+            return [
+                'allow_submission' => false,
+                'revision_mode' => false,
+                'level' => 'warning',
+                'message' => 'Payment details for this booking are already submitted and currently under review.',
+            ];
+        }
+
+        return [
+            'allow_submission' => true,
+            'revision_mode' => false,
+            'level' => 'info',
+            'message' => '',
+        ];
+    }
+
+    private function blockedPaymentResponse(Request $request, array $state)
+    {
+        $message = $state['message'] ?? 'Payment submission is not allowed right now.';
+        $level = $state['level'] ?? 'warning';
+
+        if ($request->expectsJson() || $request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => false,
+                'message' => $message,
+                'state' => $level,
+            ], 422);
+        }
+
+        return redirect()->back()->with($this->resolveFlashKey($level), $message);
+    }
+
+    private function paymentErrorResponse(Request $request, string $message, int $status = 422, string $flashType = 'error')
+    {
+        if ($request->expectsJson() || $request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => false,
+                'message' => $message,
+            ], $status);
+        }
+
+        return redirect()->back()->withInput()->with($flashType, $message);
+    }
+
+    private function resolveFlashKey(string $level): string
+    {
+        return match ($level) {
+            'error' => 'error',
+            'success' => 'success',
+            'info' => 'info',
+            default => 'warning',
+        };
+    }
+
+    private function friendlyPaymentErrorMessage(QueryException $e, string $method): ?string
+    {
+        $message = $e->getMessage();
+
+        if (str_contains($message, 'payments_gcash_global_unique')
+            || ($method === 'gcash' && str_contains($message, 'normalized_reference'))) {
+            return 'That GCash reference number is already used in this school. Please double-check it or use a different reference.';
+        }
+
+        if (str_contains($message, 'payments_onsite_branch_unique')
+            || ($method === 'on_site' && str_contains($message, 'normalized_or_number'))) {
+            return 'That official receipt number is already recorded for this branch. Please verify the OR number and try again.';
+        }
+
+        if (str_contains($message, 'Duplicate entry') || str_contains($message, 'Integrity constraint violation')) {
+            return 'Payment submission was blocked because this reference already exists. Please verify the number and submit again.';
+        }
+
+        return null;
     }
 
     /**

@@ -12,14 +12,60 @@
     $primaryRgb = sscanf($primaryColor, "#%02x%02x%02x");
 
     $student = Auth::guard('student')->user();
+    $existingRequest = null;
     $enrollmentStatus = null;
+    $pendingEnrollmentTitle = null;
+    $pendingEnrollmentMessage = null;
+    $pendingEnrollmentActionUrl = null;
+    $pendingEnrollmentActionLabel = 'Request Submitted';
+    $isPracticalCourse = (($course->course_type ?? null) === 'practical');
+    $studentLicenseStatus = $student?->student_license_status ?? 'none';
+    $studentLicenseRejectionReason = $student?->student_license_rejection_reason;
+    $hasSubmittedStudentLicense = in_array($studentLicenseStatus, ['pending', 'verified'], true);
+    $mustUploadLicenseForPractical = $isPracticalCourse && !$hasSubmittedStudentLicense;
+
     if ($student) {
         $existingRequest = \App\Models\EnrollmentRequest::where('learner_id', $student->id)
             ->where('course_id', $course->id)
             ->orderBy('created_at', 'desc')
             ->first();
+
         if ($existingRequest) {
             $enrollmentStatus = $existingRequest->status;
+
+            if ($enrollmentStatus === 'pending') {
+                $paymentStatus = $existingRequest->payment_status ?? 'pending';
+                $hasPaymentProof = !empty($existingRequest->payment_proof_path);
+
+                if (!$hasPaymentProof) {
+                    $pendingEnrollmentTitle = 'Payment Needed';
+                    $pendingEnrollmentMessage = 'Action needed: upload your payment proof to continue with approval.';
+                    $pendingEnrollmentActionLabel = 'Upload Payment Proof';
+                    $pendingEnrollmentActionUrl = route('schools.student.payments.index', [
+                        'school' => $school->slug,
+                        'enrollment_id' => $existingRequest->id,
+                    ]);
+                }
+                elseif (in_array($paymentStatus, ['rejected', 'revision_required'], true)) {
+                    $pendingEnrollmentTitle = 'Payment Update Needed';
+                    $pendingEnrollmentMessage = 'Your payment submission needs correction before your enrollment can proceed.';
+                    $pendingEnrollmentActionLabel = 'Update Payment Submission';
+                    $pendingEnrollmentActionUrl = route('schools.student.payments.index', [
+                        'school' => $school->slug,
+                        'enrollment_id' => $existingRequest->id,
+                    ]);
+                }
+                elseif ($paymentStatus === 'paid') {
+                    $pendingEnrollmentTitle = 'Pending Approval';
+                    $pendingEnrollmentMessage = 'Payment is verified. Your enrollment is now waiting for final school approval.';
+                    $pendingEnrollmentActionLabel = 'Awaiting Approval';
+                }
+                else {
+                    $pendingEnrollmentTitle = 'Payment Under Review';
+                    $pendingEnrollmentMessage = 'Your payment submission is being reviewed by the school.';
+                    $pendingEnrollmentActionLabel = 'Payment In Review';
+                }
+            }
         }
     }
     
@@ -212,7 +258,10 @@
         z-index: 1000;
         backdrop-filter: blur(4px);
         justify-content: center;
-        align-items: center;
+        align-items: flex-start;
+        overflow-y: auto;
+        padding: 20px 12px;
+        overscroll-behavior: contain;
     }
 
     .modal-window {
@@ -220,8 +269,11 @@
         border-radius: 20px;
         width: 90%;
         max-width: 600px;
+        max-height: calc(100vh - 40px);
         overflow: hidden;
         box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+        display: flex;
+        flex-direction: column;
     }
 
     .modal-header {
@@ -235,8 +287,10 @@
 
     .modal-body {
         padding: 30px;
-        max-height: 80vh;
+        min-height: 0;
         overflow-y: auto;
+        flex: 1 1 auto;
+        -webkit-overflow-scrolling: touch;
     }
 
     .form-group {
@@ -295,7 +349,7 @@
                 @if($course->vehicle_type)
                     <span class="meta-badge">{{ $course->vehicle_type }}</span>
                 @endif
-                <span class="meta-badge">{{ $course->duration_hours ?? $course->hours_required ?? 0 }} Hours Training</span>
+                <span class="meta-badge">{{ $course->hours_required ?? $course->duration_hours ?? 0 }} Hours Training</span>
             </div>
         </div>
     </div>
@@ -337,12 +391,18 @@
                     </a>
                 @elseif($enrollmentStatus === 'pending')
                     <div class="status-alert status-pending">
-                        ⌛ Enrollment Pending
+                        ⌛ {{ $pendingEnrollmentTitle ?? 'Enrollment Pending' }}
                     </div>
-                    <p class="text-sm text-center text-gray-600 mb-4">Your application is currently under review by our team.</p>
-                    <button class="btn-enroll-action opacity-50 cursor-not-allowed" disabled>
-                        Request Submitted
-                    </button>
+                    <p class="text-sm text-center text-gray-600 mb-4">{{ $pendingEnrollmentMessage ?? 'Your application is currently under review by our team.' }}</p>
+                    @if($pendingEnrollmentActionUrl)
+                        <a href="{{ $pendingEnrollmentActionUrl }}" class="btn-enroll-action text-center block" style="text-decoration: none;">
+                            {{ $pendingEnrollmentActionLabel }}
+                        </a>
+                    @else
+                        <button class="btn-enroll-action opacity-50 cursor-not-allowed" disabled>
+                            {{ $pendingEnrollmentActionLabel }}
+                        </button>
+                    @endif
                 @else
                     <div class="price-tag">
                         ₱{{ number_format($course->price ?? 0, 2) }}
@@ -355,13 +415,53 @@
                         </div>
                         <div class="quick-info-row">
                             <span class="text-gray-500">Total Hours</span>
-                            <span class="font-semibold">{{ $course->duration_hours ?? 0 }} hrs</span>
+                            <span class="font-semibold">{{ $course->hours_required ?? $course->duration_hours ?? 0 }} hrs</span>
                         </div>
                     </div>
 
-                    <button type="button" class="btn-enroll-action" onclick="openEnrollModal()">
-                        Enroll Now
-                    </button>
+                    @if($isPracticalCourse)
+                        @if($studentLicenseStatus === 'verified')
+                            <div class="status-alert status-approved">
+                                License verified. You can proceed with practical enrollment.
+                            </div>
+                        @elseif($studentLicenseStatus === 'pending')
+                            <div class="status-alert status-pending">
+                                License submitted and pending review. You can proceed with enrollment.
+                            </div>
+                        @else
+                            <div class="status-alert status-pending" style="text-align: left;">
+                                <strong>Student license required before practical enrollment.</strong>
+                                @if($studentLicenseStatus === 'rejected')
+                                    <div class="mt-2">Your previous license upload was rejected. Please upload a new file to continue.</div>
+                                    @if(!empty($studentLicenseRejectionReason))
+                                        <div class="mt-2 text-xs">Reason: {{ $studentLicenseRejectionReason }}</div>
+                                    @endif
+                                @else
+                                    <div class="mt-2">Upload your student driver's license first so you can enroll in this practical course.</div>
+                                @endif
+                            </div>
+
+                            <form method="POST" action="{{ route('schools.student.uploadLicense', ['school' => $school->slug]) }}" enctype="multipart/form-data" class="mb-4">
+                                @csrf
+                                <div class="form-group mb-3">
+                                    <label class="form-label">Upload Student Driver's License</label>
+                                    <input type="file" name="student_license" class="form-control" accept=".pdf,.jpg,.jpeg,.png" required>
+                                    <small class="text-gray-500">Accepted: PDF, JPG, PNG (max 5MB).</small>
+                                </div>
+                                <button type="submit" class="btn-submit">Upload License for Review</button>
+                            </form>
+                        @endif
+                    @endif
+
+                    @if($mustUploadLicenseForPractical)
+                        <button type="button" class="btn-enroll-action opacity-50 cursor-not-allowed" disabled>
+                            Upload License First
+                        </button>
+                    @else
+                        <button type="button" class="btn-enroll-action" onclick="openEnrollModal()">
+                            Enroll Now
+                        </button>
+                    @endif
                 @endif
 
                 <div class="mt-6 border-t pt-4">
@@ -392,6 +492,7 @@
                             <option value="{{ $package->id }}">
                                 {{ $package->name }} - ₱{{ number_format($package->price, 2) }} 
                                 ({{ $package->transmission_type ? strtoupper($package->transmission_type) : '' }})
+                                @if($package->training_hours) - {{ $package->training_hours }} hrs @endif
                             </option>
                         @endforeach
                     </select>
@@ -419,9 +520,9 @@
                 </div>
 
                 <div class="form-group" id="license_upload" style="display: none;">
-                    <label class="form-label">Student Driver's License (Recommended)</label>
+                    <label class="form-label">Supporting Document (Optional)</label>
                     <input type="file" name="credential_file" class="form-control" accept="image/*,.pdf">
-                    <small class="text-gray-500">Optional for theoretical, recommended for practical courses.</small>
+                    <small class="text-gray-500">Optional file for experienced drivers. This is separate from student license verification upload.</small>
                 </div>
 
                 <div class="form-group">

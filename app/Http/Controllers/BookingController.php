@@ -336,19 +336,49 @@ class BookingController extends Controller
         }
 
         $effectiveCourseId = (int) $validated['course_id'];
-        $hasMatchingEnrollment = $school->enrollmentRequests()
+        $effectiveCourse = $school->courses()->findOrFail($effectiveCourseId);
+
+        $linkedEnrollment = $school->enrollmentRequests()
             ->where('id', $validated['enrollment_request_id'])
             ->where('learner_id', $validated['student_id'])
             ->where('course_id', $effectiveCourseId)
             ->where('status', 'approved')
-            ->exists();
+            ->first();
 
-        if (!$hasMatchingEnrollment) {
+        if (!$linkedEnrollment) {
             $message = 'The selected enrollment record does not match this learner and lesson course.';
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json(['success' => false, 'message' => $message], 422);
             }
             return back()->withErrors(['enrollment_request_id' => $message]);
+        }
+
+        $requestedSessionType = null;
+        if (!empty($validated['time_slot_id'])) {
+            $linkedTimeSlot = $school->timeSlots()->find($validated['time_slot_id']);
+            $requestedSessionType = $linkedTimeSlot?->session_type;
+        }
+
+        if (!in_array($requestedSessionType, ['theoretical', 'practical'], true)) {
+            $requestedSessionType = ($effectiveCourse->course_type === 'practical') ? 'practical' : 'theoretical';
+        }
+
+        if ($requestedSessionType === 'practical') {
+            if (!$student->hasVerifiedLicense()) {
+                $message = "A verified student driver's license is required before booking practical sessions.";
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json(['success' => false, 'message' => $message], 422);
+                }
+                return back()->withErrors(['time_slot_id' => $message]);
+            }
+
+            if (($effectiveCourse->course_type ?? null) === 'combo' && !$student->hasPassedTheoretical()) {
+                $message = 'For combo enrollment, complete the theoretical phase first before booking practical sessions.';
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json(['success' => false, 'message' => $message], 422);
+                }
+                return back()->withErrors(['time_slot_id' => $message]);
+            }
         }
 
         $booking = DB::transaction(function () use ($validated, $school, $queueEnabled) {

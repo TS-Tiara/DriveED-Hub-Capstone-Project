@@ -717,6 +717,22 @@
         } else {
             $currentStep = 5; // All done
         }
+
+        $pendingEnrollmentStage = null;
+        if ($pendingRequest) {
+            if (!$pendingRequest->payment_proof_path) {
+                $pendingEnrollmentStage = 'payment_needed';
+            }
+            elseif (in_array($pendingRequest->payment_status, ['rejected', 'revision_required'], true)) {
+                $pendingEnrollmentStage = 'payment_update_required';
+            }
+            elseif ($pendingRequest->payment_status === 'paid') {
+                $pendingEnrollmentStage = 'awaiting_approval';
+            }
+            else {
+                $pendingEnrollmentStage = 'payment_under_review';
+            }
+        }
     @endphp
 
     @if(!$step4Done)
@@ -784,15 +800,25 @@
                 </div>
                 <div class="step-action">
                     @if($step2Done && $pendingRequest)
-                        @if(!$pendingRequest->payment_proof_path)
+                        @if($pendingEnrollmentStage === 'payment_needed')
                             <a href="{{ route('schools.guest.payment.show', ['school' => $school->slug, 'enrollment_request_id' => $pendingRequest->id]) }}" 
                                class="btn-step primary">
                                 Submit Payment Details
                             </a>
+                        @elseif($pendingEnrollmentStage === 'payment_update_required')
+                            <a href="{{ route('schools.guest.payment.show', ['school' => $school->slug, 'enrollment_request_id' => $pendingRequest->id]) }}" 
+                               class="btn-step primary">
+                                Update Payment Details
+                            </a>
+                        @elseif($pendingEnrollmentStage === 'awaiting_approval')
+                            <span class="step-badge done">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-12"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                Payment Verified
+                            </span>
                         @else
                             <span class="step-badge waiting">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-12"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                Under Review
+                                Payment Review
                             </span>
                         @endif
                     @elseif($step2Done && $rejectedRequest && !$pendingRequest)
@@ -879,7 +905,17 @@
                     <div class="step-title {{ $step4Done ? 'completed' : ($currentStep == 4 ? 'current' : 'upcoming') }}">Get Approved & Start Learning</div>
                     <div class="step-description">
                         @if($currentStep == 4 && $pendingRequest)
-                            An admin is reviewing your request. You'll become a full student once approved!
+                            @if($pendingEnrollmentStage === 'payment_needed')
+                                Complete your payment details first so the school can start reviewing your enrollment.
+                            @elseif($pendingEnrollmentStage === 'payment_update_required')
+                                Your payment submission needs correction before your enrollment can move to approval.
+                            @elseif($pendingEnrollmentStage === 'payment_under_review')
+                                Your payment is being reviewed. Once verified, your enrollment moves to final approval.
+                            @elseif($pendingEnrollmentStage === 'awaiting_approval')
+                                Payment verified. Your enrollment is now waiting for final school approval.
+                            @else
+                                An admin is reviewing your request. You'll become a full student once approved!
+                            @endif
                         @else
                             Once your enrollment is approved, you'll get full access to schedules, progress tracking, and lessons.
                         @endif
@@ -887,14 +923,23 @@
                 </div>
                 <div class="step-action">
                     @if($pendingRequest && $currentStep == 4)
-                        @if(!$pendingRequest->payment_proof_path)
+                        @if($pendingEnrollmentStage === 'payment_needed')
                              <span class="step-badge waiting" style="background: #fef3c7; color: #92400e; border: 1px solid #fde68a;">
-                                Awaiting Payment
+                                Action Needed: Payment
+                            </span>
+                        @elseif($pendingEnrollmentStage === 'payment_update_required')
+                            <span class="step-badge rejected-badge">
+                                Payment Update Required
+                            </span>
+                        @elseif($pendingEnrollmentStage === 'payment_under_review')
+                            <span class="step-badge waiting">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-12"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                Payment Under Review
                             </span>
                         @else
                             <span class="step-badge waiting">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-12"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                Awaiting Approval
+                                Pending Approval
                             </span>
                         @endif
                     @endif
