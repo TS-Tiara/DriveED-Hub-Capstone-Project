@@ -28,6 +28,8 @@ class Student extends Authenticatable
         'student_license_data',
         'student_license_mime_type',
         'student_license_filename',
+        'student_license_status',
+        'student_license_verified_at',
         'student_license_verified_by',
         'student_license_rejection_reason',
         'experience_level',
@@ -222,7 +224,7 @@ class Student extends Authenticatable
      */
     public function canEnrollPractical(): bool
     {
-        return $this->hasPassedTheoretical() && $this->hasVerifiedLicense();
+        return $this->hasVerifiedLicense();
     }
 
     /**
@@ -255,6 +257,14 @@ class Student extends Authenticatable
     public function hasNoLicense(): bool
     {
         return $this->student_license_status === 'none' || $this->student_license_status === null;
+    }
+
+    /**
+     * Check if student has submitted a license and it is awaiting verification.
+     */
+    public function hasSubmittedLicense(): bool
+    {
+        return $this->isLicensePending() || $this->hasVerifiedLicense();
     }
 
     /**

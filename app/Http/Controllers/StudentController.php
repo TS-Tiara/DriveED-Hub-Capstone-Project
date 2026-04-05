@@ -54,6 +54,16 @@ class StudentController extends Controller
             return redirect()->back()->with('error', $canEnroll['message']);
         }
 
+        // School-scoped single-active guard (single active enrollment per school).
+        $hasActiveEnrollment = EnrollmentRequest::where('learner_id', $student->id)
+            ->where('school_id', $school->id)
+            ->where('status', 'approved')
+            ->exists();
+
+        if ($hasActiveEnrollment) {
+            return redirect()->back()->with('error', 'You already have an active course in this school. Complete or cancel it before enrolling in another course.');
+        }
+
         // Check if already enrolled for this course (excluding previous rejections/cancellations)
         $existingRequest = EnrollmentRequest::where('learner_id', $student->id)
             ->where('course_id', $course->id)
@@ -119,9 +129,9 @@ class StudentController extends Controller
                 $student,
                 'enrollment_received',
                 'Enrollment Request Submitted',
-                "Your enrollment request for {$course->title} has been submitted and is under review.",
+                "Your enrollment request for {$course->title} has been submitted. Proceed to Payments to upload your receipt.",
                 'enrollment',
-                "/{$school->slug}/student/my-course" // Redirects to my course
+                "/{$school->slug}/student/payments?enrollment_id={$enrollmentRequest->id}"
             );
 
             // Notify all admins of this school
@@ -147,8 +157,8 @@ class StudentController extends Controller
         ]);
 
         return redirect()
-            ->route('schools.student.my-course', $school)
-            ->with('success', 'Your enrollment request has been submitted successfully.');
+            ->route('schools.student.payments.index', ['school' => $school->slug, 'enrollment_id' => $enrollmentRequest->id])
+            ->with('success', 'Your enrollment request has been submitted. Please upload your payment receipt to continue approval.');
     }
 
     public function dashboard(Request $request, School $school)
@@ -336,18 +346,91 @@ class StudentController extends Controller
         ]);
     }
 
+    /**
+     * Handle student driver's license upload
+     */
+    public function uploadLicense(Request $request, School $school)
+    {
+        /** @var \App\Models\Student|null $student */
+        $student = Auth::guard('student')->user();
+
+        if (!$student || !$student->isStudent() || (int) $student->school_id !== (int) $school->id) {
+            abort(403, 'Only active students can upload a license.');
+        }
+
+        $request->validate([
+            'student_license' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
+        ], [
+            'student_license.required' => 'Please select a file to upload.',
+            'student_license.mimes' => 'File must be PDF, JPG, or PNG format.',
+            'student_license.max' => 'File size must not exceed 5MB.',
+        ]);
+
+        try {
+            // Delete old file if re-uploading
+            if ($student->student_license_path) {
+                Storage::disk('local')->delete($student->student_license_path);
+            }
+
+            $uploadedFile = $request->file('student_license');
+            $path = $uploadedFile->store('student-licenses', 'local');
+
+            $student->update([
+                'student_license_path' => $path,
+                'student_license_data' => null,
+                'student_license_mime_type' => $uploadedFile->getMimeType(),
+                'student_license_filename' => $uploadedFile->getClientOriginalName(),
+                'student_license_status' => 'pending',
+                'student_license_verified_at' => null,
+                'student_license_verified_by' => null,
+                'student_license_rejection_reason' => null,
+            ]);
+
+            Log::info('Student license uploaded to disk', [
+                'student_id' => $student->id,
+                'school_id' => $school->id,
+                'path' => $path,
+            ]);
+
+            // Notify admins about pending license verification
+            $admins = Admin::where('school_id', $school->id)->where('is_active', true)->get();
+            foreach ($admins as $admin) {
+                Notification::send(
+                    $admin,
+                    'license_uploaded',
+                    'License Pending Review',
+                    "{$student->name} has uploaded a student driver's license for verification.",
+                    'license',
+                    "/{$school->slug}/admin/enrollments"
+                );
+            }
+
+            return redirect()->back()->with('success', 'License uploaded successfully! It will be reviewed by an admin.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            Log::error('Failed to upload student license', [
+                'error' => $e->getMessage(),
+                'student_id' => $student->id,
+            ]);
+            return redirect()->back()->with('error', 'Failed to upload license. Please try again.');
+        }
+    }
+
     public function schedule(Request $request, School $school)
     {
         $student = Auth::guard('student')->user();
         
         // Get enrolled course IDs (approved enrollment requests)
         $enrolledCourseIds = \App\Models\EnrollmentRequest::where('learner_id', $student->id)
+            ->where('school_id', $school->id)
             ->where('status', 'approved')
             ->pluck('course_id')
             ->toArray();
 
         // Get all bookings
         $allBookings = Booking::where('student_id', $student->id)
+            ->where('school_id', $school->id)
             ->with(['course', 'instructor', 'timeSlot'])
             ->orderBy('booking_date')
             ->get();
@@ -372,6 +455,7 @@ class StudentController extends Controller
         
         // Get enrollment requests
         $enrollmentRequests = \App\Models\EnrollmentRequest::where('learner_id', $student->id)
+            ->where('school_id', $school->id)
             ->with(['course'])
             ->orderBy('created_at', 'desc')
             ->get();

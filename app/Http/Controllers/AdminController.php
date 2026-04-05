@@ -33,6 +33,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class AdminController extends Controller
 {
@@ -1376,6 +1377,7 @@ class AdminController extends Controller
             'date' => 'required|date|after_or_equal:today',
             'start_time' => 'required',
             'end_time' => 'required|after:start_time',
+            'session_type' => 'nullable|in:theoretical,practical',
             'course_id' => [
                 'required',
                 Rule::exists('courses', 'id')->where('school_id', $school->id)
@@ -1402,18 +1404,13 @@ class AdminController extends Controller
             abort(403, 'You do not have permission to create schedules for this branch.');
         }
 
-        // Layer 3: Type Enforcement
-        $maxStudents = $validated['max_students'] ?? 1;
-        if ($course->isPractical()) {
-            $maxStudents = 1;
-        }
-
         // Layer 3: Safe Normalization
+        $resolvedSessionType = $validated['session_type'] ?? ($course->isPractical() ? 'practical' : 'theoretical');
         $maxInstructors = (int) ($validated['max_instructors'] ?? 1);
         $maxStudents = (int) ($validated['max_students'] ?? 1);
 
-        // Force PDC to 1-on-1 (QoL Implementation)
-        if ($course->isPractical()) {
+        // Practical sessions are always 1-on-1 regardless of parent course type.
+        if ($resolvedSessionType === 'practical') {
             $maxStudents = 1;
         }
 
@@ -1421,6 +1418,7 @@ class AdminController extends Controller
             'school_id' => $school->id,
             'branch_id' => $branchId,
             'course_id' => $validated['course_id'],
+            'session_type' => $resolvedSessionType,
             'date' => $validated['date'],
             'start_time' => $validated['start_time'],
             'end_time' => $validated['end_time'],
@@ -1491,6 +1489,7 @@ class AdminController extends Controller
 
             $validated = $request->validate([
                 'notes' => 'nullable|string|max:500',
+                'session_type' => 'nullable|in:theoretical,practical',
                 'instructor_ids' => 'nullable|array',
                 'instructor_ids.*' => [
                     Rule::exists('instructors', 'id')->where('school_id', $school->id)
@@ -1499,9 +1498,14 @@ class AdminController extends Controller
 
             DB::beginTransaction();
 
+            $resolvedSessionType = $validated['session_type']
+                ?? $timeslot->session_type
+                ?? (($timeslot->course && $timeslot->course->course_type === 'practical') ? 'practical' : 'theoretical');
+
             // Update notes
             $timeslot->update([
                 'notes' => $validated['notes'] ?? null,
+                'session_type' => $resolvedSessionType,
             ]);
 
             // Update admin-assigned instructors only (preserve self-selected ones)
@@ -1692,11 +1696,12 @@ class AdminController extends Controller
                 'title' => 'required|string|max:255',
                 'description' => 'nullable|string',
                 'banner_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048|dimensions:max_width=4000,max_height=4000',
-                'type' => 'nullable|string',
+                'type' => 'required|string',
                 'vehicle_type' => 'nullable|string',
-                'course_type' => 'nullable|in:theoretical,practical',
-                'license_type' => 'nullable|in:non_professional,professional',
-                'hours_required' => 'nullable|numeric|min:1|max:500',
+                'course_type' => 'required|in:theoretical,practical,combo',
+                'license_type' => 'required|in:non_professional,professional',
+                'hours_required' => 'required|numeric|min:1|max:500',
+                'price' => 'required|numeric|min:0',
                 'status' => 'nullable|in:active,inactive',
                 'is_featured' => 'nullable',
                 'features' => 'nullable|array',
@@ -1731,6 +1736,17 @@ class AdminController extends Controller
 
             return redirect()->back()->with('success', 'Course created successfully!');
         }
+        catch (ValidationException $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Please fix the highlighted validation errors.',
+                    'errors' => $e->errors(),
+                ], 422);
+            }
+
+            throw $e;
+        }
         catch (\Exception $e) {
             LogFacade::error('Failed to store course: ' . $e->getMessage(), [
                 'school_id' => $school->id
@@ -1759,11 +1775,12 @@ class AdminController extends Controller
                 'title' => 'required|string|max:255',
                 'description' => 'nullable|string',
                 'banner_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048|dimensions:max_width=4000,max_height=4000',
-                'type' => 'nullable|string',
+                'type' => 'required|string',
                 'vehicle_type' => 'nullable|string',
-                'course_type' => 'nullable|in:theoretical,practical',
-                'license_type' => 'nullable|in:non_professional,professional',
-                'hours_required' => 'nullable|numeric|min:1|max:500',
+                'course_type' => 'required|in:theoretical,practical,combo',
+                'license_type' => 'required|in:non_professional,professional',
+                'hours_required' => 'required|numeric|min:1|max:500',
+                'price' => 'required|numeric|min:0',
                 'status' => 'nullable|in:active,inactive',
                 'is_featured' => 'nullable',
                 'features' => 'nullable|array',
@@ -1801,6 +1818,17 @@ class AdminController extends Controller
             }
 
             return redirect()->back()->with('success', 'Course updated successfully!');
+        }
+        catch (ValidationException $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Please fix the highlighted validation errors.',
+                    'errors' => $e->errors(),
+                ], 422);
+            }
+
+            throw $e;
         }
         catch (\Exception $e) {
             LogFacade::error('Failed to update course: ' . $e->getMessage(), [
@@ -1883,6 +1911,17 @@ class AdminController extends Controller
 
             return redirect()->back()->with('success', 'Package added successfully!');
         }
+        catch (ValidationException $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Please fix the highlighted validation errors.',
+                    'errors' => $e->errors(),
+                ], 422);
+            }
+
+            throw $e;
+        }
         catch (\Exception $e) {
             LogFacade::error('Failed to store package: ' . $e->getMessage(), [
                 'school_id' => $school->id,
@@ -1922,6 +1961,17 @@ class AdminController extends Controller
             $package->update($validated);
 
             return redirect()->back()->with('success', 'Package updated successfully!');
+        }
+        catch (ValidationException $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Please fix the highlighted validation errors.',
+                    'errors' => $e->errors(),
+                ], 422);
+            }
+
+            throw $e;
         }
         catch (\Exception $e) {
             LogFacade::error('Failed to update package: ' . $e->getMessage(), [

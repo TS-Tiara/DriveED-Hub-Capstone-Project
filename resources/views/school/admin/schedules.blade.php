@@ -1546,6 +1546,7 @@
                              data-date="{{ $timeslot->date }}"
                              data-start-time="{{ $timeslot->start_time }}"
                              data-end-time="{{ $timeslot->end_time }}"
+                                data-session-type="{{ $timeslot->session_type ?? (($timeslot->course && $timeslot->course->course_type === 'practical') ? 'practical' : 'theoretical') }}"
                              data-max-instructors="{{ $timeslot->max_instructors }}"
                              data-notes="{{ $timeslot->notes ?? '' }}">
                             <div class="timeslot-row">
@@ -1779,6 +1780,17 @@
                         </p>
                     @endif
                 </div>
+
+                <div class="form-group" id="sessionTypeGroup">
+                    <label class="form-label">
+                        <i class="bi bi-diagram-3"></i> Session Type <span class="text-danger">*</span>
+                    </label>
+                    <select name="session_type" id="createSessionType" class="form-control" required>
+                        <option value="theoretical">Theoretical</option>
+                        <option value="practical">Practical</option>
+                    </select>
+                    <small class="text-muted" id="sessionTypeHelp">Set whether this slot logs as classroom theory or driving practical.</small>
+                </div>
                 
                 <div class="form-group">
                     <label class="form-label">Date</label>
@@ -1938,6 +1950,7 @@
     // Course-Driven Smart Form Logic
     document.addEventListener('DOMContentLoaded', function() {
         const courseSelect = document.getElementById('createCourseSelect');
+        const sessionTypeSelect = document.getElementById('createSessionType');
         const maxStudentsGroup = document.getElementById('maxStudentsGroup');
         const maxInstructorsGroup = document.getElementById('maxInstructorsGroup');
         const batchModeAlert = document.getElementById('batchModeAlert');
@@ -1945,13 +1958,33 @@
         const maxInstructorsInput = document.getElementById('createMaxInstructors');
 
         function updateFormMode() {
+            if (!courseSelect) return;
             const selectedOption = courseSelect.options[courseSelect.selectedIndex];
             if (!selectedOption || !selectedOption.value) return;
 
             const type = selectedOption.getAttribute('data-type');
-            const selectedInstructors = Array.from(instructorSelect.selectedOptions).length;
+            const selectedInstructors = instructorSelect ? Array.from(instructorSelect.selectedOptions).length : 0;
 
-            if (type === 'theoretical') {
+            if (sessionTypeSelect) {
+                if (type === 'theoretical') {
+                    sessionTypeSelect.value = 'theoretical';
+                    sessionTypeSelect.disabled = true;
+                } else if (type === 'practical') {
+                    sessionTypeSelect.value = 'practical';
+                    sessionTypeSelect.disabled = true;
+                } else {
+                    sessionTypeSelect.disabled = false;
+                    if (!['theoretical', 'practical'].includes(sessionTypeSelect.value)) {
+                        sessionTypeSelect.value = 'theoretical';
+                    }
+                }
+            }
+
+            const effectiveSessionType = sessionTypeSelect
+                ? sessionTypeSelect.value
+                : (type === 'practical' ? 'practical' : 'theoretical');
+
+            if (effectiveSessionType === 'theoretical') {
                 // TDC Mode: Focus on Seating
                 maxStudentsGroup.style.display = 'block';
                 maxInstructorsGroup.style.display = 'block';
@@ -1976,6 +2009,8 @@
 
         if (courseSelect) courseSelect.addEventListener('change', updateFormMode);
         if (instructorSelect) instructorSelect.addEventListener('change', updateFormMode);
+        if (sessionTypeSelect) sessionTypeSelect.addEventListener('change', updateFormMode);
+        updateFormMode();
     });
 
     window.openDetailsModal = function() {
@@ -2083,6 +2118,7 @@
                     @endphp
                     {
                         id: {!! json_encode($timeslot->id) !!},
+                        sessionType: {!! json_encode($timeslot->session_type ?? (($timeslot->course && $timeslot->course->course_type === 'practical') ? 'practical' : 'theoretical')) !!},
                         time: {!! json_encode(\Carbon\Carbon::parse($timeslot->start_time)->format('h:i A') . ' - ' . \Carbon\Carbon::parse($timeslot->end_time)->format('h:i A')) !!},
                         instructors: [
                             @foreach($timeslot->instructors as $instructor)
@@ -2217,6 +2253,7 @@
         // Extract data from data attributes and DOM
         const startTime = slotItem.dataset.startTime || '';
         const endTime = slotItem.dataset.endTime || '';
+        const sessionType = slotItem.dataset.sessionType || 'theoretical';
         const maxInstructors = slotItem.dataset.maxInstructors || '';
         const notes = slotItem.dataset.notes || 'No notes';
         
@@ -2246,6 +2283,7 @@
         currentSlotData = {
             id: slotId,
             time: timeText,
+            sessionType: sessionType,
             instructors: instructorsList,
             notes: notes,
             available: availableText,
@@ -2279,6 +2317,11 @@
                     <div class="details-section">
                         <strong class="details-label">Availability:</strong>
                         <div>${availableText}</div>
+                    </div>
+
+                    <div class="details-section">
+                        <strong class="details-label">Session Type:</strong>
+                        <div>${sessionType === 'practical' ? 'Practical' : 'Theoretical'}</div>
                     </div>
                     
                     <div>
@@ -2436,6 +2479,16 @@
         document.getElementById('editModalContent').innerHTML = `
             <div class="form-group">
                 <label class="form-label">
+                    <i class="bi bi-diagram-3"></i> Session Type
+                </label>
+                <select name="session_type" class="form-control">
+                    <option value="theoretical" ${slotData.sessionType === 'theoretical' ? 'selected' : ''}>Theoretical</option>
+                    <option value="practical" ${slotData.sessionType === 'practical' ? 'selected' : ''}>Practical</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">
                     <i class="bi bi-people"></i> Assigned Instructors
                 </label>
                 <select name="instructor_ids[]" class="form-control multi-select-auto" multiple size="6">
@@ -2467,37 +2520,6 @@
         });
     };
 
-    // TDC vs PDC Seat Toggle Logic
-    const courseSelect = document.getElementById('createCourseSelect');
-    const maxStudentsGroup = document.getElementById('maxStudentsGroup');
-    const maxStudentsInput = document.getElementById('createMaxStudents');
-
-    if (courseSelect) {
-        courseSelect.addEventListener('change', function() {
-            const selectedOption = this.options[this.selectedIndex];
-            if (!selectedOption) return;
-
-            const courseType = selectedOption.getAttribute('data-type');
-            
-            if (courseType === 'practical') {
-                // Hide for PDC and force value to 1
-                maxStudentsGroup.style.display = 'none';
-                maxStudentsInput.value = 1;
-            } else {
-                // Show for TDC (Theoretical)
-                maxStudentsGroup.style.display = 'block';
-                // If it was forced to 1, reset to a sensible default for TDC
-                if (maxStudentsInput.value == 1) {
-                    maxStudentsInput.value = 30;
-                }
-            }
-        });
-
-        // Trigger on load for pre-selected values
-        if (courseSelect.value) {
-            courseSelect.dispatchEvent(new Event('change'));
-        }
-    }
 </script>
 
 @endsection
