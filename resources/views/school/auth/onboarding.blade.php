@@ -131,6 +131,10 @@
                 </div>
             @endif
 
+            @php
+                $invitePayload = is_array($invitation->payload ?? null) ? $invitation->payload : [];
+            @endphp
+
             <form action="{{ route('schools.onboarding.submit', ['school' => $school->slug, 'token' => $invitation->token]) }}" method="POST">
                 @csrf
                 
@@ -149,13 +153,13 @@
                 @if($invitation->role === 'student' || $invitation->role === 'instructor')
                 <div class="form-group">
                     <label class="label">Contact Number</label>
-                    <input type="text" name="contact" value="{{ old('contact') }}" placeholder="09123456789" required>
+                    <input type="text" name="contact" value="{{ old('contact', $invitePayload['contact'] ?? '') }}" placeholder="09123456789" required>
                     @error('contact') <p class="error-text">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="form-group">
                     <label class="label">Address</label>
-                    <input type="text" name="address" value="{{ old('address') }}" placeholder="123 Street, City" required>
+                    <input type="text" name="address" value="{{ old('address', $invitePayload['address'] ?? '') }}" placeholder="123 Street, City" required>
                     @error('address') <p class="error-text">{{ $message }}</p> @enderror
                 </div>
                 @endif

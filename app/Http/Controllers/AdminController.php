@@ -354,14 +354,34 @@ class AdminController extends Controller
                     Rule::unique('instructors', 'email')->where('school_id', $school->id),
                     Rule::unique('admins', 'email')->where('school_id', $school->id),
                     'regex:/@(gmail\.com|yahoo\.com)$/i',
+                    function ($attribute, $value, $fail) use ($school) {
+                        $normalizedEmail = strtolower(trim((string) $value));
+
+                        $hasPendingInvitation = Invitation::query()
+                            ->where('school_id', $school->id)
+                            ->whereRaw('LOWER(email) = ?', [$normalizedEmail])
+                            ->whereNull('used_at')
+                            ->where(function ($query) {
+                                $query->whereNull('expires_at')
+                                    ->orWhere('expires_at', '>', now());
+                            })
+                            ->exists();
+
+                        if ($hasPendingInvitation) {
+                            $fail('A pending invitation already exists for this email. Please resend the existing invitation instead.');
+                        }
+                    },
                 ],
                 'contact' => ['nullable', 'string', 'max:13', 'regex:/^(09\d{9}|\+639\d{9})$/'],
+                'address' => ['nullable', 'string', 'max:500'],
                 'role' => 'required|in:student,instructor',
                 'branch_id' => [
                     'nullable',
                     Rule::exists('branches', 'id')->where('school_id', $school->id)
                 ],
                 'license_number' => ($request->role === 'instructor' && ($school->schoolSetting->require_instructor_license ?? true)) ? 'required|string|max:50' : 'nullable|string|max:50',
+            ], [
+                'email.regex' => 'Only Gmail and Yahoo addresses are currently allowed for invitations.',
             ]);
 
             // Branch Secretary Scope Check
@@ -382,6 +402,7 @@ class AdminController extends Controller
                 'payload' => [
                     'name' => trim($request->name),
                     'contact' => trim((string)$request->contact),
+                    'address' => trim((string)$request->address),
                     'license_number' => $request->role === 'instructor' ? trim($request->license_number) : null,
                 ],
                 'expires_at' => now()->addDays($school->schoolSetting->invitation_expiry_days ?? 7),
@@ -403,8 +424,12 @@ class AdminController extends Controller
             return redirect()->route('schools.admin.userManagement', $school)
                 ->with('success', "Invitation successfully sent to {$invitation->email}. They will receive an email to set up their account.");
 
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
-            DB::rollBack();
+            if (DB::transactionLevel() > 0) {
+                DB::rollBack();
+            }
             SystemLog::logError('Failed to send invitation: ' . $e->getMessage(), 'database', $e, [
                 'school_id' => $school->id,
                 'email' => $request->get('email'),
