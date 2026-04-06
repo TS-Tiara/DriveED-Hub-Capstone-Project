@@ -15,6 +15,11 @@
     $totalUsers = $totalStudents + $totalInstructors;
     $totalActive = $activeStudents + $activeInstructors;
     $totalInactive = $inactiveStudents + $inactiveInstructors;
+
+    $oldInviteRole = old('role');
+    $showStudentInviteErrors = $errors->any() && $oldInviteRole === 'student';
+    $showInstructorInviteErrors = $errors->any() && $oldInviteRole === 'instructor';
+    $requireInstructorLicense = $settings?->require_instructor_license ?? true;
 @endphp
 
 @include('school.admin.partials.admin-styles')
@@ -420,12 +425,23 @@
     }
     
     .modal-content {
-        width: 600px;
-        min-width: 600px;
+        width: min(600px, 92%);
+        min-width: 0;
         max-width: 92%;
+        background: #fff;
+        border: 1px solid #e2e8f0;
         border-radius: 16px;
         box-shadow: 0 25px 50px rgba(0,0,0,0.4);
         animation: fadeIn 0.2s ease-out;
+    }
+
+    /* Override shared admin transform scaling for this page's .modal pattern. */
+    #createStudentModal .modal-content,
+    #editStudentModal .modal-content,
+    #createInstructorModal .modal-content,
+    #editInstructorModal .modal-content {
+        transform: none;
+        transition: none;
     }
     
     @keyframes fadeIn {
@@ -454,8 +470,57 @@
         background: #fff;
         margin: 0;
         border-radius: 0 0 16px 16px;
-        max-height: 70vh;
+        max-height: 72vh;
         overflow-y: auto;
+        scrollbar-gutter: stable;
+    }
+
+    .modal-required-note {
+        margin: 0 0 18px;
+        font-size: 0.86rem;
+        color: #6b7280;
+    }
+
+    .required-indicator {
+        color: #dc2626;
+        margin-left: 2px;
+    }
+
+    .field-help {
+        font-size: 0.8rem;
+        color: #6b7280;
+        margin-top: 4px;
+    }
+
+    .field-error {
+        font-size: 0.8rem;
+        color: #b91c1c;
+        margin-top: 6px;
+    }
+
+    .modal-error-summary {
+        border: 1px solid #fecaca;
+        background: #fef2f2;
+        color: #991b1b;
+        border-radius: 10px;
+        padding: 12px 14px;
+        margin-bottom: 16px;
+    }
+
+    .modal-error-summary strong {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 0.88rem;
+    }
+
+    .modal-error-summary ul {
+        margin: 0;
+        padding-left: 18px;
+    }
+
+    .modal-error-summary li {
+        margin-bottom: 4px;
+        font-size: 0.82rem;
     }
     
     .form-group {
@@ -531,6 +596,13 @@
     .btn-submit:hover {
         transform: translateY(-2px);
         box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
+    }
+
+    .btn-submit:disabled {
+        cursor: not-allowed;
+        opacity: 0.75;
+        transform: none;
+        box-shadow: none;
     }
     
     .empty-state {
@@ -682,6 +754,7 @@
         .modal-content {
             width: 95%;
             max-width: 95%;
+            min-width: 0;
             margin: 10px;
         }
         
@@ -1050,24 +1123,50 @@
 <div id="createStudentModal" class="modal">
     <div class="modal-content">
         <h3>Invite New Student</h3>
-        <form method="POST" action="{{ school_route('admin.storeAccount') }}">
+        <form id="createStudentInviteForm" method="POST" action="{{ school_route('admin.storeAccount') }}" data-no-ajax="1">
             @csrf
+
+            <p class="modal-required-note">Fields marked with <span class="required-indicator">*</span> are required.</p>
+
+            @if($showStudentInviteErrors)
+                <div class="modal-error-summary" role="alert">
+                    <strong>Please fix the following before sending the invitation:</strong>
+                    <ul>
+                        @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             <div class="form-group">
-                <label>Name:</label>
-                <input type="text" name="name" placeholder="Enter student's full name" required>
+                <label>Name <span class="required-indicator">*</span></label>
+                <input type="text" name="name" value="{{ $showStudentInviteErrors ? old('name') : '' }}" placeholder="Enter student's full name" required>
+                @if($showStudentInviteErrors)
+                    @error('name') <p class="field-error">{{ $message }}</p> @enderror
+                @endif
             </div>
             <div class="form-group">
-                <label>Email:</label>
-                <input type="email" name="email" placeholder="student@example.com" required>
-                <p style="font-size: 0.8rem; color: #6b7280; margin-top: 4px;">An invitation link will be sent to this email.</p>
+                <label>Email <span class="required-indicator">*</span></label>
+                <input type="email" name="email" value="{{ $showStudentInviteErrors ? old('email') : '' }}" placeholder="student@example.com" required>
+                <p class="field-help">An invitation link will be sent to this email. Currently, Gmail and Yahoo are allowed.</p>
+                @if($showStudentInviteErrors)
+                    @error('email') <p class="field-error">{{ $message }}</p> @enderror
+                @endif
             </div>
             <div class="form-group">
                 <label>Contact:</label>
-                <input type="text" name="contact" placeholder="09123456789">
+                <input type="text" name="contact" value="{{ $showStudentInviteErrors ? old('contact') : '' }}" placeholder="09123456789">
+                @if($showStudentInviteErrors)
+                    @error('contact') <p class="field-error">{{ $message }}</p> @enderror
+                @endif
             </div>
             <div class="form-group">
                 <label>Address:</label>
-                <input type="text" name="address" placeholder="Enter address (optional)">
+                <input type="text" name="address" value="{{ $showStudentInviteErrors ? old('address') : '' }}" placeholder="Enter address (optional)">
+                @if($showStudentInviteErrors)
+                    @error('address') <p class="field-error">{{ $message }}</p> @enderror
+                @endif
             </div>
             @if(isset($branches) && $branches->count() > 0)
             <div class="form-group">
@@ -1075,15 +1174,18 @@
                 <select name="branch_id" class="branch-modal-select">
                     <option value="">No Branch</option>
                     @foreach($branches as $branch)
-                        <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                        <option value="{{ $branch->id }}" {{ $showStudentInviteErrors && (string) old('branch_id') === (string) $branch->id ? 'selected' : '' }}>{{ $branch->name }}</option>
                     @endforeach
                 </select>
+                @if($showStudentInviteErrors)
+                    @error('branch_id') <p class="field-error">{{ $message }}</p> @enderror
+                @endif
             </div>
             @endif
             <input type="hidden" name="role" value="student">
             <div class="modal-buttons">
                 <button type="button" class="btn-cancel" onclick="closeCreateStudentModal()">Cancel</button>
-                <button type="submit" class="btn-submit">Send Invitation</button>
+                <button type="submit" class="btn-submit" data-default-text="Send Invitation">Send Invitation</button>
             </div>
         </form>
     </div>
@@ -1135,24 +1237,60 @@
 <div id="createInstructorModal" class="modal">
     <div class="modal-content">
         <h3>Invite New Instructor</h3>
-        <form method="POST" action="{{ school_route('admin.storeAccount') }}">
+        <form id="createInstructorInviteForm" method="POST" action="{{ school_route('admin.storeAccount') }}" data-no-ajax="1">
             @csrf
+
+            <p class="modal-required-note">Fields marked with <span class="required-indicator">*</span> are required.</p>
+
+            @if($showInstructorInviteErrors)
+                <div class="modal-error-summary" role="alert">
+                    <strong>Please fix the following before sending the invitation:</strong>
+                    <ul>
+                        @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             <div class="form-group">
-                <label>Name:</label>
-                <input type="text" name="name" placeholder="Enter instructor's full name" required>
+                <label>Name <span class="required-indicator">*</span></label>
+                <input type="text" name="name" value="{{ $showInstructorInviteErrors ? old('name') : '' }}" placeholder="Enter instructor's full name" required>
+                @if($showInstructorInviteErrors)
+                    @error('name') <p class="field-error">{{ $message }}</p> @enderror
+                @endif
             </div>
             <div class="form-group">
-                <label>Email:</label>
-                <input type="email" name="email" placeholder="instructor@example.com" required>
-                <p style="font-size: 0.8rem; color: #6b7280; margin-top: 4px;">An invitation link will be sent to this email.</p>
+                <label>Email <span class="required-indicator">*</span></label>
+                <input type="email" name="email" value="{{ $showInstructorInviteErrors ? old('email') : '' }}" placeholder="instructor@example.com" required>
+                <p class="field-help">An invitation link will be sent to this email. Currently, Gmail and Yahoo are allowed.</p>
+                @if($showInstructorInviteErrors)
+                    @error('email') <p class="field-error">{{ $message }}</p> @enderror
+                @endif
             </div>
             <div class="form-group">
                 <label>Contact:</label>
-                <input type="text" name="contact" placeholder="09123456789">
+                <input type="text" name="contact" value="{{ $showInstructorInviteErrors ? old('contact') : '' }}" placeholder="09123456789">
+                @if($showInstructorInviteErrors)
+                    @error('contact') <p class="field-error">{{ $message }}</p> @enderror
+                @endif
             </div>
             <div class="form-group">
-                <label>License Number:</label>
-                <input type="text" name="license_number" placeholder="Enter license number" required>
+                <label>License Number @if($requireInstructorLicense)<span class="required-indicator">*</span>@endif</label>
+                <input type="text" name="license_number" value="{{ $showInstructorInviteErrors ? old('license_number') : '' }}" placeholder="Enter license number" @if($requireInstructorLicense)required @endif>
+                @if($requireInstructorLicense)
+                    <p class="field-help">Required because instructor license verification is enabled.</p>
+                @endif
+                @if($showInstructorInviteErrors)
+                    @error('license_number') <p class="field-error">{{ $message }}</p> @enderror
+                @endif
+            </div>
+            <div class="form-group">
+                <label>Address:</label>
+                <input type="text" name="address" value="{{ $showInstructorInviteErrors ? old('address') : '' }}" placeholder="Enter address (optional)">
+                @if($showInstructorInviteErrors)
+                    @error('address') <p class="field-error">{{ $message }}</p> @enderror
+                @endif
             </div>
             @if(isset($branches) && $branches->count() > 0)
             <div class="form-group">
@@ -1160,15 +1298,18 @@
                 <select name="branch_id" class="branch-modal-select">
                     <option value="">No Branch</option>
                     @foreach($branches as $branch)
-                        <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                        <option value="{{ $branch->id }}" {{ $showInstructorInviteErrors && (string) old('branch_id') === (string) $branch->id ? 'selected' : '' }}>{{ $branch->name }}</option>
                     @endforeach
                 </select>
+                @if($showInstructorInviteErrors)
+                    @error('branch_id') <p class="field-error">{{ $message }}</p> @enderror
+                @endif
             </div>
             @endif
             <input type="hidden" name="role" value="instructor">
             <div class="modal-buttons">
                 <button type="button" class="btn-cancel" onclick="closeCreateInstructorModal()">Cancel</button>
-                <button type="submit" class="btn-submit">Send Invitation</button>
+                <button type="submit" class="btn-submit" data-default-text="Send Invitation">Send Invitation</button>
             </div>
         </form>
     </div>
@@ -1321,14 +1462,40 @@
             row.style.display = found ? '' : 'none';
         }
     }
+
+    function setInviteFormLoadingState(form, isLoading) {
+        if (!form) return;
+
+        const submitButton = form.querySelector('.btn-submit');
+        if (!submitButton) return;
+
+        const defaultText = submitButton.dataset.defaultText || submitButton.textContent.trim();
+        submitButton.dataset.defaultText = defaultText;
+        submitButton.disabled = isLoading;
+        submitButton.textContent = isLoading ? 'Sending Invitation...' : defaultText;
+    }
+
+    function bindInviteFormSubmit(formId) {
+        const form = document.getElementById(formId);
+        if (!form || form.dataset.loadingBound === '1') {
+            return;
+        }
+
+        form.dataset.loadingBound = '1';
+        form.addEventListener('submit', function () {
+            setInviteFormLoadingState(form, true);
+        });
+    }
     
     // Student Modal Functions
     function openCreateStudentModal() {
         document.getElementById('createStudentModal').style.display = 'flex';
+        setInviteFormLoadingState(document.getElementById('createStudentInviteForm'), false);
     }
     
     function closeCreateStudentModal() {
         document.getElementById('createStudentModal').style.display = 'none';
+        setInviteFormLoadingState(document.getElementById('createStudentInviteForm'), false);
     }
     
     function editStudent(id, name, email, contact, address, branchId) {
@@ -1469,10 +1636,12 @@
     // Instructor Modal Functions
     function openCreateInstructorModal() {
         document.getElementById('createInstructorModal').style.display = 'flex';
+        setInviteFormLoadingState(document.getElementById('createInstructorInviteForm'), false);
     }
     
     function closeCreateInstructorModal() {
         document.getElementById('createInstructorModal').style.display = 'none';
+        setInviteFormLoadingState(document.getElementById('createInstructorInviteForm'), false);
     }
     
     function editInstructor(id, name, email, contact, license, branchId) {
@@ -1494,6 +1663,24 @@
     function viewInstructor(id) {
         Toast.info('Instructor details view coming soon!', 'Feature Info');
     }
+
+    bindInviteFormSubmit('createStudentInviteForm');
+    bindInviteFormSubmit('createInstructorInviteForm');
+
+    (function restoreInviteModalAfterValidationError() {
+        const hasInviteValidationErrors = @json($errors->any());
+        const inviteRole = @json($oldInviteRole);
+
+        if (!hasInviteValidationErrors) {
+            return;
+        }
+
+        if (inviteRole === 'student') {
+            openCreateStudentModal();
+        } else if (inviteRole === 'instructor') {
+            openCreateInstructorModal();
+        }
+    })();
     
     // Close modal when clicking outside
     window.onclick = function(e) {
