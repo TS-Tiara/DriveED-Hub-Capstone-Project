@@ -189,6 +189,27 @@
         display: block;
     }
 
+    .btn-password-toggle {
+        width: 100%;
+        background: #f3f4f6;
+        color: #1f2937;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        padding: 10px 12px;
+        font-size: 0.86rem;
+        font-weight: 600;
+        text-align: left;
+        cursor: pointer;
+    }
+
+    .btn-password-toggle:hover {
+        background: #e5e7eb;
+    }
+
+    .password-fields.hidden {
+        display: none;
+    }
+
     @media (max-width: 768px) {
         .profile-avatar-circle { width: 120px; height: 120px; }
         .profile-avatar-letter { font-size: 50px; }
@@ -209,6 +230,24 @@
             <p class="page-subtitle">View and manage your profile information</p>
         </div>
     </div>
+
+    @if(session('success'))
+        <div class="alert alert-success">{{ session('success') }}</div>
+    @endif
+
+    @if(session('error'))
+        <div class="alert alert-error">{{ session('error') }}</div>
+    @endif
+
+    @if($errors->any())
+        <div class="alert alert-error">
+            <ul class="error-list-compact">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
 
 
 
@@ -243,13 +282,13 @@
                 </div>
 
                 <div class="profile-field">
-                    <div class="profile-field-label">Specialization:</div>
-                    <div class="profile-field-value">{{ $instructor->specialization ?? 'N/A' }}</div>
+                    <div class="profile-field-label">Availability:</div>
+                    <div class="profile-field-value">{{ ucfirst(str_replace('_', ' ', $instructor->availability ?? 'Not Set')) }}</div>
                 </div>
 
                 <div class="profile-field">
-                    <div class="profile-field-label">Experience:</div>
-                    <div class="profile-field-value">{{ $instructor->experience ?? 'N/A' }}</div>
+                    <div class="profile-field-label">Address:</div>
+                    <div class="profile-field-value">{{ $instructor->address ?? 'N/A' }}</div>
                 </div>
 
                 <div class="profile-field">
@@ -288,13 +327,8 @@
                 </div>
 
                 <div class="form-field">
-                    <label for="specialization">Specialization</label>
-                    <input type="text" id="specialization" name="specialization" value="{{ old('specialization', $instructor->specialization) }}">
-                </div>
-
-                <div class="form-field">
-                    <label for="experience">Experience</label>
-                    <input type="text" id="experience" name="experience" value="{{ old('experience', $instructor->experience) }}">
+                    <label for="address">Address</label>
+                    <input type="text" id="address" name="address" value="{{ old('address', $instructor->address) }}">
                 </div>
 
                 <div class="form-field">
@@ -303,28 +337,39 @@
                 </div>
 
                 <div class="password-section">
-                    <h4 class="password-section-title">Change Password <span class="password-section-note">(optional)</span></h4>
-                    
-                    @error('current_password')
-                        <div class="password-error-box">{{ $message }}</div>
-                    @enderror
+                    <h4 class="password-section-title">Password <span class="password-section-note">(optional)</span></h4>
 
                     <div class="form-field">
-                        <label for="current_password">Current Password</label>
-                        <input type="password" id="current_password" name="current_password" placeholder="Enter current password">
+                        <button type="button" class="btn-password-toggle" id="instructorPasswordToggleBtn" onclick="toggleInstructorPasswordFields()">
+                            Change Password
+                        </button>
                     </div>
 
-                    <div class="form-field">
-                        <label for="new_password">New Password</label>
-                        <input type="password" id="new_password" name="new_password" placeholder="Min 8 chars, uppercase, lowercase, number">
-                        @error('new_password')
-                            <span class="password-error-text">{{ $message }}</span>
+                    <div class="password-fields hidden" id="instructorPasswordFields">
+                        @error('current_password')
+                            <div class="password-error-box">{{ $message }}</div>
                         @enderror
-                    </div>
 
-                    <div class="form-field">
-                        <label for="new_password_confirmation">Confirm New Password</label>
-                        <input type="password" id="new_password_confirmation" name="new_password_confirmation" placeholder="Re-enter new password">
+                        <div class="form-field">
+                            <label for="current_password">Current Password</label>
+                            <input type="password" id="current_password" name="current_password" placeholder="Enter current password" autocomplete="current-password">
+                        </div>
+
+                        <div class="form-field">
+                            <label for="new_password">New Password</label>
+                            <input type="password" id="new_password" name="new_password" placeholder="Min 8 chars, uppercase, lowercase, number" autocomplete="new-password" oninput="handleInstructorNewPasswordInput()">
+                            @error('new_password')
+                                <span class="password-error-text">{{ $message }}</span>
+                            @enderror
+                        </div>
+
+                        <div class="form-field" id="instructorConfirmPasswordField" style="display: none;">
+                            <label for="new_password_confirmation">Confirm New Password</label>
+                            <input type="password" id="new_password_confirmation" name="new_password_confirmation" placeholder="Re-enter new password" autocomplete="new-password">
+                            @error('new_password_confirmation')
+                                <span class="password-error-text">{{ $message }}</span>
+                            @enderror
+                        </div>
                     </div>
                 </div>
 
@@ -347,10 +392,6 @@
         input.addEventListener('paste', function() { setTimeout(sanitize, 0); });
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
-        enforceNumericOnly(document.getElementById('contact'));
-    });
-
     function showEditForm() {
         document.getElementById('profileView').style.display = 'none';
         document.getElementById('editForm').style.display = 'block';
@@ -359,7 +400,85 @@
     function hideEditForm() {
         document.getElementById('profileView').style.display = 'block';
         document.getElementById('editForm').style.display = 'none';
+        closeInstructorPasswordFields();
     }
+
+    function toggleInstructorPasswordFields(forceOpen = null) {
+        const fields = document.getElementById('instructorPasswordFields');
+        const button = document.getElementById('instructorPasswordToggleBtn');
+        if (!fields || !button) return;
+
+        const shouldOpen = forceOpen === null ? fields.classList.contains('hidden') : forceOpen;
+
+        if (shouldOpen) {
+            fields.classList.remove('hidden');
+            button.textContent = 'Hide Password Change';
+        } else {
+            closeInstructorPasswordFields();
+        }
+
+        handleInstructorNewPasswordInput();
+    }
+
+    function handleInstructorNewPasswordInput() {
+        const newPassword = document.getElementById('new_password');
+        const currentPassword = document.getElementById('current_password');
+        const confirmField = document.getElementById('instructorConfirmPasswordField');
+        const confirmInput = document.getElementById('new_password_confirmation');
+
+        if (!newPassword || !currentPassword || !confirmField || !confirmInput) return;
+
+        const hasNewPassword = newPassword.value.trim().length > 0;
+        confirmField.style.display = hasNewPassword ? 'block' : 'none';
+        currentPassword.required = hasNewPassword;
+        confirmInput.required = hasNewPassword;
+    }
+
+    function closeInstructorPasswordFields() {
+        const fields = document.getElementById('instructorPasswordFields');
+        const button = document.getElementById('instructorPasswordToggleBtn');
+        const currentPassword = document.getElementById('current_password');
+        const newPassword = document.getElementById('new_password');
+        const confirmInput = document.getElementById('new_password_confirmation');
+        const confirmField = document.getElementById('instructorConfirmPasswordField');
+
+        if (fields) fields.classList.add('hidden');
+        if (button) button.textContent = 'Change Password';
+
+        if (currentPassword) {
+            currentPassword.value = '';
+            currentPassword.required = false;
+        }
+        if (newPassword) {
+            newPassword.value = '';
+        }
+        if (confirmInput) {
+            confirmInput.value = '';
+            confirmInput.required = false;
+        }
+        if (confirmField) {
+            confirmField.style.display = 'none';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        enforceNumericOnly(document.getElementById('contact'));
+
+        const hasErrors = {{ $errors->any() ? 'true' : 'false' }};
+        const hasPasswordErrors = {{ ($errors->has('current_password') || $errors->has('new_password') || $errors->has('new_password_confirmation')) ? 'true' : 'false' }};
+
+        if (hasErrors) {
+            showEditForm();
+        }
+
+        if (hasPasswordErrors) {
+            toggleInstructorPasswordFields(true);
+            const confirmField = document.getElementById('instructorConfirmPasswordField');
+            if (confirmField) confirmField.style.display = 'block';
+        }
+
+        handleInstructorNewPasswordInput();
+    });
 
     function uploadProfilePicture(input) {
         if (!input.files || !input.files[0]) return;

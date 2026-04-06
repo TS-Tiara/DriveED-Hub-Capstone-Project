@@ -298,8 +298,8 @@ class StudentController extends Controller
             'contact' => ['nullable', 'string', 'max:20', 'regex:/^(09\d{9}|\+639\d{9})$/'],
             'address' => 'nullable|string|max:255',
             'date_of_birth' => 'nullable|date|before:today',
-            'current_password' => 'nullable|string|min:6',
-            'new_password' => ['nullable', 'confirmed', new StrongPassword()],
+            'current_password' => 'nullable|required_with:new_password|string',
+            'new_password' => ['nullable', 'confirmed', 'different:current_password', new StrongPassword()],
         ]);
 
         $data = $request->only(['name', 'email', 'contact', 'address', 'date_of_birth']);

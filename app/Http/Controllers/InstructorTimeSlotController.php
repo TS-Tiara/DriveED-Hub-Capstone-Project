@@ -319,18 +319,19 @@ class InstructorTimeSlotController extends Controller
             ],
             'contact' => ['nullable', 'string', 'max:20', 'regex:/^(09\d{9}|\+639\d{9})$/'],
             'license_number' => 'nullable|string|max:50',
-            'current_password' => 'nullable|string|min:6',
-            'new_password' => ['nullable', 'confirmed', new StrongPassword()],
+            'address' => 'nullable|string|max:255',
+            'current_password' => 'nullable|required_with:new_password|string',
+            'new_password' => ['nullable', 'confirmed', 'different:current_password', new StrongPassword()],
         ]);
 
-        $data = $request->only(['name', 'email', 'contact', 'license_number']);
+        $data = $request->only(['name', 'email', 'contact', 'license_number', 'address']);
 
         // Check current password if user wants to change password
         if ($request->filled('new_password')) {
             if (!$request->filled('current_password') || !Hash::check($request->current_password, $instructor->password)) {
                 return back()->withErrors(['current_password' => 'Current password is incorrect.']);
             }
-            $data['password'] = $request->new_password;
+            $data['password'] = Hash::make($request->new_password);
         }
         //False positive
         try {
