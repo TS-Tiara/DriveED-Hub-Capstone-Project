@@ -206,6 +206,31 @@
         display: block;
     }
 
+    .password-toggle-row {
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+
+    .btn-password-toggle {
+        width: 100%;
+        background: #f3f4f6;
+        color: #1f2937;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        padding: 12px 14px;
+        font-weight: 600;
+        text-align: left;
+        cursor: pointer;
+    }
+
+    .btn-password-toggle:hover {
+        background: #e5e7eb;
+    }
+
+    .password-fields.hidden {
+        display: none;
+    }
+
     .edit-form {
         display: none;
         padding: 30px;
@@ -622,6 +647,24 @@
     <div class="page-header">
         <h1 class="page-title">Profile</h1>
     </div>
+
+    @if(session('success'))
+        <div class="success-message">{{ session('success') }}</div>
+    @endif
+
+    @if(session('error'))
+        <div class="error-message">{{ session('error') }}</div>
+    @endif
+
+    @if($errors->any())
+        <div class="error-message">
+            <ul class="error-list-compact">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
     
 
 
@@ -670,6 +713,26 @@
                     <span class="info-label">Branch:</span>
                     <span class="info-value">{{ $student->branchRelation?->name ?? 'Not Assigned' }}</span>
                 </div>
+
+                <div class="info-row">
+                    <span class="info-label">Role:</span>
+                    <span class="info-value">{{ ucfirst(str_replace('_', ' ', $student->role ?? 'student')) }}</span>
+                </div>
+
+                <div class="info-row">
+                    <span class="info-label">Experience Level:</span>
+                    <span class="info-value">{{ $student->experience_level ? ucfirst(str_replace('_', ' ', $student->experience_level)) : 'Not Set' }}</span>
+                </div>
+
+                <div class="info-row">
+                    <span class="info-label">License Status:</span>
+                    <span class="info-value">{{ $student->student_license_status ? ucfirst(str_replace('_', ' ', $student->student_license_status)) : 'None' }}</span>
+                </div>
+
+                <div class="info-row">
+                    <span class="info-label">TDC Completion:</span>
+                    <span class="info-value">{{ ($student->has_passed_theoretical ?? false) ? 'Completed' : 'Not Yet Completed' }}</span>
+                </div>
             </div>
             
             <div class="profile-buttons" id="profileButtons">
@@ -709,28 +772,39 @@
                 </div>
 
                 <div class="password-section">
-                    <h4 class="password-section-title">Change Password <span class="password-section-title-note">(optional)</span></h4>
-                    
-                    @error('current_password')
-                        <div class="password-error-box">{{ $message }}</div>
-                    @enderror
+                    <h4 class="password-section-title">Password</h4>
 
-                    <div class="form-group">
-                        <label for="current_password">Current Password:</label>
-                        <input type="password" id="current_password" name="current_password" placeholder="Enter current password">
+                    <div class="password-toggle-row">
+                        <button type="button" class="btn-password-toggle" id="studentPasswordToggleBtn" onclick="toggleStudentPasswordFields()">
+                            Change Password
+                        </button>
                     </div>
 
-                    <div class="form-group">
-                        <label for="new_password">New Password:</label>
-                        <input type="password" id="new_password" name="new_password" placeholder="Min 8 chars, uppercase, lowercase, number">
-                        @error('new_password')
-                            <span class="password-error-text">{{ $message }}</span>
+                    <div class="password-fields hidden" id="studentPasswordFields">
+                        @error('current_password')
+                            <div class="password-error-box">{{ $message }}</div>
                         @enderror
-                    </div>
 
-                    <div class="form-group">
-                        <label for="new_password_confirmation">Confirm New Password:</label>
-                        <input type="password" id="new_password_confirmation" name="new_password_confirmation" placeholder="Re-enter new password">
+                        <div class="form-group">
+                            <label for="current_password">Current Password:</label>
+                            <input type="password" id="current_password" name="current_password" placeholder="Enter current password" autocomplete="current-password">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="new_password">New Password:</label>
+                            <input type="password" id="new_password" name="new_password" placeholder="Min 8 chars, uppercase, lowercase, number" autocomplete="new-password" oninput="handleStudentNewPasswordInput()">
+                            @error('new_password')
+                                <span class="password-error-text">{{ $message }}</span>
+                            @enderror
+                        </div>
+
+                        <div class="form-group" id="studentConfirmPasswordField" style="display: none;">
+                            <label for="new_password_confirmation">Confirm New Password:</label>
+                            <input type="password" id="new_password_confirmation" name="new_password_confirmation" placeholder="Re-enter new password" autocomplete="new-password">
+                            @error('new_password_confirmation')
+                                <span class="password-error-text">{{ $message }}</span>
+                            @enderror
+                        </div>
                     </div>
                 </div>
                 
@@ -754,7 +828,82 @@
         document.getElementById('profileDisplay').style.display = 'block';
         document.getElementById('profileButtons').style.display = 'block';
         document.getElementById('editForm').style.display = 'none';
+        closeStudentPasswordFields();
     }
+
+    function toggleStudentPasswordFields(forceOpen = null) {
+        const container = document.getElementById('studentPasswordFields');
+        const toggleButton = document.getElementById('studentPasswordToggleBtn');
+        if (!container || !toggleButton) return;
+
+        const shouldOpen = forceOpen === null ? container.classList.contains('hidden') : forceOpen;
+
+        if (shouldOpen) {
+            container.classList.remove('hidden');
+            toggleButton.textContent = 'Hide Password Change';
+        } else {
+            closeStudentPasswordFields();
+        }
+
+        handleStudentNewPasswordInput();
+    }
+
+    function handleStudentNewPasswordInput() {
+        const newPassword = document.getElementById('new_password');
+        const currentPassword = document.getElementById('current_password');
+        const confirmField = document.getElementById('studentConfirmPasswordField');
+        const confirmInput = document.getElementById('new_password_confirmation');
+
+        if (!newPassword || !currentPassword || !confirmField || !confirmInput) return;
+
+        const hasNewPassword = newPassword.value.trim().length > 0;
+        confirmField.style.display = hasNewPassword ? 'block' : 'none';
+        currentPassword.required = hasNewPassword;
+        confirmInput.required = hasNewPassword;
+    }
+
+    function closeStudentPasswordFields() {
+        const container = document.getElementById('studentPasswordFields');
+        const toggleButton = document.getElementById('studentPasswordToggleBtn');
+        const currentPassword = document.getElementById('current_password');
+        const newPassword = document.getElementById('new_password');
+        const confirmInput = document.getElementById('new_password_confirmation');
+        const confirmField = document.getElementById('studentConfirmPasswordField');
+
+        if (container) container.classList.add('hidden');
+        if (toggleButton) toggleButton.textContent = 'Change Password';
+        if (currentPassword) {
+            currentPassword.value = '';
+            currentPassword.required = false;
+        }
+        if (newPassword) {
+            newPassword.value = '';
+        }
+        if (confirmInput) {
+            confirmInput.value = '';
+            confirmInput.required = false;
+        }
+        if (confirmField) {
+            confirmField.style.display = 'none';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const hasErrors = {{ $errors->any() ? 'true' : 'false' }};
+        const hasPasswordErrors = {{ ($errors->has('current_password') || $errors->has('new_password') || $errors->has('new_password_confirmation')) ? 'true' : 'false' }};
+
+        if (hasErrors) {
+            showEditForm();
+        }
+
+        if (hasPasswordErrors) {
+            toggleStudentPasswordFields(true);
+            const confirmField = document.getElementById('studentConfirmPasswordField');
+            if (confirmField) confirmField.style.display = 'block';
+        }
+
+        handleStudentNewPasswordInput();
+    });
 
     function uploadProfilePicture(input) {
         if (!input.files || !input.files[0]) return;
