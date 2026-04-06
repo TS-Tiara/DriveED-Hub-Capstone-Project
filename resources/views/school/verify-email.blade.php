@@ -196,7 +196,26 @@
             font-size: 14px;
         }
 
+        .back-link form {
+            display: inline;
+            margin: 0;
+        }
+
+        .back-link-btn {
+            background: none;
+            border: none;
+            color: #6b7280;
+            text-decoration: none;
+            font-size: 14px;
+            cursor: pointer;
+            padding: 0;
+        }
+
         .back-link a:hover {
+            text-decoration: underline;
+        }
+
+        .back-link-btn:hover {
             text-decoration: underline;
         }
 
@@ -547,7 +566,10 @@
         </div>
 
         <div class="back-link">
-            <a href="{{ route('schools.login', $school) }}">&larr; Back to Login</a>
+            <form method="POST" action="{{ route('schools.logout', $school) }}">
+                @csrf
+                <button type="submit" class="back-link-btn">&larr; Back to Login</button>
+            </form>
         </div>
     </div>
     </div>
