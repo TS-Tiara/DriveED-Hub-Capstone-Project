@@ -1546,8 +1546,9 @@
                              data-date="{{ $timeslot->date }}"
                              data-start-time="{{ $timeslot->start_time }}"
                              data-end-time="{{ $timeslot->end_time }}"
-                                data-session-type="{{ $timeslot->session_type ?? (($timeslot->course && $timeslot->course->course_type === 'practical') ? 'practical' : 'theoretical') }}"
+                             data-session-type="{{ $timeslot->session_type ?? (($timeslot->course && $timeslot->course->course_type === 'practical') ? 'practical' : 'theoretical') }}"
                              data-max-instructors="{{ $timeslot->max_instructors }}"
+                             data-max-students="{{ $timeslot->max_students }}"
                              data-notes="{{ $timeslot->notes ?? '' }}">
                             <div class="timeslot-row">
                                 <div class="timeslot-time">
@@ -1781,15 +1782,17 @@
                     @endif
                 </div>
 
-                <div class="form-group" id="sessionTypeGroup">
-                    <label class="form-label">
-                        <i class="bi bi-diagram-3"></i> Session Type <span class="text-danger">*</span>
+                <div class="form-group">
+                    <label class="form-label" for="createSessionType">
+                        <i class="bi bi-diagram-3"></i> Session Type
+                        <span class="text-danger">*</span>
                     </label>
-                    <select name="session_type" id="createSessionType" class="form-control" required>
-                        <option value="theoretical">Theoretical</option>
-                        <option value="practical">Practical</option>
+                    <select name="session_type" id="createSessionType" class="form-control">
+                        <option value="theoretical">Theoretical (TDC)</option>
+                        <option value="practical">Practical (PDC)</option>
                     </select>
-                    <small class="text-muted" id="sessionTypeHelp">Set whether this slot logs as classroom theory or driving practical.</small>
+                    <input type="hidden" name="session_type" id="createSessionTypeHidden">
+                    <small class="text-muted">Determines seating vs 1-on-1 logic.</small>
                 </div>
                 
                 <div class="form-group">
@@ -1964,6 +1967,7 @@
 
             const type = selectedOption.getAttribute('data-type');
             const selectedInstructors = instructorSelect ? Array.from(instructorSelect.selectedOptions).length : 0;
+            const sessionTypeHidden = document.getElementById('createSessionTypeHidden');
 
             if (sessionTypeSelect) {
                 if (type === 'theoretical') {
@@ -1978,6 +1982,12 @@
                         sessionTypeSelect.value = 'theoretical';
                     }
                 }
+                
+                // Sync hidden input for submission since disabled fields aren't sent
+                if (sessionTypeHidden) {
+                    sessionTypeHidden.value = sessionTypeSelect.value;
+                    sessionTypeHidden.disabled = !sessionTypeSelect.disabled;
+                }
             }
 
             const effectiveSessionType = sessionTypeSelect
@@ -1987,17 +1997,26 @@
             if (effectiveSessionType === 'theoretical') {
                 // TDC Mode: Focus on Seating
                 maxStudentsGroup.style.display = 'block';
-                maxInstructorsGroup.style.display = 'block';
+                const maxStudentsInput = document.getElementById('createMaxStudents');
+                if (maxStudentsInput) maxStudentsInput.disabled = false;
+                
+                // For TDC, we hide "Max Instructors" (one-to-one focus) 
+                // and default internal instructors to 1 in the background logic.
+                maxInstructorsGroup.style.display = 'none';
+                maxInstructorsInput.disabled = true;
+                
                 batchModeAlert.style.display = 'none';
-                maxInstructorsInput.disabled = false;
             } else {
                 // PDC Mode: Focus on 1-on-1
                 maxStudentsGroup.style.display = 'none';
+                const maxStudentsInput = document.getElementById('createMaxStudents');
+                if (maxStudentsInput) maxStudentsInput.disabled = true;
                 
                 if (selectedInstructors > 1) {
                     // Batch Multi-Assign Mode active
                     batchModeAlert.style.display = 'block';
                     maxInstructorsGroup.style.display = 'none';
+                    maxInstructorsInput.disabled = true;
                 } else {
                     batchModeAlert.style.display = 'none';
                     maxInstructorsGroup.style.display = 'block';
@@ -2115,26 +2134,35 @@
                 @foreach($dateTimeslots as $timeslot)
                     @php
                         $availableSpots = $timeslot->getAvailableSpots();
+                        $adminCount = $timeslot->getAdminAssignedCount();
+                        $selfCount = $timeslot->getSelfSelectedCount();
+                        $totalCount = $timeslot->instructors->count();
                     @endphp
                     {
                         id: {!! json_encode($timeslot->id) !!},
                         sessionType: {!! json_encode($timeslot->session_type ?? (($timeslot->course && $timeslot->course->course_type === 'practical') ? 'practical' : 'theoretical')) !!},
                         time: {!! json_encode(\Carbon\Carbon::parse($timeslot->start_time)->format('h:i A') . ' - ' . \Carbon\Carbon::parse($timeslot->end_time)->format('h:i A')) !!},
+                        startTime: {!! json_encode($timeslot->start_time) !!},
+                        endTime: {!! json_encode($timeslot->end_time) !!},
                         instructors: [
                             @foreach($timeslot->instructors as $instructor)
                             { 
                                 name: {!! json_encode($instructor->name) !!}, 
                                 type: {!! json_encode($instructor->pivot->assignment_type ?? "admin_assigned") !!} 
-                            },
+                            }@if(!$loop->last),@endif
                             @endforeach
                         ],
                         notes: {!! json_encode($timeslot->notes ?? "No notes") !!},
                         status: {!! json_encode($timeslot->status) !!},
-                        available: {!! json_encode((string)$availableSpots) !!},
-                        max: {!! json_encode($timeslot->max_instructors) !!}
-                    },
+                        availableSpots: {!! json_encode($availableSpots) !!},
+                        adminCount: {!! json_encode($adminCount) !!},
+                        selfCount: {!! json_encode($selfCount) !!},
+                        totalCount: {!! json_encode($totalCount) !!},
+                        maxInstructors: {!! json_encode($timeslot->max_instructors) !!},
+                        maxStudents: {!! json_encode($timeslot->max_students) !!}
+                    }@if(!$loop->last),@endif
                 @endforeach
-            ],
+            ]@if(!$loop->last),@endif
         @endforeach
     };
 
@@ -2254,7 +2282,7 @@
         const startTime = slotItem.dataset.startTime || '';
         const endTime = slotItem.dataset.endTime || '';
         const sessionType = slotItem.dataset.sessionType || 'theoretical';
-        const maxInstructors = slotItem.dataset.maxInstructors || '';
+        let maxInstructors = slotItem.dataset.maxInstructors || '';
         const notes = slotItem.dataset.notes || 'No notes';
         
         // Format time
@@ -2278,16 +2306,19 @@
         // Get availability
         const availableBadge = slotItem.querySelector('.badge-success:not(.badge-primary), .badge-secondary');
         const availableText = availableBadge ? availableBadge.textContent.trim() : 'Full';
+        const maxStudents = slotItem.dataset.maxStudents || '1';
+        maxInstructors = slotItem.dataset.maxInstructors || '1';
         
         // Store data for edit modal
-        currentSlotData = {
+        window.currentSlotData = {
             id: slotId,
             time: timeText,
             sessionType: sessionType,
             instructors: instructorsList,
             notes: notes,
             available: availableText,
-            maxInstructors: maxInstructors
+            maxInstructors: maxInstructors,
+            maxStudents: maxStudents
         };
             
             // Populate details modal
@@ -2481,10 +2512,25 @@
                 <label class="form-label">
                     <i class="bi bi-diagram-3"></i> Session Type
                 </label>
-                <select name="session_type" class="form-control">
+                <select name="session_type" id="editSessionType" class="form-control" onchange="window.updateEditCapacityVisibility()">
                     <option value="theoretical" ${slotData.sessionType === 'theoretical' ? 'selected' : ''}>Theoretical</option>
                     <option value="practical" ${slotData.sessionType === 'practical' ? 'selected' : ''}>Practical</option>
                 </select>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6" id="editMaxInstructorsGroup" style="${slotData.sessionType === 'practical' ? 'display:none' : ''}">
+                    <div class="form-group">
+                        <label class="form-label">Max Instructors</label>
+                        <input type="number" name="max_instructors" class="form-control" value="${slotData.maxInstructors}" min="1" max="10">
+                    </div>
+                </div>
+                <div class="col-md-6" id="editMaxStudentsGroup" style="${slotData.sessionType === 'practical' ? 'display:none' : ''}">
+                    <div class="form-group">
+                        <label class="form-label">Max Students</label>
+                        <input type="number" name="max_students" class="form-control" value="${slotData.maxStudents}" min="1">
+                    </div>
+                </div>
             </div>
 
             <div class="form-group">
@@ -2496,7 +2542,6 @@
                 </select>
                 <small class="text-muted">
                     <i class="bi bi-info-circle"></i> Hold Ctrl (Windows) or Cmd (Mac) to select multiple. 
-                    Changes will update instructor assignments.
                 </small>
             </div>
             
@@ -2506,6 +2551,21 @@
             </div>
         `;
     }
+
+    window.updateEditCapacityVisibility = function() {
+        const type = document.getElementById('editSessionType').value;
+        const instructorsGroup = document.getElementById('editMaxInstructorsGroup');
+        const studentsGroup = document.getElementById('editMaxStudentsGroup');
+        
+        if (type === 'practical') {
+            instructorsGroup.style.display = 'none';
+            studentsGroup.style.display = 'none';
+        } else {
+            instructorsGroup.style.display = 'block';
+            studentsGroup.style.display = 'block';
+        }
+    }
+
     
     // Confirm Delete Schedule
     window.confirmDeleteSchedule = function(scheduleId) {
