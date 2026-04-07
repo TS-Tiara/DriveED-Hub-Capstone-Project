@@ -1391,108 +1391,131 @@ class AdminController extends Controller
      */
     public function createSchedule(Request $request, School $school)
     {
-        $admin = Auth::guard('admin')->user();
+        try {
+            $admin = Auth::guard('admin')->user();
 
-        // General schedule management check
-        if (!$admin instanceof Admin || !$admin->canManageSchedules()) {
-            abort(403, 'Unauthorized action.');
-        }
-
-        $validated = $request->validate([
-            'date' => 'required|date|after_or_equal:today',
-            'start_time' => 'required',
-            'end_time' => 'required|after:start_time',
-            'session_type' => 'nullable|in:theoretical,practical',
-            'course_id' => [
-                'required',
-                Rule::exists('courses', 'id')->where('school_id', $school->id)
-            ],
-            'branch_id' => [
-                'nullable',
-                Rule::exists('branches', 'id')->where('school_id', $school->id)
-            ],
-            'instructor_ids' => 'nullable|array',
-            'instructor_ids.*' => [
-                Rule::exists('instructors', 'id')->where('school_id', $school->id)
-            ],
-            'max_instructors' => 'nullable|integer|min:1',
-            'max_students' => 'nullable|integer|min:1',
-            'notes' => 'nullable|string',
-        ]);
-
-        // Layer 2: Fail-Closed Retrieval
-        $course = $school->courses()->findOrFail($validated['course_id']);
-
-        // Branch-level authorization
-        $branchId = $validated['branch_id'] ?? $admin->branch_id;
-        if (!$admin->canAccessBranch($branchId)) {
-            abort(403, 'You do not have permission to create schedules for this branch.');
-        }
-
-        // Layer 3: Safe Normalization
-        $resolvedSessionType = $validated['session_type'] ?? ($course->isPractical() ? 'practical' : 'theoretical');
-        $maxInstructors = (int) ($validated['max_instructors'] ?? 1);
-        $maxStudents = (int) ($validated['max_students'] ?? 1);
-
-        // Practical sessions are always 1-on-1 regardless of parent course type.
-        if ($resolvedSessionType === 'practical') {
-            $maxStudents = 1;
-        }
-
-        $schedule = \App\Models\TimeSlot::create([
-            'school_id' => $school->id,
-            'branch_id' => $branchId,
-            'course_id' => $validated['course_id'],
-            'session_type' => $resolvedSessionType,
-            'date' => $validated['date'],
-            'start_time' => $validated['start_time'],
-            'end_time' => $validated['end_time'],
-            'max_instructors' => $maxInstructors,
-            'max_students' => $maxStudents,
-            'notes' => $validated['notes'] ?? null,
-            'status' => 'open',
-        ]);
-
-        // If admin selected instructors to assign
-        if (!empty($validated['instructor_ids'])) {
-            // Verify all instructors belong to this school
-            $instructors = Instructor::whereIn('id', $validated['instructor_ids'])
-                ->where('school_id', $school->id)
-                ->where('status', 'active')
-                ->get();
-
-            if ($instructors->count() !== count($validated['instructor_ids'])) {
-                $schedule->delete(); // Changed $timeslot to $schedule
-                return redirect()->back()->with('error', 'Some instructors are invalid or inactive.');
+            // General schedule management check
+            if (!$admin instanceof Admin || !$admin->canManageSchedules()) {
+                abort(403, 'Unauthorized action.');
             }
 
-            // Check if not exceeding max capacity
-            if ($instructors->count() > $maxInstructors) {
-                $schedule->delete(); // Changed $timeslot to $schedule
-                return redirect()->back()->with('error', 'Cannot assign more instructors than max capacity.');
+            $validated = $request->validate([
+                'date' => 'required|date|after_or_equal:today',
+                'start_time' => 'required',
+                'end_time' => 'required|after:start_time',
+                'session_type' => 'nullable|in:theoretical,practical',
+                'course_id' => [
+                    'required',
+                    Rule::exists('courses', 'id')->where('school_id', $school->id)
+                ],
+                'branch_id' => [
+                    'nullable',
+                    Rule::exists('branches', 'id')->where('school_id', $school->id)
+                ],
+                'instructor_ids' => 'nullable|array',
+                'instructor_ids.*' => [
+                    Rule::exists('instructors', 'id')->where('school_id', $school->id)
+                ],
+                'max_instructors' => 'nullable|integer|min:1|max:10',
+                'max_students' => 'nullable|integer|min:1|max:100',
+                'notes' => 'nullable|string',
+            ]);
+
+            // Layer 2: Fail-Closed Retrieval
+            $course = $school->courses()->findOrFail($validated['course_id']);
+
+            // Branch-level authorization
+            $branchId = $validated['branch_id'] ?? $admin->branch_id;
+            if (!$admin->canAccessBranch($branchId)) {
+                abort(403, 'You do not have permission to create schedules for this branch.');
             }
 
-            // Assign instructors with admin_assigned type
-            foreach ($instructors as $instructor) {
-                $schedule->instructors()->attach($instructor->id, [ // Changed $timeslot to $schedule
-                    'school_id' => $school->id,
-                    'assignment_type' => 'admin_assigned',
-                ]);
+            // Layer 3: Safe Normalization (Hardening Sync)
+            $resolvedSessionType = $validated['session_type'] ?? ($course->isPractical() ? 'practical' : 'theoretical');
+            $maxInstructors = (int) ($validated['max_instructors'] ?? 1);
+            $maxStudents = (int) ($validated['max_students'] ?? 1);
+
+            // Practical sessions are always 1-on-1 regardless of parent course type.
+            if ($resolvedSessionType === 'practical') {
+                $maxStudents = 1;
+                // If it's practical, each instructor represents 1 student spot.
+                // We default max_instructors to the number of instructors being assigned, 
+                // or 1 if none are assigned yet.
+                if (!empty($validated['instructor_ids'])) {
+                     $maxInstructors = count($validated['instructor_ids']);
+                }
             }
 
-            $availableSpots = $maxInstructors - $instructors->count();
-            $message = 'Schedule created with ' . $instructors->count() . ' instructor(s) assigned.';
+            DB::beginTransaction();
 
-            if ($availableSpots > 0) {
-                $message .= ' ' . $availableSpots . ' spot(s) available for self-selection.';
+            $schedule = TimeSlot::create([
+                'school_id' => $school->id,
+                'branch_id' => $branchId,
+                'course_id' => $validated['course_id'],
+                'session_type' => $resolvedSessionType,
+                'date' => $validated['date'],
+                'start_time' => $validated['start_time'],
+                'end_time' => $validated['end_time'],
+                'max_instructors' => $maxInstructors,
+                'max_students' => $maxStudents,
+                'notes' => $validated['notes'] ?? null,
+                'status' => 'open',
+            ]);
+
+            // If admin selected instructors to assign
+            if (!empty($validated['instructor_ids'])) {
+                // Verify all instructors belong to this school
+                $instructors = Instructor::whereIn('id', $validated['instructor_ids'])
+                    ->where('school_id', $school->id)
+                    ->where('status', 'active')
+                    ->get();
+
+                if ($instructors->count() !== count($validated['instructor_ids'])) {
+                    DB::rollBack();
+                    return redirect()->back()->withInput()->with('error', 'Some selected instructors are invalid or inactive.');
+                }
+
+                // Check if not exceeding max capacity (for TDC)
+                if ($resolvedSessionType === 'theoretical' && $instructors->count() > $maxInstructors) {
+                    DB::rollBack();
+                    return redirect()->back()->withInput()->with('error', 'Cannot assign more instructors than the maximum capacity.');
+                }
+
+                // Assign instructors with admin_assigned type
+                foreach ($instructors as $instructor) {
+                    $schedule->instructors()->attach($instructor->id, [
+                        'school_id' => $school->id,
+                        'assignment_type' => 'admin_assigned',
+                    ]);
+                }
+
+                DB::commit();
+
+                $availableSpots = $maxInstructors - $instructors->count();
+                $message = 'Schedule created with ' . $instructors->count() . ' instructor(s) assigned.';
+
+                if ($availableSpots > 0) {
+                    $message .= ' ' . $availableSpots . ' spot(s) available for self-selection.';
+                }
+
+                return redirect()->back()->with('success', $message);
             }
 
-            return redirect()->back()->with('success', $message);
+            DB::commit();
+
+            // No instructors assigned - all spots available
+            return redirect()->back()->with('success', 'Schedule created! ' . $maxInstructors . ' spot(s) available for instructor self-selection.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            LogFacade::error('Failed to create schedule: ' . $e->getMessage(), [
+                'school_id' => $school->id,
+                'input' => $request->all()
+            ]);
+            return redirect()->back()->withInput()->with('error', 'Unable to create schedule due to a system error. Please try again.');
         }
-
-        // No instructors assigned - all spots available
-        return redirect()->back()->with('success', 'Schedule created! ' . $maxInstructors . ' spot(s) available for instructor self-selection.');
     }
+
 
     /**
      * Update schedule
@@ -1515,6 +1538,8 @@ class AdminController extends Controller
             $validated = $request->validate([
                 'notes' => 'nullable|string|max:500',
                 'session_type' => 'nullable|in:theoretical,practical',
+                'max_instructors' => 'nullable|integer|min:1|max:10',
+                'max_students' => 'nullable|integer|min:1|max:100',
                 'instructor_ids' => 'nullable|array',
                 'instructor_ids.*' => [
                     Rule::exists('instructors', 'id')->where('school_id', $school->id)
@@ -1527,27 +1552,35 @@ class AdminController extends Controller
                 ?? $timeslot->session_type
                 ?? (($timeslot->course && $timeslot->course->course_type === 'practical') ? 'practical' : 'theoretical');
 
-            // Update notes
+            $maxInstructors = (int)($validated['max_instructors'] ?? $timeslot->max_instructors);
+            $maxStudents = (int)($validated['max_students'] ?? $timeslot->max_students);
+
+            // PDC Safety Sync
+            if ($resolvedSessionType === 'practical') {
+                $maxStudents = 1;
+            }
+
+            // Update timeslot core data
             $timeslot->update([
                 'notes' => $validated['notes'] ?? null,
                 'session_type' => $resolvedSessionType,
+                'max_instructors' => $maxInstructors,
+                'max_students' => $maxStudents,
             ]);
 
             // Update admin-assigned instructors only (preserve self-selected ones)
             if (isset($validated['instructor_ids'])) {
                 // Get current self-selected instructors
-                $selfSelected = $timeslot->instructors()
+                $selfSelectedCount = $timeslot->instructors()
                     ->wherePivot('assignment_type', 'self_selected')
-                    ->pluck('instructors.id')
-                    ->toArray();
+                    ->count();
 
                 // Validate new admin assignments don't exceed capacity
-                $totalInstructors = count($selfSelected) + count($validated['instructor_ids']);
-                if ($totalInstructors > $timeslot->max_instructors) {
-                    $selfSelectedCount = count($selfSelected);
+                $totalInstructors = $selfSelectedCount + count($validated['instructor_ids']);
+                if ($totalInstructors > $maxInstructors) {
                     DB::rollBack();
                     return redirect()->back()
-                        ->withErrors(['instructor_ids' => "Cannot assign {$totalInstructors} instructors. Maximum capacity is {$timeslot->max_instructors}. Currently {$selfSelectedCount} instructors are self-selected."])
+                        ->withErrors(['instructor_ids' => "Cannot assign {$totalInstructors} instructors. Maximum capacity is {$maxInstructors}. Currently {$selfSelectedCount} instructors are self-selected."])
                         ->withInput();
                 }
 
@@ -1580,20 +1613,19 @@ class AdminController extends Controller
 
             DB::commit();
 
-            $adminCount = $timeslot->getAdminAssignedCount();
-            $selfCount = $timeslot->getSelfSelectedCount();
-
-            return redirect()->back()->with('success', "Schedule updated successfully! Instructors: {$adminCount} admin-assigned, {$selfCount} self-selected.");
+            return redirect()->back()->with('success', "Schedule updated successfully!");
         }
         catch (\Exception $e) {
             DB::rollBack();
             LogFacade::error('Failed to update schedule: ' . $e->getMessage(), [
                 'school_id' => $school->id,
-                'timeslot_id' => $id
+                'timeslot_id' => $id,
+                'input' => $request->all()
             ]);
             return back()->withInput()->with('error', 'Unable to update schedule at this time.');
         }
     }
+
 
     /**
      * Delete schedule
