@@ -31,8 +31,7 @@ class EnrollmentRequestController extends Controller
         $admin = Auth::guard('admin')->user();
 
         $baseQuery = EnrollmentRequest::where('school_id', $school->id)
-            ->with(['learner', 'course', 'package', 'approvedBy', 'branchRelation'])
-            ->orderBy('created_at', 'desc');
+            ->with(['learner', 'course', 'package', 'approvedBy', 'branchRelation']);
 
         $admin->scopeToBranch($baseQuery);
 
@@ -55,6 +54,80 @@ class EnrollmentRequestController extends Controller
             });
         }
 
+        $allowedSorts = [
+            'priority',
+            'newest',
+            'oldest',
+            'withdrawal_first',
+            'learner_az',
+            'learner_za',
+            'status_az',
+            'status_za',
+        ];
+
+        $currentSort = $request->input('sort', 'priority');
+        if (!in_array($currentSort, $allowedSorts, true)) {
+            $currentSort = 'priority';
+        }
+
+        $learnerNameSubquery = Student::select('name')
+            ->whereColumn('students.id', 'enrollment_requests.learner_id')
+            ->limit(1);
+
+        switch ($currentSort) {
+            case 'priority':
+                // Default triage order:
+                // 1) Pending approvals (no withdrawal request)
+                // 2) Withdrawal requests
+                // 3) Remaining statuses
+                $baseQuery->orderByRaw("CASE
+                    WHEN status = 'pending' AND (cancellation_requested = 0 OR cancellation_requested IS NULL) THEN 0
+                    WHEN cancellation_requested = 1 THEN 1
+                    WHEN status = 'approved' THEN 2
+                    WHEN status = 'revision_required' THEN 3
+                    WHEN status = 'completed' THEN 4
+                    WHEN status = 'rejected' THEN 5
+                    WHEN status = 'cancelled' THEN 6
+                    ELSE 7
+                END")
+                ->orderBy('created_at', 'desc');
+                break;
+
+            case 'oldest':
+                $baseQuery->orderBy('created_at', 'asc');
+                break;
+
+            case 'withdrawal_first':
+                $baseQuery->orderBy('cancellation_requested', 'desc')
+                    ->orderBy('created_at', 'desc');
+                break;
+
+            case 'learner_az':
+                $baseQuery->orderBy($learnerNameSubquery, 'asc')
+                    ->orderBy('created_at', 'desc');
+                break;
+
+            case 'learner_za':
+                $baseQuery->orderBy($learnerNameSubquery, 'desc')
+                    ->orderBy('created_at', 'desc');
+                break;
+
+            case 'status_az':
+                $baseQuery->orderBy('status', 'asc')
+                    ->orderBy('created_at', 'desc');
+                break;
+
+            case 'status_za':
+                $baseQuery->orderBy('status', 'desc')
+                    ->orderBy('created_at', 'desc');
+                break;
+
+            case 'newest':
+            default:
+                $baseQuery->orderBy('created_at', 'desc');
+                break;
+        }
+
         $allRequests = $baseQuery->paginate(20)->withQueryString();
 
         $branches = Branch::where('school_id', $school->id)->where('is_active', true)->orderBy('name')->get();
@@ -71,7 +144,8 @@ class EnrollmentRequestController extends Controller
             'cancelledRequestsCount',
             'rejectedRequestsCount',
             'admin',
-            'branches'
+            'branches',
+            'currentSort',
         ), ['isAjax' => $request->ajax()]));
     }
 
@@ -513,7 +587,24 @@ class EnrollmentRequestController extends Controller
         DB::beginTransaction();
         try {
             $wasApproved = $enrollmentRequest->status === 'approved';
-            $enrollmentRequest->cancel($validated['remarks'] ?? null);
+            $finalRemarks = $validated['remarks'] ?? null;
+
+            if ($enrollmentRequest->status === 'pending' && $enrollmentRequest->cancellation_requested) {
+                $guestReason = trim((string) $enrollmentRequest->cancellation_reason);
+                $finalRemarks = $finalRemarks ?: 'Cancelled upon guest withdrawal request.';
+
+                if ($guestReason !== '') {
+                    $finalRemarks .= ' Guest reason: ' . $guestReason;
+                }
+            }
+
+            $enrollmentRequest->cancel($finalRemarks);
+
+            if ($enrollmentRequest->cancellation_requested) {
+                $enrollmentRequest->update([
+                    'cancellation_requested' => false,
+                ]);
+            }
 
             // Unlock student from course if they had an active enrollment
             if ($wasApproved && $enrollmentRequest->student) {
@@ -523,8 +614,21 @@ class EnrollmentRequestController extends Controller
             // Notify student about cancellation
             if ($enrollmentRequest->student) {
                 try {
-                    $reason = $validated['remarks'] ? " Reason: {$validated['remarks']}" : '';
+                    $isGuest = $enrollmentRequest->student->isGuest();
+                    $reason = $finalRemarks ? " Reason: {$finalRemarks}" : '';
                     $notificationMessage = "Your enrollment for {$enrollmentRequest->course->title} has been cancelled.{$reason}";
+
+                    $inAppActionUrl = $isGuest
+                        ? "/{$school->slug}/guest/enrollment-requests"
+                        : "/{$school->slug}/student";
+
+                    $emailActionRoute = $isGuest
+                        ? 'schools.guest.enrollmentRequests'
+                        : 'schools.student.dashboard';
+
+                    $emailActionLabel = $isGuest
+                        ? 'View Requests'
+                        : 'View Dashboard';
 
                     $this->sendInAppTransitionNotification(
                         'enrollment_cancelled',
@@ -533,7 +637,7 @@ class EnrollmentRequestController extends Controller
                         'Enrollment Cancelled',
                         $notificationMessage,
                         'warning',
-                        "/{$school->slug}/student"
+                        $inAppActionUrl
                     );
 
                     $this->sendLifecycleTransitionEmail(
@@ -542,13 +646,15 @@ class EnrollmentRequestController extends Controller
                         $school,
                         'Enrollment Cancelled',
                         $notificationMessage,
-                        'schools.student.dashboard',
-                        'View Dashboard'
+                        $emailActionRoute,
+                        $emailActionLabel
                     );
                 } catch (\Exception $e) {
                     Log::warning('Failed to send cancellation notification: ' . $e->getMessage());
                 }
             }
+
+            DB::commit();
 
             if ($request->ajax()) {
                 return response()->json([

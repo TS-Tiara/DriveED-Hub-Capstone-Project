@@ -19,7 +19,8 @@ return [
     ],
 
     'resend' => [
-        'key' => env('RESEND_KEY'),
+        // Support both legacy and current env variable names.
+        'key' => env('RESEND_KEY', env('RESEND_API_KEY')),
     ],
 
     'ses' => [
