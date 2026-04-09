@@ -100,6 +100,32 @@
         transform: translateY(-2px);
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     }
+
+    .requests-table tbody tr.has-cancellation-request {
+        background: #f8fafc;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    }
+
+    .requests-table tbody tr.has-cancellation-request:hover {
+        transform: none;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .requests-table tbody tr.has-cancellation-request td {
+        color: #6b7280;
+    }
+
+    .requests-table tbody tr.has-cancellation-request .learner-info strong,
+    .requests-table tbody tr.has-cancellation-request .course-name {
+        color: #4b5563;
+    }
+
+    .requests-table tbody tr.has-cancellation-request .learner-email,
+    .requests-table tbody tr.has-cancellation-request .course-type,
+    .requests-table tbody tr.has-cancellation-request .date-text,
+    .requests-table tbody tr.has-cancellation-request .date-text small {
+        color: #9ca3af;
+    }
     
     .requests-table tbody td {
         padding: 18px 15px;
@@ -301,6 +327,11 @@
         background: #ef4444;
         color: white;
     }
+
+    .btn-cancel-request {
+        background: #b91c1c;
+        color: white;
+    }
     
     .btn-view {
         background: #3b82f6;
@@ -338,6 +369,37 @@
     .status-muted {
         color: #9ca3af;
         font-size: 0.9rem;
+    }
+
+    .cancellation-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .cancellation-pill {
+        display: inline-flex;
+        align-items: center;
+        width: fit-content;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+    }
+
+    .cancellation-pill-requested {
+        background: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #fecaca;
+    }
+
+    .cancellation-reason {
+        font-size: 0.76rem;
+        color: #6b7280;
+        line-height: 1.35;
+        max-width: 240px;
     }
 
     .mobile-learner-name {
@@ -637,6 +699,28 @@
         box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         border-left: 4px solid {{ $primaryColor }};
     }
+
+    .mobile-card.has-cancellation-request {
+        background: #f8fafc;
+        border-left-color: #9ca3af;
+    }
+
+    .mobile-card.has-cancellation-request .mobile-learner-name,
+    .mobile-card.has-cancellation-request .mobile-card-value {
+        color: #4b5563 !important;
+    }
+
+    .mobile-card.has-cancellation-request .mobile-learner-email,
+    .mobile-card.has-cancellation-request .mobile-card-label {
+        color: #9ca3af;
+    }
+
+    .mobile-cancellation-reason {
+        margin-top: 8px;
+        font-size: 0.78rem;
+        color: #6b7280;
+        line-height: 1.35;
+    }
     
     .mobile-card-header {
         display: flex;
@@ -893,25 +977,6 @@
 </style>
 
 <div class="enrollment-requests-container">
-    <!-- Session Alerts -->
-    @if(session('success'))
-        <div class="alert alert-success" style="padding: 15px; background: #dcfce7; color: #166534; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #22c55e;">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <svg class="icon-24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                <span>{{ session('success') }}</span>
-            </div>
-        </div>
-    @endif
-
-    @if(session('error'))
-        <div class="alert alert-error" style="padding: 15px; background: #fee2e2; color: #991b1b; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #ef4444;">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <svg class="icon-24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                <span>{{ session('error') }}</span>
-            </div>
-        </div>
-    @endif
-
     <!-- Page Header -->
     <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
         <div>
@@ -955,7 +1020,7 @@
 
     @if($branches->count() > 0 && !$admin->isBranchSecretary())
     <div class="mb-3 branch-filter-wrap">
-        <select id="branchFilter" class="form-select branch-filter-select" onchange="window.location.href = '{{ school_route('admin.enrollments.index') }}?branch=' + encodeURIComponent(this.value) + '&status={{ request('status', 'all') }}'">
+        <select id="branchFilter" class="form-select branch-filter-select" onchange="window.location.href = '{{ school_route('admin.enrollments.index') }}?branch=' + encodeURIComponent(this.value) + '&status={{ request('status', 'all') }}&sort={{ $currentSort ?? request('sort', 'priority') }}'">
             <option value="">All Branches</option>
             @foreach($branches as $branch)
                 <option value="{{ $branch->name }}" {{ request('branch') === $branch->name ? 'selected' : '' }}>{{ $branch->name }}</option>
@@ -965,9 +1030,8 @@
     @endif
 
 
-    
     <div class="stats-grid">
-        <div class="stat-card info {{ request('status', 'all') === 'all' ? 'active' : '' }}" onclick="window.location.href='{{ school_route('admin.enrollments.index', ['status' => 'all', 'branch' => request('branch')]) }}'">
+        <div class="stat-card info {{ request('status', 'all') === 'all' ? 'active' : '' }}" onclick="window.location.href='{{ school_route('admin.enrollments.index', ['status' => 'all', 'branch' => request('branch'), 'sort' => ($currentSort ?? request('sort', 'priority'))]) }}'">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -982,7 +1046,7 @@
                 </div>
             </div>
         </div>
-        <div class="stat-card pending {{ request('status') === 'pending' ? 'active' : '' }}" onclick="window.location.href='{{ school_route('admin.enrollments.index', ['status' => 'pending', 'branch' => request('branch')]) }}'">
+        <div class="stat-card pending {{ request('status') === 'pending' ? 'active' : '' }}" onclick="window.location.href='{{ school_route('admin.enrollments.index', ['status' => 'pending', 'branch' => request('branch'), 'sort' => ($currentSort ?? request('sort', 'priority'))]) }}'">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -997,7 +1061,7 @@
                 </div>
             </div>
         </div>
-        <div class="stat-card growth {{ request('status') === 'approved' ? 'active' : '' }}" onclick="window.location.href='{{ school_route('admin.enrollments.index', ['status' => 'approved', 'branch' => request('branch')]) }}'">
+        <div class="stat-card growth {{ request('status') === 'approved' ? 'active' : '' }}" onclick="window.location.href='{{ school_route('admin.enrollments.index', ['status' => 'approved', 'branch' => request('branch'), 'sort' => ($currentSort ?? request('sort', 'priority'))]) }}'">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -1012,7 +1076,7 @@
                 </div>
             </div>
         </div>
-        <div class="stat-card danger {{ request('status') === 'rejected' ? 'active' : '' }}" onclick="window.location.href='{{ school_route('admin.enrollments.index', ['status' => 'rejected', 'branch' => request('branch')]) }}'">
+        <div class="stat-card danger {{ request('status') === 'rejected' ? 'active' : '' }}" onclick="window.location.href='{{ school_route('admin.enrollments.index', ['status' => 'rejected', 'branch' => request('branch'), 'sort' => ($currentSort ?? request('sort', 'priority'))]) }}'">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -1028,6 +1092,19 @@
             </div>
         </div>
     </div>
+
+    <div class="mb-3 branch-filter-wrap">
+        <select id="sortFilter" class="form-select branch-filter-select" onchange="window.location.href = '{{ school_route('admin.enrollments.index') }}?status={{ request('status', 'all') }}&branch={{ urlencode((string) request('branch', '')) }}&sort=' + encodeURIComponent(this.value)">
+            <option value="priority" {{ ($currentSort ?? request('sort', 'priority')) === 'priority' ? 'selected' : '' }}>Sort: Priority (Approvals -> Withdrawals)</option>
+            <option value="withdrawal_first" {{ ($currentSort ?? request('sort', 'priority')) === 'withdrawal_first' ? 'selected' : '' }}>Sort: Withdrawal Requested First</option>
+            <option value="newest" {{ ($currentSort ?? request('sort', 'priority')) === 'newest' ? 'selected' : '' }}>Sort: Newest First</option>
+            <option value="oldest" {{ ($currentSort ?? request('sort', 'priority')) === 'oldest' ? 'selected' : '' }}>Sort: Oldest First</option>
+            <option value="learner_az" {{ ($currentSort ?? request('sort', 'priority')) === 'learner_az' ? 'selected' : '' }}>Sort: Learner A-Z</option>
+            <option value="learner_za" {{ ($currentSort ?? request('sort', 'priority')) === 'learner_za' ? 'selected' : '' }}>Sort: Learner Z-A</option>
+            <option value="status_az" {{ ($currentSort ?? request('sort', 'priority')) === 'status_az' ? 'selected' : '' }}>Sort: Status A-Z</option>
+            <option value="status_za" {{ ($currentSort ?? request('sort', 'priority')) === 'status_za' ? 'selected' : '' }}>Sort: Status Z-A</option>
+        </select>
+    </div>
     
     
     @if($allRequests->count() > 0)
@@ -1041,6 +1118,7 @@
                     <th>Branch</th>
                     <th>Fee</th>
                     <th>Status</th>
+                    <th>Cancellation Request</th>
                     <th>Payment</th>
                     <th>Date</th>
                     <th>Actions</th>
@@ -1054,7 +1132,7 @@
                             $displayFee = (float) ($request->package->price ?? ($request->course->price ?? 0));
                         }
                     @endphp
-                    <tr data-status="{{ $request->status }}" data-request-id="{{ $request->id }}" data-branch="{{ $request->branchRelation?->name ?? '' }}">
+                    <tr class="{{ $request->cancellation_requested ? 'has-cancellation-request' : '' }}" data-status="{{ $request->status }}" data-request-id="{{ $request->id }}" data-branch="{{ $request->branchRelation?->name ?? '' }}">
                         <td>
                             <div class="learner-info">
                                 <strong>{{ $request->learner->name }}</strong>
@@ -1083,12 +1161,19 @@
                                 <span class="status-badge status-{{ $request->status }}">
                                     {{ ucfirst($request->status) }}
                                 </span>
-                                @if($request->cancellation_requested)
-                                    <span class="badge bg-danger animate-pulse" style="font-size: 0.7rem; padding: 4px 8px;" title="Reason: {{ $request->cancellation_reason }}">
-                                        <i class="fas fa-exclamation-circle me-1"></i> CANCEL REQUESTED
-                                    </span>
-                                @endif
                             </div>
+                        </td>
+                        <td>
+                            @if($request->cancellation_requested)
+                                <div class="cancellation-cell">
+                                    <span class="cancellation-pill cancellation-pill-requested">Requested</span>
+                                    <span class="cancellation-reason" title="{{ $request->cancellation_reason }}">
+                                        {{ \Illuminate\Support\Str::limit($request->cancellation_reason, 90) }}
+                                    </span>
+                                </div>
+                            @else
+                                <span class="status-muted">No request</span>
+                            @endif
                         </td>
                         <td>
                             @if($request->payment_status === 'pending' && empty($request->payment_proof_path) && (str_contains(strtolower($request->remarks ?? ''), 'reject') || $request->payments()->where('status', 'rejected')->exists()))
@@ -1109,7 +1194,18 @@
                         </td>
                         <td>
                             <div class="action-buttons">
-                                @if(in_array($request->status, ['pending', 'revision_required']))
+                                @if($request->status === 'pending' && $request->cancellation_requested)
+                                    <form id="withdrawForm{{ $request->id }}" method="POST" action="{{ route('schools.admin.enrollments.cancel', ['school' => $school, 'enrollmentRequest' => $request->id]) }}" style="display:inline;">
+                                        @csrf
+                                        <input type="hidden" name="remarks" value="Cancelled upon guest withdrawal request.">
+                                        <button type="button" class="btn btn-cancel-request" title="Mark this enrollment as withdrawn" onclick="approveWithdrawal('withdrawForm{{ $request->id }}')">
+                                            Approve Withdrawal
+                                        </button>
+                                    </form>
+                                    <button type="button" class="btn btn-view" onclick="openVerificationModal({{ $request->id }})" title="Review request details">
+                                        Review Details
+                                    </button>
+                                @elseif(in_array($request->status, ['pending', 'revision_required']))
                                     <button type="button" class="btn btn-view" onclick="openVerificationModal({{ $request->id }})" title="Review Enrollment Verification">
                                         Review & Verify Documents
                                     </button>
@@ -1146,7 +1242,7 @@
                 $displayFee = (float) ($request->package->price ?? ($request->course->price ?? 0));
             }
         @endphp
-        <div class="mobile-card" data-status="{{ $request->status }}" data-request-id="{{ $request->id }}" data-branch="{{ $request->branchRelation?->name ?? '' }}">
+        <div class="mobile-card {{ $request->cancellation_requested ? 'has-cancellation-request' : '' }}" data-status="{{ $request->status }}" data-request-id="{{ $request->id }}" data-branch="{{ $request->branchRelation?->name ?? '' }}">
             <div class="mobile-card-header">
                 <div>
                     <strong class="mobile-learner-name" style="color: #374151;">
@@ -1156,9 +1252,6 @@
                 </div>
                 <div class="d-flex align-items-center gap-2">
                     <span class="status-badge status-{{ $request->status }}">{{ ucfirst($request->status) }}</span>
-                    @if($request->cancellation_requested)
-                        <span class="badge bg-danger" style="font-size: 0.6rem;">CANCEL REQ</span>
-                    @endif
                 </div>
             </div>
             <div class="mobile-card-row">
@@ -1172,6 +1265,16 @@
             <div class="mobile-card-row">
                 <span class="mobile-card-label">Fee</span>
                 <span class="mobile-card-value">&#8369;{{ number_format($displayFee, 2) }}</span>
+            </div>
+            <div class="mobile-card-row">
+                <span class="mobile-card-label">Cancellation</span>
+                <span class="mobile-card-value">
+                    @if($request->cancellation_requested)
+                        <span class="cancellation-pill cancellation-pill-requested">Requested</span>
+                    @else
+                        <span class="status-muted">No request</span>
+                    @endif
+                </span>
             </div>
             <div class="mobile-card-row">
                 <span class="mobile-card-label">Payment</span>
@@ -1189,9 +1292,23 @@
                 <span class="mobile-card-label">Date</span>
                 <span class="mobile-card-value">{{ $request->created_at->timezone($school->timezone ?? 'Asia/Manila')->format('M d, Y h:i A') }}</span>
             </div>
+            @if($request->cancellation_requested)
+                <div class="mobile-cancellation-reason" title="{{ $request->cancellation_reason }}">
+                    <strong>Reason:</strong> {{ \Illuminate\Support\Str::limit($request->cancellation_reason, 100) }}
+                </div>
+            @endif
             @if(in_array($request->status, ['pending', 'approved']))
                 <div class="mobile-card-actions">
-                    @if(in_array($request->status, ['pending', 'revision_required']))
+                    @if($request->status === 'pending' && $request->cancellation_requested)
+                        <form id="mobileWithdrawForm{{ $request->id }}" method="POST" action="{{ route('schools.admin.enrollments.cancel', ['school' => $school, 'enrollmentRequest' => $request->id]) }}" style="display:inline;">
+                            @csrf
+                            <input type="hidden" name="remarks" value="Cancelled upon guest withdrawal request.">
+                            <button type="button" class="btn btn-cancel-request" onclick="approveWithdrawal('mobileWithdrawForm{{ $request->id }}')">Approve Withdrawal</button>
+                        </form>
+                        <button type="button" class="btn btn-view" onclick="openVerificationModal({{ $request->id }})">
+                            Review Details
+                        </button>
+                    @elseif(in_array($request->status, ['pending', 'revision_required']))
                         <button type="button" class="btn btn-view" onclick="openVerificationModal({{ $request->id }})">
                             Review & Verify Documents
                         </button>
@@ -1359,6 +1476,27 @@ function approveRequest(requestId) {
             var form = document.getElementById('approveForm' + requestId) || document.getElementById('mobileApproveForm' + requestId);
             if (form) form.submit();
         }
+    });
+}
+
+function approveWithdrawal(formId) {
+    const submitForm = function() {
+        const form = document.getElementById(formId);
+        if (form) {
+            form.submit();
+        }
+    };
+
+    if (typeof showConfirm !== 'function') {
+        return;
+    }
+
+    showConfirm({
+        type: 'warning',
+        title: 'Approve Withdrawal',
+        message: 'This will withdraw and cancel the enrollment request. Continue?',
+        confirmText: 'Approve Withdrawal',
+        onConfirm: submitForm,
     });
 }
 
