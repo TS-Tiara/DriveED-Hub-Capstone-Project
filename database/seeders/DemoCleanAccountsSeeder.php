@@ -248,30 +248,53 @@ class DemoCleanAccountsSeeder extends Seeder
 
     private function resolveDemoCourseIds(int $schoolId): array
     {
-        $tdcCourseId = DB::table('courses')
+        $courses = DB::table('courses')
             ->where('school_id', '=', $schoolId)
-            ->where(function ($query): void {
-                $query->whereRaw('LOWER(type) = ?', ['theoretical'])
-                    ->orWhere('course_type', '=', 'theoretical');
-            })
             ->orderBy('id')
-            ->value('id');
+            ->get(['id', 'title', 'type', 'course_type']);
 
-        $pdcCourseId = DB::table('courses')
-            ->where('school_id', '=', $schoolId)
-            ->where(function ($query): void {
-                $query->whereRaw('LOWER(type) = ?', ['practical'])
-                    ->orWhere('course_type', '=', 'practical');
-            })
-            ->orderBy('id')
-            ->value('id');
-
-        if (!$tdcCourseId && !$pdcCourseId) {
-            $fallback = DB::table('courses')->where('school_id', '=', $schoolId)->orderBy('id')->value('id');
-            return ['tdc' => $fallback, 'pdc' => null];
+        if ($courses->isEmpty()) {
+            return ['tdc' => null, 'pdc' => null];
         }
 
-        return ['tdc' => $tdcCourseId, 'pdc' => $pdcCourseId];
+        $tdcCourse = $courses->first(function ($course) {
+            $type = strtolower(trim((string) ($course->type ?? '')));
+            $courseType = strtolower(trim((string) ($course->course_type ?? '')));
+            $title = strtolower(trim((string) ($course->title ?? '')));
+
+            return $type === 'theoretical'
+                || $courseType === 'theoretical'
+                || str_contains($title, 'tdc')
+                || str_contains($title, 'theoretical');
+        });
+
+        $pdcCourse = $courses->first(function ($course) {
+            $type = strtolower(trim((string) ($course->type ?? '')));
+            $courseType = strtolower(trim((string) ($course->course_type ?? '')));
+            $title = strtolower(trim((string) ($course->title ?? '')));
+
+            return $type === 'practical'
+                || $courseType === 'practical'
+                || str_contains($title, 'pdc')
+                || str_contains($title, 'practical');
+        });
+
+        if (!$pdcCourse && $tdcCourse) {
+            $pdcCourse = $courses->first(fn ($course) => (int) $course->id !== (int) $tdcCourse->id);
+        }
+
+        if (!$tdcCourse && $pdcCourse) {
+            $tdcCourse = $courses->first(fn ($course) => (int) $course->id !== (int) $pdcCourse->id) ?? $pdcCourse;
+        }
+
+        if (!$tdcCourse && !$pdcCourse) {
+            $tdcCourse = $courses->first();
+        }
+
+        return [
+            'tdc' => $tdcCourse?->id,
+            'pdc' => $pdcCourse?->id,
+        ];
     }
 
     private function ensureDemoSchedules(
@@ -284,13 +307,18 @@ class DemoCleanAccountsSeeder extends Seeder
         $requiredSlots = 15;
         $marker = "demo-clean-slot:{$slug}";
 
-        $existing = DB::table('time_slots')
+        $existingSlotIds = DB::table('time_slots')
             ->where('school_id', '=', $schoolId)
             ->where('branch_id', '=', $branchId)
             ->where('notes', 'like', "{$marker}%")
-            ->orderBy('date')
-            ->orderBy('start_time')
-            ->get(['id', 'course_id', 'date', 'start_time', 'end_time']);
+            ->pluck('id');
+
+        if ($existingSlotIds->isNotEmpty()) {
+            // Remove old demo slots and related demo slot bookings so regenerated schedules stay consistent.
+            DB::table('bookings')->whereIn('time_slot_id', $existingSlotIds->all())->delete();
+            DB::table('schedule_instructors')->whereIn('time_slot_id', $existingSlotIds->all())->delete();
+            DB::table('time_slots')->whereIn('id', $existingSlotIds->all())->delete();
+        }
 
         $timeWindows = [
             ['08:00:00', '09:00:00'],
@@ -302,7 +330,7 @@ class DemoCleanAccountsSeeder extends Seeder
 
         $now = now();
 
-        for ($i = $existing->count(); $i < $requiredSlots; $i++) {
+        for ($i = 0; $i < $requiredSlots; $i++) {
             $courseId = $this->resolveDemoCourseId($i, $tdcCourseId, $pdcCourseId);
             if (!$courseId) {
                 continue;
