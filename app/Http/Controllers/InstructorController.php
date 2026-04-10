@@ -115,10 +115,22 @@ class InstructorController extends Controller
         $instructor = Auth::guard('instructor')->user();
 
         $bookingStudentIds = Booking::where('school_id', '=', $school->id, 'and')
-            ->where('instructor_id', '=', $instructor->id, 'and')
-            ->whereIn('status', ['scheduled', 'completed'], 'and', false)
+            ->whereNotNull('student_id')
+            ->whereIn('status', [
+                Booking::STATUS_SCHEDULED,
+                Booking::STATUS_DONE,
+                Booking::STATUS_COMPLETED,
+                Booking::STATUS_NO_SHOW,
+            ], 'and', false)
+            ->where(function ($query) use ($instructor) {
+                $query->where('instructor_id', '=', $instructor->id, 'and')
+                    ->orWhereHas('timeSlot.instructors', function ($slotQuery) use ($instructor) {
+                        $slotQuery->where('instructors.id', '=', $instructor->id, 'and');
+                    });
+            })
             ->distinct()
-            ->pluck('student_id', null)
+            ->pluck('student_id')
+            ->map(fn($id) => (int) $id)
             ->toArray();
 
         // Include students from session completions (e.g., theoretical training logs)
@@ -130,15 +142,55 @@ class InstructorController extends Controller
             ->get()
             ->map(fn($session) => $session->enrollment->learner_id ?? null)
             ->filter()
+            ->map(fn($id) => (int) $id)
             ->unique()
             ->toArray();
 
-        $assignedStudentIds = array_unique(array_merge($bookingStudentIds, $sessionStudentIds));
+        $assignedStudentIds = array_values(array_unique(array_merge($bookingStudentIds, $sessionStudentIds)));
+
+        // Normalize roster IDs to existing students in this school to prevent card/list mismatches.
+        $rosterStudentIds = [];
+        if (!empty($assignedStudentIds)) {
+            $rosterStudentIds = Student::where('school_id', '=', $school->id, 'and')
+                ->whereIn('id', $assignedStudentIds, 'and', false)
+                ->pluck('id')
+                ->map(fn($id) => (int) $id)
+                ->toArray();
+        }
+
         $instructorId = $instructor->id;
+        $activeCardFilter = $request->get('card', 'all');
+
+        if (!in_array($activeCardFilter, ['all', 'active', 'inactive', 'upcoming'], true)) {
+            $activeCardFilter = 'all';
+        }
+
+        $upcomingStudentIds = [];
+        if (!empty($rosterStudentIds)) {
+            $upcomingStudentIds = Booking::where('school_id', '=', $school->id, 'and')
+            ->whereIn('student_id', $rosterStudentIds, 'and', false)
+                ->where('status', '=', Booking::STATUS_SCHEDULED, 'and')
+                ->where('scheduled_at', '>', now(), 'and')
+                ->where(function ($bookingQuery) use ($instructorId) {
+                    $bookingQuery->where('instructor_id', '=', $instructorId, 'and')
+                        ->orWhereHas('timeSlot.instructors', function ($slotQuery) use ($instructorId) {
+                            $slotQuery->where('instructors.id', '=', $instructorId, 'and');
+                        });
+                })
+                ->distinct()
+                ->pluck('student_id')
+                ->map(fn($id) => (int) $id)
+                ->toArray();
+        }
 
         // AUD-003 Fix: Only get students assigned to this instructor to prevent PII leakage
-        $query = Student::where('school_id', '=', $school->id)
-            ->whereIn('id', $assignedStudentIds, 'and', false);
+        $query = Student::where('school_id', '=', $school->id);
+
+        if (empty($rosterStudentIds)) {
+            $query->whereRaw('1 = 0');
+        } else {
+            $query->whereIn('id', $rosterStudentIds, 'and', false);
+        }
 
         // Apply Search
         if ($request->filled('search')) {
@@ -149,40 +201,67 @@ class InstructorController extends Controller
             });
         }
 
-        // Apply Status Filter
-        if ($request->filled('status') && $request->status !== 'all') {
-            $query->where('status', '=', $request->status);
-        }
-
-        // Apply Assignment Filter
-        if ($request->filled('assignment') && $request->assignment === 'unassigned') {
-            $query->whereRaw('1 = 0');
-        }
-
-        $sort = $request->get('sort', 'name-asc');
-        switch ($sort) {
-            case 'name-asc':
-                $query->orderBy('name', 'asc');
+        // Apply card-based filters
+        switch ($activeCardFilter) {
+            case 'active':
+                $query->where('status', '=', 'active', 'and');
                 break;
-            case 'name-desc':
-                $query->orderBy('name', 'desc');
+            case 'inactive':
+                $query->where('status', '=', 'inactive', 'and');
                 break;
+            case 'upcoming':
+                if (empty($upcomingStudentIds)) {
+                    $query->whereRaw('1 = 0');
+                } else {
+                    $query->whereIn('id', $upcomingStudentIds, 'and', false);
+                }
+                break;
+            case 'all':
             default:
-                $query->orderBy('name', 'asc');
                 break;
         }
+
+        $query->orderBy('name', 'asc');
 
         $students = $query->with(['progresses.course', 'bookings' => function ($query) use ($instructorId) {
-            $query->where('instructor_id', '=', $instructorId, 'and')
+            $query->where(function ($bookingQuery) use ($instructorId) {
+                $bookingQuery->where('instructor_id', '=', $instructorId, 'and')
+                    ->orWhereHas('timeSlot.instructors', function ($slotQuery) use ($instructorId) {
+                        $slotQuery->where('instructors.id', '=', $instructorId, 'and');
+                    });
+            })
+                ->whereIn('status', [
+                    Booking::STATUS_SCHEDULED,
+                    Booking::STATUS_DONE,
+                    Booking::STATUS_COMPLETED,
+                    Booking::STATUS_NO_SHOW,
+                ], 'and', false)
                 ->orderBy('scheduled_at', 'desc');
         }])
             ->paginate(12)
             ->withQueryString();
 
+        $statsTotalStudents = count($rosterStudentIds);
+        $statsActiveStudents = 0;
+        $statsInactiveStudents = 0;
+        $statsUpcomingStudents = count($upcomingStudentIds);
+
+        if (!empty($rosterStudentIds)) {
+            $statsActiveStudents = Student::where('school_id', '=', $school->id, 'and')
+                ->whereIn('id', $rosterStudentIds, 'and', false)
+                ->where('status', '=', 'active', 'and')
+                ->count('*');
+
+            $statsInactiveStudents = Student::where('school_id', '=', $school->id, 'and')
+                ->whereIn('id', $rosterStudentIds, 'and', false)
+                ->where('status', '=', 'inactive', 'and')
+                ->count('*');
+        }
+
         // Add computed data for each student
-        $students->getCollection()->each(function ($student) use ($assignedStudentIds) {
+        $students->getCollection()->each(function ($student) use ($rosterStudentIds) {
             // Mark if student is assigned to this instructor
-            $student->is_assigned = in_array($student->id, $assignedStudentIds, true);
+            $student->is_assigned = in_array($student->id, $rosterStudentIds, true);
 
             // Get most recent booking with this instructor
             $recentBooking = $student->bookings->first();
@@ -192,9 +271,12 @@ class InstructorController extends Controller
             // Calculate overall progress
             $student->overall_progress = $student->progresses->avg('completion_percent') ?? 0;
             $student->avg_progress = $student->overall_progress; // Alias for consistency
-            $student->total_sessions = $student->bookings->where('status', 'completed')->count();
+            $student->total_sessions = $student->bookings->whereIn('status', [
+                Booking::STATUS_DONE,
+                Booking::STATUS_COMPLETED,
+            ])->count();
             $student->sessions_count = $student->total_sessions; // Alias for consistency
-            $student->next_session = $student->bookings->where('status', 'scheduled')
+            $student->next_session = $student->bookings->where('status', Booking::STATUS_SCHEDULED)
                 ->where('scheduled_at', '>', now())
                 ->first();
         });
@@ -204,6 +286,11 @@ class InstructorController extends Controller
             'school' => $school,
             'students' => $students,
             'instructor' => $instructor,
+            'statsTotalStudents' => $statsTotalStudents,
+            'statsActiveStudents' => $statsActiveStudents,
+            'statsInactiveStudents' => $statsInactiveStudents,
+            'statsUpcomingStudents' => $statsUpcomingStudents,
+            'activeCardFilter' => $activeCardFilter,
         ]);
     }
 
@@ -212,9 +299,14 @@ class InstructorController extends Controller
         $instructor = Auth::guard('instructor')->user();
 
         // AUD-003 Fix: IDOR Guard - Verify student is assigned to this instructor
-        $isAssigned = Booking::where('instructor_id', '=', $instructor->id, 'and')
+        $isAssigned = Booking::where('school_id', '=', $school->id, 'and')
             ->where('student_id', '=', $id, 'and')
-            ->where('school_id', '=', $school->id, 'and')
+            ->where(function ($query) use ($instructor) {
+                $query->where('instructor_id', '=', $instructor->id, 'and')
+                    ->orWhereHas('timeSlot.instructors', function ($slotQuery) use ($instructor) {
+                        $slotQuery->where('instructors.id', '=', $instructor->id, 'and');
+                    });
+            })
             ->exists();
         
         abort_unless($isAssigned, 403, 'Unauthorized access: You are not assigned to this student.');
@@ -243,14 +335,24 @@ class InstructorController extends Controller
         });
 
         // Calculate counts for the view
-        $myCompletedCount = Booking::where('instructor_id', '=', $instructor->id, 'and')
-            ->where('student_id', '=', $student->id, 'and')
-            ->where('status', '=', 'completed', 'and')
+        $myCompletedCount = Booking::where('student_id', '=', $student->id, 'and')
+            ->where(function ($query) use ($instructor) {
+                $query->where('instructor_id', '=', $instructor->id, 'and')
+                    ->orWhereHas('timeSlot.instructors', function ($slotQuery) use ($instructor) {
+                        $slotQuery->where('instructors.id', '=', $instructor->id, 'and');
+                    });
+            })
+            ->whereIn('status', [Booking::STATUS_DONE, Booking::STATUS_COMPLETED], 'and', false)
             ->count('*');
 
-        $myUpcomingCount = Booking::where('instructor_id', '=', $instructor->id, 'and')
-            ->where('student_id', '=', $student->id, 'and')
-            ->where('status', '=', 'scheduled', 'and')
+        $myUpcomingCount = Booking::where('student_id', '=', $student->id, 'and')
+            ->where(function ($query) use ($instructor) {
+                $query->where('instructor_id', '=', $instructor->id, 'and')
+                    ->orWhereHas('timeSlot.instructors', function ($slotQuery) use ($instructor) {
+                        $slotQuery->where('instructors.id', '=', $instructor->id, 'and');
+                    });
+            })
+            ->where('status', '=', Booking::STATUS_SCHEDULED, 'and')
             ->count('*');
 
         return view($school->resolveView('instructor.student-detail'), [

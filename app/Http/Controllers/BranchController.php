@@ -21,6 +21,7 @@ class BranchController extends Controller
 
         $totalBranchesCount = (clone $query)->count();
         $activeBranchesCount = (clone $query)->where('is_active', true)->count();
+        $inactiveBranchesCount = (clone $query)->where('is_active', false)->count();
 
         $branches = $query->paginate(10);
 
@@ -33,7 +34,7 @@ class BranchController extends Controller
 
         $settings = $school->schoolSetting;
 
-        return view('school.admin.branches', array_merge(compact('school', 'branches', 'settings', 'totalBranchesCount', 'activeBranchesCount'), ['isAjax' => $request->ajax()]));
+        return view('school.admin.branches', array_merge(compact('school', 'branches', 'settings', 'totalBranchesCount', 'activeBranchesCount', 'inactiveBranchesCount'), ['isAjax' => $request->ajax()]));
     }
 
     /**

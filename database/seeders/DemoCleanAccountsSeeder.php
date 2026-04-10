@@ -102,9 +102,11 @@ class DemoCleanAccountsSeeder extends Seeder
                 tdcCourseId: $courseIds['tdc'],
                 pdcCourseId: $courseIds['pdc']
             );
+            $seededVerifiedSessions = $this->seedVerifiedSessionSample($school->id, $meta['domain']);
 
             $this->command->info("   -> {$enrolledCount} student account(s) enrolled to TDC/PDC for {$slug}");
             $this->command->info("   -> {$scheduledCount} student account(s) given schedules for {$slug}");
+            $this->command->info("   -> {$seededVerifiedSessions} verified session sample(s) seeded for {$slug}");
             $this->command->info("   -> " . count($instructorIds) . " instructor account(s) assigned to schedules for {$slug}");
         }
 
@@ -519,7 +521,7 @@ class DemoCleanAccountsSeeder extends Seeder
 
             if ($idx < $scheduledTarget) {
                 $slot = $this->pickSlotForCourse($timeSlots, $courseId, $idx);
-                if ($slot && $this->createStudentScheduleBooking($schoolId, $branchId, $studentId, $courseId, $package?->id, (float) ($package?->price ?? 0), $slot)) {
+                if ($slot && $this->createStudentScheduleBooking($schoolId, $branchId, $studentId, $courseId, $package?->id, (float) ($package?->price ?? 0), $slot, $enrollmentRequestId)) {
                     $scheduledCount++;
                 }
             }
@@ -550,7 +552,8 @@ class DemoCleanAccountsSeeder extends Seeder
         int $courseId,
         ?int $packageId,
         float $amount,
-        object $slot
+        object $slot,
+        int $enrollmentRequestId
     ): bool {
         $exists = DB::table('bookings')
             ->where('student_id', '=', $studentId)
@@ -575,11 +578,12 @@ class DemoCleanAccountsSeeder extends Seeder
             'student_id' => $studentId,
             'instructor_id' => $instructorId,
             'course_id' => $courseId,
+            'enrollment_request_id' => $enrollmentRequestId,
             'package_id' => $packageId,
             'time_slot_id' => $slot->id,
             'scheduled_at' => $scheduledAt,
             'booking_date' => $scheduledAt,
-            'status' => 'confirmed',
+            'status' => 'scheduled',
             'payment_status' => 'paid',
             'total_amount' => $amount,
             'created_at' => $now,
@@ -587,5 +591,109 @@ class DemoCleanAccountsSeeder extends Seeder
         ]);
 
         return true;
+    }
+
+    private function seedVerifiedSessionSample(int $schoolId, string $domain): int
+    {
+        $instructorId = Instructor::query()
+            ->where('school_id', '=', $schoolId)
+            ->where('email', '=', "instructor1@{$domain}")
+            ->value('id');
+
+        if (!$instructorId) {
+            return 0;
+        }
+
+        $sample = DB::table('bookings as b')
+            ->leftJoin('time_slots as ts', 'ts.id', '=', 'b.time_slot_id')
+            ->leftJoin('courses as c', 'c.id', '=', 'b.course_id')
+            ->where('b.school_id', '=', $schoolId)
+            ->where('b.instructor_id', '=', $instructorId)
+            ->whereNotNull('b.enrollment_request_id')
+            ->orderBy('b.id')
+            ->select([
+                'b.id as booking_id',
+                'b.course_id',
+                'b.enrollment_request_id',
+                'b.booking_date',
+                'b.scheduled_at',
+                'ts.date as slot_date',
+                'ts.start_time as slot_start',
+                'ts.end_time as slot_end',
+                'ts.session_type as slot_session_type',
+                'c.course_type',
+            ])
+            ->first();
+
+        if (!$sample) {
+            return 0;
+        }
+
+        $enrollmentId = DB::table('enrollments')
+            ->where('school_id', '=', $schoolId)
+            ->where('enrollment_request_id', '=', $sample->enrollment_request_id)
+            ->value('id');
+
+        if (!$enrollmentId) {
+            return 0;
+        }
+
+        $alreadySeeded = DB::table('session_completions')
+            ->where('school_id', '=', $schoolId)
+            ->where('instructor_id', '=', $instructorId)
+            ->where('enrollment_id', '=', $enrollmentId)
+            ->exists();
+
+        if ($alreadySeeded) {
+            return 0;
+        }
+
+        $sessionType = in_array((string) $sample->slot_session_type, ['theoretical', 'practical'], true)
+            ? (string) $sample->slot_session_type
+            : ((string) $sample->course_type === 'practical' ? 'practical' : 'theoretical');
+
+        $sessionDate = $sample->slot_date
+            ? (string) $sample->slot_date
+            : ($sample->booking_date ? date('Y-m-d', strtotime((string) $sample->booking_date)) : now()->toDateString());
+
+        $startTime = $sample->slot_start
+            ? (string) $sample->slot_start
+            : ($sample->scheduled_at ? date('H:i:s', strtotime((string) $sample->scheduled_at)) : '09:00:00');
+
+        $endTime = $sample->slot_end
+            ? (string) $sample->slot_end
+            : date('H:i:s', strtotime($startTime . ' +1 hour'));
+
+        $hours = round(max(0.5, (strtotime($endTime) - strtotime($startTime)) / 3600), 2);
+        $now = now();
+
+        DB::table('session_completions')->insert([
+            'school_id' => $schoolId,
+            'enrollment_id' => $enrollmentId,
+            'instructor_id' => $instructorId,
+            'session_type' => $sessionType,
+            'hours_completed' => $hours,
+            'session_date' => $sessionDate,
+            'session_time' => $startTime,
+            'start_time' => $startTime,
+            'end_time' => $endTime,
+            'status' => 'completed',
+            'notes' => 'Auto-seeded verified demo session for instructor portal validation.',
+            'logged_by' => $instructorId,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        DB::table('bookings')
+            ->where('id', '=', $sample->booking_id)
+            ->update([
+                'status' => 'completed',
+                'session_status' => 'completed',
+                'attendance_status' => 'attended',
+                'attendance_marked_at' => $now,
+                'updated_at' => $now,
+            ]);
+
+        return 1;
     }
 }

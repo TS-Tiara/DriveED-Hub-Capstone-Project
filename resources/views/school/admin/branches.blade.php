@@ -127,12 +127,9 @@
     
     .stat-card.active-branches { border-left-color: #10b981; }
     .stat-card.active-branches .stat-icon { background: #ecfdf5; color: #047857; }
-    
-    .stat-card.students { border-left-color: #f59e0b; }
-    .stat-card.students .stat-icon { background: #fffbeb; color: #b45309; }
 
-    .stat-card.instructors { border-left-color: #ec4899; }
-    .stat-card.instructors .stat-icon { background: #fdf2f8; color: #be185d; }
+    .stat-card.inactive-branches { border-left-color: #ef4444; }
+    .stat-card.inactive-branches .stat-icon { background: #fef2f2; color: #b91c1c; }
 
     /* Action Bar */
     .action-bar {
@@ -658,33 +655,18 @@
             </div>
         </div>
 
-        <div class="stat-card students" onclick="filterBranches('students', this)">
+        <div class="stat-card inactive-branches" onclick="filterBranches('inactive', this)">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
-                        <div class="stat-label">Students</div>
-                        <div class="stat-value">{{ $branches->sum('students_count') }}</div>
+                        <div class="stat-label">Inactive</div>
+                        <div class="stat-value">{{ $inactiveBranchesCount ?? max(0, $totalBranchesCount - $activeBranchesCount) }}</div>
                     </div>
                     <div class="stat-icon">
-                        <i class="bi bi-people"></i>
+                        <i class="bi bi-x-circle"></i>
                     </div>
                 </div>
-                <div style="font-size: 0.85rem; color: #6b7280;">Total student body</div>
-            </div>
-        </div>
-
-        <div class="stat-card instructors" onclick="filterBranches('instructors', this)">
-            <div class="stat-content">
-                <div class="stat-header">
-                    <div>
-                        <div class="stat-label">Instructors</div>
-                        <div class="stat-value">{{ $branches->sum('instructors_count') }}</div>
-                    </div>
-                    <div class="stat-icon">
-                        <i class="bi bi-person-badge"></i>
-                    </div>
-                </div>
-                <div style="font-size: 0.85rem; color: #6b7280;">Teaching staff pool</div>
+                <div style="font-size: 0.85rem; color: #6b7280;">Non-operating branches</div>
             </div>
         </div>
     </div>
@@ -952,11 +934,6 @@
                 } else {
                     row.style.display = !isActive ? '' : 'none';
                 }
-            } else if (status === 'students') {
-                // If filtering by students, just show all (or could filter by branches having > 0 students)
-                row.style.display = '';
-            } else if (status === 'instructors') {
-                row.style.display = '';
             }
         });
     }

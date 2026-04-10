@@ -2430,12 +2430,26 @@
             @endif
         }
 
+        function normalizePathFromUrl(url) {
+            if (!url) {
+                return window.location.pathname;
+            }
+
+            try {
+                return new URL(url, window.location.origin).pathname;
+            } catch (error) {
+                return String(url).split('#')[0].split('?')[0];
+            }
+        }
+
         function updateBreadcrumbs(url) {
             const container = document.getElementById('breadcrumbContent');
             if (!container) return;
 
+            const cleanPath = normalizePathFromUrl(url);
+
             // Extract path segments after school slug
-            const parts = url.replace(/^\//, '').split('/');
+            const parts = cleanPath.replace(/^\//, '').split('/');
             // Pattern: school-slug/role/page or school-slug/role/page/subpage
             if (parts.length < 2) {
                 container.innerHTML = '<span class="breadcrumb-current">Dashboard</span>';
@@ -2447,10 +2461,34 @@
             const dashUrl = getDashboardUrl();
             const roleLabel = getRoleLabel();
 
+            const escapeBreadcrumbLabel = function (value) {
+                return String(value || '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            };
+
             // Check if this is a dashboard page
             const isDashboard = rolePath.match(/^(admin|instructor|student|guest)(\/dashboard)?$/);
             if (isDashboard) {
                 container.innerHTML = '<span class="breadcrumb-current">' + roleLabel + ' Dashboard</span>';
+                return;
+            }
+
+            // Special case: instructor student profile should show student name, not numeric ID.
+            const instructorStudentDetailMatch = rolePath.match(/^instructor\/students\/(\d+)$/);
+            if (instructorStudentDetailMatch) {
+                const studentHeading = document.querySelector('#mainContent .student-main-info h1');
+                const studentName = studentHeading ? studentHeading.textContent.trim() : '';
+
+                let html = '<a href="#" onclick="loadContent(\'' + dashUrl + '\'); return false;">Dashboard</a>';
+                html += '<span class="breadcrumb-separator">›</span>';
+                html += '<a href="#" onclick="loadContent(\'/' + schoolSlug + '/instructor/students\'); return false;">My Students</a>';
+                html += '<span class="breadcrumb-separator">›</span>';
+                html += '<span class="breadcrumb-current">' + escapeBreadcrumbLabel(studentName || 'Student Profile') + '</span>';
+                container.innerHTML = html;
                 return;
             }
 

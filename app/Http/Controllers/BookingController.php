@@ -27,30 +27,41 @@ class BookingController extends Controller
             abort(403);
         }
 
-        $query = Booking::where('school_id', $school->id)
+        $query = Booking::where('bookings.school_id', $school->id)
             ->with([
                 'student:id,name,email,contact,branch_id',
                 'instructor:id,name,email',
-                'course:id,title,duration_hours,price',
-                'package:id,course_id,name,price',
-                'timeSlot:id,date,start_time,end_time'
+                'course:id,title,duration_hours,price,course_type',
+                'package:id,course_id,name,price,training_hours,transmission_type',
+                'timeSlot:id,date,start_time,end_time,session_type'
             ]);
 
         // Base query for statistics cards (before status/date filters)
-        $statsQuery = Booking::where('school_id', $school->id);
+        $statsQuery = Booking::where('bookings.school_id', $school->id);
 
         // Filter by role
         if (Auth::guard('student')->check()) {
-            $query->where('student_id', Auth::guard('student')->id());
-            $statsQuery->where('student_id', Auth::guard('student')->id());
+            $query->where('bookings.student_id', Auth::guard('student')->id());
+            $statsQuery->where('bookings.student_id', Auth::guard('student')->id());
         } elseif (Auth::guard('instructor')->check()) {
-            $query->where('instructor_id', Auth::guard('instructor')->id());
-            $statsQuery->where('instructor_id', Auth::guard('instructor')->id());
+            $query->where('bookings.instructor_id', Auth::guard('instructor')->id());
+            $statsQuery->where('bookings.instructor_id', Auth::guard('instructor')->id());
         }
 
-        // Additional filters
-        if (request('status')) {
-            $query->where('status', request('status'));
+        // Additional filters (server-side so pagination and filters stay in sync)
+        $activeFilter = (string) $request->query('status', 'all');
+        if ($activeFilter !== '' && $activeFilter !== 'all') {
+            if ($activeFilter === 'flagged') {
+                $query->whereIn('bookings.status', ['cancelled', 'no_show', 'no-show']);
+            } else {
+                $query->where('bookings.status', $activeFilter);
+            }
+        }
+
+        $activeSort = (string) $request->query('sort', 'audit_priority');
+        $allowedSorts = ['audit_priority', 'session_newest', 'session_oldest', 'student_az', 'instructor_az', 'recently_updated'];
+        if (!in_array($activeSort, $allowedSorts, true)) {
+            $activeSort = 'audit_priority';
         }
 
         if (request('upcoming')) {
@@ -59,8 +70,61 @@ class BookingController extends Controller
             $query->past();
         }
 
+        $sortBySessionSchedule = in_array($activeSort, ['audit_priority', 'session_newest', 'session_oldest'], true);
+        if ($sortBySessionSchedule) {
+            $query->leftJoin('time_slots as sort_slot', 'sort_slot.id', '=', 'bookings.time_slot_id')
+                ->select('bookings.*');
+        }
+
+        $sessionDateExpr = "COALESCE(sort_slot.date, DATE(bookings.booking_date), DATE(bookings.scheduled_at))";
+        $sessionTimeExpr = "COALESCE(sort_slot.start_time, TIME(bookings.booking_date), TIME(bookings.scheduled_at))";
+
+        switch ($activeSort) {
+            case 'session_newest':
+                $query->orderByRaw("{$sessionDateExpr} DESC")
+                    ->orderByRaw("{$sessionTimeExpr} DESC")
+                    ->orderByDesc('bookings.id');
+                break;
+            case 'session_oldest':
+                $query->orderByRaw("{$sessionDateExpr} ASC")
+                    ->orderByRaw("{$sessionTimeExpr} ASC")
+                    ->orderBy('bookings.id');
+                break;
+            case 'student_az':
+                $query->orderBy(
+                    Student::select('name')
+                        ->whereColumn('students.id', 'bookings.student_id')
+                        ->limit(1)
+                )->orderByDesc('bookings.booking_date');
+                break;
+            case 'instructor_az':
+                $query->orderBy(
+                    Instructor::select('name')
+                        ->whereColumn('instructors.id', 'bookings.instructor_id')
+                        ->limit(1)
+                )->orderByDesc('bookings.booking_date');
+                break;
+            case 'recently_updated':
+                $query->orderByDesc('bookings.updated_at')->orderByDesc('bookings.id');
+                break;
+            case 'audit_priority':
+            default:
+                $query->orderByRaw("CASE
+                        WHEN bookings.status = 'done' THEN 0
+                        WHEN bookings.status = 'no-show' THEN 1
+                        WHEN bookings.status = 'no_show' THEN 1
+                        WHEN bookings.status = 'scheduled' THEN 2
+                        WHEN bookings.status = 'completed' THEN 3
+                        WHEN bookings.status = 'cancelled' THEN 4
+                        ELSE 5
+                    END ASC")
+                    ->orderByRaw("{$sessionDateExpr} DESC")
+                    ->orderByRaw("{$sessionTimeExpr} DESC")
+                    ->orderByDesc('bookings.id');
+                break;
+        }
+
         $bookings = $query
-            ->latest('booking_date')
             ->paginate(15)
             ->withQueryString();
 
@@ -89,7 +153,7 @@ class BookingController extends Controller
 
         // Only admin has bookings list view
         $view = 'admin.verify-session-completion';
-        return view($school->resolveView($view), array_merge(compact('school', 'bookings', 'stats', 'allSessionsCount', 'pendingRequestsCount', 'awaitingVerificationCount', 'verifiedSessionsCount', 'flaggedIssuesCount'), ['isAjax' => $request->ajax()]));
+        return view($school->resolveView($view), array_merge(compact('school', 'bookings', 'stats', 'allSessionsCount', 'pendingRequestsCount', 'awaitingVerificationCount', 'verifiedSessionsCount', 'flaggedIssuesCount', 'activeFilter', 'activeSort'), ['isAjax' => $request->ajax()]));
     }
 
     /**
@@ -577,6 +641,18 @@ class BookingController extends Controller
             'cancellation_reason' => 'nullable|string|max:500',
         ]);
 
+        // Admin verify workflow policy: instructor owns in-progress statuses.
+        if ($isAdmin && in_array($validated['status'], ['scheduled', 'done', 'no-show'], true)) {
+            $message = 'Admin can only set Completed or Cancelled from verification. Done/No-show must come from instructor updates.';
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $message,
+                ], 422);
+            }
+            return back()->with('error', $message);
+        }
+
         // Security: Only Admins can set status to 'completed' (The Handshake)
         if ($validated['status'] === 'completed' && !$isAdmin) {
             return response()->json([
@@ -595,6 +671,46 @@ class BookingController extends Controller
                     ], 422);
                 }
                 return back()->with('error', 'Cannot complete booking: This student has no linked enrollment request.');
+            }
+
+            if ($booking->status !== 'completed' && $booking->status !== 'done') {
+                $message = 'Cannot verify this lesson yet. Instructor must mark it as done first.';
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $message,
+                    ], 422);
+                }
+                return back()->with('error', $message);
+            }
+
+            if ($booking->status !== 'completed' && ($booking->attendance_status ?? '') !== 'attended') {
+                $message = 'Cannot verify this lesson yet. Attendance must be marked as attended by the instructor first.';
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $message,
+                    ], 422);
+                }
+                return back()->with('error', $message);
+            }
+        }
+
+        // Keep booking-level and lesson-level status fields in sync for reporting and guards.
+        if ($validated['status'] === 'done') {
+            $validated['session_status'] = 'done';
+        } elseif ($validated['status'] === 'completed') {
+            $validated['session_status'] = 'completed';
+            if (!$booking->attendance_marked_at) {
+                $validated['attendance_marked_at'] = now();
+            }
+        } elseif ($validated['status'] === 'no-show') {
+            $validated['session_status'] = 'no-show';
+            if (!$booking->attendance_status) {
+                $validated['attendance_status'] = 'absent';
+            }
+            if (!$booking->attendance_marked_at) {
+                $validated['attendance_marked_at'] = now();
             }
         }
 
@@ -663,6 +779,33 @@ class BookingController extends Controller
             $sessionType = ($course && $course->course_type === 'practical') ? 'practical' : 'theoretical';
         }
 
+        $sessionDate = $timeSlot ? $timeSlot->date : ($booking->scheduled_at ? $booking->scheduled_at->toDateString() : now()->toDateString());
+        $sessionTime = $timeSlot ? $timeSlot->start_time : ($booking->scheduled_at ? $booking->scheduled_at->toTimeString() : now()->toTimeString());
+        $startTime = $timeSlot ? $timeSlot->start_time : null;
+        $endTime = $timeSlot ? $timeSlot->end_time : null;
+
+        $existingCompletion = \App\Models\SessionCompletion::query()
+            ->where('school_id', $school->id)
+            ->where('enrollment_id', $booking->enrollment_request_id)
+            ->where('instructor_id', $booking->instructor_id)
+            ->where('session_type', $sessionType)
+            ->whereDate('session_date', $sessionDate)
+            ->where(function ($query) use ($startTime, $endTime, $sessionTime) {
+                if ($startTime && $endTime) {
+                    $query->where('start_time', $startTime)
+                        ->where('end_time', $endTime);
+                    return;
+                }
+
+                $query->where('session_time', $sessionTime);
+            })
+            ->exists();
+
+        if ($existingCompletion) {
+            Log::info("Session auto-log skipped: matching completion already exists for Booking #{$booking->id}");
+            return;
+        }
+
         // Calculate hours from time slot if possible, otherwise fallback to course default
         $hours = 1.0;
         if ($timeSlot && $timeSlot->start_time && $timeSlot->end_time) {
@@ -677,10 +820,10 @@ class BookingController extends Controller
             'instructor_id' => $booking->instructor_id,
             'session_type' => $sessionType,
             'hours_completed' => $hours,
-            'session_date' => $timeSlot ? $timeSlot->date : ($booking->scheduled_at ? $booking->scheduled_at->toDateString() : now()->toDateString()),
-            'session_time' => $timeSlot ? $timeSlot->start_time : ($booking->scheduled_at ? $booking->scheduled_at->toTimeString() : now()->toTimeString()),
-            'start_time' => $timeSlot ? $timeSlot->start_time : null,
-            'end_time' => $timeSlot ? $timeSlot->end_time : null,
+            'session_date' => $sessionDate,
+            'session_time' => $sessionTime,
+            'start_time' => $startTime,
+            'end_time' => $endTime,
             'status' => 'completed',
             'notes' => $booking->instructor_feedback ?? 'Auto-generated from verified schedule.',
             'logged_by' => Auth::id() ?? $booking->instructor_id,
