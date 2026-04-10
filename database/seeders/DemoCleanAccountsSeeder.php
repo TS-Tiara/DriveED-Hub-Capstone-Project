@@ -76,6 +76,10 @@ class DemoCleanAccountsSeeder extends Seeder
                     sequence: $i
                 );
             }
+
+            // Safety pass: ensure every guest in this demo school is clean, including legacy guest seeds.
+            $resetGuests = $this->purgeAllGuestAccountsForSchool($school->id);
+            $this->command->info("   -> {$resetGuests} guest account(s) reset to no-enrollment state for {$slug}");
         }
 
         $this->command->info('   ✓ Clean demo accounts ready: guest1-15, student1-15, instructor1-15 per demo school');
@@ -112,7 +116,12 @@ class DemoCleanAccountsSeeder extends Seeder
         $account->save();
 
         $this->purgeLearnerData($account->id);
-        $account->unlockFromCourse();
+        DB::table('students')
+            ->where('id', '=', $account->id)
+            ->update([
+                'active_enrollment_id' => null,
+                'is_course_locked' => false,
+            ]);
     }
 
     private function seedInstructorAccount(
@@ -166,5 +175,28 @@ class DemoCleanAccountsSeeder extends Seeder
         DB::table('session_completions')->where('instructor_id', '=', $instructorId)->delete();
         DB::table('session_completions')->where('logged_by', '=', $instructorId)->delete();
         DB::table('bookings')->where('instructor_id', '=', $instructorId)->update(['instructor_id' => null]);
+    }
+
+    private function purgeAllGuestAccountsForSchool(int $schoolId): int
+    {
+        $guestIds = Student::query()
+            ->where('school_id', '=', $schoolId)
+            ->where('role', '=', 'guest')
+            ->pluck('id');
+
+        foreach ($guestIds as $guestId) {
+            $this->purgeLearnerData((int) $guestId);
+        }
+
+        if ($guestIds->isNotEmpty()) {
+            DB::table('students')
+                ->whereIn('id', $guestIds->all())
+                ->update([
+                    'active_enrollment_id' => null,
+                    'is_course_locked' => false,
+                ]);
+        }
+
+        return $guestIds->count();
     }
 }
