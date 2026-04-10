@@ -107,6 +107,16 @@ class StudentController extends Controller
             }
 
             $enrollmentRequest = EnrollmentRequest::create($data);
+
+            // PDC-only: if a draft license exists, submit it for admin review once a practical request is created.
+            if ($course->isPractical() && $student->hasStoredLicense() && !$student->hasVerifiedLicense()) {
+                $student->update([
+                    'student_license_status' => 'pending',
+                    'student_license_verified_at' => null,
+                    'student_license_verified_by' => null,
+                    'student_license_rejection_reason' => null,
+                ]);
+            }
         } catch (\Exception $e) {
             Log::error('Failed to create student enrollment request', [
                 'error' => $e->getMessage(),
@@ -375,12 +385,22 @@ class StudentController extends Controller
             $uploadedFile = $request->file('student_license');
             $path = $uploadedFile->store('student-licenses', 'local');
 
+            $hasOpenPracticalEnrollment = EnrollmentRequest::where('learner_id', $student->id)
+                ->where('school_id', $school->id)
+                ->whereHas('course', function ($query) {
+                    $query->where('course_type', 'practical');
+                })
+                ->whereIn('status', ['pending', 'revision_required'])
+                ->exists();
+
+            $licenseStatus = $hasOpenPracticalEnrollment ? 'pending' : 'none';
+
             $student->update([
                 'student_license_path' => $path,
                 'student_license_data' => null,
                 'student_license_mime_type' => $uploadedFile->getMimeType(),
                 'student_license_filename' => $uploadedFile->getClientOriginalName(),
-                'student_license_status' => 'pending',
+                'student_license_status' => $licenseStatus,
                 'student_license_verified_at' => null,
                 'student_license_verified_by' => null,
                 'student_license_rejection_reason' => null,
@@ -392,20 +412,24 @@ class StudentController extends Controller
                 'path' => $path,
             ]);
 
-            // Notify admins about pending license verification
-            $admins = Admin::where('school_id', $school->id)->where('is_active', true)->get();
-            foreach ($admins as $admin) {
-                Notification::send(
-                    $admin,
-                    'license_uploaded',
-                    'License Pending Review',
-                    "{$student->name} has uploaded a student driver's license for verification.",
-                    'license',
-                    "/{$school->slug}/admin/enrollments"
-                );
+            // Notify admins only when there is an actionable practical enrollment request.
+            if ($hasOpenPracticalEnrollment) {
+                $admins = Admin::where('school_id', $school->id)->where('is_active', true)->get();
+                foreach ($admins as $admin) {
+                    Notification::send(
+                        $admin,
+                        'license_uploaded',
+                        'License Pending Review',
+                        "{$student->name} has uploaded a student driver's license for verification.",
+                        'license',
+                        "/{$school->slug}/admin/enrollments"
+                    );
+                }
+
+                return redirect()->back()->with('success', 'License uploaded successfully! It was submitted for admin review.');
             }
 
-            return redirect()->back()->with('success', 'License uploaded successfully! It will be reviewed by an admin.');
+            return redirect()->back()->with('success', 'License saved. It will be submitted for admin review once you request PDC enrollment.');
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;
         } catch (\Exception $e) {

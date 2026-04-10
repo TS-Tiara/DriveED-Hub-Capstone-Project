@@ -1015,6 +1015,25 @@
                     100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
                 }
             </style>
+        @elseif($guest->hasDraftLicense())
+            <div class="license-status license-draft" style="background: #e0e7ff; color: #3730a3; border-left: 4px solid #6366f1;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-28 icon-shrink">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                </svg>
+                <div>
+                    <strong>License Saved as Draft</strong>
+                    <div class="license-status-note">Your license is successfully uploaded and safely saved as a draft. It will automatically be submitted for admin review once you request a Practical Driving Course.</div>
+                </div>
+            </div>
+            <div class="license-upload-form">
+                <form method="POST" action="{{ route('schools.guest.uploadLicense', $school) }}" enctype="multipart/form-data">
+                    @csrf
+                    <div class="file-input-wrapper">
+                        <input type="file" name="student_license" accept=".pdf,.jpg,.jpeg,.png" required>
+                        <button type="submit" class="btn-upload">Re-upload License (Optional)</button>
+                    </div>
+                </form>
+            </div>
         @elseif($guest->isLicenseRejected())
             <div class="license-status license-rejected">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-28 icon-shrink">

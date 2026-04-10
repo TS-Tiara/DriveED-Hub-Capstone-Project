@@ -21,7 +21,8 @@
     $isPracticalCourse = (($course->course_type ?? null) === 'practical');
     $studentLicenseStatus = $student?->student_license_status ?? 'none';
     $studentLicenseRejectionReason = $student?->student_license_rejection_reason;
-    $hasSubmittedStudentLicense = in_array($studentLicenseStatus, ['pending', 'verified'], true);
+    $hasDraftStudentLicense = $student?->hasDraftLicense() ?? false;
+    $hasSubmittedStudentLicense = $student?->hasSubmittedLicense() ?? false;
     $mustUploadLicenseForPractical = $isPracticalCourse && !$hasSubmittedStudentLicense;
 
     if ($student) {
@@ -427,6 +428,11 @@
                         @elseif($studentLicenseStatus === 'pending')
                             <div class="status-alert status-pending">
                                 License submitted and pending review. You can proceed with enrollment.
+                            </div>
+                        @elseif($hasDraftStudentLicense)
+                            <div class="status-alert status-pending" style="text-align: left;">
+                                <strong>License saved.</strong>
+                                <div class="mt-2">Your license is stored as draft and will be submitted for review when you submit this practical enrollment request.</div>
                             </div>
                         @else
                             <div class="status-alert status-pending" style="text-align: left;">

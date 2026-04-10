@@ -256,7 +256,27 @@ class Student extends Authenticatable
      */
     public function hasNoLicense(): bool
     {
-        return $this->student_license_status === 'none' || $this->student_license_status === null;
+        return ($this->student_license_status === 'none' || $this->student_license_status === null)
+            && !$this->hasStoredLicense();
+    }
+
+    /**
+     * Check if any license file is stored for the student.
+     */
+    public function hasStoredLicense(): bool
+    {
+        return !empty($this->student_license_path) || !empty($this->student_license_data);
+    }
+
+    /**
+     * Check if a license was uploaded early and saved as draft.
+     */
+    public function hasDraftLicense(): bool
+    {
+        return $this->hasStoredLicense()
+            && !$this->isLicensePending()
+            && !$this->hasVerifiedLicense()
+            && !$this->isLicenseRejected();
     }
 
     /**
@@ -264,7 +284,7 @@ class Student extends Authenticatable
      */
     public function hasSubmittedLicense(): bool
     {
-        return $this->isLicensePending() || $this->hasVerifiedLicense();
+        return $this->isLicensePending() || $this->hasVerifiedLicense() || $this->hasDraftLicense();
     }
 
     /**
