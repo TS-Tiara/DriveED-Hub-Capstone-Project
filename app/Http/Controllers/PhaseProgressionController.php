@@ -22,24 +22,26 @@ class PhaseProgressionController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        $query = PhaseProgression::with(['enrollment.student', 'enrollment.course', 'reviewedBy'])
+        $baseQuery = PhaseProgression::with(['enrollment.student', 'enrollment.course', 'reviewedBy'])
             ->forSchool($school->id)
             ->when($request->status, function ($query, $status) {
             $query->where('status', $status);
-        })
-            ->when($request->from_phase, function ($query, $phase) {
-            $query->where('from_phase', $phase);
         })
             ->latest('requested_at');
 
         // Branch secretary scope: filter by their branch
         if ($admin->isBranchSecretary() && $admin->branch_id) {
-            $query->whereHas('enrollment', function ($q) use ($admin) {
+            $baseQuery->whereHas('enrollment', function ($q) use ($admin) {
                 $q->where('branch_id', $admin->branch_id);
             });
         }
 
-        $progressions = $query->paginate(20);
+        $progressions = (clone $baseQuery)
+            ->when($request->from_phase, function ($query, $phase) {
+                $query->where('from_phase', $phase);
+            })
+            ->paginate(20)
+            ->withQueryString();
 
         // Pending count should also be scoped for branch secretaries
         $pendingQuery = PhaseProgression::forSchool($school->id)->pending();
@@ -50,9 +52,16 @@ class PhaseProgressionController extends Controller
         }
         $pendingCount = $pendingQuery->count();
 
+        $phaseStats = [
+            'total_records' => (clone $baseQuery)->count(),
+            'theoretical_records' => (clone $baseQuery)->where('from_phase', 'theoretical')->count(),
+            'practical_records' => (clone $baseQuery)->where('from_phase', 'practical')->count(),
+            'approved_records' => (clone $baseQuery)->where('status', 'approved')->count(),
+        ];
+
         $isAjax = request()->ajax() || request()->header('X-Requested-With') === 'XMLHttpRequest';
 
-        return view($school->resolveView('admin.phase_progressions.index'), compact('school', 'progressions', 'pendingCount', 'isAjax'));
+        return view($school->resolveView('admin.phase_progressions.index'), compact('school', 'progressions', 'pendingCount', 'phaseStats', 'isAjax'));
     }
 
     /**

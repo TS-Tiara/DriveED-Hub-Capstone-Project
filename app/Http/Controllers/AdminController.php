@@ -221,7 +221,7 @@ class AdminController extends Controller
     // ==========================
     // USER MANAGEMENT
     // ==========================
-    public function userManagement(School $school)
+    public function userManagement(Request $request, School $school)
     {
         try {
             $admin = Auth::guard('admin')->user();
@@ -241,43 +241,95 @@ class AdminController extends Controller
             $activeInstructors = (clone $instructorQuery)->where('status', 'active')->count();
             $inactiveInstructors = $totalInstructors - $activeInstructors;
 
-            $studentItems = $studentQuery
-                ->select('id', 'branch_id', 'name', 'email', 'contact', 'address', 'status')
-                ->orderBy('name')
-                ->get()
-                ->map(function ($student) {
-                return (object)[
-                'id' => $student->id,
-                'name' => $student->name,
-                'email' => $student->email,
-                'contact' => $student->contact,
-                'status' => $student->status,
-                'role' => 'student',
-                'address' => $student->address,
-                'license_number' => null,
-                'availability' => null,
-                'branch_id' => $student->branch_id,
-                ];
-            });
+            $activeSearch = trim((string) $request->query('search', ''));
+            $activeStatusFilter = strtolower(trim((string) $request->query('status', 'all')));
+            $activeRoleFilter = strtolower(trim((string) $request->query('role', 'all')));
+            $branchFilterRaw = trim((string) $request->query('branch', 'all'));
 
-            $instructorItems = $instructorQuery
-                ->select('id', 'branch_id', 'name', 'email', 'contact', 'license_number', 'status', 'availability')
-                ->orderBy('name')
-                ->get()
-                ->map(function ($instructor) {
-                return (object)[
-                'id' => $instructor->id,
-                'name' => $instructor->name,
-                'email' => $instructor->email,
-                'contact' => $instructor->contact,
-                'status' => $instructor->status,
-                'role' => 'instructor',
-                'address' => null,
-                'license_number' => $instructor->license_number,
-                'availability' => $instructor->availability,
-                'branch_id' => $instructor->branch_id,
-                ];
-            });
+            if (!in_array($activeStatusFilter, ['all', 'active', 'inactive'], true)) {
+                $activeStatusFilter = 'all';
+            }
+
+            if (!in_array($activeRoleFilter, ['all', 'student', 'instructor'], true)) {
+                $activeRoleFilter = 'all';
+            }
+
+            $activeBranchFilter = 'all';
+            if ($branchFilterRaw === 'unassigned') {
+                $activeBranchFilter = 'unassigned';
+            } elseif ($branchFilterRaw !== '' && $branchFilterRaw !== 'all' && ctype_digit($branchFilterRaw)) {
+                $activeBranchFilter = (string) ((int) $branchFilterRaw);
+            }
+
+            $applySharedFilters = function ($query) use ($activeSearch, $activeStatusFilter, $activeBranchFilter): void {
+                if ($activeSearch !== '') {
+                    $query->where(function ($q) use ($activeSearch): void {
+                        $q->where('name', 'like', '%' . $activeSearch . '%')
+                            ->orWhere('email', 'like', '%' . $activeSearch . '%')
+                            ->orWhere('contact', 'like', '%' . $activeSearch . '%');
+                    });
+                }
+
+                if ($activeStatusFilter !== 'all') {
+                    $query->where('status', '=', $activeStatusFilter);
+                }
+
+                if ($activeBranchFilter === 'unassigned') {
+                    $query->whereNull('branch_id');
+                } elseif ($activeBranchFilter !== 'all') {
+                    $query->where('branch_id', '=', (int) $activeBranchFilter);
+                }
+            };
+
+            $filteredStudentQuery = clone $studentQuery;
+            $filteredInstructorQuery = clone $instructorQuery;
+
+            $applySharedFilters($filteredStudentQuery);
+            $applySharedFilters($filteredInstructorQuery);
+
+            $studentItems = collect();
+            if ($activeRoleFilter !== 'instructor') {
+                $studentItems = $filteredStudentQuery
+                    ->select('id', 'branch_id', 'name', 'email', 'contact', 'address', 'status')
+                    ->orderBy('name')
+                    ->get()
+                    ->map(function ($student) {
+                        return (object) [
+                            'id' => $student->id,
+                            'name' => $student->name,
+                            'email' => $student->email,
+                            'contact' => $student->contact,
+                            'status' => $student->status,
+                            'role' => 'student',
+                            'address' => $student->address,
+                            'license_number' => null,
+                            'availability' => null,
+                            'branch_id' => $student->branch_id,
+                        ];
+                    });
+            }
+
+            $instructorItems = collect();
+            if ($activeRoleFilter !== 'student') {
+                $instructorItems = $filteredInstructorQuery
+                    ->select('id', 'branch_id', 'name', 'email', 'contact', 'license_number', 'status', 'availability')
+                    ->orderBy('name')
+                    ->get()
+                    ->map(function ($instructor) {
+                        return (object) [
+                            'id' => $instructor->id,
+                            'name' => $instructor->name,
+                            'email' => $instructor->email,
+                            'contact' => $instructor->contact,
+                            'status' => $instructor->status,
+                            'role' => 'instructor',
+                            'address' => null,
+                            'license_number' => $instructor->license_number,
+                            'availability' => $instructor->availability,
+                            'branch_id' => $instructor->branch_id,
+                        ];
+                    });
+            }
 
             $allUsers = $studentItems
                 ->concat($instructorItems)
@@ -285,7 +337,9 @@ class AdminController extends Controller
                 ->values();
 
             $perPage = 20;
-            $currentPage = LengthAwarePaginator::resolveCurrentPage('page');
+            $resolvedPage = LengthAwarePaginator::resolveCurrentPage('page');
+            $lastPage = max(1, (int) ceil(max(1, $allUsers->count()) / $perPage));
+            $currentPage = min(max(1, $resolvedPage), $lastPage);
             $currentItems = $allUsers->forPage($currentPage, $perPage)->values();
 
             $users = new LengthAwarePaginator(
@@ -319,6 +373,10 @@ class AdminController extends Controller
                 'totalInstructors' => $totalInstructors,
                 'activeInstructors' => $activeInstructors,
                 'inactiveInstructors' => $inactiveInstructors,
+                'activeSearch' => $activeSearch,
+                'activeStatusFilter' => $activeStatusFilter,
+                'activeRoleFilter' => $activeRoleFilter,
+                'activeBranchFilter' => $activeBranchFilter,
             ]);
         }
         catch (\Exception $e) {

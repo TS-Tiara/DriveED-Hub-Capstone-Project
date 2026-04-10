@@ -650,13 +650,18 @@ class InstructorTimeSlotController extends Controller
             // [NEW LOGIC] Map session_status to booking main status
             if (isset($updateData['session_status']) && $updateData['session_status'] === 'done') {
                 $updateData['status'] = Booking::STATUS_DONE;
+            } elseif (isset($updateData['session_status']) && $updateData['session_status'] === 'no-show') {
+                $updateData['status'] = Booking::STATUS_NO_SHOW;
             }
 
             $booking->update($updateData);
 
-            $message = ($updateData['status'] ?? null) === Booking::STATUS_DONE 
-                ? 'Lesson marked as done and submitted for admin verification.' 
-                : 'Lesson details updated successfully';
+            $message = 'Lesson details updated successfully';
+            if (($updateData['status'] ?? null) === Booking::STATUS_DONE) {
+                $message = 'Lesson marked as done and submitted for admin verification.';
+            } elseif (($updateData['status'] ?? null) === Booking::STATUS_NO_SHOW) {
+                $message = 'Lesson marked as no-show.';
+            }
 
             return response()->json([
                 'success' => true,

@@ -83,6 +83,11 @@
         background: #6b728015;
         color: #6b7280;
     }
+
+    .stat-card.filter-selected {
+        box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.18), 0 8px 20px rgba(0, 0, 0, 0.14);
+        transform: translateY(-1px);
+    }
     
     /* Action Buttons */
     .action-bar {
@@ -850,7 +855,7 @@
     
     <!-- Statistics Cards -->
     <div class="stats-grid">
-        <div class="stat-card total" onclick="filterUsers('all', this)">
+        <div class="stat-card total {{ (($activeRoleFilter ?? 'all') === 'all' && ($activeStatusFilter ?? 'all') === 'all') ? 'filter-selected' : '' }}" onclick="applyQuickFilter('all')">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -867,7 +872,7 @@
             </div>
         </div>
         
-        <div class="stat-card active" onclick="filterUsers('active', this)">
+        <div class="stat-card active {{ (($activeRoleFilter ?? 'all') === 'all' && ($activeStatusFilter ?? 'all') === 'active') ? 'filter-selected' : '' }}" onclick="applyQuickFilter('active')">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -884,7 +889,7 @@
             </div>
         </div>
         
-        <div class="stat-card inactive" onclick="filterUsers('inactive', this)">
+        <div class="stat-card inactive {{ (($activeRoleFilter ?? 'all') === 'all' && ($activeStatusFilter ?? 'all') === 'inactive') ? 'filter-selected' : '' }}" onclick="applyQuickFilter('inactive')">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -901,7 +906,7 @@
             </div>
         </div>
         
-        <div class="stat-card students" onclick="filterUsers('students', this)">
+        <div class="stat-card students {{ (($activeRoleFilter ?? 'all') === 'student' && ($activeStatusFilter ?? 'all') === 'all') ? 'filter-selected' : '' }}" onclick="applyQuickFilter('students')">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -918,7 +923,7 @@
             </div>
         </div>
         
-        <div class="stat-card instructors" onclick="filterUsers('instructors', this)">
+        <div class="stat-card instructors {{ (($activeRoleFilter ?? 'all') === 'instructor' && ($activeStatusFilter ?? 'all') === 'all') ? 'filter-selected' : '' }}" onclick="applyQuickFilter('instructors')">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -943,16 +948,16 @@
         <div class="action-bar">
             <div class="search-box">
                 <label for="userSearch" class="control-label">Search Users</label>
-                <input type="text" id="userSearch" placeholder="Search users by name, email, or role..." onkeyup="filterTable('userSearch', 'usersTable')">
+                <input type="text" id="userSearch" value="{{ $activeSearch ?? '' }}" placeholder="Search users by name, email, or role...">
             </div>
             <div class="action-controls">
                 @if(isset($branches) && $branches->count() > 0)
                 <label for="branchFilter" class="control-label">Branch Filter</label>
-                <select id="branchFilter" onchange="filterByBranch()" style="padding: 10px 14px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 0.9rem; background: white; cursor: pointer;">
-                    <option value="">All Branches</option>
-                    <option value="unassigned">Unassigned</option>
+                <select id="branchFilter" onchange="applyBranchFilter()" style="padding: 10px 14px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 0.9rem; background: white; cursor: pointer;">
+                    <option value="all" {{ ($activeBranchFilter ?? 'all') === 'all' ? 'selected' : '' }}>All Branches</option>
+                    <option value="unassigned" {{ ($activeBranchFilter ?? 'all') === 'unassigned' ? 'selected' : '' }}>Unassigned</option>
                     @foreach($branches as $branch)
-                        <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                        <option value="{{ $branch->id }}" {{ (string) ($activeBranchFilter ?? 'all') === (string) $branch->id ? 'selected' : '' }}>{{ $branch->name }}</option>
                     @endforeach
                 </select>
                 @endif
@@ -1358,9 +1363,15 @@
 </div>
 
 <script>
-    const schoolSlug = '{{ $school->slug }}';
-    const studentBaseUrl = '/{{ $school->slug }}/admin/students';
-    const instructorBaseUrl = '/{{ $school->slug }}/admin/instructors';
+    window.schoolSlug = '{{ $school->slug }}';
+    window.studentBaseUrl = '/{{ $school->slug }}/admin/students';
+    window.instructorBaseUrl = '/{{ $school->slug }}/admin/instructors';
+    window.__userMgmtInitialFilterState = {
+        search: @json($activeSearch ?? ''),
+        status: @json($activeStatusFilter ?? 'all'),
+        role: @json($activeRoleFilter ?? 'all'),
+        branch: @json((string) ($activeBranchFilter ?? 'all'))
+    };
 
     function hardenUserManagementActionForms() {
         const actionForms = document.querySelectorAll('form[data-no-ajax][action*="/toggle-status"], form[data-no-ajax][action*="/availability"]');
@@ -1392,6 +1403,11 @@
     // Initialize user management page
     function initializeUserManagementPage() {
         hardenUserManagementActionForms();
+        bindUserSearchEvents();
+        const searchInput = document.getElementById('userSearch');
+        if (searchInput) {
+            applyLocalUserTableSearch(searchInput.value || '');
+        }
         console.log('User Management page initialized');
     }
 
@@ -1401,65 +1417,148 @@
         initializeUserManagementPage();
     }
 
-    // Filter Users by Type (via stat card clicks)
-    function filterUsers(type, card) {
-        const rows = document.querySelectorAll('#usersTable tbody tr');
-
-        rows.forEach(row => {
-            const role = row.getAttribute('data-role');
-            const status = row.getAttribute('data-status');
-            let show = true;
-
-            if (type === 'students') show = (role === 'student');
-            else if (type === 'instructors') show = (role === 'instructor');
-            else if (type === 'active') show = (status === 'active');
-            else if (type === 'inactive') show = (status === 'inactive');
-            // 'all' -> show everything
-
-            row.style.display = show ? '' : 'none';
-        });
+    function getUserFilterState() {
+        const params = new URLSearchParams(window.location.search);
+        const initialUserFilterState = window.__userMgmtInitialFilterState || {};
+        const searchInput = document.getElementById('userSearch');
+        const liveSearch = searchInput ? searchInput.value : null;
+        return {
+            search: (liveSearch !== null ? liveSearch : (params.get('search') || initialUserFilterState.search || '')),
+            status: params.get('status') || initialUserFilterState.status || 'all',
+            role: params.get('role') || initialUserFilterState.role || 'all',
+            branch: params.get('branch') || initialUserFilterState.branch || 'all'
+        };
     }
 
-    function filterByBranch() {
-        const val = document.getElementById('branchFilter').value;
-        const rows = document.querySelectorAll('#usersTable tbody tr');
-        rows.forEach(row => {
-            const branch = row.getAttribute('data-branch');
-            if (!val) {
-                row.style.display = '';
-            } else if (val === 'unassigned') {
-                row.style.display = (branch === 'unassigned' || !branch) ? '' : 'none';
-            } else {
-                row.style.display = (branch === val) ? '' : 'none';
+    function buildUserManagementUrl(filters, resetPage = true) {
+        const merged = Object.assign({}, getUserFilterState(), filters || {});
+        const url = new URL(window.location.pathname, window.location.origin);
+
+        const search = (merged.search || '').trim();
+        if (search) {
+            url.searchParams.set('search', search);
+        }
+
+        if (merged.status && merged.status !== 'all') {
+            url.searchParams.set('status', merged.status);
+        }
+
+        if (merged.role && merged.role !== 'all') {
+            url.searchParams.set('role', merged.role);
+        }
+
+        if (merged.branch && merged.branch !== 'all') {
+            url.searchParams.set('branch', merged.branch);
+        }
+
+        if (!resetPage) {
+            const currentPage = new URLSearchParams(window.location.search).get('page');
+            if (currentPage) {
+                url.searchParams.set('page', currentPage);
+            }
+        }
+
+        return url;
+    }
+
+    function navigateWithUserFilters(nextFilters, resetPage = true) {
+        const targetUrl = buildUserManagementUrl(nextFilters, resetPage);
+        const target = targetUrl.pathname + targetUrl.search;
+        if (typeof loadContent === 'function') {
+            loadContent(target);
+            return;
+        }
+
+        window.location.href = target;
+    }
+
+    function applyQuickFilter(type) {
+        let role = 'all';
+        let status = 'all';
+
+        if (type === 'students') {
+            role = 'student';
+        } else if (type === 'instructors') {
+            role = 'instructor';
+        } else if (type === 'active') {
+            status = 'active';
+        } else if (type === 'inactive') {
+            status = 'inactive';
+        }
+
+        navigateWithUserFilters({ role, status }, true);
+    }
+
+    function applyBranchFilter() {
+        const select = document.getElementById('branchFilter');
+        if (!select) {
+            return;
+        }
+
+        navigateWithUserFilters({ branch: select.value || 'all' }, true);
+    }
+
+    function bindUserSearchEvents() {
+        const searchInput = document.getElementById('userSearch');
+        if (!searchInput || searchInput.dataset.searchBound === '1') {
+            return;
+        }
+
+        searchInput.dataset.searchBound = '1';
+        searchInput.addEventListener('keydown', handleUserSearchKeydown);
+        searchInput.addEventListener('input', handleUserSearchInput);
+    }
+
+    function handleUserSearchKeydown(event) {
+        if (event.key !== 'Enter') {
+            return;
+        }
+
+        event.preventDefault();
+        applyLocalUserTableSearch(event.target.value || '');
+    }
+
+    function handleUserSearchInput(event) {
+        applyLocalUserTableSearch(event.target.value || '');
+    }
+
+    function applyLocalUserTableSearch(rawValue) {
+        const table = document.getElementById('usersTable');
+        if (!table) {
+            return;
+        }
+
+        const tbody = table.querySelector('tbody');
+        if (!tbody) {
+            return;
+        }
+
+        const query = (rawValue || '').trim().toLowerCase();
+        const rows = Array.from(tbody.querySelectorAll('tr')).filter(function(row) {
+            return row.id !== 'userSearchNoResultRow';
+        });
+        const columnCount = table.querySelectorAll('thead th').length || 7;
+
+        let visibleCount = 0;
+        rows.forEach(function(row) {
+            const rowText = (row.textContent || '').toLowerCase();
+            const visible = query === '' || rowText.indexOf(query) !== -1;
+            row.style.display = visible ? '' : 'none';
+            if (visible) {
+                visibleCount++;
             }
         });
-    }
-    
-    // Table Search/Filter
-    function filterTable(searchId, tableId) {
-        const input = document.getElementById(searchId);
-        const filter = input.value.toUpperCase();
-        const table = document.getElementById(tableId);
-        if (!table) return;
-        const tr = table.getElementsByTagName('tr');
-        
-        for (let i = 1; i < tr.length; i++) {
-            const row = tr[i];
-            const cells = row.getElementsByTagName('td');
-            let found = false;
-            
-            for (let j = 0; j < cells.length; j++) {
-                const cell = cells[j];
-                if (cell) {
-                    const textValue = cell.textContent || cell.innerText;
-                    if (textValue.toUpperCase().indexOf(filter) > -1) {
-                        found = true;
-                        break;
-                    }
-                }
+
+        let noResultRow = document.getElementById('userSearchNoResultRow');
+        if (visibleCount === 0 && rows.length > 0) {
+            if (!noResultRow) {
+                noResultRow = document.createElement('tr');
+                noResultRow.id = 'userSearchNoResultRow';
+                noResultRow.innerHTML = '<td colspan="' + columnCount + '" style="text-align:center;padding:18px;color:#6b7280;">No users match your search on this page.</td>';
+                tbody.appendChild(noResultRow);
             }
-            
-            row.style.display = found ? '' : 'none';
+        } else if (noResultRow) {
+            noResultRow.remove();
         }
     }
 
@@ -1500,7 +1599,7 @@
     
     function editStudent(id, name, email, contact, address, branchId) {
         const form = document.getElementById('editStudentForm');
-        form.action = `${studentBaseUrl}/${id}`;
+        form.action = `${window.studentBaseUrl}/${id}`;
         document.getElementById('edit_student_name').value = name || '';
         document.getElementById('edit_student_email').value = email || '';
         document.getElementById('edit_student_contact').value = contact || '';
@@ -1574,10 +1673,10 @@
                 // Determine correct route (Relative paths for Hostinger/CORS safety)
                 let url = '';
                 if (type === 'availability') {
-                    url = '/' + schoolSlug + '/admin/instructors/' + id + '/availability';
+                    url = '/' + window.schoolSlug + '/admin/instructors/' + id + '/availability';
                 } else {
                     const basePart = (role === 'instructor') ? 'instructors' : 'students';
-                    url = '/' + schoolSlug + '/admin/' + basePart + '/' + id + '/toggle-status';
+                    url = '/' + window.schoolSlug + '/admin/' + basePart + '/' + id + '/toggle-status';
                 }
 
                 fetch(url, {
@@ -1609,7 +1708,7 @@
                         try {
                             // CLEAN REFRESH: Manually trigger a fresh GET request to reload the table
                             if (typeof loadContent === 'function') {
-                                loadContent(window.location.pathname);
+                                loadContent(window.location.pathname + window.location.search);
                             } else {
                                 window.location.reload();
                             }
@@ -1646,7 +1745,7 @@
     
     function editInstructor(id, name, email, contact, license, branchId) {
         const form = document.getElementById('editInstructorForm');
-        form.action = `${instructorBaseUrl}/${id}`;
+        form.action = `${window.instructorBaseUrl}/${id}`;
         document.getElementById('edit_instructor_name').value = name;
         document.getElementById('edit_instructor_email').value = email;
         document.getElementById('edit_instructor_contact').value = contact || '';

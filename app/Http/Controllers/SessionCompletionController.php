@@ -61,12 +61,9 @@ class SessionCompletionController extends Controller
         if (Auth::guard('admin')->check()) {
             $admin = Auth::guard('admin')->user();
             
-            $sessionsQuery = SessionCompletion::with(['enrollment.student', 'enrollment.course', 'instructor'])
+            $baseSessionsQuery = SessionCompletion::with(['enrollment.student', 'enrollment.course', 'instructor'])
                 ->whereHas('enrollment.course', function ($query) use ($school) {
                 $query->where('school_id', $school->id);
-            })
-                ->when($request->session_type, function ($query, $type) {
-                $query->where('session_type', $type);
             })
                 ->when($request->instructor_id, function ($query, $instructorId) {
                 $query->where('instructor_id', $instructorId);
@@ -82,20 +79,25 @@ class SessionCompletionController extends Controller
 
             // Branch secretary scope: filter by their branch
             if ($admin->isBranchSecretary() && $admin->branch_id) {
-                $sessionsQuery->whereHas('enrollment', function ($query) use ($admin) {
+                $baseSessionsQuery->whereHas('enrollment', function ($query) use ($admin) {
                     $query->where('branch_id', $admin->branch_id);
                 });
             }
 
             // Pre-compute statistics before pagination
             $stats = [
-                'total_sessions' => (clone $sessionsQuery)->count(),
-                'total_hours' => (clone $sessionsQuery)->sum('hours_completed'),
-                'theoretical_count' => (clone $sessionsQuery)->where('session_type', 'theoretical')->count(),
-                'practical_count' => (clone $sessionsQuery)->where('session_type', 'practical')->count(),
+                'total_sessions' => (clone $baseSessionsQuery)->count(),
+                'total_hours' => (clone $baseSessionsQuery)->sum('hours_completed'),
+                'theoretical_count' => (clone $baseSessionsQuery)->where('session_type', 'theoretical')->count(),
+                'practical_count' => (clone $baseSessionsQuery)->where('session_type', 'practical')->count(),
             ];
 
-            $sessions = $sessionsQuery->paginate(10);
+            $sessionsQuery = (clone $baseSessionsQuery)
+                ->when($request->session_type, function ($query, $type) {
+                    $query->where('session_type', $type);
+                });
+
+            $sessions = $sessionsQuery->paginate(10)->withQueryString();
 
             // Get instructors (branch secretaries only see instructors in their branch)
             $instructorQuery = Instructor::where('school_id', $school->id);

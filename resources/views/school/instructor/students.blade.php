@@ -11,11 +11,20 @@
     $instructorId = Auth::guard('instructor')->id();
     
     // Calculate statistics
-    $totalStudents = $students->count();
-    $myStudents = $students->where('is_assigned', true)->count();
-    $activeStudents = $students->where('status', 'active')->count();
-    $totalSessions = $students->sum('sessions_count');
-    $avgProgress = $students->avg('avg_progress') ?? 0;
+    $totalStudents = $statsTotalStudents ?? $students->total();
+    $activeStudents = $statsActiveStudents ?? $students->where('status', 'active')->count();
+    $inactiveStudents = $statsInactiveStudents ?? $students->where('status', 'inactive')->count();
+    $upcomingStudents = $statsUpcomingStudents ?? $students->filter(function ($student) {
+        return !empty($student->next_session);
+    })->count();
+    $activeCardFilter = $activeCardFilter ?? request('card', 'all');
+    $filterLabelMap = [
+        'all' => 'All Students',
+        'active' => 'Active Students',
+        'inactive' => 'Inactive Students',
+        'upcoming' => 'With Upcoming Session',
+    ];
+    $currentFilterLabel = $filterLabelMap[$activeCardFilter] ?? 'All Students';
 @endphp
 
 @include('school.admin.partials.admin-styles')
@@ -50,6 +59,16 @@
     }
 
     .search-input:focus { border-color: {{ $primaryColor }}; }
+
+    .stat-card.card-filter {
+        cursor: pointer;
+    }
+
+    .stat-card.card-filter-active {
+        box-shadow: 0 0 0 2px {{ $primaryColor }}40;
+        border-color: {{ $primaryColor }} !important;
+        transform: translateY(-1px);
+    }
 
     .filter-select {
         padding: 10px 32px 10px 12px;
@@ -302,87 +321,76 @@
 
     <!-- Stats Cards -->
     <div class="stats-grid">
-        <div class="stat-card students">
+        <div class="stat-card students card-filter {{ $activeCardFilter === 'all' ? 'card-filter-active' : '' }}" onclick="applyStudentsCardFilter('all')">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
-                        <div class="stat-label">Total Students</div>
+                        <div class="stat-label">All Students</div>
                         <div class="stat-value">{{ $totalStudents }}</div>
                     </div>
                     <div class="stat-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                     </div>
                 </div>
-                <div class="stat-detail">All students in the school</div>
+                <div class="stat-detail">All students in your instructor roster</div>
             </div>
         </div>
-        <div class="stat-card instructors">
+        <div class="stat-card instructors card-filter {{ $activeCardFilter === 'active' ? 'card-filter-active' : '' }}" onclick="applyStudentsCardFilter('active')">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
-                        <div class="stat-label">My Students</div>
-                        <div class="stat-value">{{ $myStudents }}</div>
+                        <div class="stat-label">Active Students</div>
+                        <div class="stat-value">{{ $activeStudents }}</div>
                     </div>
                     <div class="stat-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     </div>
                 </div>
-                <div class="stat-detail">Assigned to you</div>
+                <div class="stat-detail">Active accounts in your roster</div>
             </div>
         </div>
-        <div class="stat-card active">
+        <div class="stat-card active card-filter {{ $activeCardFilter === 'inactive' ? 'card-filter-active' : '' }}" onclick="applyStudentsCardFilter('inactive')">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
-                        <div class="stat-label">Total Sessions</div>
-                        <div class="stat-value">{{ $totalSessions }}</div>
+                        <div class="stat-label">Inactive Students</div>
+                        <div class="stat-value">{{ $inactiveStudents }}</div>
                     </div>
                     <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-1.414 1.414A7.963 7.963 0 0119 12a8 8 0 11-8-8c1.657 0 3.196.504 4.471 1.364l1.414-1.414A9.96 9.96 0 0011 2a10 10 0 1010 10c0-2.761-1.12-5.261-2.929-7.071zM10 8a1 1 0 012 0v3a1 1 0 01-.293.707l-2 2a1 1 0 11-1.414-1.414L10 10.586V8z"/></svg>
                     </div>
                 </div>
-                <div class="stat-detail">Completed sessions</div>
+                <div class="stat-detail">Learners needing re-engagement</div>
             </div>
         </div>
-        <div class="stat-card growth">
+        <div class="stat-card growth card-filter {{ $activeCardFilter === 'upcoming' ? 'card-filter-active' : '' }}" onclick="applyStudentsCardFilter('upcoming')">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
-                        <div class="stat-label">Avg Progress</div>
-                        <div class="stat-value">{{ number_format($avgProgress, 0) }}%</div>
+                        <div class="stat-label">Upcoming Sessions</div>
+                        <div class="stat-value">{{ $upcomingStudents }}</div>
                     </div>
                     <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10m-11 9h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v11a2 2 0 002 2z"/></svg>
                     </div>
                 </div>
-                <div class="stat-detail">Average student progress</div>
+                <div class="stat-detail">Students with scheduled upcoming lessons</div>
             </div>
         </div>
     </div>
 
     <!-- Controls Bar -->
-    <form action="{{ $schoolRoute('instructor.students.index') }}" method="GET" class="controls-bar">
+    <form action="{{ $schoolRoute('instructor.students.index') }}" method="GET" class="controls-bar" id="studentsControlsForm">
         <div class="search-wrapper">
             <input type="text" name="search" class="search-input" id="searchInput" 
                    placeholder="Search students by name or email..." value="{{ request('search') }}">
         </div>
-        <select class="filter-select" name="assignment" id="assignmentFilter" onchange="this.form.submit()">
-            <option value="all" {{ request('assignment') == 'all' ? 'selected' : '' }}>All Students</option>
-            <option value="assigned" {{ request('assignment') == 'assigned' ? 'selected' : '' }}>My Students</option>
-            <option value="unassigned" {{ request('assignment') == 'unassigned' ? 'selected' : '' }}>Other Students</option>
-        </select>
-        <select class="filter-select" name="status" id="statusFilter" onchange="this.form.submit()">
-            <option value="all" {{ request('status') == 'all' ? 'selected' : '' }}>All Status</option>
-            <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
-            <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
-        </select>
-        <select class="filter-select" name="sort" id="sortFilter" onchange="this.form.submit()">
-            <option value="name-asc" {{ request('sort') == 'name-asc' ? 'selected' : '' }}>Name (A-Z)</option>
-            <option value="name-desc" {{ request('sort') == 'name-desc' ? 'selected' : '' }}>Name (Z-A)</option>
-            <option value="progress-desc" {{ request('sort') == 'progress-desc' ? 'selected' : '' }}>Progress (High-Low)</option>
-        </select>
         <div class="view-count">
-            Showing {{ $students->count() }} of {{ $students->total() }} students
+            @if($students->count() > 0)
+                {{ $currentFilterLabel }}: {{ $students->count() }} on this page, {{ $students->total() }} total
+            @else
+                No students found for {{ strtolower($currentFilterLabel) }}
+            @endif
         </div>
     </form>
 
@@ -428,14 +436,140 @@
     @if($students->hasPages())
         <div class="table-footer">
             <div class="pagination-info">
-                Showing {{ $students->firstItem() }} to {{ $students->lastItem() }} of {{ $students->total() }} students
+                @if($students->count() > 0)
+                    Showing {{ $students->firstItem() }}-{{ $students->lastItem() }} of {{ $students->total() }} ({{ $currentFilterLabel }})
+                @else
+                    No students to display
+                @endif
             </div>
-            {{ $students->links() }}
+            {{ $students->appends(request()->query())->links() }}
         </div>
     @endif
 </div>
 
 <script>
+var instructorStudentsBaseUrl = @json($schoolRoute('instructor.students.index'));
+
+function getInstructorStudentsFilterState() {
+    const params = new URLSearchParams(window.location.search);
+    const searchInput = document.getElementById('searchInput');
+
+    return {
+        search: searchInput ? (searchInput.value || '') : (params.get('search') || ''),
+        card: params.get('card') || @json($activeCardFilter),
+    };
+}
+
+function buildInstructorStudentsUrl(filters = {}, resetPage = true) {
+    const merged = Object.assign({}, getInstructorStudentsFilterState(), filters || {});
+    const url = new URL(instructorStudentsBaseUrl || window.location.pathname, window.location.origin);
+
+    const search = (merged.search || '').trim();
+    if (search) {
+        url.searchParams.set('search', search);
+    }
+
+    if (merged.card && merged.card !== 'all') {
+        url.searchParams.set('card', merged.card);
+    }
+
+    if (!resetPage) {
+        const currentPage = new URLSearchParams(window.location.search).get('page');
+        if (currentPage) {
+            url.searchParams.set('page', currentPage);
+        }
+    }
+
+    return url;
+}
+
+function navigateWithInstructorStudentsFilters(filters = {}, resetPage = true) {
+    const targetUrl = buildInstructorStudentsUrl(filters, resetPage);
+    const target = targetUrl.pathname + targetUrl.search;
+
+    if (typeof loadContent === 'function') {
+        loadContent(target);
+        return;
+    }
+
+    window.location.href = target;
+}
+
+function applyStudentsCardFilter(card) {
+    navigateWithInstructorStudentsFilters({ card: card || 'all' }, true);
+}
+
+function applyLocalStudentsSearch(rawValue) {
+    const studentsGrid = document.getElementById('studentsGrid');
+    if (!studentsGrid) {
+        return;
+    }
+
+    const query = (rawValue || '').trim().toLowerCase();
+    const cards = Array.from(studentsGrid.querySelectorAll('.student-card'));
+    let visibleCount = 0;
+
+    cards.forEach(function(card) {
+        const name = (card.dataset.name || '').toLowerCase();
+        const email = (card.dataset.email || '').toLowerCase();
+        const show = query === '' || name.indexOf(query) !== -1 || email.indexOf(query) !== -1;
+        card.style.display = show ? '' : 'none';
+        if (show) {
+            visibleCount++;
+        }
+    });
+
+    let noResults = document.getElementById('studentsSearchNoResults');
+    if (visibleCount === 0 && cards.length > 0) {
+        if (!noResults) {
+            noResults = document.createElement('div');
+            noResults.id = 'studentsSearchNoResults';
+            noResults.className = 'no-students';
+            noResults.innerHTML = '<div class="no-students-text">No students match your search on this page.</div>';
+            studentsGrid.appendChild(noResults);
+        }
+    } else if (noResults) {
+        noResults.remove();
+    }
+}
+
+function bindInstructorStudentsSearchEvents() {
+    const searchInput = document.getElementById('searchInput');
+    if (!searchInput || searchInput.dataset.searchBound === '1') {
+        return;
+    }
+
+    searchInput.dataset.searchBound = '1';
+
+    searchInput.addEventListener('input', function(event) {
+        applyLocalStudentsSearch(event.target.value || '');
+    });
+
+    searchInput.addEventListener('keydown', function(event) {
+        if (event.key !== 'Enter') {
+            return;
+        }
+
+        event.preventDefault();
+        applyLocalStudentsSearch(event.target.value || '');
+    });
+}
+
+function initializeInstructorStudentsPage() {
+    bindInstructorStudentsSearchEvents();
+
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        applyLocalStudentsSearch(searchInput.value || '');
+    }
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeInstructorStudentsPage);
+} else {
+    initializeInstructorStudentsPage();
+}
+
 // Toggle Export Menu
 function toggleExportMenu() {
     document.getElementById('exportMenu').classList.toggle('show');

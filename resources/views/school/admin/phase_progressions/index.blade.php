@@ -8,6 +8,7 @@
     $settings = $school?->schoolSetting;
     $primaryColor = $settings?->primary_color ?? '#667eea';
     $secondaryColor = $settings?->secondary_color ?? '#764ba2';
+    $activeFromPhaseFilter = request('from_phase', '');
 @endphp
 
 @include('school.admin.partials.admin-styles')
@@ -134,6 +135,106 @@
     .modal-action-row .btn {
         flex: 1;
     }
+
+    .table-top {
+        padding: 14px 20px;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        background: #fff;
+    }
+
+    .table-top-meta {
+        font-size: 0.9rem;
+        color: #6b7280;
+        font-weight: 500;
+    }
+
+    .filter-group .table-top-meta {
+        display: inline-flex;
+        align-items: center;
+        min-height: 40px;
+        padding: 0 4px;
+    }
+
+    .table-top-search {
+        min-width: 260px;
+        max-width: 420px;
+        width: 100%;
+    }
+
+    .table-top-search input {
+        width: 100%;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        padding: 9px 10px;
+        font-size: 0.88rem;
+    }
+
+    .card-filter {
+        cursor: pointer;
+    }
+
+    .card-filter-active {
+        border-color: {{ $primaryColor }} !important;
+        box-shadow: 0 0 0 2px {{ $primaryColor }}30;
+    }
+
+    /* Keep the filter white bar visually stable (no hover lift/shadow change). */
+    .content-card.content-card-mb:hover {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+    }
+
+    .phase-progression-cards .stat-card.info { order: 1; }
+    .phase-progression-cards .stat-card.pending { order: 2; }
+    .phase-progression-cards .stat-card.success { order: 3; }
+    .phase-progression-cards .stat-card.students { order: 4; }
+    .phase-progression-cards .stat-card.growth { order: 5; }
+
+    .phase-filters-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: nowrap;
+    }
+
+    .phase-filters-row .table-top-search {
+        flex: 1 1 360px;
+        min-width: 260px;
+        max-width: none;
+        width: auto;
+    }
+
+    .phase-filters-row .form-control-auto {
+        min-width: 170px;
+    }
+
+    .phase-filters-row .table-top-meta {
+        margin-left: auto;
+        white-space: nowrap;
+    }
+
+    .phase-filters-row .btn {
+        white-space: nowrap;
+    }
+
+    @media (max-width: 992px) {
+        .phase-filters-row {
+            flex-wrap: wrap;
+        }
+
+        .phase-filters-row .table-top-search {
+            flex: 1 1 100%;
+            max-width: 100%;
+        }
+
+        .phase-filters-row .table-top-meta {
+            margin-left: 0;
+        }
+    }
 </style>
 
 <div class="admin-container">
@@ -148,8 +249,21 @@
     </div>
 
     <!-- Stats Summary -->
-    <div class="stats-grid">
-        <div class="stat-card">
+    <div class="stats-grid phase-progression-cards">
+        <div class="stat-card info card-filter {{ $activeFromPhaseFilter === '' ? 'card-filter-active' : '' }}" onclick="applyPhaseCardFilter('')">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">Total Records</div>
+                        <div class="stat-value">{{ $phaseStats['total_records'] ?? 0 }}</div>
+                    </div>
+                    <div class="stat-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#3b82f6" class="icon-24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg></div>
+                </div>
+                <div class="stat-detail">All records for current status scope</div>
+            </div>
+        </div>
+
+        <div class="stat-card pending">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -165,12 +279,38 @@
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
-                        <div class="stat-label">Total Approved</div>
-                        <div class="stat-value">{{ $progressions->where('status', 'approved')->count() }}</div>
+                        <div class="stat-label">Approved</div>
+                        <div class="stat-value">{{ $phaseStats['approved_records'] ?? 0 }}</div>
                     </div>
                     <div class="stat-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#10b981" class="icon-24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
                 </div>
                 <div class="stat-detail">Lifetime approved transitions</div>
+            </div>
+        </div>
+
+        <div class="stat-card students card-filter {{ $activeFromPhaseFilter === 'theoretical' ? 'card-filter-active' : '' }}" onclick="applyPhaseCardFilter('theoretical')">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">Theoretical</div>
+                        <div class="stat-value">{{ $phaseStats['theoretical_records'] ?? 0 }}</div>
+                    </div>
+                    <div class="stat-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422A12.083 12.083 0 0118 14.5C18 16.985 15.314 19 12 19s-6-2.015-6-4.5c0-1.386.688-2.63 1.84-3.422L12 14z"/></svg></div>
+                </div>
+                <div class="stat-detail">Requests from theoretical phase</div>
+            </div>
+        </div>
+
+        <div class="stat-card growth card-filter {{ $activeFromPhaseFilter === 'practical' ? 'card-filter-active' : '' }}" onclick="applyPhaseCardFilter('practical')">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">Practical</div>
+                        <div class="stat-value">{{ $phaseStats['practical_records'] ?? 0 }}</div>
+                    </div>
+                    <div class="stat-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17h6m-6 0a2 2 0 11-4 0m4 0a2 2 0 104 0m0 0a2 2 0 104 0m-4 0H9m0-8l1.6-3.2A2 2 0 0112.4 5h3.2a2 2 0 011.79 1.11L19 10m-14 0h14M5 10l-.75 3a2 2 0 001.94 2.5h11.62a2 2 0 001.94-2.5L19 10"/></svg></div>
+                </div>
+                <div class="stat-detail">Requests from practical phase</div>
             </div>
         </div>
     </div>
@@ -178,19 +318,20 @@
     <!-- Filters -->
     <div class="content-card content-card-mb">
         <div class="content-card-body">
-            <form id="filterForm" action="{{ school_route('admin.phase-progressions.index') }}" method="GET" class="filter-group" onsubmit="loadWithFilters(this); return false;">
-                <select name="status" class="form-control form-control-auto" onchange="this.form.dispatchEvent(new Event('submit'))">
+            <form id="filterForm" action="{{ school_route('admin.phase-progressions.index') }}" method="GET" class="filter-group phase-filters-row" onsubmit="return applyPhaseProgressionFilters(event)">
+                <div class="table-top-search">
+                    <input type="text" id="phaseProgressionLocalSearch" placeholder="Search student, course, phase, or reviewer...">
+                </div>
+
+                <select id="phaseProgressionStatusFilter" name="status" class="form-control form-control-auto" onchange="return applyPhaseProgressionFilters()">
                     <option value="">All Statuses</option>
                     <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
                     <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>Approved</option>
                     <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
                 </select>
-                
-                <select name="from_phase" class="form-control form-control-auto" onchange="this.form.dispatchEvent(new Event('submit'))">
-                    <option value="">All Phases</option>
-                    <option value="theoretical" {{ request('from_phase') == 'theoretical' ? 'selected' : '' }}>Theoretical</option>
-                    <option value="practical" {{ request('from_phase') == 'practical' ? 'selected' : '' }}>Practical</option>
-                </select>
+
+                <div class="table-top-meta">Filtered records: {{ $progressions->total() }}</div>
+
             </form>
         </div>
     </div>
@@ -201,7 +342,7 @@
     <div class="content-card">
         <div class="content-card-body content-card-body-no-padding">
             <div class="table-overflow-wrap">
-                <table class="admin-table">
+                <table class="admin-table" id="phaseProgressionsTable">
                     <thead>
                         <tr>
                             <th>Student</th>
@@ -274,7 +415,7 @@
 
             @if($progressions->hasPages())
                 <div class="pagination-wrap">
-                    {{ $progressions->links() }}
+                    {{ $progressions->appends(request()->query())->links() }}
                 </div>
             @endif
         </div>
@@ -295,18 +436,18 @@
                 
                 <div class="modal-section-label">Transition</div>
                 <div id="modalTransitionLabel" class="modal-transition-label"></div>
-            </div>
-
-            <form id="reviewForm" method="POST" onsubmit="submitReview(this); return false;">
-                @csrf
-                <div class="form-group">
-                    <label class="form-label">Admin Notes / Decision Reason</label>
-                    <textarea name="admin_notes" class="form-control" rows="4" placeholder="Enter reason for approval or rejection..."></textarea>
+        <div class="stat-card info card-filter {{ $activeFromPhaseFilter === '' ? 'card-filter-active' : '' }}" onclick="applyPhaseCardFilter('')">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">Total Records</div>
+                        <div class="stat-value">{{ $phaseStats['total_records'] ?? 0 }}</div>
+                    </div>
+                    <div class="stat-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#3b82f6" class="icon-24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg></div>
                 </div>
-                
-                <div class="modal-action-row">
-                    <button type="button" class="btn btn-success" onclick="setDecision('approve')">
-                        Approve Progression
+                <div class="stat-detail">All records for current status scope</div>
+            </div>
+        </div>
                     </button>
                     <button type="button" class="btn btn-danger" onclick="setDecision('reject')">
                         Reject Request
@@ -318,6 +459,146 @@
 </div>
 
 <script>
+    const phaseProgressionsBaseUrl = @json(school_route('admin.phase-progressions.index'));
+    const initialPhaseProgressionFromPhase = @json(request('from_phase', ''));
+
+    function getPhaseProgressionFilterState() {
+        const params = new URLSearchParams(window.location.search);
+        const statusFilter = document.getElementById('phaseProgressionStatusFilter');
+
+        return {
+            status: statusFilter ? (statusFilter.value || '') : (params.get('status') || ''),
+            from_phase: params.get('from_phase') || initialPhaseProgressionFromPhase || '',
+        };
+    }
+
+    function buildPhaseProgressionUrl(filters = {}, resetPage = true) {
+        const merged = Object.assign({}, getPhaseProgressionFilterState(), filters || {});
+        const url = new URL(phaseProgressionsBaseUrl, window.location.origin);
+
+        if (merged.status) {
+            url.searchParams.set('status', merged.status);
+        }
+
+        if (merged.from_phase) {
+            url.searchParams.set('from_phase', merged.from_phase);
+        }
+
+        if (!resetPage) {
+            const currentPage = new URLSearchParams(window.location.search).get('page');
+            if (currentPage) {
+                url.searchParams.set('page', currentPage);
+            }
+        }
+
+        return url;
+    }
+
+    function navigateWithPhaseProgressionFilters(nextFilters, resetPage = true) {
+        const targetUrl = buildPhaseProgressionUrl(nextFilters, resetPage);
+        const target = targetUrl.pathname + targetUrl.search;
+
+        if (typeof loadContent === 'function') {
+            loadContent(target);
+            return;
+        }
+
+        window.location.href = target;
+    }
+
+    function applyPhaseProgressionFilters(event) {
+        if (event) {
+            event.preventDefault();
+        }
+
+        const statusFilter = document.getElementById('phaseProgressionStatusFilter');
+
+        navigateWithPhaseProgressionFilters({
+            status: statusFilter ? (statusFilter.value || '') : '',
+        }, true);
+
+        return false;
+    }
+
+    function applyPhaseCardFilter(fromPhase) {
+        navigateWithPhaseProgressionFilters({ from_phase: fromPhase || '' }, true);
+    }
+
+    function applyLocalPhaseProgressionSearch(rawValue) {
+        const table = document.getElementById('phaseProgressionsTable');
+        if (!table) {
+            return;
+        }
+
+        const tbody = table.querySelector('tbody');
+        if (!tbody) {
+            return;
+        }
+
+        const query = (rawValue || '').trim().toLowerCase();
+        const rows = Array.from(tbody.querySelectorAll('tr')).filter(function(row) {
+            return row.id !== 'phaseProgressionSearchNoResultRow';
+        });
+        const colCount = table.querySelectorAll('thead th').length || 7;
+
+        let visibleCount = 0;
+        rows.forEach(function(row) {
+            const rowText = (row.textContent || '').toLowerCase();
+            const isVisible = query === '' || rowText.indexOf(query) !== -1;
+            row.style.display = isVisible ? '' : 'none';
+            if (isVisible) {
+                visibleCount++;
+            }
+        });
+
+        let noResultRow = document.getElementById('phaseProgressionSearchNoResultRow');
+        if (visibleCount === 0 && rows.length > 0) {
+            if (!noResultRow) {
+                noResultRow = document.createElement('tr');
+                noResultRow.id = 'phaseProgressionSearchNoResultRow';
+                noResultRow.innerHTML = '<td colspan="' + colCount + '"><div class="empty-state"><div class="empty-state-title">No progression request matches your search on this page.</div></div></td>';
+                tbody.appendChild(noResultRow);
+            }
+        } else if (noResultRow) {
+            noResultRow.remove();
+        }
+    }
+
+    function bindPhaseProgressionSearchEvents() {
+        const searchInput = document.getElementById('phaseProgressionLocalSearch');
+        if (!searchInput || searchInput.dataset.searchBound === '1') {
+            return;
+        }
+
+        searchInput.dataset.searchBound = '1';
+        searchInput.addEventListener('input', function(event) {
+            applyLocalPhaseProgressionSearch(event.target.value || '');
+        });
+        searchInput.addEventListener('keydown', function(event) {
+            if (event.key !== 'Enter') {
+                return;
+            }
+
+            event.preventDefault();
+            applyLocalPhaseProgressionSearch(event.target.value || '');
+        });
+    }
+
+    function initializePhaseProgressionPage() {
+        bindPhaseProgressionSearchEvents();
+
+        const searchInput = document.getElementById('phaseProgressionLocalSearch');
+        if (searchInput) {
+            applyLocalPhaseProgressionSearch(searchInput.value || '');
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializePhaseProgressionPage);
+    } else {
+        initializePhaseProgressionPage();
+    }
+
     let currentRequestId = null;
 
     function openReviewModal(id, name, transition) {
@@ -385,10 +666,7 @@
     }
 
     function loadWithFilters(form) {
-        const formData = new FormData(form);
-        const params = new URLSearchParams(formData);
-        const url = `${form.action}?${params.toString()}`;
-        loadContent(url);
+        applyPhaseProgressionFilters();
     }
 </script>
 

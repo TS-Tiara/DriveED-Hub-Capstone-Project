@@ -110,6 +110,10 @@
     .main-toggle-btn:hover:not(.active) {
         color: #1f2937;
     }
+
+    .mobile-only-tab-btn {
+        display: none;
+    }
     
     .main-view-section {
         display: none;
@@ -413,6 +417,95 @@
         color: #6c757d;
         font-size: 13px;
     }
+
+    .student-meta {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-top: 6px;
+    }
+
+    .student-status-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.2px;
+    }
+
+    .status-scheduled { background: #e0f2fe; color: #0c4a6e; }
+    .status-pending { background: #fef3c7; color: #92400e; }
+    .status-done { background: #fef9c3; color: #854d0e; }
+    .status-completed { background: #dcfce7; color: #166534; }
+    .status-no-show { background: #fee2e2; color: #991b1b; }
+
+    .attendance-attended { background: #dcfce7; color: #166534; }
+    .attendance-late { background: #ffedd5; color: #9a3412; }
+    .attendance-absent { background: #fee2e2; color: #991b1b; }
+
+    .lesson-action-row {
+        margin-top: 8px;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .btn-mark-done {
+        border: none;
+        border-radius: 6px;
+        padding: 7px 10px;
+        font-size: 12px;
+        font-weight: 600;
+        color: white;
+        background: #2563eb;
+        cursor: pointer;
+        transition: background 0.2s ease;
+    }
+
+    .btn-mark-done:hover {
+        background: #1d4ed8;
+    }
+
+    .btn-mark-done:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+    }
+
+    .btn-mark-no-show {
+        border: none;
+        border-radius: 6px;
+        padding: 7px 10px;
+        font-size: 12px;
+        font-weight: 600;
+        color: white;
+        background: #dc2626;
+        cursor: pointer;
+        transition: background 0.2s ease;
+    }
+
+    .btn-mark-no-show:hover {
+        background: #b91c1c;
+    }
+
+    .btn-mark-no-show:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+    }
+
+    .lesson-action-note {
+        margin-top: 8px;
+        font-size: 12px;
+        color: #6b7280;
+        font-weight: 600;
+    }
+
+    .lesson-action-note.success {
+        color: #166534;
+    }
     
     .mini-schedule-card {
         background: white;
@@ -604,6 +697,13 @@
         border-radius: 6px;
         cursor: pointer;
     }
+
+    .mobile-lessons-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        margin-top: 20px;
+    }
     
     /* Mobile Responsiveness */
     @media (max-width: 768px) {
@@ -612,12 +712,28 @@
         .main-toggle-btn { padding: 10px 16px; font-size: 13px; }
         .slot-item { padding: 12px; }
         .schedule-sidebar { display: none; }
-        .mobile-sidebar-btn { display: inline-block !important; }
+
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .header-actions {
+            width: 100%;
+        }
+
+        .main-toggle {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .mobile-only-tab-btn {
+            display: inline-block;
+        }
     }
     
-    .mobile-sidebar-btn {
-        display: none;
-    }
+
     /* Confirmation Modal */
     .confirm-modal {
         position: fixed;
@@ -725,8 +841,9 @@
         </div>
         <div class="header-actions">
             <div class="main-toggle">
-                <button type="button" class="main-toggle-btn active" onclick="switchMainView('my-slots')">My Sessions</button>
-                <button type="button" class="main-toggle-btn" onclick="switchMainView('available')">Open Sessions</button>
+                <button type="button" class="main-toggle-btn active" data-view="my-slots" onclick="switchMainView('my-slots')">My Sessions</button>
+                <button type="button" class="main-toggle-btn" data-view="available" onclick="switchMainView('available')">Open Sessions</button>
+                <button type="button" class="main-toggle-btn mobile-only-tab-btn" data-view="mobile-lessons" onclick="switchMainView('mobile-lessons')">Today &amp; Upcoming</button>
             </div>
         </div>
     </div>
@@ -744,7 +861,6 @@
                     <label>
                         <input type="checkbox" id="collapse-all-my" onchange="toggleCollapseAllMy(this)"> Collapse All
                     </label>
-                    <button type="button" class="btn-select btn-select-compact mobile-sidebar-btn" onclick="toggleMobileSidebar()">Today's Lessons</button>
                 </div>
                 
                 @forelse($groupedMySlots as $date => $dateSlots)
@@ -844,9 +960,36 @@
                                 </div>
                                 @if($slotBookings->isNotEmpty())
                                     @foreach($slotBookings as $booking)
+                                        @php
+                                            $bookingStatus = strtolower((string) ($booking->status ?? 'scheduled'));
+                                            $canMarkDone = !in_array($bookingStatus, ['done', 'completed', 'cancelled', 'no-show'], true);
+                                        @endphp
                                         <div class="student-item">
                                             <div class="student-name">{{ $booking->student->name ?? 'Student' }}</div>
                                             <div class="student-course">{{ $booking->course->title ?? 'Course' }}</div>
+                                            <div class="student-meta">
+                                                <span class="student-status-pill status-{{ $bookingStatus === 'no-show' ? 'no-show' : $bookingStatus }}">
+                                                    {{ strtoupper(str_replace('-', ' ', $bookingStatus)) }}
+                                                </span>
+                                                @if($booking->attendance_status)
+                                                    <span class="student-status-pill attendance-{{ strtolower((string) $booking->attendance_status) }}">
+                                                        {{ ucfirst((string) $booking->attendance_status) }}
+                                                    </span>
+                                                @endif
+                                            </div>
+
+                                            @if($canMarkDone)
+                                                <div class="lesson-action-row">
+                                                    <button type="button" class="btn-mark-done" onclick="markLessonStatus({{ $booking->id }}, 'done', this)">Mark Done</button>
+                                                    <button type="button" class="btn-mark-no-show" onclick="markLessonStatus({{ $booking->id }}, 'no-show', this)">No-Show</button>
+                                                </div>
+                                            @elseif($bookingStatus === 'done')
+                                                <div class="lesson-action-note">Submitted for admin verification</div>
+                                            @elseif($bookingStatus === 'completed')
+                                                <div class="lesson-action-note success">Verified and logged</div>
+                                            @elseif($bookingStatus === 'no-show')
+                                                <div class="lesson-action-note">Marked no-show</div>
+                                            @endif
                                         </div>
                                     @endforeach
                                 @else
@@ -965,9 +1108,36 @@
                                 </div>
                                 @if($slotBookings->isNotEmpty())
                                     @foreach($slotBookings as $booking)
+                                        @php
+                                            $bookingStatus = strtolower((string) ($booking->status ?? 'scheduled'));
+                                            $canMarkDone = !in_array($bookingStatus, ['done', 'completed', 'cancelled', 'no-show'], true);
+                                        @endphp
                                         <div class="student-item">
                                             <div class="student-name">{{ $booking->student->name ?? 'Student' }}</div>
                                             <div class="student-course">{{ $booking->course->title ?? 'Course' }}</div>
+                                            <div class="student-meta">
+                                                <span class="student-status-pill status-{{ $bookingStatus === 'no-show' ? 'no-show' : $bookingStatus }}">
+                                                    {{ strtoupper(str_replace('-', ' ', $bookingStatus)) }}
+                                                </span>
+                                                @if($booking->attendance_status)
+                                                    <span class="student-status-pill attendance-{{ strtolower((string) $booking->attendance_status) }}">
+                                                        {{ ucfirst((string) $booking->attendance_status) }}
+                                                    </span>
+                                                @endif
+                                            </div>
+
+                                            @if($canMarkDone)
+                                                <div class="lesson-action-row">
+                                                    <button type="button" class="btn-mark-done" onclick="markLessonStatus({{ $booking->id }}, 'done', this)">Mark Done</button>
+                                                    <button type="button" class="btn-mark-no-show" onclick="markLessonStatus({{ $booking->id }}, 'no-show', this)">No-Show</button>
+                                                </div>
+                                            @elseif($bookingStatus === 'done')
+                                                <div class="lesson-action-note">Submitted for admin verification</div>
+                                            @elseif($bookingStatus === 'completed')
+                                                <div class="lesson-action-note success">Verified and logged</div>
+                                            @elseif($bookingStatus === 'no-show')
+                                                <div class="lesson-action-note">Marked no-show</div>
+                                            @endif
                                         </div>
                                     @endforeach
                                 @else
@@ -993,6 +1163,84 @@
                         <div class="no-lessons">No upcoming slots</div>
                     @endforelse
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Lessons View -->
+    <div id="mobile-lessons-view" class="main-view-section">
+        <div class="mobile-lessons-stack">
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">Today's Lessons</h3>
+                @if($todaySlots->isNotEmpty())
+                    @foreach($todaySlots->sortBy('start_time') as $slot)
+                        @php
+                            $slotBookings = $slot->bookings->where('instructor_id', $instructorId)->where('status', '!=', 'cancelled');
+                        @endphp
+                        <div class="today-lesson-card">
+                            <div class="lesson-time">
+                                {{ \Carbon\Carbon::parse($slot->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($slot->end_time)->format('g:i A') }}
+                            </div>
+                            @if($slotBookings->isNotEmpty())
+                                @foreach($slotBookings as $booking)
+                                    @php
+                                        $bookingStatus = strtolower((string) ($booking->status ?? 'scheduled'));
+                                        $canMarkDone = !in_array($bookingStatus, ['done', 'completed', 'cancelled', 'no-show'], true);
+                                    @endphp
+                                    <div class="student-item">
+                                        <div class="student-name">{{ $booking->student->name ?? 'Student' }}</div>
+                                        <div class="student-course">{{ $booking->course->title ?? 'Course' }}</div>
+                                        <div class="student-meta">
+                                            <span class="student-status-pill status-{{ $bookingStatus === 'no-show' ? 'no-show' : $bookingStatus }}">
+                                                {{ strtoupper(str_replace('-', ' ', $bookingStatus)) }}
+                                            </span>
+                                            @if($booking->attendance_status)
+                                                <span class="student-status-pill attendance-{{ strtolower((string) $booking->attendance_status) }}">
+                                                    {{ ucfirst((string) $booking->attendance_status) }}
+                                                </span>
+                                            @endif
+                                        </div>
+
+                                        @if($canMarkDone)
+                                            <div class="lesson-action-row">
+                                                <button type="button" class="btn-mark-done" onclick="markLessonStatus({{ $booking->id }}, 'done', this)">Mark Done</button>
+                                                <button type="button" class="btn-mark-no-show" onclick="markLessonStatus({{ $booking->id }}, 'no-show', this)">No-Show</button>
+                                            </div>
+                                        @elseif($bookingStatus === 'done')
+                                            <div class="lesson-action-note">Submitted for admin verification</div>
+                                        @elseif($bookingStatus === 'completed')
+                                            <div class="lesson-action-note success">Verified and logged</div>
+                                        @elseif($bookingStatus === 'no-show')
+                                            <div class="lesson-action-note">Marked no-show</div>
+                                        @endif
+                                    </div>
+                                @endforeach
+                            @else
+                                <p class="no-students-text">No students scheduled</p>
+                            @endif
+                        </div>
+                    @endforeach
+                @else
+                    <div class="no-lessons">No lessons scheduled for today</div>
+                @endif
+            </div>
+
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">Upcoming This Week</h3>
+                @forelse($upcomingSlots as $slot)
+                    @php
+                        $instructor = $slot->instructors->firstWhere('id', $instructorId);
+                        $isAdmin = $instructor && $instructor->pivot->assignment_type === 'admin_assigned';
+                    @endphp
+                    <div class="mini-schedule-card {{ $isAdmin ? 'mini-schedule-card-admin' : 'mini-schedule-card-my' }}">
+                        <div class="mini-schedule-date">{{ \Carbon\Carbon::parse($slot->date)->format('D, M d') }}</div>
+                        <div class="mini-schedule-info">
+                            {{ \Carbon\Carbon::parse($slot->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($slot->end_time)->format('g:i A') }}
+                        </div>
+                    </div>
+                @empty
+                    <div class="no-lessons">No upcoming slots</div>
+                @endforelse
             </div>
         </div>
     </div>
@@ -1042,42 +1290,6 @@
     </div>
 </div>
 
-<!-- Mobile Sidebar Popup -->
-<div class="modal-overlay" id="mobileSidebar" onclick="if(event.target === this) toggleMobileSidebar()">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>Today's Lessons</h2>
-            <button class="modal-close" onclick="toggleMobileSidebar()">&times;</button>
-        </div>
-        <div class="modal-body">
-            @if($todaySlots->isNotEmpty())
-                @foreach($todaySlots->sortBy('start_time') as $slot)
-                    @php
-                        $slotBookings = $slot->bookings->where('instructor_id', $instructorId)->where('status', '!=', 'cancelled');
-                    @endphp
-                    <div class="today-lesson-card">
-                        <div class="lesson-time">
-                            {{ \Carbon\Carbon::parse($slot->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($slot->end_time)->format('g:i A') }}
-                        </div>
-                        @if($slotBookings->isNotEmpty())
-                            @foreach($slotBookings as $booking)
-                                <div class="student-item">
-                                    <div class="student-name">{{ $booking->student->name ?? 'Student' }}</div>
-                                    <div class="student-course">{{ $booking->course->title ?? 'Course' }}</div>
-                                </div>
-                            @endforeach
-                        @else
-                            <p class="no-students-text">No students scheduled</p>
-                        @endif
-                    </div>
-                @endforeach
-            @else
-                <div class="no-lessons">No lessons scheduled for today</div>
-            @endif
-        </div>
-    </div>
-</div>
-
 <script>
     // Toast notification system
     function showToast(message, type) {
@@ -1105,21 +1317,83 @@
         }
     })();
 
+    function markLessonStatus(bookingId, sessionStatus, button) {
+        var attendanceStatus = sessionStatus === 'no-show' ? 'absent' : 'attended';
+        var promptMessage = sessionStatus === 'no-show'
+            ? 'Mark this student as no-show for the selected lesson?'
+            : 'Mark this lesson as done and submit it for admin verification?';
+
+        showConfirm({
+            title: 'Update Lesson Status',
+            message: promptMessage,
+            type: sessionStatus === 'no-show' ? 'warning' : 'success',
+            confirmText: 'Yes, Continue',
+            onConfirm: function() {
+                submitLessonStatusUpdate(bookingId, sessionStatus, attendanceStatus, button);
+            }
+        });
+    }
+
+    function submitLessonStatusUpdate(bookingId, sessionStatus, attendanceStatus, button) {
+        var actionRow = button.closest('.lesson-action-row');
+        var rowButtons = actionRow ? actionRow.querySelectorAll('button') : [];
+        var originalLabel = button.textContent;
+        button.textContent = sessionStatus === 'no-show' ? 'Marking...' : 'Submitting...';
+        rowButtons.forEach(function(rowButton) { rowButton.disabled = true; });
+
+        fetch('{{ url($school->slug) }}/instructor/lessons/' + bookingId + '/update', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                session_status: sessionStatus,
+                attendance_status: attendanceStatus
+            })
+        })
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(data) {
+            if (data.success) {
+                showToast(data.message || 'Lesson status updated successfully.', 'success');
+                setTimeout(function() {
+                    window.location.reload();
+                }, 500);
+                return;
+            }
+
+            showToast(data.message || 'Failed to update lesson status.', 'error');
+            button.textContent = originalLabel;
+            rowButtons.forEach(function(rowButton) { rowButton.disabled = false; });
+        })
+        .catch(function(error) {
+            console.error('Error:', error);
+            showToast('An error occurred while updating lesson status.', 'error');
+            button.textContent = originalLabel;
+            rowButtons.forEach(function(rowButton) { rowButton.disabled = false; });
+        });
+    }
+
     // Tab switching
     function switchMainView(viewName) {
         document.querySelectorAll('.main-toggle-btn').forEach(function(btn) {
-            btn.classList.remove('active');
+            var isTarget = btn.getAttribute('data-view') === viewName;
+            btn.classList.toggle('active', isTarget);
         });
+
         document.querySelectorAll('.main-view-section').forEach(function(section) {
             section.classList.remove('active');
         });
-        
-        if (viewName === 'my-slots') {
-            document.querySelectorAll('.main-toggle-btn')[0].classList.add('active');
-            document.getElementById('my-slots-view').classList.add('active');
+
+        var targetView = document.getElementById(viewName + '-view');
+        if (targetView) {
+            targetView.classList.add('active');
         } else {
-            document.querySelectorAll('.main-toggle-btn')[1].classList.add('active');
-            document.getElementById('available-view').classList.add('active');
+            document.getElementById('my-slots-view').classList.add('active');
         }
     }
     
@@ -1307,12 +1581,6 @@
             }
         }
     });
-    
-    // Mobile sidebar toggle
-    function toggleMobileSidebar() {
-        var sidebar = document.getElementById('mobileSidebar');
-        sidebar.style.display = sidebar.style.display === 'flex' ? 'none' : 'flex';
-    }
     
     // Handle removal form submission
     document.getElementById('removalForm').addEventListener('submit', function(e) {

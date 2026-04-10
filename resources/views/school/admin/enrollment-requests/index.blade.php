@@ -443,6 +443,17 @@
         margin-bottom: 16px;
     }
 
+    .filters-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .filters-row .branch-filter-wrap {
+        margin-bottom: 0;
+    }
+
     .branch-filter-select {
         max-width: 300px;
         display: inline-block;
@@ -450,6 +461,11 @@
         border: 2px solid #e5e7eb;
         border-radius: 8px;
         font-size: 0.9rem;
+    }
+
+    .filters-row .branch-filter-select {
+        max-width: 340px;
+        width: 100%;
     }
 
     .action-bar-wrapper {
@@ -819,6 +835,16 @@
             min-height: 44px;
             padding: 10px 14px;
         }
+
+        .filters-row {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .filters-row .branch-filter-select {
+            max-width: 100%;
+            display: block;
+        }
     }
     
     @media (max-width: 480px) {
@@ -1018,20 +1044,8 @@
     </div>
     @endif
 
-    @if($branches->count() > 0 && !$admin->isBranchSecretary())
-    <div class="mb-3 branch-filter-wrap">
-        <select id="branchFilter" class="form-select branch-filter-select" onchange="window.location.href = '{{ school_route('admin.enrollments.index') }}?branch=' + encodeURIComponent(this.value) + '&status={{ request('status', 'all') }}&sort={{ $currentSort ?? request('sort', 'priority') }}'">
-            <option value="">All Branches</option>
-            @foreach($branches as $branch)
-                <option value="{{ $branch->name }}" {{ request('branch') === $branch->name ? 'selected' : '' }}>{{ $branch->name }}</option>
-            @endforeach
-        </select>
-    </div>
-    @endif
-
-
     <div class="stats-grid">
-        <div class="stat-card info {{ request('status', 'all') === 'all' ? 'active' : '' }}" onclick="window.location.href='{{ school_route('admin.enrollments.index', ['status' => 'all', 'branch' => request('branch'), 'sort' => ($currentSort ?? request('sort', 'priority'))]) }}'">
+        <div class="stat-card info {{ request('status', 'all') === 'all' ? 'active' : '' }}" onclick="applyEnrollmentStatusFilter('all')">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -1046,7 +1060,7 @@
                 </div>
             </div>
         </div>
-        <div class="stat-card pending {{ request('status') === 'pending' ? 'active' : '' }}" onclick="window.location.href='{{ school_route('admin.enrollments.index', ['status' => 'pending', 'branch' => request('branch'), 'sort' => ($currentSort ?? request('sort', 'priority'))]) }}'">
+        <div class="stat-card pending {{ request('status') === 'pending' ? 'active' : '' }}" onclick="applyEnrollmentStatusFilter('pending')">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -1061,7 +1075,7 @@
                 </div>
             </div>
         </div>
-        <div class="stat-card growth {{ request('status') === 'approved' ? 'active' : '' }}" onclick="window.location.href='{{ school_route('admin.enrollments.index', ['status' => 'approved', 'branch' => request('branch'), 'sort' => ($currentSort ?? request('sort', 'priority'))]) }}'">
+        <div class="stat-card growth {{ request('status') === 'approved' ? 'active' : '' }}" onclick="applyEnrollmentStatusFilter('approved')">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -1076,7 +1090,7 @@
                 </div>
             </div>
         </div>
-        <div class="stat-card danger {{ request('status') === 'rejected' ? 'active' : '' }}" onclick="window.location.href='{{ school_route('admin.enrollments.index', ['status' => 'rejected', 'branch' => request('branch'), 'sort' => ($currentSort ?? request('sort', 'priority'))]) }}'">
+        <div class="stat-card danger {{ request('status') === 'rejected' ? 'active' : '' }}" onclick="applyEnrollmentStatusFilter('rejected')">
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
@@ -1093,17 +1107,30 @@
         </div>
     </div>
 
-    <div class="mb-3 branch-filter-wrap">
-        <select id="sortFilter" class="form-select branch-filter-select" onchange="window.location.href = '{{ school_route('admin.enrollments.index') }}?status={{ request('status', 'all') }}&branch={{ urlencode((string) request('branch', '')) }}&sort=' + encodeURIComponent(this.value)">
-            <option value="priority" {{ ($currentSort ?? request('sort', 'priority')) === 'priority' ? 'selected' : '' }}>Sort: Priority (Approvals -> Withdrawals)</option>
-            <option value="withdrawal_first" {{ ($currentSort ?? request('sort', 'priority')) === 'withdrawal_first' ? 'selected' : '' }}>Sort: Withdrawal Requested First</option>
-            <option value="newest" {{ ($currentSort ?? request('sort', 'priority')) === 'newest' ? 'selected' : '' }}>Sort: Newest First</option>
-            <option value="oldest" {{ ($currentSort ?? request('sort', 'priority')) === 'oldest' ? 'selected' : '' }}>Sort: Oldest First</option>
-            <option value="learner_az" {{ ($currentSort ?? request('sort', 'priority')) === 'learner_az' ? 'selected' : '' }}>Sort: Learner A-Z</option>
-            <option value="learner_za" {{ ($currentSort ?? request('sort', 'priority')) === 'learner_za' ? 'selected' : '' }}>Sort: Learner Z-A</option>
-            <option value="status_az" {{ ($currentSort ?? request('sort', 'priority')) === 'status_az' ? 'selected' : '' }}>Sort: Status A-Z</option>
-            <option value="status_za" {{ ($currentSort ?? request('sort', 'priority')) === 'status_za' ? 'selected' : '' }}>Sort: Status Z-A</option>
-        </select>
+    <div class="filters-row">
+        @if($branches->count() > 0 && !$admin->isBranchSecretary())
+        <div class="branch-filter-wrap">
+            <select id="branchFilter" class="form-select branch-filter-select" onchange="applyEnrollmentBranchFilter()">
+                <option value="">All Branches</option>
+                @foreach($branches as $branch)
+                    <option value="{{ $branch->name }}" {{ request('branch') === $branch->name ? 'selected' : '' }}>{{ $branch->name }}</option>
+                @endforeach
+            </select>
+        </div>
+        @endif
+
+        <div class="branch-filter-wrap">
+            <select id="sortFilter" class="form-select branch-filter-select" onchange="applyEnrollmentSortFilter()">
+                <option value="priority" {{ ($currentSort ?? request('sort', 'priority')) === 'priority' ? 'selected' : '' }}>Sort: Priority (Approvals -> Withdrawals)</option>
+                <option value="withdrawal_first" {{ ($currentSort ?? request('sort', 'priority')) === 'withdrawal_first' ? 'selected' : '' }}>Sort: Withdrawal Requested First</option>
+                <option value="newest" {{ ($currentSort ?? request('sort', 'priority')) === 'newest' ? 'selected' : '' }}>Sort: Newest First</option>
+                <option value="oldest" {{ ($currentSort ?? request('sort', 'priority')) === 'oldest' ? 'selected' : '' }}>Sort: Oldest First</option>
+                <option value="learner_az" {{ ($currentSort ?? request('sort', 'priority')) === 'learner_az' ? 'selected' : '' }}>Sort: Learner A-Z</option>
+                <option value="learner_za" {{ ($currentSort ?? request('sort', 'priority')) === 'learner_za' ? 'selected' : '' }}>Sort: Learner Z-A</option>
+                <option value="status_az" {{ ($currentSort ?? request('sort', 'priority')) === 'status_az' ? 'selected' : '' }}>Sort: Status A-Z</option>
+                <option value="status_za" {{ ($currentSort ?? request('sort', 'priority')) === 'status_za' ? 'selected' : '' }}>Sort: Status Z-A</option>
+            </select>
+        </div>
     </div>
     
     
@@ -1456,6 +1483,75 @@
 <script>
 // Server-side filtering is now used.
 // JS applyFilters and filterRequests functions removed.
+
+var enrollmentBaseUrl = @json(school_route('admin.enrollments.index'));
+
+function getEnrollmentFilterState() {
+    const params = new URLSearchParams(window.location.search);
+    const branchFilter = document.getElementById('branchFilter');
+    const sortFilter = document.getElementById('sortFilter');
+    const currentStatus = params.get('status') || 'all';
+    const currentBranch = params.get('branch') || '';
+    const currentSort = params.get('sort') || 'priority';
+
+    return {
+        status: currentStatus,
+        branch: branchFilter ? (branchFilter.value || '') : currentBranch,
+        sort: sortFilter ? (sortFilter.value || currentSort) : currentSort,
+    };
+}
+
+function buildEnrollmentUrl(filters = {}) {
+    const merged = Object.assign({}, getEnrollmentFilterState(), filters || {});
+    const url = new URL(enrollmentBaseUrl || window.location.pathname, window.location.origin);
+
+    url.searchParams.set('status', merged.status || 'all');
+    url.searchParams.set('sort', merged.sort || 'priority');
+
+    if (merged.branch) {
+        url.searchParams.set('branch', merged.branch);
+    }
+
+    return url;
+}
+
+function navigateWithEnrollmentFilters(nextFilters, resetPage = true) {
+    const url = buildEnrollmentUrl(nextFilters);
+    if (resetPage) {
+        url.searchParams.delete('page');
+    }
+
+    const target = url.pathname + url.search;
+
+    if (typeof loadContent === 'function') {
+        loadContent(target);
+        return;
+    }
+
+    window.location.href = target;
+}
+
+function applyEnrollmentStatusFilter(status) {
+    navigateWithEnrollmentFilters({ status: status || 'all' }, true);
+}
+
+function applyEnrollmentBranchFilter() {
+    const branchFilter = document.getElementById('branchFilter');
+    if (!branchFilter) {
+        return;
+    }
+
+    navigateWithEnrollmentFilters({ branch: branchFilter.value || '' }, true);
+}
+
+function applyEnrollmentSortFilter() {
+    const sortFilter = document.getElementById('sortFilter');
+    if (!sortFilter) {
+        return;
+    }
+
+    navigateWithEnrollmentFilters({ sort: sortFilter.value || 'priority' }, true);
+}
 
 function showRejectModal(requestId) {
     const modal = document.getElementById('rejectModal');
