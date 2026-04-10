@@ -19,7 +19,8 @@ class LySpeedSeeder extends Seeder
 
     public function run(): void
     {
-        $hashedPassword = Hash::make('P@ssw0rd123');
+        $demoPassword = (string) env('DEMO_SEED_PASSWORD', 'DriveDemo123');
+        $hashedPassword = Hash::make($demoPassword);
 
         $this->command->info('');
         $this->command->info('🏫 Creating LySpeed Driving School (10 branches)...');
@@ -225,7 +226,7 @@ class LySpeedSeeder extends Seeder
 
         // Guests
         $admins = Admin::where('school_id', '=', $school->id)->where('role', '=', 'school_admin')->get()->all();
-        $guests = $this->createGuestsAndEnrollmentRequests($school, [], $admins, 'P@ssw0rd123');
+        $guests = $this->createGuestsAndEnrollmentRequests($school, [], $admins, $demoPassword);
 
         $this->command->info('   ✓ All user identities created (Admins, Managers, Instructors, Students, Guests)');
 
@@ -240,7 +241,7 @@ class LySpeedSeeder extends Seeder
         $this->createBookingsAndPayments($school, $students, $instructors, $courses, $branches, 18);
 
         // Link guests to courses
-        $this->createGuestsAndEnrollmentRequests($school, $courses, $admins, 'P@ssw0rd123');
+        $this->createGuestsAndEnrollmentRequests($school, $courses, $admins, $demoPassword);
 
         // Notifications
         $this->createSampleNotifications($school, $students, $instructors, $admins, $guests);

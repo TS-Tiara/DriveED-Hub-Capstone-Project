@@ -14,6 +14,7 @@ use App\Models\Instructor;
 use App\Models\School;
 use App\Models\Student;
 use App\Models\SystemLog;
+use App\Support\DemoAccountProtection;
 
 class AuthController extends Controller
 {
@@ -526,6 +527,28 @@ class AuthController extends Controller
         $request->validate([
             'password' => ['required', 'string', 'confirmed', new \App\Rules\StrongPassword()],
         ]);
+
+        if (in_array($guard, ['student', 'instructor'], true)
+            && DemoAccountProtection::isProtectedAccount($user->email, $guard, $school)) {
+            $user->update(['must_reset_password' => false]);
+
+            SystemLog::logInfo(
+                "Protected demo account skipped forced password reset: {$user->name}",
+                'authentication',
+                ['user_id' => $user->id, 'email' => $user->email, 'guard' => $guard],
+                $school->id,
+                'force_password_reset_skipped'
+            );
+
+            $routes = [
+                'admin' => 'schools.admin.dashboard',
+                'instructor' => 'schools.instructor.dashboard',
+                'student' => $user->role === 'guest' ? 'schools.guest.dashboard' : 'schools.student.dashboard',
+            ];
+
+            return redirect()->route($routes[$guard], $school)
+                ->with('info', 'This demo account password is fixed and cannot be changed.');
+        }
 
         $user->update([
             'password' => Hash::make($request->password),

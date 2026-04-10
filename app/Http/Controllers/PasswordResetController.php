@@ -16,6 +16,7 @@ use App\Models\Student;
 use App\Models\Admin;
 use App\Models\Instructor;
 use Carbon\Carbon;
+use App\Support\DemoAccountProtection;
 
 class PasswordResetController extends Controller
 {
@@ -74,6 +75,12 @@ class PasswordResetController extends Controller
 
         $user = $resolved['user'];
         $userType = $resolved['user_type'];
+
+        // Demo identities keep fixed credentials for predictable demos.
+        if ($school && DemoAccountProtection::isProtectedAccount($email, $userType, $school)) {
+            $this->registerResetAttempt($request, $school, $email);
+            return back()->with('success', 'If that email is registered, a password reset link will be sent shortly.');
+        }
 
         // Delete old tokens
         DB::table('password_reset_tokens')
@@ -208,6 +215,20 @@ class PasswordResetController extends Controller
         if (!$user) {
             $this->registerResetUpdateAttempt($request, $school, $email);
             return back()->withErrors(['email' => 'User not found.']);
+        }
+
+        if ($school && DemoAccountProtection::isProtectedAccount($user->email, $userType, $school)) {
+            DB::table('password_reset_tokens')
+                ->where('email', $email)
+                ->where('user_type', $userType)
+                ->where('school_id', $schoolId)
+                ->delete();
+
+            $this->registerResetUpdateAttempt($request, $school, $email);
+
+            return back()->withErrors([
+                'email' => 'This demo account password is fixed and cannot be changed.',
+            ]);
         }
 
         $user->password = $request->password; // Cast handles hashing

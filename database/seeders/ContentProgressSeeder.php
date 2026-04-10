@@ -23,7 +23,7 @@ use App\Models\ModuleLesson;
  *  - Progress records
  *
  * Run: php artisan db:seed --class=ContentProgressSeeder
- * All passwords: "P@ssw0rd123"
+ * All non-system seeded passwords: DEMO_SEED_PASSWORD (default: DriveDemo123)
  */
 class ContentProgressSeeder extends Seeder
 {
@@ -55,7 +55,8 @@ class ContentProgressSeeder extends Seeder
 
     public function run(): void
     {
-        $this->hashedPassword = Hash::make('P@ssw0rd123');
+        $demoPassword = (string) env('DEMO_SEED_PASSWORD', 'DriveDemo123');
+        $this->hashedPassword = Hash::make($demoPassword);
 
         $this->command->info('');
         $this->command->info(str_repeat('=', 64));
