@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             SmartDrivingSeeder::class,
             LySpeedSeeder::class,
             DriveEdHubSeeder::class,
+            DemoAccountsVerifiedSeeder::class,
             ContentProgressSeeder::class,
         ]);
     }

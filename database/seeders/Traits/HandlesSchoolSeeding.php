@@ -211,6 +211,13 @@ trait HandlesSchoolSeeding
                 ]
             );
             $guest->role = 'guest';
+            if (in_array($school->slug, ['lyspeed-driving', 'drived-hub'], true)) {
+                $guest->email_verified_at = $guest->email_verified_at ?? now();
+                $guest->verification_code = null;
+                $guest->verification_code_expires_at = null;
+                $guest->verification_attempts = 0;
+                $guest->last_verification_attempt_at = null;
+            }
             $guest->save();
             $guests[] = $guest;
 
