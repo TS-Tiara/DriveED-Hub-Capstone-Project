@@ -10,7 +10,8 @@ class SystemAdminSeeder extends Seeder
 {
     public function run(): void
     {
-        $hashedPassword = Hash::make('P@ssw0rd123');
+        $systemAdminPassword = (string) env('SYSTEM_ADMIN_SEED_PASSWORD', 'U4m!z7Q#p2L@x9V$k6R%t3N&');
+        $hashedPassword = Hash::make($systemAdminPassword);
 
         $this->command->info('🔐 Creating System Administrators...');
 

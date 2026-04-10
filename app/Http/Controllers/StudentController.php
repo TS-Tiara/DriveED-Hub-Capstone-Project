@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\EnrollmentRequestReceived;
 use App\Models\Notification;
 use App\Models\Admin;
+use App\Support\DemoAccountProtection;
 
 class StudentController extends Controller
 {
@@ -311,6 +312,16 @@ class StudentController extends Controller
             'current_password' => 'nullable|required_with:new_password|string',
             'new_password' => ['nullable', 'confirmed', 'different:current_password', new StrongPassword()],
         ]);
+
+        $nameChanged = trim((string) $request->input('name')) !== trim((string) $student->name);
+        $emailChanged = strtolower(trim((string) $request->input('email'))) !== strtolower(trim((string) $student->email));
+        $passwordChanged = $request->filled('new_password');
+
+        if (DemoAccountProtection::isProtectedAccount($student->email, 'student', $school) && ($nameChanged || $emailChanged || $passwordChanged)) {
+            return back()
+            ->withErrors(['name' => 'This demo account has locked name, email, and password.'])
+                ->withInput($request->except(['current_password', 'new_password', 'new_password_confirmation']));
+        }
 
         $data = $request->only(['name', 'email', 'contact', 'address', 'date_of_birth']);
 

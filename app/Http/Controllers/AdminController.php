@@ -34,6 +34,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use App\Support\DemoAccountProtection;
 
 class AdminController extends Controller
 {
@@ -482,6 +483,15 @@ class AdminController extends Controller
                 ],
             ]);
 
+                $nameChanged = trim((string) ($validated['name'] ?? '')) !== trim((string) $student->name);
+                $emailChanged = strtolower(trim((string) ($validated['email'] ?? ''))) !== strtolower(trim((string) $student->email));
+            $passwordChanged = $request->filled('password');
+
+                if (DemoAccountProtection::isProtectedAccount($student->email, 'student', $school) && ($nameChanged || $emailChanged || $passwordChanged)) {
+                return redirect()->route('schools.admin.userManagement', $school)
+                    ->with('error', 'This demo account has locked name, email, and password.');
+            }
+
             DB::beginTransaction();
 
             $data = $request->only('name', 'email', 'contact', 'address', 'branch_id');
@@ -593,6 +603,15 @@ class AdminController extends Controller
                     },
                 ],
             ]);
+
+                $nameChanged = trim((string) $request->input('name')) !== trim((string) $instructor->name);
+                $emailChanged = strtolower(trim((string) $request->input('email'))) !== strtolower(trim((string) $instructor->email));
+            $passwordChanged = $request->filled('password');
+
+                if (DemoAccountProtection::isProtectedAccount($instructor->email, 'instructor', $school) && ($nameChanged || $emailChanged || $passwordChanged)) {
+                return redirect()->route('schools.admin.userManagement', $school)
+                    ->with('error', 'This demo account has locked name, email, and password.');
+            }
 
             $data = $request->only('name', 'email', 'contact', 'license_number', 'branch_id');
 

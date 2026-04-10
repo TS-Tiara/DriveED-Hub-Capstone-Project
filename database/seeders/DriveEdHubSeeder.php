@@ -19,7 +19,8 @@ class DriveEdHubSeeder extends Seeder
 
     public function run(): void
     {
-        $hashedPassword = Hash::make('P@ssw0rd123');
+        $demoPassword = (string) env('DEMO_SEED_PASSWORD', 'DriveDemo123');
+        $hashedPassword = Hash::make($demoPassword);
 
         $this->command->info('');
         $this->command->info('🏫 Creating DriveED Hub Driving School (2 branches)...');

@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use App\Rules\StrongPassword;
+use App\Support\DemoAccountProtection;
 
 class InstructorTimeSlotController extends Controller
 {
@@ -323,6 +324,16 @@ class InstructorTimeSlotController extends Controller
             'current_password' => 'nullable|required_with:new_password|string',
             'new_password' => ['nullable', 'confirmed', 'different:current_password', new StrongPassword()],
         ]);
+
+        $nameChanged = trim((string) $request->input('name')) !== trim((string) $instructor->name);
+        $emailChanged = strtolower(trim((string) $request->input('email'))) !== strtolower(trim((string) $instructor->email));
+        $passwordChanged = $request->filled('new_password');
+
+        if (DemoAccountProtection::isProtectedAccount($instructor->email, 'instructor', $school) && ($nameChanged || $emailChanged || $passwordChanged)) {
+            return back()
+            ->withErrors(['name' => 'This demo account has locked name, email, and password.'])
+                ->withInput($request->except(['current_password', 'new_password', 'new_password_confirmation']));
+        }
 
         $data = $request->only(['name', 'email', 'contact', 'license_number', 'address']);
 

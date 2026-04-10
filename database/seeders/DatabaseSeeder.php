@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             DriveEdHubSeeder::class,
             DemoAccountsVerifiedSeeder::class,
             ContentProgressSeeder::class,
+            DemoCleanAccountsSeeder::class,
         ]);
     }
 }
