@@ -1246,6 +1246,14 @@ class EnrollmentRequestController extends Controller
             $displayPrice = (float) ($enrollmentRequest->package->price ?? ($enrollmentRequest->course->price ?? 0));
         }
 
+        $hasStoredLicense = !empty($enrollmentRequest->learner->student_license_path)
+            || !empty($enrollmentRequest->learner->student_license_data);
+        $isLicenseSubmittedForReview = in_array(
+            $enrollmentRequest->learner->student_license_status,
+            ['pending', 'verified', 'rejected'],
+            true
+        );
+
         return response()->json([
             'id' => $enrollmentRequest->id,
             'student_name' => $enrollmentRequest->learner->name,
@@ -1260,7 +1268,7 @@ class EnrollmentRequestController extends Controller
             'reference_number' => $enrollmentRequest->payment_reference,
             'remarks' => $enrollmentRequest->remarks,
             // Paths/Routes
-            'license_url' => $enrollmentRequest->learner->student_license_path
+            'license_url' => ($hasStoredLicense && $isLicenseSubmittedForReview)
                 ? route('schools.admin.enrollments.viewLicense', ['school' => $school->slug, 'student' => $enrollmentRequest->learner->id])
                 : null,
             'receipt_url' => $enrollmentRequest->payment_proof_path

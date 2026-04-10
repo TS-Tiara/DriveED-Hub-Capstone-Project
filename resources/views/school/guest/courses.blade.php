@@ -898,17 +898,14 @@
                         @if($course->course_type === 'theoretical')
                             <small class="text-muted">TDC is open to all drivers — this helps us customize your learning path</small>
                         @else
-                            <small class="text-muted">PDC requires a Student Driver's License and prior theoretical completion</small>
+                            <small class="text-muted">PDC needs a verified student license before practical driving sessions. You may submit an enrollment request first.</small>
                         @endif
                     </div>
 
                     <!-- Credential Upload (shown for experienced drivers on practical courses) -->
                     <div class="mb-3 credential-section-hidden" id="credentialSection{{ $course->id }}">
                         <label for="credential_file{{ $course->id }}" class="form-label">
-                            <strong>Student Driver's License / Credential</strong>
-                            @if($course->course_type === 'practical')
-                                <span class="text-danger">*</span>
-                            @endif
+                            <strong>Student Driver's License / Credential (Optional)</strong>
                         </label>
                         <input type="file" name="credential_file" id="credential_file{{ $course->id }}" class="form-control @error('credential_file') is-invalid @enderror" accept=".pdf,.jpg,.jpeg,.png">
                         @error('credential_file')
@@ -916,7 +913,7 @@
                         @enderror
                         <small class="text-muted">
                             @if($course->course_type === 'practical')
-                                Upload your Student Driver's License or TDC completion certificate (required for PDC, PDF/Image, max 5MB)
+                                Upload your Student Driver's License now if available. If uploaded before request, it is saved and submitted to admins once your PDC enrollment request is created.
                             @else
                                 Upload a copy of your existing driver's license or credential (optional, PDF/Image, max 5MB)
                             @endif
