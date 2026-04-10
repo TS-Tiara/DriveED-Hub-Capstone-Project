@@ -241,6 +241,11 @@ class DriveEdHubSeeder extends Seeder
                 ]
             );
             $student->role = 'student';
+            $student->email_verified_at = $student->email_verified_at ?? now();
+            $student->verification_code = null;
+            $student->verification_code_expires_at = null;
+            $student->verification_attempts = 0;
+            $student->last_verification_attempt_at = null;
             $student->save();
             $students[] = $student;
         }
@@ -274,6 +279,11 @@ class DriveEdHubSeeder extends Seeder
                 ]
             );
             $g->role = 'guest';
+            $g->email_verified_at = $g->email_verified_at ?? now();
+            $g->verification_code = null;
+            $g->verification_code_expires_at = null;
+            $g->verification_attempts = 0;
+            $g->last_verification_attempt_at = null;
             $g->save();
             $guests[] = $g;
 

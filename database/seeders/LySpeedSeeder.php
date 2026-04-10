@@ -193,6 +193,11 @@ class LySpeedSeeder extends Seeder
                     ]
                 );
                 $student->role = 'student';
+                $student->email_verified_at = $student->email_verified_at ?? now();
+                $student->verification_code = null;
+                $student->verification_code_expires_at = null;
+                $student->verification_attempts = 0;
+                $student->last_verification_attempt_at = null;
                 $student->save();
                 $students[] = $student;
                 $stuOffset++;
@@ -210,6 +215,11 @@ class LySpeedSeeder extends Seeder
             ]
         );
         $demoStudent->role = 'student';
+        $demoStudent->email_verified_at = $demoStudent->email_verified_at ?? now();
+        $demoStudent->verification_code = null;
+        $demoStudent->verification_code_expires_at = null;
+        $demoStudent->verification_attempts = 0;
+        $demoStudent->last_verification_attempt_at = null;
         $demoStudent->save();
         $students[] = $demoStudent;
 
