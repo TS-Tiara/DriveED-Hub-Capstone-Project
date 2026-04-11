@@ -14,7 +14,12 @@
 
         <div class="prose max-w-none text-sm">
             @if(!empty($lesson->content))
-                {!! $lesson->content !!}
+                @php $hasHtml = $lesson->content !== strip_tags($lesson->content); @endphp
+                @if($hasHtml)
+                    {!! $lesson->content !!}
+                @else
+                    {!! nl2br(e($lesson->content)) !!}
+                @endif
             @else
                 <p class="text-gray-500">Lesson content will appear here.</p>
             @endif
