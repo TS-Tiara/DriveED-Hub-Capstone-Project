@@ -3,34 +3,51 @@
 @section('title', $lesson->title ?? 'Lesson Details')
 
 @section('content')
-<div class="container mx-auto px-4 py-6 max-w-5xl">
-    <div class="mb-6">
-        <a href="{{ school_route('admin.courses.modules.lessons.index', ['course' => $course->id, 'module' => $module->id]) }}" class="text-sm text-blue-600 hover:underline">← Back to Lessons</a>
+@include('school.partials.lms-shared-styles')
+
+<div class="lms-page">
+    <div class="lms-header">
+        <div>
+            <h1 class="lms-title">{{ $lesson->title ?? 'Lesson' }}</h1>
+            <p class="lms-subtitle">Module: {{ $module->title ?? 'N/A' }}</p>
+        </div>
+        <div class="lms-actions">
+            <a href="{{ school_route('admin.courses.modules.lessons.index', ['course' => $course->id, 'module' => $module->id]) }}" class="lms-btn lms-btn-muted">Back to Lessons</a>
+            <a href="{{ school_route('admin.courses.modules.lessons.edit', ['course' => $course->id, 'module' => $module->id, 'lesson' => $lesson->id]) }}" class="lms-btn lms-btn-warn">Edit Lesson</a>
+        </div>
     </div>
 
-    <div class="bg-white border rounded-lg shadow-sm p-6">
-        <h1 class="text-2xl font-semibold mb-2">{{ $lesson->title ?? 'Lesson' }}</h1>
-        <p class="text-sm text-gray-500 mb-4">Module: {{ $module->title ?? 'N/A' }}</p>
-        <div class="prose max-w-none text-sm mb-6">
-            {!! $lesson->content ?? '<p class="text-gray-500">No lesson content provided.</p>' !!}
+    <div class="lms-card">
+        <div class="lms-card-head">
+            <h2 class="lms-card-title">Lesson Content</h2>
+            <span class="lms-chip">Sort #{{ $lesson->sort_order ?? '-' }}</span>
         </div>
 
-        @if(!empty($lesson->video_url))
-            <div class="mb-4">
-                <a href="{{ $lesson->video_url }}" target="_blank" rel="noopener" class="text-sm text-blue-600 hover:underline">Open Video Resource</a>
+        <div style="padding: 18px;">
+            <div class="lms-rich">
+                {!! $lesson->content ?? '<p class="lms-inline-note">No lesson content provided.</p>' !!}
             </div>
-        @endif
 
-        <h2 class="text-lg font-semibold mb-2">Attachments</h2>
-        @if(!empty($lesson->attachments) && is_array($lesson->attachments))
-            <ul class="list-disc pl-5 text-sm">
-                @foreach($lesson->attachments as $attachment)
-                    <li>{{ $attachment['name'] ?? 'Attachment' }}</li>
-                @endforeach
-            </ul>
-        @else
-            <p class="text-sm text-gray-500">No attachments uploaded.</p>
-        @endif
+            @if(!empty($lesson->video_url))
+                <div class="lms-section">
+                    <h3 class="lms-section-title">Video Resource</h3>
+                    <a href="{{ $lesson->video_url }}" target="_blank" rel="noopener" class="lms-link lms-link-view">Open Video</a>
+                </div>
+            @endif
+
+            <div class="lms-section">
+                <h3 class="lms-section-title">Attachments</h3>
+                @if(!empty($lesson->attachments) && is_array($lesson->attachments))
+                    <ul class="lms-attachments">
+                        @foreach($lesson->attachments as $attachment)
+                            <li>{{ $attachment['name'] ?? 'Attachment' }}</li>
+                        @endforeach
+                    </ul>
+                @else
+                    <p class="lms-inline-note">No attachments uploaded.</p>
+                @endif
+            </div>
+        </div>
     </div>
 </div>
 @endsection

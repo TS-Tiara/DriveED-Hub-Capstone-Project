@@ -1935,6 +1935,8 @@
                     <div class="nav-category-items">
                         <a href="{{ school_route('admin.courses', [], $currentSchool) }}" class="nav-item"
                             data-page="courses">Courses</a>
+                        <a href="{{ school_route('admin.materials.index', [], $currentSchool) }}" class="nav-item"
+                            data-page="materials">Course Materials</a>
                         <a href="{{ school_route('admin.enrollments.index', [], $currentSchool) }}" class="nav-item"
                             data-page="enrollments">Enrollments</a>
                         <a href="{{ school_route('admin.theoretical.index', [], $currentSchool) }}" class="nav-item"
@@ -2014,8 +2016,20 @@
                 <div class="nav-divider"></div>
 
                 {{-- Theoretical Training --}}
-                <a href="{{ $schoolRoute('instructor.theoretical.index') }}" class="nav-item"
-                    data-page="theoretical">Theoretical Training</a>
+                <div class="nav-category" data-category="instructor-training-resources">
+                    <div class="nav-category-header" onclick="toggleCategory(this)" role="button" aria-expanded="false"
+                        tabindex="0"
+                        onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleCategory(this)}">
+                        <span>Training Resources</span>
+                        <span class="nav-category-arrow">&#9660;</span>
+                    </div>
+                    <div class="nav-category-items">
+                        <a href="{{ $schoolRoute('instructor.theoretical.index') }}" class="nav-item"
+                            data-page="theoretical">Theoretical Training</a>
+                        <a href="{{ $schoolRoute('instructor.materials.index') }}" class="nav-item"
+                            data-page="materials">Course Materials</a>
+                    </div>
+                </div>
             @elseif(Auth::guard('student')->check())
                 @php
                     $currentStudent = Auth::guard('student')->user();
@@ -2362,6 +2376,7 @@
             'admin/user-management': 'User Management',
             'admin/removal-requests': 'Removal Requests',
             'admin/courses': 'Courses',
+            'admin/materials': 'Course Materials',
             'admin/enrollments': 'Enrollments',
             'admin/theoretical': 'Theoretical Training',
             'admin/schedules': 'Manage Schedule',
@@ -2380,6 +2395,7 @@
             'instructor/students': 'My Students',
             'instructor/sessions': 'Session Completions',
             'instructor/grades': 'Grades',
+            'instructor/materials': 'Course Materials',
             'instructor/theoretical': 'Theoretical Training',
             // Student pages
             'student': 'Dashboard',

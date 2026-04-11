@@ -536,6 +536,16 @@
     .mini-schedule-info {
         color: #6c757d;
     }
+
+    .mini-schedule-students {
+        margin-top: 4px;
+        font-size: 12px;
+        color: #374151;
+    }
+
+    .mini-schedule-students-empty {
+        color: #9ca3af;
+    }
     
     .no-lessons {
         text-align: center;
@@ -1008,12 +1018,24 @@
                         @php
                             $instructor = $slot->instructors->firstWhere('id', $instructorId);
                             $isAdmin = $instructor && $instructor->pivot->assignment_type === 'admin_assigned';
+                            $upcomingStudents = $slot->bookings
+                                ->where('instructor_id', $instructorId)
+                                ->whereIn('status', ['scheduled', 'confirmed', 'done', 'completed'])
+                                ->pluck('student.name')
+                                ->filter()
+                                ->unique()
+                                ->values();
                         @endphp
                         <div class="mini-schedule-card {{ $isAdmin ? 'mini-schedule-card-admin' : 'mini-schedule-card-my' }}">
                             <div class="mini-schedule-date">{{ \Carbon\Carbon::parse($slot->date)->format('D, M d') }}</div>
                             <div class="mini-schedule-info">
                                 {{ \Carbon\Carbon::parse($slot->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($slot->end_time)->format('g:i A') }}
                             </div>
+                            @if($upcomingStudents->isNotEmpty())
+                                <div class="mini-schedule-students">Students: {{ $upcomingStudents->implode(', ') }}</div>
+                            @else
+                                <div class="mini-schedule-students mini-schedule-students-empty">No student booked yet</div>
+                            @endif
                         </div>
                     @empty
                         <div class="no-lessons">No upcoming slots</div>
@@ -1153,11 +1175,25 @@
                 <div class="sidebar-section">
                     <h3 class="sidebar-title">Your Schedule</h3>
                     @forelse($upcomingSlots as $slot)
+                        @php
+                            $upcomingStudents = $slot->bookings
+                                ->where('instructor_id', $instructorId)
+                                ->whereIn('status', ['scheduled', 'confirmed', 'done', 'completed'])
+                                ->pluck('student.name')
+                                ->filter()
+                                ->unique()
+                                ->values();
+                        @endphp
                         <div class="mini-schedule-card">
                             <div class="mini-schedule-date">{{ \Carbon\Carbon::parse($slot->date)->format('D, M d') }}</div>
                             <div class="mini-schedule-info">
                                 {{ \Carbon\Carbon::parse($slot->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($slot->end_time)->format('g:i A') }}
                             </div>
+                            @if($upcomingStudents->isNotEmpty())
+                                <div class="mini-schedule-students">Students: {{ $upcomingStudents->implode(', ') }}</div>
+                            @else
+                                <div class="mini-schedule-students mini-schedule-students-empty">No student booked yet</div>
+                            @endif
                         </div>
                     @empty
                         <div class="no-lessons">No upcoming slots</div>
@@ -1231,12 +1267,24 @@
                     @php
                         $instructor = $slot->instructors->firstWhere('id', $instructorId);
                         $isAdmin = $instructor && $instructor->pivot->assignment_type === 'admin_assigned';
+                        $upcomingStudents = $slot->bookings
+                            ->where('instructor_id', $instructorId)
+                            ->whereIn('status', ['scheduled', 'confirmed', 'done', 'completed'])
+                            ->pluck('student.name')
+                            ->filter()
+                            ->unique()
+                            ->values();
                     @endphp
                     <div class="mini-schedule-card {{ $isAdmin ? 'mini-schedule-card-admin' : 'mini-schedule-card-my' }}">
                         <div class="mini-schedule-date">{{ \Carbon\Carbon::parse($slot->date)->format('D, M d') }}</div>
                         <div class="mini-schedule-info">
                             {{ \Carbon\Carbon::parse($slot->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($slot->end_time)->format('g:i A') }}
                         </div>
+                        @if($upcomingStudents->isNotEmpty())
+                            <div class="mini-schedule-students">Students: {{ $upcomingStudents->implode(', ') }}</div>
+                        @else
+                            <div class="mini-schedule-students mini-schedule-students-empty">No student booked yet</div>
+                        @endif
                     </div>
                 @empty
                     <div class="no-lessons">No upcoming slots</div>

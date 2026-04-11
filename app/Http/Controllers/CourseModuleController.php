@@ -23,6 +23,61 @@ class CourseModuleController extends Controller
     }
 
     /**
+     * Display a role-based course materials hub (list of courses).
+     */
+    public function materialsHub(Request $request, School $school)
+    {
+        $role = $this->resolveAuthRole();
+
+        if (!in_array($role, ['admin', 'instructor'], true)) {
+            abort(403);
+        }
+
+        $courses = $school->courses()
+            ->select('id', 'title', 'type', 'course_type', 'status', 'hours_required', 'duration_hours')
+            ->withCount('modules')
+            ->orderBy('title')
+            ->get()
+            ->map(function ($course) {
+                $canonicalType = strtolower(trim((string) ($course->course_type ?? '')));
+                $legacyType = strtolower(trim((string) ($course->type ?? '')));
+
+                $validTypes = ['theoretical', 'practical', 'combo'];
+
+                $effectiveType = in_array($canonicalType, $validTypes, true)
+                    ? $canonicalType
+                    : null;
+
+                // Backward compatibility: some older rows still carry practical/combo only in the legacy `type` column.
+                if (in_array($legacyType, ['practical', 'combo'], true) && $effectiveType === 'theoretical') {
+                    $effectiveType = $legacyType;
+                }
+
+                if ($effectiveType === null) {
+                    $effectiveType = in_array($legacyType, $validTypes, true)
+                        ? $legacyType
+                        : 'theoretical';
+                }
+
+                $course->effective_course_type = $effectiveType;
+
+                return $course;
+            });
+
+        $practicalCount = $courses->whereIn('effective_course_type', ['practical', 'combo'])->count();
+        $theoreticalCount = $courses->where('effective_course_type', 'theoretical')->count();
+
+        $viewPath = $role === 'admin'
+            ? 'admin.modules.courses'
+            : 'instructor.modules.courses';
+
+        return view(
+            $school->resolveView($viewPath),
+            compact('school', 'courses', 'practicalCount', 'theoreticalCount')
+        )->with('isAjax', $request->ajax());
+    }
+
+    /**
      * Display a listing of modules for a specific course
      */
     public function index(Request $request, School $school, Course $course)
