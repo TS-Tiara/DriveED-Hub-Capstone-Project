@@ -3,24 +3,41 @@
 @section('title', 'Course Modules')
 
 @section('content')
-<div class="container mx-auto px-4 py-6 max-w-5xl">
-    <div class="flex items-center justify-between mb-6">
-        <h1 class="text-2xl font-semibold">Instructor View: Modules</h1>
-        <a href="{{ school_route('instructor.dashboard') }}" class="inline-flex items-center px-4 py-2 rounded-md bg-gray-100 hover:bg-gray-200 text-sm font-medium">Back to Dashboard</a>
+@include('school.partials.lms-shared-styles')
+
+<div class="lms-page">
+    <div class="lms-header">
+        <div>
+            <h1 class="lms-title">Course Modules</h1>
+            <p class="lms-subtitle">Reference materials for {{ $course->title ?? 'this course' }}.</p>
+        </div>
+        <div class="lms-actions">
+            <a href="{{ school_route('instructor.dashboard') }}" class="lms-btn lms-btn-muted">Back to Dashboard</a>
+        </div>
     </div>
 
-    <div class="bg-white border rounded-lg shadow-sm">
-        <ul class="divide-y">
+    <div class="lms-card">
+        <div class="lms-card-head">
+            <h2 class="lms-card-title">Available Modules</h2>
+            <span class="lms-chip">{{ $modules->count() }} module(s)</span>
+        </div>
+
+        <ul class="lms-list">
             @forelse($modules as $module)
-                <li class="p-4 flex items-center justify-between">
+                <li class="lms-item">
                     <div>
-                        <div class="font-medium">{{ $module->title }}</div>
-                        <div class="text-sm text-gray-500">{{ $module->lessons->count() ?? 0 }} lesson(s)</div>
+                        <p class="lms-item-title">{{ $module->title }}</p>
+                        <p class="lms-item-meta">
+                            {{ $module->lessons->count() ?? 0 }} lesson(s)
+                            | {{ ucfirst($module->module_type ?? 'lesson') }}
+                        </p>
                     </div>
-                    <a href="{{ school_route('instructor.courses.modules.show', ['course' => $course->id, 'module' => $module->id]) }}" class="text-sm text-blue-600 hover:underline">View Module</a>
+                    <div class="lms-item-links">
+                        <a href="{{ school_route('instructor.courses.modules.show', ['course' => $course->id, 'module' => $module->id]) }}" class="lms-link lms-link-open">Open Module</a>
+                    </div>
                 </li>
             @empty
-                <li class="p-4 text-sm text-gray-500">No modules found.</li>
+                <li class="lms-empty">No modules found.</li>
             @endforelse
         </ul>
     </div>

@@ -361,6 +361,8 @@ Route::prefix('{school:slug}')
                         );
 
                         // Course modules and lessons management (LMS content)
+                        Route::get('/materials', [CourseModuleController::class , 'materialsHub'])->name('materials.index');
+
                         Route::prefix('courses/{course}')->name('courses.')->group(function () {
                             // Modules
                             Route::prefix('modules')->name('modules.')->group(function () {
@@ -469,6 +471,8 @@ Route::prefix('{school:slug}')
 
                     // LMS routes with ajax middleware for layout consistency
                     Route::middleware(['ajax'])->group(function () {
+                    Route::get('/materials', [CourseModuleController::class , 'materialsHub'])->name('materials.index');
+
                     Route::prefix('theoretical')->name('theoretical.')->group(function () {
                             Route::get('/', [TheoreticalCompletionController::class , 'index'])->name('index');
                             Route::get('/{enrollment}', [TheoreticalCompletionController::class , 'show'])->name('show');

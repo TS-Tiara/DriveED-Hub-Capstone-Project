@@ -1620,6 +1620,8 @@
                                 $isEnrolledInCourse = empty($enrolledCourseIds) || in_array($timeSlot->course_id, $enrolledCourseIds);
                                 $courseName = $timeSlot->course->title ?? 'Driving Lesson';
                                 $linkedEnrollmentRequestId = $approvedEnrollmentByCourse->get($timeSlot->course_id);
+                                                                $availableStudentSpots = $timeSlot->getAvailableStudentSpots();
+                                                                $slotIsFull = $availableStudentSpots <= 0;
                             @endphp
                                <div class="available-schedule-card {{ !$isEnrolledInCourse ? 'is-hidden' : '' }}" 
                                  data-course-id="{{ $timeSlot->course_id ?? '' }}" 
@@ -1629,6 +1631,7 @@
                                  data-date="{{ $date }}"
                                  data-start-time="{{ \Carbon\Carbon::parse($timeSlot->start_time)->format('H:i') }}"
                                  data-end-time="{{ \Carbon\Carbon::parse($timeSlot->end_time)->format('H:i') }}"
+                                                                 data-available-spots="{{ $availableStudentSpots }}"
                                    data-enrolled="{{ $isEnrolledInCourse ? 'true' : 'false' }}">
                                 <div class="available-details">
                                     <div class="booking-time booking-time-wrap">
@@ -1650,7 +1653,7 @@
                                     
                                     @if($selectionMode === 'student_chooses')
                                         <!-- Student selects instructor -->
-                                        <select class="instructor-select" id="instructor-{{ $timeSlot->id }}" onchange="updateBookButton({{ $timeSlot->id }})">
+                                        <select class="instructor-select" id="instructor-{{ $timeSlot->id }}" onchange="updateBookButton({{ $timeSlot->id }})" {{ $slotIsFull ? 'disabled' : '' }}>
                                             <option value="">Select an instructor</option>
                                             @if($timeSlot->instructors->count() > 0)
                                                 @foreach($timeSlot->instructors as $instructor)
@@ -1664,10 +1667,10 @@
                                                 <span class="course-badge">{{ $timeSlot->course->vehicle_type ?? 'Manual' }}</span>
                                             @endif
                                             <div class="booking-status booking-status-inline">
-                                                {{ $timeSlot->getAvailableStudentSpots() }} {{ $timeSlot->getAvailableStudentSpots() === 1 ? 'spot' : 'spots' }} available
+                                                {{ $availableStudentSpots }} {{ $availableStudentSpots === 1 ? 'spot' : 'spots' }} available
                                             </div>
                                             <button class="book-now-btn book-now-btn-inline book-now-btn-disabled" id="book-btn-{{ $timeSlot->id }}" onclick="bookTimeSlot({{ $timeSlot->id }})" disabled>
-                                                Schedule Lesson
+                                                {{ $slotIsFull ? 'Full' : 'Schedule Lesson' }}
                                             </button>
                                         </div>
                                     @elseif($selectionMode === 'auto_assign')
@@ -1677,10 +1680,10 @@
                                                 <span class="course-badge">{{ $timeSlot->course->vehicle_type ?? 'Manual' }}</span>
                                             @endif
                                             <div class="booking-status booking-status-inline">
-                                                {{ $timeSlot->getAvailableStudentSpots() }} {{ $timeSlot->getAvailableStudentSpots() === 1 ? 'spot' : 'spots' }} available
+                                                {{ $availableStudentSpots }} {{ $availableStudentSpots === 1 ? 'spot' : 'spots' }} available
                                             </div>
-                                            <button class="book-now-btn book-now-btn-inline" onclick="bookTimeSlotAuto({{ $timeSlot->id }})">
-                                                Schedule Now
+                                            <button class="book-now-btn book-now-btn-inline {{ $slotIsFull ? 'book-now-btn-disabled' : '' }}" onclick="bookTimeSlotAuto({{ $timeSlot->id }})" {{ $slotIsFull ? 'disabled' : '' }}>
+                                                {{ $slotIsFull ? 'Full' : 'Schedule Now' }}
                                             </button>
                                         </div>
                                     @else
@@ -1690,10 +1693,10 @@
                                                 <span class="course-badge">{{ $timeSlot->course->vehicle_type ?? 'Manual' }}</span>
                                             @endif
                                             <div class="booking-status booking-status-inline">
-                                                {{ $timeSlot->getAvailableStudentSpots() }} {{ $timeSlot->getAvailableStudentSpots() === 1 ? 'spot' : 'spots' }} available
+                                                {{ $availableStudentSpots }} {{ $availableStudentSpots === 1 ? 'spot' : 'spots' }} available
                                             </div>
-                                            <button class="book-now-btn book-now-btn-inline" onclick="bookTimeSlotAdmin({{ $timeSlot->id }})">
-                                                Request Schedule
+                                            <button class="book-now-btn book-now-btn-inline {{ $slotIsFull ? 'book-now-btn-disabled' : '' }}" onclick="bookTimeSlotAdmin({{ $timeSlot->id }})" {{ $slotIsFull ? 'disabled' : '' }}>
+                                                {{ $slotIsFull ? 'Full' : 'Request Schedule' }}
                                             </button>
                                         </div>
                                     @endif
@@ -2091,7 +2094,13 @@
         const startTime = timeSlotCard.getAttribute('data-start-time');
         const endTime = timeSlotCard.getAttribute('data-end-time');
         const enrollmentRequestId = timeSlotCard.getAttribute('data-enrollment-request-id');
+        const availableSpots = parseInt(timeSlotCard.getAttribute('data-available-spots') || '0', 10);
         const instructorName = select.options[select.selectedIndex].text;
+
+        if (availableSpots <= 0) {
+            showNotification('This slot is already full.', 'error');
+            return;
+        }
 
         if (!enrollmentRequestId) {
             showNotification('This schedule cannot be booked because no active enrollment is linked to this course.', 'error');
@@ -2110,6 +2119,12 @@
         const startTime = timeSlotCard.getAttribute('data-start-time');
         const endTime = timeSlotCard.getAttribute('data-end-time');
         const enrollmentRequestId = timeSlotCard.getAttribute('data-enrollment-request-id');
+        const availableSpots = parseInt(timeSlotCard.getAttribute('data-available-spots') || '0', 10);
+
+        if (availableSpots <= 0) {
+            showNotification('This slot is already full.', 'error');
+            return;
+        }
 
         if (!enrollmentRequestId) {
             showNotification('This schedule cannot be booked because no active enrollment is linked to this course.', 'error');
@@ -2128,6 +2143,12 @@
         const startTime = timeSlotCard.getAttribute('data-start-time');
         const endTime = timeSlotCard.getAttribute('data-end-time');
         const enrollmentRequestId = timeSlotCard.getAttribute('data-enrollment-request-id');
+        const availableSpots = parseInt(timeSlotCard.getAttribute('data-available-spots') || '0', 10);
+
+        if (availableSpots <= 0) {
+            showNotification('This slot is already full.', 'error');
+            return;
+        }
 
         if (!enrollmentRequestId) {
             showNotification('This schedule cannot be booked because no active enrollment is linked to this course.', 'error');
@@ -2140,8 +2161,10 @@
     function updateBookButton(timeSlotId) {
         const select = document.getElementById('instructor-' + timeSlotId);
         const button = document.getElementById('book-btn-' + timeSlotId);
+        const timeSlotCard = select.closest('.available-schedule-card');
+        const availableSpots = parseInt(timeSlotCard?.getAttribute('data-available-spots') || '0', 10);
         
-        if (select.value) {
+        if (select.value && availableSpots > 0) {
             button.disabled = false;
             button.classList.remove('book-now-btn-disabled');
         } else {

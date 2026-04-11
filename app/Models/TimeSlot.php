@@ -116,7 +116,9 @@ class TimeSlot extends Model
             $sessionType = ($this->course?->course_type === 'practical') ? 'practical' : 'theoretical';
         }
 
-        $bookingsCount = $this->bookings->count();
+        $bookingsCount = $this->bookings
+            ->whereIn('status', ['pending', 'scheduled', 'confirmed', 'done', 'completed'])
+            ->count();
 
         if ($sessionType === 'theoretical') {
             // Classroom capacity is fixed to max_students once at least 1 instructor joins.

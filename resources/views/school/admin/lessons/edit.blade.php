@@ -3,32 +3,60 @@
 @section('title', 'Edit Lesson')
 
 @section('content')
-<div class="container mx-auto px-4 py-6 max-w-4xl">
-    <h1 class="text-2xl font-semibold mb-6">Edit Lesson</h1>
+@include('school.partials.lms-shared-styles')
 
-    <form method="POST" action="{{ school_route('admin.courses.modules.lessons.update', ['course' => $course->id, 'module' => $module->id, 'lesson' => $lesson->id]) }}" enctype="multipart/form-data" class="bg-white border rounded-lg shadow-sm p-6 space-y-4">
-        @csrf
-        @method('PUT')
+<div class="lms-page" style="max-width: 900px;">
+    <div class="lms-header">
         <div>
-            <label for="title" class="block text-sm font-medium mb-1">Title</label>
-            <input id="title" name="title" type="text" value="{{ old('title', $lesson->title) }}" required class="w-full border rounded-md px-3 py-2 text-sm">
+            <h1 class="lms-title">Edit Lesson</h1>
+            <p class="lms-subtitle">Module: {{ $module->title ?? 'N/A' }}</p>
         </div>
-        <div>
-            <label for="content" class="block text-sm font-medium mb-1">Content</label>
-            <textarea id="content" name="content" rows="8" class="w-full border rounded-md px-3 py-2 text-sm">{{ old('content', $lesson->content) }}</textarea>
+        <div class="lms-actions">
+            <a href="{{ school_route('admin.courses.modules.lessons.show', ['course' => $course->id, 'module' => $module->id, 'lesson' => $lesson->id]) }}" class="lms-btn lms-btn-muted">Cancel</a>
         </div>
-        <div>
-            <label for="video_url" class="block text-sm font-medium mb-1">Video URL</label>
-            <input id="video_url" name="video_url" type="url" value="{{ old('video_url', $lesson->video_url) }}" class="w-full border rounded-md px-3 py-2 text-sm">
+    </div>
+
+    <div class="lms-form-wrap">
+        @if($errors->any())
+            <div class="lms-errors">
+                <ul>
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        <form method="POST" action="{{ school_route('admin.courses.modules.lessons.update', ['course' => $course->id, 'module' => $module->id, 'lesson' => $lesson->id]) }}" enctype="multipart/form-data" class="lms-form">
+            @csrf
+            @method('PUT')
+
+            <div class="lms-field">
+                <label for="title" class="lms-label">Lesson Title</label>
+                <input id="title" name="title" type="text" value="{{ old('title', $lesson->title) }}" required class="lms-input">
+            </div>
+
+            <div class="lms-field">
+                <label for="content" class="lms-label">Lesson Content</label>
+                <textarea id="content" name="content" rows="10" class="lms-textarea">{{ old('content', $lesson->content) }}</textarea>
+            </div>
+
+            <div class="lms-field">
+                <label for="video_url" class="lms-label">Video URL (Optional)</label>
+                <input id="video_url" name="video_url" type="url" value="{{ old('video_url', $lesson->video_url) }}" class="lms-input" placeholder="https://...">
+            </div>
+
+            <div class="lms-field">
+                <label for="attachments" class="lms-label">Add New Attachments (Optional)</label>
+                <input id="attachments" name="attachments[]" type="file" multiple class="lms-input">
+                <p class="lms-help">New uploads are appended to existing attachments.</p>
+            </div>
+
+            <div class="lms-actions" style="margin-top: 4px;">
+                <button type="submit" class="lms-btn lms-btn-primary">Update Lesson</button>
+                <a href="{{ school_route('admin.courses.modules.lessons.show', ['course' => $course->id, 'module' => $module->id, 'lesson' => $lesson->id]) }}" class="lms-btn lms-btn-muted">Back</a>
+            </div>
+        </form>
         </div>
-        <div>
-            <label for="attachments" class="block text-sm font-medium mb-1">Add New Attachments</label>
-            <input id="attachments" name="attachments[]" type="file" multiple class="w-full text-sm">
-        </div>
-        <div class="flex items-center gap-3">
-            <button type="submit" class="px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium">Update Lesson</button>
-            <a href="{{ school_route('admin.courses.modules.lessons.show', ['course' => $course->id, 'module' => $module->id, 'lesson' => $lesson->id]) }}" class="px-4 py-2 rounded-md bg-gray-100 hover:bg-gray-200 text-sm font-medium">Cancel</a>
-        </div>
-    </form>
 </div>
 @endsection

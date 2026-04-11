@@ -3,32 +3,58 @@
 @section('title', 'Edit Module')
 
 @section('content')
-<div class="container mx-auto px-4 py-6 max-w-3xl">
-    <h1 class="text-2xl font-semibold mb-6">Edit Module</h1>
+@include('school.partials.lms-shared-styles')
 
-    <form method="POST" action="{{ school_route('admin.courses.modules.update', ['course' => $course->id, 'module' => $module->id]) }}" class="bg-white border rounded-lg shadow-sm p-6 space-y-4">
-        @csrf
-        @method('PUT')
+<div class="lms-page" style="max-width: 850px;">
+    <div class="lms-header">
         <div>
-            <label for="title" class="block text-sm font-medium mb-1">Title</label>
-            <input id="title" name="title" type="text" value="{{ old('title', $module->title) }}" required class="w-full border rounded-md px-3 py-2 text-sm">
+            <h1 class="lms-title">Edit Module</h1>
+            <p class="lms-subtitle">Update content setup for {{ $module->title }}.</p>
         </div>
-        <div>
-            <label for="description" class="block text-sm font-medium mb-1">Description</label>
-            <textarea id="description" name="description" rows="4" class="w-full border rounded-md px-3 py-2 text-sm">{{ old('description', $module->description) }}</textarea>
+        <div class="lms-actions">
+            <a href="{{ school_route('admin.courses.modules.show', ['course' => $course->id, 'module' => $module->id]) }}" class="lms-btn lms-btn-muted">Cancel</a>
         </div>
-        <div>
-            <label for="module_type" class="block text-sm font-medium mb-1">Module Type</label>
-            <select id="module_type" name="module_type" class="w-full border rounded-md px-3 py-2 text-sm" required>
-                @foreach(['lesson' => 'Lesson', 'reading' => 'Reading', 'video' => 'Video', 'assessment' => 'Assessment'] as $value => $label)
-                    <option value="{{ $value }}" @selected(old('module_type', $module->module_type) === $value)>{{ $label }}</option>
-                @endforeach
-            </select>
+    </div>
+
+    <div class="lms-form-wrap">
+        @if($errors->any())
+            <div class="lms-errors">
+                <ul>
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        <form method="POST" action="{{ school_route('admin.courses.modules.update', ['course' => $course->id, 'module' => $module->id]) }}" class="lms-form">
+            @csrf
+            @method('PUT')
+
+            <div class="lms-field">
+                <label for="title" class="lms-label">Module Title</label>
+                <input id="title" name="title" type="text" value="{{ old('title', $module->title) }}" required class="lms-input">
+            </div>
+
+            <div class="lms-field">
+                <label for="description" class="lms-label">Description</label>
+                <textarea id="description" name="description" rows="4" class="lms-textarea">{{ old('description', $module->description) }}</textarea>
+            </div>
+
+            <div class="lms-field">
+                <label for="module_type" class="lms-label">Module Type</label>
+                <select id="module_type" name="module_type" class="lms-select" required>
+                    @foreach(['lesson' => 'Lesson', 'reading' => 'Reading', 'video' => 'Video', 'assessment' => 'Assessment'] as $value => $label)
+                        <option value="{{ $value }}" @selected(old('module_type', $module->module_type) === $value)>{{ $label }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="lms-actions" style="margin-top: 4px;">
+                <button type="submit" class="lms-btn lms-btn-primary">Update Module</button>
+                <a href="{{ school_route('admin.courses.modules.show', ['course' => $course->id, 'module' => $module->id]) }}" class="lms-btn lms-btn-muted">Back</a>
+            </div>
+        </form>
         </div>
-        <div class="flex items-center gap-3">
-            <button type="submit" class="px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium">Update Module</button>
-            <a href="{{ school_route('admin.courses.modules.show', ['course' => $course->id, 'module' => $module->id]) }}" class="px-4 py-2 rounded-md bg-gray-100 hover:bg-gray-200 text-sm font-medium">Cancel</a>
-        </div>
-    </form>
 </div>
 @endsection

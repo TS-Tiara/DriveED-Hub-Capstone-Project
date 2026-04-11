@@ -372,28 +372,99 @@ class BookingController extends Controller
                     return back()->withErrors(['time_slot' => 'You already have a schedule for this time slot.']);
                 }
 
+                $slotSessionType = $timeSlot->session_type;
+                if (!in_array($slotSessionType, ['theoretical', 'practical'], true)) {
+                    $slotSessionType = ($timeSlot->course?->course_type === 'practical') ? 'practical' : 'theoretical';
+                }
+
+                $activeSlotStatuses = ['pending', 'scheduled', 'confirmed', 'done', 'completed'];
+                $slotBookingsCount = \App\Models\Booking::where('time_slot_id', $timeSlot->id)
+                    ->whereIn('status', $activeSlotStatuses)
+                    ->count();
+
+                $assignedInstructors = $timeSlot->instructors;
+
+                if ($slotSessionType === 'theoretical') {
+                    $maxStudents = (int) ($timeSlot->max_students ?? 30);
+                    if ($slotBookingsCount >= $maxStudents) {
+                        $message = 'This theoretical slot is already full.';
+                        if ($request->ajax() || $request->wantsJson()) {
+                            return response()->json(['success' => false, 'message' => $message], 422);
+                        }
+                        return back()->withErrors(['time_slot' => $message]);
+                    }
+                } else {
+                    if ($assignedInstructors->isEmpty()) {
+                        $message = 'This practical slot has no assigned instructor.';
+                        if ($request->ajax() || $request->wantsJson()) {
+                            return response()->json(['success' => false, 'message' => $message], 422);
+                        }
+                        return back()->withErrors(['time_slot' => $message]);
+                    }
+
+                    // PDC: each assigned instructor can only handle one student per slot.
+                    if ($slotBookingsCount >= $assignedInstructors->count()) {
+                        $message = 'This practical slot is already full (1 student per instructor).';
+                        if ($request->ajax() || $request->wantsJson()) {
+                            return response()->json(['success' => false, 'message' => $message], 422);
+                        }
+                        return back()->withErrors(['time_slot' => $message]);
+                    }
+                }
+
+                if (!empty($validated['instructor_id']) && $assignedInstructors->isNotEmpty()) {
+                    $isInstructorAssignedToSlot = $assignedInstructors->contains('id', (int) $validated['instructor_id']);
+                    if (!$isInstructorAssignedToSlot) {
+                        $message = 'Selected instructor is not assigned to this slot.';
+                        if ($request->ajax() || $request->wantsJson()) {
+                            return response()->json(['success' => false, 'message' => $message], 422);
+                        }
+                        return back()->withErrors(['instructor_id' => $message]);
+                    }
+                }
+
                 // Auto-assign instructor if not provided
                 if (empty($validated['instructor_id'])) {
-                    // Get instructors assigned to this time slot
-                    $assignedInstructors = $timeSlot->instructors;
-
                     if ($assignedInstructors->isNotEmpty()) {
                         // Find instructor with least bookings for this slot (load balancing)
                         $instructorBookingCounts = [];
                         foreach ($assignedInstructors as $instructor) {
                             $count = \App\Models\Booking::where('time_slot_id', $timeSlot->id)
                                 ->where('instructor_id', $instructor->id)
-                                ->whereIn('status', ['pending', 'scheduled', 'confirmed'])
+                                ->whereIn('status', $activeSlotStatuses)
                                 ->count();
                             $instructorBookingCounts[$instructor->id] = $count;
                         }
 
-                        // Get instructor with minimum bookings
-                        $minBookings = min($instructorBookingCounts);
-                        $availableInstructors = array_keys(array_filter($instructorBookingCounts, fn($count) => $count === $minBookings));
+                        if ($slotSessionType === 'practical') {
+                            $availableInstructors = array_keys(array_filter($instructorBookingCounts, fn($count) => $count < 1));
+                            if (empty($availableInstructors)) {
+                                $message = 'This practical slot is already full (1 student per instructor).';
+                                if ($request->ajax() || $request->wantsJson()) {
+                                    return response()->json(['success' => false, 'message' => $message], 422);
+                                }
+                                return back()->withErrors(['time_slot' => $message]);
+                            }
+                            $validated['instructor_id'] = $availableInstructors[array_rand($availableInstructors)];
+                        } else {
+                            // Theoretical: distribute to least-loaded instructor for this slot.
+                            $minBookings = min($instructorBookingCounts);
+                            $availableInstructors = array_keys(array_filter($instructorBookingCounts, fn($count) => $count === $minBookings));
+                            $validated['instructor_id'] = $availableInstructors[array_rand($availableInstructors)];
+                        }
+                    }
+                } elseif ($slotSessionType === 'practical') {
+                    $selectedInstructorBookings = \App\Models\Booking::where('time_slot_id', $timeSlot->id)
+                        ->where('instructor_id', $validated['instructor_id'])
+                        ->whereIn('status', $activeSlotStatuses)
+                        ->count();
 
-                        // Randomly pick one if multiple have same count
-                        $validated['instructor_id'] = $availableInstructors[array_rand($availableInstructors)];
+                    if ($selectedInstructorBookings >= 1) {
+                        $message = 'Selected instructor already has a student in this practical slot.';
+                        if ($request->ajax() || $request->wantsJson()) {
+                            return response()->json(['success' => false, 'message' => $message], 422);
+                        }
+                        return back()->withErrors(['instructor_id' => $message]);
                     }
                 }
             }

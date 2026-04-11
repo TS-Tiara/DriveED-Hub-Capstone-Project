@@ -3,27 +3,46 @@
 @section('title', 'Module Lessons')
 
 @section('content')
-<div class="container mx-auto px-4 py-6 max-w-6xl">
-    <div class="flex items-center justify-between mb-6">
-        <h1 class="text-2xl font-semibold">Lessons: {{ $module->title ?? 'Module' }}</h1>
-        <a href="{{ school_route('admin.courses.modules.lessons.create', ['course' => $course->id, 'module' => $module->id]) }}" class="px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium">Create Lesson</a>
+@include('school.partials.lms-shared-styles')
+
+<div class="lms-page">
+    <div class="lms-header">
+        <div>
+            <h1 class="lms-title">Lessons</h1>
+            <p class="lms-subtitle">{{ $module->title ?? 'Module' }}</p>
+        </div>
+        <div class="lms-actions">
+            <a href="{{ school_route('admin.courses.modules.show', ['course' => $course->id, 'module' => $module->id]) }}" class="lms-btn lms-btn-muted">Back to Module</a>
+            <a href="{{ school_route('admin.courses.modules.lessons.create', ['course' => $course->id, 'module' => $module->id]) }}" class="lms-btn lms-btn-primary">Create Lesson</a>
+        </div>
     </div>
 
-    <div class="bg-white border rounded-lg shadow-sm">
-        <ul class="divide-y">
+    <div class="lms-card">
+        <div class="lms-card-head">
+            <h2 class="lms-card-title">Lesson Library</h2>
+            <span class="lms-chip">{{ $lessons->count() }} lesson(s)</span>
+        </div>
+
+        <ul class="lms-list">
             @forelse($lessons as $lesson)
-                <li class="p-4 flex items-center justify-between">
+                <li class="lms-item">
                     <div>
-                        <div class="font-medium">{{ $lesson->title }}</div>
-                        <div class="text-sm text-gray-500">Sort #{{ $lesson->sort_order ?? '-' }}</div>
+                        <p class="lms-item-title">{{ $lesson->title }}</p>
+                        <p class="lms-item-meta">
+                            Sort #{{ $lesson->sort_order ?? '-' }}
+                            @if(!empty($lesson->video_url))
+                                | Has video
+                            @endif
+                        </p>
                     </div>
-                    <div class="flex gap-3 text-sm">
-                        <a href="{{ school_route('admin.courses.modules.lessons.show', ['course' => $course->id, 'module' => $module->id, 'lesson' => $lesson->id]) }}" class="text-blue-600 hover:underline">View</a>
-                        <a href="{{ school_route('admin.courses.modules.lessons.edit', ['course' => $course->id, 'module' => $module->id, 'lesson' => $lesson->id]) }}" class="text-amber-600 hover:underline">Edit</a>
+
+                    <div class="lms-item-links">
+                        <a href="{{ school_route('admin.courses.modules.lessons.show', ['course' => $course->id, 'module' => $module->id, 'lesson' => $lesson->id]) }}" class="lms-link lms-link-view">View</a>
+                        <a href="{{ school_route('admin.courses.modules.lessons.edit', ['course' => $course->id, 'module' => $module->id, 'lesson' => $lesson->id]) }}" class="lms-link lms-link-edit">Edit</a>
                     </div>
                 </li>
             @empty
-                <li class="p-4 text-sm text-gray-500">No lessons found.</li>
+                <li class="lms-empty">No lessons found.</li>
             @endforelse
         </ul>
     </div>
