@@ -752,8 +752,20 @@
 <script>
 function toggleReadModal(title, content) {
     const modal = document.getElementById('readLessonModal');
+    const modalContent = document.getElementById('modalLessonContent');
+    const rawContent = content || '';
+    const hasHtml = /<\s*\/?\s*[a-z][^>]*>/i.test(rawContent);
+
     document.getElementById('modalLessonTitle').innerText = title;
-    document.getElementById('modalLessonContent').innerHTML = content || '';
+
+    if (hasHtml) {
+        modalContent.style.whiteSpace = '';
+        modalContent.innerHTML = rawContent;
+    } else {
+        modalContent.style.whiteSpace = 'pre-line';
+        modalContent.textContent = rawContent;
+    }
+
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
 }

@@ -26,7 +26,12 @@
         <div style="padding: 18px;">
             <div class="lms-rich">
                 @if(!empty($lesson->content))
-                    {!! $lesson->content !!}
+                    @php $hasHtml = $lesson->content !== strip_tags($lesson->content); @endphp
+                    @if($hasHtml)
+                        {!! $lesson->content !!}
+                    @else
+                        {!! nl2br(e($lesson->content)) !!}
+                    @endif
                 @else
                     <p class="lms-inline-note">No lesson content provided.</p>
                 @endif
