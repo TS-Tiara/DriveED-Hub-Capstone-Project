@@ -5,7 +5,7 @@
 @section('content')
 @include('school.partials.lms-shared-styles')
 
-<div class="lms-page">
+<div class="lms-page" data-breadcrumb-course="{{ $course->title ?? '' }}" data-breadcrumb-module="{{ $module->title ?? '' }}">
     <div class="lms-header">
         <div>
             <h1 class="lms-title">{{ $module->title ?? 'Module' }}</h1>

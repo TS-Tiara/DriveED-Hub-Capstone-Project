@@ -5,7 +5,7 @@
 @section('content')
 @include('school.partials.lms-shared-styles')
 
-<div class="lms-page" style="max-width: 950px;">
+<div class="lms-page" style="max-width: 950px;" data-breadcrumb-course="{{ $course->title ?? '' }}" data-breadcrumb-module="{{ $module->title ?? '' }}" data-breadcrumb-lesson="{{ $lesson->title ?? '' }}">
     <div class="lms-header">
         <div>
             <h1 class="lms-title">{{ $lesson->title ?? 'Lesson' }}</h1>
@@ -24,7 +24,11 @@
 
         <div style="padding: 18px;">
             <div class="lms-rich">
-                {!! $lesson->content ?? '<p class="lms-inline-note">Lesson content is not yet available.</p>' !!}
+                @if(!empty($lesson->content))
+                    {!! $lesson->content !!}
+                @else
+                    <p class="lms-inline-note">Lesson content is not yet available.</p>
+                @endif
             </div>
 
             @if(!empty($lesson->video_url))

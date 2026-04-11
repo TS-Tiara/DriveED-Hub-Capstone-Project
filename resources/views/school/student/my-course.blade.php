@@ -593,7 +593,7 @@
                                                 @endif
 
                                                 @if($lesson->content)
-                                                    <button type="button" class="action-btn btn-read" onclick="toggleReadModal('{{ addslashes($lesson->title) }}', '{{ addslashes($lesson->content) }}')">
+                                                    <button type="button" class="action-btn btn-read" onclick='toggleReadModal(@js($lesson->title), @js($lesson->content))'>
                                                         <i class="bi bi-book-fill"></i> Read
                                                     </button>
                                                 @endif
@@ -753,7 +753,7 @@
 function toggleReadModal(title, content) {
     const modal = document.getElementById('readLessonModal');
     document.getElementById('modalLessonTitle').innerText = title;
-    document.getElementById('modalLessonContent').innerHTML = content.replace(/\n/g, '<br>');
+    document.getElementById('modalLessonContent').innerHTML = content || '';
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
 }

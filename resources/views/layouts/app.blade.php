@@ -2508,6 +2508,140 @@
                 return;
             }
 
+            // LMS special case: modules/lessons should be grouped under Course Materials for both admin and instructor.
+            const materialsLmsPathMatch = rolePath.match(/^(admin|instructor)\/courses\/([^/]+)\/modules(?:\/(.*))?$/);
+            if (materialsLmsPathMatch) {
+                const role = materialsLmsPathMatch[1];
+                const courseId = materialsLmsPathMatch[2];
+                const trailingPath = (materialsLmsPathMatch[3] || '').replace(/^\/+|\/+$/g, '');
+
+                const materialsPath = role + '/materials';
+                const modulesPath = role + '/courses/' + courseId + '/modules';
+
+                const lmsPage = document.querySelector('#mainContent .lms-page');
+                const courseLabelRaw = lmsPage ? lmsPage.getAttribute('data-breadcrumb-course') : '';
+                const moduleLabelRaw = lmsPage ? lmsPage.getAttribute('data-breadcrumb-module') : '';
+                const lessonLabelRaw = lmsPage ? lmsPage.getAttribute('data-breadcrumb-lesson') : '';
+
+                const formatSegmentLabel = function (segment) {
+                    return String(segment || '')
+                        .replace(/-/g, ' ')
+                        .replace(/\b\w/g, l => l.toUpperCase());
+                };
+
+                const courseLabel = (courseLabelRaw || '').trim() || 'Course';
+                let moduleLabel = (moduleLabelRaw || '').trim();
+                let lessonLabel = (lessonLabelRaw || '').trim();
+
+                let materialsHtml = '<a href="#" onclick="loadContent(\'' + dashUrl + '\'); return false;">Dashboard</a>';
+                materialsHtml += '<span class="breadcrumb-separator">›</span>';
+                materialsHtml += '<a href="#" onclick="loadContent(\'/' + schoolSlug + '/' + materialsPath + '\'); return false;">Course Materials</a>';
+
+                if (!trailingPath) {
+                    materialsHtml += '<span class="breadcrumb-separator">›</span>';
+                    materialsHtml += '<span class="breadcrumb-current">' + escapeBreadcrumbLabel(courseLabel) + '</span>';
+                    container.innerHTML = materialsHtml;
+                    return;
+                }
+
+                materialsHtml += '<span class="breadcrumb-separator">›</span>';
+                materialsHtml += '<a href="#" onclick="loadContent(\'/' + schoolSlug + '/' + modulesPath + '\'); return false;">' + escapeBreadcrumbLabel(courseLabel) + '</a>';
+
+                const segments = trailingPath.split('/').filter(Boolean);
+                const firstSegment = segments[0];
+
+                if (['create', 'reorder'].includes(firstSegment)) {
+                    const actionLabel = firstSegment === 'create' ? 'Create Module' : 'Reorder Modules';
+                    materialsHtml += '<span class="breadcrumb-separator">›</span>';
+                    materialsHtml += '<span class="breadcrumb-current">' + actionLabel + '</span>';
+                    container.innerHTML = materialsHtml;
+                    return;
+                }
+
+                if (!moduleLabel || /^\d+$/.test(moduleLabel)) {
+                    moduleLabel = 'Module';
+                }
+
+                const modulePath = modulesPath + '/' + firstSegment;
+
+                if (segments.length === 1) {
+                    materialsHtml += '<span class="breadcrumb-separator">›</span>';
+                    materialsHtml += '<span class="breadcrumb-current">' + escapeBreadcrumbLabel(moduleLabel) + '</span>';
+                    container.innerHTML = materialsHtml;
+                    return;
+                }
+
+                if (segments[1] === 'edit') {
+                    materialsHtml += '<span class="breadcrumb-separator">›</span>';
+                    materialsHtml += '<a href="#" onclick="loadContent(\'/' + schoolSlug + '/' + modulePath + '\'); return false;">' + escapeBreadcrumbLabel(moduleLabel) + '</a>';
+                    materialsHtml += '<span class="breadcrumb-separator">›</span>';
+                    materialsHtml += '<span class="breadcrumb-current">Edit</span>';
+                    container.innerHTML = materialsHtml;
+                    return;
+                }
+
+                if (segments[1] !== 'lessons') {
+                    const subLabel = segments.slice(1).map(formatSegmentLabel).join(' > ');
+                    materialsHtml += '<span class="breadcrumb-separator">›</span>';
+                    materialsHtml += '<a href="#" onclick="loadContent(\'/' + schoolSlug + '/' + modulePath + '\'); return false;">' + escapeBreadcrumbLabel(moduleLabel) + '</a>';
+                    materialsHtml += '<span class="breadcrumb-separator">›</span>';
+                    materialsHtml += '<span class="breadcrumb-current">' + subLabel + '</span>';
+                    container.innerHTML = materialsHtml;
+                    return;
+                }
+
+                materialsHtml += '<span class="breadcrumb-separator">›</span>';
+                materialsHtml += '<a href="#" onclick="loadContent(\'/' + schoolSlug + '/' + modulePath + '\'); return false;">' + escapeBreadcrumbLabel(moduleLabel) + '</a>';
+
+                if (segments.length === 2) {
+                    materialsHtml += '<span class="breadcrumb-separator">›</span>';
+                    materialsHtml += '<span class="breadcrumb-current">Lessons</span>';
+                    container.innerHTML = materialsHtml;
+                    return;
+                }
+
+                const lessonsPath = modulePath + '/lessons';
+
+                if (segments[2] === 'create') {
+                    materialsHtml += '<span class="breadcrumb-separator">›</span>';
+                    materialsHtml += '<a href="#" onclick="loadContent(\'/' + schoolSlug + '/' + lessonsPath + '\'); return false;">Lessons</a>';
+                    materialsHtml += '<span class="breadcrumb-separator">›</span>';
+                    materialsHtml += '<span class="breadcrumb-current">Create</span>';
+                    container.innerHTML = materialsHtml;
+                    return;
+                }
+
+                if (!lessonLabel || /^\d+$/.test(lessonLabel)) {
+                    lessonLabel = 'Lesson';
+                }
+
+                const lessonPath = lessonsPath + '/' + segments[2];
+
+                if (segments.length === 3) {
+                    materialsHtml += '<span class="breadcrumb-separator">›</span>';
+                    materialsHtml += '<span class="breadcrumb-current">' + escapeBreadcrumbLabel(lessonLabel) + '</span>';
+                    container.innerHTML = materialsHtml;
+                    return;
+                }
+
+                if (segments[3] === 'edit') {
+                    materialsHtml += '<span class="breadcrumb-separator">›</span>';
+                    materialsHtml += '<a href="#" onclick="loadContent(\'/' + schoolSlug + '/' + lessonPath + '\'); return false;">' + escapeBreadcrumbLabel(lessonLabel) + '</a>';
+                    materialsHtml += '<span class="breadcrumb-separator">›</span>';
+                    materialsHtml += '<span class="breadcrumb-current">Edit</span>';
+                    container.innerHTML = materialsHtml;
+                    return;
+                }
+
+                const lessonSubLabel = segments.slice(3).map(formatSegmentLabel).join(' > ');
+                materialsHtml += '<span class="breadcrumb-separator">›</span>';
+                materialsHtml += '<a href="#" onclick="loadContent(\'/' + schoolSlug + '/' + lessonPath + '\'); return false;">' + escapeBreadcrumbLabel(lessonLabel) + '</a>';
+                materialsHtml += '<span class="breadcrumb-separator">›</span>';
+                materialsHtml += '<span class="breadcrumb-current">' + lessonSubLabel + '</span>';
+                container.innerHTML = materialsHtml;
+                return;
+            }
+
             // Build breadcrumb trail
             let html = '<a href="#" onclick="loadContent(\'' + dashUrl + '\'); return false;">Dashboard</a>';
 

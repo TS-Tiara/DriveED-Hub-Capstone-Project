@@ -278,14 +278,14 @@
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
-                        <div class="stat-label">Awaiting Verification</div>
+                        <div class="stat-label">Pending Admin Review</div>
                         <div class="stat-value">{{ $pendingBookings }}</div>
                     </div>
                     <div class="stat-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     </div>
                 </div>
-                <div class="stat-detail">Marked as Done</div>
+                <div class="stat-detail">Lessons you marked as done</div>
             </div>
         </div>
     </div>

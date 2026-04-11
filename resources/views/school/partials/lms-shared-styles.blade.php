@@ -241,6 +241,76 @@
         box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.2);
     }
 
+    .lms-editor {
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+        overflow: hidden;
+        background: #ffffff;
+    }
+
+    .lms-editor:focus-within {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.2);
+    }
+
+    .lms-editor-toolbar {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 6px;
+        padding: 8px;
+        border-bottom: 1px solid #e5e7eb;
+        background: #f8fafc;
+    }
+
+    .lms-editor-btn {
+        appearance: none;
+        border: 1px solid #d1d5db;
+        background: #ffffff;
+        color: #1f2937;
+        border-radius: 8px;
+        padding: 6px 9px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        line-height: 1;
+        cursor: pointer;
+    }
+
+    .lms-editor-btn:hover {
+        background: #f3f4f6;
+    }
+
+    .lms-editor-separator {
+        width: 1px;
+        height: 20px;
+        background: #e5e7eb;
+        margin: 0 2px;
+    }
+
+    .lms-editor-surface {
+        min-height: 170px;
+        padding: 12px;
+        color: #111827;
+        font-size: 0.92rem;
+        line-height: 1.6;
+        outline: none;
+    }
+
+    .lms-editor-surface:empty:before {
+        content: attr(data-placeholder);
+        color: #9ca3af;
+    }
+
+    .lms-editor-surface p {
+        margin: 0 0 8px;
+    }
+
+    .lms-editor-surface ul,
+    .lms-editor-surface ol {
+        padding-left: 20px;
+        margin: 0 0 10px;
+    }
+
     .lms-help {
         color: #6b7280;
         font-size: 0.8rem;
