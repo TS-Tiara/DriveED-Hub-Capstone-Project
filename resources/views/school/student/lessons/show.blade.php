@@ -13,7 +13,11 @@
         <p class="text-sm text-gray-500 mb-4">Module: {{ $module->title ?? 'N/A' }}</p>
 
         <div class="prose max-w-none text-sm">
-            {!! $lesson->content ?? '<p class="text-gray-500">Lesson content will appear here.</p>' !!}
+            @if(!empty($lesson->content))
+                {!! $lesson->content !!}
+            @else
+                <p class="text-gray-500">Lesson content will appear here.</p>
+            @endif
         </div>
 
         @if(!empty($lesson->video_url))

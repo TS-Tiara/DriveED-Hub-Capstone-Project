@@ -311,7 +311,7 @@
                                     <span class="my-session-badge">Your Session</span>
                                 @endif
                                 <span class="session-status status-{{ $session['status'] === 'done' ? 'no-show' : $session['status'] }}">
-                                    {{ $session['status'] === 'done' ? 'Awaiting Verification' : ucfirst($session['status']) }}
+                                    {{ $session['status'] === 'done' ? 'Pending Admin Review' : ucfirst($session['status']) }}
                                 </span>
                             </div>
                         </div>

@@ -5,7 +5,7 @@
 @section('content')
 @include('school.partials.lms-shared-styles')
 
-<div class="lms-page" style="max-width: 850px;">
+<div class="lms-page" style="max-width: 850px;" data-breadcrumb-course="{{ $course->title ?? '' }}">
     <div class="lms-header">
         <div>
             <h1 class="lms-title">Create Module</h1>

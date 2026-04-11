@@ -5,14 +5,14 @@
 @section('content')
 @include('school.partials.lms-shared-styles')
 
-<div class="lms-page">
+<div class="lms-page" data-breadcrumb-course="{{ $course->title ?? '' }}">
     <div class="lms-header">
         <div>
             <h1 class="lms-title">Course Modules</h1>
             <p class="lms-subtitle">Reference materials for {{ $course->title ?? 'this course' }}.</p>
         </div>
         <div class="lms-actions">
-            <a href="{{ school_route('instructor.dashboard') }}" class="lms-btn lms-btn-muted">Back to Dashboard</a>
+            <a href="{{ school_route('instructor.materials.index') }}" class="lms-btn lms-btn-muted">Back to Course Materials</a>
         </div>
     </div>
 

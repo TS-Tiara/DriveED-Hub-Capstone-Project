@@ -5,7 +5,7 @@
 @section('content')
 @include('school.partials.lms-shared-styles')
 
-<div class="lms-page">
+<div class="lms-page" data-breadcrumb-course="{{ $course->title ?? '' }}" data-breadcrumb-module="{{ $module->title ?? '' }}" data-breadcrumb-lesson="{{ $lesson->title ?? '' }}">
     <div class="lms-header">
         <div>
             <h1 class="lms-title">{{ $lesson->title ?? 'Lesson' }}</h1>
@@ -25,7 +25,11 @@
 
         <div style="padding: 18px;">
             <div class="lms-rich">
-                {!! $lesson->content ?? '<p class="lms-inline-note">No lesson content provided.</p>' !!}
+                @if(!empty($lesson->content))
+                    {!! $lesson->content !!}
+                @else
+                    <p class="lms-inline-note">No lesson content provided.</p>
+                @endif
             </div>
 
             @if(!empty($lesson->video_url))
