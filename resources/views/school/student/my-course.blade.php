@@ -593,7 +593,7 @@
                                                 @endif
 
                                                 @if($lesson->content)
-                                                    <button type="button" class="action-btn btn-read" onclick='toggleReadModal(@js($lesson->title), @js($lesson->content))'>
+                                                    <button type="button" class="action-btn btn-read" onclick="toggleReadModal(@js($lesson->title), @js($lesson->content))">
                                                         <i class="bi bi-book-fill"></i> Read
                                                     </button>
                                                 @endif
