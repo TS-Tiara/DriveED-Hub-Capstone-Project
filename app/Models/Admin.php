@@ -32,6 +32,7 @@ class Admin extends Authenticatable
         'failed_login_attempts',
         'locked_until',
         'last_login_at',
+        'last_logout_at',
     ];
 
     protected $hidden = [
@@ -45,6 +46,7 @@ class Admin extends Authenticatable
             'password' => 'hashed',
             'locked_until' => 'datetime',
             'last_login_at' => 'datetime',
+            'last_logout_at' => 'datetime',
         ];
     }
 
@@ -70,6 +72,11 @@ class Admin extends Authenticatable
     public function reviewedActionRequests()
     {
         return $this->hasMany(StudentActionRequest::class , 'reviewed_by');
+    }
+
+    public function handledProfileUnlockRequests()
+    {
+        return $this->hasMany(ProfileUnlockRequest::class, 'handled_by');
     }
 
     // ──────────────────────────────────────

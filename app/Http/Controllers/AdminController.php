@@ -13,6 +13,7 @@ use App\Models\Instructor;
 use App\Models\InstructorRemovalRequest;
 use App\Models\Log;
 use App\Models\Payment;
+use App\Models\ProfileUnlockRequest;
 use App\Models\RegistrationRequest;
 use App\Models\School;
 use App\Models\SchoolSetting;
@@ -290,7 +291,7 @@ class AdminController extends Controller
             $studentItems = collect();
             if ($activeRoleFilter !== 'instructor') {
                 $studentItems = $filteredStudentQuery
-                    ->select('id', 'branch_id', 'name', 'email', 'contact', 'address', 'status')
+                    ->select('id', 'branch_id', 'name', 'email', 'contact', 'address', 'status', 'last_login_at', 'last_logout_at')
                     ->orderBy('name')
                     ->get()
                     ->map(function ($student) {
@@ -305,6 +306,8 @@ class AdminController extends Controller
                             'license_number' => null,
                             'availability' => null,
                             'branch_id' => $student->branch_id,
+                            'last_login_at' => $student->last_login_at,
+                            'last_logout_at' => $student->last_logout_at,
                         ];
                     });
             }
@@ -312,7 +315,7 @@ class AdminController extends Controller
             $instructorItems = collect();
             if ($activeRoleFilter !== 'student') {
                 $instructorItems = $filteredInstructorQuery
-                    ->select('id', 'branch_id', 'name', 'email', 'contact', 'license_number', 'status', 'availability')
+                    ->select('id', 'branch_id', 'name', 'email', 'contact', 'license_number', 'status', 'availability', 'last_login_at', 'last_logout_at')
                     ->orderBy('name')
                     ->get()
                     ->map(function ($instructor) {
@@ -327,6 +330,8 @@ class AdminController extends Controller
                             'license_number' => $instructor->license_number,
                             'availability' => $instructor->availability,
                             'branch_id' => $instructor->branch_id,
+                            'last_login_at' => $instructor->last_login_at,
+                            'last_logout_at' => $instructor->last_logout_at,
                         ];
                     });
             }
@@ -359,6 +364,20 @@ class AdminController extends Controller
                 ->orderBy('name')
                 ->get();
 
+            $pendingProfileUnlockRequests = collect();
+            $pendingProfileUnlockRequestsCount = 0;
+            if ($admin->isSchoolAdmin()) {
+                $pendingProfileUnlockRequests = ProfileUnlockRequest::query()
+                    ->with('user')
+                    ->where('school_id', $school->id)
+                    ->pending()
+                    ->orderBy('created_at', 'desc')
+                    ->limit(25)
+                    ->get();
+
+                $pendingProfileUnlockRequestsCount = $pendingProfileUnlockRequests->count();
+            }
+
             $isAjax = request()->ajax() || request()->header('X-Requested-With') === 'XMLHttpRequest';
 
             return view($school->resolveView('admin.user-management'), [
@@ -377,6 +396,8 @@ class AdminController extends Controller
                 'activeStatusFilter' => $activeStatusFilter,
                 'activeRoleFilter' => $activeRoleFilter,
                 'activeBranchFilter' => $activeBranchFilter,
+                'pendingProfileUnlockRequests' => $pendingProfileUnlockRequests,
+                'pendingProfileUnlockRequestsCount' => $pendingProfileUnlockRequestsCount,
             ]);
         }
         catch (\Exception $e) {
@@ -1161,6 +1182,7 @@ class AdminController extends Controller
                 'alert_threshold_pending' => 'required|integer|min:0|max:999',
                 'timezone' => 'required|string|timezone',
                 'invitation_expiry_days' => 'required|integer|min:1|max:30',
+                'branch_secretary_limit_per_branch' => 'required|integer|min:1|max:50',
                 'require_instructor_license' => 'nullable|boolean',
             ], [
                 'instructor_removal_notice_days.required' => 'Minimum notice period is required.',
@@ -1270,6 +1292,7 @@ class AdminController extends Controller
                 'booking_queue_days' => $request->booking_queue_days ?? 3,
                 'contact_email' => $request->contact_email,
                 'invitation_expiry_days' => $request->invitation_expiry_days ?? 7,
+                'branch_secretary_limit_per_branch' => $request->branch_secretary_limit_per_branch ?? 1,
                 'require_instructor_license' => $request->has('require_instructor_license'),
                 // Login page settings
                 'login_header_layout' => $request->login_header_layout ?? 'horizontal',

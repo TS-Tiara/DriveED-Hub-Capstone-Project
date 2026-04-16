@@ -10,6 +10,7 @@
     $primaryColor = $settings->primary_color ?? '#667eea';
     $secondaryColor = $settings->secondary_color ?? '#764ba2';
     $useGradient = $settings?->use_gradient_header;
+    $pendingInviteCount = ($pendingInvitations ?? collect())->count();
 @endphp
 
 @include('school.admin.partials.admin-styles')
@@ -189,6 +190,198 @@
         gap: 12px;
         align-items: center;
         flex-shrink: 0;
+    }
+
+    .btn-pending-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        height: 42px;
+        padding: 0 14px;
+        background: white;
+        color: #374151;
+        border: 2px solid #d1d5db;
+        border-radius: 10px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .btn-pending-toggle:hover {
+        border-color: {{ $primaryColor }}80;
+        color: {{ $primaryColor }};
+        transform: translateY(-1px);
+    }
+
+    .pending-count-badge {
+        min-width: 22px;
+        height: 22px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #1f2937;
+        background: #e5e7eb;
+        padding: 0 6px;
+        line-height: 1;
+    }
+
+    .pending-count-badge.has-items {
+        color: white;
+        background: #f59e0b;
+    }
+
+    .pending-modal-content {
+        width: min(1120px, 95vw);
+        min-width: 760px;
+        max-width: 95vw;
+    }
+
+    .pending-modal-body {
+        padding: 0 !important;
+        max-height: 70vh;
+        overflow: auto;
+    }
+
+    .pending-panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 20px;
+        border-bottom: 1px solid {{ $primaryColor }}15;
+        background: {{ $primaryColor }}06;
+    }
+
+    .pending-panel-title {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 700;
+        color: #1f2937;
+    }
+
+    .pending-panel-subtitle {
+        margin: 0;
+        font-size: 0.82rem;
+        color: #6b7280;
+    }
+
+    .pending-panel-body {
+        padding: 0;
+    }
+
+    .pending-table-wrapper {
+        overflow-x: auto;
+    }
+
+    .pending-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .pending-table thead th {
+        text-align: left;
+        padding: 12px 16px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        color: #6b7280;
+        border-bottom: 1px solid #e5e7eb;
+        background: #f9fafb;
+    }
+
+    .pending-table tbody td {
+        padding: 12px 16px;
+        border-bottom: 1px solid #f3f4f6;
+        color: #1f2937;
+        font-size: 0.9rem;
+        vertical-align: middle;
+    }
+
+    .pending-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .pending-role {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: {{ $secondaryColor }}14;
+        color: {{ $secondaryColor }};
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+    }
+
+    .pending-status {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+    }
+
+    .pending-status.pending {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .pending-status.expired {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .pending-invite-actions {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .btn-invite-action {
+        border: none;
+        border-radius: 8px;
+        padding: 7px 10px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s;
+    }
+
+    .btn-invite-resend {
+        background: #dbeafe;
+        color: #1d4ed8;
+    }
+
+    .btn-invite-resend:hover {
+        background: #bfdbfe;
+    }
+
+    .btn-invite-cancel {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .btn-invite-cancel:hover {
+        background: #fecaca;
+    }
+
+    .pending-empty {
+        padding: 20px;
+        font-size: 0.9rem;
+        color: #6b7280;
+        text-align: center;
     }
 
     .btn-create {
@@ -645,6 +838,27 @@
             gap: 15px;
         }
 
+        .action-bar {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 12px;
+        }
+
+        .search-wrapper {
+            max-width: none;
+        }
+
+        .action-controls {
+            width: 100%;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .pending-modal-content {
+            min-width: 0;
+            width: 95vw;
+        }
+
         .admin-table-card {
             overflow-x: auto;
         }
@@ -727,6 +941,11 @@
             <input type="text" id="adminSearch" placeholder="Search by name, email, or role..." onkeyup="filterAdminTable()">
         </div>
         <div class="action-controls">
+            <button type="button" class="btn-pending-toggle" id="pendingInvitationsToggle" onclick="openPendingInvitationsModal()">
+                <i class="bi bi-envelope-paper"></i>
+                Pending Invitations
+                <span class="pending-count-badge {{ $pendingInviteCount > 0 ? 'has-items' : '' }}">{{ $pendingInviteCount }}</span>
+            </button>
             <div class="export-dropdown" id="adminExportDropdown">
                 <button class="btn-export-trigger" onclick="toggleAdminExportDropdown()">
                     <svg class="icon-18" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
@@ -760,6 +979,7 @@
                     <th>Role</th>
                     <th>Branch</th>
                     <th>Status</th>
+                    <th>Portal Activity</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -798,6 +1018,18 @@
                                 <i class="bi bi-x-circle-fill"></i> Inactive
                             </span>
                         @endif
+                    </td>
+                    <td>
+                        <div style="font-size: 0.82rem; line-height: 1.4; color: #4b5563;">
+                            <div>
+                                <span style="font-weight: 600; color: #1f2937;">In:</span> 
+                                {{ $adminRow->last_login_at ? $adminRow->last_login_at->diffForHumans() : 'Never' }}
+                            </div>
+                            <div>
+                                <span style="font-weight: 600; color: #1f2937;">Out:</span> 
+                                {{ $adminRow->last_logout_at ? $adminRow->last_logout_at->diffForHumans() : 'Never' }}
+                            </div>
+                        </div>
                     </td>
                     <td>
                         @if($adminRow->id === $admin->id)
@@ -848,6 +1080,92 @@
     @endif
 </div>
 
+{{-- Pending Invitations Modal --}}
+<div class="modal-overlay" id="pendingInvitationsModal">
+    <div class="modal-content pending-modal-content">
+        <div class="modal-header">
+            <h5>Pending Invitations</h5>
+            <button class="btn-close-modal" onclick="closePendingInvitationsModal()">&times;</button>
+        </div>
+        <div class="modal-body pending-modal-body">
+            <div class="pending-panel-header">
+                <div>
+                    <h3 class="pending-panel-title">{{ $pendingInviteCount }} Pending Invitation{{ $pendingInviteCount === 1 ? '' : 's' }}</h3>
+                    <p class="pending-panel-subtitle">Unaccepted invites count toward branch manager capacity until used, expired, or cancelled.</p>
+                </div>
+            </div>
+            <div class="pending-panel-body">
+                @if($pendingInviteCount > 0)
+                    <div class="pending-table-wrapper">
+                        <table class="pending-table">
+                            <thead>
+                                <tr>
+                                    <th>Recipient</th>
+                                    <th>Role</th>
+                                    <th>Branch</th>
+                                    <th>Status</th>
+                                    <th>Sent At</th>
+                                    <th>Expires At</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($pendingInvitations as $invitation)
+                                    <tr>
+                                        <td>
+                                            <div style="font-weight: 600;">{{ $invitation->payload['name'] ?? $invitation->name ?? 'Unnamed Recipient' }}</div>
+                                            <div style="font-size: 0.82rem; color: #6b7280;">{{ $invitation->email }}</div>
+                                        </td>
+                                        <td>
+                                            <span class="pending-role">{{ strtoupper(str_replace('_', ' ', $invitation->role)) }}</span>
+                                        </td>
+                                        <td>{{ $invitation->branch?->name ?? 'All Branches' }}</td>
+                                        <td>
+                                            @if($invitation->isExpired())
+                                                <span class="pending-status expired">Expired</span>
+                                            @else
+                                                <span class="pending-status pending">Pending</span>
+                                            @endif
+                                        </td>
+                                        <td>{{ $invitation->created_at?->format('M d, Y H:i') ?? 'N/A' }}</td>
+                                        <td>{{ $invitation->expires_at?->format('M d, Y H:i') ?? 'No Expiry' }}</td>
+                                        <td>
+                                            <div class="pending-invite-actions">
+                                                <form action="{{ route('schools.admin.invitations.resend', ['school' => $school, 'invitation' => $invitation]) }}" method="POST" class="inline-form">
+                                                    @csrf
+                                                    <button type="submit" class="btn-invite-action btn-invite-resend" title="Resend Invitation">
+                                                        <i class="bi bi-arrow-repeat"></i>
+                                                        Resend
+                                                    </button>
+                                                </form>
+                                                <form action="{{ route('schools.admin.invitations.cancel', ['school' => $school, 'invitation' => $invitation]) }}" method="POST" class="inline-form" onsubmit="return confirm('Are you sure you want to cancel this invitation?');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn-invite-action btn-invite-cancel" title="Cancel Invitation">
+                                                        <i class="bi bi-x-circle"></i>
+                                                        Cancel
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @else
+                    <div class="pending-empty">
+                        No pending invitations found.
+                    </div>
+                @endif
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-secondary" onclick="closePendingInvitationsModal()">Close</button>
+        </div>
+    </div>
+</div>
+
 {{-- Create Modal --}}
 <div class="modal-overlay" id="createModal">
     <div class="modal-content">
@@ -880,15 +1198,27 @@
                     <select id="create_branch_id" name="branch_id">
                         <option value="">— Select Branch —</option>
                         @foreach($branches as $branch)
+                            @php
+                                $capacity = $branchCapacityMap[$branch->id] ?? [
+                                    'used' => 0,
+                                    'limit' => ($branchSecretaryLimit ?? 1),
+                                    'at_capacity' => false,
+                                ];
+                                $isAtCapacity = (bool) ($capacity['at_capacity'] ?? false);
+                            @endphp
                             <option value="{{ $branch->id }}"
                                 {{ old('branch_id') == $branch->id ? 'selected' : '' }}
-                                @if(in_array($branch->id, $branchesWithSecretary ?? [])) disabled @endif>
+                                @if($isAtCapacity) disabled @endif>
                                 {{ $branch->name }}
-                                @if(in_array($branch->id, $branchesWithSecretary ?? [])) (already has secretary) @endif
+                                ({{ $capacity['used'] }}/{{ $capacity['limit'] }} used)
+                                @if($isAtCapacity) (full) @endif
                             </option>
                         @endforeach
                     </select>
-                    <div class="form-hint">Only branches without an assigned secretary are available.</div>
+                    <div class="form-hint">
+                        Capacity includes active branch managers and pending, unexpired invitations.
+                        Limit per branch: {{ $branchSecretaryLimit ?? 1 }}.
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -1116,6 +1446,14 @@
             document.getElementById('adminExportMenu').classList.remove('show');
         }
     });
+
+    function openPendingInvitationsModal() {
+        document.getElementById('pendingInvitationsModal').classList.add('active');
+    }
+
+    function closePendingInvitationsModal() {
+        document.getElementById('pendingInvitationsModal').classList.remove('active');
+    }
 
     document.addEventListener('DOMContentLoaded', function() {
         toggleBranchField('create');

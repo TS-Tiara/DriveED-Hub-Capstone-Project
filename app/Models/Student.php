@@ -39,8 +39,11 @@ class Student extends Authenticatable
         'failed_login_attempts',
         'locked_until',
         'last_login_at',
+        'last_logout_at',
         'status',
         'is_active',
+        'profile_edit_count',
+        'profile_locked_at',
         'must_reset_password',
     ];
 
@@ -63,6 +66,9 @@ class Student extends Authenticatable
             'is_course_locked' => 'boolean',
             'locked_until' => 'datetime',
             'last_login_at' => 'datetime',
+            'last_logout_at' => 'datetime',
+            'profile_edit_count' => 'integer',
+            'profile_locked_at' => 'datetime',
         ];
     }
 
@@ -184,6 +190,11 @@ class Student extends Authenticatable
     {
         return $this->hasMany(EnrollmentRequest::class , 'learner_id')
             ->whereIn('status', ['approved', 'completed', 'cancelled']);
+    }
+
+    public function profileUnlockRequests()
+    {
+        return $this->morphMany(ProfileUnlockRequest::class, 'user');
     }
 
     /**

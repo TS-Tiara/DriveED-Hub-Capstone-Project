@@ -10,6 +10,8 @@
     $settings = $school?->schoolSetting;
     $primaryColor = $settings?->primary_color ?? '#667eea';
     $secondaryColor = $settings?->secondary_color ?? '#764ba2';
+    $profileLocked = (int) ($student->profile_edit_count ?? 0) >= 1;
+    $hasPendingUnlockRequest = !empty($pendingUnlockRequest);
 @endphp
 
 <style>
@@ -318,6 +320,17 @@
         color: #721c24;
         border: 1px solid #f5c6cb;
     }
+
+    .alert-warning {
+        background: #fff4cc;
+        color: #7a5a00;
+        border: 1px solid #f6d365;
+    }
+
+    .policy-note {
+        max-width: 600px;
+        margin: 0 auto 20px;
+    }
     
     .status-badge {
         position: absolute;
@@ -501,6 +514,45 @@
         transform: translateY(-1px);
     }
 
+    .btn-request {
+        background: #d97706;
+        color: white;
+    }
+
+    .btn-request:hover {
+        background: #b45309;
+        transform: translateY(-1px);
+    }
+
+    .request-status-note {
+        margin-top: 10px;
+        color: #6b7280;
+        font-size: 0.9rem;
+    }
+
+    .form-group textarea {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 15px;
+        box-sizing: border-box;
+        resize: vertical;
+        min-height: 96px;
+    }
+
+    .form-group textarea:focus {
+        outline: none;
+        border-color: {{ $primaryColor }};
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .locked-field-note {
+        margin-top: 5px;
+        color: #7a5a00;
+        font-size: 0.82rem;
+    }
+
     .success-message {
         background-color: #d4edda;
         color: #155724;
@@ -665,6 +717,18 @@
             </ul>
         </div>
     @endif
+
+    <div class="alert alert-warning policy-note">
+        Core profile details can only be changed once. Profile photo and password can still be changed anytime.
+        @if($profileLocked)
+            Your core details are currently locked.
+            @if($hasPendingUnlockRequest)
+                A correction request is already pending admin review.
+            @else
+                Submit a correction request if you need to update locked details.
+            @endif
+        @endif
+    </div>
     
 
 
@@ -705,10 +769,12 @@
                     <span class="info-value">{{ $student->address ?? 'N/A' }}</span>
                 </div>
                 
-                <div class="info-row">
-                    <span class="info-label">Date of Birth:</span>
-                    <span class="info-value">{{ $student->date_of_birth ? \Carbon\Carbon::parse($student->date_of_birth)->format('F d, Y') : 'N/A' }}</span>
-                </div>
+                @if($supportsDateOfBirth ?? false)
+                    <div class="info-row">
+                        <span class="info-label">Date of Birth:</span>
+                        <span class="info-value">{{ $student->date_of_birth ? \Carbon\Carbon::parse($student->date_of_birth)->format('F d, Y') : 'N/A' }}</span>
+                    </div>
+                @endif
                 <div class="info-row">
                     <span class="info-label">Branch:</span>
                     <span class="info-value">{{ $student->branchRelation?->name ?? 'Not Assigned' }}</span>
@@ -736,7 +802,12 @@
             </div>
             
             <div class="profile-buttons" id="profileButtons">
-                <button onclick="showEditForm()" class="btn btn-edit">Edit Profile</button>
+                <button onclick="showEditForm()" class="btn btn-edit">{{ $profileLocked ? 'Manage Password' : 'Edit Profile' }}</button>
+                @if($profileLocked && !$hasPendingUnlockRequest)
+                    <button type="button" onclick="showCorrectionRequestForm()" class="btn btn-request">Request Profile Correction</button>
+                @elseif($profileLocked && $hasPendingUnlockRequest)
+                    <div class="request-status-note">Correction request pending admin review.</div>
+                @endif
             </div>
         </div>
         
@@ -753,7 +824,8 @@
                 
                 <div class="form-group">
                     <label for="email">Email:</label>
-                    <input type="email" id="email" name="email" value="{{ old('email', $student->email) }}" required>
+                    <input type="email" id="email" value="{{ old('email', $student->email) }}" readonly>
+                    <div class="locked-field-note">Email cannot be changed.</div>
                 </div>
                 
                 <div class="form-group">
@@ -766,10 +838,18 @@
                     <input type="text" id="address" name="address" value="{{ old('address', $student->address) }}">
                 </div>
                 
-                <div class="form-group">
-                    <label for="date_of_birth">Date of Birth:</label>
-                    <input type="date" id="date_of_birth" name="date_of_birth" value="{{ old('date_of_birth', $student->date_of_birth) }}">
-                </div>
+                @if($supportsDateOfBirth ?? false)
+                    <div class="form-group">
+                        <label for="date_of_birth">Date of Birth:</label>
+                        <input type="date" id="date_of_birth" name="date_of_birth" value="{{ old('date_of_birth', $student->date_of_birth) }}">
+                    </div>
+                @endif
+
+                @if($profileLocked)
+                    <div class="locked-field-note" style="margin-bottom: 14px;">
+                        Core profile fields are locked. Use the correction request button to unlock them.
+                    </div>
+                @endif
 
                 <div class="password-section">
                     <h4 class="password-section-title">Password</h4>
@@ -814,21 +894,71 @@
                 </div>
             </form>
         </div>
+
+        @if($profileLocked && !$hasPendingUnlockRequest)
+            <div id="correctionRequestForm" class="edit-form" style="display: none;">
+                <form method="POST" action="{{ school_route('student.profile.unlockRequest') }}">
+                    @csrf
+
+                    <div class="form-group">
+                        <label for="reason">Reason for correction request:</label>
+                        <textarea id="reason" name="reason" maxlength="1000" placeholder="Explain what needs to be corrected...">{{ old('reason') }}</textarea>
+                    </div>
+
+                    <div class="form-buttons">
+                        <button type="submit" class="btn btn-save">Submit Request</button>
+                        <button type="button" onclick="cancelCorrectionRequest()" class="btn btn-cancel">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        @endif
     </div>
 </div>
 
 <script>
     function showEditForm() {
+        const correctionRequestForm = document.getElementById('correctionRequestForm');
         document.getElementById('profileDisplay').style.display = 'none';
         document.getElementById('profileButtons').style.display = 'none';
         document.getElementById('editForm').style.display = 'block';
+        if (correctionRequestForm) {
+            correctionRequestForm.style.display = 'none';
+        }
     }
     
     function cancelEdit() {
+        const correctionRequestForm = document.getElementById('correctionRequestForm');
         document.getElementById('profileDisplay').style.display = 'block';
         document.getElementById('profileButtons').style.display = 'block';
         document.getElementById('editForm').style.display = 'none';
+        if (correctionRequestForm) {
+            correctionRequestForm.style.display = 'none';
+        }
         closeStudentPasswordFields();
+    }
+
+    function showCorrectionRequestForm() {
+        const correctionRequestForm = document.getElementById('correctionRequestForm');
+        if (!correctionRequestForm) {
+            return;
+        }
+
+        document.getElementById('profileDisplay').style.display = 'none';
+        document.getElementById('profileButtons').style.display = 'none';
+        document.getElementById('editForm').style.display = 'none';
+        correctionRequestForm.style.display = 'block';
+    }
+
+    function cancelCorrectionRequest() {
+        const correctionRequestForm = document.getElementById('correctionRequestForm');
+
+        document.getElementById('profileDisplay').style.display = 'block';
+        document.getElementById('profileButtons').style.display = 'block';
+        document.getElementById('editForm').style.display = 'none';
+
+        if (correctionRequestForm) {
+            correctionRequestForm.style.display = 'none';
+        }
     }
 
     function toggleStudentPasswordFields(forceOpen = null) {
@@ -890,10 +1020,15 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         const hasErrors = {{ $errors->any() ? 'true' : 'false' }};
+        const hasCorrectionErrors = {{ $errors->has('reason') ? 'true' : 'false' }};
         const hasPasswordErrors = {{ ($errors->has('current_password') || $errors->has('new_password') || $errors->has('new_password_confirmation')) ? 'true' : 'false' }};
 
         if (hasErrors) {
-            showEditForm();
+            if (hasCorrectionErrors) {
+                showCorrectionRequestForm();
+            } else {
+                showEditForm();
+            }
         }
 
         if (hasPasswordErrors) {

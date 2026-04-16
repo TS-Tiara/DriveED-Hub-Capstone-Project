@@ -238,16 +238,26 @@ class SystemAdminController extends Controller
     /**
      * View all schools
      */
-    public function schools()
+    public function schools(Request $request)
     {
         try {
-            $schools = School::withCount([
+            $query = School::withCount([
                 'students',
                 'instructors',
                 'admins',
                 'courses',
                 'bookings'
-            ])->paginate(20);
+            ]);
+
+            $search = trim((string) $request->query('search', ''));
+            if ($search !== '') {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('slug', 'like', "%{$search}%");
+                });
+            }
+
+            $schools = $query->paginate(20);
 
             return view('system-admin.schools', compact('schools'));
         }
@@ -727,13 +737,6 @@ class SystemAdminController extends Controller
             }
             elseif ($type === 'instructor') {
                 $user = Instructor::findOrFail($id);
-            }
-            elseif ($type === 'admin') {
-                $user = Admin::findOrFail($id);
-                // Prevent toggling system admins via this general route
-                if ($user->role === 'system_admin') {
-                    return back()->with('error', 'Cannot toggle status of system administrators.');
-                }
             }
             else {
                 return back()->with('error', 'Invalid user type.');

@@ -90,6 +90,7 @@ class SchoolSetting extends Model
         'booking_cutoff_hours',
         'alert_threshold_pending',
         'invitation_expiry_days',
+        'branch_secretary_limit_per_branch',
         'require_instructor_license',
     ];
 
@@ -103,6 +104,7 @@ class SchoolSetting extends Model
         'booking_cutoff_hours' => 'integer',
         'alert_threshold_pending' => 'integer',
         'invitation_expiry_days' => 'integer',
+        'branch_secretary_limit_per_branch' => 'integer',
         'require_instructor_license' => 'boolean',
         'custom_css' => 'array',
         'additional_settings' => 'array',

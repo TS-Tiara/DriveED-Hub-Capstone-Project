@@ -39,16 +39,21 @@ class AdminManagementController extends Controller
             ->orderBy('name')
             ->get();
 
-        // Calculate which branches already have a secretary
-        $branchesWithSecretary = Admin::where('school_id', $school->id)
-            ->where('role', Admin::ROLE_BRANCH_SECRETARY)
-            ->where('is_active', true)
-            ->pluck('branch_id')
-            ->filter()
-            ->toArray();
+        $pendingInvitations = Invitation::where('school_id', $school->id)
+            ->whereIn('role', [Admin::ROLE_SCHOOL_ADMIN, Admin::ROLE_BRANCH_SECRETARY])
+            ->whereNull('used_at')
+            ->with('branch')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $branchSecretaryLimit = $this->getBranchSecretaryLimit($school);
+        $branchCapacityMap = [];
+        foreach ($branches as $branch) {
+            $branchCapacityMap[$branch->id] = $this->buildBranchSecretaryCapacitySummary($school, (int) $branch->id);
+        }
 
         return view('school.admin.admin-management.index', array_merge(compact(
-            'school', 'admin', 'admins', 'branches', 'branchesWithSecretary'
+            'school', 'admin', 'admins', 'branches', 'branchCapacityMap', 'branchSecretaryLimit', 'pendingInvitations'
         ), ['isAjax' => $request->ajax()]));
     }
 
@@ -78,16 +83,27 @@ class AdminManagementController extends Controller
             'branch_id' => ['required_if:role,branch_secretary', 'nullable', 'exists:branches,id'],
         ]);
 
+        $selectedBranch = null;
         // If creating secretary, verify branch belongs to this school
         if ($validated['role'] === Admin::ROLE_BRANCH_SECRETARY && $validated['branch_id']) {
-            $branch = Branch::where('id', $validated['branch_id'])
+            $selectedBranch = Branch::where('id', $validated['branch_id'])
                 ->where('school_id', $school->id)
                 ->first();
 
-            if (!$branch) {
+            if (!$selectedBranch) {
                 return redirect()->back()->with('error', 'Selected branch does not belong to this school.');
             }
+
+            $capacity = $this->buildBranchSecretaryCapacitySummary($school, (int) $validated['branch_id']);
+            if ($capacity['at_capacity']) {
+                return redirect()->back()->withInput()->with(
+                    'error',
+                    "Cannot invite another branch manager for {$selectedBranch->name}. Capacity is full ({$capacity['used']}/{$capacity['limit']})."
+                );
+            }
         }
+
+        $invitationExpiryDays = max(1, (int) ($school->schoolSetting?->invitation_expiry_days ?? 7));
 
         DB::beginTransaction();
         try {
@@ -101,7 +117,7 @@ class AdminManagementController extends Controller
                     'name' => trim($validated['name']),
                     'contact' => trim((string)($validated['contact'] ?? '')),
                 ],
-                'expires_at' => now()->addDays($school->schoolSetting->invitation_expiry_days ?? 7),
+                'expires_at' => now()->addDays($invitationExpiryDays),
             ]);
 
             // Send Invitation Mail
@@ -169,14 +185,31 @@ class AdminManagementController extends Controller
             'branch_id' => ['required_if:role,branch_secretary', 'nullable', 'exists:branches,id'],
         ]);
 
+        $selectedBranch = null;
         // If updating to secretary, verify branch belongs to this school
         if ($validated['role'] === Admin::ROLE_BRANCH_SECRETARY && $validated['branch_id']) {
-            $branch = Branch::where('id', $validated['branch_id'])
+            $selectedBranch = Branch::where('id', $validated['branch_id'])
                 ->where('school_id', $school->id)
                 ->first();
 
-            if (!$branch) {
+            if (!$selectedBranch) {
                 return redirect()->back()->with('error', 'Selected branch does not belong to this school.');
+            }
+
+            // Enforce capacity when the update would keep/put an active admin into a branch secretary slot.
+            if ($targetAdmin->is_active) {
+                $capacity = $this->buildBranchSecretaryCapacitySummary(
+                    $school,
+                    (int) $validated['branch_id'],
+                    $targetAdmin->id
+                );
+
+                if ($capacity['at_capacity']) {
+                    return redirect()->back()->withInput()->with(
+                        'error',
+                        "Cannot assign another active branch manager to {$selectedBranch->name}. Capacity is full ({$capacity['used']}/{$capacity['limit']})."
+                    );
+                }
             }
         }
 
@@ -231,6 +264,34 @@ class AdminManagementController extends Controller
         // Cannot modify system admins
         if ($targetAdmin->isSystemAdmin()) {
             return redirect()->back()->with('error', 'System administrators cannot be modified here.');
+        }
+
+        $isActivating = !$targetAdmin->is_active;
+        if ($isActivating && $targetAdmin->role === Admin::ROLE_BRANCH_SECRETARY) {
+            if (!$targetAdmin->branch_id) {
+                return redirect()->back()->with('error', 'Branch managers must be assigned to a branch before activation.');
+            }
+
+            $branch = Branch::where('id', $targetAdmin->branch_id)
+                ->where('school_id', $school->id)
+                ->first();
+
+            if (!$branch) {
+                return redirect()->back()->with('error', 'Assigned branch is invalid for this school.');
+            }
+
+            $capacity = $this->buildBranchSecretaryCapacitySummary(
+                $school,
+                (int) $targetAdmin->branch_id,
+                $targetAdmin->id
+            );
+
+            if ($capacity['at_capacity']) {
+                return redirect()->back()->with(
+                    'error',
+                    "Cannot activate this branch manager. {$branch->name} is already at capacity ({$capacity['used']}/{$capacity['limit']})."
+                );
+            }
         }
 
         $targetAdmin->update([
@@ -294,5 +355,56 @@ class AdminManagementController extends Controller
         );
 
         return redirect()->back()->with('success', "Administrator '{$name}' has been removed.");
+    }
+
+    private function getBranchSecretaryLimit(School $school): int
+    {
+        return max(1, (int) ($school->schoolSetting?->branch_secretary_limit_per_branch ?? 1));
+    }
+
+    private function buildBranchSecretaryCapacitySummary(
+        School $school,
+        int $branchId,
+        ?int $excludeAdminId = null,
+        ?int $excludeInvitationId = null
+    ): array {
+        $limit = $this->getBranchSecretaryLimit($school);
+
+        $activeQuery = Admin::query()
+            ->where('school_id', $school->id)
+            ->where('branch_id', $branchId)
+            ->where('role', Admin::ROLE_BRANCH_SECRETARY)
+            ->where('is_active', true);
+
+        if ($excludeAdminId !== null) {
+            $activeQuery->where('id', '!=', $excludeAdminId);
+        }
+
+        $pendingInvitationQuery = Invitation::query()
+            ->where('school_id', $school->id)
+            ->where('branch_id', $branchId)
+            ->where('role', Admin::ROLE_BRANCH_SECRETARY)
+            ->whereNull('used_at')
+            ->where(function ($query) {
+                $query->whereNull('expires_at')
+                    ->orWhere('expires_at', '>', now());
+            });
+
+        if ($excludeInvitationId !== null) {
+            $pendingInvitationQuery->where('id', '!=', $excludeInvitationId);
+        }
+
+        $activeCount = $activeQuery->count();
+        $pendingCount = $pendingInvitationQuery->count();
+        $used = $activeCount + $pendingCount;
+
+        return [
+            'limit' => $limit,
+            'active' => $activeCount,
+            'pending' => $pendingCount,
+            'used' => $used,
+            'remaining' => max(0, $limit - $used),
+            'at_capacity' => $used >= $limit,
+        ];
     }
 }
