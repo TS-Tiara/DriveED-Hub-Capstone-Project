@@ -5,10 +5,12 @@
 @section('content')
 @php
     $school = $school ?? $currentSchool ?? null;
-    $instructor = Auth::guard('instructor')->user();
+    $instructor = $instructor ?? Auth::guard('instructor')->user();
     $settings = $school?->schoolSetting;
     $primaryColor = $settings?->primary_color ?? '#667eea';
     $secondaryColor = $settings?->secondary_color ?? '#764ba2';
+    $profileLocked = (int) ($instructor->profile_edit_count ?? 0) >= 1;
+    $hasPendingUnlockRequest = !empty($pendingUnlockRequest);
 @endphp
 
 @include('school.admin.partials.admin-styles')
@@ -155,6 +157,24 @@
 
     .btn-cancel-profile:hover { background: #4b5563; }
 
+    .btn-request-profile {
+        background: #d97706;
+        color: white;
+        border: none;
+        padding: 11px 36px;
+        border-radius: 10px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-left: 10px;
+    }
+
+    .btn-request-profile:hover {
+        background: #b45309;
+        transform: translateY(-1px);
+    }
+
     .alert {
         padding: 14px 16px;
         margin-bottom: 20px;
@@ -167,6 +187,8 @@
 
     .alert-success { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
     .alert-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    .alert-warning { background: #fff4cc; color: #7a5a00; border: 1px solid #f6d365; }
+    .policy-note { max-width: 580px; margin: 0 auto 20px; }
 
     .error-list-compact { margin: 0; padding-left: 20px; }
     .hidden-file-input { display: none; }
@@ -210,6 +232,34 @@
         display: none;
     }
 
+    .request-status-note {
+        margin-top: 10px;
+        color: #6b7280;
+        font-size: 0.85rem;
+    }
+
+    .locked-field-note {
+        margin-top: 4px;
+        color: #7a5a00;
+        font-size: 0.8rem;
+    }
+
+    .form-field textarea {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 0.88rem;
+        min-height: 96px;
+        resize: vertical;
+        outline: none;
+        transition: border-color 0.2s;
+    }
+
+    .form-field textarea:focus {
+        border-color: {{ $primaryColor }};
+    }
+
     @media (max-width: 768px) {
         .profile-avatar-circle { width: 120px; height: 120px; }
         .profile-avatar-letter { font-size: 50px; }
@@ -218,6 +268,7 @@
         .profile-field { grid-template-columns: 1fr; gap: 4px; padding: 10px 0; }
         .profile-field-label { font-size: 0.78rem; color: #9ca3af; }
         .btn-edit-profile { width: 100%; }
+        .btn-request-profile { width: 100%; margin-left: 0; margin-top: 10px; }
         .form-actions { flex-direction: column; }
         .btn-save-profile, .btn-cancel-profile { width: 100%; }
     }
@@ -248,6 +299,18 @@
             </ul>
         </div>
     @endif
+
+    <div class="alert alert-warning policy-note">
+        Core profile details can only be changed once. Profile photo and password can still be changed anytime.
+        @if($profileLocked)
+            Your core details are currently locked.
+            @if($hasPendingUnlockRequest)
+                A correction request is already pending admin review.
+            @else
+                Submit a correction request if you need to update locked details.
+            @endif
+        @endif
+    </div>
 
 
 
@@ -302,7 +365,12 @@
             </div>
 
             <div class="profile-actions">
-                <button type="button" class="btn-edit-profile" onclick="showEditForm()">Edit Profile</button>
+                <button type="button" class="btn-edit-profile" onclick="showEditForm()">{{ $profileLocked ? 'Manage Password' : 'Edit Profile' }}</button>
+                @if($profileLocked && !$hasPendingUnlockRequest)
+                    <button type="button" class="btn-request-profile" onclick="showCorrectionRequestForm()">Request Profile Correction</button>
+                @elseif($profileLocked && $hasPendingUnlockRequest)
+                    <div class="request-status-note">Correction request pending admin review.</div>
+                @endif
             </div>
         </div>
 
@@ -318,7 +386,8 @@
 
                 <div class="form-field">
                     <label for="email">Email</label>
-                    <input type="email" id="email" name="email" value="{{ old('email', $instructor->email) }}" required>
+                    <input type="email" id="email" value="{{ old('email', $instructor->email) }}" readonly>
+                    <div class="locked-field-note">Email cannot be changed.</div>
                 </div>
 
                 <div class="form-field">
@@ -335,6 +404,12 @@
                     <label for="license_number">License Number</label>
                     <input type="text" id="license_number" name="license_number" value="{{ old('license_number', $instructor->license_number) }}">
                 </div>
+
+                @if($profileLocked)
+                    <div class="locked-field-note" style="margin-bottom: 14px;">
+                        Core profile fields are locked. Use the correction request button to unlock them.
+                    </div>
+                @endif
 
                 <div class="password-section">
                     <h4 class="password-section-title">Password <span class="password-section-note">(optional)</span></h4>
@@ -379,6 +454,24 @@
                 </div>
             </form>
         </div>
+
+        @if($profileLocked && !$hasPendingUnlockRequest)
+            <div id="correctionRequestForm" class="edit-form" style="display: none;">
+                <form method="POST" action="{{ school_route('instructor.profile.unlockRequest') }}">
+                    @csrf
+
+                    <div class="form-field">
+                        <label for="reason">Reason for correction request</label>
+                        <textarea id="reason" name="reason" maxlength="1000" placeholder="Explain what needs to be corrected...">{{ old('reason') }}</textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-save-profile">Submit Request</button>
+                        <button type="button" class="btn-cancel-profile" onclick="cancelCorrectionRequest()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        @endif
     </div>
 </div>
 
@@ -393,14 +486,42 @@
     }
 
     function showEditForm() {
+        const correctionRequestForm = document.getElementById('correctionRequestForm');
         document.getElementById('profileView').style.display = 'none';
         document.getElementById('editForm').style.display = 'block';
+        if (correctionRequestForm) {
+            correctionRequestForm.style.display = 'none';
+        }
     }
 
     function hideEditForm() {
+        const correctionRequestForm = document.getElementById('correctionRequestForm');
         document.getElementById('profileView').style.display = 'block';
         document.getElementById('editForm').style.display = 'none';
+        if (correctionRequestForm) {
+            correctionRequestForm.style.display = 'none';
+        }
         closeInstructorPasswordFields();
+    }
+
+    function showCorrectionRequestForm() {
+        const correctionRequestForm = document.getElementById('correctionRequestForm');
+        if (!correctionRequestForm) return;
+
+        document.getElementById('profileView').style.display = 'none';
+        document.getElementById('editForm').style.display = 'none';
+        correctionRequestForm.style.display = 'block';
+    }
+
+    function cancelCorrectionRequest() {
+        const correctionRequestForm = document.getElementById('correctionRequestForm');
+
+        document.getElementById('profileView').style.display = 'block';
+        document.getElementById('editForm').style.display = 'none';
+
+        if (correctionRequestForm) {
+            correctionRequestForm.style.display = 'none';
+        }
     }
 
     function toggleInstructorPasswordFields(forceOpen = null) {
@@ -465,10 +586,15 @@
         enforceNumericOnly(document.getElementById('contact'));
 
         const hasErrors = {{ $errors->any() ? 'true' : 'false' }};
+        const hasCorrectionErrors = {{ $errors->has('reason') ? 'true' : 'false' }};
         const hasPasswordErrors = {{ ($errors->has('current_password') || $errors->has('new_password') || $errors->has('new_password_confirmation')) ? 'true' : 'false' }};
 
         if (hasErrors) {
-            showEditForm();
+            if (hasCorrectionErrors) {
+                showCorrectionRequestForm();
+            } else {
+                showEditForm();
+            }
         }
 
         if (hasPasswordErrors) {

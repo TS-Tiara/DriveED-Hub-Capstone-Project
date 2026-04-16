@@ -52,6 +52,31 @@
         font-size: 0.9rem;
         margin-top: 5px;
     }
+
+    .page-header-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .btn-review-requests {
+        position: relative;
+    }
+
+    .request-count-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 20px;
+        height: 20px;
+        padding: 0 6px;
+        border-radius: 999px;
+        background: #ef4444;
+        color: #fff;
+        font-size: 0.75rem;
+        font-weight: 700;
+        line-height: 1;
+    }
     
     /* Statistics Cards - Using shared styles from admin-styles.blade.php */
     .stats-grid {
@@ -448,6 +473,49 @@
         transform: none;
         transition: none;
     }
+
+    /* Keep correction modal static on open to avoid visible shrink effect. */
+    #correctionRequestsModal .modal-content {
+        transform: none;
+        transition: none;
+        animation: none;
+        overflow: hidden;
+    }
+
+    #correctionRequestsModal .modal-required-note {
+        margin: 16px 24px 12px;
+        color: #4b5563;
+        font-size: 0.9rem;
+        line-height: 1.45;
+    }
+
+    #correctionRequestsModal .unlock-requests-list {
+        margin: 0 24px;
+    }
+
+    #correctionRequestsModal .empty-state {
+        margin: 12px 24px 0;
+        min-height: 170px;
+        padding: 28px 16px;
+        border: 1px dashed #d1d5db;
+        border-radius: 12px;
+        background: #f9fafb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6b7280;
+    }
+
+    #correctionRequestsModal .empty-state-text {
+        color: #374151;
+        font-size: 0.96rem;
+        line-height: 1.45;
+    }
+
+    #correctionRequestsModal .modal-buttons {
+        margin-top: 0 !important;
+        padding: 16px 24px 24px;
+    }
     
     @keyframes fadeIn {
         from {
@@ -468,6 +536,94 @@
         font-size: 1.75rem;
         font-weight: 600;
         border-radius: 16px 16px 0 0;
+    }
+
+    .unlock-requests-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        max-height: 60vh;
+        overflow-y: auto;
+        padding-right: 2px;
+        margin: 0 24px 0;
+    }
+
+    .unlock-request-item {
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 12px;
+        background: #f9fafb;
+    }
+
+    .unlock-request-header {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 8px;
+        flex-wrap: wrap;
+    }
+
+    .unlock-request-name {
+        font-weight: 600;
+        color: #1f2937;
+    }
+
+    .unlock-request-role {
+        font-size: 0.8rem;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+    }
+
+    .unlock-request-meta {
+        font-size: 0.8rem;
+        color: #6b7280;
+    }
+
+    .unlock-request-reason {
+        margin: 10px 0;
+        font-size: 0.88rem;
+        color: #374151;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
+    .unlock-request-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .unlock-request-actions form {
+        margin: 0;
+    }
+
+    .btn-approve-request,
+    .btn-deny-request {
+        border: none;
+        border-radius: 8px;
+        padding: 8px 14px;
+        color: #fff;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .btn-approve-request {
+        background: #059669;
+    }
+
+    .btn-approve-request:hover {
+        background: #047857;
+    }
+
+    .btn-deny-request {
+        background: #dc2626;
+    }
+
+    .btn-deny-request:hover {
+        background: #b91c1c;
     }
     
     .modal-content form {
@@ -658,6 +814,15 @@
             flex-direction: column;
             align-items: flex-start;
             gap: 15px;
+        }
+
+        .page-header-right {
+            width: 100%;
+        }
+
+        .page-header-right .btn-create {
+            width: 100%;
+            justify-content: center;
         }
         
         .page-title {
@@ -851,6 +1016,17 @@
             <h1 class="page-title">User Management</h1>
             <p class="page-subtitle">Manage students and instructors in your driving school</p>
         </div>
+        @if(isset($admin) && $admin->isSchoolAdmin())
+            <div class="page-header-right">
+                <button type="button" class="btn-create btn-review-requests" onclick="openCorrectionRequestsModal()">
+                    <svg class="icon-18" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16h6M7 4h10a2 2 0 012 2v12l-3-2-3 2-3-2-3 2V6a2 2 0 012-2z" /></svg>
+                    Profile Correction Requests
+                    @if(($pendingProfileUnlockRequestsCount ?? 0) > 0)
+                        <span class="request-count-badge">{{ $pendingProfileUnlockRequestsCount }}</span>
+                    @endif
+                </button>
+            </div>
+        @endif
     </div>
     
     <!-- Statistics Cards -->
@@ -1007,6 +1183,7 @@
                             <th>Role</th>
                             <th>Branch</th>
                             <th>Status</th>
+                            <th>Portal Activity</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -1031,6 +1208,18 @@
                                 <span class="status-badge status-{{ $user->status }}">
                                     {{ ucfirst($user->status) }}
                                 </span>
+                            </td>
+                            <td>
+                                <div style="font-size: 0.82rem; line-height: 1.4; color: #4b5563;">
+                                    <div>
+                                        <span style="font-weight: 600; color: #1f2937;">In:</span> 
+                                        {{ ($user->last_login_at ?? null) ? \Illuminate\Support\Carbon::parse($user->last_login_at)->diffForHumans() : 'Never' }}
+                                    </div>
+                                    <div>
+                                        <span style="font-weight: 600; color: #1f2937;">Out:</span> 
+                                        {{ ($user->last_logout_at ?? null) ? \Illuminate\Support\Carbon::parse($user->last_logout_at)->diffForHumans() : 'Never' }}
+                                    </div>
+                                </div>
                             </td>
                             <td class="actions-cell">
                                 <div class="action-buttons">
@@ -1362,6 +1551,55 @@
     </div>
 </div>
 
+@if(isset($admin) && $admin->isSchoolAdmin())
+<div id="correctionRequestsModal" class="modal">
+    <div class="modal-content">
+        <h3>Profile Correction Requests</h3>
+        <p class="modal-required-note">Pending requests from locked student or instructor profiles.</p>
+
+        @if(($pendingProfileUnlockRequests ?? collect())->count() > 0)
+            <div class="unlock-requests-list">
+                @foreach($pendingProfileUnlockRequests as $unlockRequest)
+                    @php
+                        $requestUser = $unlockRequest->user;
+                        $requestUserRole = $unlockRequest->user_type === \App\Models\Instructor::class ? 'Instructor' : 'Student';
+                    @endphp
+                    <div class="unlock-request-item">
+                        <div class="unlock-request-header">
+                            <div>
+                                <div class="unlock-request-name">{{ $requestUser->name ?? 'Unknown User' }}</div>
+                                <div class="unlock-request-role">{{ $requestUserRole }}</div>
+                            </div>
+                            <div class="unlock-request-meta">Requested {{ $unlockRequest->created_at?->diffForHumans() ?? 'recently' }}</div>
+                        </div>
+                        <div class="unlock-request-meta">Email: {{ $requestUser->email ?? 'N/A' }}</div>
+                        <div class="unlock-request-reason">{{ $unlockRequest->reason ?: 'No reason provided.' }}</div>
+                        <div class="unlock-request-actions">
+                            <form method="POST" action="{{ school_route('admin.profileUnlockRequests.approve', ['profileUnlockRequest' => $unlockRequest->id]) }}" data-no-ajax="1">
+                                @csrf
+                                <button type="submit" class="btn-approve-request">Approve</button>
+                            </form>
+                            <form method="POST" action="{{ school_route('admin.profileUnlockRequests.deny', ['profileUnlockRequest' => $unlockRequest->id]) }}" data-no-ajax="1">
+                                @csrf
+                                <button type="submit" class="btn-deny-request">Deny</button>
+                            </form>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @else
+            <div class="empty-state" style="margin-top: 10px;">
+                <div class="empty-state-text">No pending profile correction requests.</div>
+            </div>
+        @endif
+
+        <div class="modal-buttons" style="margin-top: 16px;">
+            <button type="button" class="btn-cancel" onclick="closeCorrectionRequestsModal()">Close</button>
+        </div>
+    </div>
+</div>
+@endif
+
 <script>
     window.schoolSlug = '{{ $school->slug }}';
     window.studentBaseUrl = '/{{ $school->slug }}/admin/students';
@@ -1584,6 +1822,20 @@
         form.addEventListener('submit', function () {
             setInviteFormLoadingState(form, true);
         });
+    }
+
+    function openCorrectionRequestsModal() {
+        const modal = document.getElementById('correctionRequestsModal');
+        if (modal) {
+            modal.style.display = 'flex';
+        }
+    }
+
+    function closeCorrectionRequestsModal() {
+        const modal = document.getElementById('correctionRequestsModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
     }
     
     // Student Modal Functions

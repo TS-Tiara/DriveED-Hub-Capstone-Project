@@ -12,8 +12,8 @@ use App\Models\PhaseProgression;
 use App\Rules\StrongPassword;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\Rule;
 use Carbon\Carbon;
 use App\Http\Requests\StoreEnrollmentRequestRequest;
 use Illuminate\Support\Facades\Log;
@@ -285,9 +285,18 @@ class StudentController extends Controller
         $student = Auth::guard('student')->user();
         $student->load('branchRelation');
 
+        $pendingUnlockRequest = $student->profileUnlockRequests()
+            ->where('status', 'pending')
+            ->latest('id')
+            ->first();
+
+        $supportsDateOfBirth = Schema::hasColumn('students', 'date_of_birth');
+
         return view($school->resolveView('student.profile'), [
             'school' => $school,
             'student' => $student,
+            'pendingUnlockRequest' => $pendingUnlockRequest,
+            'supportsDateOfBirth' => $supportsDateOfBirth,
             'isAjax' => $request->ajax(),
         ]);
     }
@@ -296,34 +305,71 @@ class StudentController extends Controller
     {
         $student = Auth::guard('student')->user();
 
+        $supportsDateOfBirth = Schema::hasColumn('students', 'date_of_birth');
+
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => [
-                'required',
-                'email',
-                Rule::unique('students', 'email')
-                    ->where('school_id', $school->id)
-                    ->ignore($student->id),
-                'regex:/@(gmail\.com|yahoo\.com)$/i',
-            ],
+            'email' => 'nullable|email',
             'contact' => ['nullable', 'string', 'max:20', 'regex:/^(09\d{9}|\+639\d{9})$/'],
             'address' => 'nullable|string|max:255',
-            'date_of_birth' => 'nullable|date|before:today',
+            'date_of_birth' => $supportsDateOfBirth ? 'nullable|date|before:today' : 'nullable',
             'current_password' => 'nullable|required_with:new_password|string',
             'new_password' => ['nullable', 'confirmed', 'different:current_password', new StrongPassword()],
         ]);
 
-        $nameChanged = trim((string) $request->input('name')) !== trim((string) $student->name);
-        $emailChanged = strtolower(trim((string) $request->input('email'))) !== strtolower(trim((string) $student->email));
-        $passwordChanged = $request->filled('new_password');
-
-        if (DemoAccountProtection::isProtectedAccount($student->email, 'student', $school) && ($nameChanged || $emailChanged || $passwordChanged)) {
+        $incomingEmail = trim((string) $request->input('email', ''));
+        if ($incomingEmail !== '' && strcasecmp($incomingEmail, (string) $student->email) !== 0) {
             return back()
-            ->withErrors(['name' => 'This demo account has locked name, email, and password.'])
+                ->withErrors(['email' => 'Email address cannot be changed.'])
                 ->withInput($request->except(['current_password', 'new_password', 'new_password_confirmation']));
         }
 
-        $data = $request->only(['name', 'email', 'contact', 'address', 'date_of_birth']);
+        $coreFields = ['name', 'contact', 'address'];
+        if ($supportsDateOfBirth) {
+            $coreFields[] = 'date_of_birth';
+        }
+
+        $normalize = static function ($value) {
+            if (is_string($value)) {
+                $value = trim($value);
+            }
+
+            return $value === '' ? null : $value;
+        };
+
+        $coreChanged = false;
+        foreach ($coreFields as $field) {
+            $incoming = $normalize($request->input($field));
+            $current = $normalize($student->{$field});
+
+            $incomingComparable = $incoming === null ? null : (string) $incoming;
+            $currentComparable = $current === null ? null : (string) $current;
+
+            if ($incomingComparable !== $currentComparable) {
+                $coreChanged = true;
+                break;
+            }
+        }
+
+        $profileEditCount = (int) ($student->profile_edit_count ?? 0);
+        if ($coreChanged && $profileEditCount >= 1) {
+            return back()
+                ->with('error', 'Core profile details are locked. Submit a correction request to your school admin.')
+                ->withInput($request->except(['current_password', 'new_password', 'new_password_confirmation']));
+        }
+
+        $passwordChanged = $request->filled('new_password');
+
+        if (DemoAccountProtection::isProtectedAccount($student->email, 'student', $school) && ($coreChanged || $passwordChanged)) {
+            return back()
+                ->withErrors(['name' => 'This demo account has locked profile details and password.'])
+                ->withInput($request->except(['current_password', 'new_password', 'new_password_confirmation']));
+        }
+
+        $data = [];
+        foreach ($coreFields as $field) {
+            $data[$field] = $request->input($field);
+        }
 
         // Check current password if user wants to change password
         if ($request->filled('new_password')) {
@@ -332,12 +378,27 @@ class StudentController extends Controller
             }
             $data['password'] = Hash::make($request->new_password);
         }
-        //False positive
+
+        if ($coreChanged) {
+            $data['profile_edit_count'] = 1;
+            $data['profile_locked_at'] = now();
+        }
+
+        if (!$coreChanged && !$passwordChanged) {
+            return redirect()
+                ->route('schools.student.profile', $school)
+                ->with('success', 'No profile changes were detected.');
+        }
+
         $student->update($data);
+
+        $message = $coreChanged
+            ? 'Profile updated successfully. Core details are now locked until admin approval.'
+            : 'Password updated successfully!';
 
         return redirect()
             ->route('schools.student.profile', $school)
-            ->with('success', 'Profile updated successfully!');
+            ->with('success', $message);
     }
 
     public function updateProfilePicture(Request $request, School $school)

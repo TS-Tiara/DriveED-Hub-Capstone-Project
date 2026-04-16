@@ -1238,6 +1238,14 @@
                         </div>
 
                         <div class="form-group">
+                            <label class="form-label">Max Branch Managers Per Branch</label>
+                            <input type="number" class="number-input" name="branch_secretary_limit_per_branch" value="{{ old('branch_secretary_limit_per_branch', $settings->branch_secretary_limit_per_branch ?? 1) }}" min="1" max="50">
+                            <small class="text-muted help-text-block">
+                                Maximum number of active and pending branch manager slots allowed per branch (minimum 1)
+                            </small>
+                        </div>
+
+                        <div class="form-group">
                             <label class="form-label">
                                 <input type="checkbox" name="require_instructor_license" value="1" {{ old('require_instructor_license', $settings->require_instructor_license ?? true) ? 'checked' : '' }} class="checkbox-inline">
                                 Mandatory Instructor License

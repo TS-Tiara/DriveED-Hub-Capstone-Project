@@ -460,18 +460,21 @@ class AuthController extends Controller
         // Log the primary authenticated guard before logout
         if (Auth::guard('admin')->check()) {
             $admin = Auth::guard('admin')->user();
+            $admin->update(['last_logout_at' => now()]);
             $logMessage = "School admin logged out: {$admin->name}";
             $logContext = ['admin_id' => $admin->id, 'email' => $admin->email];
             $action = 'school_admin_logout';
         }
         elseif (Auth::guard('instructor')->check()) {
             $instructor = Auth::guard('instructor')->user();
+            $instructor->update(['last_logout_at' => now()]);
             $logMessage = "Instructor logged out: {$instructor->name}";
             $logContext = ['instructor_id' => $instructor->id, 'email' => $instructor->email];
             $action = 'instructor_logout';
         }
         elseif (Auth::guard('student')->check()) {
             $student = Auth::guard('student')->user();
+            $student->update(['last_logout_at' => now()]);
             $userType = $student->role === 'guest' ? 'Guest' : 'Student';
             $logMessage = "{$userType} logged out: {$student->name}";
             $logContext = ['student_id' => $student->id, 'email' => $student->email, 'role' => $student->role];

@@ -520,11 +520,13 @@
             <table>
                 <thead>
                     <tr>
+                        <th class="hide-mobile">ID</th>
                         <th>Name</th>
                         <th>Email</th>
+                        <th class="hide-mobile">Contact</th>
                         <th>School</th>
                         <th>Status</th>
-                        <th>Joined</th>
+                        <th class="hide-mobile">Joined</th>
                         <th>Actions</th>
                     </tr>
                 </thead>

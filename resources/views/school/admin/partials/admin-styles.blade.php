@@ -1,11 +1,11 @@
 @php
     $school = $school ?? $currentSchool ?? null;
     $settings = $school?->schoolSetting;
-    $primaryColor = $settings?->primary_color ?? '#667eea';
-    $secondaryColor = $settings?->secondary_color ?? '#764ba2';
-    $accentColor = $settings?->accent_color ?? '#1e40af';
+    $primaryColor = blank($settings?->primary_color) ? '#667eea' : $settings->primary_color;
+    $secondaryColor = blank($settings?->secondary_color) ? '#764ba2' : $settings->secondary_color;
+    $accentColor = blank($settings?->accent_color) ? '#1e40af' : $settings->accent_color;
     $useGradient = $settings?->use_gradient_header ?? true;
-    $headerTextColor = $settings?->header_text_color ?? '#ffffff';
+    $headerTextColor = blank($settings?->header_text_color) ? '#ffffff' : $settings->header_text_color;
 @endphp
 
 <style>
