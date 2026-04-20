@@ -15,6 +15,12 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // Trust all proxies (Railway, Heroku, etc.) - required for HTTPS
         $middleware->trustProxies(at: '*');
+
+        // Invitation onboarding links are token-protected and may be opened without a stable browser session.
+        // Exempt this endpoint from CSRF so account activation does not fail with 419.
+        $middleware->validateCsrfTokens(except: [
+            '*/onboard/*',
+        ]);
         
         $middleware->alias([
             'school.context' => \App\Http\Middleware\EnsureSchoolContext::class,

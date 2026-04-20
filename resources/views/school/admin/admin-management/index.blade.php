@@ -235,10 +235,10 @@
         background: #f59e0b;
     }
 
-    .pending-modal-content {
-        width: min(1120px, 95vw);
-        min-width: 760px;
-        max-width: 95vw;
+    #pendingInvitationsModal .modal-content.pending-modal-content {
+        width: min(1440px, 98vw);
+        min-width: 900px;
+        max-width: 98vw;
     }
 
     .pending-modal-body {
@@ -854,7 +854,7 @@
             flex-wrap: wrap;
         }
 
-        .pending-modal-content {
+        #pendingInvitationsModal .modal-content.pending-modal-content {
             min-width: 0;
             width: 95vw;
         }
@@ -1131,17 +1131,17 @@
                                         <td>{{ $invitation->expires_at?->format('M d, Y H:i') ?? 'No Expiry' }}</td>
                                         <td>
                                             <div class="pending-invite-actions">
-                                                <form action="{{ route('schools.admin.invitations.resend', ['school' => $school, 'invitation' => $invitation]) }}" method="POST" class="inline-form">
+                                                <form action="{{ route('schools.admin.invitations.resend', ['school' => $school, 'invitation' => $invitation]) }}" method="POST" class="inline-form native-form pending-invitation-form" data-no-ajax="1" data-no-submit-guard="1" data-protected="1">
                                                     @csrf
-                                                    <button type="submit" class="btn-invite-action btn-invite-resend" title="Resend Invitation">
+                                                    <button type="button" class="btn-invite-action btn-invite-resend" title="Resend Invitation" data-pending-submit="1">
                                                         <i class="bi bi-arrow-repeat"></i>
                                                         Resend
                                                     </button>
                                                 </form>
-                                                <form action="{{ route('schools.admin.invitations.cancel', ['school' => $school, 'invitation' => $invitation]) }}" method="POST" class="inline-form" onsubmit="return confirm('Are you sure you want to cancel this invitation?');">
+                                                <form action="{{ route('schools.admin.invitations.cancel', ['school' => $school, 'invitation' => $invitation]) }}" method="POST" class="inline-form native-form pending-invitation-form" data-no-ajax="1" data-no-submit-guard="1" data-protected="1">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" class="btn-invite-action btn-invite-cancel" title="Cancel Invitation">
+                                                    <button type="button" class="btn-invite-action btn-invite-cancel" title="Cancel Invitation" data-pending-submit="1" data-confirm-message="Are you sure you want to cancel this invitation?">
                                                         <i class="bi bi-x-circle"></i>
                                                         Cancel
                                                     </button>
@@ -1304,25 +1304,6 @@
         enforceNumericOnly(document.getElementById('edit_contact'));
     });
 
-    function toggleAdminExportDropdown() {
-        const dropdown = document.getElementById('adminExportMenu');
-        dropdown.classList.toggle('show');
-        
-        // Close on outside click
-        const closeDropdown = (e) => {
-            if (!e.target.closest('.export-dropdown')) {
-                dropdown.classList.remove('show');
-                document.removeEventListener('click', closeDropdown);
-            }
-        };
-        
-        setTimeout(() => {
-            if (dropdown.classList.contains('show')) {
-                document.addEventListener('click', closeDropdown);
-            }
-        }, 10);
-    }
-
     // Toggle branch field visibility based on role selection
     function toggleBranchField(prefix) {
         const roleSelect = document.getElementById(prefix + '_role');
@@ -1447,16 +1428,57 @@
         }
     });
 
-    function openPendingInvitationsModal() {
+    window.openPendingInvitationsModal = function() {
         document.getElementById('pendingInvitationsModal').classList.add('active');
-    }
+    };
 
-    function closePendingInvitationsModal() {
+    window.closePendingInvitationsModal = function() {
         document.getElementById('pendingInvitationsModal').classList.remove('active');
+    };
+
+    function initializePendingInvitationModalActions() {
+        const pendingModal = document.getElementById('pendingInvitationsModal');
+        if (!pendingModal) return;
+
+        pendingModal.addEventListener('click', function(event) {
+            const actionButton = event.target.closest('[data-pending-submit="1"]');
+            if (!actionButton) return;
+
+            const actionForm = actionButton.closest('form');
+            if (!actionForm) return;
+
+            if (actionButton.dataset.submitting === 'true') {
+                return;
+            }
+
+            const confirmMessage = actionButton.getAttribute('data-confirm-message');
+            if (confirmMessage && !confirm(confirmMessage)) {
+                return;
+            }
+
+            // Reopen pending modal after redirect so action feedback stays in context.
+            sessionStorage.setItem('adminManagementPendingModalReopen', '1');
+
+            actionButton.dataset.submitting = 'true';
+            actionButton.disabled = true;
+            actionForm.submit();
+
+            setTimeout(function() {
+                actionButton.dataset.submitting = 'false';
+                actionButton.disabled = false;
+            }, 8000);
+        });
     }
 
     document.addEventListener('DOMContentLoaded', function() {
         toggleBranchField('create');
+        initializePendingInvitationModalActions();
+
+        const reopenPendingModal = sessionStorage.getItem('adminManagementPendingModalReopen') === '1';
+        if (reopenPendingModal) {
+            sessionStorage.removeItem('adminManagementPendingModalReopen');
+            window.openPendingInvitationsModal();
+        }
     });
 </script>
 @endsection
