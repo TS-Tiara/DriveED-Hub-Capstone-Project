@@ -1196,16 +1196,6 @@ class AdminController extends Controller
                 'button_border_radius.max' => 'Button border radius cannot exceed 30 pixels.',
             ]);
 
-            if (
-                $request->boolean('gcash_enabled')
-                && !$request->hasFile('gcash_qr')
-                && empty($schoolLevelGcash?->qr_path)
-            ) {
-                throw \Illuminate\Validation\ValidationException::withMessages([
-                    'gcash_qr' => 'Please upload a GCash payment image for initial setup.',
-                ]);
-            }
-
             DB::beginTransaction();
 
             // Update school settings
@@ -1349,27 +1339,22 @@ class AdminController extends Controller
                 $accountName = trim((string) $request->input('gcash_account_name', $gcashSetting->account_name ?? ''));
                 $accountNumber = trim((string) $request->input('gcash_account_number', $gcashSetting->account_number ?? ''));
 
-                // Backward-compatible placeholders: details can live in the uploaded image.
+                // Keep account labels human-readable even when optional fields are left blank.
                 if ($accountName === '') {
-                    $accountName = 'See uploaded payment image';
+                    $accountName = 'Not set';
                 }
                 if ($accountNumber === '') {
-                    $accountNumber = 'See uploaded payment image';
+                    $accountNumber = 'Not set';
                 }
 
-                if (empty($qrPath)) {
-                    throw \Illuminate\Validation\ValidationException::withMessages([
-                        'gcash_qr' => 'A GCash payment image is required to activate school GCash payments.',
-                    ]);
-                }
+                // Keep school-level GCash active regardless of QR image presence.
+                $isActive = true;
 
                 $gcashSetting->fill([
                     'account_name' => $accountName,
                     'account_number' => $accountNumber,
                     'qr_path' => $qrPath,
-                    'is_active' => $request->has('gcash_enabled')
-                        ? $request->boolean('gcash_enabled')
-                        : (bool) ($gcashSetting->is_active ?? false),
+                    'is_active' => $isActive,
                 ]);
 
                 $gcashSetting->save();

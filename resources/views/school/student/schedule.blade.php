@@ -1349,10 +1349,12 @@
                         <input type="checkbox" id="collapse-all-my" onchange="toggleCollapseAllMySchedule(this)">
                         <span>Collapse All</span>
                     </label>
+{{-- 
                     <label class="filter-checkbox">
                         <input type="checkbox" id="show-past-my" onchange="toggleShowPastMySchedule(this)">
                         <span>Show Past</span>
                     </label>
+--}}
                     <button class="collapse-btn mobile-queue-btn" onclick="toggleQueuePopup()">My Schedule</button>
                 </div>
             </div>
@@ -1571,6 +1573,7 @@
                         <input type="checkbox" id="collapse-all-available" onchange="toggleCollapseAllAvailable(this)">
                         <span>Collapse All</span>
                     </label>
+{{-- 
                     <label class="filter-checkbox">
                         <input type="checkbox" id="show-past-available" onchange="toggleShowPastAvailable(this)">
                         <span>Show Past</span>
@@ -1590,6 +1593,7 @@
                         @endforeach
                     </select>
                     @endif
+--}}
                     <button class="collapse-btn mobile-queue-btn" onclick="toggleQueuePopup()">My Schedule</button>
                 </div>
             </div>
@@ -2098,12 +2102,12 @@
         const instructorName = select.options[select.selectedIndex].text;
 
         if (availableSpots <= 0) {
-            showNotification('This slot is already full.', 'error');
+            showToast('This slot is already full.', 'error');
             return;
         }
 
         if (!enrollmentRequestId) {
-            showNotification('This schedule cannot be booked because no active enrollment is linked to this course.', 'error');
+            showToast('This schedule cannot be booked because no active enrollment is linked to this course.', 'error');
             return;
         }
         
@@ -2122,12 +2126,12 @@
         const availableSpots = parseInt(timeSlotCard.getAttribute('data-available-spots') || '0', 10);
 
         if (availableSpots <= 0) {
-            showNotification('This slot is already full.', 'error');
+            showToast('This slot is already full.', 'error');
             return;
         }
 
         if (!enrollmentRequestId) {
-            showNotification('This schedule cannot be booked because no active enrollment is linked to this course.', 'error');
+            showToast('This schedule cannot be booked because no active enrollment is linked to this course.', 'error');
             return;
         }
         
@@ -2146,12 +2150,12 @@
         const availableSpots = parseInt(timeSlotCard.getAttribute('data-available-spots') || '0', 10);
 
         if (availableSpots <= 0) {
-            showNotification('This slot is already full.', 'error');
+            showToast('This slot is already full.', 'error');
             return;
         }
 
         if (!enrollmentRequestId) {
-            showNotification('This schedule cannot be booked because no active enrollment is linked to this course.', 'error');
+            showToast('This schedule cannot be booked because no active enrollment is linked to this course.', 'error');
             return;
         }
         
@@ -2615,7 +2619,7 @@
 <script>
 function openBookingModal(timeSlotId, courseId, courseName, instructorId, instructorName, date, startTime, endTime, enrollmentRequestId) {
     if (!enrollmentRequestId) {
-        showNotification('Missing enrollment linkage for this schedule.', 'error');
+        showToast('Missing enrollment linkage for this schedule.', 'error');
         return;
     }
 
@@ -2665,21 +2669,28 @@ document.getElementById('bookingForm').addEventListener('submit', function(e) {
             'Accept': 'application/json'
         }
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
+    .then(response => {
+        return response.json().then(data => ({ ok: response.ok, data }));
+    })
+    .then(({ ok, data }) => {
+        if (ok && data.success) {
             closeBookingModal();
-            showNotification(data.message || 'Schedule request added to your queue.', 'success');
+            showToast(data.message || 'Schedule request added to your queue.', 'success');
             setTimeout(() => window.location.reload(), 1000);
         } else {
-            showNotification(data.message || 'Could not create your schedule request. Please try again.', 'error');
+            let errorMsg = data.message || 'Could not create your schedule request. Please try again.';
+            if (data.errors) {
+                const firstError = Object.values(data.errors)[0];
+                if (Array.isArray(firstError) && firstError.length) errorMsg = firstError[0];
+            }
+            showToast(errorMsg, 'error');
             submitBtn.disabled = false;
             submitBtn.innerHTML = '<i class="bi bi-check-circle"></i> Add Schedule Request';
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        showNotification('Something went wrong while submitting your schedule request. Please try again.', 'error');
+        showToast('Something went wrong while submitting your schedule request. Please try again.', 'error');
         submitBtn.disabled = false;
         submitBtn.innerHTML = '<i class="bi bi-check-circle"></i> Add Schedule Request';
     });
@@ -2717,59 +2728,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Custom notification system
-function showNotification(message, type = 'info') {
-    const notification = document.createElement('div');
-    const bgColors = {
-        'success': '#d4edda',
-        'error': '#f8d7da',
-        'info': '#d1ecf1',
-        'warning': '#fff3cd'
-    };
-    const textColors = {
-        'success': '#155724',
-        'error': '#721c24',
-        'info': '#0c5460',
-        'warning': '#856404'
-    };
-    const borderColors = {
-        'success': '#c3e6cb',
-        'error': '#f5c6cb',
-        'info': '#bee5eb',
-        'warning': '#ffeeba'
-    };
-    
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: ${bgColors[type] || bgColors['info']};
-        color: ${textColors[type] || textColors['info']};
-        border: 1px solid ${borderColors[type] || borderColors['info']};
-        padding: 12px 16px;
-        border-radius: 6px;
-        z-index: 10000;
-        max-width: 400px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        animation: slideIn 0.3s ease-out;
-    `;
-    
-    notification.innerHTML = `
-        <span>${message}</span>
-        <button type="button" class="dismiss-alert-btn notification-dismiss-btn" aria-label="Dismiss notification" onclick="this.parentElement.remove()">&times;</button>
-    `;
-    
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        notification.style.opacity = '0';
-        notification.style.transition = 'opacity 0.5s';
-        setTimeout(() => notification.remove(), 500);
-    }, 5000);
-}
+
 
 // Custom confirmation modal
 let confirmCallback = null;

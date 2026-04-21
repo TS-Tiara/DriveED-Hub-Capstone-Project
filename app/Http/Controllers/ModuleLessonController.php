@@ -64,7 +64,10 @@ class ModuleLessonController extends Controller
      */
     public function create(Request $request, School $school, Course $course, CourseModule $module)
     {
-        if (!Auth::guard('admin')->check()) {
+        $isAdmin = Auth::guard('admin')->check();
+        $isInstructor = Auth::guard('instructor')->check();
+
+        if (!$isAdmin && !$isInstructor) {
             abort(403);
         }
 
@@ -78,7 +81,9 @@ class ModuleLessonController extends Controller
             abort(404);
         }
 
-        return view('school.admin.lessons.create', compact('school', 'course', 'module'))->with('isAjax', $request->ajax());
+        $view = $isInstructor ? 'school.instructor.lessons.create' : 'school.admin.lessons.create';
+
+        return view($view, compact('school', 'course', 'module'))->with('isAjax', $request->ajax());
     }
 
     /**
@@ -86,7 +91,10 @@ class ModuleLessonController extends Controller
      */
     public function store(Request $request, School $school, Course $course, CourseModule $module)
     {
-        if (!Auth::guard('admin')->check()) {
+        $isAdmin = Auth::guard('admin')->check();
+        $isInstructor = Auth::guard('instructor')->check();
+
+        if (!$isAdmin && !$isInstructor) {
             abort(403);
         }
 
@@ -149,8 +157,12 @@ class ModuleLessonController extends Controller
                 ]);
             }
 
+            $redirectRoute = $isInstructor
+                ? 'schools.instructor.courses.modules.show'
+                : 'schools.admin.courses.modules.show';
+
             return redirect()
-                ->route('schools.admin.courses.modules.show', ['school' => $school->slug, 'course' => $course->id, 'module' => $module->id])
+                ->route($redirectRoute, ['school' => $school->slug, 'course' => $course->id, 'module' => $module->id])
                 ->with('success', 'Lesson created successfully.');
 
         }
@@ -218,7 +230,10 @@ class ModuleLessonController extends Controller
      */
     public function edit(Request $request, School $school, Course $course, CourseModule $module, ModuleLesson $lesson)
     {
-        if (!Auth::guard('admin')->check()) {
+        $isAdmin = Auth::guard('admin')->check();
+        $isInstructor = Auth::guard('instructor')->check();
+
+        if (!$isAdmin && !$isInstructor) {
             abort(403);
         }
 
@@ -232,7 +247,9 @@ class ModuleLessonController extends Controller
             abort(404);
         }
 
-        return view('school.admin.lessons.edit', compact('school', 'course', 'module', 'lesson'))->with('isAjax', $request->ajax());
+        $view = $isInstructor ? 'school.instructor.lessons.edit' : 'school.admin.lessons.edit';
+
+        return view($view, compact('school', 'course', 'module', 'lesson'))->with('isAjax', $request->ajax());
     }
 
     /**
@@ -240,7 +257,10 @@ class ModuleLessonController extends Controller
      */
     public function update(Request $request, School $school, Course $course, CourseModule $module, ModuleLesson $lesson)
     {
-        if (!Auth::guard('admin')->check()) {
+        $isAdmin = Auth::guard('admin')->check();
+        $isInstructor = Auth::guard('instructor')->check();
+
+        if (!$isAdmin && !$isInstructor) {
             abort(403);
         }
 
@@ -318,8 +338,12 @@ class ModuleLessonController extends Controller
                 ]);
             }
 
+            $redirectRoute = $isInstructor
+                ? 'schools.instructor.courses.modules.lessons.show'
+                : 'schools.admin.courses.modules.lessons.show';
+
             return redirect()
-                ->route('schools.admin.courses.modules.lessons.show', ['school' => $school->slug, 'course' => $course->id, 'module' => $module->id, 'lesson' => $lesson->id])
+                ->route($redirectRoute, ['school' => $school->slug, 'course' => $course->id, 'module' => $module->id, 'lesson' => $lesson->id])
                 ->with('success', 'Lesson updated successfully.');
 
         }
@@ -344,7 +368,10 @@ class ModuleLessonController extends Controller
      */
     public function destroy(School $school, Course $course, CourseModule $module, ModuleLesson $lesson)
     {
-        if (!Auth::guard('admin')->check()) {
+        $isAdmin = Auth::guard('admin')->check();
+        $isInstructor = Auth::guard('instructor')->check();
+
+        if (!$isAdmin && !$isInstructor) {
             abort(403);
         }
 
@@ -371,8 +398,12 @@ class ModuleLessonController extends Controller
 
             DB::commit();
 
+            $redirectRoute = $isInstructor
+                ? 'schools.instructor.courses.modules.show'
+                : 'schools.admin.courses.modules.show';
+
             return redirect()
-                ->route('schools.admin.courses.modules.show', ['school' => $school->slug, 'course' => $course->id, 'module' => $module->id])
+                ->route($redirectRoute, ['school' => $school->slug, 'course' => $course->id, 'module' => $module->id])
                 ->with('success', 'Lesson deleted successfully.');
 
         }
@@ -387,7 +418,10 @@ class ModuleLessonController extends Controller
      */
     public function reorder(Request $request, School $school, Course $course, CourseModule $module)
     {
-        if (!Auth::guard('admin')->check()) {
+        $isAdmin = Auth::guard('admin')->check();
+        $isInstructor = Auth::guard('instructor')->check();
+
+        if (!$isAdmin && !$isInstructor) {
             abort(403);
         }
 

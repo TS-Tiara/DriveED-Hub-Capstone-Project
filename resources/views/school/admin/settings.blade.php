@@ -1112,6 +1112,29 @@
         </div>
     </div>
 
+    @if(session('success'))
+        <div class="alert alert-success" role="alert">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="alert alert-danger" role="alert">
+            {{ session('error') }}
+        </div>
+    @endif
+
+    @if($errors->any())
+        <div class="alert alert-danger" role="alert">
+            <strong>Unable to save settings.</strong>
+            <ul style="margin:8px 0 0 20px;">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <!-- Section Navigation -->
     <div class="tabs-container tabs-container-frame" id="settingsNavigation">
         <div class="settings-nav-toolbar">
@@ -1340,6 +1363,9 @@
                         <small class="text-muted help-text-block">
                             Upload a single image containing the QR code. Accepted formats: JPG, PNG, WEBP. Max size: 5MB.
                         </small>
+                        @error('gcash_qr')
+                            <small class="text-danger help-text-block">{{ $message }}</small>
+                        @enderror
                     </div>
 
                     @if(!empty($gcashSetting?->qr_path))
@@ -1498,6 +1524,9 @@
                 <div class="form-group bg-image-group-hidden" id="background_image_group">
                     <label class="form-label">Background Image</label>
                     <input type="file" class="form-control" name="background_image" accept="image/*" onchange="previewBackgroundImage(event)">
+                    @error('background_image')
+                        <small class="text-danger help-text-block">{{ $message }}</small>
+                    @enderror
                     @if($settings && $settings->background_image)
                         <div class="current-bg-wrap">
                             <img src="{{ asset('storage/' . $settings->background_image) }}" class="current-bg-image">
@@ -2169,6 +2198,9 @@
                             <div class="form-group bg-image-group-hidden" id="loginBgImageGroup">
                                 <label class="form-label">Background Image</label>
                                 <input type="file" class="form-control" name="login_page_bg_image" accept="image/*">
+                                @error('login_page_bg_image')
+                                    <small class="text-danger help-text-block">{{ $message }}</small>
+                                @enderror
                                 @if($settings && $settings->login_page_bg_image)
                                     <div class="current-bg-wrap">
                                         <img src="{{ asset('storage/' . $settings->login_page_bg_image) }}" class="current-bg-image">
