@@ -16,7 +16,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             SystemAdminSeeder::class,
-            LySpeedSeeder::class,
+                //LySpeedSeeder::class,
             DriveEdHubSeeder::class,
             // DemoAccountsVerifiedSeeder::class,
             // ContentProgressSeeder::class, // Moved syllabus content natively to DriveEdHubSeeder to avoid FK crashes
