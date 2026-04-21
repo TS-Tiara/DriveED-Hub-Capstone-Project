@@ -18,9 +18,9 @@ class DatabaseSeeder extends Seeder
             SystemAdminSeeder::class,
             LySpeedSeeder::class,
             DriveEdHubSeeder::class,
-            DemoAccountsVerifiedSeeder::class,
-            ContentProgressSeeder::class,
-            DemoCleanAccountsSeeder::class,
+            // DemoAccountsVerifiedSeeder::class,
+            // ContentProgressSeeder::class, // Moved syllabus content natively to DriveEdHubSeeder to avoid FK crashes
+            // DemoCleanAccountsSeeder::class,
         ]);
     }
 }
