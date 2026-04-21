@@ -11,6 +11,8 @@ use App\Models\Instructor;
 use App\Models\Student;
 use App\Models\Course;
 use App\Models\CoursePackage;
+use App\Models\CourseModule;
+use App\Models\ModuleLesson;
 use Database\Seeders\Traits\HandlesSchoolSeeding;
 
 class DriveEdHubSeeder extends Seeder
@@ -82,21 +84,21 @@ class DriveEdHubSeeder extends Seeder
         // ── 2. IDENTITY (All users first) ──
 
         // Admins
-        $admin = Admin::updateOrCreate(['email' => 'admin1@gmail.com'], [
+        $admin = Admin::updateOrCreate(['email' => 'admin1@driveedhub.test'], [
             'school_id' => $school->id,
             'name' => 'Antonio Francisco Reyes',
             'password' => $hashedPassword,
             'role' => 'school_admin',
             'is_active' => true,
         ]);
-        $admin2 = Admin::updateOrCreate(['email' => 'admin2@gmail.com'], [
+        $admin2 = Admin::updateOrCreate(['email' => 'admin2@driveedhub.test'], [
             'school_id' => $school->id,
             'name' => 'School Admin Two',
             'password' => $hashedPassword,
             'role' => 'school_admin',
             'is_active' => true,
         ]);
-        Admin::updateOrCreate(['email' => 'manager1@gmail.com'], [
+        Admin::updateOrCreate(['email' => 'manager1@driveedhub.test'], [
             'school_id' => $school->id,
             'branch_id' => $branches[0]->id,
             'name' => 'Patricia Lyn Mendoza',
@@ -104,7 +106,7 @@ class DriveEdHubSeeder extends Seeder
             'role' => 'branch_secretary',
             'is_active' => true,
         ]);
-        Admin::updateOrCreate(['email' => 'manager2@gmail.com'], [
+        Admin::updateOrCreate(['email' => 'manager2@driveedhub.test'], [
             'school_id' => $school->id,
             'branch_id' => $branches[1]->id,
             'name' => 'Gabriel Marco Santos',
@@ -115,11 +117,11 @@ class DriveEdHubSeeder extends Seeder
 
         // Instructors
         $dhInstructors = [
-            ['name' => 'Ricardo Antonio Cruz', 'email' => 'instructor1@gmail.com', 'contact' => '+63-919-777-3001', 'license' => 'LIC-DH-2024-001', 'bio' => 'Senior Instructor specializing in Manual Transmission and Motorcycle training. 8 years experience.', 'branch' => 0, 'course_idx' => 0], // TDC
-            ['name' => 'Maria Victoria Santos', 'email' => 'instructor2@gmail.com', 'contact' => '+63-919-777-3002', 'license' => 'LIC-DH-2024-002', 'bio' => 'Expert in Automatic Transmission and Practical Driving. Certified defensive driving instructor.', 'branch' => 0, 'course_idx' => 0], // TDC
-            ['name' => 'Angelo Miguel Ramos', 'email' => 'instructor3@gmail.com', 'contact' => '+63-919-777-3003', 'license' => 'LIC-DH-2024-003', 'bio' => 'TDC specialist. LTO-certified TDC instructor with 6 years experience.', 'branch' => 1, 'course_idx' => 1], // PDC
-            ['name' => 'Sofia Elena Torres', 'email' => 'instructor4@gmail.com', 'contact' => '+63-919-777-3004', 'license' => 'LIC-DH-2024-004', 'bio' => 'Motorcycle and Manual Transmission specialist. Former professional rider turned instructor.', 'branch' => 1, 'course_idx' => 1], // PDC
-            ['name' => 'Juan Dela Cruz Jr.', 'email' => 'instructor5@gmail.com', 'contact' => '+63-919-777-3005', 'license' => 'LIC-DH-2024-005', 'bio' => 'Defensive driving specialist.', 'branch' => 0, 'course_idx' => 2], // COMBO
+            ['name' => 'Ricardo Antonio Cruz', 'email' => 'instructor1@driveedhub.test', 'contact' => '+63-919-777-3001', 'license' => 'LIC-DH-2024-001', 'bio' => 'Senior Instructor specializing in Manual Transmission and Motorcycle training. 8 years experience.', 'branch' => 0, 'course_idx' => 0], // TDC
+            ['name' => 'Maria Victoria Santos', 'email' => 'instructor2@driveedhub.test', 'contact' => '+63-919-777-3002', 'license' => 'LIC-DH-2024-002', 'bio' => 'Expert in Automatic Transmission and Practical Driving. Certified defensive driving instructor.', 'branch' => 0, 'course_idx' => 0], // TDC
+            ['name' => 'Angelo Miguel Ramos', 'email' => 'instructor3@driveedhub.test', 'contact' => '+63-919-777-3003', 'license' => 'LIC-DH-2024-003', 'bio' => 'TDC specialist. LTO-certified TDC instructor with 6 years experience.', 'branch' => 1, 'course_idx' => 1], // PDC
+            ['name' => 'Sofia Elena Torres', 'email' => 'instructor4@driveedhub.test', 'contact' => '+63-919-777-3004', 'license' => 'LIC-DH-2024-004', 'bio' => 'Motorcycle and Manual Transmission specialist. Former professional rider turned instructor.', 'branch' => 1, 'course_idx' => 1], // PDC
+            ['name' => 'Juan Dela Cruz Jr.', 'email' => 'instructor5@driveedhub.test', 'contact' => '+63-919-777-3005', 'license' => 'LIC-DH-2024-005', 'bio' => 'Defensive driving specialist.', 'branch' => 0, 'course_idx' => 2], // COMBO
         ];
         $instructors = [];
         foreach ($dhInstructors as $inst) {
@@ -159,6 +161,9 @@ class DriveEdHubSeeder extends Seeder
         }
         
         $this->command->info('   ✓ Courses with packages created');
+        
+        // ── 3.5 SYLLABUS (Ported from ContentProgressSeeder) ──
+        $this->seedCourseContentForDriveEdHub($school, $courses);
 
         // ── 4. INTERACTIONS (Link everything) ──
 
@@ -212,16 +217,16 @@ class DriveEdHubSeeder extends Seeder
     private function createDriveEdHubStudents(School $school, array $branches, string $password): array
     {
         $data = [
-            ['name' => 'Juan Miguel Dela Cruz', 'email' => 'student1@gmail.com', 'level' => 'new_driver'],
-            ['name' => 'Maria Victoria Garcia', 'email' => 'student2@gmail.com', 'level' => 'new_driver'],
-            ['name' => 'Pedro Jose Santos', 'email' => 'student3@gmail.com', 'level' => 'new_driver'],
-            ['name' => 'Ana Patricia Reyes', 'email' => 'student4@gmail.com', 'level' => 'new_driver'],
-            ['name' => 'Carlos Manuel Mendoza', 'email' => 'student5@gmail.com', 'level' => 'experienced'],
-            ['name' => 'Sofia Angelica Torres', 'email' => 'student6@gmail.com', 'level' => 'experienced'],
-            ['name' => 'Miguel Francisco Ramos', 'email' => 'student7@gmail.com', 'level' => 'new_driver'],
-            ['name' => 'Isabella Rose Cruz', 'email' => 'student8@gmail.com', 'level' => 'new_driver'],
-            ['name' => 'Diego Emmanuel Fernandez', 'email' => 'student9@gmail.com', 'level' => 'new_driver'],
-            ['name' => 'Luna Marie Martinez', 'email' => 'student10@gmail.com', 'level' => 'experienced'],
+            ['name' => 'Juan Miguel Dela Cruz', 'email' => 'student1@driveedhub.test', 'level' => 'new_driver'],
+            ['name' => 'Maria Victoria Garcia', 'email' => 'student2@driveedhub.test', 'level' => 'new_driver'],
+            ['name' => 'Pedro Jose Santos', 'email' => 'student3@driveedhub.test', 'level' => 'new_driver'],
+            ['name' => 'Ana Patricia Reyes', 'email' => 'student4@driveedhub.test', 'level' => 'new_driver'],
+            ['name' => 'Carlos Manuel Mendoza', 'email' => 'student5@driveedhub.test', 'level' => 'experienced'],
+            ['name' => 'Sofia Angelica Torres', 'email' => 'student6@driveedhub.test', 'level' => 'experienced'],
+            ['name' => 'Miguel Francisco Ramos', 'email' => 'student7@driveedhub.test', 'level' => 'new_driver'],
+            ['name' => 'Isabella Rose Cruz', 'email' => 'student8@driveedhub.test', 'level' => 'new_driver'],
+            ['name' => 'Diego Emmanuel Fernandez', 'email' => 'student9@driveedhub.test', 'level' => 'new_driver'],
+            ['name' => 'Luna Marie Martinez', 'email' => 'student10@driveedhub.test', 'level' => 'experienced'],
         ];
 
         $students = [];
@@ -256,16 +261,16 @@ class DriveEdHubSeeder extends Seeder
 
         // Definition of guests to create
         $guestData = [
-            'guest1@gmail.com' => ['name' => 'Elena Joy Reyes', 'license' => 'verified', 'exp' => 'new_driver', 'course_idx' => 0, 'status' => 'approved', 'pay' => 'paid'],
-            'guest2@gmail.com' => ['name' => 'Mark Anthony Dizon', 'license' => 'verified', 'exp' => 'experienced', 'course_idx' => 2, 'status' => 'approved', 'pay' => 'paid', 'cancellation' => true],
-            'guest3@gmail.com' => ['name' => 'Jamie Lyn Pascual', 'license' => 'none', 'exp' => 'new_driver'],
-            'guest4@gmail.com' => ['name' => 'Carlo Miguel Bautista', 'license' => 'pending', 'exp' => 'new_driver', 'course_idx' => 1, 'status' => 'pending', 'pay' => 'pending'],
-            'guest5@gmail.com' => ['name' => 'Angelica Mae Soriano', 'license' => 'none', 'exp' => 'new_driver', 'course_idx' => 2, 'status' => 'rejected', 'pay' => 'pending'],
-            'guest6@gmail.com' => ['name' => 'Miguel Francisco Ramos', 'license' => 'verified', 'exp' => 'new_driver', 'course_idx' => 0, 'status' => 'approved', 'pay' => 'paid'],
-            'guest7@gmail.com' => ['name' => 'Isabella Rose Cruz', 'license' => 'none', 'exp' => 'new_driver'],
-            'guest8@gmail.com' => ['name' => 'Diego Fernandez', 'license' => 'pending', 'exp' => 'new_driver', 'course_idx' => 1, 'status' => 'pending', 'pay' => 'pending'],
-            'guest9@gmail.com' => ['name' => 'Luna Martinez', 'license' => 'none', 'exp' => 'new_driver', 'course_idx' => 0, 'status' => 'rejected', 'pay' => 'pending'],
-            'guest10@gmail.com' => ['name' => 'Sofia Torres', 'license' => 'verified', 'exp' => 'experienced', 'course_idx' => 2, 'status' => 'approved', 'pay' => 'paid'],
+            'guest1@driveedhub.test' => ['name' => 'Elena Joy Reyes', 'license' => 'verified', 'exp' => 'new_driver', 'course_idx' => 0, 'status' => 'approved', 'pay' => 'paid'],
+            'guest2@driveedhub.test' => ['name' => 'Mark Anthony Dizon', 'license' => 'verified', 'exp' => 'experienced', 'course_idx' => 2, 'status' => 'approved', 'pay' => 'paid', 'cancellation' => true],
+            'guest3@driveedhub.test' => ['name' => 'Jamie Lyn Pascual', 'license' => 'none', 'exp' => 'new_driver'],
+            'guest4@driveedhub.test' => ['name' => 'Carlo Miguel Bautista', 'license' => 'pending', 'exp' => 'new_driver', 'course_idx' => 1, 'status' => 'pending', 'pay' => 'pending'],
+            'guest5@driveedhub.test' => ['name' => 'Angelica Mae Soriano', 'license' => 'none', 'exp' => 'new_driver', 'course_idx' => 2, 'status' => 'rejected', 'pay' => 'pending'],
+            'guest6@driveedhub.test' => ['name' => 'Miguel Francisco Ramos', 'license' => 'verified', 'exp' => 'new_driver', 'course_idx' => 0, 'status' => 'approved', 'pay' => 'paid'],
+            'guest7@driveedhub.test' => ['name' => 'Isabella Rose Cruz', 'license' => 'none', 'exp' => 'new_driver'],
+            'guest8@driveedhub.test' => ['name' => 'Diego Fernandez', 'license' => 'pending', 'exp' => 'new_driver', 'course_idx' => 1, 'status' => 'pending', 'pay' => 'pending'],
+            'guest9@driveedhub.test' => ['name' => 'Luna Martinez', 'license' => 'none', 'exp' => 'new_driver', 'course_idx' => 0, 'status' => 'rejected', 'pay' => 'pending'],
+            'guest10@driveedhub.test' => ['name' => 'Sofia Torres', 'license' => 'verified', 'exp' => 'experienced', 'course_idx' => 2, 'status' => 'approved', 'pay' => 'paid'],
         ];
 
         foreach ($guestData as $email => $data) {
@@ -335,5 +340,117 @@ class DriveEdHubSeeder extends Seeder
         }
 
         return $guests;
+    }
+
+    // ================================================================
+    //  SYLLABUS / CURRICULUM PORTED FROM CONTENTPROGRESSSEEDER
+    // ================================================================
+
+    private function seedCourseContentForDriveEdHub(School $school, array $courses): void
+    {
+        $this->command->info('');
+        $this->command->info("   Creating course syllabus constraints...");
+
+        foreach ($courses as $course) {
+            $isTheoretical = in_array(strtolower($course->type), ['theoretical']) || ($course->course_type === 'theoretical');
+
+            $modules = $isTheoretical ? $this->getTheoreticalModules() : $this->getPracticalModules($course);
+
+            foreach ($modules as $sortOrder => $moduleData) {
+                $module = CourseModule::updateOrCreate(
+                    ['school_id' => $school->id, 'course_id' => $course->id, 'title' => $moduleData['title']],
+                    ['description' => $moduleData['description'], 'module_type' => $moduleData['module_type'], 'sort_order' => $sortOrder + 1]
+                );
+
+                foreach ($moduleData['lessons'] as $lSort => $lesson) {
+                    ModuleLesson::updateOrCreate(
+                        ['school_id' => $school->id, 'module_id' => $module->id, 'title' => $lesson['title']],
+                        [
+                            'content' => $lesson['content'],
+                            'video_url' => $lesson['video_url'] ?? null,
+                            'attachments' => $lesson['attachments'] ?? null,
+                            'sort_order' => $lSort + 1,
+                        ]
+                    );
+                }
+            }
+        }
+        $this->command->info("   ✓ Syllabus inserted.");
+    }
+
+    private function getTheoreticalModules(): array
+    {
+        return [
+            [
+                'title' => 'Introduction to Philippine Traffic Laws',
+                'description' => 'Overview of Republic Act 4136, RA 10913, and other relevant traffic legislation.',
+                'module_type' => 'theoretical',
+                'lessons' => [
+                    ['title' => 'History of Philippine Traffic Laws', 'content' => "This lesson covers the evolution of traffic legislation in the Philippines.\n\n## Key Laws\n- **RA 4136** - Land Transportation and Traffic Code\n- **RA 10913** - Anti-Distracted Driving Act\n- **RA 10586** - Anti-Drunk and Drugged Driving Act\n- **RA 11229** - Child Safety in Motor Vehicles Act\n\n## Learning Objectives\n1. Identify the major traffic laws\n2. Understand the penalties for common violations\n3. Know the rights and responsibilities of drivers"],
+                    ['title' => 'LTO Rules and Regulations', 'content' => "The Land Transportation Office (LTO) is the primary government agency responsible for driver licensing.\n\n## License Categories\n- **Student Permit** - Valid for 1 year\n- **Non-Professional License** - For private vehicle use\n- **Professional License** - For public utility and commercial vehicles\n\n## Requirements\n1. Valid student permit\n2. TDC Certificate\n3. PDC Certificate\n4. Medical certificate\n5. Drug test clearance"],
+                    ['title' => 'Penalties and Fines Schedule', 'content' => "Understanding penalties helps drivers maintain proper road behavior.\n\n## Common Violations and Fines\n| Violation | First Offense | Second Offense |\n|-----------|--------------|----------------|\n| No license | P3,000 | P5,000 |\n| Beating red light | P1,000 | P2,000 |\n| Over-speeding | P1,000-P2,000 | P2,000-P5,000 |", 'video_url' => 'https://www.youtube.com/watch?v=example_traffic_fines'],
+                ],
+            ],
+            [
+                'title' => 'Road Signs, Signals, and Markings',
+                'description' => 'Complete guide to Philippine road signs, traffic signals, and pavement markings.',
+                'module_type' => 'theoretical',
+                'lessons' => [
+                    ['title' => 'Regulatory Signs', 'content' => "Regulatory signs inform road users of traffic laws.\n\n## Categories\n### Prohibitory Signs\n- No Entry\n- No Left/Right Turn\n- No U-Turn\n- Speed Limit\n\n### Mandatory Signs\n- Keep Right/Left\n- Roundabout\n\nRegulatory signs MUST be obeyed."],
+                    ['title' => 'Warning Signs', 'content' => "Warning signs alert drivers to potential hazards. They are typically diamond-shaped with a yellow background.\n\n## Common Warning Signs\n- Curve Ahead\n- Steep Grade\n- Slippery When Wet\n- Pedestrian Crossing\n- School Zone\n\nWhen you see a warning sign, reduce speed and be prepared."],
+                    ['title' => 'Pavement Markings and Traffic Signals', 'content' => "## Pavement Markings\n- **Solid Yellow Line** - No overtaking zone\n- **Broken White Line** - Lane division, overtaking permitted\n- **Solid White Line** - Edge of road\n- **Crosswalk** - Pedestrian crossing area\n\n## Traffic Signals\n- **Green** - Proceed with caution\n- **Yellow** - Prepare to stop\n- **Red** - Full stop\n- **Flashing Red** - Treat as STOP sign", 'video_url' => 'https://www.youtube.com/watch?v=example_road_signs'],
+                ],
+            ],
+            [
+                'title' => 'Defensive Driving and Road Safety',
+                'description' => 'Principles of defensive driving, hazard perception, and accident prevention.',
+                'module_type' => 'theoretical',
+                'lessons' => [
+                    ['title' => 'Principles of Defensive Driving', 'content' => "Defensive driving means preventing accidents regardless of what other drivers do.\n\n## SIPDE Process\n1. **S**can - Check surroundings\n2. **I**dentify - Recognize hazards\n3. **P**redict - Anticipate behavior\n4. **D**ecide - Choose best response\n5. **E**xecute - Act on your decision\n\n## Smith System\n1. Aim high in steering\n2. Get the big picture\n3. Keep your eyes moving\n4. Leave yourself an out\n5. Make sure they see you"],
+                    ['title' => 'Common Driving Hazards in the Philippines', 'content' => "Philippine roads present unique challenges.\n\n## Common Hazards\n- **Flooding** - Avoid driving through deep flood waters\n- **Jaywalkers** - Always watch for pedestrians\n- **Motorcycles weaving** - Check mirrors frequently\n- **Construction zones** - Reduce speed\n\n## Emergency Procedures\n1. Tire blowout: Grip steering, ease off gas\n2. Brake failure: Pump brakes, use engine braking\n3. Engine fire: Pull over, turn off engine, evacuate"],
+                ],
+            ],
+        ];
+    }
+
+    private function getPracticalModules(object $course): array
+    {
+        $isManual = stripos($course->title, 'manual') !== false;
+
+        return [
+            [
+                'title' => 'Vehicle Familiarization',
+                'description' => 'Understanding vehicle controls, dashboard indicators, and pre-drive checks.',
+                'module_type' => 'practical_prep',
+                'lessons' => [
+                    ['title' => 'Vehicle Controls and Dashboard', 'content' => "Familiarize yourself with all vehicle controls before driving.\n\n## Primary Controls\n- **Steering Wheel** - Turn to steer\n- **Accelerator** (right pedal) - Controls speed\n- **Brake** (middle pedal) - Slows and stops\n" . ($isManual ? "- **Clutch** (left pedal) - Transmission engagement\n" : "- **Gear Selector** - P, R, N, D\n") . "\n## Dashboard Indicators\n- Red = Stop immediately\n- Yellow = Caution\n- Green/Blue = Information\n\n## Pre-Drive Routine\n1. Adjust seat and mirrors\n2. Fasten seatbelt\n3. Check mirrors\n4. Start engine"],
+                    ['title' => 'Seat Position, Mirrors, and Safety', 'content' => "## Seat Adjustment\n- Feet reach all pedals comfortably\n- Knees slightly bent\n- Arms slightly bent at 9-and-3\n\n## Mirror Setup\n- Rearview: frame rear window\n- Left mirror: lean left, barely see car\n- Right mirror: lean right, barely see car\n\nAlways wear your seatbelt (RA 8750)."],
+                ],
+            ],
+            [
+                'title' => ($isManual ? 'Clutch Control and Gear Shifting' : 'Basic Driving Techniques'),
+                'description' => $isManual
+                    ? 'Master the friction zone, smooth gear changes, and hill starts.'
+                    : 'Steering, braking, accelerating, and basic maneuvering.',
+                'module_type' => 'practical_prep',
+                'lessons' => $isManual ? [
+                    ['title' => 'Understanding the Friction Zone', 'content' => "The friction zone is where the clutch begins to engage.\n\n## Finding It\n1. Press clutch fully\n2. Shift into 1st gear\n3. Slowly release clutch until car starts to pull\n4. That point = friction zone\n\n## Common Mistakes\n- Releasing clutch too fast = stall\n- Too much gas + slow clutch = excessive wear\n- Riding the clutch = premature wear"],
+                    ['title' => 'Gear Shifting Patterns', 'content' => "## Upshifting\n1. Release accelerator\n2. Press clutch fully\n3. Move gear lever to next gear\n4. Release clutch smoothly with gas\n\n## When to Shift\n| Gear | Speed Range |\n|------|------------|\n| 1st | 0-15 km/h |\n| 2nd | 15-30 km/h |\n| 3rd | 30-45 km/h |\n| 4th | 45-60 km/h |\n| 5th | 60+ km/h |"],
+                    ['title' => 'Hill Start Technique', 'content' => "## Handbrake Method\n1. Stop on hill with handbrake engaged\n2. Press clutch, shift to 1st\n3. Find friction zone\n4. Release handbrake while adding gas\n5. Fully release clutch once moving\n\n## Tips\n- Start on gentle inclines first\n- Use handbrake to prevent rolling"],
+                ] : [
+                    ['title' => 'Smooth Acceleration and Braking', 'content' => "## Acceleration\n- Press accelerator gradually\n- Maintain steady pressure for constant speed\n- Ease off before curves\n\n## Braking\n- Progressive braking: start light, increase, ease off before stop\n- Keep both hands on wheel\n- 3-second following distance rule"],
+                    ['title' => 'Steering Techniques', 'content' => "## Hand Position\n- 9-and-3 position (recommended for airbag safety)\n- Keep both hands on wheel\n\n## Methods\n- Push-pull: Push up one hand, pull down other\n- Hand-over-hand: For tight turns\n\n## Avoid\n- One-hand driving\n- Palming the wheel\n- Over-correcting"],
+                ],
+            ],
+            [
+                'title' => 'On-Road Driving Skills',
+                'description' => 'City driving, highway driving, parking, and real-world practice.',
+                'module_type' => 'practical_prep',
+                'lessons' => [
+                    ['title' => 'City and Urban Driving', 'content' => "City driving requires constant awareness.\n\n## Key Skills\n- Intersection management (check left-right-left)\n- Stay centered in lane\n- 3+ seconds following distance\n- Check blind spots before lane changes\n\n## Common Hazards\n- Pedestrians crossing unexpectedly\n- Motorcycles splitting lanes\n- Buses stopping suddenly\n- Doors opening from parked cars"],
+                    ['title' => 'Parking Techniques', 'content' => "## Perpendicular (90 degrees) Parking\n1. Signal and slow down\n2. Position 1m from parked cars\n3. When shoulder aligns with space, turn fully\n4. Straighten when centered\n\n## Parallel Parking\n1. Pull alongside car in front\n2. Reverse and turn toward curb\n3. Straighten briefly at 45 degrees\n4. Turn away from curb\n5. Straighten and center\n\n## Hill Parking\n- Uphill with curb: wheels LEFT\n- Downhill with curb: wheels RIGHT\n- Always engage parking brake", 'video_url' => 'https://www.youtube.com/watch?v=example_parking'],
+                ],
+            ],
+        ];
     }
 }

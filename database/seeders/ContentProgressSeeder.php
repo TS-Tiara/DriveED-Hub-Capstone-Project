@@ -65,11 +65,10 @@ class ContentProgressSeeder extends Seeder
         $this->command->info('');
 
         // Load existing schools
-        $smartDriving = School::where('slug', 'smart-driving')->first();
         $lySpeed      = School::where('slug', 'lyspeed-driving')->first();
         $driveEdHub   = School::where('slug', 'drived-hub')->first();
 
-        if (!$smartDriving || !$lySpeed || !$driveEdHub) {
+        if (!$lySpeed || !$driveEdHub) {
             $this->command->error('Schools not found! Run UnifiedSeeder first.');
             return;
         }
@@ -78,12 +77,10 @@ class ContentProgressSeeder extends Seeder
         $this->fixCourseMetadata();
 
         // 2. Seed course modules & lessons for all schools
-        $this->seedCourseContent($smartDriving);
         $this->seedCourseContent($lySpeed);
         $this->seedCourseContent($driveEdHub);
 
         // 3. Create new students + instructors, enrollments, sessions, phases per school
-        $this->seedSchoolProgress($smartDriving, studentsPerBranch: 4, instructorsPerBranch: 1);
         $this->seedSchoolProgress($lySpeed, studentsPerBranch: 4, instructorsPerBranch: 1);
         $this->seedSchoolProgress($driveEdHub, studentsPerBranch: 3, instructorsPerBranch: 1);
 
