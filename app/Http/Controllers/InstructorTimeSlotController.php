@@ -237,9 +237,14 @@ class InstructorTimeSlotController extends Controller
         });
 
         // Upcoming slots this week (excluding today)
+        // Sort slots with active bookings first so they aren't cut off by take(5)
         $upcomingSlots = $mySlots->filter(function ($slot) use ($todayDate, $endOfWeek) {
             $slotDate = $slot->date->format('Y-m-d');
             return $slotDate > $todayDate && $slotDate <= $endOfWeek;
+        })->sortBy(function ($slot) use ($instructorId) {
+            $hasBookings = $slot->bookings->where('instructor_id', $instructorId)
+                ->where('status', '!=', 'cancelled')->isNotEmpty();
+            return [$hasBookings ? 0 : 1, $slot->date->format('Y-m-d'), $slot->start_time];
         })->take(5);
 
         // Available slots (not taken by this instructor)

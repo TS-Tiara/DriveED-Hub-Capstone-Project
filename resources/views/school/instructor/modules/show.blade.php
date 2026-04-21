@@ -12,6 +12,7 @@
             <p class="lms-subtitle">{{ $module->description ?? 'No module description available.' }}</p>
         </div>
         <div class="lms-actions">
+            <a href="{{ school_route('instructor.courses.modules.lessons.index', ['course' => $course->id, 'module' => $module->id]) }}" class="lms-btn lms-btn-primary">Manage Lessons</a>
             <a href="{{ school_route('instructor.courses.modules.index', ['course' => $course->id]) }}" class="lms-btn lms-btn-muted">Back to Modules</a>
         </div>
     </div>

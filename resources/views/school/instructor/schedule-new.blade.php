@@ -668,6 +668,31 @@
         margin: 0;
     }
 
+    .slot-students {
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px dashed #e2e8f0;
+    }
+
+    .slot-student-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 0;
+        font-size: 13px;
+        flex-wrap: wrap;
+    }
+
+    .slot-student-name {
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    .slot-student-course {
+        color: #64748b;
+        font-size: 12px;
+    }
+
     .modal-help-text {
         color: #666;
         margin-bottom: 15px;
@@ -865,9 +890,11 @@
         <div class="schedule-grid">
             <div class="schedule-main">
                 <div class="filter-bar">
+{{-- 
                     <label>
                         <input type="checkbox" id="show-past-my" onchange="toggleShowPastMy(this)"> Show Past Slots
                     </label>
+--}}
                     <label>
                         <input type="checkbox" id="collapse-all-my" onchange="toggleCollapseAllMy(this)"> Collapse All
                     </label>
@@ -941,6 +968,23 @@
                                             @else
                                                 <button type="button" class="btn-leave" onclick="leaveSlot({{ $slot->id }}, this)">Leave Slot</button>
                                             @endif
+                                        </div>
+                                        @endif
+
+                                        @if($slotBookings->isNotEmpty())
+                                        <div class="slot-students">
+                                            @foreach($slotBookings as $booking)
+                                                @php
+                                                    $bookingStatus = strtolower((string) ($booking->status ?? 'scheduled'));
+                                                @endphp
+                                                <div class="slot-student-item">
+                                                    <span class="slot-student-name">{{ $booking->student->name ?? 'Student' }}</span>
+                                                    <span class="slot-student-course">{{ $booking->course->title ?? '' }}</span>
+                                                    <span class="student-status-pill status-{{ $bookingStatus === 'no-show' ? 'no-show' : $bookingStatus }}">
+                                                        {{ strtoupper(str_replace('-', ' ', $bookingStatus)) }}
+                                                    </span>
+                                                </div>
+                                            @endforeach
                                         </div>
                                         @endif
                                     </div>
@@ -1050,15 +1094,19 @@
         <div class="schedule-grid">
             <div class="schedule-main">
                 <div class="filter-bar">
+{{-- 
                     <label>
                         <input type="checkbox" id="show-past-available" onchange="toggleShowPastAvailable(this)"> Show Past Slots
                     </label>
+--}}
                     <label>
                         <input type="checkbox" id="collapse-all-available" onchange="toggleCollapseAllAvailable(this)"> Collapse All
                     </label>
+{{-- 
                     <label>
                         <input type="checkbox" id="show-all-courses" onchange="toggleShowAllCourses(this)"> Show All Courses
                     </label>
+--}}
                 </div>
                 
                 @forelse($groupedAvailableSlots as $date => $dateSlots)
@@ -1339,21 +1387,7 @@
 </div>
 
 <script>
-    // Toast notification system
-    function showToast(message, type) {
-        type = type || 'success';
-        var toast = document.createElement('div');
-        toast.className = 'schedule-toast schedule-toast-' + type;
-        toast.textContent = message;
-        toast.style.cssText = 'position:fixed;top:20px;right:20px;z-index:10000;padding:14px 24px;border-radius:8px;color:white;font-weight:500;font-size:0.9rem;box-shadow:0 4px 12px rgba(0,0,0,0.15);transform:translateX(120%);transition:transform 0.3s ease;max-width:400px;';
-        toast.style.background = type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#f59e0b';
-        document.body.appendChild(toast);
-        requestAnimationFrame(function() { toast.style.transform = 'translateX(0)'; });
-        setTimeout(function() {
-            toast.style.transform = 'translateX(120%)';
-            setTimeout(function() { toast.remove(); }, 300);
-        }, 3000);
-    }
+
 
     // Show pending toast from previous page action
     (function() {

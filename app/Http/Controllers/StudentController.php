@@ -559,6 +559,7 @@ class StudentController extends Controller
         // Get available time slots (Only those with instructors assigned)
         $availableTimeSlots = \App\Models\TimeSlot::visibleToStudents()
             ->where('school_id', $school->id)
+            ->where('date', '>=', now()->toDateString())
             ->with(['instructors', 'course', 'branch'])
             ->orderBy('date')
             ->orderBy('start_time')

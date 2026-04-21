@@ -494,6 +494,12 @@ Route::prefix('{school:slug}')
 
                             Route::prefix('{module}/lessons')->name('lessons.')->group(function () {
                                     Route::get('/', [ModuleLessonController::class , 'index'])->name('index');
+                                    Route::get('/create', [ModuleLessonController::class , 'create'])->name('create');
+                                    Route::post('/', [ModuleLessonController::class , 'store'])->name('store');
+                                    Route::post('/reorder', [ModuleLessonController::class , 'reorder'])->name('reorder');
+                                    Route::get('/{lesson}/edit', [ModuleLessonController::class , 'edit'])->name('edit');
+                                    Route::put('/{lesson}', [ModuleLessonController::class , 'update'])->name('update');
+                                    Route::delete('/{lesson}', [ModuleLessonController::class , 'destroy'])->name('destroy');
                                     Route::get('/{lesson}', [ModuleLessonController::class , 'show'])->name('show');
                                 }
                                 );
