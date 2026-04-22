@@ -115,6 +115,9 @@ class DriveEdHubSeeder extends Seeder
             'is_active' => true,
         ]);
 
+        // ── 3. PRODUCTS (Courses) ──
+        $courses = $this->createDriveEdHubCourses($school);
+
         // Instructors
         $dhInstructors = [
             ['name' => 'Ricardo Antonio Cruz', 'email' => 'instructor1@driveedhub.test', 'contact' => '+63-919-777-3001', 'license' => 'LIC-DH-2024-001', 'bio' => 'Senior Instructor specializing in Manual Transmission and Motorcycle training. 8 years experience.', 'branch' => 0, 'course_idx' => 0], // TDC
@@ -150,10 +153,7 @@ class DriveEdHubSeeder extends Seeder
 
         $this->command->info('   ✓ All user identities created (Admins, Instructors, Students, Guests)');
 
-        // ── 3. PRODUCTS (Courses) ──
-        $courses = $this->createDriveEdHubCourses($school);
-
-        // Link instructors strictly to exactly 1 course generated above
+        // Link instructors strictly to their primary course for testing specializations
         foreach ($dhInstructors as $idx => $instData) {
             if (isset($instructors[$idx]) && isset($courses[$instData['course_idx']])) {
                 $instructors[$idx]->update(['course_specializations' => [$courses[$instData['course_idx']]->id]]);
@@ -171,7 +171,7 @@ class DriveEdHubSeeder extends Seeder
         $this->createDriveEdHubGuests($school, $courses, $admins_arr, $branches, $hashedPassword, false);
 
         // Clean, Open Scheduling (Today -> Friday)
-        $this->createTimeSlotsAndAssignments($school, [], $courses, $branches);
+        $this->createTimeSlotsAndAssignments($school, $instructors, $courses, $branches);
 
         // Notifications
         $this->createSampleNotifications($school, $students, $instructors, $admins_arr, $guests);
@@ -186,7 +186,7 @@ class DriveEdHubSeeder extends Seeder
         // 1. TDC
         $tdc = Course::updateOrCreate(
             ['school_id' => $school->id, 'title' => 'Theoretical Driving Course (TDC)'],
-            ['description' => 'LTO-accredited 15-hour TDC for new applicants. Covers traffic rules, road signs, and defensive driving.', 'type' => 'Theoretical', 'vehicle_type' => 'Car', 'status' => 'active', 'is_featured' => true, 'features' => ['Traffic Rules & Regulations', 'Road Signs & Markings', 'Defensive Driving', 'LTO Written Exam Prep']]
+            ['description' => 'LTO-accredited 15-hour TDC for new applicants. Covers traffic rules, road signs, and defensive driving.', 'type' => 'Theoretical', 'course_type' => 'theoretical', 'vehicle_type' => 'Car', 'status' => 'active', 'is_featured' => true, 'features' => ['Traffic Rules & Regulations', 'Road Signs & Markings', 'Defensive Driving', 'LTO Written Exam Prep']]
         );
         $courses[] = $tdc;
         CoursePackage::updateOrCreate(['course_id' => $tdc->id, 'name' => 'TDC Standard 15-Hour'], ['transmission_type' => 'automatic', 'vehicle_type' => 'Car', 'training_hours' => 15, 'price' => 2000.00, 'description' => 'Complete 15-hour TDC for new license applicants.', 'is_popular' => true]);
@@ -194,7 +194,7 @@ class DriveEdHubSeeder extends Seeder
         // 2. PDC
         $pdc = Course::updateOrCreate(
             ['school_id' => $school->id, 'title' => 'Practical Driving Course (PDC)'],
-            ['description' => 'Hands-on practical driving. Master vehicle control, parking, and safe driving.', 'type' => 'Practical', 'vehicle_type' => 'Car', 'status' => 'active', 'is_featured' => true, 'features' => ['Vehicle Operation Basics', 'Parking Techniques', 'City Driving']]
+            ['description' => 'Hands-on practical driving. Master vehicle control, parking, and safe driving.', 'type' => 'Practical', 'course_type' => 'practical', 'vehicle_type' => 'Car', 'status' => 'active', 'is_featured' => true, 'features' => ['Vehicle Operation Basics', 'Parking Techniques', 'City Driving']]
         );
         $courses[] = $pdc;
         CoursePackage::updateOrCreate(['course_id' => $pdc->id, 'name' => 'PDC 10-Hour Manual'], ['transmission_type' => 'manual', 'vehicle_type' => 'Car', 'training_hours' => 10, 'price' => 5000.00, 'description' => 'Manual driving 10 hours', 'is_popular' => true]);
@@ -203,7 +203,7 @@ class DriveEdHubSeeder extends Seeder
         // 3. COMBO
         $combo = Course::updateOrCreate(
             ['school_id' => $school->id, 'title' => 'TDC + PDC Combo Course'],
-            ['description' => 'Complete beginner comprehensive package. TDC and PDC bundled together.', 'type' => 'Practical', 'vehicle_type' => 'Car', 'status' => 'active', 'features' => ['15H Theory Classes', '10H Practical Hand-on', 'License Full Processing Help']]
+            ['description' => 'Complete beginner comprehensive package. TDC and PDC bundled together.', 'type' => 'Combo', 'course_type' => 'combo', 'vehicle_type' => 'Car', 'status' => 'active', 'features' => ['15H Theory Classes', '10H Practical Hand-on', 'License Full Processing Help']]
         );
         $courses[] = $combo;
         CoursePackage::updateOrCreate(['course_id' => $combo->id, 'name' => 'Combo 15H TDC + 10H PDC'], ['transmission_type' => 'automatic', 'vehicle_type' => 'Car', 'training_hours' => 25, 'price' => 6800.00, 'description' => 'Full combined package.']);
@@ -280,7 +280,8 @@ class DriveEdHubSeeder extends Seeder
                     'status' => 'active',
                     'student_license_status' => $data['license'],
                     'student_license_verified_at' => $data['license'] === 'verified' ? now()->subDays(10) : null,
-                    'experience_level' => $data['exp']
+                    'experience_level' => $data['exp'],
+                    'branch_id' => $branches[array_search($email, array_keys($guestData)) % count($branches)]->id,
                 ]
             );
             $g->role = 'guest';
@@ -482,16 +483,16 @@ class DriveEdHubSeeder extends Seeder
             $date = $dateObj->format('Y-m-d');
             
             // Create slots across all courses
-            foreach ($courses as $course) {
+            foreach ($courses as $i => $course) {
                 // Determine 2 to 4 slots per course per day
                 $slotCount = rand(2, 4); 
                 $selectedTimes = (array) array_rand($times, $slotCount);
 
-                foreach ($selectedTimes as $timeIndex) {
+                foreach ($selectedTimes as $idx => $timeIndex) {
                     $branch = $branches[$branchIdx % count($branches)];
                     $branchIdx++;
 
-                    \App\Models\TimeSlot::create([
+                    $timeSlot = \App\Models\TimeSlot::create([
                         'school_id' => $school->id, 
                         'branch_id' => $branch->id, 
                         'course_id' => $course->id, 
@@ -502,7 +503,15 @@ class DriveEdHubSeeder extends Seeder
                         'max_instructors' => 1,
                         'max_students' => rand(2, 5),
                     ]);
-                    // INTENTIONALLY NO INSTRUCTORS ATTACHED
+
+                    // Assign an instructor to about 75% of slots to ensure visibility for students
+                    if (($i + $idx) % 4 !== 0) {
+                        $instructor = $instructors[($i + $idx) % count($instructors)];
+                        $timeSlot->instructors()->attach($instructor->id, [
+                            'school_id' => $school->id,
+                            'assignment_type' => 'admin_assigned',
+                        ]);
+                    }
                 }
             }
 
