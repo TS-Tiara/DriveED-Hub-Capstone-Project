@@ -152,16 +152,16 @@ class DriveEdHubSeeder extends Seeder
 
         // ── 3. PRODUCTS (Courses) ──
         $courses = $this->createDriveEdHubCourses($school);
-        
+
         // Link instructors strictly to exactly 1 course generated above
         foreach ($dhInstructors as $idx => $instData) {
             if (isset($instructors[$idx]) && isset($courses[$instData['course_idx']])) {
                 $instructors[$idx]->update(['course_specializations' => [$courses[$instData['course_idx']]->id]]);
             }
         }
-        
+
         $this->command->info('   ✓ Courses with packages created');
-        
+
         // ── 3.5 SYLLABUS (Ported from ContentProgressSeeder) ──
         $this->seedCourseContentForDriveEdHub($school, $courses);
 
@@ -170,11 +170,8 @@ class DriveEdHubSeeder extends Seeder
         // Course assignments for guests (completing the creation)
         $this->createDriveEdHubGuests($school, $courses, $admins_arr, $branches, $hashedPassword, false);
 
-        // Time Slots & Assignments
-        $this->createTimeSlotsAndAssignments($school, $instructors, $courses, $branches);
-
-        // Bookings & Payments
-        $this->createBookingsAndPayments($school, $students, $instructors, $courses, $branches, 10);
+        // Clean, Open Scheduling (Today -> Friday)
+        $this->createTimeSlotsAndAssignments($school, [], $courses, $branches);
 
         // Notifications
         $this->createSampleNotifications($school, $students, $instructors, $admins_arr, $guests);
@@ -452,5 +449,68 @@ class DriveEdHubSeeder extends Seeder
                 ],
             ],
         ];
+    }
+
+    // ================================================================
+    //  OVERRIDE: Clean Scheduling (Today -> Friday, Unassigned)
+    // ================================================================
+
+    protected function createTimeSlotsAndAssignments(School $school, array $instructors, array $courses, array $branches): void
+    {
+        $this->command->info('   Generating clean scheduling blocks (Today until Friday)...');
+
+        $times = [
+            ['08:00:00', '10:00:00'],
+            ['10:00:00', '12:00:00'],
+            ['13:00:00', '15:00:00'], 
+            ['15:00:00', '17:00:00'],
+        ];
+
+        // Start today, end when we process Friday
+        $daysOffset = 0;
+        $branchIdx = 0;
+
+        while (true) {
+            $dateObj = now()->addDays($daysOffset);
+            
+            // Skip Sundays if applicable, though we stop at Friday anyway
+            if ($dateObj->dayOfWeek == 0) {
+                $daysOffset++;
+                continue;
+            }
+
+            $date = $dateObj->format('Y-m-d');
+            
+            // Create slots across all courses
+            foreach ($courses as $course) {
+                // Determine 2 to 4 slots per course per day
+                $slotCount = rand(2, 4); 
+                $selectedTimes = (array) array_rand($times, $slotCount);
+
+                foreach ($selectedTimes as $timeIndex) {
+                    $branch = $branches[$branchIdx % count($branches)];
+                    $branchIdx++;
+
+                    \App\Models\TimeSlot::create([
+                        'school_id' => $school->id, 
+                        'branch_id' => $branch->id, 
+                        'course_id' => $course->id, 
+                        'date' => $date, 
+                        'start_time' => $times[$timeIndex][0], 
+                        'end_time' => $times[$timeIndex][1], 
+                        'status' => 'open', 
+                        'max_instructors' => 1,
+                        'max_students' => rand(2, 5),
+                    ]);
+                    // INTENTIONALLY NO INSTRUCTORS ATTACHED
+                }
+            }
+
+            // If the day we just processed was Friday (5), we stop.
+            if ($dateObj->dayOfWeek == 5) {
+                break;
+            }
+            $daysOffset++;
+        }
     }
 }
