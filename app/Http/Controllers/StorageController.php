@@ -117,6 +117,28 @@ class StorageController extends Controller
         abort(404, 'Receipt file not found.');
     }
 
+    /**
+     * Serve a vehicle image securely.
+     */
+    public function streamVehicleImage(School $school, \App\Models\VehicleImage $image)
+    {
+        // Authorization: Admin or Student from same school
+        $admin = Auth::guard('admin')->user();
+        $student = Auth::guard('student')->user();
+        
+        $isAuthorized = ($admin && (int)$admin->school_id === (int)$school->id) ||
+                        ($student && (int)$student->school_id === (int)$school->id);
+        
+        abort_unless($isAuthorized, 403);
+        abort_if((int)$image->school_id !== (int)$school->id, 404);
+
+        if (!$image->image_path || !Storage::disk('local')->exists($image->image_path)) {
+            abort(404, 'Vehicle image not found.');
+        }
+
+        return $this->fileResponseFromDisk('local', $image->image_path);
+    }
+
     private function fileResponseFromDisk(string $diskName, string $path)
     {
         $disk = Storage::disk($diskName);
