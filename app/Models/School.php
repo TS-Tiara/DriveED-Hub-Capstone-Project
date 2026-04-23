@@ -111,10 +111,6 @@ class School extends Model
         return $this->hasMany(StudentActionRequest::class);
     }
 
-    public function profileUnlockRequests()
-    {
-        return $this->hasMany(ProfileUnlockRequest::class);
-    }
 
     public function reports()
     {

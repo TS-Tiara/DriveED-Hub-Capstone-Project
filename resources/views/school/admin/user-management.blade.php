@@ -139,6 +139,29 @@
         margin-bottom: 6px;
     }
 
+    .contact-input-group {
+        display: flex;
+        align-items: stretch;
+    }
+
+    .contact-prefix {
+        display: flex;
+        align-items: center;
+        background: #f3f4f6;
+        border: 2px solid #e1e5e9;
+        border-right: none;
+        padding: 0 12px;
+        border-radius: 8px 0 0 8px;
+        color: #4b5563;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .contact-input-group input {
+        border-radius: 0 8px 8px 0 !important;
+        flex: 1;
+    }
+
     .action-controls {
         display: flex;
         align-items: flex-end;
@@ -207,6 +230,35 @@
     .icon-14 {
         width: 14px;
         height: 14px;
+    }
+
+    /* Validation Feedback Styles */
+    .is-invalid {
+        border-color: #ef4444 !important;
+        background-color: #fffafb !important;
+    }
+
+    .field-error {
+        color: #ef4444;
+        font-size: 0.8rem;
+        margin-top: 4px;
+        font-weight: 500;
+        display: block;
+    }
+
+    .modal-error-summary {
+        background: #fef2f2;
+        border: 1px solid #fee2e2;
+        border-radius: 8px;
+        padding: 12px 16px;
+        margin-bottom: 20px;
+        color: #991b1b;
+    }
+
+    .modal-error-summary ul {
+        margin: 8px 0 0 0;
+        padding-left: 20px;
+        font-size: 0.85rem;
     }
     
     /* Table Styles */
@@ -1016,17 +1068,6 @@
             <h1 class="page-title">User Management</h1>
             <p class="page-subtitle">Manage students and instructors in your driving school</p>
         </div>
-        @if(isset($admin) && $admin->isSchoolAdmin())
-            <div class="page-header-right">
-                <button type="button" class="btn-create btn-review-requests" onclick="openCorrectionRequestsModal()">
-                    <svg class="icon-18" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16h6M7 4h10a2 2 0 012 2v12l-3-2-3 2-3-2-3 2V6a2 2 0 012-2z" /></svg>
-                    Profile Correction Requests
-                    @if(($pendingProfileUnlockRequestsCount ?? 0) > 0)
-                        <span class="request-count-badge">{{ $pendingProfileUnlockRequestsCount }}</span>
-                    @endif
-                </button>
-            </div>
-        @endif
     </div>
     
     <!-- Statistics Cards -->
@@ -1163,11 +1204,11 @@
                 </div>
                 <button class="btn-create" onclick="openCreateStudentModal()">
                     <svg class="icon-18" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-                    Invite Student
+                    Add Student
                 </button>
                 <button class="btn-create" onclick="openCreateInstructorModal()">
                     <svg class="icon-18" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-                    Invite Instructor
+                    Add Instructor
                 </button>
             </div>
         </div>
@@ -1245,6 +1286,7 @@
                                             data-email="{{ $user->email }}" 
                                             data-contact="{{ $user->contact }}" 
                                             data-license="{{ $user->license_number }}" 
+                                            data-address="{{ $user->address }}" 
                                             data-branch="{{ $user->branch_id }}"
                                             title="Edit Instructor">
                                             <i class="bi bi-pencil-square"></i>
@@ -1316,7 +1358,7 @@
 <!-- INVITE STUDENT MODAL -->
 <div id="createStudentModal" class="modal">
     <div class="modal-content">
-        <h3>Invite New Student</h3>
+        <h3>Add New Student</h3>
         <form id="createStudentInviteForm" method="POST" action="{{ school_route('admin.storeAccount') }}" data-no-ajax="1">
             @csrf
 
@@ -1324,7 +1366,7 @@
 
             @if($showStudentInviteErrors)
                 <div class="modal-error-summary" role="alert">
-                    <strong>Please fix the following before sending the invitation:</strong>
+                    <strong>Please fix the following before adding the student:</strong>
                     <ul>
                         @foreach($errors->all() as $error)
                             <li>{{ $error }}</li>
@@ -1335,24 +1377,28 @@
 
             <div class="form-group">
                 <label>Name <span class="required-indicator">*</span></label>
-                <input type="text" name="name" value="{{ $showStudentInviteErrors ? old('name') : '' }}" placeholder="Enter student's full name" required>
-                @if($showStudentInviteErrors)
-                    @error('name') <p class="field-error">{{ $message }}</p> @enderror
+                <input type="text" name="name" value="{{ $showStudentInviteErrors ? old('name') : '' }}" placeholder="Enter student's full name" required class="{{ $showStudentInviteErrors && $errors->has('name') ? 'is-invalid' : '' }}">
+                @if($showStudentInviteErrors && $errors->has('name'))
+                    <p class="field-error">{{ $errors->first('name') }}</p>
                 @endif
             </div>
             <div class="form-group">
                 <label>Email <span class="required-indicator">*</span></label>
-                <input type="email" name="email" value="{{ $showStudentInviteErrors ? old('email') : '' }}" placeholder="student@example.com" required>
-                <p class="field-help">An invitation link will be sent to this email. Currently, Gmail and Yahoo are allowed.</p>
-                @if($showStudentInviteErrors)
-                    @error('email') <p class="field-error">{{ $message }}</p> @enderror
+                <input type="email" name="email" value="{{ $showStudentInviteErrors ? old('email') : '' }}" placeholder="student@example.com" required class="{{ $showStudentInviteErrors && $errors->has('email') ? 'is-invalid' : '' }}">
+                <p class="field-help">An account setup link will be sent to this email address.</p>
+                @if($showStudentInviteErrors && $errors->has('email'))
+                    <p class="field-error">{{ $errors->first('email') }}</p>
                 @endif
             </div>
             <div class="form-group">
-                <label>Contact:</label>
-                <input type="text" name="contact" value="{{ $showStudentInviteErrors ? old('contact') : '' }}" placeholder="09123456789">
-                @if($showStudentInviteErrors)
-                    @error('contact') <p class="field-error">{{ $message }}</p> @enderror
+                <label>Contact <span class="required-indicator">*</span></label>
+                <div class="contact-input-group">
+                    <span class="contact-prefix">+63</span>
+                    <input type="text" name="contact" value="{{ $showStudentInviteErrors ? old('contact') : '' }}" placeholder="9123456789" required maxlength="10" class="{{ $showStudentInviteErrors && $errors->has('contact') ? 'is-invalid' : '' }}">
+                </div>
+                <p class="field-help">Enter the 10-digit number after +63 (e.g., 9123456789).</p>
+                @if($showStudentInviteErrors && $errors->has('contact'))
+                    <p class="field-error">{{ $errors->first('contact') }}</p>
                 @endif
             </div>
             <div class="form-group">
@@ -1379,7 +1425,7 @@
             <input type="hidden" name="role" value="student">
             <div class="modal-buttons">
                 <button type="button" class="btn-cancel" onclick="closeCreateStudentModal()">Cancel</button>
-                <button type="submit" class="btn-submit" data-default-text="Send Invitation">Send Invitation</button>
+                <button type="submit" class="btn-submit" data-default-text="Add Student">Add Student</button>
             </div>
         </form>
     </div>
@@ -1393,16 +1439,20 @@
             @csrf
             @method('PUT')
             <div class="form-group">
-                <label>Name:</label>
+                <label>Name <span class="required-indicator">*</span>:</label>
                 <input type="text" id="edit_student_name" name="name" required>
             </div>
             <div class="form-group">
-                <label>Email:</label>
+                <label>Email <span class="required-indicator">*</span>:</label>
                 <input type="email" id="edit_student_email" name="email" required>
             </div>
             <div class="form-group">
-                <label>Contact:</label>
-                <input type="text" id="edit_student_contact" name="contact">
+                <label>Contact <span class="required-indicator">*</span>:</label>
+                <div class="contact-input-group">
+                    <span class="contact-prefix">+63</span>
+                    <input type="text" id="edit_student_contact" name="contact" required maxlength="10" placeholder="9123456789">
+                </div>
+                <p class="field-help">Enter the 10-digit number after +63 (e.g., 9123456789).</p>
             </div>
             <div class="form-group">
                 <label>Address:</label>
@@ -1430,7 +1480,7 @@
 <!-- INVITE INSTRUCTOR MODAL -->
 <div id="createInstructorModal" class="modal">
     <div class="modal-content">
-        <h3>Invite New Instructor</h3>
+        <h3>Add New Instructor</h3>
         <form id="createInstructorInviteForm" method="POST" action="{{ school_route('admin.storeAccount') }}" data-no-ajax="1">
             @csrf
 
@@ -1438,7 +1488,7 @@
 
             @if($showInstructorInviteErrors)
                 <div class="modal-error-summary" role="alert">
-                    <strong>Please fix the following before sending the invitation:</strong>
+                    <strong>Please fix the following before adding the instructor:</strong>
                     <ul>
                         @foreach($errors->all() as $error)
                             <li>{{ $error }}</li>
@@ -1449,41 +1499,42 @@
 
             <div class="form-group">
                 <label>Name <span class="required-indicator">*</span></label>
-                <input type="text" name="name" value="{{ $showInstructorInviteErrors ? old('name') : '' }}" placeholder="Enter instructor's full name" required>
-                @if($showInstructorInviteErrors)
-                    @error('name') <p class="field-error">{{ $message }}</p> @enderror
+                <input type="text" name="name" value="{{ $showInstructorInviteErrors ? old('name') : '' }}" placeholder="Enter instructor's full name" required class="{{ $showInstructorInviteErrors && $errors->has('name') ? 'is-invalid' : '' }}">
+                @if($showInstructorInviteErrors && $errors->has('name'))
+                    <p class="field-error">{{ $errors->first('name') }}</p>
                 @endif
             </div>
             <div class="form-group">
                 <label>Email <span class="required-indicator">*</span></label>
-                <input type="email" name="email" value="{{ $showInstructorInviteErrors ? old('email') : '' }}" placeholder="instructor@example.com" required>
-                <p class="field-help">An invitation link will be sent to this email. Currently, Gmail and Yahoo are allowed.</p>
-                @if($showInstructorInviteErrors)
-                    @error('email') <p class="field-error">{{ $message }}</p> @enderror
+                <input type="email" name="email" value="{{ $showInstructorInviteErrors ? old('email') : '' }}" placeholder="instructor@example.com" required class="{{ $showInstructorInviteErrors && $errors->has('email') ? 'is-invalid' : '' }}">
+                <p class="field-help">An account setup link will be sent to this email address.</p>
+                @if($showInstructorInviteErrors && $errors->has('email'))
+                    <p class="field-error">{{ $errors->first('email') }}</p>
                 @endif
             </div>
             <div class="form-group">
-                <label>Contact:</label>
-                <input type="text" name="contact" value="{{ $showInstructorInviteErrors ? old('contact') : '' }}" placeholder="09123456789">
-                @if($showInstructorInviteErrors)
-                    @error('contact') <p class="field-error">{{ $message }}</p> @enderror
+                <label>Contact <span class="required-indicator">*</span></label>
+                <div class="contact-input-group">
+                    <span class="contact-prefix">+63</span>
+                    <input type="text" name="contact" value="{{ $showInstructorInviteErrors ? old('contact') : '' }}" placeholder="9123456789" required maxlength="10" class="{{ $showInstructorInviteErrors && $errors->has('contact') ? 'is-invalid' : '' }}">
+                </div>
+                <p class="field-help">Enter the 10-digit number after +63 (e.g., 9123456789).</p>
+                @if($showInstructorInviteErrors && $errors->has('contact'))
+                    <p class="field-error">{{ $errors->first('contact') }}</p>
                 @endif
             </div>
             <div class="form-group">
-                <label>License Number @if($requireInstructorLicense)<span class="required-indicator">*</span>@endif</label>
-                <input type="text" name="license_number" value="{{ $showInstructorInviteErrors ? old('license_number') : '' }}" placeholder="Enter license number" @if($requireInstructorLicense)required @endif>
-                @if($requireInstructorLicense)
-                    <p class="field-help">Required because instructor license verification is enabled.</p>
-                @endif
-                @if($showInstructorInviteErrors)
-                    @error('license_number') <p class="field-error">{{ $message }}</p> @enderror
+                <label>License Number <span class="required-indicator">*</span></label>
+                <input type="text" name="license_number" value="{{ $showInstructorInviteErrors ? old('license_number') : '' }}" placeholder="Enter license number" required class="{{ $showInstructorInviteErrors && $errors->has('license_number') ? 'is-invalid' : '' }}">
+                @if($showInstructorInviteErrors && $errors->has('license_number'))
+                    <p class="field-error">{{ $errors->first('license_number') }}</p>
                 @endif
             </div>
             <div class="form-group">
-                <label>Address:</label>
-                <input type="text" name="address" value="{{ $showInstructorInviteErrors ? old('address') : '' }}" placeholder="Enter address (optional)">
-                @if($showInstructorInviteErrors)
-                    @error('address') <p class="field-error">{{ $message }}</p> @enderror
+                <label>Address <span class="required-indicator">*</span></label>
+                <input type="text" name="address" value="{{ $showInstructorInviteErrors ? old('address') : '' }}" placeholder="Enter full address" required class="{{ $showInstructorInviteErrors && $errors->has('address') ? 'is-invalid' : '' }}">
+                @if($showInstructorInviteErrors && $errors->has('address'))
+                    <p class="field-error">{{ $errors->first('address') }}</p>
                 @endif
             </div>
             @if(isset($branches) && $branches->count() > 0)
@@ -1503,7 +1554,7 @@
             <input type="hidden" name="role" value="instructor">
             <div class="modal-buttons">
                 <button type="button" class="btn-cancel" onclick="closeCreateInstructorModal()">Cancel</button>
-                <button type="submit" class="btn-submit" data-default-text="Send Invitation">Send Invitation</button>
+                <button type="submit" class="btn-submit" data-default-text="Add Instructor">Add Instructor</button>
             </div>
         </form>
     </div>
@@ -1517,20 +1568,28 @@
             @csrf
             @method('PUT')
             <div class="form-group">
-                <label>Name:</label>
+                <label>Name <span class="required-indicator">*</span>:</label>
                 <input type="text" id="edit_instructor_name" name="name" required>
             </div>
             <div class="form-group">
-                <label>Email:</label>
+                <label>Email <span class="required-indicator">*</span>:</label>
                 <input type="email" id="edit_instructor_email" name="email" required>
             </div>
             <div class="form-group">
-                <label>Contact:</label>
-                <input type="text" id="edit_instructor_contact" name="contact">
+                <label>Contact <span class="required-indicator">*</span>:</label>
+                <div class="contact-input-group">
+                    <span class="contact-prefix">+63</span>
+                    <input type="text" id="edit_instructor_contact" name="contact" required maxlength="10" placeholder="9123456789">
+                </div>
+                <p class="field-help">Enter the 10-digit number after +63 (e.g., 9123456789).</p>
             </div>
             <div class="form-group">
-                <label>License Number:</label>
-                <input type="text" id="edit_instructor_license" name="license_number">
+                <label>License Number <span class="required-indicator">*</span>:</label>
+                <input type="text" id="edit_instructor_license" name="license_number" required>
+            </div>
+            <div class="form-group">
+                <label>Address <span class="required-indicator">*</span>:</label>
+                <input type="text" id="edit_instructor_address" name="address" required>
             </div>
             @if(isset($branches) && $branches->count() > 0)
             <div class="form-group">
@@ -1551,54 +1610,6 @@
     </div>
 </div>
 
-@if(isset($admin) && $admin->isSchoolAdmin())
-<div id="correctionRequestsModal" class="modal">
-    <div class="modal-content">
-        <h3>Profile Correction Requests</h3>
-        <p class="modal-required-note">Pending requests from locked student or instructor profiles.</p>
-
-        @if(($pendingProfileUnlockRequests ?? collect())->count() > 0)
-            <div class="unlock-requests-list">
-                @foreach($pendingProfileUnlockRequests as $unlockRequest)
-                    @php
-                        $requestUser = $unlockRequest->user;
-                        $requestUserRole = $unlockRequest->user_type === \App\Models\Instructor::class ? 'Instructor' : 'Student';
-                    @endphp
-                    <div class="unlock-request-item">
-                        <div class="unlock-request-header">
-                            <div>
-                                <div class="unlock-request-name">{{ $requestUser->name ?? 'Unknown User' }}</div>
-                                <div class="unlock-request-role">{{ $requestUserRole }}</div>
-                            </div>
-                            <div class="unlock-request-meta">Requested {{ $unlockRequest->created_at?->diffForHumans() ?? 'recently' }}</div>
-                        </div>
-                        <div class="unlock-request-meta">Email: {{ $requestUser->email ?? 'N/A' }}</div>
-                        <div class="unlock-request-reason">{{ $unlockRequest->reason ?: 'No reason provided.' }}</div>
-                        <div class="unlock-request-actions">
-                            <form method="POST" action="{{ school_route('admin.profileUnlockRequests.approve', ['profileUnlockRequest' => $unlockRequest->id]) }}" data-no-ajax="1">
-                                @csrf
-                                <button type="submit" class="btn-approve-request">Approve</button>
-                            </form>
-                            <form method="POST" action="{{ school_route('admin.profileUnlockRequests.deny', ['profileUnlockRequest' => $unlockRequest->id]) }}" data-no-ajax="1">
-                                @csrf
-                                <button type="submit" class="btn-deny-request">Deny</button>
-                            </form>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-        @else
-            <div class="empty-state" style="margin-top: 10px;">
-                <div class="empty-state-text">No pending profile correction requests.</div>
-            </div>
-        @endif
-
-        <div class="modal-buttons" style="margin-top: 16px;">
-            <button type="button" class="btn-cancel" onclick="closeCorrectionRequestsModal()">Close</button>
-        </div>
-    </div>
-</div>
-@endif
 
 <script>
     window.schoolSlug = '{{ $school->slug }}';
@@ -1809,7 +1820,7 @@
         const defaultText = submitButton.dataset.defaultText || submitButton.textContent.trim();
         submitButton.dataset.defaultText = defaultText;
         submitButton.disabled = isLoading;
-        submitButton.textContent = isLoading ? 'Sending Invitation...' : defaultText;
+        submitButton.textContent = isLoading ? 'Adding...' : defaultText;
     }
 
     function bindInviteFormSubmit(formId) {
@@ -1824,19 +1835,6 @@
         });
     }
 
-    function openCorrectionRequestsModal() {
-        const modal = document.getElementById('correctionRequestsModal');
-        if (modal) {
-            modal.style.display = 'flex';
-        }
-    }
-
-    function closeCorrectionRequestsModal() {
-        const modal = document.getElementById('correctionRequestsModal');
-        if (modal) {
-            modal.style.display = 'none';
-        }
-    }
     
     // Student Modal Functions
     function openCreateStudentModal() {
@@ -1854,7 +1852,14 @@
         form.action = `${window.studentBaseUrl}/${id}`;
         document.getElementById('edit_student_name').value = name || '';
         document.getElementById('edit_student_email').value = email || '';
-        document.getElementById('edit_student_contact').value = contact || '';
+        
+        let displayContact = contact || '';
+        if (displayContact.startsWith('+63')) {
+            displayContact = displayContact.substring(3);
+        } else if (displayContact.startsWith('0')) {
+            displayContact = displayContact.substring(1);
+        }
+        document.getElementById('edit_student_contact').value = displayContact;
         document.getElementById('edit_student_address').value = address || '';
         const branchSelect = document.getElementById('edit_student_branch');
         if (branchSelect) branchSelect.value = branchId || '';
@@ -1891,6 +1896,7 @@
                     btn.dataset.email, 
                     btn.dataset.contact, 
                     btn.dataset.license, 
+                    btn.dataset.address, 
                     btn.dataset.branch
                 );
             }
@@ -1995,13 +2001,21 @@
         setInviteFormLoadingState(document.getElementById('createInstructorInviteForm'), false);
     }
     
-    function editInstructor(id, name, email, contact, license, branchId) {
+    function editInstructor(id, name, email, contact, license, address, branchId) {
         const form = document.getElementById('editInstructorForm');
         form.action = `${window.instructorBaseUrl}/${id}`;
-        document.getElementById('edit_instructor_name').value = name;
-        document.getElementById('edit_instructor_email').value = email;
-        document.getElementById('edit_instructor_contact').value = contact || '';
+        document.getElementById('edit_instructor_name').value = name || '';
+        document.getElementById('edit_instructor_email').value = email || '';
+        
+        let displayContact = contact || '';
+        if (displayContact.startsWith('+63')) {
+            displayContact = displayContact.substring(3);
+        } else if (displayContact.startsWith('0')) {
+            displayContact = displayContact.substring(1);
+        }
+        document.getElementById('edit_instructor_contact').value = displayContact;
         document.getElementById('edit_instructor_license').value = license || '';
+        document.getElementById('edit_instructor_address').value = address || '';
         const branchSelect = document.getElementById('edit_instructor_branch');
         if (branchSelect) branchSelect.value = branchId || '';
         document.getElementById('editInstructorModal').style.display = 'flex';
@@ -2039,6 +2053,16 @@
             e.target.style.display = 'none';
         }
     }
+
+    // Auto-strip leading zero from contact inputs
+    document.addEventListener('input', function(e) {
+        if (e.target.getAttribute('name') === 'contact' || e.target.id.includes('contact')) {
+            let value = e.target.value;
+            if (value.startsWith('0')) {
+                e.target.value = value.substring(1);
+            }
+        }
+    });
     
 </script>
 

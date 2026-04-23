@@ -31,8 +31,6 @@ class Instructor extends Authenticatable
         'last_login_at',
         'last_logout_at',
         'address', // Added address field
-        'profile_edit_count',
-        'profile_locked_at',
         'must_reset_password',
     ];
 
@@ -49,8 +47,6 @@ class Instructor extends Authenticatable
             'locked_until' => 'datetime',
             'last_login_at' => 'datetime',
             'last_logout_at' => 'datetime',
-            'profile_edit_count' => 'integer',
-            'profile_locked_at' => 'datetime',
         ];
     }
 
@@ -84,10 +80,5 @@ class Instructor extends Authenticatable
     public function removalRequests()
     {
         return $this->hasMany(InstructorRemovalRequest::class);
-    }
-
-    public function profileUnlockRequests()
-    {
-        return $this->morphMany(ProfileUnlockRequest::class, 'user');
     }
 }
