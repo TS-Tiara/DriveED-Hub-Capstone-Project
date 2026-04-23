@@ -24,7 +24,6 @@ use App\Http\Controllers\ExportController;
 use App\Http\Controllers\ModuleLessonController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PhaseProgressionController;
-use App\Http\Controllers\ProfileUnlockRequestController;
 use App\Http\Controllers\AdminManagementController;
 use App\Models\School;
 
@@ -186,10 +185,6 @@ Route::prefix('{school:slug}')
 
                     Route::get('/user-management', [AdminController::class , 'userManagement'])->name('userManagement');
 
-                    Route::middleware('school.admin.only')->group(function (): void {
-                        Route::post('/profile-unlock-requests/{profileUnlockRequest}/approve', [ProfileUnlockRequestController::class, 'approve'])->name('profileUnlockRequests.approve');
-                        Route::post('/profile-unlock-requests/{profileUnlockRequest}/deny', [ProfileUnlockRequestController::class, 'deny'])->name('profileUnlockRequests.deny');
-                    });
 
                     Route::post('/store-account', [AdminController::class , 'storeAccount'])->name('storeAccount');
 
@@ -420,7 +415,6 @@ Route::prefix('{school:slug}')
                     Route::get('/profile', [InstructorTimeSlotController::class , 'profile'])->name('profile');
                     Route::put('/profile', [InstructorTimeSlotController::class , 'updateProfile'])->name('profile.update');
                     Route::post('/profile/picture', [InstructorTimeSlotController::class , 'updateProfilePicture'])->name('profile.picture');
-                    Route::post('/profile/unlock-request', [ProfileUnlockRequestController::class, 'storeInstructor'])->name('profile.unlockRequest');
 
                     // Instructor attendance and feedback (used from schedule page)
                     Route::post('/bookings/{booking}/attendance', [InstructorTimeSlotController::class , 'updateAttendance'])->name('bookings.attendance');
@@ -520,7 +514,6 @@ Route::prefix('{school:slug}')
                     Route::get('/profile', [StudentController::class , 'profile'])->name('profile');
                     Route::put('/profile', [StudentController::class , 'updateProfile'])->name('profile.update');
                     Route::post('/profile/picture', [StudentController::class , 'updateProfilePicture'])->name('profile.picture');
-                    Route::post('/profile/unlock-request', [ProfileUnlockRequestController::class, 'storeStudent'])->name('profile.unlockRequest');
 
                     // Student courses
                     Route::get('/courses', [CourseController::class , 'index'])->name('courses.index');

@@ -13,7 +13,6 @@ use App\Models\Instructor;
 use App\Models\InstructorRemovalRequest;
 use App\Models\Log;
 use App\Models\Payment;
-use App\Models\ProfileUnlockRequest;
 use App\Models\RegistrationRequest;
 use App\Models\School;
 use App\Models\SchoolSetting;
@@ -364,19 +363,6 @@ class AdminController extends Controller
                 ->orderBy('name')
                 ->get();
 
-            $pendingProfileUnlockRequests = collect();
-            $pendingProfileUnlockRequestsCount = 0;
-            if ($admin->isSchoolAdmin()) {
-                $pendingProfileUnlockRequests = ProfileUnlockRequest::query()
-                    ->with('user')
-                    ->where('school_id', $school->id)
-                    ->pending()
-                    ->orderBy('created_at', 'desc')
-                    ->limit(25)
-                    ->get();
-
-                $pendingProfileUnlockRequestsCount = $pendingProfileUnlockRequests->count();
-            }
 
             $isAjax = request()->ajax() || request()->header('X-Requested-With') === 'XMLHttpRequest';
 
@@ -396,8 +382,6 @@ class AdminController extends Controller
                 'activeStatusFilter' => $activeStatusFilter,
                 'activeRoleFilter' => $activeRoleFilter,
                 'activeBranchFilter' => $activeBranchFilter,
-                'pendingProfileUnlockRequests' => $pendingProfileUnlockRequests,
-                'pendingProfileUnlockRequestsCount' => $pendingProfileUnlockRequestsCount,
             ]);
         }
         catch (\Exception $e) {
@@ -433,7 +417,6 @@ class AdminController extends Controller
                     Rule::unique('students', 'email')->where('school_id', $school->id),
                     Rule::unique('instructors', 'email')->where('school_id', $school->id),
                     Rule::unique('admins', 'email')->where('school_id', $school->id),
-                    'regex:/@(gmail\.com|yahoo\.com)$/i',
                     function ($attribute, $value, $fail) use ($school) {
                         $normalizedEmail = strtolower(trim((string) $value));
 
@@ -448,26 +431,37 @@ class AdminController extends Controller
                             ->exists();
 
                         if ($hasPendingInvitation) {
-                            $fail('A pending invitation already exists for this email. Please resend the existing invitation instead.');
+                            $fail('This email is already pending account setup. Please resend the setup link if needed.');
                         }
                     },
                 ],
-                'contact' => ['nullable', 'string', 'max:13', 'regex:/^(09\d{9}|\+639\d{9})$/'],
-                'address' => ['nullable', 'string', 'max:500'],
+                'contact' => [
+                    'required', 
+                    'string', 
+                    'max:13', 
+                    'regex:/^(09\d{9}|\+639\d{9}|9\d{9})$/'
+                ],
+                'address' => [
+                    $request->role === 'instructor' ? 'required' : 'nullable', 
+                    'string', 
+                    'max:500'
+                ],
                 'role' => 'required|in:student,instructor',
                 'branch_id' => [
                     'nullable',
                     Rule::exists('branches', 'id')->where('school_id', $school->id)
                 ],
-                'license_number' => ($request->role === 'instructor' && ($school->schoolSetting->require_instructor_license ?? true)) ? 'required|string|max:50' : 'nullable|string|max:50',
+                'license_number' => $request->role === 'instructor' ? 'required|string|max:50' : 'nullable|string|max:50',
             ], [
-                'email.regex' => 'Only Gmail and Yahoo addresses are currently allowed for invitations.',
+                'contact.regex' => 'Please provide a valid 10-digit mobile number starting with 9 (e.g., 9123456789).',
+                'address.required' => 'The address is required for instructors.',
+                'license_number.required' => 'The license number is required for instructors.',
             ]);
 
             // Branch Secretary Scope Check
             $branchId = $request->branch_id ?? $admin->branch_id;
             if ($admin->isBranchSecretary() && (int)$branchId !== (int)$admin->branch_id) {
-                return back()->withInput()->with('error', 'You can only invite users to your assigned branch.');
+                return back()->withInput()->with('error', 'You can only add users to your assigned branch.');
             }
 
             DB::beginTransaction();
@@ -481,7 +475,16 @@ class AdminController extends Controller
                 'token' => \Illuminate\Support\Str::random(40),
                 'payload' => [
                     'name' => trim($request->name),
-                    'contact' => trim((string)$request->contact),
+                    'contact' => (function($contact) {
+                        $contact = trim((string)$contact);
+                        if (preg_match('/^9\d{9}$/', $contact)) {
+                            return '+63' . $contact;
+                        }
+                        if (preg_match('/^09\d{9}$/', $contact)) {
+                            return '+63' . substr($contact, 1);
+                        }
+                        return $contact;
+                    })($request->contact),
                     'address' => trim((string)$request->address),
                     'license_number' => $request->role === 'instructor' ? trim($request->license_number) : null,
                 ],
@@ -502,7 +505,7 @@ class AdminController extends Controller
             DB::commit();
 
             return redirect()->route('schools.admin.userManagement', $school)
-                ->with('success', "Invitation successfully sent to {$invitation->email}. They will receive an email to set up their account.");
+                ->with('success', "Account successfully created for {$invitation->email}. They will receive an email to set up their password.");
 
         } catch (ValidationException $e) {
             throw $e;
@@ -546,9 +549,8 @@ class AdminController extends Controller
                     Rule::unique('students', 'email')
                     ->where('school_id', $school->id)
                     ->ignore($student->id),
-                    'regex:/@(gmail\.com|yahoo\.com)$/i',
                 ],
-                'contact' => ['nullable', 'string', 'max:13', 'regex:/^(09\d{9}|\+639\d{9})$/'],
+                'contact' => ['required', 'string', 'max:13', 'regex:/^(09\d{9}|\+639\d{9}|9\d{9})$/'],
                 'address' => 'nullable|string|max:255',
                 'password' => ['nullable', 'string', new StrongPassword()],
                 'branch_id' => [
@@ -560,6 +562,8 @@ class AdminController extends Controller
                         }
                     },
                 ],
+            ], [
+                'contact.regex' => 'Please provide a valid 10-digit mobile number starting with 9 (e.g., 9123456789).',
             ]);
 
                 $nameChanged = trim((string) ($validated['name'] ?? '')) !== trim((string) $student->name);
@@ -574,6 +578,16 @@ class AdminController extends Controller
             DB::beginTransaction();
 
             $data = $request->only('name', 'email', 'contact', 'address', 'branch_id');
+            
+            // Normalize contact
+            if (!empty($data['contact'])) {
+                $contact = trim((string)$data['contact']);
+                if (preg_match('/^9\d{9}$/', $contact)) {
+                    $data['contact'] = '+63' . $contact;
+                } elseif (preg_match('/^09\d{9}$/', $contact)) {
+                    $data['contact'] = '+63' . substr($contact, 1);
+                }
+            }
 
             if ($request->filled('password')) {
                 $data['password'] = Hash::make($request->password);
@@ -667,10 +681,10 @@ class AdminController extends Controller
                     Rule::unique('instructors', 'email')
                     ->where('school_id', $school->id)
                     ->ignore($instructor->id),
-                    'regex:/@(gmail\.com|yahoo\.com)$/i',
                 ],
-                'contact' => ['nullable', 'string', 'max:13', 'regex:/^(09\d{9}|\+639\d{9})$/'],
-                'license_number' => 'nullable|string|max:50',
+                'contact' => ['required', 'string', 'max:13', 'regex:/^(09\d{9}|\+639\d{9}|9\d{9})$/'],
+                'license_number' => 'required|string|max:50',
+                'address' => 'required|string|max:255',
                 'password' => ['nullable', 'string', new StrongPassword()],
                 'branch_id' => [
                     'nullable',
@@ -681,6 +695,8 @@ class AdminController extends Controller
                         }
                     },
                 ],
+            ], [
+                'contact.regex' => 'Please provide a valid 10-digit mobile number starting with 9 (e.g., 9123456789).',
             ]);
 
                 $nameChanged = trim((string) $request->input('name')) !== trim((string) $instructor->name);
@@ -692,7 +708,17 @@ class AdminController extends Controller
                     ->with('error', 'This demo account has locked name, email, and password.');
             }
 
-            $data = $request->only('name', 'email', 'contact', 'license_number', 'branch_id');
+            $data = $request->only('name', 'email', 'contact', 'license_number', 'address', 'branch_id');
+
+            // Normalize contact
+            if (!empty($data['contact'])) {
+                $contact = trim((string)$data['contact']);
+                if (preg_match('/^9\d{9}$/', $contact)) {
+                    $data['contact'] = '+63' . $contact;
+                } elseif (preg_match('/^09\d{9}$/', $contact)) {
+                    $data['contact'] = '+63' . substr($contact, 1);
+                }
+            }
 
             if ($request->filled('password')) {
                 $data['password'] = Hash::make($request->password);
@@ -826,7 +852,6 @@ class AdminController extends Controller
                     Rule::unique('admins', 'email')
                     ->where('school_id', $school->id)
                     ->ignore($admin->id),
-                    'regex:/@(gmail\.com|yahoo\.com)$/i',
                 ],
                 'contact' => ['nullable', 'string', 'max:20', 'regex:/^(09\d{9}|\+639\d{9})$/'],
                 'current_password' => 'nullable|required_with:new_password|string',
@@ -1440,9 +1465,18 @@ class AdminController extends Controller
         $startDate = $validated['start_date'];
         $endDate = $validated['end_date'];
 
+        $courseId = $request->input('course_id');
+        $sessionType = $request->input('session_type');
+
         $timeslots = $admin->scopeToBranch(TimeSlot::with(['instructors', 'course'])
             ->where('school_id', $school->id)
-            ->whereBetween('date', [$startDate, $endDate]))
+            ->whereBetween('date', [$startDate, $endDate])
+            ->when($courseId, function ($query) use ($courseId) {
+                return $query->where('course_id', $courseId);
+            })
+            ->when($sessionType, function ($query) use ($sessionType) {
+                return $query->where('session_type', $sessionType);
+            }))
             ->orderBy('date')
             ->orderBy('start_time')
             ->get()
