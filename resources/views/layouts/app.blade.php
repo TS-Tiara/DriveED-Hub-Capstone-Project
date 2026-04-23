@@ -1955,8 +1955,8 @@
                     <div class="nav-category-items">
                         <a href="{{ school_route('admin.schedules', [], $currentSchool) }}" class="nav-item"
                             data-page="schedules">Manage Schedule</a>
-                        <a href="{{ school_route('admin.verify-session-completion.index', [], $currentSchool) }}" class="nav-item"
-                            data-page="verify-session-completion">Verify Session Completion</a>
+                        <a href="{{ school_route('admin.verify-session-completion.index', [], $currentSchool) }}"
+                            class="nav-item" data-page="verify-session-completion">Verify Session Completion</a>
                         <a href="{{ school_route('admin.sessions.index', [], $currentSchool) }}" class="nav-item"
                             data-page="session-completions">Session Completions</a>
                         <a href="{{ school_route('admin.phase-progressions.index', [], $currentSchool) }}" class="nav-item"
@@ -1998,6 +1998,8 @@
                                 data-page="admin-management">Admin Management</a>
                             <a href="{{ school_route('admin.branches.index', [], $currentSchool) }}" class="nav-item"
                                 data-page="branches">Branches</a>
+                            <a href="{{ school_route('admin.vehicles.index', [], $currentSchool) }}" class="nav-item"
+                                data-page="vehicles">Vehicle Management</a>
                             <a href="{{ school_route('admin.settings', [], $currentSchool) }}" class="nav-item"
                                 data-page="settings">Settings</a>
                         </div>
@@ -2387,6 +2389,7 @@
             'admin/reports': 'Reports & Analytics',
             'admin/admin-management': 'Admin Management',
             'admin/branches': 'Branches',
+            'admin/vehicles': 'Vehicle Management',
             'admin/settings': 'Settings',
             // Instructor pages
             'instructor': 'Dashboard',

@@ -1468,14 +1468,24 @@ class AdminController extends Controller
         $courseId = $request->input('course_id');
         $sessionType = $request->input('session_type');
 
-        $timeslots = $admin->scopeToBranch(TimeSlot::with(['instructors', 'course'])
+        $timeslots = $admin->scopeToBranch(TimeSlot::with(['instructors', 'course', 'bookings.student', 'bookings.instructor'])
             ->where('school_id', $school->id)
             ->whereBetween('date', [$startDate, $endDate])
             ->when($courseId, function ($query) use ($courseId) {
                 return $query->where('course_id', $courseId);
             })
             ->when($sessionType, function ($query) use ($sessionType) {
-                return $query->where('session_type', $sessionType);
+                return $query->where(function($q) use ($sessionType) {
+                    $q->whereHas('course', function($cq) use ($sessionType) {
+                        $cq->where('course_type', $sessionType);
+                    })
+                    ->orWhere(function($sq) use ($sessionType) {
+                        $sq->whereHas('course', function($cq) {
+                            $cq->where('course_type', 'combo');
+                        })
+                        ->where('session_type', $sessionType);
+                    });
+                });
             }))
             ->orderBy('date')
             ->orderBy('start_time')

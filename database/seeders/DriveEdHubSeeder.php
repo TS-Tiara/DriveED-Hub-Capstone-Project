@@ -463,63 +463,119 @@ class DriveEdHubSeeder extends Seeder
         $times = [
             ['08:00:00', '10:00:00'],
             ['10:00:00', '12:00:00'],
-            ['13:00:00', '15:00:00'], 
+            ['13:00:00', '15:00:00'],
             ['15:00:00', '17:00:00'],
         ];
 
         // Start today, end when we process Friday
         $daysOffset = 0;
         $branchIdx = 0;
+        $allCreatedSlots = [];
 
         while (true) {
             $dateObj = now()->addDays($daysOffset);
-            
-            // Skip Sundays if applicable, though we stop at Friday anyway
+
+            // Skip Sundays if applicable
             if ($dateObj->dayOfWeek == 0) {
                 $daysOffset++;
                 continue;
             }
 
             $date = $dateObj->format('Y-m-d');
-            
+
             // Create slots across all courses
             foreach ($courses as $i => $course) {
                 // Determine 2 to 4 slots per course per day
-                $slotCount = rand(2, 4); 
-                $selectedTimes = (array) array_rand($times, $slotCount);
+                $slotCount = rand(2, 4);
+                $timeIndices = (array) array_rand($times, $slotCount);
 
-                foreach ($selectedTimes as $idx => $timeIndex) {
+                foreach ($timeIndices as $idx => $timeIndex) {
                     $branch = $branches[$branchIdx % count($branches)];
                     $branchIdx++;
 
+                    // Determine Session Type (No Guessing)
+                    $resolvedSessionType = $course->course_type;
+                    if ($course->course_type === 'combo') {
+                        // For combo, alternate based on index
+                        $resolvedSessionType = ($idx % 2 === 0) ? 'theoretical' : 'practical';
+                    }
+
+                    $isTheoretical = $resolvedSessionType === 'theoretical';
+
                     $timeSlot = \App\Models\TimeSlot::create([
-                        'school_id' => $school->id, 
-                        'branch_id' => $branch->id, 
-                        'course_id' => $course->id, 
-                        'date' => $date, 
-                        'start_time' => $times[$timeIndex][0], 
-                        'end_time' => $times[$timeIndex][1], 
-                        'status' => 'open', 
+                        'school_id' => $school->id,
+                        'branch_id' => $branch->id,
+                        'course_id' => $course->id,
+                        'session_type' => $resolvedSessionType, // Explicitly set to avoid guessing
+                        'date' => $date,
+                        'start_time' => $times[$timeIndex][0],
+                        'end_time' => $times[$timeIndex][1],
+                        'status' => 'open',
                         'max_instructors' => 1,
-                        'max_students' => rand(2, 5),
+                        'max_students' => $isTheoretical ? rand(15, 25) : 1, // Classroom vs 1-on-1
                     ]);
 
-                    // Assign an instructor to about 75% of slots to ensure visibility for students
-                    if (($i + $idx) % 4 !== 0) {
+                    // Assign an instructor to about 80% of slots
+                    if (($i + $idx) % 5 !== 0) {
                         $instructor = $instructors[($i + $idx) % count($instructors)];
                         $timeSlot->instructors()->attach($instructor->id, [
                             'school_id' => $school->id,
                             'assignment_type' => 'admin_assigned',
                         ]);
+                        $allCreatedSlots[] = $timeSlot;
                     }
                 }
             }
 
-            // If the day we just processed was Friday (5), we stop.
-            if ($dateObj->dayOfWeek == 5) {
-                break;
-            }
+            if ($dateObj->dayOfWeek == 5) break;
             $daysOffset++;
+        }
+
+        // Now create some bookings to show the "Who is assigned to who" feature
+        $this->createSampleBookings($school, $allCreatedSlots);
+    }
+
+    private function createSampleBookings(School $school, array $slots): void
+    {
+        $this->command->info('   Creating sample bookings for pairings display...');
+        
+        $students = \App\Models\Student::where('school_id', $school->id)
+            ->where('role', 'student')
+            ->limit(15)
+            ->get();
+
+        if ($students->isEmpty()) return;
+
+        $studentIdx = 0;
+        foreach ($slots as $slot) {
+            // Only book for slots that have an instructor
+            $instructor = $slot->instructors->first();
+            if (!$instructor) continue;
+
+            // Determine how many students to book
+            $numToBook = $slot->course->course_type === 'theoretical' ? rand(3, 5) : 1;
+
+            for ($i = 0; $i < $numToBook; $i++) {
+                $student = $students[$studentIdx % $students->count()];
+                $studentIdx++;
+
+                \App\Models\Booking::create([
+                    'school_id' => $school->id,
+                    'branch_id' => $slot->branch_id,
+                    'student_id' => $student->id,
+                    'instructor_id' => $instructor->id, // Explicit pairing
+                    'course_id' => $slot->course_id,
+                    'time_slot_id' => $slot->id,
+                    'booking_date' => $slot->date,
+                    'scheduled_at' => \Carbon\Carbon::parse(($slot->date instanceof \Carbon\Carbon ? $slot->date->toDateString() : $slot->date) . ' ' . $slot->start_time),
+                    'status' => 'scheduled',
+                    'attendance_status' => 'pending',
+                    'payment_status' => 'paid',
+                ]);
+            }
+            
+            // Stop after we've booked enough to show the feature
+            if ($studentIdx > 25) break;
         }
     }
 }

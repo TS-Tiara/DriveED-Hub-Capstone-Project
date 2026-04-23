@@ -174,6 +174,8 @@ Route::prefix('{school:slug}')
                     Route::get('/credential/{enrollment}', [\App\Http\Controllers\StorageController::class, 'streamCredential'])->name('storage.credential');
                     Route::get('/gcash-qr/{gcashSetting}', [\App\Http\Controllers\StorageController::class, 'streamGcashQr'])->name('storage.gcash-qr');
                     Route::get('/receipt', [\App\Http\Controllers\StorageController::class, 'streamReceipt'])->name('storage.receipt');
+                    Route::get('/vehicle-image/{image}', [\App\Http\Controllers\StorageController::class, 'streamVehicleImage'])->name('storage.vehicle-image');
+                    Route::delete('/vehicles/{vehicle}/images/{image}', [\App\Http\Controllers\VehicleController::class, 'deleteImage'])->name('schools.admin.vehicles.images.destroy');
                 });
             }
             );
@@ -233,6 +235,19 @@ Route::prefix('{school:slug}')
                     Route::put('/branches/{id}', [BranchController::class , 'update'])->name('branches.update');
                     Route::patch('/branches/{id}/toggle', [BranchController::class , 'toggleActive'])->name('branches.toggle');
                     Route::delete('/branches/{id}', [BranchController::class , 'destroy'])->name('branches.destroy');
+
+                    // Vehicle management
+                    Route::prefix('vehicles')->name('vehicles.')->group(function () {
+                        Route::get('/', [\App\Http\Controllers\VehicleController::class, 'index'])->name('index');
+                        Route::post('/', [\App\Http\Controllers\VehicleController::class, 'store'])->name('store');
+                        Route::put('/{vehicle}', [\App\Http\Controllers\VehicleController::class, 'update'])->name('update');
+                        Route::delete('/{vehicle}', [\App\Http\Controllers\VehicleController::class, 'destroy'])->name('destroy');
+                        Route::patch('/{vehicle}/toggle-status', [\App\Http\Controllers\VehicleController::class, 'toggleStatus'])->name('toggleStatus');
+                        
+                        Route::post('/categories', [\App\Http\Controllers\VehicleController::class, 'storeCategory'])->name('categories.store');
+                        Route::put('/categories/{category}', [\App\Http\Controllers\VehicleController::class, 'updateCategory'])->name('categories.update');
+                        Route::delete('/categories/{category}', [\App\Http\Controllers\VehicleController::class, 'destroyCategory'])->name('categories.destroy');
+                    });
 
                     // Reports & Analytics - Grouped for clarity and robust naming
                     Route::prefix('reports')->group(function () {

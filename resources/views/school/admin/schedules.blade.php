@@ -1267,6 +1267,12 @@
             background: #3b82f6; /* Blue: Fully Assigned */
         }
 
+        .slot-bar.empty {
+            background: #94a3b8; /* Muted Slate: No Instructor */
+            opacity: 0.8;
+            font-style: italic;
+        }
+
         .slot-bar.more-indicator {
             background: #64748b; /* Slate: Standard indicator */
         }
@@ -1725,16 +1731,29 @@
                             <div class="day-slots-wrap">
                                 @foreach($daySlots->take(3) as $slot)
                                     @php
+                                        $instructorCount = $slot->instructors->count();
                                         $availableSpots = $slot->getAvailableStudentSpots();
                                         $isFull = $availableSpots <= 0;
                                         $adminCount = $slot->getAdminAssignedCount();
                                         $selfCount = $slot->getSelfSelectedCount();
                                         $totalAssigned = $adminCount + $selfCount;
                                         $maxCapacity = ($slot->session_type ?? '') === 'theoretical' ? $slot->max_students : $slot->max_instructors;
+                                        
+                                        // Determine status class
+                                        $statusClass = 'available';
+                                        if ($instructorCount === 0) {
+                                            $statusClass = 'empty';
+                                        } elseif ($isFull) {
+                                            $statusClass = 'full';
+                                        }
                                     @endphp
-                                    <div class="slot-bar {{ $isFull ? 'full' : 'available' }}">
+                                    <div class="slot-bar {{ $statusClass }}">
                                         {{ \Carbon\Carbon::parse($slot->start_time)->format('g:i A') }} 
-                                        ({{ $totalAssigned }}/{{ $maxCapacity }})
+                                        @if($instructorCount === 0)
+                                            (No Instructor)
+                                        @else
+                                            ({{ $totalAssigned }}/{{ $maxCapacity }})
+                                        @endif
                                     </div>
                                 @endforeach
                                 @if($daySlots->count() > 3)
@@ -1761,6 +1780,10 @@
                         <span style="width: 16px; height: 16px; background: #3b82f6; border-radius: 4px;"></span>
                         <span style="font-weight: 500; color: #64748b;">Fully Assigned</span>
                     </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="width: 16px; height: 16px; background: #cbd5e1; border-radius: 4px;"></span>
+                        <span style="font-weight: 500; color: #64748b;">No Instructor (No Room)</span>
+                    </div>
                 </div>
                 <p style="margin: 0; font-size: 0.9rem; color: #94a3b8; font-weight: 500;">Click on a day to view details</p>
             </div>
@@ -1775,7 +1798,7 @@
                 @foreach($timeslots as $date => $dateTimeslots)
                     @php
                         $isToday = \Carbon\Carbon::parse($date)->isToday();
-                        $tdcCount = $dateTimeslots->filter(fn($t) => ($t->session_type ?? '') === 'theoretical' || (!$t->session_type && $t->course && $t->course->course_type === 'theoretical'))->count();
+                        $tdcCount = $dateTimeslots->filter(fn($t) => $t->resolved_session_type === 'theoretical')->count();
                         $pdcCount = $dateTimeslots->count() - $tdcCount;
                     @endphp
 
@@ -1824,7 +1847,7 @@
                                             @php
                                                 $totalCount = $timeslot->instructors->count();
                                                 $availableSpots = $timeslot->getAvailableStudentSpots();
-                                                $sessionType = $timeslot->session_type ?? (($timeslot->course && $timeslot->course->course_type === 'practical') ? 'practical' : 'theoretical');
+                                                $sessionType = $timeslot->resolved_session_type;
                                                 $isFull = $availableSpots <= 0;
                                             @endphp
                                             <tr class="timeslot-table-row timeslot-item" 
@@ -1853,21 +1876,38 @@
                                                 </td>
                                                 <td>
                                                     <div style="display: flex; flex-wrap: wrap; gap: 5px;">
-                                                        @forelse($timeslot->instructors as $instructor)
-                                                            @php $isSelf = ($instructor->pivot->assignment_type ?? '') === 'self_selected'; @endphp
+                                                        @php
+                                                            $instructorCount = $timeslot->instructors->count();
+                                                            $firstInstructor = $timeslot->instructors->first();
+                                                        @endphp
+                                                        
+                                                        @if($instructorCount > 0)
+                                                            @php $isSelf = ($firstInstructor->pivot->assignment_type ?? '') === 'self_selected'; @endphp
                                                             <span class="badge {{ $isSelf ? 'badge-success' : 'badge-primary' }}" style="font-size: 0.75rem; padding: 2px 8px; border-radius: 5px; font-weight: 500;">
-                                                                {{ $isSelf ? '[S] ' : '[A] ' }}{{ $instructor->name }}
+                                                                {{ $isSelf ? '[S] ' : '[A] ' }}{{ $firstInstructor->name }}
                                                             </span>
-                                                        @empty
+                                                            @if($instructorCount > 1)
+                                                                <span style="font-size: 0.75rem; color: #64748b; font-weight: 600; align-self: center; margin-left: 4px;">
+                                                                    +{{ $instructorCount - 1 }} more
+                                                                </span>
+                                                            @endif
+                                                        @else
                                                             <span style="color: #cbd5e1; font-style: italic; font-size: 0.85rem;">Unassigned</span>
-                                                        @endforelse
+                                                        @endif
                                                     </div>
                                                 </td>
                                                 <td>
-                                                    <div style="font-size: 0.85rem; font-weight: 700; color: {{ $isFull ? '#94a3b8' : '#059669' }};">
-                                                        {{ $isFull ? 'FULL' : $availableSpots . ' SPOTS' }}
-                                                    </div>
-                                                    <div style="font-size: 0.75rem; color: #94a3b8;">Max: {{ $timeslot->max_students }} Students</div>
+                                                    @if($timeslot->instructors->isEmpty())
+                                                        <div style="font-size: 0.85rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">
+                                                            <i class="bi bi-exclamation-circle" style="font-size: 0.8rem;"></i> No Room
+                                                        </div>
+                                                        <div style="font-size: 0.7rem; color: #cbd5e1; font-weight: 500;">Assign instructor to open</div>
+                                                    @else
+                                                        <div style="font-size: 0.85rem; font-weight: 700; color: {{ $isFull ? '#64748b' : '#059669' }};">
+                                                            {{ $isFull ? 'FULL' : $availableSpots . ' SPOTS' }}
+                                                        </div>
+                                                        <div style="font-size: 0.75rem; color: #94a3b8;">Max: {{ $timeslot->max_students }} Students</div>
+                                                    @endif
                                                 </td>
                                                 <td style="text-align: center; width: 180px;">
                                                     <div style="display: flex; gap: 8px; justify-content: center;">
@@ -2114,8 +2154,35 @@
                             document.getElementById(inputName + '_hidden').value = val;
                             document.getElementById(labelId).textContent = label;
                             document.getElementById(listId).classList.remove('active');
+                            
+                            validateTimeRange();
+                        }
+
+                        function validateTimeRange() {
+                            const start = document.getElementById('start_time_hidden').value;
+                            const end = document.getElementById('end_time_hidden').value;
+                            const errorMsg = document.getElementById('timeRangeError');
+                            const submitBtn = document.getElementById('submitCreateBtn');
+                            
+                            if (start && end) {
+                                // Simple string comparison works for HH:mm format
+                                if (start >= end) {
+                                    errorMsg.textContent = 'End time must be after start time.';
+                                    errorMsg.style.display = 'block';
+                                    document.getElementById('startTimeContainer').querySelector('.custom-select-trigger').style.borderColor = '#ef4444';
+                                    document.getElementById('endTimeContainer').querySelector('.custom-select-trigger').style.borderColor = '#ef4444';
+                                    if(submitBtn) submitBtn.disabled = true;
+                                } else {
+                                    errorMsg.style.display = 'none';
+                                    document.getElementById('startTimeContainer').querySelector('.custom-select-trigger').style.borderColor = '#e2e8f0';
+                                    document.getElementById('endTimeContainer').querySelector('.custom-select-trigger').style.borderColor = '#e2e8f0';
+                                    if(submitBtn) submitBtn.disabled = false;
+                                }
+                            }
                         }
                     </script>
+
+                    <p id="timeRangeError" style="color: #ef4444; font-size: 0.75rem; margin-top: 8px; display: none; font-weight: 600;"></p>
 
                     <div class="form-group" id="maxStudentsGroup">
                         <label class="form-label" id="maxStudentsLabel">Student Capacity (Seats)</label>
@@ -2166,7 +2233,7 @@
                         <i class="bi bi-info-circle-fill"></i> <strong>Batch Mode Active:</strong> Since you have selected multiple instructors for a PDC session, the system will create <strong>one separate slot for each instructor</strong>.
                     </div>
                     <button type="button" class="btn btn-secondary" onclick="closeCreateModal()">Cancel</button>
-                    <button type="submit" class="btn btn-success">
+                    <button type="submit" id="submitCreateBtn" class="btn btn-success">
                         <i class="bi bi-check-circle"></i> Create Schedule
                     </button>
                 </div>
@@ -2473,8 +2540,19 @@
                             adminCount: {!! json_encode($adminCount) !!},
                             selfCount: {!! json_encode($selfCount) !!},
                             totalCount: {!! json_encode($totalCount) !!},
+                            start_time: {!! json_encode($timeslot->start_time) !!},
+                            end_time: {!! json_encode($timeslot->end_time) !!},
                             maxInstructors: {!! json_encode($timeslot->max_instructors) !!},
-                            maxStudents: {!! json_encode($timeslot->max_students) !!}
+                            maxStudents: {!! json_encode($timeslot->max_students) !!},
+                            bookings: [
+                                @foreach($timeslot->bookings as $booking)
+                                    {
+                                        student_name: {!! json_encode($booking->student->name ?? 'Unknown Student') !!},
+                                        instructor_name: {!! json_encode($booking->instructor->name ?? 'Unassigned') !!},
+                                        status: {!! json_encode($booking->status) !!}
+                                    }@if(!$loop->last),@endif
+                                @endforeach
+                            ]
                         }@if(!$loop->last),@endif
                     @endforeach
                 ]@if(!$loop->last),@endif
@@ -2648,6 +2726,85 @@
                     instructorsHtml = '<span class="text-muted">No instructors assigned yet</span>';
                 }
 
+                // Helper to get dynamic status
+                window.getDynamicStatus = function(status, date, startTime, endTime) {
+                    if (status === 'cancelled') return { text: 'CANCELLED', color: '#ef4444', bg: '#fee2e2' };
+                    if (status === 'completed' || status === 'done') return { text: 'COMPLETED', color: '#10b981', bg: '#d1fae5' };
+                    if (status === 'no-show') return { text: 'NO-SHOW', color: '#ef4444', bg: '#fee2e2' };
+
+                    const now = new Date();
+                    const slotStart = new Date(`${date} ${startTime}`);
+                    const slotEnd = new Date(`${date} ${endTime}`);
+
+                    if (now >= slotStart && now <= slotEnd) {
+                        return { text: 'IN SESSION', color: '#0ea5e9', bg: '#e0f2fe' };
+                    } else if (now > slotEnd) {
+                        return { text: 'ABSENT', color: '#f59e0b', bg: '#fef3c7' };
+                    } else {
+                        return { text: 'SCHEDULED', color: '#64748b', bg: '#f1f5f9' };
+                    }
+                };
+
+                // Add Bookings/Pairings Logic
+                let bookingsHtml = '';
+                // Get bookings from our pre-loaded data
+                let slotData = null;
+                let slotDate = '';
+                for (let date in window.allSchedulesData) {
+                    let found = window.allSchedulesData[date].find(s => s.id == slotId);
+                    if (found) {
+                        slotData = found;
+                        slotDate = date;
+                        break;
+                    }
+                }
+                
+                const bookings = slotData ? slotData.bookings || [] : [];
+                
+                if (bookings.length > 0) {
+                    bookingsHtml = `
+                        <div class="details-section" style="margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 15px;">
+                            <strong class="details-label" style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; color: #1e293b;">
+                                <i class="bi bi-people"></i> ${sessionType === 'practical' ? 'Student-Instructor Pairings' : 'Attendance List'}
+                            </strong>
+                            <div style="background: #f8fafc; border-radius: 8px; padding: 12px; border: 1px solid #e2e8f0;">
+                                <table style="width: 100%; font-size: 0.85rem; border-collapse: collapse;">
+                                    <thead>
+                                        <tr style="text-align: left; border-bottom: 1px solid #e2e8f0;">
+                                            <th style="padding: 8px; color: #64748b;">Student</th>
+                                            ${sessionType === 'practical' ? '<th style="padding: 8px; color: #64748b;">Instructor</th>' : ''}
+                                            <th style="padding: 8px; color: #64748b;">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${bookings.map(b => {
+                                            const dyn = window.getDynamicStatus(b.status, slotDate, slotData.start_time, slotData.end_time);
+                                            return `
+                                                <tr style="border-bottom: 1px solid #f1f5f9;">
+                                                    <td style="padding: 8px; font-weight: 600; color: #334155;">${b.student_name}</td>
+                                                    ${sessionType === 'practical' ? `<td style="padding: 8px; color: #334155;">${b.instructor_name}</td>` : ''}
+                                                    <td style="padding: 8px;">
+                                                        <span style="font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; background: ${dyn.bg}; color: ${dyn.color}; text-transform: uppercase; border: 1px solid ${dyn.color}40;">
+                                                            ${dyn.text}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            `;
+                                        }).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    bookingsHtml = `
+                        <div class="details-section" style="margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 15px;">
+                            <strong class="details-label"><i class="bi bi-people"></i> Students</strong>
+                            <p style="font-size: 0.85rem; color: #94a3b8; font-style: italic; margin-left: 5px;">No students booked yet.</p>
+                        </div>
+                    `;
+                }
+
                 document.getElementById('detailsModalContent').innerHTML = `
                     <div class="details-wrap">
                         <div class="details-section">
@@ -2670,7 +2827,9 @@
                             <div>${sessionType === 'practical' ? 'Practical' : 'Theoretical'}</div>
                         </div>
 
-                        <div>
+                        ${bookingsHtml}
+
+                        <div class="details-section">
                             <strong class="details-label">Notes:</strong>
                             <div class="details-notes">
                                 ${notes}

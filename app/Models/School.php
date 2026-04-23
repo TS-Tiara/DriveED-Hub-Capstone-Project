@@ -7,6 +7,19 @@ use Illuminate\Database\Eloquent\Model;
 
 class School extends Model
 {
+    protected static function booted()
+    {
+        static::created(function ($school) {
+            $defaults = ['Sedan', 'SUV', 'MPV', 'Hatchback', 'Motorcycle', 'Truck (Heavy)'];
+            foreach ($defaults as $cat) {
+                \App\Models\VehicleCategory::create([
+                    'school_id' => $school->id,
+                    'name' => $cat
+                ]);
+            }
+        });
+    }
+
     use HasFactory;
 
     protected $fillable = [
