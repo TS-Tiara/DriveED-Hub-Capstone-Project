@@ -1940,7 +1940,7 @@
                         <a href="{{ school_route('admin.enrollments.index', [], $currentSchool) }}" class="nav-item"
                             data-page="enrollments">Enrollments</a>
                         <a href="{{ school_route('admin.theoretical.index', [], $currentSchool) }}" class="nav-item"
-                            data-page="theoretical">Theoretical Training</a>
+                            data-page="theoretical">Student Training List</a>
                     </div>
                 </div>
 
@@ -1957,8 +1957,6 @@
                             data-page="schedules">Manage Schedule</a>
                         <a href="{{ school_route('admin.verify-session-completion.index', [], $currentSchool) }}"
                             class="nav-item" data-page="verify-session-completion">Verify Session Completion</a>
-                        <a href="{{ school_route('admin.sessions.index', [], $currentSchool) }}" class="nav-item"
-                            data-page="session-completions">Session Completions</a>
                         <a href="{{ school_route('admin.phase-progressions.index', [], $currentSchool) }}" class="nav-item"
                             data-page="phase-progressions">Phase Progressions</a>
                     </div>
@@ -2027,7 +2025,7 @@
                     </div>
                     <div class="nav-category-items">
                         <a href="{{ $schoolRoute('instructor.theoretical.index') }}" class="nav-item"
-                            data-page="theoretical">Theoretical Training</a>
+                            data-page="theoretical">Student Training List</a>
                         <a href="{{ $schoolRoute('instructor.materials.index') }}" class="nav-item"
                             data-page="materials">Course Materials</a>
                     </div>
@@ -2380,7 +2378,7 @@
             'admin/courses': 'Courses',
             'admin/materials': 'Course Materials',
             'admin/enrollments': 'Enrollments',
-            'admin/theoretical': 'Theoretical Training',
+            'admin/theoretical': 'Student Training List',
             'admin/schedules': 'Manage Schedule',
             'admin/verify-session-completion': 'Verify Session Completion',
             'admin/sessions': 'Session Completions',
@@ -2399,7 +2397,7 @@
             'instructor/sessions': 'Session Completions',
             'instructor/grades': 'Grades',
             'instructor/materials': 'Course Materials',
-            'instructor/theoretical': 'Theoretical Training',
+            'instructor/theoretical': 'Student Training List',
             // Student pages
             'student': 'Dashboard',
             'student/dashboard': 'Dashboard',

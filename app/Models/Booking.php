@@ -185,4 +185,37 @@ class Booking extends Model
     {
         return $this->status === self::STATUS_COMPLETED;
     }
+
+    /**
+     * Get the duration of the booking in hours.
+     * Calculated from the associated TimeSlot.
+     */
+    public function getDurationHoursAttribute(): float
+    {
+        if (!$this->timeSlot) {
+            return 0.0;
+        }
+
+        try {
+            $start = \Illuminate\Support\Carbon::parse($this->timeSlot->start_time);
+            $end = \Illuminate\Support\Carbon::parse($this->timeSlot->end_time);
+            
+            // If end time is before start time, assume it crossed midnight
+            if ($end->lessThan($start)) {
+                $end->addDay();
+            }
+
+            return round($start->diffInMinutes($end) / 60, 1);
+        } catch (\Exception $e) {
+            return 0.0;
+        }
+    }
+
+    /**
+     * Get the session type (theoretical or practical) for this booking.
+     */
+    public function getSessionTypeAttribute(): string
+    {
+        return $this->timeSlot ? $this->timeSlot->resolved_session_type : 'theoretical';
+    }
 }
