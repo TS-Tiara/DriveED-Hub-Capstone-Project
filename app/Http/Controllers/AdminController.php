@@ -8,6 +8,7 @@ use App\Models\Branch;
 use App\Models\EnrollmentRequest;
 use App\Models\GCashSetting;
 use App\Models\Invitation;
+use App\Models\VehicleCategory;
 use App\Mail\SystemInvitationMail;
 use App\Models\Instructor;
 use App\Models\InstructorRemovalRequest;
@@ -1868,8 +1869,9 @@ class AdminController extends Controller
         }
 
         $courses = $query->paginate(10)->withQueryString();
+        $vehicleCategories = VehicleCategory::where('school_id', $school->id)->orderBy('name')->get();
 
-        return view($school->resolveView('admin.courses'), array_merge(compact('school', 'courses'), ['isAjax' => $request->ajax()]));
+        return view($school->resolveView('admin.courses'), array_merge(compact('school', 'courses', 'vehicleCategories'), ['isAjax' => $request->ajax()]));
     }
 
     /**
@@ -1887,6 +1889,7 @@ class AdminController extends Controller
                 'course_type' => 'required|in:theoretical,practical,combo',
                 'license_type' => 'required|in:non_professional,professional',
                 'hours_required' => 'required|numeric|min:1|max:500',
+                'lto_base_hours' => 'nullable|integer|min:0|max:500',
                 'price' => 'required|numeric|min:0',
                 'status' => 'nullable|in:active,inactive',
                 'is_featured' => 'nullable',
@@ -1966,6 +1969,7 @@ class AdminController extends Controller
                 'course_type' => 'required|in:theoretical,practical,combo',
                 'license_type' => 'required|in:non_professional,professional',
                 'hours_required' => 'required|numeric|min:1|max:500',
+                'lto_base_hours' => 'nullable|integer|min:0|max:500',
                 'price' => 'required|numeric|min:0',
                 'status' => 'nullable|in:active,inactive',
                 'is_featured' => 'nullable',
@@ -2076,9 +2080,14 @@ class AdminController extends Controller
 
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
+                'vehicle_category_id' => 'nullable|exists:vehicle_categories,id',
+                'package_level' => 'nullable|string|max:100',
+                'tier' => 'nullable|string|max:100',
                 'transmission_type' => 'required|in:manual,automatic',
                 'price' => 'required|numeric|min:0',
-                'training_hours' => 'nullable|integer|min:0',
+                'training_hours' => 'nullable|numeric|min:0',
+                'tdc_hours' => 'nullable|numeric|min:0',
+                'pdc_hours' => 'nullable|numeric|min:0',
                 'description' => 'nullable|string',
                 'is_popular' => 'boolean',
                 'features' => 'nullable|array',
@@ -2128,9 +2137,14 @@ class AdminController extends Controller
 
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
+                'vehicle_category_id' => 'nullable|exists:vehicle_categories,id',
+                'package_level' => 'nullable|string|max:100',
+                'tier' => 'nullable|string|max:100',
                 'transmission_type' => 'required|in:manual,automatic',
                 'price' => 'required|numeric|min:0',
-                'training_hours' => 'nullable|integer|min:0',
+                'training_hours' => 'nullable|numeric|min:0',
+                'tdc_hours' => 'nullable|numeric|min:0',
+                'pdc_hours' => 'nullable|numeric|min:0',
                 'description' => 'nullable|string',
                 'is_popular' => 'boolean',
                 'features' => 'nullable|array',

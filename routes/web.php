@@ -355,6 +355,7 @@ Route::prefix('{school:slug}')
                             Route::get('/stats/overview', [TheoreticalCompletionController::class , 'stats'])->name('stats');
                             Route::get('/{enrollment}', [TheoreticalCompletionController::class , 'show'])->name('show');
                             Route::post('/mark-passed', [TheoreticalCompletionController::class , 'markAsPassed'])->name('markAsPassed');
+                            Route::post('/{enrollment}/complete', [TheoreticalCompletionController::class , 'complete'])->name('complete');
                             Route::post('/{enrollment}/revoke', [TheoreticalCompletionController::class , 'revoke'])->name('revoke');
                         }
                         );

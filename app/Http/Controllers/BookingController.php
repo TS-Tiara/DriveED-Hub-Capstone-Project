@@ -29,11 +29,12 @@ class BookingController extends Controller
 
         $query = Booking::where('bookings.school_id', $school->id)
             ->with([
-                'student:id,name,email,contact,branch_id',
+                'student:id,name,email,contact,branch_id,has_passed_theoretical,theoretical_passed_at',
                 'instructor:id,name,email',
                 'course:id,title,duration_hours,price,course_type',
                 'package:id,course_id,name,price,training_hours,transmission_type',
-                'timeSlot:id,date,start_time,end_time,session_type'
+                'timeSlot:id,date,start_time,end_time,session_type',
+                'enrollmentRequest:id,learner_id,course_id,package_id,status,completed_at'
             ]);
 
         // Base query for statistics cards (before status/date filters)
@@ -48,14 +49,56 @@ class BookingController extends Controller
             $statsQuery->where('bookings.instructor_id', Auth::guard('instructor')->id());
         }
 
-        // Additional filters (server-side so pagination and filters stay in sync)
+        // Tab-based filtering
+        $activeTab = $request->query('tab', 'verify');
         $activeFilter = (string) $request->query('status', 'all');
+
+        if ($activeTab === 'verify') {
+            // If we are on the verify tab and NO specific filter is selected (it's 'all'),
+            // we default to showing only 'done' sessions for action.
+            if ($activeFilter === 'all') {
+                $query->where('bookings.status', 'done');
+                $activeFilter = 'done'; // Set this so the UI shows the 'Awaiting' card as active
+            }
+        }
+
+        // Additional filters (server-side so pagination and filters stay in sync)
         if ($activeFilter !== '' && $activeFilter !== 'all') {
             if ($activeFilter === 'flagged') {
                 $query->whereIn('bookings.status', ['cancelled', 'no_show', 'no-show']);
             } else {
                 $query->where('bookings.status', $activeFilter);
             }
+        }
+
+        // Fetch instructors for the filter dropdown
+        $instructors = Instructor::where('school_id', $school->id)->orderBy('name')->get();
+
+        // Additional date filters
+        if ($request->filled('date_from')) {
+            $query->whereDate('bookings.booking_date', '>=', $request->date_from)
+                ->orWhereDate('bookings.scheduled_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('bookings.booking_date', '<=', $request->date_to)
+                ->orWhereDate('bookings.scheduled_at', '<=', $request->date_to);
+        }
+        if ($request->filled('instructor_id')) {
+            $query->where('bookings.instructor_id', $request->instructor_id);
+        }
+
+        // Search filter
+        $search = $request->query('search');
+        if (!empty($search)) {
+            $query->where(function($q) use ($search) {
+                $q->whereHas('student', function($sq) use ($search) {
+                    $sq->where('name', 'like', "%{$search}%");
+                })->orWhereHas('instructor', function($iq) use ($search) {
+                    $iq->where('name', 'like', "%{$search}%");
+                })->orWhereHas('course', function($cq) use ($search) {
+                    $cq->where('title', 'like', "%{$search}%");
+                });
+            });
         }
 
         $activeSort = (string) $request->query('sort', 'audit_priority');
@@ -153,7 +196,7 @@ class BookingController extends Controller
 
         // Only admin has bookings list view
         $view = 'admin.verify-session-completion';
-        return view($school->resolveView($view), array_merge(compact('school', 'bookings', 'stats', 'allSessionsCount', 'pendingRequestsCount', 'awaitingVerificationCount', 'verifiedSessionsCount', 'flaggedIssuesCount', 'activeFilter', 'activeSort'), ['isAjax' => $request->ajax()]));
+        return view($school->resolveView($view), array_merge(compact('school', 'bookings', 'stats', 'allSessionsCount', 'pendingRequestsCount', 'awaitingVerificationCount', 'verifiedSessionsCount', 'flaggedIssuesCount', 'activeFilter', 'activeSort', 'activeTab', 'instructors'), ['isAjax' => $request->ajax()]));
     }
 
     /**
