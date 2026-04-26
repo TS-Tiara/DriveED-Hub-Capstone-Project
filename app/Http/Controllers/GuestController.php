@@ -218,7 +218,7 @@ class GuestController extends Controller
 
         // PDC (Practical Driving Course) requires a verified Student Driver's License
         /** @var \App\Models\Student $guest */
-        $isUploadingLicense = $request->hasFile('credential_file');
+        $isUploadingLicense = $request->hasFile('student_license') || $request->hasFile('credential_file');
         $canEnroll = \App\Support\EnrollmentValidator::canEnrollInCourse($guest, $course, $isUploadingLicense);
         if (!$canEnroll['allowed']) {
             Log::warning('Guest enrollment blocked', [
@@ -264,8 +264,12 @@ class GuestController extends Controller
                 $data['price'] = $course->price;
             }
 
-            // Handle credential file upload for experienced drivers
-            if ($request->hasFile('credential_file')) {
+            // Handle student license upload (staged)
+            if ($request->hasFile('student_license')) {
+                $file = $request->file('student_license');
+                $path = $file->store('student-licenses', 'local');
+                $data['credentials_file_path'] = $path;
+            } elseif ($request->hasFile('credential_file')) {
                 $file = $request->file('credential_file');
                 $path = $file->store('credentials', 'local');
                 $data['credentials_file_path'] = $path;
@@ -273,8 +277,8 @@ class GuestController extends Controller
 
             $enrollmentRequest = EnrollmentRequest::create($data);
 
-            // PDC-only: if a draft license exists, submit it for admin review once a practical request is created.
-            if ($course->isPractical() && $guest->hasStoredLicense() && !$guest->hasVerifiedLicense()) {
+            // PDC-only: if a license is being submitted (staged or existing), mark status as pending for admin review.
+            if ($course->isPractical() && ($request->hasFile('student_license') || $guest->hasStoredLicense()) && !$guest->hasVerifiedLicense()) {
                 $guest->update([
                     'student_license_status' => 'pending',
                     'student_license_verified_at' => null,
@@ -668,25 +672,63 @@ class GuestController extends Controller
             'cancellation_reason' => 'required|string|max:1000',
         ]);
 
+        // Check if there is any payment activity (paid status, proof path, or reference number)
+        $hasPaymentActivity = $enrollmentRequest->payment_status === 'paid' 
+            || !empty($enrollmentRequest->payment_proof_path) 
+            || !empty($enrollmentRequest->payment_reference);
+
+        if ($hasPaymentActivity) {
+            // If money is involved, we MUST request approval
+            $enrollmentRequest->update([
+                'cancellation_requested' => true,
+                'cancellation_reason' => $request->cancellation_reason
+            ]);
+
+            // Notify admins of the REQUEST
+            $admins = Admin::where('school_id', $school->id)->where('is_active', true)->get();
+            foreach ($admins as $admin) {
+                Notification::send(
+                    $admin,
+                    'enrollment_cancellation_requested',
+                    'Withdrawal Requested (Paid)',
+                    "{$guest->name} has requested to withdraw a PAID enrollment request for {$enrollmentRequest->course->title}.",
+                    'enrollment',
+                    "/{$school->slug}/admin/enrollments"
+                );
+            }
+
+            return redirect()->back()->with('success', 'Your withdrawal request has been submitted for admin review due to your payment submission.');
+        }
+
+        // Otherwise: Instant Cancel for unpaid requests
         $enrollmentRequest->update([
-            'cancellation_requested' => true,
+            'status' => 'cancelled',
+            'cancelled_at' => now(),
+            'payment_status' => 'cancelled',
+            'remarks' => 'Withdrawn by guest: ' . $request->cancellation_reason,
+            'cancellation_requested' => false,
             'cancellation_reason' => $request->cancellation_reason
         ]);
+
+        // Also update learner license status if it was pending
+        if ($guest->student_license_status === 'pending') {
+            $guest->update(['student_license_status' => 'none']);
+        }
 
         // Optional: Notify admins here
         $admins = Admin::where('school_id', $school->id)->where('is_active', true)->get();
         foreach ($admins as $admin) {
             Notification::send(
                 $admin,
-                'enrollment_cancellation_requested',
-                'Withdrawal Requested',
-                "{$guest->name} has requested to withdraw their enrollment request for {$enrollmentRequest->course->title}.",
+                'enrollment_cancelled',
+                'Enrollment Withdrawn',
+                "{$guest->name} has withdrawn their enrollment request for {$enrollmentRequest->course->title}.",
                 'enrollment',
                 "/{$school->slug}/admin/enrollments"
             );
         }
 
-        return redirect()->back()->with('success', 'Your withdrawal request has been submitted to the admin for review.');
+        return redirect()->back()->with('success', 'Your enrollment request has been cancelled.');
     }
 
     /**

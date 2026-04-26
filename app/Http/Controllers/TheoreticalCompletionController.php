@@ -103,7 +103,7 @@ class TheoreticalCompletionController extends Controller
     }
 
     /**
-     * Show the form for marking a student as passed
+     * Show the Student Training Hub & Life Log
      */
     public function show(Request $request, School $school, $enrollment)
     {
@@ -112,19 +112,42 @@ class TheoreticalCompletionController extends Controller
             abort(403, 'Unauthorized');
         }
 
-        // Layer 2: Fail-Closed Retrieval
+        // Retrieval of primary enrollment
         $enrollment = $school->enrollmentRequests()
-            ->with(['learner', 'course', 'sessionCompletions'])
+            ->with(['learner', 'course', 'sessionCompletions.instructor'])
             ->findOrFail($enrollment);
 
-        // Validate if student can be marked as passed
+        $student = $enrollment->learner;
+
+        // Fetch all student enrollments for the Life Log
+        $allEnrollments = $student->enrollments()
+            ->with(['course', 'package'])
+            ->where('school_id', $school->id)
+            ->get();
+
+        // Check for active (LIVE) session
+        $now = now();
+        $liveSession = $student->bookings()
+            ->where('status', 'scheduled') // Or 'in_progress' if you have that status
+            ->whereHas('timeSlot', function($q) use ($now) {
+                $q->where('date', $now->toDateString())
+                  ->where('start_time', '<=', $now->toTimeString())
+                  ->where('end_time', '>=', $now->toTimeString());
+            })
+            ->with(['instructor', 'timeSlot'])
+            ->first();
+
+        // Validate if student can be marked as passed TDC
         $validation = $this->validateCanPassTheoretical($enrollment);
 
         $viewPath = Auth::guard('admin')->check()
             ? 'school.admin.theoretical.show'
             : 'school.instructor.theoretical.show';
 
-        return view($viewPath, array_merge(compact('school', 'enrollment', 'validation'), ['isAjax' => $request->ajax()]));
+        return view($viewPath, array_merge(
+            compact('school', 'enrollment', 'student', 'allEnrollments', 'liveSession', 'validation'), 
+            ['isAjax' => $request->ajax()]
+        ));
     }
 
     /**
@@ -132,42 +155,11 @@ class TheoreticalCompletionController extends Controller
      */
     private function validateCanPassTheoretical(EnrollmentRequest $enrollment): array
     {
-        // Already passed
-        if ($enrollment->student->has_passed_theoretical) {
-            return [
-                'allowed' => false,
-                'message' => 'This student has already passed theoretical training.'
-            ];
-        }
-
-        // Not a theoretical course
-        if ($enrollment->course->course_type !== 'theoretical') {
-            return [
-                'allowed' => false,
-                'message' => 'This is not a theoretical course enrollment.'
-            ];
-        }
-
-        // Check if minimum hours requirement met
-        $totalHours = $enrollment->sessionCompletions->sum('hours_completed');
-        $requiredHours = $enrollment->course->theoretical_hours ?? 15;
-
-        if ($totalHours < $requiredHours) {
-            return [
-                'allowed' => false,
-                'message' => "Student needs at least {$requiredHours} hours. Currently has {$totalHours} hours completed."
-            ];
-        }
-
-        // All validations passed
-        return [
-            'allowed' => true,
-            'message' => 'Student meets all requirements and can be marked as passed.'
-        ];
+        return \App\Support\EnrollmentValidator::canMarkTheoreticalPassed($enrollment);
     }
 
     /**
-     * Mark a student as passed theoretical
+     * Mark a student as passed theoretical (TDC Graduation)
      */
     public function markAsPassed(Request $request)
     {
@@ -179,8 +171,6 @@ class TheoreticalCompletionController extends Controller
             abort(403);
         }
 
-        $redirectRoute = $ctx['routePrefix'] . '.index';
-
         $request->validate([
             'enrollment_id' => 'required|exists:enrollment_requests,id',
             'notes' => 'nullable|string|max:1000'
@@ -190,32 +180,32 @@ class TheoreticalCompletionController extends Controller
             ->with(['learner', 'course'])
             ->findOrFail($request->enrollment_id);
 
-        // Verify it's a theoretical course
-        if ($enrollment->course->course_type !== 'theoretical') {
-            return back()->with('error', 'This is not a theoretical course enrollment.');
-        }
-
-        // Verify student hasn't already passed
+        // Verify student hasn't already passed theoretical
         if ($enrollment->student->has_passed_theoretical) {
             return back()->with('error', 'Student has already passed theoretical.');
         }
 
         DB::beginTransaction();
         try {
-            // AUD-004 Fix: Sync theoretical completion flags using model helper
+            // Mark theoretical as passed
             $enrollment->markTheoreticalPassed($user->id, $request->notes);
 
-            // Complete the enrollment
-            $enrollment->update([
-                'status' => 'completed',
-                'completed_at' => now(),
-            ]);
+            // If it is ONLY a theoretical course, we can complete the enrollment now
+            if ($enrollment->course->course_type === 'theoretical') {
+                $enrollment->update([
+                    'status' => 'completed',
+                    'completed_at' => now(),
+                ]);
+                $enrollment->learner->unlockFromCourse();
+                $message = 'Student marked as passed theoretical and enrollment completed!';
+            } else {
+                // For Combo/Practical, we just mark TDC as passed, they stay "Enrolled" for PDC
+                $message = 'Student marked as passed theoretical! They are now eligible for PDC.';
+            }
 
             DB::commit();
 
-            return redirect()
-                ->route($redirectRoute, ['school' => $user->school->slug])
-                ->with('success', 'Student marked as passed theoretical successfully! They can now enroll in practical courses.');
+            return back()->with('success', $message);
 
         }
         catch (\Exception $e) {
@@ -224,8 +214,40 @@ class TheoreticalCompletionController extends Controller
                 'enrollment_id' => $request->enrollment_id,
                 'exception' => $e
             ]);
-            return back()
-                ->with('error', 'Unable to mark student as passed at this time. Please try again later.');
+            return back()->with('error', 'Unable to mark status at this time.');
+        }
+    }
+
+    /**
+     * Final Graduation (Complete the entire enrollment)
+     */
+    public function complete(Request $request, School $school, $enrollment)
+    {
+        $enrollment = $school->enrollmentRequests()
+            ->with(['learner', 'course'])
+            ->findOrFail($enrollment);
+
+        $user = Auth::guard('admin')->user() ?? Auth::guard('instructor')->user();
+
+        DB::beginTransaction();
+        try {
+            // Final completion logic
+            $enrollment->update([
+                'status' => 'completed',
+                'completed_at' => now(),
+            ]);
+
+            if ($enrollment->learner) {
+                $enrollment->learner->unlockFromCourse();
+            }
+
+            DB::commit();
+
+            return back()->with('success', 'Student has been successfully graduated! Enrollment is now completed.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            LogFacade::error('Failed to graduate student: ' . $e->getMessage());
+            return back()->with('error', 'Unable to graduate student at this time.');
         }
     }
 

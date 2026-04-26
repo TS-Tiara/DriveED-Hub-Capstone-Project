@@ -12,18 +12,17 @@
     $primaryRgb = sscanf($primaryColor, "#%02x%02x%02x");
 
     $student = Auth::guard('student')->user();
+    $isPracticalCourse = ($course->course_type ?? '') === 'practical';
     $existingRequest = null;
     $enrollmentStatus = null;
     $pendingEnrollmentTitle = null;
     $pendingEnrollmentMessage = null;
     $pendingEnrollmentActionUrl = null;
     $pendingEnrollmentActionLabel = 'Request Submitted';
-    $isPracticalCourse = (($course->course_type ?? null) === 'practical');
-    $studentLicenseStatus = $student?->student_license_status ?? 'none';
-    $studentLicenseRejectionReason = $student?->student_license_rejection_reason;
-    $hasDraftStudentLicense = $student?->hasDraftLicense() ?? false;
+    $hasPassedTdc = $student?->hasPassedTheoretical() ?? false;
+    $mustPassTdcForPractical = $isPracticalCourse && !$hasPassedTdc;
     $hasSubmittedStudentLicense = $student?->hasSubmittedLicense() ?? false;
-    $mustUploadLicenseForPractical = $isPracticalCourse && !$hasSubmittedStudentLicense;
+    $mustUploadLicenseForPractical = $isPracticalCourse && $hasPassedTdc && !$hasSubmittedStudentLicense;
 
     if ($student) {
         $existingRequest = \App\Models\EnrollmentRequest::where('learner_id', $student->id)
@@ -421,7 +420,12 @@
                     </div>
 
                     @if($isPracticalCourse)
-                        @if($studentLicenseStatus === 'verified')
+                        @if(!$hasPassedTdc)
+                            <div class="status-alert status-pending" style="text-align: left;">
+                                <strong>Theoretical completion required.</strong>
+                                <div class="mt-2">You must pass a Theoretical Driving Course (TDC) before enrolling in this practical course.</div>
+                            </div>
+                        @elseif($studentLicenseStatus === 'verified')
                             <div class="status-alert status-approved">
                                 License verified. You can proceed with practical enrollment.
                             </div>
@@ -429,39 +433,12 @@
                             <div class="status-alert status-pending">
                                 License submitted and pending review. You can proceed with enrollment.
                             </div>
-                        @elseif($hasDraftStudentLicense)
-                            <div class="status-alert status-pending" style="text-align: left;">
-                                <strong>License saved.</strong>
-                                <div class="mt-2">Your license is stored as draft and will be submitted for review when you submit this practical enrollment request.</div>
-                            </div>
-                        @else
-                            <div class="status-alert status-pending" style="text-align: left;">
-                                <strong>Student license required before practical enrollment.</strong>
-                                @if($studentLicenseStatus === 'rejected')
-                                    <div class="mt-2">Your previous license upload was rejected. Please upload a new file to continue.</div>
-                                    @if(!empty($studentLicenseRejectionReason))
-                                        <div class="mt-2 text-xs">Reason: {{ $studentLicenseRejectionReason }}</div>
-                                    @endif
-                                @else
-                                    <div class="mt-2">Upload your student driver's license first so you can enroll in this practical course.</div>
-                                @endif
-                            </div>
-
-                            <form method="POST" action="{{ route('schools.student.uploadLicense', ['school' => $school->slug]) }}" enctype="multipart/form-data" class="mb-4">
-                                @csrf
-                                <div class="form-group mb-3">
-                                    <label class="form-label">Upload Student Driver's License</label>
-                                    <input type="file" name="student_license" class="form-control" accept=".pdf,.jpg,.jpeg,.png" required>
-                                    <small class="text-gray-500">Accepted: PDF, JPG, PNG (max 5MB).</small>
-                                </div>
-                                <button type="submit" class="btn-submit">Upload License for Review</button>
-                            </form>
                         @endif
                     @endif
 
-                    @if($mustUploadLicenseForPractical)
-                        <button type="button" class="btn-enroll-action opacity-50 cursor-not-allowed" disabled>
-                            Upload License First
+                    @if($mustPassTdcForPractical)
+                        <button type="button" class="btn-enroll-action opacity-50 cursor-not-allowed" disabled title="Complete TDC first">
+                            Complete TDC First
                         </button>
                     @else
                         <button type="button" class="btn-enroll-action" onclick="openEnrollModal()">
@@ -525,10 +502,18 @@
                     </select>
                 </div>
 
+                @if($mustUploadLicenseForPractical)
+                <div class="form-group">
+                    <label class="form-label">Upload Student Driver's License</label>
+                    <input type="file" name="student_license" class="form-control" accept=".pdf,.jpg,.jpeg,.png" required>
+                    <small class="text-gray-500">Required for practical enrollment. Accepted: PDF, JPG, PNG.</small>
+                </div>
+                @endif
+
                 <div class="form-group" id="license_upload" style="display: none;">
                     <label class="form-label">Supporting Document (Optional)</label>
                     <input type="file" name="credential_file" class="form-control" accept="image/*,.pdf">
-                    <small class="text-gray-500">Optional file for experienced drivers. This is separate from student license verification upload.</small>
+                    <small class="text-gray-500">Optional file for experienced drivers.</small>
                 </div>
 
                 <div class="form-group">

@@ -5,15 +5,16 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Admin;
 use App\Models\Branch;
+use App\Models\Course;
 use App\Models\EnrollmentRequest;
 use App\Models\GCashSetting;
 use App\Models\Invitation;
+use App\Models\VehicleCategory;
 use App\Mail\SystemInvitationMail;
 use App\Models\Instructor;
 use App\Models\InstructorRemovalRequest;
 use App\Models\Log;
 use App\Models\Payment;
-use App\Models\ProfileUnlockRequest;
 use App\Models\RegistrationRequest;
 use App\Models\School;
 use App\Models\SchoolSetting;
@@ -155,7 +156,7 @@ class AdminController extends Controller
                     ->whereNotNull('received_at')
                     ->whereBetween('received_at', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()])
                     ->sum('amount');
-                
+
                 $monthlyRefunds = $admin->scopeToBranch(Payment::where('school_id', $school->id))
                     ->where('status', '=', 'refunded')
                     ->whereNotNull('refunded_at')
@@ -197,8 +198,7 @@ class AdminController extends Controller
                 'alertThreshold' => $alertThreshold = ($school->schoolSetting?->alert_threshold_pending ?? 50),
                 'isAlertCritical' => $pendingEnrollments > $alertThreshold,
             ]);
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             SystemLog::logError(
                 'Fatal dashboard failure triggered loop protection',
                 'database',
@@ -352,11 +352,11 @@ class AdminController extends Controller
                 $allUsers->count(),
                 $perPage,
                 $currentPage,
-            [
-                'path' => request()->url(),
-                'query' => request()->query(),
-            ]
-                );
+                [
+                    'path' => request()->url(),
+                    'query' => request()->query(),
+                ]
+            );
 
             $branches = Branch::where('school_id', $school->id)
                 ->where('is_active', true)
@@ -364,27 +364,20 @@ class AdminController extends Controller
                 ->orderBy('name')
                 ->get();
 
-            $pendingProfileUnlockRequests = collect();
-            $pendingProfileUnlockRequestsCount = 0;
-            if ($admin->isSchoolAdmin()) {
-                $pendingProfileUnlockRequests = ProfileUnlockRequest::query()
-                    ->with('user')
-                    ->where('school_id', $school->id)
-                    ->pending()
-                    ->orderBy('created_at', 'desc')
-                    ->limit(25)
-                    ->get();
-
-                $pendingProfileUnlockRequestsCount = $pendingProfileUnlockRequests->count();
-            }
 
             $isAjax = request()->ajax() || request()->header('X-Requested-With') === 'XMLHttpRequest';
+
+            $courses = Course::where('school_id', $school->id)
+                ->where('status', 'active')
+                ->orderBy('title')
+                ->get();
 
             return view($school->resolveView('admin.user-management'), [
                 'school' => $school,
                 'admin' => $admin,
                 'users' => $users,
                 'branches' => $branches,
+                'courses' => $courses,
                 'isAjax' => $isAjax,
                 'totalStudents' => $totalStudents,
                 'activeStudents' => $activeStudents,
@@ -396,16 +389,13 @@ class AdminController extends Controller
                 'activeStatusFilter' => $activeStatusFilter,
                 'activeRoleFilter' => $activeRoleFilter,
                 'activeBranchFilter' => $activeBranchFilter,
-                'pendingProfileUnlockRequests' => $pendingProfileUnlockRequests,
-                'pendingProfileUnlockRequestsCount' => $pendingProfileUnlockRequestsCount,
             ]);
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             SystemLog::logError(
                 'Failed to load user management page',
                 'database',
                 $e,
-            ['school_id' => $school->id],
+                ['school_id' => $school->id],
                 $school->id,
                 'view_user_management'
             );
@@ -433,7 +423,6 @@ class AdminController extends Controller
                     Rule::unique('students', 'email')->where('school_id', $school->id),
                     Rule::unique('instructors', 'email')->where('school_id', $school->id),
                     Rule::unique('admins', 'email')->where('school_id', $school->id),
-                    'regex:/@(gmail\.com|yahoo\.com)$/i',
                     function ($attribute, $value, $fail) use ($school) {
                         $normalizedEmail = strtolower(trim((string) $value));
 
@@ -448,26 +437,50 @@ class AdminController extends Controller
                             ->exists();
 
                         if ($hasPendingInvitation) {
-                            $fail('A pending invitation already exists for this email. Please resend the existing invitation instead.');
+                            $fail('This email is already pending account setup. Please resend the setup link if needed.');
                         }
                     },
                 ],
-                'contact' => ['nullable', 'string', 'max:13', 'regex:/^(09\d{9}|\+639\d{9})$/'],
-                'address' => ['nullable', 'string', 'max:500'],
+                'contact' => [
+                    'required',
+                    'string',
+                    'max:13',
+                    'regex:/^(09\d{9}|\+639\d{9}|9\d{9})$/'
+                ],
+                'address' => 'required|string|max:500',
                 'role' => 'required|in:student,instructor',
                 'branch_id' => [
                     'nullable',
                     Rule::exists('branches', 'id')->where('school_id', $school->id)
                 ],
-                'license_number' => ($request->role === 'instructor' && ($school->schoolSetting->require_instructor_license ?? true)) ? 'required|string|max:50' : 'nullable|string|max:50',
+                'course_id' => [
+                    'nullable',
+                    Rule::exists('courses', 'id')->where('school_id', $school->id)->where('status', 'active')
+                ],
+                'license_number' => $request->role === 'instructor' ? 'required|string|max:50' : 'nullable|string|max:50',
+                'license_image' => $request->role === 'instructor' ? 'required|image|mimes:jpeg,png,jpg,webp|max:5120' : 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
             ], [
-                'email.regex' => 'Only Gmail and Yahoo addresses are currently allowed for invitations.',
+                'contact.regex' => 'Please provide a valid 10-digit mobile number starting with 9 (e.g., 9123456789).',
+                'address.required' => 'The address is required.',
+                'license_number.required' => 'The license number is required for instructors.',
+                'license_image.required' => 'A photo of the instructor license is required.',
+                'license_image.image' => 'The license image must be a valid image file.',
+                'license_image.max' => 'The license image may not be greater than 5MB.',
             ]);
+
+            // Handle License Image if role is instructor
+            $licenseImagePath = null;
+            
+            if ($request->role === 'instructor') {
+                if ($request->hasFile('license_image')) {
+                    $licenseImagePath = $request->file('license_image')->store('instructor_licenses', 'public');
+                }
+            }
 
             // Branch Secretary Scope Check
             $branchId = $request->branch_id ?? $admin->branch_id;
-            if ($admin->isBranchSecretary() && (int)$branchId !== (int)$admin->branch_id) {
-                return back()->withInput()->with('error', 'You can only invite users to your assigned branch.');
+            if ($admin->isBranchSecretary() && (int) $branchId !== (int) $admin->branch_id) {
+                return back()->withInput()->with('error', 'You can only add users to your assigned branch.');
             }
 
             DB::beginTransaction();
@@ -481,9 +494,20 @@ class AdminController extends Controller
                 'token' => \Illuminate\Support\Str::random(40),
                 'payload' => [
                     'name' => trim($request->name),
-                    'contact' => trim((string)$request->contact),
-                    'address' => trim((string)$request->address),
+                    'contact' => (function ($contact) {
+                        $contact = trim((string) $contact);
+                        if (preg_match('/^9\d{9}$/', $contact)) {
+                            return '+63' . $contact;
+                        }
+                        if (preg_match('/^09\d{9}$/', $contact)) {
+                            return '+63' . substr($contact, 1);
+                        }
+                        return $contact;
+                    })($request->contact),
+                    'address' => trim((string) $request->address),
+                    'course_id' => $request->course_id,
                     'license_number' => $request->role === 'instructor' ? trim($request->license_number) : null,
+                    'license_image' => $licenseImagePath,
                 ],
                 'expires_at' => now()->addDays($school->schoolSetting->invitation_expiry_days ?? 7),
             ]);
@@ -502,7 +526,7 @@ class AdminController extends Controller
             DB::commit();
 
             return redirect()->route('schools.admin.userManagement', $school)
-                ->with('success', "Invitation successfully sent to {$invitation->email}. They will receive an email to set up their account.");
+                ->with('success', "Account successfully created for {$invitation->email}. They will receive an email to set up their password.");
 
         } catch (ValidationException $e) {
             throw $e;
@@ -533,7 +557,7 @@ class AdminController extends Controller
             if (!$admin) {
                 return redirect()->route('schools.admin.login', $school);
             }
-            if ($admin->isBranchSecretary() && (int)$student->branch_id !== (int)$admin->branch_id) {
+            if ($admin->isBranchSecretary() && (int) $student->branch_id !== (int) $admin->branch_id) {
                 return redirect()->route('schools.admin.userManagement', $school)
                     ->with('error', 'You do not have permission to manage students in this branch.');
             }
@@ -544,29 +568,30 @@ class AdminController extends Controller
                     'required',
                     'email',
                     Rule::unique('students', 'email')
-                    ->where('school_id', $school->id)
-                    ->ignore($student->id),
-                    'regex:/@(gmail\.com|yahoo\.com)$/i',
+                        ->where('school_id', $school->id)
+                        ->ignore($student->id),
                 ],
-                'contact' => ['nullable', 'string', 'max:13', 'regex:/^(09\d{9}|\+639\d{9})$/'],
-                'address' => 'nullable|string|max:255',
+                'contact' => ['required', 'string', 'max:13', 'regex:/^(09\d{9}|\+639\d{9}|9\d{9})$/'],
+                'address' => 'required|string|max:255',
                 'password' => ['nullable', 'string', new StrongPassword()],
                 'branch_id' => [
                     'nullable',
                     Rule::exists('branches', 'id')->where('school_id', $school->id),
                     function ($attribute, $value, $fail) use ($admin) {
-                        if ($admin->isBranchSecretary() && !empty($value) && (int)$value !== (int)$admin->branch_id) {
+                        if ($admin->isBranchSecretary() && !empty($value) && (int) $value !== (int) $admin->branch_id) {
                             $fail('You can only assign students to your own branch.');
                         }
                     },
                 ],
+            ], [
+                'contact.regex' => 'Please provide a valid 10-digit mobile number starting with 9 (e.g., 9123456789).',
             ]);
 
-                $nameChanged = trim((string) ($validated['name'] ?? '')) !== trim((string) $student->name);
-                $emailChanged = strtolower(trim((string) ($validated['email'] ?? ''))) !== strtolower(trim((string) $student->email));
+            $nameChanged = trim((string) ($validated['name'] ?? '')) !== trim((string) $student->name);
+            $emailChanged = strtolower(trim((string) ($validated['email'] ?? ''))) !== strtolower(trim((string) $student->email));
             $passwordChanged = $request->filled('password');
 
-                if (DemoAccountProtection::isProtectedAccount($student->email, 'student', $school) && ($nameChanged || $emailChanged || $passwordChanged)) {
+            if (DemoAccountProtection::isProtectedAccount($student->email, 'student', $school) && ($nameChanged || $emailChanged || $passwordChanged)) {
                 return redirect()->route('schools.admin.userManagement', $school)
                     ->with('error', 'This demo account has locked name, email, and password.');
             }
@@ -574,6 +599,16 @@ class AdminController extends Controller
             DB::beginTransaction();
 
             $data = $request->only('name', 'email', 'contact', 'address', 'branch_id');
+
+            // Normalize contact
+            if (!empty($data['contact'])) {
+                $contact = trim((string) $data['contact']);
+                if (preg_match('/^9\d{9}$/', $contact)) {
+                    $data['contact'] = '+63' . $contact;
+                } elseif (preg_match('/^09\d{9}$/', $contact)) {
+                    $data['contact'] = '+63' . substr($contact, 1);
+                }
+            }
 
             if ($request->filled('password')) {
                 $data['password'] = Hash::make($request->password);
@@ -586,26 +621,24 @@ class AdminController extends Controller
             SystemLog::logInfo(
                 "Student profile updated: {$student->name}",
                 'database',
-            ['student_id' => $student->id, 'updated_fields' => array_keys($data)],
+                ['student_id' => $student->id, 'updated_fields' => array_keys($data)],
                 $school->id,
                 'update_student'
             );
 
             return redirect()->route('schools.admin.userManagement', $school)
                 ->with('success', 'Student updated successfully!');
-        }
-        catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (\Illuminate\Validation\ValidationException $e) {
             DB::rollBack();
             throw $e;
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             DB::rollBack();
 
             SystemLog::logError(
                 'Failed to update student profile',
                 'database',
                 $e,
-            ['student_id' => $id, 'school_id' => $school->id],
+                ['student_id' => $id, 'school_id' => $school->id],
                 $school->id,
                 'update_student'
             );
@@ -630,8 +663,7 @@ class AdminController extends Controller
             $student->update(['status' => $student->status === 'active' ? 'inactive' : 'active']);
 
             return redirect()->back()->with('success', 'Student status updated successfully!');
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             LogFacade::error('Failed to toggle student status: ' . $e->getMessage(), [
                 'school_id' => $school->id,
                 'student_id' => $id
@@ -654,7 +686,7 @@ class AdminController extends Controller
             if (!$admin) {
                 return redirect()->route('schools.admin.login', $school);
             }
-            if ($admin->isBranchSecretary() && (int)$instructor->branch_id !== (int)$admin->branch_id) {
+            if ($admin->isBranchSecretary() && (int) $instructor->branch_id !== (int) $admin->branch_id) {
                 return redirect()->route('schools.admin.userManagement', $school)
                     ->with('error', 'You do not have permission to manage instructors in this branch.');
             }
@@ -665,45 +697,67 @@ class AdminController extends Controller
                     'required',
                     'email',
                     Rule::unique('instructors', 'email')
-                    ->where('school_id', $school->id)
-                    ->ignore($instructor->id),
-                    'regex:/@(gmail\.com|yahoo\.com)$/i',
+                        ->where('school_id', $school->id)
+                        ->ignore($instructor->id),
                 ],
-                'contact' => ['nullable', 'string', 'max:13', 'regex:/^(09\d{9}|\+639\d{9})$/'],
-                'license_number' => 'nullable|string|max:50',
+                'contact' => ['required', 'string', 'max:13', 'regex:/^(09\d{9}|\+639\d{9}|9\d{9})$/'],
+                'license_number' => 'required|string|max:50',
+                'license_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+                'address' => 'required|string|max:255',
                 'password' => ['nullable', 'string', new StrongPassword()],
                 'branch_id' => [
                     'nullable',
                     Rule::exists('branches', 'id')->where('school_id', $school->id),
                     function ($attribute, $value, $fail) use ($admin) {
-                        if ($admin->isBranchSecretary() && !empty($value) && (int)$value !== (int)$admin->branch_id) {
+                        if ($admin->isBranchSecretary() && !empty($value) && (int) $value !== (int) $admin->branch_id) {
                             $fail('You can only assign instructors to your own branch.');
                         }
                     },
                 ],
+            ], [
+                'contact.regex' => 'Please provide a valid 10-digit mobile number starting with 9 (e.g., 9123456789).',
+                'license_image.image' => 'The license image must be a valid image file.',
             ]);
 
-                $nameChanged = trim((string) $request->input('name')) !== trim((string) $instructor->name);
-                $emailChanged = strtolower(trim((string) $request->input('email'))) !== strtolower(trim((string) $instructor->email));
+            $nameChanged = trim((string) $request->input('name')) !== trim((string) $instructor->name);
+            $emailChanged = strtolower(trim((string) $request->input('email'))) !== strtolower(trim((string) $instructor->email));
             $passwordChanged = $request->filled('password');
 
-                if (DemoAccountProtection::isProtectedAccount($instructor->email, 'instructor', $school) && ($nameChanged || $emailChanged || $passwordChanged)) {
+            if (DemoAccountProtection::isProtectedAccount($instructor->email, 'instructor', $school) && ($nameChanged || $emailChanged || $passwordChanged)) {
                 return redirect()->route('schools.admin.userManagement', $school)
                     ->with('error', 'This demo account has locked name, email, and password.');
             }
 
-            $data = $request->only('name', 'email', 'contact', 'license_number', 'branch_id');
+            $data = $request->only('name', 'email', 'contact', 'license_number', 'address', 'branch_id');
+
+            // Normalize contact
+            if (!empty($data['contact'])) {
+                $contact = trim((string) $data['contact']);
+                if (preg_match('/^9\d{9}$/', $contact)) {
+                    $data['contact'] = '+63' . $contact;
+                } elseif (preg_match('/^09\d{9}$/', $contact)) {
+                    $data['contact'] = '+63' . substr($contact, 1);
+                }
+            }
 
             if ($request->filled('password')) {
                 $data['password'] = Hash::make($request->password);
+            }
+
+            // Handle License Image
+            if ($request->hasFile('license_image')) {
+                // Delete old one if exists
+                if ($instructor->license_image) {
+                    Storage::disk('public')->delete($instructor->license_image);
+                }
+                $data['license_image'] = $request->file('license_image')->store('instructor_licenses', 'public');
             }
 
             $instructor->update($data);
 
             return redirect()->route('schools.admin.userManagement', $school)
                 ->with('success', 'Instructor updated successfully!');
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             SystemLog::logError(
                 'Failed to update instructor: ' . $e->getMessage(),
                 'database',
@@ -732,8 +786,7 @@ class AdminController extends Controller
             $instructor->update(['status' => $instructor->status === 'active' ? 'inactive' : 'active']);
 
             return redirect()->back()->with('success', 'Instructor status updated successfully!');
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             LogFacade::error('Failed to toggle instructor status: ' . $e->getMessage(), [
                 'school_id' => $school->id,
                 'instructor_id' => $id
@@ -758,8 +811,7 @@ class AdminController extends Controller
             $instructor->update(['availability' => $instructor->availability === 'available' ? 'unavailable' : 'available']);
 
             return redirect()->back()->with('success', 'Instructor availability updated successfully!');
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             LogFacade::error('Failed to toggle instructor availability: ' . $e->getMessage(), [
                 'school_id' => $school->id,
                 'instructor_id' => $id
@@ -824,9 +876,8 @@ class AdminController extends Controller
                     'required',
                     'email',
                     Rule::unique('admins', 'email')
-                    ->where('school_id', $school->id)
-                    ->ignore($admin->id),
-                    'regex:/@(gmail\.com|yahoo\.com)$/i',
+                        ->where('school_id', $school->id)
+                        ->ignore($admin->id),
                 ],
                 'contact' => ['nullable', 'string', 'max:20', 'regex:/^(09\d{9}|\+639\d{9})$/'],
                 'current_password' => 'nullable|required_with:new_password|string',
@@ -848,8 +899,7 @@ class AdminController extends Controller
             return redirect()
                 ->route('schools.admin.profile', $school)
                 ->with('success', 'Profile updated successfully!');
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             LogFacade::error('Failed to update admin profile: ' . $e->getMessage(), [
                 'school_id' => $school->id,
                 'admin_id' => Auth::guard('admin')->id()
@@ -972,8 +1022,8 @@ class AdminController extends Controller
             if ($request->notify_students) {
                 $timeSlot = $removalRequest->timeSlot;
                 $bookings = $timeSlot->bookings()->with('student')->get();
-                $message = $request->notification_message 
-                    ? : "Your instructor for " . Carbon::parse($timeSlot->date)->format('M d, Y') . " at " . Carbon::parse($timeSlot->start_time)->format('g:i A') . " has been changed. Please check your schedule for updates.";
+                $message = $request->notification_message
+                    ?: "Your instructor for " . Carbon::parse($timeSlot->date)->format('M d, Y') . " at " . Carbon::parse($timeSlot->start_time)->format('g:i A') . " has been changed. Please check your schedule for updates.";
 
                 foreach ($bookings as $booking) {
                     if ($booking->student) {
@@ -1005,8 +1055,7 @@ class AdminController extends Controller
 
             return redirect()->back()
                 ->with('success', 'Removal request approved. Instructor has been removed from the time slot.');
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()
                 ->with('error', 'Unable to approve removal request at this time. Please try again later.');
@@ -1051,8 +1100,7 @@ class AdminController extends Controller
 
             return redirect()->back()
                 ->with('success', 'Removal request rejected.');
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()
                 ->with('error', 'Unable to reject removal request at this time. Please try again later.');
@@ -1365,15 +1413,13 @@ class AdminController extends Controller
             return redirect()->back()
                 ->with('success', 'Settings updated successfully. Refresh the page to see changes.');
 
-        }
-        catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (\Illuminate\Validation\ValidationException $e) {
             DB::rollBack();
             return redirect()->back()
                 ->withErrors($e->validator)
                 ->withInput()
                 ->with('error', 'Please correct the errors below.');
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             DB::rollBack();
             LogFacade::error('Settings update failed: ' . $e->getMessage(), [
                 'school_id' => $school->id,
@@ -1440,9 +1486,28 @@ class AdminController extends Controller
         $startDate = $validated['start_date'];
         $endDate = $validated['end_date'];
 
-        $timeslots = $admin->scopeToBranch(TimeSlot::with(['instructors', 'course'])
+        $courseId = $request->input('course_id');
+        $sessionType = $request->input('session_type');
+
+        $timeslots = $admin->scopeToBranch(TimeSlot::with(['instructors', 'course', 'bookings.student', 'bookings.instructor'])
             ->where('school_id', $school->id)
-            ->whereBetween('date', [$startDate, $endDate]))
+            ->whereBetween('date', [$startDate, $endDate])
+            ->when($courseId, function ($query) use ($courseId) {
+                return $query->where('course_id', $courseId);
+            })
+            ->when($sessionType, function ($query) use ($sessionType) {
+                return $query->where(function ($q) use ($sessionType) {
+                    $q->whereHas('course', function ($cq) use ($sessionType) {
+                        $cq->where('course_type', $sessionType);
+                    })
+                        ->orWhere(function ($sq) use ($sessionType) {
+                            $sq->whereHas('course', function ($cq) {
+                                $cq->where('course_type', 'combo');
+                            })
+                                ->where('session_type', $sessionType);
+                        });
+                });
+            }))
             ->orderBy('date')
             ->orderBy('start_time')
             ->get()
@@ -1527,7 +1592,7 @@ class AdminController extends Controller
                 // We default max_instructors to the number of instructors being assigned, 
                 // or 1 if none are assigned yet.
                 if (!empty($validated['instructor_ids'])) {
-                     $maxInstructors = count($validated['instructor_ids']);
+                    $maxInstructors = count($validated['instructor_ids']);
                 }
             }
 
@@ -1547,6 +1612,7 @@ class AdminController extends Controller
                 'status' => 'open',
             ]);
 
+            $instructors = null;
             // If admin selected instructors to assign
             if (!empty($validated['instructor_ids'])) {
                 // Verify all instructors belong to this school
@@ -1573,9 +1639,31 @@ class AdminController extends Controller
                         'assignment_type' => 'admin_assigned',
                     ]);
                 }
+            }
 
-                DB::commit();
+            DB::commit();
 
+            if ($request->ajax() || $request->wantsJson()) {
+                $availableSpots = $maxInstructors - ($instructors ? $instructors->count() : 0);
+                $message = 'Schedule created!';
+                if (!empty($validated['instructor_ids'])) {
+                    $message = 'Schedule created with ' . $instructors->count() . ' instructor(s) assigned.';
+                    if ($availableSpots > 0) {
+                        $message .= ' ' . $availableSpots . ' spot(s) available for self-selection.';
+                    }
+                } else {
+                    $message = 'Schedule created! ' . $maxInstructors . ' spot(s) available for instructor self-selection.';
+                }
+
+                return response()->json([
+                    'success' => true,
+                    'message' => $message,
+                    'schedule' => $schedule
+                ], 201);
+            }
+
+            // If admin selected instructors to assign
+            if (!empty($validated['instructor_ids'])) {
                 $availableSpots = $maxInstructors - $instructors->count();
                 $message = 'Schedule created with ' . $instructors->count() . ' instructor(s) assigned.';
 
@@ -1586,17 +1674,32 @@ class AdminController extends Controller
                 return redirect()->back()->with('success', $message);
             }
 
-            DB::commit();
-
             // No instructors assigned - all spots available
             return redirect()->back()->with('success', 'Schedule created! ' . $maxInstructors . ' spot(s) available for instructor self-selection.');
 
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Please fix the highlighted errors.',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+            throw $e;
         } catch (\Exception $e) {
             DB::rollBack();
             LogFacade::error('Failed to create schedule: ' . $e->getMessage(), [
                 'school_id' => $school->id,
                 'input' => $request->all()
             ]);
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unable to create schedule due to a system error.'
+                ], 500);
+            }
+
             return redirect()->back()->withInput()->with('error', 'Unable to create schedule due to a system error. Please try again.');
         }
     }
@@ -1637,8 +1740,8 @@ class AdminController extends Controller
                 ?? $timeslot->session_type
                 ?? (($timeslot->course && $timeslot->course->course_type === 'practical') ? 'practical' : 'theoretical');
 
-            $maxInstructors = (int)($validated['max_instructors'] ?? $timeslot->max_instructors);
-            $maxStudents = (int)($validated['max_students'] ?? $timeslot->max_students);
+            $maxInstructors = (int) ($validated['max_instructors'] ?? $timeslot->max_instructors);
+            $maxStudents = (int) ($validated['max_students'] ?? $timeslot->max_students);
 
             // PDC Safety Sync
             if ($resolvedSessionType === 'practical') {
@@ -1698,15 +1801,39 @@ class AdminController extends Controller
 
             DB::commit();
 
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "Schedule updated successfully!",
+                    'schedule' => $timeslot
+                ]);
+            }
+
             return redirect()->back()->with('success', "Schedule updated successfully!");
-        }
-        catch (\Exception $e) {
+        } catch (ValidationException $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Please fix the highlighted errors.',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+            throw $e;
+        } catch (\Exception $e) {
             DB::rollBack();
             LogFacade::error('Failed to update schedule: ' . $e->getMessage(), [
                 'school_id' => $school->id,
                 'timeslot_id' => $id,
                 'input' => $request->all()
             ]);
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unable to update schedule at this time.'
+                ], 500);
+            }
+
             return back()->withInput()->with('error', 'Unable to update schedule at this time.');
         }
     }
@@ -1738,14 +1865,28 @@ class AdminController extends Controller
 
             DB::commit();
 
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Schedule deleted successfully.'
+                ]);
+            }
+
             return redirect()->back()->with('success', 'Schedule deleted successfully.');
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             DB::rollBack();
             LogFacade::error('Failed to delete schedule: ' . $e->getMessage(), [
                 'school_id' => $school->id,
                 'timeslot_id' => $id
             ]);
+
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unable to delete schedule at this time.'
+                ], 500);
+            }
+
             return back()->with('error', 'Unable to delete schedule at this time.');
         }
     }
@@ -1778,7 +1919,9 @@ class AdminController extends Controller
                             ->select('course_id', DB::raw('MIN(price) as min_price'))
                             ->groupBy('course_id'),
                         'package_prices',
-                        'courses.id', '=', 'package_prices.course_id'
+                        'courses.id',
+                        '=',
+                        'package_prices.course_id'
                     )
                     ->orderBy('package_prices.min_price', 'asc');
                 break;
@@ -1789,29 +1932,33 @@ class AdminController extends Controller
                             ->select('course_id', DB::raw('MAX(price) as max_price'))
                             ->groupBy('course_id'),
                         'package_prices',
-                        'courses.id', '=', 'package_prices.course_id'
+                        'courses.id',
+                        '=',
+                        'package_prices.course_id'
                     )
                     ->orderBy('package_prices.max_price', 'desc');
                 break;
             case 'popularity':
-                $query->withCount(['bookings' => function($q) {
-                    $q->whereIn('status', [
-                        \App\Models\Booking::STATUS_SCHEDULED, 
-                        \App\Models\Booking::STATUS_DONE, 
-                        \App\Models\Booking::STATUS_COMPLETED
-                    ]);
-                }])->orderBy('bookings_count', 'desc');
+                $query->withCount([
+                    'bookings' => function ($q) {
+                        $q->whereIn('status', [
+                            \App\Models\Booking::STATUS_SCHEDULED,
+                            \App\Models\Booking::STATUS_DONE,
+                            \App\Models\Booking::STATUS_COMPLETED
+                        ]);
+                    }
+                ])->orderBy('bookings_count', 'desc');
                 break;
             case 'status':
                 $query->orderByRaw("CASE WHEN status = 'active' THEN 0 ELSE 1 END")
-                      ->orderBy('created_at', 'desc');
+                    ->orderBy('created_at', 'desc');
                 break;
             case 'duration':
                 $query->orderBy('hours_required', 'desc');
                 break;
             case 'type':
                 $query->orderBy('course_type', 'asc')
-                      ->orderBy('title', 'asc');
+                    ->orderBy('title', 'asc');
                 break;
             case 'oldest':
                 $query->orderBy('created_at', 'asc');
@@ -1819,13 +1966,14 @@ class AdminController extends Controller
             case 'newest':
             default:
                 $query->orderBy('sort_order')
-                      ->orderBy('created_at', 'desc');
+                    ->orderBy('created_at', 'desc');
                 break;
         }
 
         $courses = $query->paginate(10)->withQueryString();
+        $vehicleCategories = VehicleCategory::where('school_id', $school->id)->orderBy('name')->get();
 
-        return view($school->resolveView('admin.courses'), array_merge(compact('school', 'courses'), ['isAjax' => $request->ajax()]));
+        return view($school->resolveView('admin.courses'), array_merge(compact('school', 'courses', 'vehicleCategories'), ['isAjax' => $request->ajax()]));
     }
 
     /**
@@ -1843,6 +1991,7 @@ class AdminController extends Controller
                 'course_type' => 'required|in:theoretical,practical,combo',
                 'license_type' => 'required|in:non_professional,professional',
                 'hours_required' => 'required|numeric|min:1|max:500',
+                'lto_base_hours' => 'nullable|integer|min:0|max:500',
                 'price' => 'required|numeric|min:0',
                 'status' => 'nullable|in:active,inactive',
                 'is_featured' => 'nullable',
@@ -1877,8 +2026,7 @@ class AdminController extends Controller
             }
 
             return redirect()->back()->with('success', 'Course created successfully!');
-        }
-        catch (ValidationException $e) {
+        } catch (ValidationException $e) {
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => false,
@@ -1888,8 +2036,7 @@ class AdminController extends Controller
             }
 
             throw $e;
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             LogFacade::error('Failed to store course: ' . $e->getMessage(), [
                 'school_id' => $school->id
             ]);
@@ -1922,6 +2069,7 @@ class AdminController extends Controller
                 'course_type' => 'required|in:theoretical,practical,combo',
                 'license_type' => 'required|in:non_professional,professional',
                 'hours_required' => 'required|numeric|min:1|max:500',
+                'lto_base_hours' => 'nullable|integer|min:0|max:500',
                 'price' => 'required|numeric|min:0',
                 'status' => 'nullable|in:active,inactive',
                 'is_featured' => 'nullable',
@@ -1960,8 +2108,7 @@ class AdminController extends Controller
             }
 
             return redirect()->back()->with('success', 'Course updated successfully!');
-        }
-        catch (ValidationException $e) {
+        } catch (ValidationException $e) {
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => false,
@@ -1971,8 +2118,7 @@ class AdminController extends Controller
             }
 
             throw $e;
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             LogFacade::error('Failed to update course: ' . $e->getMessage(), [
                 'school_id' => $school->id,
                 'course_id' => $id
@@ -2012,8 +2158,7 @@ class AdminController extends Controller
             $course->delete();
 
             return redirect()->back()->with('success', 'Course deleted successfully!');
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             LogFacade::error('Failed to delete course: ' . $e->getMessage(), [
                 'school_id' => $school->id,
                 'course_id' => $id
@@ -2032,9 +2177,14 @@ class AdminController extends Controller
 
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
+                'vehicle_category_id' => 'nullable|exists:vehicle_categories,id',
+                'package_level' => 'nullable|string|max:100',
+                'tier' => 'nullable|string|max:100',
                 'transmission_type' => 'required|in:manual,automatic',
                 'price' => 'required|numeric|min:0',
-                'training_hours' => 'nullable|integer|min:0',
+                'training_hours' => 'nullable|numeric|min:0',
+                'tdc_hours' => 'nullable|numeric|min:0',
+                'pdc_hours' => 'nullable|numeric|min:0',
                 'description' => 'nullable|string',
                 'is_popular' => 'boolean',
                 'features' => 'nullable|array',
@@ -2052,8 +2202,7 @@ class AdminController extends Controller
             \App\Models\CoursePackage::create($validated);
 
             return redirect()->back()->with('success', 'Package added successfully!');
-        }
-        catch (ValidationException $e) {
+        } catch (ValidationException $e) {
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => false,
@@ -2063,8 +2212,7 @@ class AdminController extends Controller
             }
 
             throw $e;
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             LogFacade::error('Failed to store package: ' . $e->getMessage(), [
                 'school_id' => $school->id,
                 'course_id' => $courseId
@@ -2084,9 +2232,14 @@ class AdminController extends Controller
 
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
+                'vehicle_category_id' => 'nullable|exists:vehicle_categories,id',
+                'package_level' => 'nullable|string|max:100',
+                'tier' => 'nullable|string|max:100',
                 'transmission_type' => 'required|in:manual,automatic',
                 'price' => 'required|numeric|min:0',
-                'training_hours' => 'nullable|integer|min:0',
+                'training_hours' => 'nullable|numeric|min:0',
+                'tdc_hours' => 'nullable|numeric|min:0',
+                'pdc_hours' => 'nullable|numeric|min:0',
                 'description' => 'nullable|string',
                 'is_popular' => 'boolean',
                 'features' => 'nullable|array',
@@ -2103,8 +2256,7 @@ class AdminController extends Controller
             $package->update($validated);
 
             return redirect()->back()->with('success', 'Package updated successfully!');
-        }
-        catch (ValidationException $e) {
+        } catch (ValidationException $e) {
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => false,
@@ -2114,8 +2266,7 @@ class AdminController extends Controller
             }
 
             throw $e;
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             LogFacade::error('Failed to update package: ' . $e->getMessage(), [
                 'school_id' => $school->id,
                 'course_id' => $courseId,
@@ -2137,8 +2288,7 @@ class AdminController extends Controller
             $package->delete();
 
             return redirect()->back()->with('success', 'Package deleted successfully!');
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             LogFacade::error('Failed to delete package: ' . $e->getMessage(), [
                 'school_id' => $school->id,
                 'course_id' => $courseId,
@@ -2168,11 +2318,11 @@ class AdminController extends Controller
             SystemLog::logWarning(
                 "Student permanently deleted: {$student->name} ({$student->email})",
                 'database',
-            [
-                'student_id' => $student->id,
-                'email' => $student->email,
-                'deleted_by' => $admin->name
-            ],
+                [
+                    'student_id' => $student->id,
+                    'email' => $student->email,
+                    'deleted_by' => $admin->name
+                ],
                 $school->id,
                 'delete_student'
             );
@@ -2189,8 +2339,7 @@ class AdminController extends Controller
             $student->delete();
 
             return redirect()->back()->with('success', 'Student permanently deleted.');
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             LogFacade::error('Failed to delete student: ' . $e->getMessage(), [
                 'school_id' => $school->id,
                 'student_id' => $id
@@ -2219,11 +2368,11 @@ class AdminController extends Controller
             SystemLog::logWarning(
                 "Instructor permanently deleted: {$instructor->name} ({$instructor->email})",
                 'database',
-            [
-                'instructor_id' => $instructor->id,
-                'email' => $instructor->email,
-                'deleted_by' => $admin->name
-            ],
+                [
+                    'instructor_id' => $instructor->id,
+                    'email' => $instructor->email,
+                    'deleted_by' => $admin->name
+                ],
                 $school->id,
                 'delete_instructor'
             );
@@ -2240,8 +2389,7 @@ class AdminController extends Controller
             $instructor->delete();
 
             return redirect()->back()->with('success', 'Instructor permanently deleted.');
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             LogFacade::error('Failed to delete instructor: ' . $e->getMessage(), [
                 'school_id' => $school->id,
                 'instructor_id' => $id

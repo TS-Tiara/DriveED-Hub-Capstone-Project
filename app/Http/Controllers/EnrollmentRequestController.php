@@ -373,9 +373,18 @@ class EnrollmentRequestController extends Controller
                 // Full Rejection Flow
                 $enrollmentRequest->update([
                     'status' => 'rejected',
+                    'payment_status' => 'cancelled',
                     'remarks' => $validated['remarks'],
                     'rejected_at' => now(),
                 ]);
+
+                // Also update learner license status to rejected in a full rejection
+                if ($enrollmentRequest->learner) {
+                    $enrollmentRequest->learner->update([
+                        'student_license_status' => 'rejected',
+                        'student_license_rejection_reason' => $validated['remarks']
+                    ]);
+                }
                 $messagePrefix = "Enrollment request rejected.";
             }
 
@@ -600,6 +609,14 @@ class EnrollmentRequestController extends Controller
 
             $enrollmentRequest->cancel($finalRemarks);
 
+            // Also update learner license status to 'none' if it was pending
+            if ($enrollmentRequest->learner && $enrollmentRequest->learner->student_license_status === 'pending') {
+                $enrollmentRequest->learner->update(['student_license_status' => 'none']);
+            }
+
+            // Also ensure payment status is cancelled
+            $enrollmentRequest->update(['payment_status' => 'cancelled']);
+
             if ($enrollmentRequest->cancellation_requested) {
                 $enrollmentRequest->update([
                     'cancellation_requested' => false,
@@ -711,6 +728,14 @@ class EnrollmentRequestController extends Controller
 
         DB::beginTransaction();
         try {
+            // Validate LTO requirements (15h/3d rule)
+            $validation = \App\Support\EnrollmentValidator::canMarkTheoreticalPassed($enrollmentRequest);
+            if (!$validation['allowed']) {
+                return redirect()
+                    ->back()
+                    ->with('error', $validation['message']);
+            }
+
             $enrollmentRequest->markTheoreticalPassed($admin->id, $validated['notes'] ?? null);
 
             // Notify student about theoretical completion
@@ -872,7 +897,9 @@ class EnrollmentRequestController extends Controller
 
                 $enrollment->update([
                     'status' => 'rejected',
+                    'payment_status' => 'cancelled',
                     'remarks' => $request->remarks,
+                    'rejected_at' => now(),
                 ]);
 
                 // Send rejection email
@@ -1060,6 +1087,31 @@ class EnrollmentRequestController extends Controller
                 $student->promoteToStudent();
             }
             $student->update(['is_course_locked' => true]);
+
+            // Promote staged license if present
+            if ($enrollmentRequest->credentials_file_path) {
+                $stagedPath = $enrollmentRequest->credentials_file_path;
+                $newFileName = basename($stagedPath);
+                $permanentPath = 'student-licenses/' . $newFileName;
+
+                try {
+                    if (Storage::disk('local')->exists($stagedPath)) {
+                        Storage::disk('local')->move($stagedPath, $permanentPath);
+                        
+                        $student->update([
+                            'student_license_path' => $permanentPath,
+                            'student_license_status' => 'verified',
+                            'student_license_verified_at' => now(),
+                            'student_license_verified_by' => $admin->id,
+                        ]);
+
+                        // Update request to reflect new permanent path (optional but good for audit)
+                        $enrollmentRequest->update(['credentials_file_path' => $permanentPath]);
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Failed to promote staged license: ' . $e->getMessage());
+                }
+            }
         }
 
         // Send approval email
@@ -1248,11 +1300,20 @@ class EnrollmentRequestController extends Controller
 
         $hasStoredLicense = !empty($enrollmentRequest->learner->student_license_path)
             || !empty($enrollmentRequest->learner->student_license_data);
+        $hasStagedLicense = !empty($enrollmentRequest->credentials_file_path);
+
         $isLicenseSubmittedForReview = in_array(
             $enrollmentRequest->learner->student_license_status,
             ['pending', 'verified', 'rejected'],
             true
         );
+
+        $licenseUrl = null;
+        if ($hasStagedLicense) {
+            $licenseUrl = route('schools.admin.enrollments.view-credential', ['school' => $school->slug, 'enrollmentRequest' => $enrollmentRequest->id]);
+        } elseif ($hasStoredLicense && $isLicenseSubmittedForReview) {
+            $licenseUrl = route('schools.admin.enrollments.viewLicense', ['school' => $school->slug, 'student' => $enrollmentRequest->learner->id]);
+        }
 
         return response()->json([
             'id' => $enrollmentRequest->id,
@@ -1268,9 +1329,7 @@ class EnrollmentRequestController extends Controller
             'reference_number' => $enrollmentRequest->payment_reference,
             'remarks' => $enrollmentRequest->remarks,
             // Paths/Routes
-            'license_url' => ($hasStoredLicense && $isLicenseSubmittedForReview)
-                ? route('schools.admin.enrollments.viewLicense', ['school' => $school->slug, 'student' => $enrollmentRequest->learner->id])
-                : null,
+            'license_url' => $licenseUrl,
             'receipt_url' => $enrollmentRequest->payment_proof_path
                 ? route('schools.admin.enrollments.view-payment-proof', ['school' => $school->slug, 'enrollmentRequest' => $enrollmentRequest->id])
                 : null,
@@ -1449,8 +1508,8 @@ class EnrollmentRequestController extends Controller
             return response()->json(['success' => false, 'message' => 'Student does not belong to this school.'], 403);
         }
 
-        if ($student->student_license_status !== 'pending') {
-            return response()->json(['success' => false, 'message' => 'License is not pending verification.'], 422);
+        if ($student->student_license_status !== 'pending' && $student->student_license_status !== 'none') {
+            return response()->json(['success' => false, 'message' => 'License is not in a verifiable state.'], 422);
         }
 
         $student->update([
@@ -1501,5 +1560,34 @@ class EnrollmentRequestController extends Controller
         ]);
 
         abort(404, 'Payment proof file not found on any configured disk.');
+    }
+
+    /**
+     * View a staged student license (credential) file
+     */
+    public function viewCredential(Request $request, School $school, EnrollmentRequest $enrollmentRequest)
+    {
+        /** @var \App\Models\Admin $admin */
+        $admin = Auth::guard('admin')->user();
+        if (!$admin || $admin->school_id !== (int) $school->id)
+            abort(403);
+
+        $path = $enrollmentRequest->credentials_file_path;
+        if (empty($path))
+            abort(404, 'No credential file found for this enrollment.');
+
+        foreach (['public', 'local'] as $diskName) {
+            if (Storage::disk($diskName)->exists($path)) {
+                $fullPath = Storage::disk($diskName)->path($path);
+                $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+                $filename = "staged-license-{$enrollmentRequest->id}.{$extension}";
+
+                return response()->file($fullPath, [
+                    'Content-Disposition' => 'inline; filename="' . $filename . '"',
+                ]);
+            }
+        }
+
+        abort(404, 'Credential file not found on any configured disk.');
     }
 }

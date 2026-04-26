@@ -48,7 +48,7 @@ class EnrollmentValidator
             if ($student->isLicenseRejected()) {
                 return [
                     'allowed' => false,
-                    'message' => "Your submitted student driver's license was rejected. Please re-upload from your dashboard before enrolling in practical courses."
+                    'message' => "Your submitted student driver's license was rejected. Please re-upload a valid license during enrollment."
                 ];
             }
 
@@ -61,7 +61,7 @@ class EnrollmentValidator
 
             return [
                 'allowed' => false,
-                'message' => "You must upload your student driver's license from your dashboard before enrolling in practical courses."
+                'message' => "You must upload your student driver's license to enroll in practical courses."
             ];
         }
 
@@ -144,13 +144,27 @@ class EnrollmentValidator
         }
 
         // Check if student has completed required hours
-        $totalHours = $enrollment->total_hours;
-        $requiredHours = $enrollment->course->hours_required;
+        $totalHours = (float) ($enrollment->used_tdc_hours ?? $enrollment->hours_completed ?? 0);
+        $requiredHours = (float) ($enrollment->course->hours_required ?? 15);
 
         if ($totalHours < $requiredHours) {
             return [
                 'allowed' => false,
                 'message' => "Student must complete {$requiredHours} hours. Currently completed: {$totalHours} hours."
+            ];
+        }
+
+        // Check for 3 unique session dates (LTO requirement)
+        $uniqueDatesCount = $enrollment->sessionCompletions()
+            ->where('status', 'completed')
+            ->where('session_type', 'theoretical')
+            ->distinct('session_date')
+            ->count('session_date');
+
+        if ($uniqueDatesCount < 3) {
+            return [
+                'allowed' => false,
+                'message' => "LTO Requirement: Student must attend sessions on at least 3 unique dates. Currently attended: {$uniqueDatesCount} dates."
             ];
         }
 
@@ -229,6 +243,27 @@ class EnrollmentValidator
         return [
             'allowed' => true,
             'message' => 'Enrollment can be marked as complete.'
+        ];
+    }
+
+    /**
+     * Get detailed TDC progress for LTO compliance
+     * 
+     * @param EnrollmentRequest $enrollment
+     * @return array
+     */
+    public static function getTdcProgress($enrollment): array
+    {
+        $completions = $enrollment->sessionCompletions->where('status', 'completed')->where('session_type', 'theoretical');
+        $uniqueDates = $completions->pluck('session_date')->unique();
+        $hours = (float) $completions->sum('hours_completed');
+        $count = $uniqueDates->count();
+        
+        return [
+            'hours' => $hours,
+            'unique_dates_count' => $count,
+            'unique_dates' => $uniqueDates,
+            'is_compliant' => $hours >= 15 && $count >= 3
         ];
     }
 }

@@ -171,6 +171,16 @@ class EnrollmentRequest extends Model
             'enrolled_at' => now(),
         ]);
 
+        // Promote staged license to student's profile if present
+        if ($this->credentials_file_path) {
+            $this->learner->update([
+                'student_license_path' => $this->credentials_file_path,
+                'student_license_status' => 'verified',
+                'student_license_verified_at' => now(),
+                'student_license_verified_by' => $adminId,
+            ]);
+        }
+
         // Update the learner's role from guest to student
         $this->learner->role = 'student';
         $this->learner->save();
@@ -289,5 +299,88 @@ class EnrollmentRequest extends Model
             ->with('course')
             ->orderBy('completed_at', 'desc')
             ->get();
+    }
+
+    /**
+     * Get the Theoretical (TDC) hour limit for this enrollment.
+     */
+    public function getTdcHoursLimitAttribute(): float
+    {
+        if (!$this->course) {
+            return 0.0;
+        }
+
+        // 1. Check if the specific Package has an explicit TDC limit
+        if ($this->package && $this->package->tdc_hours > 0) {
+            return (float) $this->package->tdc_hours;
+        }
+
+        // 2. Fallback for dedicated TDC courses: Use the legacy training_hours
+        if ($this->course->course_type === 'theoretical') {
+            return (float) ($this->package->training_hours ?? $this->course->hours_required ?? 15.0);
+        }
+
+        // 3. Absolute Fallback: Use Course required hours
+        return (float) ($this->course->hours_required ?? 15.0);
+    }
+
+    /**
+     * Get the Practical (PDC) hour limit for this enrollment.
+     */
+    public function getPdcHoursLimitAttribute(): float
+    {
+        if (!$this->course) {
+            return 0.0;
+        }
+
+        // 1. Check if the specific Package has an explicit PDC limit
+        if ($this->package && $this->package->pdc_hours > 0) {
+            return (float) $this->package->pdc_hours;
+        }
+
+        // 2. Fallback for Practical/Combo: Use legacy training_hours
+        if (in_array($this->course->course_type, ['practical', 'combo'])) {
+            return (float) ($this->package->training_hours ?? 10.0);
+        }
+
+        return 0.0;
+    }
+
+    /**
+     * Get the total used Theoretical (TDC) hours.
+     */
+    public function getUsedTdcHoursAttribute()
+    {
+        return $this->sessionCompletions()
+            ->where('status', 'completed')
+            ->where('session_type', 'theoretical')
+            ->sum('hours_completed');
+    }
+
+    /**
+     * Get the total used Practical (PDC) hours.
+     */
+    public function getUsedPdcHoursAttribute()
+    {
+        return $this->sessionCompletions()
+            ->where('status', 'completed')
+            ->where('session_type', 'practical')
+            ->sum('hours_completed');
+    }
+
+    /**
+     * Get the remaining TDC hours.
+     */
+    public function getRemainingTdcHoursAttribute(): float
+    {
+        return max(0.0, $this->tdc_hours_limit - $this->used_tdc_hours);
+    }
+
+    /**
+     * Get the remaining PDC hours.
+     */
+    public function getRemainingPdcHoursAttribute(): float
+    {
+        return max(0.0, $this->pdc_hours_limit - $this->used_pdc_hours);
     }
 }

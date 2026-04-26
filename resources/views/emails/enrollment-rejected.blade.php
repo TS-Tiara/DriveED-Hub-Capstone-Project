@@ -38,7 +38,7 @@
                     <strong style="color: #92400e;">Action Required: Your enrollment needs revision.</strong>
                     <p style="margin: 5px 0 0 0; color: #78350f;">The following items were not accepted and need to be re-uploaded:</p>
                     <ul style="margin: 10px 0; color: #78350f; font-weight: 600;">
-                        @if($licenseRejected) <li>Identity Document (License)</li> @endif
+                        @if($licenseRejected) <li>Student Driver's License</li> @endif
                         @if($paymentRejected) <li>Payment Proof (GCash Receipt)</li> @endif
                     </ul>
                 @else

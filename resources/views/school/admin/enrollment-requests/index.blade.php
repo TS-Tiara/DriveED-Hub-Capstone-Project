@@ -264,8 +264,9 @@
     }
     
     .status-cancelled {
-        background: #f3f4f6;
-        color: #374151;
+        background: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #fecaca;
     }
     
     .status-rejected {
@@ -294,6 +295,12 @@
     .payment-paid {
         background: #d1fae5;
         color: #065f46;
+    }
+
+    .payment-cancelled {
+        background: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #fecaca;
     }
     
     .action-buttons {
@@ -1000,6 +1007,57 @@
         align-items: center;
         gap: 10px;
     }
+
+    .v-panel-actions {
+        background: rgba(15, 23, 42, 0.9);
+        padding: 12px;
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        border-top: 1px solid #334155;
+    }
+
+    .v-btn-panel {
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s;
+    }
+
+    .v-btn-panel-approve {
+        background: #10b981;
+        color: white;
+    }
+
+    .v-btn-panel-reject {
+        background: #ef4444;
+        color: white;
+    }
+
+    .v-btn-panel:hover {
+        transform: translateY(-1px);
+        opacity: 0.9;
+    }
+
+    .v-btn-panel:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .btn-locked {
+        opacity: 0.5 !important;
+        filter: grayscale(1) !important;
+        cursor: not-allowed !important;
+        pointer-events: auto !important; /* Keep it clickable for JS feedback */
+    }
 </style>
 
 <div class="enrollment-requests-container">
@@ -1237,14 +1295,26 @@
                                         Review & Verify Documents
                                     </button>
                                     
+                                    @php
+                                        $isFullyVerified = ($request->license_status === 'verified' || $request->license_status === 'none') && 
+                                                           ($request->payment_status === 'paid' || $request->payment_status === 'none');
+                                        $atLeastOneProcessed = ($request->license_status !== 'pending') || ($request->payment_status !== 'pending');
+                                    @endphp
+
                                     <form id="approveForm{{ $request->id }}" method="POST" action="{{ route('schools.admin.enrollments.api.unified-approve', ['school' => $school, 'enrollmentRequest' => $request->id]) }}" style="display:inline;">
                                         @csrf
-                                        <button type="button" id="outerApprove{{ $request->id }}" class="btn btn-approve opacity-50" disabled onclick="approveRequest({{ $request->id }})" title="Must verify documents first">
+                                        <button type="button" id="outerApprove{{ $request->id }}" 
+                                                class="btn btn-approve {{ !$isFullyVerified ? 'btn-locked' : '' }}" 
+                                                onclick="approveRequest({{ $request->id }})" 
+                                                title="{{ !$isFullyVerified ? 'Verify documents first' : 'Final Approve' }}">
                                             &#10003; Final Approve
                                         </button>
                                     </form>
 
-                                    <button id="outerReject{{ $request->id }}" class="btn btn-reject opacity-50" disabled onclick="showRejectModal({{ $request->id }})" title="Must verify documents first">
+                                    <button type="button" id="outerReject{{ $request->id }}" 
+                                            class="btn btn-reject {{ !$atLeastOneProcessed ? 'btn-locked' : '' }}" 
+                                            onclick="showRejectModal({{ $request->id }})" 
+                                            title="{{ !$atLeastOneProcessed ? 'Review documents first' : 'Reject' }}">
                                         &#10005; Reject
                                     </button>
                                 @elseif($request->status === 'approved')
@@ -1343,7 +1413,7 @@
                             @csrf
                             <button type="button" id="mobileOuterApprove{{ $request->id }}" class="btn btn-approve opacity-50" disabled onclick="approveRequest({{ $request->id }})">&#10003; Final Approve</button>
                         </form>
-                        <button id="mobileOuterReject{{ $request->id }}" class="btn btn-reject opacity-50" disabled onclick="showRejectModal({{ $request->id }})">&#10005; Reject</button>
+                        <button id="mobileOuterReject{{ $request->id }}" class="btn btn-reject" onclick="showRejectModal({{ $request->id }})">&#10005; Reject</button>
                     @elseif($request->status === 'approved')
                         <button type="button" class="btn btn-view" onclick="openVerificationModal({{ $request->id }})">
                             View Record
@@ -1428,7 +1498,7 @@
                 <button type="button" onclick="closeRejectModal()" class="action-modal-btn action-modal-btn-secondary">
                     Cancel
                 </button>
-                <button type="submit" class="action-modal-btn action-modal-btn-danger">
+                <button type="submit" id="rejectSubmitBtn" class="action-modal-btn action-modal-btn-danger">
                     Reject Request
                 </button>
             </div>
@@ -1476,6 +1546,22 @@
         </div>
         <div style="flex: 1; background: #f3f4f6;">
             <iframe id="licensePreviewFrame" src="" title="License Preview" style="width: 100%; height: 100%; border: 0;"></iframe>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Info Modal -->
+<div id="infoModal" class="action-modal modal">
+    <div class="action-modal-card" style="max-width: 400px; text-align: center;">
+        <div style="width: 60px; height: 60px; background: #fffbeb; color: #f59e0b; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 30px; font-weight: bold; border: 2px solid #fef3c7;">
+            !
+        </div>
+        <h3 class="action-modal-title" id="infoModalTitle">Attention Required</h3>
+        <p class="action-modal-subtitle" id="infoModalMessage" style="margin-bottom: 25px; line-height: 1.5;"></p>
+        <div class="action-modal-actions" style="justify-content: center;">
+            <button type="button" onclick="closeInfoModal()" class="action-modal-btn" style="background: #1e293b; color: white; border: none; padding: 10px 30px;">
+                Got it
+            </button>
         </div>
     </div>
 </div>
@@ -1554,6 +1640,12 @@ function applyEnrollmentSortFilter() {
 }
 
 function showRejectModal(requestId) {
+    const btn = document.getElementById(`outerReject${requestId}`);
+    if (btn && btn.classList.contains('btn-locked')) {
+        showInfoModal('Verification Required', 'Please open the Verification Dashboard and review at least one document (License or Payment) before rejecting the entire enrollment.');
+        return;
+    }
+
     const modal = document.getElementById('rejectModal');
     const form = document.getElementById('rejectForm');
     form.action = `{{ route('schools.admin.enrollments.reject', ['school' => $school, 'enrollmentRequest' => ':id']) }}`.replace(':id', requestId);
@@ -1562,6 +1654,12 @@ function showRejectModal(requestId) {
 
 
 function approveRequest(requestId) {
+    const btn = document.getElementById(`outerApprove${requestId}`);
+    if (btn && btn.classList.contains('btn-locked')) {
+        showInfoModal('Documents Pending', 'Please verify all documents (Identity & Payment) in the Verification Dashboard before finalizing the enrollment.');
+        return;
+    }
+
     showConfirm({
         type: 'success',
         title: 'Approve Enrollment',
@@ -1603,11 +1701,27 @@ function closeRejectModal() {
     document.getElementById('remarks').value = '';
 }
 
+function showInfoModal(title, message) {
+    document.getElementById('infoModalTitle').textContent = title;
+    document.getElementById('infoModalMessage').textContent = message;
+    document.getElementById('infoModal').style.display = 'flex';
+}
+
+function closeInfoModal() {
+    document.getElementById('infoModal').style.display = 'none';
+}
+
 
 // Close modals when clicking outside
 document.getElementById('rejectModal').addEventListener('click', function(e) {
     if (e.target === this) {
         closeRejectModal();
+    }
+});
+
+document.getElementById('infoModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeInfoModal();
     }
 });
 
@@ -1669,6 +1783,13 @@ document.getElementById('licensePreviewModal').addEventListener('click', functio
 });
 
 // Reject form submits as a normal POST (no AJAX needed)
+document.getElementById('rejectForm')?.addEventListener('submit', function(e) {
+    const btn = document.getElementById('rejectSubmitBtn');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+    }
+});
 
 // Export Menu Toggle
 function toggleExportMenu() {
@@ -1719,11 +1840,17 @@ function openVerificationModal(enrollmentId) {
             updatePanelImage('payment', data.receipt_url, paymentMethod === 'on_site' ? 'On-site Receipt' : 'GCash Receipt');
             
             // Update Action Buttons Visibility
-            const verifyPayBtn = document.getElementById('v-btn-verify-payment');
-            const verifyLicBtn = document.getElementById('v-btn-verify-license');
+            const licenseActions = document.getElementById('v-license-actions');
+            const paymentActions = document.getElementById('v-payment-actions');
             
-            verifyPayBtn.style.display = (data.payment_status === 'pending') ? 'block' : 'none';
-            verifyLicBtn.style.display = (data.license_status === 'pending') ? 'block' : 'none';
+            // Show license actions if document exists and is pending
+            // Show actions if a license is present and it hasn't been finalized (pending OR none)
+            licenseActions.style.display = (data.license_url && (data.license_status === 'pending' || data.license_status === 'none')) ? 'flex' : 'none';
+            // Show payment actions if document exists and is pending
+            paymentActions.style.display = (data.receipt_url && data.payment_status === 'pending') ? 'flex' : 'none';
+            
+            // Initial check for final approval
+            checkIfFullyVerified(enrollmentId, data.license_status, data.payment_status);
             
             // Show content
             document.getElementById('v-modal-loading').style.display = 'none';
@@ -1770,10 +1897,10 @@ function closeVerificationModal() {
 function verifyPaymentAjax() {
     if (!currentEnrollmentId) return;
     
-    const btn = document.getElementById('v-btn-verify-payment');
+    const btn = document.getElementById('v-btn-verify-payment-panel');
     const originalText = btn.innerHTML;
     btn.disabled = true;
-    btn.innerHTML = 'Verifying...';
+    btn.innerHTML = 'Wait...';
     
     const url = `{{ school_route('admin.enrollments.index') }}/api/${currentEnrollmentId}/verify-payment`;
     
@@ -1790,8 +1917,8 @@ function verifyPaymentAjax() {
         if (data.success) {
             Toast.success(data.message);
             updateTableRowStatus(currentEnrollmentId, 'payment', 'paid');
-            // If the message says "automatically approved", we should probably refresh or update status
-            closeVerificationModal();
+            // Don't close modal, just update the status inside it
+            updatePanelStatus('payment', 'paid');
         } else {
             Toast.error(data.message);
         }
@@ -1806,10 +1933,10 @@ function verifyPaymentAjax() {
 function verifyLicenseAjax() {
     if (!currentEnrollmentId) return;
     
-    const btn = document.getElementById('v-btn-verify-license');
+    const btn = document.getElementById('v-btn-verify-license-panel');
     const originalText = btn.innerHTML;
     btn.disabled = true;
-    btn.innerHTML = 'Verifying...';
+    btn.innerHTML = 'Wait...';
     
     const url = `{{ school_route('admin.enrollments.index') }}/api/${currentEnrollmentId}/verify-license`;
     
@@ -1826,7 +1953,8 @@ function verifyLicenseAjax() {
         if (data.success) {
             Toast.success(data.message);
             updateTableRowStatus(currentEnrollmentId, 'license', 'verified');
-            closeVerificationModal();
+            // Don't close modal, just update status inside it
+            updatePanelStatus('license', 'verified');
         } else {
             Toast.error(data.message);
         }
@@ -1859,53 +1987,108 @@ function updateTableRowStatus(id, type, status) {
         if (actions) actions.style.display = 'none';
     }
 
-    // 2-Step Verification Logic: Enable outer buttons once both are verified (or if only one was pending and it's now verified)
+    // Hide panel actions in modal after verification
+    const actionsDiv = document.getElementById(`v-${type}-actions`);
+    if (actionsDiv) actionsDiv.style.display = 'none';
+
+    // Check if fully verified to show final button
     checkIfFullyVerified(id);
 }
 
-function checkIfFullyVerified(id) {
+function checkIfFullyVerified(id, licenseStatus, paymentStatus) {
     const row = document.querySelector(`tr[data-request-id="${id}"]`);
     if (!row) return;
 
-    // We check the badges in the row (you might need to ensure these are updated correctly by the controller response)
-    // For simplicity, let's assume if this is called, we want to re-check the state.
-    // However, since we are doing this via AJAX, we can just check if the buttons inside the modal were both hidden or already verified.
-    
-    // An even better way: Enable them if at least one verification action was successful and there are no more "Pending" badges in the modal
+    // Determine current statuses if not provided
+    if (!licenseStatus) {
+        const badge = row.querySelector('.license-badge');
+        if (badge) {
+            if (badge.classList.contains('license-verified')) licenseStatus = 'verified';
+            else if (badge.classList.contains('license-none')) licenseStatus = 'none';
+            else licenseStatus = 'pending';
+        } else {
+            licenseStatus = 'verified'; // Default if no badge
+        }
+    }
+    if (!paymentStatus) {
+        const badge = row.querySelector('.payment-badge');
+        if (badge) {
+            if (badge.classList.contains('payment-paid')) paymentStatus = 'paid';
+            else if (badge.classList.contains('payment-none')) paymentStatus = 'none';
+            else paymentStatus = 'pending';
+        } else {
+            paymentStatus = 'paid'; // Default if no badge
+        }
+    }
+
+    const isFullyVerified = (licenseStatus === 'verified' || licenseStatus === 'none') && 
+                            (paymentStatus === 'paid' || paymentStatus === 'none');
+
+    const atLeastOneProcessed = (licenseStatus !== 'pending') || (paymentStatus !== 'pending');
+
+    // Toggle Final Approve Button in Modal
+    const finalApproveBtn = document.getElementById('v-btn-final-approve');
+    if (finalApproveBtn) {
+        finalApproveBtn.style.display = isFullyVerified ? 'block' : 'none';
+    }
+
+    // Update outer table buttons
     const approveBtn = document.getElementById(`outerApprove${id}`);
     const rejectBtn = document.getElementById(`outerReject${id}`);
-    const mobileApproveBtn = document.getElementById(`mobileOuterApprove${id}`);
-    const mobileRejectBtn = document.getElementById(`mobileOuterReject${id}`);
+    const mobileApproveBtn = document.getElementById(`mobileApproveForm${id}`);
+    const mobileRejectBtn = document.getElementById(`mobileRejectForm${id}`);
 
     if (approveBtn) {
-        approveBtn.disabled = false;
-        approveBtn.classList.remove('opacity-50');
-        approveBtn.title = "Verified - Ready for Final Approval";
+        approveBtn.title = isFullyVerified ? "Approve enrollment" : "Verify documents first";
+        isFullyVerified ? approveBtn.classList.remove('btn-locked') : approveBtn.classList.add('btn-locked');
     }
+
     if (rejectBtn) {
-        rejectBtn.disabled = false;
-        rejectBtn.classList.remove('opacity-50');
-        rejectBtn.title = "Verified - Ready for Final Decision";
+        rejectBtn.title = atLeastOneProcessed ? "Reject enrollment" : "Review documents first";
+        atLeastOneProcessed ? rejectBtn.classList.remove('btn-locked') : rejectBtn.classList.add('btn-locked');
     }
-    
+
     // Repeat for mobile
     if (mobileApproveBtn) {
-        mobileApproveBtn.disabled = false;
-        mobileApproveBtn.classList.remove('opacity-50');
+        isFullyVerified ? mobileApproveBtn.classList.remove('btn-locked') : mobileApproveBtn.classList.add('btn-locked');
     }
     if (mobileRejectBtn) {
-        mobileRejectBtn.disabled = false;
-        mobileRejectBtn.classList.remove('opacity-50');
+        atLeastOneProcessed ? mobileRejectBtn.classList.remove('btn-locked') : mobileRejectBtn.classList.add('btn-locked');
     }
 }
 
-function rejectFromVerificationModal() {
+function rejectLicenseFromModal() {
     if (!currentEnrollmentId) return;
-    const enrollmentId = currentEnrollmentId;
+    const studentName = document.getElementById('v-student-name').textContent;
+    // We need the student ID. It might be better to fetch it or pass it.
+    // For now, let's close and open the existing license reject modal.
+    closeVerificationModal();
+    // Since we don't have studentId easily here without extra data, we can just trigger the full rejection modal
+    // but pre-check "Reject License".
+    setTimeout(() => {
+        showRejectModal(currentEnrollmentId);
+        document.querySelector('input[name="reject_license"]').checked = true;
+        document.querySelector('input[name="reject_payment"]').checked = false;
+    }, 100);
+}
+
+function rejectPaymentFromModal() {
+    if (!currentEnrollmentId) return;
     closeVerificationModal();
     setTimeout(() => {
-        showRejectModal(enrollmentId);
+        showRejectModal(currentEnrollmentId);
+        document.querySelector('input[name="reject_license"]').checked = false;
+        document.querySelector('input[name="reject_payment"]').checked = true;
     }, 100);
+}
+
+function finalApproveFromModal() {
+    if (!currentEnrollmentId) return;
+    const form = document.getElementById(`approveForm${currentEnrollmentId}`) || 
+                 document.getElementById(`mobileApproveForm${currentEnrollmentId}`);
+    if (form) {
+        form.submit();
+    }
 }
 
 </script>
@@ -1956,11 +2139,21 @@ function rejectFromVerificationModal() {
                 <!-- Panel 1: Student License -->
                 <div class="v-image-panel">
                     <div class="v-panel-title">
-                        <span>Identity Document</span>
+                        <span>Student License</span>
                         <span id="v-license-status" class="v-panel-status">PENDING</span>
                     </div>
                     <div id="v-license-viewer" class="v-image-viewer">
                         <!-- Image injected here -->
+                    </div>
+                    <div class="v-panel-actions" id="v-license-actions" style="display: none;">
+                        <button type="button" class="v-btn-panel v-btn-panel-reject" onclick="rejectLicenseFromModal()">
+                            <svg class="icon-14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            Reject License
+                        </button>
+                        <button type="button" id="v-btn-verify-license-panel" class="v-btn-panel v-btn-panel-approve" onclick="verifyLicenseAjax()">
+                            <svg class="icon-14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            Approve License
+                        </button>
                     </div>
                 </div>
 
@@ -1973,6 +2166,16 @@ function rejectFromVerificationModal() {
                     <div id="v-payment-viewer" class="v-image-viewer">
                         <!-- Image injected here -->
                     </div>
+                    <div class="v-panel-actions" id="v-payment-actions" style="display: none;">
+                        <button type="button" class="v-btn-panel v-btn-panel-reject" onclick="rejectPaymentFromModal()">
+                            <svg class="icon-14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            Reject Payment
+                        </button>
+                        <button type="button" id="v-btn-verify-payment-panel" class="v-btn-panel v-btn-panel-approve" onclick="verifyPaymentAjax()">
+                            <svg class="icon-14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            Approve Payment
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1980,14 +2183,10 @@ function rejectFromVerificationModal() {
         <!-- Sticky Footer for Actions -->
         <div class="v-btn-group">
             <button type="button" onclick="closeVerificationModal()" class="btn btn-secondary" style="background:#e2e8f0; color:#475569;">Close</button>
-            <div class="ms-auto d-flex gap-2">
-                <button type="button" id="v-btn-reject-enrollment" class="btn btn-danger" style="background: #ef4444; border:none;" onclick="rejectFromVerificationModal()">
-                    Reject Enrollment
-                </button>
-                <button type="button" id="v-btn-verify-license" class="btn btn-primary" onclick="verifyLicenseAjax()" style="display:none;">Verify License</button>
-                <button type="button" id="v-btn-verify-payment" class="btn btn-success" style="background: #10b981; border:none; display:none;" onclick="verifyPaymentAjax()">
-                    <svg class="icon-14 me-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                    Confirm & Approve
+            <div class="ms-auto">
+                <button type="button" id="v-btn-final-approve" class="btn btn-success" style="background: #10b981; border:none; display:none;" onclick="finalApproveFromModal()">
+                    <svg class="icon-14 me-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Final Complete Enrollment
                 </button>
             </div>
         </div>

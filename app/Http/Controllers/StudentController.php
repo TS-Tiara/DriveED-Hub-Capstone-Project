@@ -45,7 +45,8 @@ class StudentController extends Controller
 
         // PDC (Practical Driving Course) requires a verified Student Driver's License
         /** @var \App\Models\Student $student */
-        $canEnroll = \App\Support\EnrollmentValidator::canEnrollInCourse($student, $course);
+        $isUploadingLicense = $request->hasFile('student_license') || $request->hasFile('credential_file');
+        $canEnroll = \App\Support\EnrollmentValidator::canEnrollInCourse($student, $course, $isUploadingLicense);
         if (!$canEnroll['allowed']) {
             Log::warning('Student enrollment blocked', [
                 'user' => $student->id,
@@ -100,8 +101,12 @@ class StudentController extends Controller
                 $data['price'] = $course->price;
             }
 
-            // Handle credential file upload for experienced drivers
-            if ($request->hasFile('credential_file')) {
+            // Handle student license upload (staged)
+            if ($request->hasFile('student_license')) {
+                $file = $request->file('student_license');
+                $path = $file->store('student-licenses', 'local');
+                $data['credentials_file_path'] = $path;
+            } elseif ($request->hasFile('credential_file')) {
                 $file = $request->file('credential_file');
                 $path = $file->store('credentials', 'local');
                 $data['credentials_file_path'] = $path;
@@ -109,8 +114,8 @@ class StudentController extends Controller
 
             $enrollmentRequest = EnrollmentRequest::create($data);
 
-            // PDC-only: if a draft license exists, submit it for admin review once a practical request is created.
-            if ($course->isPractical() && $student->hasStoredLicense() && !$student->hasVerifiedLicense()) {
+            // PDC-only: if a license is being submitted (staged or existing), mark status as pending for admin review.
+            if ($course->isPractical() && ($request->hasFile('student_license') || $student->hasStoredLicense()) && !$student->hasVerifiedLicense()) {
                 $student->update([
                     'student_license_status' => 'pending',
                     'student_license_verified_at' => null,
@@ -285,17 +290,34 @@ class StudentController extends Controller
         $student = Auth::guard('student')->user();
         $student->load('branchRelation');
 
-        $pendingUnlockRequest = $student->profileUnlockRequests()
-            ->where('status', 'pending')
-            ->latest('id')
+        // Get TDC progress for LTO compliance (15h/3d rule)
+        $tdcEnrollment = EnrollmentRequest::where('learner_id', $student->id)
+            ->where('school_id', $school->id)
+            ->whereHas('course', function($q) {
+                $q->where('course_type', 'theoretical');
+            })
+            ->where('status', 'approved')
+            ->with('sessionCompletions')
             ->first();
+
+        $tdcProgress = null;
+        if ($tdcEnrollment) {
+            $completions = $tdcEnrollment->sessionCompletions->where('status', 'completed');
+            $uniqueDates = $completions->pluck('session_date')->unique();
+            $tdcProgress = [
+                'hours' => $completions->sum('hours_completed'),
+                'unique_dates_count' => $uniqueDates->count(),
+                'unique_dates' => $uniqueDates,
+                'is_compliant' => $completions->sum('hours_completed') >= 15 && $uniqueDates->count() >= 3
+            ];
+        }
 
         $supportsDateOfBirth = Schema::hasColumn('students', 'date_of_birth');
 
         return view($school->resolveView('student.profile'), [
             'school' => $school,
             'student' => $student,
-            'pendingUnlockRequest' => $pendingUnlockRequest,
+            'tdcProgress' => $tdcProgress,
             'supportsDateOfBirth' => $supportsDateOfBirth,
             'isAjax' => $request->ajax(),
         ]);
@@ -309,25 +331,13 @@ class StudentController extends Controller
 
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'nullable|email',
-            'contact' => ['nullable', 'string', 'max:20', 'regex:/^(09\d{9}|\+639\d{9})$/'],
+            'email' => 'required|email',
+            'contact' => ['required', 'string', 'max:20', 'regex:/^(09\d{9}|\+639\d{9}|9\d{9})$/'],
             'address' => 'nullable|string|max:255',
             'date_of_birth' => $supportsDateOfBirth ? 'nullable|date|before:today' : 'nullable',
             'current_password' => 'nullable|required_with:new_password|string',
             'new_password' => ['nullable', 'confirmed', 'different:current_password', new StrongPassword()],
         ]);
-
-        $incomingEmail = trim((string) $request->input('email', ''));
-        if ($incomingEmail !== '' && strcasecmp($incomingEmail, (string) $student->email) !== 0) {
-            return back()
-                ->withErrors(['email' => 'Email address cannot be changed.'])
-                ->withInput($request->except(['current_password', 'new_password', 'new_password_confirmation']));
-        }
-
-        $coreFields = ['name', 'contact', 'address'];
-        if ($supportsDateOfBirth) {
-            $coreFields[] = 'date_of_birth';
-        }
 
         $normalize = static function ($value) {
             if (is_string($value)) {
@@ -337,40 +347,21 @@ class StudentController extends Controller
             return $value === '' ? null : $value;
         };
 
-        $coreChanged = false;
-        foreach ($coreFields as $field) {
-            $incoming = $normalize($request->input($field));
-            $current = $normalize($student->{$field});
-
-            $incomingComparable = $incoming === null ? null : (string) $incoming;
-            $currentComparable = $current === null ? null : (string) $current;
-
-            if ($incomingComparable !== $currentComparable) {
-                $coreChanged = true;
-                break;
-            }
-        }
-
-        $profileEditCount = (int) ($student->profile_edit_count ?? 0);
-        if ($coreChanged && $profileEditCount >= 1) {
-            return back()
-                ->with('error', 'Core profile details are locked. Submit a correction request to your school admin.')
-                ->withInput($request->except(['current_password', 'new_password', 'new_password_confirmation']));
-        }
 
         $passwordChanged = $request->filled('new_password');
 
-        if (DemoAccountProtection::isProtectedAccount($student->email, 'student', $school) && ($coreChanged || $passwordChanged)) {
-            return back()
-                ->withErrors(['name' => 'This demo account has locked profile details and password.'])
-                ->withInput($request->except(['current_password', 'new_password', 'new_password_confirmation']));
-        }
 
-        $data = [];
-        foreach ($coreFields as $field) {
-            $data[$field] = $request->input($field);
+        $data = $request->only(['name', 'email', 'contact', 'address', 'date_of_birth']);
+        
+        // Normalize contact number
+        if (!empty($data['contact'])) {
+            $contact = trim((string)$data['contact']);
+            if (preg_match('/^9\d{9}$/', $contact)) {
+                $data['contact'] = '+63' . $contact;
+            } elseif (preg_match('/^09\d{9}$/', $contact)) {
+                $data['contact'] = '+63' . substr($contact, 1);
+            }
         }
-
         // Check current password if user wants to change password
         if ($request->filled('new_password')) {
             if (!$request->filled('current_password') || !Hash::check($request->current_password, $student->password)) {
@@ -379,12 +370,7 @@ class StudentController extends Controller
             $data['password'] = Hash::make($request->new_password);
         }
 
-        if ($coreChanged) {
-            $data['profile_edit_count'] = 1;
-            $data['profile_locked_at'] = now();
-        }
-
-        if (!$coreChanged && !$passwordChanged) {
+        if (!$passwordChanged && $request->only(['name', 'email', 'contact', 'address', 'date_of_birth']) == $student->only(['name', 'email', 'contact', 'address', 'date_of_birth'])) {
             return redirect()
                 ->route('schools.student.profile', $school)
                 ->with('success', 'No profile changes were detected.');
@@ -392,9 +378,7 @@ class StudentController extends Controller
 
         $student->update($data);
 
-        $message = $coreChanged
-            ? 'Profile updated successfully. Core details are now locked until admin approval.'
-            : 'Password updated successfully!';
+        $message = 'Profile updated successfully.';
 
         return redirect()
             ->route('schools.student.profile', $school)

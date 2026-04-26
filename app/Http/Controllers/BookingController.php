@@ -7,6 +7,7 @@ use App\Models\Course;
 use App\Models\Instructor;
 use App\Models\School;
 use App\Models\Student;
+use App\Models\Branch;
 use App\Models\SystemLog;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
@@ -29,11 +30,12 @@ class BookingController extends Controller
 
         $query = Booking::where('bookings.school_id', $school->id)
             ->with([
-                'student:id,name,email,contact,branch_id',
+                'student:id,name,email,contact,branch_id,has_passed_theoretical,theoretical_passed_at',
                 'instructor:id,name,email',
                 'course:id,title,duration_hours,price,course_type',
                 'package:id,course_id,name,price,training_hours,transmission_type',
-                'timeSlot:id,date,start_time,end_time,session_type'
+                'timeSlot:id,date,start_time,end_time,session_type',
+                'enrollmentRequest:id,learner_id,course_id,package_id,status,completed_at'
             ]);
 
         // Base query for statistics cards (before status/date filters)
@@ -48,8 +50,24 @@ class BookingController extends Controller
             $statsQuery->where('bookings.instructor_id', Auth::guard('instructor')->id());
         }
 
-        // Additional filters (server-side so pagination and filters stay in sync)
+        // Tab-based filtering
+        $activeTab = $request->query('tab', 'verify');
         $activeFilter = (string) $request->query('status', 'all');
+
+        if ($activeTab === 'verify') {
+            // If no specific filter is selected, we default to showing 'done' and 'no-show' sessions.
+            // If 'all' is explicitly selected, we show EVERYTHING as cards.
+            if (!request('filter')) {
+                $query->whereIn('bookings.status', ['done', 'no-show', 'no_show']);
+                $activeFilter = 'done'; 
+            } elseif ($activeFilter === 'all') {
+                // Do nothing, show all statuses
+            } else {
+                $query->where('bookings.status', $activeFilter);
+            }
+        }
+
+        // Additional filters (server-side so pagination and filters stay in sync)
         if ($activeFilter !== '' && $activeFilter !== 'all') {
             if ($activeFilter === 'flagged') {
                 $query->whereIn('bookings.status', ['cancelled', 'no_show', 'no-show']);
@@ -58,8 +76,49 @@ class BookingController extends Controller
             }
         }
 
+        // Fetch instructors and branches for filters
+        $instructors = Instructor::where('school_id', $school->id)->orderBy('name')->get();
+        $branches = Branch::where('school_id', $school->id)->orderBy('name')->get();
+
+        // Additional date and branch filters
+        if ($request->filled('branch_id')) {
+            $query->where('bookings.branch_id', $request->branch_id);
+        }
+        if ($request->filled('date_from')) {
+            $query->whereDate('bookings.booking_date', '>=', $request->date_from)
+                ->orWhereDate('bookings.scheduled_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('bookings.booking_date', '<=', $request->date_to)
+                ->orWhereDate('bookings.scheduled_at', '<=', $request->date_to);
+        }
+        if ($request->filled('instructor_id')) {
+            $query->where('bookings.instructor_id', $request->instructor_id);
+        }
+
+        // Search filter
+        $search = $request->query('search');
+        if (!empty($search)) {
+            $query->where(function($q) use ($search) {
+                $q->whereHas('student', function($sq) use ($search) {
+                    $sq->where('name', 'like', "%{$search}%");
+                })->orWhereHas('instructor', function($iq) use ($search) {
+                    $iq->where('name', 'like', "%{$search}%");
+                })->orWhereHas('course', function($cq) use ($search) {
+                    $cq->where('title', 'like', "%{$search}%");
+                });
+            });
+        }
+
         $activeSort = (string) $request->query('sort', 'audit_priority');
-        $allowedSorts = ['audit_priority', 'session_newest', 'session_oldest', 'student_az', 'instructor_az', 'recently_updated'];
+        $allowedSorts = [
+            'audit_priority', 'session_newest', 'session_oldest', 'recently_updated',
+            'student_az', 'student_za', 'instructor_az', 'instructor_za',
+            'branch_az', 'branch_za', 'course_az', 'course_za',
+            'type_az', 'type_za', 'hours_high', 'hours_low',
+            'status_az', 'status_za', 'time_early', 'time_late'
+        ];
+        
         if (!in_array($activeSort, $allowedSorts, true)) {
             $activeSort = 'audit_priority';
         }
@@ -70,11 +129,9 @@ class BookingController extends Controller
             $query->past();
         }
 
-        $sortBySessionSchedule = in_array($activeSort, ['audit_priority', 'session_newest', 'session_oldest'], true);
-        if ($sortBySessionSchedule) {
-            $query->leftJoin('time_slots as sort_slot', 'sort_slot.id', '=', 'bookings.time_slot_id')
-                ->select('bookings.*');
-        }
+        // Always join sort_slot on this page to handle date/time fallbacks reliably
+        $query->leftJoin('time_slots as sort_slot', 'sort_slot.id', '=', 'bookings.time_slot_id')
+              ->select('bookings.*');
 
         $sessionDateExpr = "COALESCE(sort_slot.date, DATE(bookings.booking_date), DATE(bookings.scheduled_at))";
         $sessionTimeExpr = "COALESCE(sort_slot.start_time, TIME(bookings.booking_date), TIME(bookings.scheduled_at))";
@@ -90,19 +147,109 @@ class BookingController extends Controller
                     ->orderByRaw("{$sessionTimeExpr} ASC")
                     ->orderBy('bookings.id');
                 break;
-            case 'student_az':
-                $query->orderBy(
-                    Student::select('name')
-                        ->whereColumn('students.id', 'bookings.student_id')
-                        ->limit(1)
-                )->orderByDesc('bookings.booking_date');
+            case 'time_early':
+                $query->orderByRaw("{$sessionTimeExpr} ASC")
+                    ->orderByRaw("{$sessionDateExpr} DESC")
+                    ->orderBy('bookings.id');
+                break;
+            case 'time_late':
+                $query->orderByRaw("{$sessionTimeExpr} DESC")
+                    ->orderByRaw("{$sessionDateExpr} DESC")
+                    ->orderBy('bookings.id');
                 break;
             case 'instructor_az':
                 $query->orderBy(
                     Instructor::select('name')
                         ->whereColumn('instructors.id', 'bookings.instructor_id')
-                        ->limit(1)
-                )->orderByDesc('bookings.booking_date');
+                        ->limit(1),
+                    'asc'
+                )->orderByRaw("{$sessionDateExpr} DESC");
+                break;
+            case 'instructor_za':
+                $query->orderBy(
+                    Instructor::select('name')
+                        ->whereColumn('instructors.id', 'bookings.instructor_id')
+                        ->limit(1),
+                    'desc'
+                )->orderByRaw("{$sessionDateExpr} DESC");
+                break;
+            case 'student_az':
+                $query->orderBy(
+                    Student::select('name')
+                        ->whereColumn('students.id', 'bookings.student_id')
+                        ->limit(1),
+                    'asc'
+                )->orderByRaw("{$sessionDateExpr} DESC");
+                break;
+            case 'student_za':
+                $query->orderBy(
+                    Student::select('name')
+                        ->whereColumn('students.id', 'bookings.student_id')
+                        ->limit(1),
+                    'desc'
+                )->orderByRaw("{$sessionDateExpr} DESC");
+                break;
+            case 'branch_az':
+                $query->orderBy(
+                    Branch::select('name')
+                        ->whereColumn('branches.id', 'bookings.branch_id')
+                        ->limit(1),
+                    'asc'
+                )->orderByRaw("{$sessionDateExpr} DESC");
+                break;
+            case 'branch_za':
+                $query->orderBy(
+                    Branch::select('name')
+                        ->whereColumn('branches.id', 'bookings.branch_id')
+                        ->limit(1),
+                    'desc'
+                )->orderByRaw("{$sessionDateExpr} DESC");
+                break;
+            case 'course_az':
+                $query->orderBy(
+                    Course::select('title')
+                        ->whereColumn('courses.id', 'bookings.course_id')
+                        ->limit(1),
+                    'asc'
+                )->orderByRaw("{$sessionDateExpr} DESC");
+                break;
+            case 'course_za':
+                $query->orderBy(
+                    Course::select('title')
+                        ->whereColumn('courses.id', 'bookings.course_id')
+                        ->limit(1),
+                    'desc'
+                )->orderByRaw("{$sessionDateExpr} DESC");
+                break;
+            case 'type_az':
+                $query->orderBy(
+                    \App\Models\TimeSlot::select('session_type')
+                        ->whereColumn('time_slots.id', 'bookings.time_slot_id')
+                        ->limit(1),
+                    'asc'
+                )->orderByRaw("{$sessionDateExpr} DESC");
+                break;
+            case 'type_za':
+                $query->orderBy(
+                    \App\Models\TimeSlot::select('session_type')
+                        ->whereColumn('time_slots.id', 'bookings.time_slot_id')
+                        ->limit(1),
+                    'desc'
+                )->orderByRaw("{$sessionDateExpr} DESC");
+                break;
+            case 'hours_high':
+                $query->orderByRaw("(TIMESTAMPDIFF(MINUTE, sort_slot.start_time, sort_slot.end_time) / 60) DESC")
+                    ->orderByRaw("{$sessionDateExpr} DESC");
+                break;
+            case 'hours_low':
+                $query->orderByRaw("(TIMESTAMPDIFF(MINUTE, sort_slot.start_time, sort_slot.end_time) / 60) ASC")
+                    ->orderByRaw("{$sessionDateExpr} DESC");
+                break;
+            case 'status_az':
+                $query->orderBy('bookings.status', 'asc')->orderByRaw("{$sessionDateExpr} DESC");
+                break;
+            case 'status_za':
+                $query->orderBy('bookings.status', 'desc')->orderByRaw("{$sessionDateExpr} DESC");
                 break;
             case 'recently_updated':
                 $query->orderByDesc('bookings.updated_at')->orderByDesc('bookings.id');
@@ -131,9 +278,9 @@ class BookingController extends Controller
         // Calculate consolidated counts for the focused 5-card verification view
         $allSessionsCount = (clone $statsQuery)->count();
         $pendingRequestsCount = (clone $statsQuery)->where('status', 'pending')->count();
-        $awaitingVerificationCount = (clone $statsQuery)->where('status', 'done')->count();
+        $awaitingVerificationCount = (clone $statsQuery)->whereIn('status', ['done', 'no-show', 'no_show'])->count();
         $verifiedSessionsCount = (clone $statsQuery)->where('status', 'completed')->count();
-        $flaggedIssuesCount = (clone $statsQuery)->whereIn('status', ['cancelled', 'no_show', 'no-show'])->count();
+        $flaggedIssuesCount = (clone $statsQuery)->where('status', 'cancelled')->count();
 
         $stats = [
             'all' => $allSessionsCount,
@@ -153,7 +300,7 @@ class BookingController extends Controller
 
         // Only admin has bookings list view
         $view = 'admin.verify-session-completion';
-        return view($school->resolveView($view), array_merge(compact('school', 'bookings', 'stats', 'allSessionsCount', 'pendingRequestsCount', 'awaitingVerificationCount', 'verifiedSessionsCount', 'flaggedIssuesCount', 'activeFilter', 'activeSort'), ['isAjax' => $request->ajax()]));
+        return view($school->resolveView($view), array_merge(compact('school', 'bookings', 'stats', 'allSessionsCount', 'pendingRequestsCount', 'awaitingVerificationCount', 'verifiedSessionsCount', 'flaggedIssuesCount', 'activeFilter', 'activeSort', 'activeTab', 'instructors', 'branches'), ['isAjax' => $request->ajax()]));
     }
 
     /**

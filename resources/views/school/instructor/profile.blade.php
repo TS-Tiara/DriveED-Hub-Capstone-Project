@@ -9,8 +9,6 @@
     $settings = $school?->schoolSetting;
     $primaryColor = $settings?->primary_color ?? '#667eea';
     $secondaryColor = $settings?->secondary_color ?? '#764ba2';
-    $profileLocked = (int) ($instructor->profile_edit_count ?? 0) >= 1;
-    $hasPendingUnlockRequest = !empty($pendingUnlockRequest);
 @endphp
 
 @include('school.admin.partials.admin-styles')
@@ -24,6 +22,7 @@
         box-shadow: 0 1px 3px rgba(0,0,0,0.08);
         position: relative;
         overflow: hidden;
+        padding-top: 20px;
     }
 
     .status-badge-top {
@@ -126,6 +125,29 @@
     }
 
     .form-field input:focus { border-color: {{ $primaryColor }}; }
+
+    .contact-input-group {
+        display: flex;
+        align-items: stretch;
+    }
+
+    .contact-prefix {
+        display: flex;
+        align-items: center;
+        background: #f3f4f6;
+        border: 1px solid #e5e7eb;
+        border-right: none;
+        padding: 0 12px;
+        border-radius: 8px 0 0 8px;
+        color: #4b5563;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .contact-input-group input {
+        border-radius: 0 8px 8px 0 !important;
+        flex: 1;
+    }
 
     .form-actions { display: flex; gap: 10px; justify-content: center; margin-top: 24px; }
 
@@ -300,38 +322,28 @@
         </div>
     @endif
 
-    <div class="alert alert-warning policy-note">
-        Core profile details can only be changed once. Profile photo and password can still be changed anytime.
-        @if($profileLocked)
-            Your core details are currently locked.
-            @if($hasPendingUnlockRequest)
-                A correction request is already pending admin review.
-            @else
-                Submit a correction request if you need to update locked details.
-            @endif
-        @endif
-    </div>
 
 
 
     <div class="profile-card">
         <div class="status-badge-top">{{ ucfirst($instructor->status ?? 'Active') }}</div>
         
-        <div id="profileView">
-            <div class="profile-card-header">
-                <div class="profile-avatar-circle" id="avatarContainer">
-                    @if($instructor->profile_picture && file_exists(public_path('storage/' . $instructor->profile_picture)))
-                        <img src="{{ asset('storage/' . $instructor->profile_picture) }}" alt="{{ $instructor->name }}" id="avatarImage">
-                    @else
-                        <span class="profile-avatar-letter" id="avatarLetter">{{ strtoupper(substr($instructor->name ?? 'I', 0, 1)) }}</span>
-                    @endif
-                    <div class="avatar-upload-overlay" onclick="document.getElementById('profilePictureInput').click()">
-                        <span>Change Photo</span>
-                    </div>
+        <div class="profile-card-header">
+            <div class="profile-avatar-circle" id="avatarContainer">
+                @if($instructor->profile_picture && file_exists(public_path('storage/' . $instructor->profile_picture)))
+                    <img src="{{ asset('storage/' . $instructor->profile_picture) }}" alt="{{ $instructor->name }}" id="avatarImage">
+                @else
+                    <span class="profile-avatar-letter" id="avatarLetter">{{ strtoupper(substr($instructor->name ?? 'I', 0, 1)) }}</span>
+                @endif
+                <div class="avatar-upload-overlay" onclick="document.getElementById('profilePictureInput').click()">
+                    <span>Change Photo</span>
                 </div>
-                <input type="file" id="profilePictureInput" accept="image/png,image/jpg,image/jpeg,image/webp" class="hidden-file-input" onchange="uploadProfilePicture(this)">
-                <div class="profile-name">{{ $instructor->name ?? "Instructor's Name" }}</div>
             </div>
+            <input type="file" id="profilePictureInput" accept="image/png,image/jpg,image/jpeg,image/webp" class="hidden-file-input" onchange="uploadProfilePicture(this)">
+            <div class="profile-name">{{ $instructor->name ?? "Instructor's Name" }}</div>
+        </div>
+
+        <div id="profileView">
 
             <div class="profile-card-body">
                 <div class="profile-field">
@@ -365,12 +377,7 @@
             </div>
 
             <div class="profile-actions">
-                <button type="button" class="btn-edit-profile" onclick="showEditForm()">{{ $profileLocked ? 'Manage Password' : 'Edit Profile' }}</button>
-                @if($profileLocked && !$hasPendingUnlockRequest)
-                    <button type="button" class="btn-request-profile" onclick="showCorrectionRequestForm()">Request Profile Correction</button>
-                @elseif($profileLocked && $hasPendingUnlockRequest)
-                    <div class="request-status-note">Correction request pending admin review.</div>
-                @endif
+                <button type="button" class="btn-edit-profile" onclick="showEditForm()">Edit Profile</button>
             </div>
         </div>
 
@@ -385,31 +392,28 @@
                 </div>
 
                 <div class="form-field">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" value="{{ old('email', $instructor->email) }}" readonly>
-                    <div class="locked-field-note">Email cannot be changed.</div>
+                    <label for="email">Email <span class="required-indicator">*</span></label>
+                    <input type="email" id="email" name="email" value="{{ old('email', $instructor->email) }}" required>
                 </div>
 
                 <div class="form-field">
-                    <label for="contact">Contact</label>
-                    <input type="text" id="contact" name="contact" value="{{ old('contact', $instructor->contact) }}" inputmode="numeric" pattern="[0-9]*" autocomplete="tel" maxlength="15">
-                </div>
-
-                <div class="form-field">
-                    <label for="address">Address</label>
-                    <input type="text" id="address" name="address" value="{{ old('address', $instructor->address) }}">
-                </div>
-
-                <div class="form-field">
-                    <label for="license_number">License Number</label>
-                    <input type="text" id="license_number" name="license_number" value="{{ old('license_number', $instructor->license_number) }}">
-                </div>
-
-                @if($profileLocked)
-                    <div class="locked-field-note" style="margin-bottom: 14px;">
-                        Core profile fields are locked. Use the correction request button to unlock them.
+                    <label for="contact">Contact <span class="required-indicator">*</span></label>
+                    <div class="contact-input-group">
+                        <span class="contact-prefix">+63</span>
+                        <input type="text" id="contact" name="contact" value="{{ old('contact', $instructor->contact) }}" inputmode="numeric" pattern="[0-9]*" autocomplete="tel" maxlength="10" required placeholder="9123456789">
                     </div>
-                @endif
+                </div>
+
+                <div class="form-field">
+                    <label for="address">Address <span class="required-indicator">*</span></label>
+                    <input type="text" id="address" name="address" value="{{ old('address', $instructor->address) }}" required>
+                </div>
+
+                <div class="form-field">
+                    <label for="license_number">License Number <span class="required-indicator">*</span></label>
+                    <input type="text" id="license_number" name="license_number" value="{{ old('license_number', $instructor->license_number) }}" required>
+                </div>
+
 
                 <div class="password-section">
                     <h4 class="password-section-title">Password <span class="password-section-note">(optional)</span></h4>
@@ -455,23 +459,6 @@
             </form>
         </div>
 
-        @if($profileLocked && !$hasPendingUnlockRequest)
-            <div id="correctionRequestForm" class="edit-form" style="display: none;">
-                <form method="POST" action="{{ school_route('instructor.profile.unlockRequest') }}">
-                    @csrf
-
-                    <div class="form-field">
-                        <label for="reason">Reason for correction request</label>
-                        <textarea id="reason" name="reason" maxlength="1000" placeholder="Explain what needs to be corrected...">{{ old('reason') }}</textarea>
-                    </div>
-
-                    <div class="form-actions">
-                        <button type="submit" class="btn-save-profile">Submit Request</button>
-                        <button type="button" class="btn-cancel-profile" onclick="cancelCorrectionRequest()">Cancel</button>
-                    </div>
-                </form>
-            </div>
-        @endif
     </div>
 </div>
 
@@ -486,43 +473,25 @@
     }
 
     function showEditForm() {
-        const correctionRequestForm = document.getElementById('correctionRequestForm');
+        // Strip +63 or leading 0 from contact for display
+        const contactInput = document.getElementById('contact');
+        if (contactInput) {
+            let val = contactInput.value;
+            if (val.startsWith('+63')) val = val.substring(3);
+            else if (val.startsWith('0')) val = val.substring(1);
+            contactInput.value = val;
+        }
+
         document.getElementById('profileView').style.display = 'none';
         document.getElementById('editForm').style.display = 'block';
-        if (correctionRequestForm) {
-            correctionRequestForm.style.display = 'none';
-        }
     }
 
     function hideEditForm() {
-        const correctionRequestForm = document.getElementById('correctionRequestForm');
         document.getElementById('profileView').style.display = 'block';
         document.getElementById('editForm').style.display = 'none';
-        if (correctionRequestForm) {
-            correctionRequestForm.style.display = 'none';
-        }
         closeInstructorPasswordFields();
     }
 
-    function showCorrectionRequestForm() {
-        const correctionRequestForm = document.getElementById('correctionRequestForm');
-        if (!correctionRequestForm) return;
-
-        document.getElementById('profileView').style.display = 'none';
-        document.getElementById('editForm').style.display = 'none';
-        correctionRequestForm.style.display = 'block';
-    }
-
-    function cancelCorrectionRequest() {
-        const correctionRequestForm = document.getElementById('correctionRequestForm');
-
-        document.getElementById('profileView').style.display = 'block';
-        document.getElementById('editForm').style.display = 'none';
-
-        if (correctionRequestForm) {
-            correctionRequestForm.style.display = 'none';
-        }
-    }
 
     function toggleInstructorPasswordFields(forceOpen = null) {
         const fields = document.getElementById('instructorPasswordFields');
@@ -586,15 +555,10 @@
         enforceNumericOnly(document.getElementById('contact'));
 
         const hasErrors = {{ $errors->any() ? 'true' : 'false' }};
-        const hasCorrectionErrors = {{ $errors->has('reason') ? 'true' : 'false' }};
         const hasPasswordErrors = {{ ($errors->has('current_password') || $errors->has('new_password') || $errors->has('new_password_confirmation')) ? 'true' : 'false' }};
 
         if (hasErrors) {
-            if (hasCorrectionErrors) {
-                showCorrectionRequestForm();
-            } else {
-                showEditForm();
-            }
+            showEditForm();
         }
 
         if (hasPasswordErrors) {
@@ -680,6 +644,16 @@
             input.value = '';
         });
     }
+
+    // Auto-strip leading zero from contact inputs
+    document.addEventListener('input', function(e) {
+        if (e.target.getAttribute('name') === 'contact' || e.target.id.includes('contact')) {
+            let value = e.target.value;
+            if (value.startsWith('0')) {
+                e.target.value = value.substring(1);
+            }
+        }
+    });
 </script>
 
 @endsection

@@ -725,6 +725,8 @@
         </div>
     </div>
 
+    @include('school.student.partials.license-guide')
+
     <!-- Desktop: 3 column layout -->
     <div class="dashboard-cards">
         @php

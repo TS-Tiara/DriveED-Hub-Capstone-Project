@@ -301,15 +301,10 @@ class InstructorTimeSlotController extends Controller
         $instructor = Auth::guard('instructor')->user();
         $instructor->load('branch');
 
-        $pendingUnlockRequest = $instructor->profileUnlockRequests()
-            ->where('status', 'pending')
-            ->latest('id')
-            ->first();
 
         return view($school->resolveView('instructor.profile'), [
             'school' => $school,
             'instructor' => $instructor,
-            'pendingUnlockRequest' => $pendingUnlockRequest,
             'isAjax' => $request->ajax(),
         ]);
     }
@@ -320,22 +315,13 @@ class InstructorTimeSlotController extends Controller
 
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'nullable|email',
-            'contact' => ['nullable', 'string', 'max:20', 'regex:/^(09\d{9}|\+639\d{9})$/'],
-            'license_number' => 'nullable|string|max:50',
-            'address' => 'nullable|string|max:255',
+            'email' => 'required|email',
+            'contact' => ['required', 'string', 'max:20', 'regex:/^(09\d{9}|\+639\d{9}|9\d{9})$/'],
+            'license_number' => 'required|string|max:50',
+            'address' => 'required|string|max:255',
             'current_password' => 'nullable|required_with:new_password|string',
             'new_password' => ['nullable', 'confirmed', 'different:current_password', new StrongPassword()],
         ]);
-
-        $incomingEmail = trim((string) $request->input('email', ''));
-        if ($incomingEmail !== '' && strcasecmp($incomingEmail, (string) $instructor->email) !== 0) {
-            return back()
-                ->withErrors(['email' => 'Email address cannot be changed.'])
-                ->withInput($request->except(['current_password', 'new_password', 'new_password_confirmation']));
-        }
-
-        $coreFields = ['name', 'contact', 'license_number', 'address'];
 
         $normalize = static function ($value) {
             if (is_string($value)) {
@@ -345,36 +331,20 @@ class InstructorTimeSlotController extends Controller
             return $value === '' ? null : $value;
         };
 
-        $coreChanged = false;
-        foreach ($coreFields as $field) {
-            $incoming = $normalize($request->input($field));
-            $current = $normalize($instructor->{$field});
-
-            $incomingComparable = $incoming === null ? null : (string) $incoming;
-            $currentComparable = $current === null ? null : (string) $current;
-
-            if ($incomingComparable !== $currentComparable) {
-                $coreChanged = true;
-                break;
-            }
-        }
-
-        $profileEditCount = (int) ($instructor->profile_edit_count ?? 0);
-        if ($coreChanged && $profileEditCount >= 1) {
-            return back()
-                ->with('error', 'Core profile details are locked. Submit a correction request to your school admin.')
-                ->withInput($request->except(['current_password', 'new_password', 'new_password_confirmation']));
-        }
 
         $passwordChanged = $request->filled('new_password');
 
-        if (DemoAccountProtection::isProtectedAccount($instructor->email, 'instructor', $school) && ($coreChanged || $passwordChanged)) {
-            return back()
-            ->withErrors(['name' => 'This demo account has locked profile details and password.'])
-                ->withInput($request->except(['current_password', 'new_password', 'new_password_confirmation']));
+        $data = $request->only(['name', 'email', 'contact', 'license_number', 'address']);
+        
+        // Normalize contact number
+        if (!empty($data['contact'])) {
+            $contact = trim((string)$data['contact']);
+            if (preg_match('/^9\d{9}$/', $contact)) {
+                $data['contact'] = '+63' . $contact;
+            } elseif (preg_match('/^09\d{9}$/', $contact)) {
+                $data['contact'] = '+63' . substr($contact, 1);
+            }
         }
-
-        $data = $request->only($coreFields);
 
         // Check current password if user wants to change password
         if ($request->filled('new_password')) {
@@ -384,12 +354,7 @@ class InstructorTimeSlotController extends Controller
             $data['password'] = Hash::make($request->new_password);
         }
 
-        if ($coreChanged) {
-            $data['profile_edit_count'] = 1;
-            $data['profile_locked_at'] = now();
-        }
-
-        if (!$coreChanged && !$passwordChanged) {
+        if (!$passwordChanged && $request->only(['name', 'email', 'contact', 'license_number', 'address']) == $instructor->only(['name', 'email', 'contact', 'license_number', 'address'])) {
             return redirect()
                 ->route('schools.instructor.profile', $school)
                 ->with('success', 'No profile changes were detected.');
@@ -398,9 +363,7 @@ class InstructorTimeSlotController extends Controller
         try {
             $instructor->update($data);
 
-            $message = $coreChanged
-                ? 'Profile updated successfully. Core details are now locked until admin approval.'
-                : 'Password updated successfully!';
+            $message = 'Profile updated successfully.';
 
             return redirect()
                 ->route('schools.instructor.profile', $school)

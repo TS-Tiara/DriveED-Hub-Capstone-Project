@@ -99,6 +99,29 @@ class TimeSlot extends Model
     }
 
     /**
+     * Get the session type, falling back to the course type if not explicitly set.
+     * Course-First Logic: 
+     * - If the course is 'practical' or 'theoretical', we trust the course type.
+     * - Only for 'combo' courses do we check the session_type column.
+     */
+    public function getResolvedSessionTypeAttribute(): string
+    {
+        $courseType = $this->course?->course_type;
+
+        // If it's a dedicated course, the session must match that type.
+        if (in_array($courseType, ['theoretical', 'practical'], true)) {
+            return $courseType;
+        }
+
+        // For combo courses, look at the explicit session type, defaulting to theoretical.
+        if (in_array($this->session_type, ['theoretical', 'practical'], true)) {
+            return $this->session_type;
+        }
+        
+        return 'theoretical';
+    }
+
+    /**
      * Logic for Student Booking Visibility & Capacity.
      * 1. 0 Instructors = 0 Visibility/Capacity.
      * 2. TDC (Theoretical) = max_students (fixed classroom size).
@@ -111,10 +134,7 @@ class TimeSlot extends Model
             return 0;
         }
 
-        $sessionType = $this->session_type;
-        if (!in_array($sessionType, ['theoretical', 'practical'], true)) {
-            $sessionType = ($this->course?->course_type === 'practical') ? 'practical' : 'theoretical';
-        }
+        $sessionType = $this->resolved_session_type;
 
         $bookingsCount = $this->bookings
             ->whereIn('status', ['pending', 'scheduled', 'confirmed', 'done', 'completed'])
