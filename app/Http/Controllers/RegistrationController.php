@@ -24,7 +24,6 @@ class RegistrationController extends Controller
             'email' => [
                 'required',
                 'email',
-                'regex:/@(gmail\.com|yahoo\.com)$/i',
             ],
             'contact' => ['required', 'string', 'max:13', 'regex:/^(09\d{9}|\+639\d{9})$/'],
             'is_new_driver' => 'required|boolean',

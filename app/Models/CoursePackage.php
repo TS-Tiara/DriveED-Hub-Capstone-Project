@@ -12,19 +12,27 @@ class CoursePackage extends Model
 
     protected $fillable = [
         'course_id',
+        'vehicle_category_id',
         'name',
+        'package_level',
+        'tier',
         'transmission_type',
         'vehicle_type',
         'price',
         'features',
         'description',
         'training_hours',
+        'tdc_hours',
+        'pdc_hours',
         'is_popular',
         'sort_order',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
+        'training_hours' => 'decimal:1',
+        'tdc_hours' => 'decimal:1',
+        'pdc_hours' => 'decimal:1',
         'features' => 'array',
         'is_popular' => 'boolean',
     ];
@@ -35,5 +43,13 @@ class CoursePackage extends Model
     public function course(): BelongsTo
     {
         return $this->belongsTo(Course::class);
+    }
+
+    /**
+     * Get the vehicle category for this package.
+     */
+    public function vehicleCategory(): BelongsTo
+    {
+        return $this->belongsTo(VehicleCategory::class, 'vehicle_category_id');
     }
 }

@@ -74,10 +74,6 @@ class Admin extends Authenticatable
         return $this->hasMany(StudentActionRequest::class , 'reviewed_by');
     }
 
-    public function handledProfileUnlockRequests()
-    {
-        return $this->hasMany(ProfileUnlockRequest::class, 'handled_by');
-    }
 
     // ──────────────────────────────────────
     // Role helpers

@@ -1,6 +1,6 @@
 @extends($isAjax ?? false ? 'layouts.ajax' : 'layouts.app')
 
-@section('title', 'Theoretical Training')
+@section('title', 'Student Training List')
 
 @section('content')
 @php
@@ -284,7 +284,7 @@
     <!-- Page Header -->
     <div class="page-header">
         <div>
-            <h1 class="page-title">Theoretical Training</h1>
+            <h1 class="page-title">Student Training List</h1>
             <p class="page-subtitle">Track student progress, mark completions, and view passed students</p>
         </div>
     </div>

@@ -32,6 +32,7 @@ class Course extends Model
         'course_type',
         'license_type',
         'hours_required',
+        'lto_base_hours',
     ];
 
     protected function casts(): array
@@ -40,6 +41,7 @@ class Course extends Model
             'price' => 'decimal:2',
             'duration_hours' => 'decimal:1',
             'hours_required' => 'decimal:2',
+            'lto_base_hours' => 'integer',
             'features' => 'array',
             'is_featured' => 'boolean',
         ];

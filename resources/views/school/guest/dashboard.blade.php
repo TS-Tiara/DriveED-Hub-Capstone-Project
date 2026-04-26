@@ -695,8 +695,7 @@
     @php
         $step1Done = true; // Registration is done (they're on this page)
         $step2Done = $hasSubmittedRequest ?? false;
-        $step3Done = $hasUploadedLicense ?? false;
-        $step4Done = ($approvedEnrollment ?? false) ? true : false;
+        $step3Done = ($approvedEnrollment ?? false) ? true : false;
         
         // Determine if license is optional for this student
         $latestRequest = $pendingRequest ?? $approvedEnrollment ?? $rejectedRequest;
@@ -704,18 +703,16 @@
         $isNewDriver = ($latestRequest && $latestRequest->experience_level === 'new_driver') || ($guest && $guest->experience_level === 'new_driver');
         $licenseOptional = $isTheoreticalOnly || $isNewDriver;
 
-        $completedSteps = ($step1Done ? 1 : 0) + ($step2Done ? 1 : 0) + ($step3Done ? 1 : 0) + ($step4Done ? 1 : 0);
-        $progressPercent = round(($completedSteps / 4) * 100);
+        $completedSteps = ($step1Done ? 1 : 0) + ($step2Done ? 1 : 0) + ($step3Done ? 1 : 0);
+        $progressPercent = round(($completedSteps / 3) * 100);
         
-        // Determine current step - Skip 3 if optional and not done
+        // Determine current step
         if (!$step2Done) {
             $currentStep = 2; // Browse & enroll
-        } elseif (!$step3Done && !$licenseOptional) {
-            $currentStep = 3; // Upload license (Required)
-        } elseif (!$step4Done) {
-            $currentStep = 4; // Waiting for approval
+        } elseif (!$step3Done) {
+            $currentStep = 3; // Waiting for approval
         } else {
-            $currentStep = 5; // All done
+            $currentStep = 4; // All done
         }
 
         $pendingEnrollmentStage = null;
@@ -735,7 +732,7 @@
         }
     @endphp
 
-    @if(!$step4Done)
+    @if(!$step3Done)
     <div class="onboarding-section">
         <div class="onboarding-header">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="{{ $primaryColor }}" class="icon-28">
@@ -750,10 +747,7 @@
                 <div class="onboarding-progress-fill progress-{{ $progressPercent }}"></div>
             </div>
             <span class="onboarding-progress-text">
-                {{ $completedSteps }} of 4 complete 
-                @if($licenseOptional && !$step3Done)
-                    <small style="opacity: 0.8; font-weight: normal;">(Step 3 is optional for you)</small>
-                @endif
+                {{ $completedSteps }} of 3 complete 
             </span>
         </div>
 
@@ -837,8 +831,10 @@
                 </div>
             </div>
 
-            <!-- Step 3: Upload License (Optional for TDC, Required for PDC) -->
-            <div class="onboarding-step {{ $step3Done ? 'step-completed' : '' }}">
+
+
+            <!-- Step 4: Get Approved -->
+            <div class="onboarding-step">
                 @if($step3Done)
                     <div class="step-indicator completed">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-18"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
@@ -849,69 +845,14 @@
                     <div class="step-indicator upcoming">3</div>
                 @endif
                 <div class="step-content">
-                    <div class="step-title {{ $step3Done ? 'completed' : ($currentStep == 3 ? 'current' : 'upcoming') }}">
-                        Upload Student Driver's License 
-                        @if($licenseOptional)
-                            <span style="font-size: 0.75em; opacity: 0.7; font-weight: normal;">(Optional)</span>
-                        @endif
-                    </div>
+                    <div class="step-title {{ $step3Done ? 'completed' : ($currentStep == 3 ? 'current' : 'upcoming') }}">Get Approved & Start Learning</div>
                     <div class="step-description">
-                        @if($guest->hasVerifiedLicense())
-                            Your license has been verified. You're eligible for PDC courses!
-                        @elseif($guest->isLicensePending())
-                            Your license is being reviewed by an administrator.
-                        @elseif($guest->isLicenseRejected())
-                            Your license was rejected. Please re-upload a valid license.
-                        @else
-                            @if($licenseOptional)
-                                Optional for New Drivers or TDC students. You can do this later.
-                            @else
-                                Required for Practical Driving Courses (PDC).
-                            @endif
-                        @endif
-                    </div>
-                </div>
-                <div class="step-action">
-                    @if($guest->hasVerifiedLicense())
-                        <span class="step-badge done">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-12"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
-                            Verified
-                        </span>
-                    @elseif($guest->isLicensePending())
-                        <span class="step-badge waiting">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-12"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            Pending
-                        </span>
-                    @elseif($guest->isLicenseRejected())
-                        <span class="step-badge rejected-badge">Rejected</span>
-                    @elseif($currentStep == 3 || ($licenseOptional && !$step3Done))
-                        <a href="#license-section" class="btn-step outline">Upload License</a>
-                    @endif
-                </div>
-            </div>
-
-            <!-- Step 4: Get Approved -->
-            <div class="onboarding-step">
-                @if($step4Done)
-                    <div class="step-indicator completed">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-18"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
-                    </div>
-                @elseif($currentStep == 4)
-                    <div class="step-indicator current">4</div>
-                @else
-                    <div class="step-indicator upcoming">4</div>
-                @endif
-                <div class="step-content">
-                    <div class="step-title {{ $step4Done ? 'completed' : ($currentStep == 4 ? 'current' : 'upcoming') }}">Get Approved & Start Learning</div>
-                    <div class="step-description">
-                        @if($currentStep == 4 && $pendingRequest)
-                            @if($pendingEnrollmentStage === 'payment_needed')
-                                Complete your payment details first so the school can start reviewing your enrollment.
-                            @elseif($pendingEnrollmentStage === 'payment_update_required')
-                                Your payment submission needs correction before your enrollment can move to approval.
-                            @elseif($pendingEnrollmentStage === 'payment_under_review')
+                        @if ($pendingRequest && $currentStep == 3)
+                            @if ($pendingEnrollmentStage === 'payment_needed' || $pendingEnrollmentStage === 'payment_update_required')
+                                Please complete your payment submission to move to the final approval stage.
+                            @elseif ($pendingEnrollmentStage === 'payment_under_review')
                                 Your payment is being reviewed. Once verified, your enrollment moves to final approval.
-                            @elseif($pendingEnrollmentStage === 'awaiting_approval')
+                            @elseif ($pendingEnrollmentStage === 'awaiting_approval')
                                 Payment verified. Your enrollment is now waiting for final school approval.
                             @else
                                 An admin is reviewing your request. You'll become a full student once approved!
@@ -922,16 +863,16 @@
                     </div>
                 </div>
                 <div class="step-action">
-                    @if($pendingRequest && $currentStep == 4)
-                        @if($pendingEnrollmentStage === 'payment_needed')
+                    @if ($pendingRequest && $currentStep == 3)
+                        @if ($pendingEnrollmentStage === 'payment_needed')
                              <span class="step-badge waiting" style="background: #fef3c7; color: #92400e; border: 1px solid #fde68a;">
                                 Action Needed: Payment
                             </span>
-                        @elseif($pendingEnrollmentStage === 'payment_update_required')
+                        @elseif ($pendingEnrollmentStage === 'payment_update_required')
                             <span class="step-badge rejected-badge">
                                 Payment Update Required
                             </span>
-                        @elseif($pendingEnrollmentStage === 'payment_under_review')
+                        @elseif ($pendingEnrollmentStage === 'payment_under_review')
                             <span class="step-badge waiting">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-12"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                 Payment Under Review
@@ -977,111 +918,7 @@
     </div>
     @endif
     
-    <!-- Student Driver's License Section -->
-    <div class="license-section" id="license-section">
-        <h3>
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-24 icon-inline-leading">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0" />
-            </svg>
-            Student Driver's License
-        </h3>
-        <p>A verified student driver's license is required to enroll in practical (behind-the-wheel) courses.</p>
 
-        @if($guest->hasVerifiedLicense())
-            <div class="license-status license-verified">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-28 icon-shrink">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
-                <div>
-                    <strong>License Verified</strong>
-                    <div class="license-status-note">Your student driver's license has been verified. You are eligible for practical courses.</div>
-                </div>
-            </div>
-        @elseif($guest->isLicensePending())
-            <div class="license-status license-pending" style="border: 2px solid #f59e0b; animation: pulse 2s infinite;">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-28 icon-shrink">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <div>
-                    <strong>Verification in Progress</strong>
-                    <div class="license-status-note">Your student driver's license has been successfully uploaded and is currently being reviewed by our administrators. You will be notified once verified!</div>
-                </div>
-            </div>
-            
-            <style>
-                @keyframes pulse {
-                    0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
-                    70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
-                    100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
-                }
-            </style>
-        @elseif($guest->hasDraftLicense())
-            <div class="license-status license-draft" style="background: #e0e7ff; color: #3730a3; border-left: 4px solid #6366f1;">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-28 icon-shrink">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-                </svg>
-                <div>
-                    <strong>License Saved as Draft</strong>
-                    <div class="license-status-note">Your license is successfully uploaded and safely saved as a draft. It will automatically be submitted for admin review once you request a Practical Driving Course.</div>
-                </div>
-            </div>
-            <div class="license-upload-form">
-                <form method="POST" action="{{ route('schools.guest.uploadLicense', $school) }}" enctype="multipart/form-data">
-                    @csrf
-                    <div class="file-input-wrapper">
-                        <input type="file" name="student_license" accept=".pdf,.jpg,.jpeg,.png" required>
-                        <button type="submit" class="btn-upload">Re-upload License (Optional)</button>
-                    </div>
-                </form>
-            </div>
-        @elseif($guest->isLicenseRejected())
-            <div class="license-status license-rejected">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-28 icon-shrink">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
-                <div>
-                    <strong>License Rejected</strong>
-                    <div class="license-status-note">Your license submission was not approved. Please re-upload a valid license.</div>
-                </div>
-            </div>
-            @if($guest->student_license_rejection_reason)
-                <div class="rejection-reason">
-                    <strong>Reason for rejection:</strong>
-                    {{ $guest->student_license_rejection_reason }}
-                </div>
-            @endif
-            <div class="license-upload-form">
-                <form method="POST" action="{{ route('schools.guest.uploadLicense', $school) }}" enctype="multipart/form-data">
-                    @csrf
-                    <div class="file-input-wrapper">
-                        <input type="file" name="student_license" accept=".pdf,.jpg,.jpeg,.png" required>
-                        <button type="submit" class="btn-upload">Re-upload License</button>
-                    </div>
-                    <div class="license-file-info">Accepted formats: PDF, JPG, PNG (max 5MB)</div>
-                </form>
-            </div>
-        @else
-            <div class="license-status license-none">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-28 icon-shrink">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                </svg>
-                <div>
-                    <strong>No License Uploaded</strong>
-                    <div class="license-status-note">Upload your student driver's license to become eligible for practical courses.</div>
-                </div>
-            </div>
-            <div class="license-upload-form">
-                <form method="POST" action="{{ route('schools.guest.uploadLicense', $school) }}" enctype="multipart/form-data">
-                    @csrf
-                    <div class="file-input-wrapper">
-                        <input type="file" name="student_license" accept=".pdf,.jpg,.jpeg,.png" required>
-                        <button type="submit" class="btn-upload">Upload License</button>
-                    </div>
-                    <div class="license-file-info">Accepted formats: PDF, JPG, PNG (max 5MB)</div>
-                </form>
-            </div>
-        @endif
-    </div>
 
     <!-- Browse Courses Section -->
     <div class="section">

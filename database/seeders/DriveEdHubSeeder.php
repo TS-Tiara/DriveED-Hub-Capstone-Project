@@ -145,7 +145,7 @@ class DriveEdHubSeeder extends Seeder
         }
 
         // Students
-        $students = $this->createDriveEdHubStudents($school, $branches, $hashedPassword);
+        $students = $this->createDriveEdHubStudents($school, $branches, $courses, $hashedPassword);
 
         // Guests (Base records only, enrollment logic separated later or handled in createDriveEdHubGuests)
         $admins_arr = [$admin, $admin2];
@@ -211,7 +211,7 @@ class DriveEdHubSeeder extends Seeder
         return $courses;
     }
 
-    private function createDriveEdHubStudents(School $school, array $branches, string $password): array
+    private function createDriveEdHubStudents(School $school, array $branches, array $courses, string $password): array
     {
         $data = [
             ['name' => 'Juan Miguel Dela Cruz', 'email' => 'student1@driveedhub.test', 'level' => 'new_driver'],
@@ -248,6 +248,27 @@ class DriveEdHubSeeder extends Seeder
             $student->last_verification_attempt_at = null;
             $student->save();
             $students[] = $student;
+
+            // Ensure every student has an approved/paid enrollment request so they aren't "ghosts"
+            $course = $courses[$i % count($courses)];
+            $package = \App\Models\CoursePackage::where('course_id', $course->id)->first();
+            
+            \App\Models\EnrollmentRequest::updateOrCreate(
+                ['school_id' => $school->id, 'learner_id' => $student->id, 'course_id' => $course->id],
+                [
+                    'status' => 'approved',
+                    'payment_status' => 'paid',
+                    'experience_level' => $s['level'],
+                    'requested_license_type' => 'non_professional',
+                    'branch_id' => $student->branch_id,
+                    'price' => $package ? $package->price : 0,
+                    'payment_method' => 'cash',
+                    'payment_reference' => 'DH-SEED-' . strtoupper(\Illuminate\Support\Str::random(8)),
+                    'approved_by' => 1, // System/Admin
+                    'approved_at' => now()->subDays(10),
+                    'enrolled_at' => now()->subDays(10),
+                ]
+            );
         }
         return $students;
     }
@@ -262,11 +283,11 @@ class DriveEdHubSeeder extends Seeder
             'guest2@driveedhub.test' => ['name' => 'Mark Anthony Dizon', 'license' => 'verified', 'exp' => 'experienced', 'course_idx' => 2, 'status' => 'approved', 'pay' => 'paid', 'cancellation' => true],
             'guest3@driveedhub.test' => ['name' => 'Jamie Lyn Pascual', 'license' => 'none', 'exp' => 'new_driver'],
             'guest4@driveedhub.test' => ['name' => 'Carlo Miguel Bautista', 'license' => 'pending', 'exp' => 'new_driver', 'course_idx' => 1, 'status' => 'pending', 'pay' => 'pending'],
-            'guest5@driveedhub.test' => ['name' => 'Angelica Mae Soriano', 'license' => 'none', 'exp' => 'new_driver', 'course_idx' => 2, 'status' => 'rejected', 'pay' => 'pending'],
+            'guest5@driveedhub.test' => ['name' => 'Angelica Mae Soriano', 'license' => 'none', 'exp' => 'new_driver', 'course_idx' => 2, 'status' => 'rejected', 'pay' => 'cancelled'],
             'guest6@driveedhub.test' => ['name' => 'Miguel Francisco Ramos', 'license' => 'verified', 'exp' => 'new_driver', 'course_idx' => 0, 'status' => 'approved', 'pay' => 'paid'],
             'guest7@driveedhub.test' => ['name' => 'Isabella Rose Cruz', 'license' => 'none', 'exp' => 'new_driver'],
             'guest8@driveedhub.test' => ['name' => 'Diego Fernandez', 'license' => 'pending', 'exp' => 'new_driver', 'course_idx' => 1, 'status' => 'pending', 'pay' => 'pending'],
-            'guest9@driveedhub.test' => ['name' => 'Luna Martinez', 'license' => 'none', 'exp' => 'new_driver', 'course_idx' => 0, 'status' => 'rejected', 'pay' => 'pending'],
+            'guest9@driveedhub.test' => ['name' => 'Luna Martinez', 'license' => 'none', 'exp' => 'new_driver', 'course_idx' => 0, 'status' => 'rejected', 'pay' => 'cancelled'],
             'guest10@driveedhub.test' => ['name' => 'Sofia Torres', 'license' => 'verified', 'exp' => 'experienced', 'course_idx' => 2, 'status' => 'approved', 'pay' => 'paid'],
         ];
 
@@ -291,6 +312,12 @@ class DriveEdHubSeeder extends Seeder
             $g->verification_attempts = 0;
             $g->last_verification_attempt_at = null;
             $g->save();
+
+            // Promote to student if approved
+            if (isset($data['status']) && $data['status'] === 'approved') {
+                $g->update(['role' => 'student']);
+            }
+
             $guests[] = $g;
 
             // If we're only creating users, skip the interaction logic
@@ -328,6 +355,25 @@ class DriveEdHubSeeder extends Seeder
 
                 if ($data['status'] === 'rejected') {
                     $ed['remarks'] = 'Incomplete documentation. Please re-submit with valid student license.';
+                    $ed['rejected_at'] = now()->subDays(2);
+                    $ed['payment_status'] = 'cancelled';
+                    
+                    // Sync learner license status for rejected enrollments
+                    $g->update([
+                        'student_license_status' => 'rejected',
+                        'student_license_rejection_reason' => $ed['remarks']
+                    ]);
+                }
+
+                if ($data['status'] === 'cancelled' || ($data['cancellation'] ?? false)) {
+                    $ed['status'] = 'cancelled';
+                    $ed['cancelled_at'] = now()->subDays(1);
+                    $ed['payment_status'] = 'cancelled';
+                    
+                    // Sync learner license status for cancelled enrollments
+                    if ($g->student_license_status === 'pending') {
+                        $g->update(['student_license_status' => 'none']);
+                    }
                 }
 
                 \App\Models\EnrollmentRequest::updateOrCreate(
@@ -463,63 +509,167 @@ class DriveEdHubSeeder extends Seeder
         $times = [
             ['08:00:00', '10:00:00'],
             ['10:00:00', '12:00:00'],
-            ['13:00:00', '15:00:00'], 
+            ['13:00:00', '15:00:00'],
             ['15:00:00', '17:00:00'],
         ];
 
         // Start today, end when we process Friday
-        $daysOffset = 0;
+        $now = now();
+        $daysOffset = -3; // Start 3 days ago to show history
         $branchIdx = 0;
+        $allCreatedSlots = [];
 
-        while (true) {
-            $dateObj = now()->addDays($daysOffset);
-            
-            // Skip Sundays if applicable, though we stop at Friday anyway
+        for ($d = 0; $d < 8; $d++) { // 3 past + 5 future = 8 days
+            $dateObj = $now->copy()->addDays($daysOffset);
+
+            // Skip Sundays if applicable
             if ($dateObj->dayOfWeek == 0) {
                 $daysOffset++;
                 continue;
             }
 
             $date = $dateObj->format('Y-m-d');
-            
+
             // Create slots across all courses
             foreach ($courses as $i => $course) {
                 // Determine 2 to 4 slots per course per day
-                $slotCount = rand(2, 4); 
-                $selectedTimes = (array) array_rand($times, $slotCount);
+                $slotCount = rand(2, 4);
+                $timeIndices = (array) array_rand($times, $slotCount);
 
-                foreach ($selectedTimes as $idx => $timeIndex) {
+                foreach ($timeIndices as $idx => $timeIndex) {
                     $branch = $branches[$branchIdx % count($branches)];
                     $branchIdx++;
 
+                    // Determine Session Type (No Guessing)
+                    $resolvedSessionType = $course->course_type;
+                    if ($course->course_type === 'combo') {
+                        // For combo, alternate based on index
+                        $resolvedSessionType = ($idx % 2 === 0) ? 'theoretical' : 'practical';
+                    }
+
+                    $isTheoretical = $resolvedSessionType === 'theoretical';
+
                     $timeSlot = \App\Models\TimeSlot::create([
-                        'school_id' => $school->id, 
-                        'branch_id' => $branch->id, 
-                        'course_id' => $course->id, 
-                        'date' => $date, 
-                        'start_time' => $times[$timeIndex][0], 
-                        'end_time' => $times[$timeIndex][1], 
-                        'status' => 'open', 
+                        'school_id' => $school->id,
+                        'branch_id' => $branch->id,
+                        'course_id' => $course->id,
+                        'session_type' => $resolvedSessionType, // Explicitly set to avoid guessing
+                        'date' => $date,
+                        'start_time' => $times[$timeIndex][0],
+                        'end_time' => $times[$timeIndex][1],
+                        'status' => 'open',
                         'max_instructors' => 1,
-                        'max_students' => rand(2, 5),
+                        'max_students' => $isTheoretical ? rand(15, 25) : 1, // Classroom vs 1-on-1
                     ]);
 
-                    // Assign an instructor to about 75% of slots to ensure visibility for students
-                    if (($i + $idx) % 4 !== 0) {
+                    // Assign an instructor to about 80% of slots
+                    if (($i + $idx) % 5 !== 0) {
                         $instructor = $instructors[($i + $idx) % count($instructors)];
                         $timeSlot->instructors()->attach($instructor->id, [
                             'school_id' => $school->id,
                             'assignment_type' => 'admin_assigned',
                         ]);
+                        $allCreatedSlots[] = $timeSlot;
                     }
                 }
             }
 
-            // If the day we just processed was Friday (5), we stop.
-            if ($dateObj->dayOfWeek == 5) {
-                break;
-            }
+            if ($dateObj->dayOfWeek == 5) break;
             $daysOffset++;
+        }
+
+        // Now create some bookings to show the "Who is assigned to who" feature
+        $this->createSampleBookings($school, $allCreatedSlots);
+    }
+
+    private function createSampleBookings(School $school, array $slots): void
+    {
+        $this->command->info('   Creating distributed sample bookings (Done, Verified, Cancelled, Scheduled)...');
+        
+        $students = \App\Models\Student::where('school_id', $school->id)
+            ->where('role', 'student')
+            ->limit(15)
+            ->get();
+
+        if ($students->isEmpty()) return;
+
+        $studentIdx = 0;
+        $statuses = [
+            'done',       // Awaiting Verification
+            'completed',  // Verified
+            'scheduled',  // Future
+            'cancelled',  // Flagged
+            'no-show',    // Flagged
+            'scheduled',  // Future
+            'done',       // Awaiting Verification
+        ];
+
+        foreach ($slots as $idx => $slot) {
+            // Only book for slots that have an instructor
+            $instructor = $slot->instructors->first();
+            if (!$instructor) continue;
+
+            // Determine if the slot is in the past or future
+            $slotDate = \Carbon\Carbon::parse($slot->date);
+            $isPast = $slotDate->isPast();
+
+            // Determine how many students to book
+            $numToBook = $slot->course->course_type === 'theoretical' ? rand(3, 5) : 1;
+
+            for ($i = 0; $i < $numToBook; $i++) {
+                $student = $students[$studentIdx % $students->count()];
+                $studentIdx++;
+
+                // Logic-based status selection
+                if ($isPast) {
+                    // Past slots are either Completed (Verified), Done (Awaiting), No-Show, or Cancelled
+                    $pastRoll = rand(1, 100);
+                    if ($pastRoll <= 50) $status = 'completed';      // 50% Verified
+                    elseif ($pastRoll <= 75) $status = 'done';        // 25% Awaiting Verification
+                    elseif ($pastRoll <= 90) $status = 'no-show';     // 15% No-Show
+                    else $status = 'cancelled';                       // 10% Voided
+                } else {
+                    // Future slots are always Scheduled
+                    $status = 'scheduled';
+                }
+
+                // Find enrollment request for this student/course
+                $enrollmentRequest = \App\Models\EnrollmentRequest::where('learner_id', $student->id)
+                    ->where('course_id', $slot->course_id)
+                    ->first();
+
+                $booking = \App\Models\Booking::create([
+                    'school_id' => $school->id,
+                    'branch_id' => $slot->branch_id,
+                    'student_id' => $student->id,
+                    'instructor_id' => $instructor->id,
+                    'course_id' => $slot->course_id,
+                    'enrollment_request_id' => $enrollmentRequest ? $enrollmentRequest->id : null,
+                    'time_slot_id' => $slot->id,
+                    'booking_date' => $slot->date,
+                    'scheduled_at' => \Carbon\Carbon::parse(($slot->date instanceof \Carbon\Carbon ? $slot->date->toDateString() : $slot->date) . ' ' . $slot->start_time),
+                    'status' => $status,
+                    'attendance_status' => in_array($status, ['done', 'completed']) ? 'present' : ($status === 'no-show' ? 'absent' : 'pending'),
+                    'payment_status' => 'paid',
+                ]);
+
+                // Create SessionCompletion for 'completed' bookings to populate training logs and hours
+                if ($status === 'completed' && $enrollmentRequest) {
+                    \App\Models\SessionCompletion::create([
+                        'school_id' => $school->id,
+                        'enrollment_id' => $enrollmentRequest->id,
+                        'instructor_id' => $instructor->id,
+                        'session_type' => $slot->session_type,
+                        'session_date' => $slot->date,
+                        'session_time' => $slot->start_time . ' - ' . $slot->end_time,
+                        'hours_completed' => 2.0, 
+                        'notes' => 'Session verified and completed.',
+                    ]);
+                }
+            }
+            
+            // Limit to a reasonable amount of data
+            if ($studentIdx > 60) break;
         }
     }
 }
