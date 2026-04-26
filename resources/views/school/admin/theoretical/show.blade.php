@@ -24,6 +24,9 @@
 
     // Chronological Session History (TDC + PDC)
     $allSessions = $enrollment->sessionCompletions->sortByDesc('session_date');
+
+    // LTO TDC Compliance Logic
+    $tdcLtoProgress = \App\Support\EnrollmentValidator::getTdcProgress($enrollment);
 @endphp
 
 @include('school.admin.partials.admin-styles')
@@ -371,6 +374,16 @@
         box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
     }
 
+    /* Disabled State - Gray out */
+    .btn:disabled, .btn-primary:disabled, .btn-success:disabled {
+        background: #e5e7eb !important;
+        border-color: #d1d5db !important;
+        color: #9ca3af !important;
+        cursor: not-allowed !important;
+        transform: none !important;
+        box-shadow: none !important;
+    }
+
     /* Empty state */
     .empty-text {
         text-align: center;
@@ -465,7 +478,7 @@
                 </div>
                 <div class="info-row">
                     <span class="info-label">Enrolled:</span>
-                    <span class="info-value">{{ $enrollment->enrolled_at->format('M d, Y') }}</span>
+                    <span class="info-value">{{ $enrollment->enrolled_at?->format('M d, Y') ?? $enrollment->created_at->format('M d, Y') }}</span>
                 </div>
             </div>
 
@@ -530,14 +543,53 @@
                                 @endif
                             </div>
 
-                            @if(!$enrollment->student->has_passed_theoretical)
+                             @if(!$enrollment->student->has_passed_theoretical)
+                                <div style="margin-bottom: 12px; padding: 15px; background: {{ $tdcLtoProgress['is_compliant'] ? '#f0fdf4' : '#fffbeb' }}; border: 1px solid {{ $tdcLtoProgress['is_compliant'] ? '#a7f3d0' : '#fde68a' }}; border-radius: 8px; font-size: 0.85rem;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                        <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; color: {{ $tdcLtoProgress['is_compliant'] ? '#065f46' : '#92400e' }};">
+                                            <i class="bi bi-shield-check"></i>
+                                            LTO Compliance Check
+                                        </div>
+                                        <span class="badge-custom {{ $tdcLtoProgress['is_compliant'] ? 'badge-success' : 'badge-secondary' }}" style="padding: 4px 8px; font-size: 0.7rem;">
+                                            {{ $tdcLtoProgress['is_compliant'] ? 'COMPLIANT' : 'NON-COMPLIANT' }}
+                                        </span>
+                                    </div>
+                                    
+                                    <div style="display: flex; flex-direction: column; gap: 6px; color: #4b5563;">
+                                        <div style="display: flex; justify-content: space-between;">
+                                            <span>Cumulative Hours (min 15):</span>
+                                            <span style="font-weight: 600; color: {{ $tdcLtoProgress['hours'] >= 15 ? '#059669' : '#dc2626' }};">
+                                                {{ round($tdcLtoProgress['hours'], 1) }} / 15.0
+                                            </span>
+                                        </div>
+                                        <div style="display: flex; justify-content: space-between;">
+                                            <span>Unique Sessions (min 3 days):</span>
+                                            <span style="font-weight: 600; color: {{ $tdcLtoProgress['unique_dates_count'] >= 3 ? '#059669' : '#dc2626' }};">
+                                                {{ $tdcLtoProgress['unique_dates_count'] }} / 3
+                                            </span>
+                                        </div>
+                                        @if($tdcLtoProgress['unique_dates_count'] > 0)
+                                            <div style="font-size: 0.75rem; color: #6b7280; padding-top: 5px; border-top: 1px dashed #d1d5db; margin-top: 2px;">
+                                                Dates: {{ $tdcLtoProgress['unique_dates']->map(fn($d) => \Carbon\Carbon::parse($d)->format('M d'))->join(', ') }}
+                                            </div>
+                                        @endif
+                                    </div>
+
+                                    @if(!$tdcLtoProgress['is_compliant'])
+                                        <div style="margin-top: 10px; font-size: 0.8rem; color: #b45309; font-style: italic;">
+                                            <i class="bi bi-exclamation-triangle"></i>
+                                            {{ $validation['message'] ?? 'Student must meet all LTO requirements before graduation.' }}
+                                        </div>
+                                    @endif
+                                </div>
+
                                 <form action="{{ school_route('admin.theoretical.markAsPassed') }}" method="POST">
                                     @csrf
                                     <input type="hidden" name="enrollment_id" value="{{ $enrollment->id }}">
                                     <div class="form-group" style="margin-bottom: 10px;">
-                                        <textarea name="notes" class="form-control" rows="2" placeholder="Theoretical completion notes..." style="font-size: 0.85rem;"></textarea>
+                                        <textarea name="notes" class="form-control" rows="2" placeholder="Theoretical completion notes..." style="font-size: 0.85rem;" {{ !$tdcLtoProgress['is_compliant'] ? 'disabled' : '' }}></textarea>
                                     </div>
-                                    <button type="submit" class="btn btn-primary w-100" style="font-weight: 600;" {{ $tdcProgress < 100 ? 'disabled' : '' }} onclick="return confirm('Mark student as passed TDC? This will officially unlock PDC for them.')">
+                                    <button type="submit" class="btn btn-primary w-100" style="font-weight: 600;" {{ !$tdcLtoProgress['is_compliant'] ? 'disabled' : '' }} onclick="return confirm('Mark student as passed TDC? This will officially unlock PDC for them.')">
                                         Mark TDC as Passed
                                     </button>
                                 </form>
@@ -559,6 +611,18 @@
                             </div>
 
                             @if($enrollment->student->has_passed_theoretical)
+                                <div style="margin-bottom: 12px; padding: 12px; background: {{ $pdcProgress >= 100 ? '#f0fdf4' : '#fffbeb' }}; border: 1px solid {{ $pdcProgress >= 100 ? '#a7f3d0' : '#fde68a' }}; border-radius: 8px; font-size: 0.85rem; color: {{ $pdcProgress >= 100 ? '#065f46' : '#92400e' }};">
+                                    <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; margin-bottom: 4px;">
+                                        <i class="bi bi-info-circle-fill"></i>
+                                        Instructions
+                                    </div>
+                                    @if($pdcProgress >= 100)
+                                        The student has finished their driving hours. You can now issue their graduation certificate.
+                                    @else
+                                        Student must complete all <strong>{{ $pdcLimit }} hours</strong> of driving. Currently at <strong>{{ $pdcUsed }} hours</strong>.
+                                    @endif
+                                </div>
+
                                 <form action="{{ school_route('admin.theoretical.complete', $enrollment->id) }}" method="POST">
                                     @csrf
                                     <button type="submit" class="btn btn-success w-100" style="font-weight: 600; background: #10b981; border: none;" {{ $pdcProgress < 100 ? 'disabled' : '' }} onclick="return confirm('Graduate student? This will mark the entire course as COMPLETED.')">

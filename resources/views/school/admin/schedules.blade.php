@@ -1871,7 +1871,19 @@
                                                         <span style="font-size: 0.7rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; background: {{ $sessionType === 'practical' ? '#eff6ff' : '#f0fdf4' }}; color: {{ $sessionType === 'practical' ? '#2563eb' : '#166534' }}; border: 1px solid {{ $sessionType === 'practical' ? '#bfdbfe' : '#bbf7d0' }}; text-transform: uppercase;">
                                                             {{ $sessionType === 'practical' ? 'PDC' : 'TDC' }}
                                                         </span>
-                                                        <span style="font-size: 0.7rem; color: #94a3b8; font-weight: 500; margin-left: 8px;">{{ ucfirst($timeslot->status) }}</span>
+                                                        @php
+                                                            $statusColors = [
+                                                                'open' => ['bg' => '#f0f9ff', 'color' => '#0369a1', 'border' => '#bae6fd'],
+                                                                'closed' => ['bg' => '#f1f5f9', 'color' => '#475569', 'border' => '#e2e8f0'],
+                                                                'cancelled' => ['bg' => '#fee2e2', 'color' => '#ef4444', 'border' => '#fecaca'],
+                                                                'completed' => ['bg' => '#f0fdf4', 'color' => '#166534', 'border' => '#bbf7d0'],
+                                                            ];
+                                                            $currStatus = strtolower($timeslot->status);
+                                                            $colors = $statusColors[$currStatus] ?? ['bg' => '#f8fafc', 'color' => '#64748b', 'border' => '#e2e8f0'];
+                                                        @endphp
+                                                        <span style="font-size: 0.7rem; color: {{ $colors['color'] }}; background: {{ $colors['bg'] }}; border: 1px solid {{ $colors['border'] }}; padding: 2px 8px; border-radius: 4px; font-weight: 800; margin-left: 8px; text-transform: uppercase;">
+                                                            {{ $timeslot->status }}
+                                                        </span>
                                                     </div>
                                                 </td>
                                                 <td>
@@ -1970,9 +1982,10 @@
                 <h5><i class="bi bi-calendar-plus"></i> Create Schedule</h5>
                 <button type="button" class="btn-close" onclick="closeCreateModal()">&times;</button>
             </div>
-            <form method="POST" action="{{ route('schools.admin.schedules.create', $school) }}">
+            <form id="createScheduleForm" method="POST" action="{{ route('schools.admin.schedules.create', $school) }}">
                 @csrf
                 <div class="modal-body">
+                    <div id="createScheduleErrors" class="alert alert-danger" style="display: none; margin-bottom: 20px;"></div>
                     @if($errors->any() && (old('course_id') || old('date') || old('start_time')))
                         <div class="modal-error-summary">
                             <strong>Please fix the errors below:</strong>
@@ -2275,8 +2288,11 @@
             <form method="POST" id="editScheduleForm">
                 @csrf
                 @method('PUT')
-                <div class="modal-body" id="editModalContent">
-                    <!-- Content will be populated by JavaScript -->
+                <div class="modal-body">
+                    <div id="editScheduleErrors" class="alert alert-danger" style="display: none; margin-bottom: 20px;"></div>
+                    <div id="editModalContent">
+                        <!-- Content will be populated by JavaScript -->
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
@@ -2610,6 +2626,83 @@
             if (dayModal && dayModal.style.display === 'flex') {
                 window.closeDayModal();
             }
+        });
+
+        // AJAX Form Handling
+        async function handleScheduleSubmit(formId, errorContainerId, successMessage) {
+            const form = document.getElementById(formId);
+            const errorContainer = document.getElementById(errorContainerId);
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalBtnHtml = submitBtn.innerHTML;
+
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                // Reset errors
+                errorContainer.style.display = 'none';
+                errorContainer.innerHTML = '';
+                
+                // Loading state
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+
+                try {
+                    const formData = new FormData(form);
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        if (typeof Toast !== 'undefined' && Toast.success) {
+                            Toast.success(data.message || successMessage);
+                        } else if (typeof showToast !== 'undefined') {
+                            showToast('success', data.message || successMessage);
+                        }
+                        
+                        // Wait a bit and reload to show changes
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    } else if (response.status === 422) {
+                        // Validation errors
+                        errorContainer.style.display = 'block';
+                        let errorHtml = '<strong>Please fix the following errors:</strong><ul style="margin-top: 10px; padding-left: 20px;">';
+                        for (const field in data.errors) {
+                            data.errors[field].forEach(err => {
+                                errorHtml += `<li>${err}</li>`;
+                            });
+                        }
+                        errorHtml += '</ul>';
+                        errorContainer.innerHTML = errorHtml;
+                        
+                        // Scroll modal to top to show errors
+                        const modalContent = form.closest('.modal-content');
+                        if (modalContent) modalContent.scrollTop = 0;
+                    } else {
+                        throw new Error(data.message || 'An unexpected error occurred.');
+                    }
+                } catch (error) {
+                    console.error('Submission error:', error);
+                    errorContainer.style.display = 'block';
+                    errorContainer.innerHTML = `<strong>Error:</strong> ${error.message}`;
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnHtml;
+                }
+            });
+        }
+
+        // Initialize AJAX handlers
+        document.addEventListener('DOMContentLoaded', function() {
+            handleScheduleSubmit('createScheduleForm', 'createScheduleErrors', 'Schedule created successfully!');
+            handleScheduleSubmit('editScheduleForm', 'editScheduleErrors', 'Schedule updated successfully!');
         });
 
         // Collapsible Date Sections
@@ -3050,20 +3143,45 @@
                 title: 'Delete Schedule',
                 message: 'Are you sure you want to delete this schedule? This action cannot be undone.',
                 confirmText: 'Yes, Delete',
-                onConfirm: () => {
-                    document.getElementById('deleteScheduleForm' + scheduleId).submit();
+                onConfirm: async () => {
+                    const form = document.getElementById('deleteScheduleForm' + scheduleId);
+                    try {
+                        const response = await fetch(form.action, {
+                            method: 'POST',
+                            body: new FormData(form),
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                            }
+                        });
+
+                        const data = await response.json();
+
+                        if (response.ok) {
+                            if (typeof Toast !== 'undefined' && Toast.success) {
+                                Toast.success(data.message || 'Schedule deleted successfully.');
+                            } else if (typeof showToast !== 'undefined') {
+                                showToast('success', data.message || 'Schedule deleted successfully.');
+                            }
+                            
+                            // Reload to refresh the list
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1000);
+                        } else {
+                            throw new Error(data.message || 'Failed to delete schedule.');
+                        }
+                    } catch (error) {
+                        console.error('Delete error:', error);
+                        if (typeof Toast !== 'undefined' && Toast.error) {
+                            Toast.error(error.message);
+                        } else if (typeof showToast !== 'undefined') {
+                            showToast('error', error.message);
+                        }
+                    }
                 }
             });
         };
-
-        (function restoreCreateModalAfterValidationError() {
-            const hasValidationErrors = @json($errors->any());
-            const hasOldInput = @json(old('course_id') || old('date') || old('start_time'));
-
-            if (hasValidationErrors && hasOldInput) {
-                window.openCreateModal();
-            }
-        })();
 
     </script>
 

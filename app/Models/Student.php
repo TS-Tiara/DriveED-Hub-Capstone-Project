@@ -43,6 +43,7 @@ class Student extends Authenticatable
         'status',
         'is_active',
         'must_reset_password',
+        'role',
     ];
 
     protected $hidden = [

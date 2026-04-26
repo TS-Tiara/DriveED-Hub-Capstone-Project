@@ -810,6 +810,7 @@
                     <span class="info-label">TDC Completion:</span>
                     <span class="info-value">{{ ($student->has_passed_theoretical ?? false) ? 'Completed' : 'Not Yet Completed' }}</span>
                 </div>
+
             </div>
             
             <div class="profile-buttons" id="profileButtons">

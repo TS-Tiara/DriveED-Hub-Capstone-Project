@@ -348,7 +348,7 @@
                 <!-- All Sessions (Full View) -->
                 <div class="stat-card stat-card-clickable {{ ($activeFilter ?? 'all') === 'all' ? 'stat-card-active' : '' }}" id="card-all"
                     style="border-left: 5px solid #6366f1; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); cursor: pointer;"
-                    onclick="switchTab('history')">
+                    onclick="filterBookings('all')">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                         <div>
                             <div style="color: #6b7280; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">All Sessions</div>
@@ -360,8 +360,9 @@
                         </div>
                     </div>
                 </div>
+
                 <!-- Awaiting Verification (Priority Focus) -->
-                <div class="stat-card stat-card-clickable {{ ($activeFilter ?? 'all') === 'done' ? 'stat-card-active' : '' }}" id="card-done"
+                <div class="stat-card stat-card-clickable {{ in_array($activeFilter, ['done', 'no-show', 'no_show']) ? 'stat-card-active' : '' }}" id="card-done"
                     style="border-left: 5px solid #f59e0b; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); cursor: pointer;"
                     onclick="filterBookings('done')">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
@@ -371,7 +372,7 @@
                                 Awaiting Verification</div>
                             <div style="font-size: 2rem; font-weight: 700; color: #1f2937;">{{ $awaitingVerificationCount }}
                             </div>
-                            <div style="color: #f59e0b; font-size: 0.8rem; margin-top: 5px;">Marked as Done by Instructor</div>
+                            <div style="color: #f59e0b; font-size: 0.8rem; margin-top: 5px;">Completed or No-Show Logs</div>
                         </div>
                         <div
                             style="background: rgba(245, 158, 11, 0.1); color: #f59e0b; width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
@@ -383,13 +384,13 @@
                 <!-- Future Schedules (Scheduled State) -->
                 <div class="stat-card stat-card-clickable {{ ($activeFilter ?? 'all') === 'scheduled' ? 'stat-card-active' : '' }}"
                     style="border-left: 5px solid #6366f1; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); cursor: pointer;"
-                    onclick="switchTab('history')">
+                    onclick="filterBookings('scheduled')">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                         <div>
                             <div
                                 style="color: #6b7280; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">
                                 Future Schedules</div>
-                            <div style="font-size: 2rem; font-weight: 700; color: #1f2937;">{{ $allSessionsCount - ($awaitingVerificationCount + $verifiedSessionsCount + $flaggedIssuesCount + $pendingRequestsCount) }}</div>
+                            <div style="font-size: 2rem; font-weight: 700; color: #1f2937;">{{ $allSessionsCount - ($awaitingVerificationCount + $verifiedSessionsCount + $flaggedIssuesCount) }}</div>
                             <div style="color: #6366f1; font-size: 0.8rem; margin-top: 5px;">Upcoming training sessions</div>
                         </div>
                         <div
@@ -402,14 +403,14 @@
                 <!-- Verified Sessions (Success State) -->
                 <div class="stat-card stat-card-clickable {{ ($activeFilter ?? 'all') === 'completed' ? 'stat-card-active' : '' }}"
                     style="border-left: 5px solid #10b981; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); cursor: pointer;"
-                    onclick="switchTab('history')">
+                    onclick="filterBookings('completed')">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                         <div>
                             <div
                                 style="color: #6b7280; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">
                                 Verified Sessions</div>
                             <div style="font-size: 2rem; font-weight: 700; color: #1f2937;">{{ $verifiedSessionsCount }}</div>
-                            <div style="color: #10b981; font-size: 0.8rem; margin-top: 5px;">Successfully finalized logs</div>
+                            <div style="color: #10b981; font-size: 0.8rem; margin-top: 5px;">Successfully verified logs</div>
                         </div>
                         <div
                             style="background: rgba(16, 185, 129, 0.1); color: #10b981; width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
@@ -418,17 +419,17 @@
                     </div>
                 </div>
 
-                <!-- Flagged Issues (Error/Warning State) -->
-                <div class="stat-card stat-card-clickable {{ ($activeFilter ?? 'all') === 'flagged' ? 'stat-card-active' : '' }}"
+                <!-- Voided Sessions (Error/Warning State) -->
+                <div class="stat-card stat-card-clickable {{ ($activeFilter ?? 'all') === 'cancelled' ? 'stat-card-active' : '' }}"
                     style="border-left: 5px solid #ef4444; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); cursor: pointer;"
-                    onclick="switchTab('history')">
+                    onclick="filterBookings('cancelled')">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                         <div>
                             <div
                                 style="color: #6b7280; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">
-                                Flagged Issues</div>
+                                Voided Sessions</div>
                             <div style="font-size: 2rem; font-weight: 700; color: #1f2937;">{{ $flaggedIssuesCount }}</div>
-                            <div style="color: #ef4444; font-size: 0.8rem; margin-top: 5px;">Cancelled or no-show logs</div>
+                            <div style="color: #ef4444; font-size: 0.8rem; margin-top: 5px;">Voided or invalid logs</div>
                         </div>
                         <div
                             style="background: rgba(239, 68, 68, 0.1); color: #ef4444; width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
@@ -437,25 +438,6 @@
                     </div>
                 </div>
 
-                <!-- Booking Requests (Initialization State) -->
-                <div class="stat-card stat-card-clickable {{ ($activeFilter ?? 'all') === 'pending' ? 'stat-card-active' : '' }}"
-                    style="border-left: 5px solid #3b82f6; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); cursor: pointer;"
-                    onclick="switchTab('history')">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                        <div>
-                            <div
-                                style="color: #6b7280; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">
-                                Booking Requests</div>
-                            <div style="font-size: 2rem; font-weight: 700; color: #1f2937;">{{ $pendingRequestsCount }}</div>
-                            <div style="color: #3b82f6; font-size: 0.8rem; margin-top: 5px;">New schedule approvals pending
-                            </div>
-                        </div>
-                        <div
-                            style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
-                            <i class="bi bi-envelope-paper"></i>
-                        </div>
-                    </div>
-                </div>
             </div>
         @endif
 
@@ -511,8 +493,14 @@
                             <div class="booking-info">
                                 <h3 style="margin: 0;">{{ $booking->course->title ?? 'N/A' }}</h3>
                                 <span
-                                    class="badge badge-{{ $booking->status === 'completed' ? 'success' : ($booking->status === 'done' ? 'warning' : ($booking->status === 'cancelled' ? 'danger' : ($booking->status === 'pending' ? 'warning' : 'info'))) }}">
-                                    {{ $booking->status === 'done' ? 'Awaiting Verification' : ucfirst($booking->status) }}
+                                    class="badge badge-{{ $booking->status === 'completed' ? 'success' : (in_array($booking->status, ['done', 'no-show', 'no_show']) ? 'warning' : ($booking->status === 'cancelled' ? 'danger' : ($booking->status === 'pending' ? 'warning' : 'info'))) }}">
+                                    @if($booking->status === 'done')
+                                        Awaiting Verification
+                                    @elseif(in_array($booking->status, ['no-show', 'no_show']))
+                                        Review No-Show
+                                    @else
+                                        {{ ucfirst($booking->status) }}
+                                    @endif
                                 </span>
                             </div>
                             <div class="booking-date">
@@ -530,7 +518,7 @@
                             </div>
                         </div>
 
-                        <div class="booking-details" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                        <div class="booking-details" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
                             <div class="detail-item">
                                 <span class="detail-label">Student</span>
                                 <span class="detail-value" style="font-weight: 600; color: #111827;">{{ $booking->student->name ?? 'N/A' }}</span>
@@ -548,6 +536,21 @@
                                 <span class="detail-value" style="color: {{ $sessionType === 'theoretical' ? '#3b82f6' : '#8b5cf6' }}; font-weight: 700;">{{ number_format((float) $sessionHours, 1) }} hrs</span>
                             </div>
 
+                            <div class="detail-item">
+                                <span class="detail-label">Reported Status</span>
+                                <span class="detail-value">
+                                    @if(in_array($booking->status, ['no-show', 'no_show']))
+                                        <span style="color: #ef4444; font-weight: 700; font-size: 0.9rem; display: flex; align-items: center; gap: 5px;">
+                                            <i class="bi bi-person-x-fill"></i> Student No-Show
+                                        </span>
+                                    @else
+                                        <span style="color: #10b981; font-weight: 700; font-size: 0.9rem; display: flex; align-items: center; gap: 5px;">
+                                            <i class="bi bi-check-circle-fill"></i> Normal Completion
+                                        </span>
+                                    @endif
+                                </span>
+                            </div>
+
                             @if($booking->notes)
                                 <div class="detail-item detail-item-full" style="background: #fff; padding: 10px; border: 1px dashed #d1d5db; border-radius: 6px; margin-top: 5px;">
                                     <span class="detail-label">Instructor Notes</span>
@@ -557,37 +560,51 @@
                         </div>
 
                         <div class="booking-actions">
-                            <div style="display: flex; gap: 10px; align-items: center;">
+                            <div style="display: flex; gap: 12px; align-items: center;">
                                 @php
                                     $isFinalStatus = in_array($booking->status, ['completed', 'cancelled'], true);
-                                    $canAdminAudit = in_array($booking->status, ['scheduled', 'done', 'no-show'], true);
+                                    $canCancel = in_array($booking->status, ['scheduled', 'done', 'no-show'], true);
                                 @endphp
                                 
                                 @if($booking->status === 'done' && !$isFinalStatus)
-                                    <button class="btn btn-success" style="background: #10b981; border: none; font-weight: 700;" onclick="updateStatus({{ $booking->id }}, 'completed')">
-                                        Verify & Log Session
+                                    {{-- Primary Action: Verify --}}
+                                    <button class="btn btn-success" 
+                                            style="background: #10b981; border: none; font-weight: 700; display: flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: 10px; transition: all 0.2s;" 
+                                            onclick="updateStatus({{ $booking->id }}, 'completed')">
+                                        <i class="bi bi-patch-check-fill"></i>
+                                        Verify Session
+                                    </button>
+
+                                    {{-- Secondary Action: Void --}}
+                                    <button class="btn btn-outline-danger" 
+                                            style="color: #ef4444; border: 2px solid #fee2e2; background: #fff; font-weight: 600; display: flex; align-items: center; gap: 8px; padding: 10px 15px; border-radius: 10px; transition: all 0.2s;" 
+                                            onclick="updateStatus({{ $booking->id }}, 'cancelled')">
+                                        <i class="bi bi-x-circle"></i>
+                                        Void Session
                                     </button>
                                 @elseif($booking->status === 'completed')
-                                    <span class="paid-indicator" style="background: #ecfdf5; padding: 5px 12px; border-radius: 20px; border: 1px solid #10b981;">
-                                        ✓ Session Verified
+                                    <span class="paid-indicator" style="background: #ecfdf5; padding: 8px 16px; border-radius: 20px; border: 1px solid #10b981; color: #059669; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                                        <i class="bi bi-check-circle-fill"></i>
+                                        Session Verified
+                                    </span>
+                                @elseif($canCancel && !$isFinalStatus)
+                                    {{-- For Scheduled or No-Show, only show Void option --}}
+                                    <button class="btn btn-outline-danger" 
+                                            style="color: #ef4444; border: 2px solid #fee2e2; background: #fff; font-weight: 600; display: flex; align-items: center; gap: 8px; padding: 10px 15px; border-radius: 10px; transition: all 0.2s;" 
+                                            onclick="updateStatus({{ $booking->id }}, 'cancelled')">
+                                        <i class="bi bi-trash"></i>
+                                        Void Session
+                                    </button>
+                                @elseif($booking->status === 'cancelled')
+                                    <span style="background: #fef2f2; padding: 8px 16px; border-radius: 20px; border: 1px solid #fee2e2; color: #ef4444; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                                        <i class="bi bi-x-octagon-fill"></i>
+                                        Cancelled
                                     </span>
                                 @endif
-
-                                <select class="status-select" style="min-width: 140px; height: 38px;" onchange="updateStatus({{ $booking->id }}, this.value)" {{ !$canAdminAudit ? 'disabled' : '' }}>
-                                    <option value="">Admin Action...</option>
-                                    @if($booking->status === 'done')
-                                        <option value="completed">Complete Session</option>
-                                        <option value="cancelled">Cancel Session</option>
-                                    @elseif($booking->status === 'no-show')
-                                        <option value="cancelled">Cancel Session</option>
-                                    @elseif($booking->status === 'scheduled')
-                                        <option value="cancelled">Cancel Session</option>
-                                    @endif
-                                </select>
                             </div>
                         </div>
                     </div>
-                @empty
+@empty
                     <div class="content-card">
                         <div class="content-card-body">
                             <div class="empty-state">
@@ -602,6 +619,17 @@
             <!-- Advanced Filters for History -->
             <form class="filters-grid" id="historyFilterForm" method="GET" action="{{ url()->current() }}">
                 <input type="hidden" name="tab" value="history">
+                <div class="filter-item">
+                    <label>Branch</label>
+                    <select name="branch_id" onchange="this.form.submit()">
+                        <option value="">All Branches</option>
+                        @foreach($branches as $branch)
+                            <option value="{{ $branch->id }}" {{ request('branch_id') == $branch->id ? 'selected' : '' }}>
+                                {{ $branch->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
                 <div class="filter-item">
                     <label>Instructor</label>
                     <select name="instructor_id" onchange="this.form.submit()">
@@ -639,14 +667,33 @@
                 <table class="history-table">
                     <thead>
                         <tr>
-                            <th>Date</th>
-                            <th>Time</th>
-                            <th>Student</th>
-                            <th>Course</th>
-                            <th>Instructor</th>
-                            <th>Type</th>
-                            <th>Hours</th>
-                            <th>Status</th>
+                            <th style="cursor: pointer;" onclick="window.location.href='{{ request()->fullUrlWithQuery(['sort' => request('sort') === 'session_newest' ? 'session_oldest' : 'session_newest']) }}'">
+                                Date {!! in_array(request('sort'), ['session_newest', 'session_oldest']) ? (request('sort') === 'session_newest' ? '↓' : '↑') : '↕' !!}
+                            </th>
+                            <th style="cursor: pointer;" onclick="window.location.href='{{ request()->fullUrlWithQuery(['sort' => request('sort') === 'time_early' ? 'time_late' : 'time_early']) }}'">
+                                Time {!! in_array(request('sort'), ['time_early', 'time_late']) ? (request('sort') === 'time_early' ? '↓' : '↑') : '↕' !!}
+                            </th>
+                            <th style="cursor: pointer;" onclick="window.location.href='{{ request()->fullUrlWithQuery(['sort' => request('sort') === 'student_az' ? 'student_za' : 'student_az']) }}'">
+                                Student {!! in_array(request('sort'), ['student_az', 'student_za']) ? (request('sort') === 'student_az' ? '↓' : '↑') : '↕' !!}
+                            </th>
+                            <th style="cursor: pointer;" onclick="window.location.href='{{ request()->fullUrlWithQuery(['sort' => request('sort') === 'branch_az' ? 'branch_za' : 'branch_az']) }}'">
+                                Branch {!! in_array(request('sort'), ['branch_az', 'branch_za']) ? (request('sort') === 'branch_az' ? '↓' : '↑') : '↕' !!}
+                            </th>
+                            <th style="cursor: pointer;" onclick="window.location.href='{{ request()->fullUrlWithQuery(['sort' => request('sort') === 'course_az' ? 'course_za' : 'course_az']) }}'">
+                                Course {!! in_array(request('sort'), ['course_az', 'course_za']) ? (request('sort') === 'course_az' ? '↓' : '↑') : '↕' !!}
+                            </th>
+                            <th style="cursor: pointer;" onclick="window.location.href='{{ request()->fullUrlWithQuery(['sort' => request('sort') === 'instructor_az' ? 'instructor_za' : 'instructor_az']) }}'">
+                                Instructor {!! in_array(request('sort'), ['instructor_az', 'instructor_za']) ? (request('sort') === 'instructor_az' ? '↓' : '↑') : '↕' !!}
+                            </th>
+                            <th style="cursor: pointer;" onclick="window.location.href='{{ request()->fullUrlWithQuery(['sort' => request('sort') === 'type_az' ? 'type_za' : 'type_az']) }}'">
+                                Type {!! in_array(request('sort'), ['type_az', 'type_za']) ? (request('sort') === 'type_az' ? '↓' : '↑') : '↕' !!}
+                            </th>
+                            <th style="cursor: pointer;" onclick="window.location.href='{{ request()->fullUrlWithQuery(['sort' => request('sort') === 'hours_high' ? 'hours_low' : 'hours_high']) }}'">
+                                Hours {!! in_array(request('sort'), ['hours_high', 'hours_low']) ? (request('sort') === 'hours_high' ? '↓' : '↑') : '↕' !!}
+                            </th>
+                            <th style="cursor: pointer;" onclick="window.location.href='{{ request()->fullUrlWithQuery(['sort' => request('sort') === 'status_az' ? 'status_za' : 'status_az']) }}'">
+                                Status {!! in_array(request('sort'), ['status_az', 'status_za']) ? (request('sort') === 'status_az' ? '↓' : '↑') : '↕' !!}
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
@@ -669,6 +716,7 @@
                                     @endif
                                 </td>
                                 <td style="font-weight: 600;">{{ $booking->student->name ?? 'N/A' }}</td>
+                                <td style="font-size: 0.8rem; color: #6b7280;">{{ $booking->branch->name ?? 'N/A' }}</td>
                                 <td>{{ $booking->course->title ?? 'N/A' }}</td>
                                 <td>{{ $booking->instructor->name ?? 'N/A' }}</td>
                                 <td>
@@ -679,7 +727,7 @@
                                 <td style="font-weight: 700;">{{ $calculatedHours }} hrs</td>
                                 <td>
                                     <span class="badge badge-{{ $booking->status === 'completed' ? 'success' : ($booking->status === 'cancelled' ? 'danger' : 'warning') }}">
-                                        {{ ucfirst($booking->status) }}
+                                        {{ $booking->status === 'completed' ? 'Verified' : ($booking->status === 'cancelled' ? 'Voided' : ucfirst($booking->status)) }}
                                     </span>
                                 </td>
                             </tr>
@@ -752,11 +800,17 @@
         function updateStatus(bookingId, status) {
             if (!status) return;
 
+            const isVerify = status === 'completed';
+            const actionTitle = isVerify ? 'Verify Training Session' : 'Void Training Session';
+            const actionMsg = isVerify 
+                ? 'Are you sure you want to verify this session? This will officially add it to the student\'s training log.' 
+                : 'Are you sure you want to void this session? These hours will not count towards student graduation.';
+
             showConfirm({
-                type: 'warning',
-                title: 'Change Schedule Status',
-                message: `Are you sure you want to change this schedule status to "${status}"?`,
-                confirmText: 'Yes, Update Status',
+                type: isVerify ? 'info' : 'warning',
+                title: actionTitle,
+                message: actionMsg,
+                confirmText: isVerify ? 'Yes, Verify Session' : 'Yes, Void Session',
                 onConfirm: () => {
                     fetch(`/${schoolSlug}/admin/verify-session-completion/${bookingId}/status`, {
                         method: 'PATCH',
@@ -771,7 +825,12 @@
                         .then(response => response.json())
                         .then(data => {
                             if (data.success) {
-                                Toast.success('Schedule status has been updated successfully.', 'Status Updated!');
+                                const successTitle = isVerify ? 'Session Verified!' : 'Session Voided';
+                                const successMsg = isVerify 
+                                    ? 'The training session has been successfully added to the student log.' 
+                                    : 'The training session has been voided and moved to history.';
+                                    
+                                Toast.success(successMsg, successTitle);
                                 setTimeout(() => location.reload(), 1500);
                             } else {
                                 Toast.error(data.message || 'Failed to update schedule status.', 'Update Failed');

@@ -171,6 +171,16 @@ class EnrollmentRequest extends Model
             'enrolled_at' => now(),
         ]);
 
+        // Promote staged license to student's profile if present
+        if ($this->credentials_file_path) {
+            $this->learner->update([
+                'student_license_path' => $this->credentials_file_path,
+                'student_license_status' => 'verified',
+                'student_license_verified_at' => now(),
+                'student_license_verified_by' => $adminId,
+            ]);
+        }
+
         // Update the learner's role from guest to student
         $this->learner->role = 'student';
         $this->learner->save();
@@ -339,25 +349,23 @@ class EnrollmentRequest extends Model
     /**
      * Get the total used Theoretical (TDC) hours.
      */
-    public function getUsedTdcHoursAttribute(): float
+    public function getUsedTdcHoursAttribute()
     {
-        return (float) $this->bookings()
-            ->whereIn('status', ['scheduled', 'confirmed', 'done', 'completed'])
-            ->get()
-            ->filter(fn($b) => $b->session_type === 'theoretical')
-            ->sum('duration_hours');
+        return $this->sessionCompletions()
+            ->where('status', 'completed')
+            ->where('session_type', 'theoretical')
+            ->sum('hours_completed');
     }
 
     /**
      * Get the total used Practical (PDC) hours.
      */
-    public function getUsedPdcHoursAttribute(): float
+    public function getUsedPdcHoursAttribute()
     {
-        return (float) $this->bookings()
-            ->whereIn('status', ['scheduled', 'confirmed', 'done', 'completed'])
-            ->get()
-            ->filter(fn($b) => $b->session_type === 'practical')
-            ->sum('duration_hours');
+        return $this->sessionCompletions()
+            ->where('status', 'completed')
+            ->where('session_type', 'practical')
+            ->sum('hours_completed');
     }
 
     /**

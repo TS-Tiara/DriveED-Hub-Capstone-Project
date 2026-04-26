@@ -45,7 +45,8 @@ class StudentController extends Controller
 
         // PDC (Practical Driving Course) requires a verified Student Driver's License
         /** @var \App\Models\Student $student */
-        $canEnroll = \App\Support\EnrollmentValidator::canEnrollInCourse($student, $course);
+        $isUploadingLicense = $request->hasFile('student_license') || $request->hasFile('credential_file');
+        $canEnroll = \App\Support\EnrollmentValidator::canEnrollInCourse($student, $course, $isUploadingLicense);
         if (!$canEnroll['allowed']) {
             Log::warning('Student enrollment blocked', [
                 'user' => $student->id,
@@ -100,8 +101,12 @@ class StudentController extends Controller
                 $data['price'] = $course->price;
             }
 
-            // Handle credential file upload for experienced drivers
-            if ($request->hasFile('credential_file')) {
+            // Handle student license upload (staged)
+            if ($request->hasFile('student_license')) {
+                $file = $request->file('student_license');
+                $path = $file->store('student-licenses', 'local');
+                $data['credentials_file_path'] = $path;
+            } elseif ($request->hasFile('credential_file')) {
                 $file = $request->file('credential_file');
                 $path = $file->store('credentials', 'local');
                 $data['credentials_file_path'] = $path;
@@ -109,8 +114,8 @@ class StudentController extends Controller
 
             $enrollmentRequest = EnrollmentRequest::create($data);
 
-            // PDC-only: if a draft license exists, submit it for admin review once a practical request is created.
-            if ($course->isPractical() && $student->hasStoredLicense() && !$student->hasVerifiedLicense()) {
+            // PDC-only: if a license is being submitted (staged or existing), mark status as pending for admin review.
+            if ($course->isPractical() && ($request->hasFile('student_license') || $student->hasStoredLicense()) && !$student->hasVerifiedLicense()) {
                 $student->update([
                     'student_license_status' => 'pending',
                     'student_license_verified_at' => null,
@@ -285,12 +290,34 @@ class StudentController extends Controller
         $student = Auth::guard('student')->user();
         $student->load('branchRelation');
 
+        // Get TDC progress for LTO compliance (15h/3d rule)
+        $tdcEnrollment = EnrollmentRequest::where('learner_id', $student->id)
+            ->where('school_id', $school->id)
+            ->whereHas('course', function($q) {
+                $q->where('course_type', 'theoretical');
+            })
+            ->where('status', 'approved')
+            ->with('sessionCompletions')
+            ->first();
+
+        $tdcProgress = null;
+        if ($tdcEnrollment) {
+            $completions = $tdcEnrollment->sessionCompletions->where('status', 'completed');
+            $uniqueDates = $completions->pluck('session_date')->unique();
+            $tdcProgress = [
+                'hours' => $completions->sum('hours_completed'),
+                'unique_dates_count' => $uniqueDates->count(),
+                'unique_dates' => $uniqueDates,
+                'is_compliant' => $completions->sum('hours_completed') >= 15 && $uniqueDates->count() >= 3
+            ];
+        }
 
         $supportsDateOfBirth = Schema::hasColumn('students', 'date_of_birth');
 
         return view($school->resolveView('student.profile'), [
             'school' => $school,
             'student' => $student,
+            'tdcProgress' => $tdcProgress,
             'supportsDateOfBirth' => $supportsDateOfBirth,
             'isAjax' => $request->ajax(),
         ]);

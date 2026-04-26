@@ -1935,8 +1935,8 @@
                     <div class="nav-category-items">
                         <a href="{{ school_route('admin.courses', [], $currentSchool) }}" class="nav-item"
                             data-page="courses">Courses</a>
-                        <a href="{{ school_route('admin.materials.index', [], $currentSchool) }}" class="nav-item"
-                            data-page="materials">Course Materials</a>
+                        {{-- <a href="{{ school_route('admin.materials.index', [], $currentSchool) }}" class="nav-item"
+                            data-page="materials">Course Materials</a> --}}
                         <a href="{{ school_route('admin.enrollments.index', [], $currentSchool) }}" class="nav-item"
                             data-page="enrollments">Enrollments</a>
                         <a href="{{ school_route('admin.theoretical.index', [], $currentSchool) }}" class="nav-item"

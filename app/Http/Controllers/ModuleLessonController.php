@@ -64,11 +64,9 @@ class ModuleLessonController extends Controller
      */
     public function create(Request $request, School $school, Course $course, CourseModule $module)
     {
-        $isAdmin = Auth::guard('admin')->check();
         $isInstructor = Auth::guard('instructor')->check();
-
-        if (!$isAdmin && !$isInstructor) {
-            abort(403);
+        if (!$isInstructor) {
+            abort(403, 'Only instructors can create lessons.');
         }
 
         // Verify course belongs to school
@@ -81,7 +79,7 @@ class ModuleLessonController extends Controller
             abort(404);
         }
 
-        $view = $isInstructor ? 'school.instructor.lessons.create' : 'school.admin.lessons.create';
+        $view = 'school.instructor.lessons.create';
 
         return view($view, compact('school', 'course', 'module'))->with('isAjax', $request->ajax());
     }
@@ -91,11 +89,9 @@ class ModuleLessonController extends Controller
      */
     public function store(Request $request, School $school, Course $course, CourseModule $module)
     {
-        $isAdmin = Auth::guard('admin')->check();
         $isInstructor = Auth::guard('instructor')->check();
-
-        if (!$isAdmin && !$isInstructor) {
-            abort(403);
+        if (!$isInstructor) {
+            abort(403, 'Only instructors can create lessons.');
         }
 
         // Verify course belongs to school
@@ -157,16 +153,11 @@ class ModuleLessonController extends Controller
                 ]);
             }
 
-            $redirectRoute = $isInstructor
-                ? 'schools.instructor.courses.modules.show'
-                : 'schools.admin.courses.modules.show';
-
             return redirect()
-                ->route($redirectRoute, ['school' => $school->slug, 'course' => $course->id, 'module' => $module->id])
+                ->route('schools.instructor.courses.modules.show', ['school' => $school->slug, 'course' => $course->id, 'module' => $module->id])
                 ->with('success', 'Lesson created successfully.');
 
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             DB::rollBack();
 
             if ($request->expectsJson()) {
@@ -230,11 +221,9 @@ class ModuleLessonController extends Controller
      */
     public function edit(Request $request, School $school, Course $course, CourseModule $module, ModuleLesson $lesson)
     {
-        $isAdmin = Auth::guard('admin')->check();
         $isInstructor = Auth::guard('instructor')->check();
-
-        if (!$isAdmin && !$isInstructor) {
-            abort(403);
+        if (!$isInstructor) {
+            abort(403, 'Only instructors can edit lessons.');
         }
 
         // Verify course belongs to school
@@ -247,7 +236,7 @@ class ModuleLessonController extends Controller
             abort(404);
         }
 
-        $view = $isInstructor ? 'school.instructor.lessons.edit' : 'school.admin.lessons.edit';
+        $view = 'school.instructor.lessons.edit';
 
         return view($view, compact('school', 'course', 'module', 'lesson'))->with('isAjax', $request->ajax());
     }
@@ -257,11 +246,9 @@ class ModuleLessonController extends Controller
      */
     public function update(Request $request, School $school, Course $course, CourseModule $module, ModuleLesson $lesson)
     {
-        $isAdmin = Auth::guard('admin')->check();
         $isInstructor = Auth::guard('instructor')->check();
-
-        if (!$isAdmin && !$isInstructor) {
-            abort(403);
+        if (!$isInstructor) {
+            abort(403, 'Only instructors can update lessons.');
         }
 
         // Verify course belongs to school
@@ -338,16 +325,13 @@ class ModuleLessonController extends Controller
                 ]);
             }
 
-            $redirectRoute = $isInstructor
-                ? 'schools.instructor.courses.modules.lessons.show'
-                : 'schools.admin.courses.modules.lessons.show';
+            $redirectRoute = 'schools.instructor.courses.modules.lessons.show';
 
             return redirect()
                 ->route($redirectRoute, ['school' => $school->slug, 'course' => $course->id, 'module' => $module->id, 'lesson' => $lesson->id])
                 ->with('success', 'Lesson updated successfully.');
 
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             DB::rollBack();
 
             if ($request->expectsJson()) {
@@ -368,11 +352,9 @@ class ModuleLessonController extends Controller
      */
     public function destroy(School $school, Course $course, CourseModule $module, ModuleLesson $lesson)
     {
-        $isAdmin = Auth::guard('admin')->check();
         $isInstructor = Auth::guard('instructor')->check();
-
-        if (!$isAdmin && !$isInstructor) {
-            abort(403);
+        if (!$isInstructor) {
+            abort(403, 'Only instructors can delete lessons.');
         }
 
         // Verify course belongs to school
@@ -398,16 +380,13 @@ class ModuleLessonController extends Controller
 
             DB::commit();
 
-            $redirectRoute = $isInstructor
-                ? 'schools.instructor.courses.modules.show'
-                : 'schools.admin.courses.modules.show';
+            $redirectRoute = 'schools.instructor.courses.modules.show';
 
             return redirect()
                 ->route($redirectRoute, ['school' => $school->slug, 'course' => $course->id, 'module' => $module->id])
                 ->with('success', 'Lesson deleted successfully.');
 
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Unable to delete lesson at this time. Please try again later.');
         }
@@ -418,11 +397,9 @@ class ModuleLessonController extends Controller
      */
     public function reorder(Request $request, School $school, Course $course, CourseModule $module)
     {
-        $isAdmin = Auth::guard('admin')->check();
         $isInstructor = Auth::guard('instructor')->check();
-
-        if (!$isAdmin && !$isInstructor) {
-            abort(403);
+        if (!$isInstructor) {
+            abort(403, 'Only instructors can reorder lessons.');
         }
 
         // Verify course belongs to school
@@ -455,8 +432,7 @@ class ModuleLessonController extends Controller
                 'message' => 'Lessons reordered successfully.',
             ]);
 
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
                 'success' => false,

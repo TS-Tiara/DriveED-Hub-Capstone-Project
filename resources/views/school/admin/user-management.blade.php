@@ -1402,10 +1402,10 @@
                 @endif
             </div>
             <div class="form-group">
-                <label>Address:</label>
-                <input type="text" name="address" value="{{ $showStudentInviteErrors ? old('address') : '' }}" placeholder="Enter address (optional)">
-                @if($showStudentInviteErrors)
-                    @error('address') <p class="field-error">{{ $message }}</p> @enderror
+                <label>Address <span class="required-indicator">*</span></label>
+                <input type="text" name="address" value="{{ $showStudentInviteErrors ? old('address') : '' }}" placeholder="Enter full address" required class="{{ $showStudentInviteErrors && $errors->has('address') ? 'is-invalid' : '' }}">
+                @if($showStudentInviteErrors && $errors->has('address'))
+                    <p class="field-error">{{ $errors->first('address') }}</p>
                 @endif
             </div>
             @if(isset($branches) && $branches->count() > 0)
@@ -1419,6 +1419,24 @@
                 </select>
                 @if($showStudentInviteErrors)
                     @error('branch_id') <p class="field-error">{{ $message }}</p> @enderror
+                @endif
+            </div>
+            @endif
+
+            @if(isset($courses) && $courses->count() > 0)
+            <div class="form-group">
+                <label>Assigned Course (Optional):</label>
+                <select name="course_id" class="branch-modal-select">
+                    <option value="">No Course Assigned</option>
+                    @foreach($courses as $course)
+                        <option value="{{ $course->id }}" {{ $showStudentInviteErrors && (string) old('course_id') === (string) $course->id ? 'selected' : '' }}>
+                            {{ $course->title }} ({{ ucfirst($course->course_type) }})
+                        </option>
+                    @endforeach
+                </select>
+                <p class="field-help">Student will be automatically enrolled upon registration.</p>
+                @if($showStudentInviteErrors)
+                    @error('course_id') <p class="field-error">{{ $message }}</p> @enderror
                 @endif
             </div>
             @endif
@@ -1455,8 +1473,8 @@
                 <p class="field-help">Enter the 10-digit number after +63 (e.g., 9123456789).</p>
             </div>
             <div class="form-group">
-                <label>Address:</label>
-                <input type="text" id="edit_student_address" name="address">
+                <label>Address <span class="required-indicator">*</span>:</label>
+                <input type="text" id="edit_student_address" name="address" required>
             </div>
             @if(isset($branches) && $branches->count() > 0)
             <div class="form-group">
@@ -1481,7 +1499,7 @@
 <div id="createInstructorModal" class="modal">
     <div class="modal-content">
         <h3>Add New Instructor</h3>
-        <form id="createInstructorInviteForm" method="POST" action="{{ school_route('admin.storeAccount') }}" data-no-ajax="1">
+        <form id="createInstructorInviteForm" method="POST" action="{{ school_route('admin.storeAccount') }}" data-no-ajax="1" enctype="multipart/form-data">
             @csrf
 
             <p class="modal-required-note">Fields marked with <span class="required-indicator">*</span> are required.</p>
@@ -1537,6 +1555,14 @@
                     <p class="field-error">{{ $errors->first('address') }}</p>
                 @endif
             </div>
+            <div class="form-group">
+                <label>License Image <span class="required-indicator">*</span></label>
+                <input type="file" name="license_image" accept="image/*" required class="{{ $showInstructorInviteErrors && $errors->has('license_image') ? 'is-invalid' : '' }}">
+                <p class="field-help">Upload a photo of the instructor's license.</p>
+                @if($showInstructorInviteErrors && $errors->has('license_image'))
+                    <p class="field-error">{{ $errors->first('license_image') }}</p>
+                @endif
+            </div>
             @if(isset($branches) && $branches->count() > 0)
             <div class="form-group">
                 <label>Branch:</label>
@@ -1564,7 +1590,7 @@
 <div id="editInstructorModal" class="modal">
     <div class="modal-content">
         <h3>Edit Instructor</h3>
-        <form id="editInstructorForm" method="POST" action="">
+        <form id="editInstructorForm" method="POST" action="" enctype="multipart/form-data">
             @csrf
             @method('PUT')
             <div class="form-group">
@@ -1590,6 +1616,11 @@
             <div class="form-group">
                 <label>Address <span class="required-indicator">*</span>:</label>
                 <input type="text" id="edit_instructor_address" name="address" required>
+            </div>
+            <div class="form-group">
+                <label>License Image:</label>
+                <input type="file" name="license_image" accept="image/*">
+                <p class="field-help">Leave empty to keep current license image.</p>
             </div>
             @if(isset($branches) && $branches->count() > 0)
             <div class="form-group">

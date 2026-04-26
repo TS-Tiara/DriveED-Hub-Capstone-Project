@@ -8,6 +8,8 @@ use App\Models\Invitation;
 use App\Models\Admin;
 use App\Models\Instructor;
 use App\Models\Student;
+use App\Models\Course;
+use App\Models\EnrollmentRequest;
 use App\Models\SystemLog;
 use App\Rules\StrongPassword;
 use Illuminate\Http\Request;
@@ -135,6 +137,7 @@ class OnboardingController extends Controller
                     $payload = $invitation->payload ?? [];
                     $user = Instructor::create(array_merge($commonData, [
                         'license_number' => $payload['license_number'] ?? null,
+                        'license_image' => $payload['license_image'] ?? null,
                         'contact' => $validated['contact'],
                         'address' => $validated['address'],
                         'status' => 'active',
@@ -144,11 +147,43 @@ class OnboardingController extends Controller
                     break;
 
                 case 'student':
+                    $payload = $invitation->payload ?? [];
                     $user = Student::create(array_merge($commonData, [
                         'contact' => $validated['contact'],
                         'address' => $validated['address'],
                         'status' => 'active',
+                        'role' => 'student', // Ensure role is set to student, not guest
                     ]));
+
+                    // Handle Auto-Enrollment (Item 5)
+                    if (!empty($payload['course_id'])) {
+                        $course = Course::find($payload['course_id']);
+                        if ($course) {
+                            $isTheoretical = $course->course_type === 'theoretical';
+                            
+                            $enrollment = EnrollmentRequest::create([
+                                'learner_id' => $user->id,
+                                'course_id' => $course->id,
+                                'school_id' => $school->id,
+                                'branch_id' => $user->branch_id,
+                                'status' => $isTheoretical ? 'approved' : 'pending',
+                                'payment_status' => 'pending', 
+                                'notes' => 'Auto-enrolled via invitation by Admin.'
+                            ]);
+
+                            // If it's a practical course and they already passed TDC (as marked by admin)
+                            // We might want to set has_passed_theoretical if the admin selected a theoretical course?
+                            // No, Item 5 says "if we just add them, they will need to enroll"
+                            // But Item 6 is about LTO rules.
+
+                            SystemLog::logInfo(
+                                "Student auto-enrolled in course: {$course->title}",
+                                'enrollment',
+                                ['student_id' => $user->id, 'course_id' => $course->id, 'status' => $isTheoretical ? 'approved' : 'pending'],
+                                $school->id
+                            );
+                        }
+                    }
                     $guard = 'student';
                     break;
 

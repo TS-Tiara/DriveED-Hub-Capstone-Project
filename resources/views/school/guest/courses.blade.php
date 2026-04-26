@@ -1014,10 +1014,10 @@
                     </div>
 
                     @if($course->course_type === 'practical')
-                    <!-- PDC License Recommendation Notice -->
+                    <!-- PDC License Notice -->
                     <div class="alert alert-info alert-warning-compact mb-3">
                         <i class="fas fa-id-card me-1"></i>
-                        <strong>PDC Recommendation:</strong> While enrollment is open, note that Practical Driving Courses will ultimately require a verified Student Driver's License before driving sessions can be booked.
+                        <strong>Student License Required:</strong> To enroll in a Practical Driving Course (PDC), you must provide a valid Student Driver's License.
                     </div>
                     @endif
 
@@ -1072,18 +1072,46 @@
                         @endif
                     </div>
 
-                    <!-- Credential Upload (shown for experienced drivers on practical courses) -->
-                    <div class="mb-3 credential-section-hidden" id="credentialSection{{ $course->id }}">
-                        <label for="credential_file{{ $course->id }}" class="form-label">
-                            <strong>Student Driver's License / Credential (Optional)</strong>
+                    <!-- Student License Status & Upload (shown for experienced drivers on practical courses) -->
+                    <div class="mb-3 {{ $course->course_type === 'practical' ? '' : 'credential-section-hidden' }}" id="credentialSection{{ $course->id }}">
+                        <label for="student_license{{ $course->id }}" class="form-label">
+                            <strong>Student Driver's License</strong> 
+                            <span class="text-danger" id="licenseRequiredStar{{ $course->id }}">
+                                {{ ($course->course_type === 'practical' && !$guest->hasVerifiedLicense() && !$guest->isLicensePending()) ? '*' : '' }}
+                            </span>
                         </label>
-                        <input type="file" name="credential_file" id="credential_file{{ $course->id }}" class="form-control @error('credential_file') is-invalid @enderror" accept=".pdf,.jpg,.jpeg,.png">
-                        @error('credential_file')
+                        
+                        @if($guest->hasVerifiedLicense())
+                            <div class="alert alert-success alert-warning-compact mb-2">
+                                <i class="fas fa-check-circle me-1"></i>
+                                <strong>Verified:</strong> You have a verified student license on file.
+                            </div>
+                        @elseif($guest->isLicensePending())
+                            <div class="alert alert-info alert-warning-compact mb-2">
+                                <i class="fas fa-clock me-1"></i>
+                                <strong>Pending:</strong> Your previously uploaded license is awaiting admin review.
+                            </div>
+                        @elseif($guest->isLicenseRejected())
+                            <div class="alert alert-danger alert-warning-compact mb-2">
+                                <i class="fas fa-times-circle me-1"></i>
+                                <strong>Rejected:</strong> Your previous license was rejected. Please upload a valid one.
+                            </div>
+                        @endif
+
+                        <input type="file" name="student_license" id="student_license{{ $course->id }}" 
+                               class="form-control @error('student_license') is-invalid @enderror" 
+                               accept=".pdf,.jpg,.jpeg,.png" 
+                               {{ ($course->course_type === 'practical' && !$guest->hasVerifiedLicense() && !$guest->isLicensePending()) ? 'required' : '' }}>
+                        
+                        @error('student_license')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
+                        
                         <small class="text-muted">
-                            @if($course->course_type === 'practical')
-                                Upload your Student Driver's License now if available. If uploaded before request, it is saved and submitted to admins once your PDC enrollment request is created.
+                            @if($guest->hasVerifiedLicense() || $guest->isLicensePending())
+                                (Optional) Upload a new version only if you need to update your license on file.
+                            @elseif($course->course_type === 'practical')
+                                Please upload a clear photo or PDF of your Student Driver's License.
                             @else
                                 Upload a copy of your existing driver's license or credential (optional, PDF/Image, max 5MB)
                             @endif
@@ -1152,9 +1180,11 @@ function handleExperienceChange{{ $course->id }}() {
     if (select.value === 'experienced') {
         credentialSection.style.display = 'block';
     } else {
-        credentialSection.style.display = 'none';
+        if (courseType !== 'practical') {
+            credentialSection.style.display = 'none';
+        }
         // Clear file input when hiding
-        const fileInput = document.getElementById('credential_file{{ $course->id }}');
+        const fileInput = document.getElementById('student_license{{ $course->id }}');
         if (fileInput) fileInput.value = '';
     }
 }
