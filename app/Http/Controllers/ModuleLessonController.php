@@ -200,7 +200,11 @@ class ModuleLessonController extends Controller
                 abort(403, 'You must be enrolled in this course to view lessons.');
             }
 
-            return view('school.student.lessons.show', compact('school', 'course', 'module', 'lesson'))->with('isAjax', $request->ajax());
+            // Get navigation
+            $courseModuleController = app(\App\Http\Controllers\CourseModuleController::class);
+            $navigation = $courseModuleController->getLearningPathNavigation($course, $module, $lesson);
+
+            return view('school.student.lessons.show', compact('school', 'course', 'module', 'lesson', 'navigation'))->with('isAjax', $request->ajax());
         }
 
         // Instructor view

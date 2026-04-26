@@ -63,12 +63,17 @@ class AssessmentController extends Controller
             'points' => 'nullable|integer|min:1',
         ]);
 
-        // Check if already attached
         $exists = AssessmentQuestion::where('module_id', $module->id)
             ->where('question_id', $validated['question_id'])
             ->exists();
 
         if ($exists) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Question is already part of this assessment.'
+                ], 422);
+            }
             return redirect()->back()->with('error', 'Question is already part of this assessment.');
         }
 
@@ -80,6 +85,13 @@ class AssessmentController extends Controller
             'points' => $validated['points'] ?? Question::find($validated['question_id'])->default_points,
             'sort_order' => $sortOrder,
         ]);
+
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Question added to assessment.'
+            ]);
+        }
 
         return redirect()->back()->with('success', 'Question added to assessment.');
     }
@@ -114,6 +126,13 @@ class AssessmentController extends Controller
                 ]);
                 $addedCount++;
             }
+        }
+
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => "$addedCount questions added to assessment."
+            ]);
         }
 
         return redirect()->back()->with('success', "$addedCount questions added to assessment.");

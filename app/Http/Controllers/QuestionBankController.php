@@ -48,9 +48,10 @@ class QuestionBankController extends Controller
 
         $questions = $query->with(['course', 'lesson'])->latest()->paginate(20);
         $courses = $school->courses()->get();
+        $isAjax = $request->ajax();
 
         return view($school->resolveView('instructor.questions.index'), compact(
-            'school', 'questions', 'courses', 'role', 'isSelecting', 'moduleId', 'module', 'attachedQuestionIds'
+            'school', 'questions', 'courses', 'role', 'isSelecting', 'moduleId', 'module', 'attachedQuestionIds', 'isAjax'
         ));
     }
 
@@ -76,9 +77,10 @@ class QuestionBankController extends Controller
         $course = $selectedCourseId ? Course::find($selectedCourseId) : null;
         $module = $selectedModuleId ? \App\Models\CourseModule::find($selectedModuleId) : null;
         $lesson = $selectedLessonId ? ModuleLesson::find($selectedLessonId) : null;
+        $isAjax = $request->ajax();
 
         return view($school->resolveView('instructor.questions.create'), compact(
-            'school', 'courses', 'lessons', 'role', 'selectedCourseId', 'selectedModuleId', 'selectedLessonId', 'course', 'module', 'lesson'
+            'school', 'courses', 'lessons', 'role', 'selectedCourseId', 'selectedModuleId', 'selectedLessonId', 'course', 'module', 'lesson', 'isAjax'
         ));
     }
 
@@ -121,6 +123,15 @@ class QuestionBankController extends Controller
         }
 
         $returnUrl = $request->query('return_url');
+        
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => $request->filled('module_id') ? 'Question created and added to quiz.' : 'Question added to bank successfully.',
+                'redirect' => $returnUrl ?: school_route('instructor.questions.index')
+            ]);
+        }
+
         if ($returnUrl) {
             return redirect($returnUrl)->with('success', $request->filled('module_id') ? 'Question created and added to quiz.' : 'Question added to bank successfully.');
         }
@@ -172,6 +183,14 @@ class QuestionBankController extends Controller
         }
 
         $question->update($validated);
+
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Question updated successfully.',
+                'redirect' => $request->query('return_url') ?: school_route('instructor.questions.index')
+            ]);
+        }
 
         return redirect()->route('schools.instructor.questions.index', $school->slug)
             ->with('success', 'Question updated successfully.');
