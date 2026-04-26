@@ -557,7 +557,7 @@ class DriveEdHubSeeder extends Seeder
                         'instructor_id' => $instructor->id,
                         'session_type' => $slot->session_type,
                         'session_date' => $slot->date,
-                        'session_time' => $slot->start_time . ' - ' . $slot->end_time,
+                        'session_time' => $slot->start_time,
                         'hours_completed' => 2.0,
                         'notes' => 'Verified session.',
                     ]);
