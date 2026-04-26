@@ -13,7 +13,6 @@
         </div>
         <div class="lms-actions">
             <a href="{{ school_route('instructor.courses.modules.show', ['course' => $course->id, 'module' => $module->id]) }}" class="lms-btn lms-btn-muted">Back to Module</a>
-            <button type="button" id="saveLessonOrderBtn" class="lms-btn lms-btn-warn" style="display: none;">Save Lesson Order</button>
             <a href="{{ school_route('instructor.courses.modules.lessons.create', ['course' => $course->id, 'module' => $module->id]) }}" class="lms-btn lms-btn-primary">Create Lesson</a>
         </div>
     </div>
@@ -27,13 +26,16 @@
         <ul class="lms-list" id="instructorLessonList">
             @forelse($lessons as $lesson)
                 <li class="lms-item" data-lesson-id="{{ $lesson->id }}">
-                    <div>
-                        <p class="lms-item-title">{{ $lesson->title }}</p>
-                        <p class="lms-item-meta">Sort #{{ $lesson->sort_order ?? '-' }}</p>
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <div class="sort-handle" style="cursor: grab; color: #9ca3af; padding: 0.5rem 0;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>
+                        </div>
+                        <div>
+                            <p class="lms-item-title">{{ $lesson->title }}</p>
+                            <p class="lms-item-meta">Sort #{{ $lesson->sort_order ?? '-' }}</p>
+                        </div>
                     </div>
                     <div class="lms-item-links">
-                        <button type="button" class="lms-link lms-link-view" data-move="up">Up</button>
-                        <button type="button" class="lms-link lms-link-view" data-move="down">Down</button>
                         <a href="{{ school_route('instructor.courses.modules.lessons.show', ['course' => $course->id, 'module' => $module->id, 'lesson' => $lesson->id]) }}" class="lms-link lms-link-open">View</a>
                         <a href="{{ school_route('instructor.courses.modules.lessons.edit', ['course' => $course->id, 'module' => $module->id, 'lesson' => $lesson->id]) }}" class="lms-link lms-link-edit">Edit</a>
                         <form method="POST" action="{{ school_route('instructor.courses.modules.lessons.destroy', ['course' => $course->id, 'module' => $module->id, 'lesson' => $lesson->id]) }}" onsubmit="return confirm('Delete this lesson? This action cannot be undone.');" style="display: inline;">
@@ -50,93 +52,54 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script>
-    (function initInstructorLessonReorder() {
-        const list = document.getElementById('instructorLessonList');
-        const saveButton = document.getElementById('saveLessonOrderBtn');
+    document.addEventListener('DOMContentLoaded', function() {
+        const el = document.getElementById('instructorLessonList');
+        if (!el) return;
 
-        if (!list || !saveButton) {
-            return;
-        }
-
-        let isDirty = false;
-
-        const markDirty = () => {
-            if (isDirty) {
-                return;
-            }
-
-            isDirty = true;
-            saveButton.style.display = 'inline-flex';
-        };
-
-        list.addEventListener('click', function(event) {
-            const moveButton = event.target.closest('[data-move]');
-            if (!moveButton) {
-                return;
-            }
-
-            const row = moveButton.closest('[data-lesson-id]');
-            if (!row) {
-                return;
-            }
-
-            const direction = moveButton.getAttribute('data-move');
-            if (direction === 'up') {
-                const previousRow = row.previousElementSibling;
-                if (previousRow && previousRow.hasAttribute('data-lesson-id')) {
-                    list.insertBefore(row, previousRow);
-                    markDirty();
-                }
-                return;
-            }
-
-            if (direction === 'down') {
-                const nextRow = row.nextElementSibling;
-                if (nextRow && nextRow.hasAttribute('data-lesson-id')) {
-                    list.insertBefore(nextRow, row);
-                    markDirty();
-                }
-            }
-        });
-
-        saveButton.addEventListener('click', async function() {
-            const lessonIds = Array.from(list.querySelectorAll('[data-lesson-id]')).map(function(item) {
-                return Number(item.getAttribute('data-lesson-id'));
-            });
-
-            if (!lessonIds.length) {
-                return;
-            }
-
-            saveButton.disabled = true;
-            const originalText = saveButton.textContent;
-            saveButton.textContent = 'Saving...';
-
-            try {
-                const response = await fetch("{{ school_route('instructor.courses.modules.lessons.reorder', ['course' => $course->id, 'module' => $module->id]) }}", {
+        Sortable.create(el, {
+            handle: '.sort-handle',
+            animation: 150,
+            ghostClass: 'lms-sortable-ghost',
+            onEnd: function() {
+                const ids = Array.from(el.querySelectorAll('.lms-item')).map(item => item.dataset.lesson_id || item.dataset.lessonId);
+                
+                fetch("{{ school_route('instructor.courses.modules.lessons.reorder', ['course' => $course->id, 'module' => $module->id]) }}", {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
                         'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRF-TOKEN': "{{ csrf_token() }}",
+                        'X-Requested-With': 'XMLHttpRequest'
                     },
-                    body: JSON.stringify({ lesson_ids: lessonIds }),
+                    body: JSON.stringify({ lesson_ids: ids })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        if (typeof showToast === 'function') showToast('Lesson order saved', 'success');
+                    } else {
+                        if (typeof showToast === 'function') showToast('Failed to save order', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    if (typeof showToast === 'function') showToast('An error occurred', 'error');
                 });
-
-                const data = await response.json().catch(function() { return {}; });
-                if (!response.ok || data.success === false) {
-                    throw new Error(data.message || 'Unable to save lesson order.');
-                }
-
-                window.location.reload();
-            } catch (error) {
-                alert(error.message || 'Unable to save lesson order.');
-                saveButton.disabled = false;
-                saveButton.textContent = originalText;
             }
         });
-    })();
+    });
 </script>
+
+<style>
+    .lms-sortable-ghost {
+        opacity: 0.4;
+        background: #f3f4f6 !important;
+        border: 2px dashed #3b82f6 !important;
+    }
+    .sort-handle:active {
+        cursor: grabbing;
+    }
+</style>
 @endsection
