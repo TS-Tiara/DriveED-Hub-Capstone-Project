@@ -450,11 +450,16 @@ class AdminController extends Controller
                 'address' => 'required|string|max:500',
                 'role' => 'required|in:student,instructor',
                 'branch_id' => [
-                    'nullable',
+                    'required',
                     Rule::exists('branches', 'id')->where('school_id', $school->id)
                 ],
                 'course_id' => [
-                    'nullable',
+                    $request->role === 'student' ? 'required' : 'nullable',
+                    Rule::exists('courses', 'id')->where('school_id', $school->id)->where('status', 'active')
+                ],
+                'course_specializations' => $request->role === 'instructor' ? 'required|array|min:1' : 'nullable|array',
+                'course_specializations.*' => [
+                    'required',
                     Rule::exists('courses', 'id')->where('school_id', $school->id)->where('status', 'active')
                 ],
                 'license_number' => $request->role === 'instructor' ? 'required|string|max:50' : 'nullable|string|max:50',
@@ -506,6 +511,7 @@ class AdminController extends Controller
                     })($request->contact),
                     'address' => trim((string) $request->address),
                     'course_id' => $request->course_id,
+                    'course_specializations' => $request->role === 'instructor' ? $request->course_specializations : null,
                     'license_number' => $request->role === 'instructor' ? trim($request->license_number) : null,
                     'license_image' => $licenseImagePath,
                 ],
@@ -516,17 +522,17 @@ class AdminController extends Controller
             Mail::to($invitation->email)->send(new SystemInvitationMail($invitation, $school));
 
             SystemLog::logInfo(
-                "Invitation sent to " . ($request->role === 'instructor' ? 'instructor' : 'student') . ": {$invitation->email}",
+                "Account setup link sent to " . ($request->role === 'instructor' ? 'instructor' : 'student') . ": {$invitation->email}",
                 'database',
-                ['role' => $request->role, 'branch_id' => $branchId, 'invited_by' => $admin->name],
+                ['role' => $request->role, 'branch_id' => $branchId, 'added_by' => $admin->name],
                 $school->id,
-                'invite_user'
+                'add_user'
             );
 
             DB::commit();
 
             return redirect()->route('schools.admin.userManagement', $school)
-                ->with('success', "Account successfully created for {$invitation->email}. They will receive an email to set up their password.");
+                ->with('success', "Account successfully added for {$invitation->email}. They will receive an email to set up their password.");
 
         } catch (ValidationException $e) {
             throw $e;
@@ -714,6 +720,11 @@ class AdminController extends Controller
                         }
                     },
                 ],
+                'course_specializations' => 'nullable|array',
+                'course_specializations.*' => [
+                    'required',
+                    Rule::exists('courses', 'id')->where('school_id', $school->id)->where('status', 'active')
+                ],
             ], [
                 'contact.regex' => 'Please provide a valid 10-digit mobile number starting with 9 (e.g., 9123456789).',
                 'license_image.image' => 'The license image must be a valid image file.',
@@ -728,7 +739,7 @@ class AdminController extends Controller
                     ->with('error', 'This demo account has locked name, email, and password.');
             }
 
-            $data = $request->only('name', 'email', 'contact', 'license_number', 'address', 'branch_id');
+            $data = $request->only('name', 'email', 'contact', 'license_number', 'address', 'branch_id', 'course_specializations');
 
             // Normalize contact
             if (!empty($data['contact'])) {
@@ -2399,7 +2410,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Cancel a pending invitation
+     * Remove a pending account setup
      */
     public function cancelInvitation(School $school, Invitation $invitation)
     {
@@ -2414,20 +2425,20 @@ class AdminController extends Controller
             }
 
             if ($invitation->isUsed()) {
-                return redirect()->back()->with('error', 'Cannot cancel an invitation that has already been used.');
+                return redirect()->back()->with('error', 'Cannot remove an account setup that has already been completed.');
             }
 
             $invitation->delete();
 
-            return redirect()->back()->with('success', 'Invitation cancelled successfully.');
+            return redirect()->back()->with('success', 'Account setup removed successfully.');
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Invitation cancellation failed: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Failed to cancel invitation.');
+            return redirect()->back()->with('error', 'Failed to remove account setup.');
         }
     }
 
     /**
-     * Resend a pending invitation
+     * Resend account setup email
      */
     public function resendInvitation(School $school, Invitation $invitation)
     {
@@ -2442,7 +2453,7 @@ class AdminController extends Controller
             }
 
             if ($invitation->isUsed()) {
-                return redirect()->back()->with('error', 'Cannot resend an invitation that has already been used.');
+                return redirect()->back()->with('error', 'Cannot resend setup email for an account that has already been completed.');
             }
 
             // Extend expiry if it was already expired or close to it
@@ -2455,10 +2466,10 @@ class AdminController extends Controller
 
             \Illuminate\Support\Facades\Mail::to($invitation->email)->send(new \App\Mail\SystemInvitationMail($invitation, $school));
 
-            return redirect()->back()->with('success', 'Invitation resent successfully.');
+            return redirect()->back()->with('success', 'Setup email resent successfully.');
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Invitation resend failed: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Failed to resend invitation.');
+            return redirect()->back()->with('error', 'Failed to resend setup email.');
         }
     }
 }

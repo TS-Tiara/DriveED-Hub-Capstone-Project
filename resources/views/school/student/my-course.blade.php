@@ -617,7 +617,7 @@
                                     @endif
                                 </ul>
                             @elseif($module->module_type === 'assessment' || ($module->questions && $module->questions->count() > 0))
-                                <div class="lesson-list" style="display: block; padding: 20px; text-align: center; background: #eff6ff;">
+                                <div class="lesson-list" style="padding: 20px; text-align: center; background: #eff6ff;">
                                     <div style="margin-bottom: 15px; color: #1e40af; font-weight: 600;">
                                         This module is an assessment to test your knowledge.
                                     </div>

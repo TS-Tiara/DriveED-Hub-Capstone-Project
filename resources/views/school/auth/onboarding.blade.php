@@ -147,7 +147,7 @@
                 <div class="form-group">
                     <label class="label">Email Address</label>
                     <input type="email" value="{{ $invitation->email }}" disabled style="background-color: #f1f5f9; cursor: not-allowed;">
-                    <p style="font-size: 11px; color: #64748b; margin-top: 4px;">This email is linked to your invitation and cannot be changed.</p>
+                    <p style="font-size: 11px; color: #64748b; margin-top: 4px;">This email is linked to your account setup and cannot be changed.</p>
                 </div>
 
                 @if($invitation->role === 'student' || $invitation->role === 'instructor')
