@@ -44,6 +44,12 @@
                 <span class="detail-label">Approved At:</span>
                 <span>{{ $enrollment->approved_at->format('F d, Y h:i A') }}</span>
             </div>
+            @if($enrollment->learner->hasVerifiedLicense())
+            <div class="detail-row">
+                <span class="detail-label">License:</span>
+                <span style="color: #10b981; font-weight: 600;">Verified ✓</span>
+            </div>
+            @endif
 
             <p style="margin-top: 25px;">You can now start scheduling your sessions. Login to your account to view available time slots and book your lessons.</p>
 

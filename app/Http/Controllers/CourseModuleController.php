@@ -109,7 +109,7 @@ class CourseModuleController extends Controller
     {
         $role = $this->resolveAuthRole();
         
-        if ($role !== 'admin') {
+        if (!in_array($role, ['admin', 'instructor'], true)) {
             abort(403);
         }
         
@@ -123,7 +123,7 @@ class CourseModuleController extends Controller
     {
         $role = $this->resolveAuthRole();
         
-        if ($role !== 'admin') {
+        if (!in_array($role, ['admin', 'instructor'], true)) {
             abort(403);
         }
         
@@ -157,8 +157,12 @@ class CourseModuleController extends Controller
                 ]);
             }
             
+            $redirectRoute = $role === 'admin'
+                ? 'schools.admin.courses.modules.index'
+                : 'schools.instructor.courses.modules.index';
+
             return redirect()
-                ->route('schools.admin.courses.modules.index', ['school' => $school->slug, 'course' => $course->id])
+                ->route($redirectRoute, ['school' => $school->slug, 'course' => $course->id])
                 ->with('success', 'Module created successfully.');
             
         } catch (\Exception $e) {
@@ -210,7 +214,7 @@ class CourseModuleController extends Controller
     {
         $role = $this->resolveAuthRole();
         
-        if ($role !== 'admin') {
+        if (!in_array($role, ['admin', 'instructor'], true)) {
             abort(403);
         }
         
@@ -229,7 +233,7 @@ class CourseModuleController extends Controller
     {
         $role = $this->resolveAuthRole();
         
-        if ($role !== 'admin') {
+        if (!in_array($role, ['admin', 'instructor'], true)) {
             abort(403);
         }
         
@@ -260,8 +264,12 @@ class CourseModuleController extends Controller
             ]);
         }
         
+        $redirectRoute = $role === 'admin'
+            ? 'schools.admin.courses.modules.show'
+            : 'schools.instructor.courses.modules.show';
+
         return redirect()
-            ->route('schools.admin.courses.modules.show', ['school' => $school->slug, 'course' => $course->id, 'module' => $module->id])
+            ->route($redirectRoute, ['school' => $school->slug, 'course' => $course->id, 'module' => $module->id])
             ->with('success', 'Module updated successfully.');
     }
 
@@ -272,7 +280,7 @@ class CourseModuleController extends Controller
     {
         $role = $this->resolveAuthRole();
         
-        if ($role !== 'admin') {
+        if (!in_array($role, ['admin', 'instructor'], true)) {
             abort(403);
         }
         
@@ -291,8 +299,12 @@ class CourseModuleController extends Controller
             
             DB::commit();
             
+            $redirectRoute = $role === 'admin'
+                ? 'schools.admin.courses.modules.index'
+                : 'schools.instructor.courses.modules.index';
+
             return redirect()
-                ->route('schools.admin.courses.modules.index', ['school' => $school->slug, 'course' => $course->id])
+                ->route($redirectRoute, ['school' => $school->slug, 'course' => $course->id])
                 ->with('success', 'Module and all its lessons deleted successfully.');
             
         } catch (\Exception $e) {
@@ -308,7 +320,7 @@ class CourseModuleController extends Controller
     {
         $role = $this->resolveAuthRole();
         
-        if ($role !== 'admin') {
+        if (!in_array($role, ['admin', 'instructor'], true)) {
             abort(403);
         }
         
@@ -348,7 +360,7 @@ class CourseModuleController extends Controller
     {
         $role = $this->resolveAuthRole();
         
-        if ($role !== 'admin') {
+        if (!in_array($role, ['admin', 'instructor'], true)) {
             abort(403);
         }
         
@@ -374,8 +386,12 @@ class CourseModuleController extends Controller
             
             DB::commit();
             
+            $redirectRoute = $role === 'admin'
+                ? 'schools.admin.courses.modules.show'
+                : 'schools.instructor.courses.modules.show';
+
             return redirect()
-                ->route('schools.admin.courses.modules.show', ['school' => $school->slug, 'course' => $course->id, 'module' => $newModule->id])
+                ->route($redirectRoute, ['school' => $school->slug, 'course' => $course->id, 'module' => $newModule->id])
                 ->with('success', 'Module duplicated successfully.');
             
         } catch (\Exception $e) {

@@ -341,6 +341,7 @@ Route::prefix('{school:slug}')
 
                             // View payment proof
                             Route::get('/{enrollmentRequest}/view-payment-proof', [EnrollmentRequestController::class, 'viewPaymentProof'])->name('view-payment-proof');
+                            Route::get('/{enrollmentRequest}/view-credential', [EnrollmentRequestController::class, 'viewCredential'])->name('view-credential');
                         });
 
 

@@ -155,38 +155,7 @@ class TheoreticalCompletionController extends Controller
      */
     private function validateCanPassTheoretical(EnrollmentRequest $enrollment): array
     {
-        // Already passed
-        if ($enrollment->student->has_passed_theoretical) {
-            return [
-                'allowed' => false,
-                'message' => 'This student has already passed theoretical training.'
-            ];
-        }
-
-        // Not a theoretical course
-        if ($enrollment->course->course_type !== 'theoretical') {
-            return [
-                'allowed' => false,
-                'message' => 'This is not a theoretical course enrollment.'
-            ];
-        }
-
-        // Check if minimum hours requirement met
-        $totalHours = $enrollment->sessionCompletions->sum('hours_completed');
-        $requiredHours = $enrollment->course->theoretical_hours ?? 15;
-
-        if ($totalHours < $requiredHours) {
-            return [
-                'allowed' => false,
-                'message' => "Student needs at least {$requiredHours} hours. Currently has {$totalHours} hours completed."
-            ];
-        }
-
-        // All validations passed
-        return [
-            'allowed' => true,
-            'message' => 'Student meets all requirements and can be marked as passed.'
-        ];
+        return \App\Support\EnrollmentValidator::canMarkTheoreticalPassed($enrollment);
     }
 
     /**
