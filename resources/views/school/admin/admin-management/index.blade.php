@@ -1479,6 +1479,10 @@
             sessionStorage.removeItem('adminManagementPendingModalReopen');
             window.openPendingInvitationsModal();
         }
+
+        if (@json($errors->any()) && @json(old('role'))) {
+            openCreateModal(@json(old('role')));
+        }
     });
 </script>
 @endsection

@@ -541,6 +541,9 @@
         <div class="modal-body">
             <form id="approveForm" method="POST">
                 @csrf
+                <input type="hidden" name="modal_type" value="approve">
+                <input type="hidden" name="request_id" id="approveRequestId">
+                <input type="hidden" name="instructor_name" id="approveInstructorNameInput">
                 <p class="modal-description">
                     Are you sure you want to approve this removal request for <strong id="approveInstructorName"></strong>? 
                     The instructor will be removed from the time slot.
@@ -581,6 +584,9 @@
         <div class="modal-body">
             <form id="rejectForm" method="POST">
                 @csrf
+                <input type="hidden" name="modal_type" value="reject">
+                <input type="hidden" name="request_id" id="rejectRequestId">
+                <input type="hidden" name="instructor_name" id="rejectInstructorNameInput">
                 <p class="modal-description">
                     You are rejecting the removal request for <strong id="rejectInstructorName"></strong>. 
                     Please provide a reason for the rejection.
@@ -623,6 +629,8 @@
 
         form.action = `{{ route('schools.admin.removalRequests.approve', ['school' => $school->slug, 'id' => '__ID__']) }}`.replace('__ID__', requestId);
         nameEl.textContent = instructorName;
+        document.getElementById('approveRequestId').value = requestId;
+        document.getElementById('approveInstructorNameInput').value = instructorName;
 
         modal.classList.add('active');
         document.body.style.overflow = 'hidden';
@@ -655,6 +663,8 @@
 
         form.action = `{{ route('schools.admin.removalRequests.reject', ['school' => $school->slug, 'id' => '__ID__']) }}`.replace('__ID__', requestId);
         nameEl.textContent = instructorName;
+        document.getElementById('rejectRequestId').value = requestId;
+        document.getElementById('rejectInstructorNameInput').value = instructorName;
 
         modal.classList.add('active');
         document.body.style.overflow = 'hidden';
@@ -681,13 +691,20 @@
     }
 
     // Call on DOMContentLoaded (initial page load)
-    document.addEventListener('DOMContentLoaded', initializeRemovalRequestsPage);
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeRemovalRequestsPage();
+
+        @if($errors->any())
+            @if(old('modal_type') === 'approve')
+                showApproveModal({{ old('request_id', 'null') }}, '{{ old('instructor_name', 'Instructor') }}');
+            @elseif(old('modal_type') === 'reject')
+                showRejectModal({{ old('request_id', 'null') }}, '{{ old('instructor_name', 'Instructor') }}');
+            @endif
+        @endif
+    });
     
     // Also call immediately (for AJAX navigation)
-    if (document.readyState === 'loading') {
-        // Still loading, wait for DOMContentLoaded
-    } else {
-        // Already loaded (AJAX navigation), initialize now
+    if (document.readyState !== 'loading') {
         initializeRemovalRequestsPage();
     }
 </script>

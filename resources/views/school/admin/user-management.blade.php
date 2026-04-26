@@ -2113,8 +2113,16 @@
     (function restoreInviteModalAfterValidationError() {
         const hasInviteValidationErrors = @json($errors->any());
         const inviteRole = @json($oldInviteRole);
+        const isEdit = @json(old('is_edit'));
 
         if (!hasInviteValidationErrors) {
+            return;
+        }
+
+        if (isEdit) {
+            // For edit modals, we'd need more data (ID, etc.) to restore perfectly.
+            // But usually validation errors happen on 'Create' because 'Edit' uses JS to pre-fill.
+            // If an edit fails, it redirects back.
             return;
         }
 
