@@ -214,16 +214,16 @@ class DriveEdHubSeeder extends Seeder
     private function createDriveEdHubStudents(School $school, array $branches, array $courses, string $password): array
     {
         $data = [
-            ['name' => 'Juan Miguel Dela Cruz', 'email' => 'student1@driveedhub.test', 'level' => 'new_driver'],
-            ['name' => 'Maria Victoria Garcia', 'email' => 'student2@driveedhub.test', 'level' => 'new_driver'],
-            ['name' => 'Pedro Jose Santos', 'email' => 'student3@driveedhub.test', 'level' => 'new_driver'],
-            ['name' => 'Ana Patricia Reyes', 'email' => 'student4@driveedhub.test', 'level' => 'new_driver'],
-            ['name' => 'Carlos Manuel Mendoza', 'email' => 'student5@driveedhub.test', 'level' => 'experienced'],
-            ['name' => 'Sofia Angelica Torres', 'email' => 'student6@driveedhub.test', 'level' => 'experienced'],
-            ['name' => 'Miguel Francisco Ramos', 'email' => 'student7@driveedhub.test', 'level' => 'new_driver'],
-            ['name' => 'Isabella Rose Cruz', 'email' => 'student8@driveedhub.test', 'level' => 'new_driver'],
-            ['name' => 'Diego Emmanuel Fernandez', 'email' => 'student9@driveedhub.test', 'level' => 'new_driver'],
-            ['name' => 'Luna Marie Martinez', 'email' => 'student10@driveedhub.test', 'level' => 'experienced'],
+            ['name' => 'Juan Miguel Dela Cruz', 'email' => 'student1@driveedhub.test', 'level' => 'new_driver', 'progress' => 100], // Star Student
+            ['name' => 'Maria Victoria Garcia', 'email' => 'student2@driveedhub.test', 'level' => 'new_driver', 'progress' => 45],
+            ['name' => 'Pedro Jose Santos', 'email' => 'student3@driveedhub.test', 'level' => 'new_driver', 'progress' => 12],
+            ['name' => 'Ana Patricia Reyes', 'email' => 'student4@driveedhub.test', 'level' => 'new_driver', 'progress' => 0],
+            ['name' => 'Carlos Manuel Mendoza', 'email' => 'student5@driveedhub.test', 'level' => 'experienced', 'progress' => 75],
+            ['name' => 'Sofia Angelica Torres', 'email' => 'student6@driveedhub.test', 'level' => 'experienced', 'progress' => 90],
+            ['name' => 'Miguel Francisco Ramos', 'email' => 'student7@driveedhub.test', 'level' => 'new_driver', 'progress' => 20],
+            ['name' => 'Isabella Rose Cruz', 'email' => 'student8@driveedhub.test', 'level' => 'new_driver', 'progress' => 5],
+            ['name' => 'Diego Emmanuel Fernandez', 'email' => 'student9@driveedhub.test', 'level' => 'new_driver', 'progress' => 0],
+            ['name' => 'Luna Marie Martinez', 'email' => 'student10@driveedhub.test', 'level' => 'experienced', 'progress' => 60],
         ];
 
         $students = [];
@@ -238,22 +238,19 @@ class DriveEdHubSeeder extends Seeder
                     'status' => 'active',
                     'experience_level' => $s['level'],
                     'enrollment_date' => now()->subDays(rand(7, 60)),
+                    'student_license_status' => 'verified',
+                    'student_license_verified_at' => now()->subDays(15),
                 ]
             );
             $student->role = 'student';
             $student->email_verified_at = $student->email_verified_at ?? now();
-            $student->verification_code = null;
-            $student->verification_code_expires_at = null;
-            $student->verification_attempts = 0;
-            $student->last_verification_attempt_at = null;
             $student->save();
             $students[] = $student;
 
-            // Ensure every student has an approved/paid enrollment request so they aren't "ghosts"
             $course = $courses[$i % count($courses)];
             $package = \App\Models\CoursePackage::where('course_id', $course->id)->first();
             
-            \App\Models\EnrollmentRequest::updateOrCreate(
+            $enrollment = \App\Models\EnrollmentRequest::updateOrCreate(
                 ['school_id' => $school->id, 'learner_id' => $student->id, 'course_id' => $course->id],
                 [
                     'status' => 'approved',
@@ -264,11 +261,24 @@ class DriveEdHubSeeder extends Seeder
                     'price' => $package ? $package->price : 0,
                     'payment_method' => 'cash',
                     'payment_reference' => 'DH-SEED-' . strtoupper(\Illuminate\Support\Str::random(8)),
-                    'approved_by' => 1, // System/Admin
+                    'approved_by' => 1,
                     'approved_at' => now()->subDays(10),
                     'enrolled_at' => now()->subDays(10),
                 ]
             );
+
+            // Create progress
+            if ($s['progress'] > 0) {
+                \App\Models\Progress::updateOrCreate(
+                    ['student_id' => $student->id, 'course_id' => $course->id],
+                    [
+                        'school_id' => $school->id,
+                        'completion_percent' => $s['progress'],
+                        'last_updated' => now(),
+                        'notes' => 'Seeded progress'
+                    ]
+                );
+            }
         }
         return $students;
     }
@@ -277,16 +287,15 @@ class DriveEdHubSeeder extends Seeder
     {
         $guests = [];
 
-        // Definition of guests to create
         $guestData = [
-            'guest1@driveedhub.test' => ['name' => 'Elena Joy Reyes', 'license' => 'verified', 'exp' => 'new_driver', 'course_idx' => 0, 'status' => 'approved', 'pay' => 'paid'],
-            'guest2@driveedhub.test' => ['name' => 'Mark Anthony Dizon', 'license' => 'verified', 'exp' => 'experienced', 'course_idx' => 2, 'status' => 'approved', 'pay' => 'paid', 'cancellation' => true],
-            'guest3@driveedhub.test' => ['name' => 'Jamie Lyn Pascual', 'license' => 'none', 'exp' => 'new_driver'],
-            'guest4@driveedhub.test' => ['name' => 'Carlo Miguel Bautista', 'license' => 'pending', 'exp' => 'new_driver', 'course_idx' => 1, 'status' => 'pending', 'pay' => 'pending'],
-            'guest5@driveedhub.test' => ['name' => 'Angelica Mae Soriano', 'license' => 'none', 'exp' => 'new_driver', 'course_idx' => 2, 'status' => 'rejected', 'pay' => 'cancelled'],
-            'guest6@driveedhub.test' => ['name' => 'Miguel Francisco Ramos', 'license' => 'verified', 'exp' => 'new_driver', 'course_idx' => 0, 'status' => 'approved', 'pay' => 'paid'],
-            'guest7@driveedhub.test' => ['name' => 'Isabella Rose Cruz', 'license' => 'none', 'exp' => 'new_driver'],
-            'guest8@driveedhub.test' => ['name' => 'Diego Fernandez', 'license' => 'pending', 'exp' => 'new_driver', 'course_idx' => 1, 'status' => 'pending', 'pay' => 'pending'],
+            'guest1@driveedhub.test' => ['name' => 'Elena Joy Reyes', 'license' => 'none', 'exp' => 'new_driver', 'course_idx' => 0, 'status' => 'pending', 'pay' => 'pending'],
+            'guest2@driveedhub.test' => ['name' => 'Mark Anthony Dizon', 'license' => 'pending', 'exp' => 'experienced', 'course_idx' => 2, 'status' => 'approved', 'pay' => 'paid', 'cancellation' => true], // Added cancellation request
+            'guest3@driveedhub.test' => ['name' => 'Jamie Lyn Pascual', 'license' => 'none', 'exp' => 'new_driver', 'course_idx' => 1, 'status' => 'pending', 'pay' => 'paid'],
+            'guest4@driveedhub.test' => ['name' => 'Carlo Miguel Bautista', 'license' => 'verified', 'exp' => 'new_driver'], // Registered but no request yet
+            'guest5@driveedhub.test' => ['name' => 'Angelica Mae Soriano', 'license' => 'rejected', 'exp' => 'new_driver', 'course_idx' => 2, 'status' => 'rejected', 'pay' => 'cancelled'],
+            'guest6@driveedhub.test' => ['name' => 'Miguel Francisco Ramos', 'license' => 'none', 'exp' => 'new_driver'],
+            'guest7@driveedhub.test' => ['name' => 'Isabella Rose Cruz', 'license' => 'pending', 'exp' => 'new_driver'],
+            'guest8@driveedhub.test' => ['name' => 'Diego Fernandez', 'license' => 'none', 'exp' => 'new_driver', 'course_idx' => 1, 'status' => 'pending', 'pay' => 'pending'],
             'guest9@driveedhub.test' => ['name' => 'Luna Martinez', 'license' => 'none', 'exp' => 'new_driver', 'course_idx' => 0, 'status' => 'rejected', 'pay' => 'cancelled'],
             'guest10@driveedhub.test' => ['name' => 'Sofia Torres', 'license' => 'verified', 'exp' => 'experienced', 'course_idx' => 2, 'status' => 'approved', 'pay' => 'paid'],
         ];
@@ -300,85 +309,45 @@ class DriveEdHubSeeder extends Seeder
                     'password' => $password,
                     'status' => 'active',
                     'student_license_status' => $data['license'],
-                    'student_license_verified_at' => $data['license'] === 'verified' ? now()->subDays(10) : null,
+                    'student_license_verified_at' => $data['license'] === 'verified' ? now()->subDays(5) : null,
+                    'student_license_rejection_reason' => $data['license'] === 'rejected' ? 'Blurred ID photo' : null,
                     'experience_level' => $data['exp'],
-                    'branch_id' => $branches[array_search($email, array_keys($guestData)) % count($branches)]->id,
+                    'branch_id' => $branches[rand(0, count($branches)-1)]->id,
                 ]
             );
-            $g->role = 'guest';
+            
+            // Logic: promote to student only if fully approved AND not cancelled
+            $isFullyApproved = ($data['status'] ?? '') === 'approved' && !($data['cancellation'] ?? false);
+            $g->role = $isFullyApproved ? 'student' : 'guest';
+            
             $g->email_verified_at = $g->email_verified_at ?? now();
-            $g->verification_code = null;
-            $g->verification_code_expires_at = null;
-            $g->verification_attempts = 0;
-            $g->last_verification_attempt_at = null;
             $g->save();
-
-            // Promote to student if approved
-            if (isset($data['status']) && $data['status'] === 'approved') {
-                $g->update(['role' => 'student']);
-            }
 
             $guests[] = $g;
 
-            // If we're only creating users, skip the interaction logic
-            if ($onlyUsers)
-                continue;
+            if ($onlyUsers) continue;
 
-            // Interaction logic (Enrollment Requests)
             if (isset($data['course_idx']) && isset($courses[$data['course_idx']])) {
                 $course = $courses[$data['course_idx']];
                 $package = CoursePackage::where('course_id', '=', $course->id)->first();
 
-                $branch = $branches[rand(0, count($branches) - 1)];
-
-                $ed = [
-                    'status' => $data['status'],
-                    'payment_status' => $data['pay'],
-                    'experience_level' => $data['exp'],
-                    'requested_license_type' => 'non_professional',
-                    'branch_id' => $branch->id,
-                    'price' => $package ? $package->price : 0,
-                    'payment_method' => 'gcash',
-                    'payment_reference' => 'DH-REF-' . strtoupper(\Illuminate\Support\Str::random(8)),
-                ];
-
-                if (isset($data['cancellation']) && $data['cancellation']) {
-                    $ed['cancellation_requested'] = true;
-                    $ed['cancellation_reason'] = 'Conflict with work schedule.';
-                }
-
-                if ($data['status'] === 'approved' && !empty($admins)) {
-                    $ed['approved_by'] = $admins[0]->id;
-                    $ed['approved_at'] = now()->subDays(5);
-                    $ed['enrolled_at'] = now()->subDays(5);
-                }
-
-                if ($data['status'] === 'rejected') {
-                    $ed['remarks'] = 'Incomplete documentation. Please re-submit with valid student license.';
-                    $ed['rejected_at'] = now()->subDays(2);
-                    $ed['payment_status'] = 'cancelled';
-                    
-                    // Sync learner license status for rejected enrollments
-                    $g->update([
-                        'student_license_status' => 'rejected',
-                        'student_license_rejection_reason' => $ed['remarks']
-                    ]);
-                }
-
-                if ($data['status'] === 'cancelled' || ($data['cancellation'] ?? false)) {
-                    $ed['status'] = 'cancelled';
-                    $ed['cancelled_at'] = now()->subDays(1);
-                    $ed['payment_status'] = 'cancelled';
-                    
-                    // Sync learner license status for cancelled enrollments
-                    if ($g->student_license_status === 'pending') {
-                        $g->update(['student_license_status' => 'none']);
-                    }
-                }
-
                 \App\Models\EnrollmentRequest::updateOrCreate(
                     ['school_id' => $school->id, 'learner_id' => $g->id, 'course_id' => $course->id],
-                    $ed
+                    [
+                        'status' => $data['status'],
+                        'payment_status' => $data['pay'],
+                        'experience_level' => $data['exp'],
+                        'requested_license_type' => 'non_professional',
+                        'branch_id' => $g->branch_id,
+                        'price' => $package ? $package->price : 0,
+                        'payment_method' => 'gcash',
+                        'payment_reference' => 'DH-REF-' . strtoupper(\Illuminate\Support\Str::random(8)),
+                        'approved_by' => ($data['status'] === 'approved' && !empty($admins)) ? $admins[0]->id : null,
+                        'approved_at' => $data['status'] === 'approved' ? now()->subDays(5) : null,
+                        'enrolled_at' => $data['status'] === 'approved' ? now()->subDays(5) : null,
+                        'cancellation_requested' => $data['cancellation'] ?? false,
+                        'cancellation_reason' => ($data['cancellation'] ?? false) ? 'Personal emergency, need to reschedule later.' : null,
+                    ]
                 );
             }
         }
@@ -386,18 +355,13 @@ class DriveEdHubSeeder extends Seeder
         return $guests;
     }
 
-    // ================================================================
-    //  SYLLABUS / CURRICULUM PORTED FROM CONTENTPROGRESSSEEDER
-    // ================================================================
-
     private function seedCourseContentForDriveEdHub(School $school, array $courses): void
     {
         $this->command->info('');
-        $this->command->info("   Creating course syllabus constraints...");
+        $this->command->info("   Creating course syllabus with practice questions...");
 
         foreach ($courses as $course) {
-            $isTheoretical = in_array(strtolower($course->type), ['theoretical']) || ($course->course_type === 'theoretical');
-
+            $isTheoretical = ($course->course_type === 'theoretical');
             $modules = $isTheoretical ? $this->getTheoreticalModules() : $this->getPracticalModules($course);
 
             foreach ($modules as $sortOrder => $moduleData) {
@@ -417,9 +381,53 @@ class DriveEdHubSeeder extends Seeder
                         ]
                     );
                 }
+
+                // Seed Questions for every module
+                $this->seedQuestionsForModule($school, $course, $module);
             }
         }
-        $this->command->info("   ✓ Syllabus inserted.");
+    }
+
+    private function seedQuestionsForModule(School $school, Course $course, CourseModule $module): void
+    {
+        $questions = [
+            [
+                'text' => 'What is the primary meaning of a solid yellow line on the road?',
+                'type' => 'multiple_choice',
+                'options' => ['Overtaking permitted', 'No overtaking zone', 'Parking allowed', 'Yield to pedestrians'],
+                'answer' => 'No overtaking zone'
+            ],
+            [
+                'text' => 'A flashing red traffic light should be treated as a STOP sign.',
+                'type' => 'true_false',
+                'options' => ['True', 'False'],
+                'answer' => 'True'
+            ],
+            [
+                'text' => 'Under RA 10913, using a mobile phone while driving is permitted if you are using a hands-free device.',
+                'type' => 'true_false',
+                'options' => ['True', 'False'],
+                'answer' => 'True'
+            ],
+            [
+                'text' => 'What is the standard following distance in seconds under normal conditions?',
+                'type' => 'multiple_choice',
+                'options' => ['1 second', '2 seconds', '3 seconds', '5 seconds'],
+                'answer' => '3 seconds'
+            ]
+        ];
+
+        foreach ($questions as $index => $qData) {
+            \App\Models\Question::updateOrCreate(
+                ['school_id' => $school->id, 'course_id' => $course->id, 'question_text' => $qData['text']],
+                [
+                    'question_type' => $qData['type'],
+                    'options' => $qData['options'],
+                    'correct_answer' => $qData['answer'],
+                    'default_points' => 1
+                ]
+            )->assessments()->syncWithoutDetaching([$module->id => ['sort_order' => $index + 1, 'points' => 1]]);
+        }
     }
 
     private function getTheoreticalModules(): array
@@ -427,31 +435,20 @@ class DriveEdHubSeeder extends Seeder
         return [
             [
                 'title' => 'Introduction to Philippine Traffic Laws',
-                'description' => 'Overview of Republic Act 4136, RA 10913, and other relevant traffic legislation.',
-                'module_type' => 'theoretical',
+                'description' => 'Overview of RA 4136, RA 10913, and other relevant legislation.',
+                'module_type' => 'lesson',
                 'lessons' => [
-                    ['title' => 'History of Philippine Traffic Laws', 'content' => "This lesson covers the evolution of traffic legislation in the Philippines.\n\n## Key Laws\n- **RA 4136** - Land Transportation and Traffic Code\n- **RA 10913** - Anti-Distracted Driving Act\n- **RA 10586** - Anti-Drunk and Drugged Driving Act\n- **RA 11229** - Child Safety in Motor Vehicles Act\n\n## Learning Objectives\n1. Identify the major traffic laws\n2. Understand the penalties for common violations\n3. Know the rights and responsibilities of drivers"],
-                    ['title' => 'LTO Rules and Regulations', 'content' => "The Land Transportation Office (LTO) is the primary government agency responsible for driver licensing.\n\n## License Categories\n- **Student Permit** - Valid for 1 year\n- **Non-Professional License** - For private vehicle use\n- **Professional License** - For public utility and commercial vehicles\n\n## Requirements\n1. Valid student permit\n2. TDC Certificate\n3. PDC Certificate\n4. Medical certificate\n5. Drug test clearance"],
-                    ['title' => 'Penalties and Fines Schedule', 'content' => "Understanding penalties helps drivers maintain proper road behavior.\n\n## Common Violations and Fines\n| Violation | First Offense | Second Offense |\n|-----------|--------------|----------------|\n| No license | P3,000 | P5,000 |\n| Beating red light | P1,000 | P2,000 |\n| Over-speeding | P1,000-P2,000 | P2,000-P5,000 |", 'video_url' => 'https://www.youtube.com/watch?v=example_traffic_fines'],
+                    ['title' => 'History of Philippine Traffic Laws', 'content' => "## Key Laws\n- **RA 4136** - Land Transportation Code\n- **RA 10913** - Anti-Distracted Driving\n\nUnderstand your rights and responsibilities as a driver."],
+                    ['title' => 'LTO Rules and Licensing', 'content' => "## License Types\n- Student Permit\n- Non-Professional\n- Professional\n\nEnsure you meet all requirements before applying."],
                 ],
             ],
             [
-                'title' => 'Road Signs, Signals, and Markings',
-                'description' => 'Complete guide to Philippine road signs, traffic signals, and pavement markings.',
-                'module_type' => 'theoretical',
+                'title' => 'Road Signs and Pavement Markings',
+                'description' => 'Identifying regulatory, warning, and informative signs.',
+                'module_type' => 'lesson',
                 'lessons' => [
-                    ['title' => 'Regulatory Signs', 'content' => "Regulatory signs inform road users of traffic laws.\n\n## Categories\n### Prohibitory Signs\n- No Entry\n- No Left/Right Turn\n- No U-Turn\n- Speed Limit\n\n### Mandatory Signs\n- Keep Right/Left\n- Roundabout\n\nRegulatory signs MUST be obeyed."],
-                    ['title' => 'Warning Signs', 'content' => "Warning signs alert drivers to potential hazards. They are typically diamond-shaped with a yellow background.\n\n## Common Warning Signs\n- Curve Ahead\n- Steep Grade\n- Slippery When Wet\n- Pedestrian Crossing\n- School Zone\n\nWhen you see a warning sign, reduce speed and be prepared."],
-                    ['title' => 'Pavement Markings and Traffic Signals', 'content' => "## Pavement Markings\n- **Solid Yellow Line** - No overtaking zone\n- **Broken White Line** - Lane division, overtaking permitted\n- **Solid White Line** - Edge of road\n- **Crosswalk** - Pedestrian crossing area\n\n## Traffic Signals\n- **Green** - Proceed with caution\n- **Yellow** - Prepare to stop\n- **Red** - Full stop\n- **Flashing Red** - Treat as STOP sign", 'video_url' => 'https://www.youtube.com/watch?v=example_road_signs'],
-                ],
-            ],
-            [
-                'title' => 'Defensive Driving and Road Safety',
-                'description' => 'Principles of defensive driving, hazard perception, and accident prevention.',
-                'module_type' => 'theoretical',
-                'lessons' => [
-                    ['title' => 'Principles of Defensive Driving', 'content' => "Defensive driving means preventing accidents regardless of what other drivers do.\n\n## SIPDE Process\n1. **S**can - Check surroundings\n2. **I**dentify - Recognize hazards\n3. **P**redict - Anticipate behavior\n4. **D**ecide - Choose best response\n5. **E**xecute - Act on your decision\n\n## Smith System\n1. Aim high in steering\n2. Get the big picture\n3. Keep your eyes moving\n4. Leave yourself an out\n5. Make sure they see you"],
-                    ['title' => 'Common Driving Hazards in the Philippines', 'content' => "Philippine roads present unique challenges.\n\n## Common Hazards\n- **Flooding** - Avoid driving through deep flood waters\n- **Jaywalkers** - Always watch for pedestrians\n- **Motorcycles weaving** - Check mirrors frequently\n- **Construction zones** - Reduce speed\n\n## Emergency Procedures\n1. Tire blowout: Grip steering, ease off gas\n2. Brake failure: Pump brakes, use engine braking\n3. Engine fire: Pull over, turn off engine, evacuate"],
+                    ['title' => 'Regulatory Signs', 'content' => "Regulatory signs inform users of laws. These MUST be obeyed.\n- No Entry\n- Speed Limits\n- No Turn Signs"],
+                    ['title' => 'Warning and Hazard Signs', 'content' => "Warning signs alert you to hazards ahead. Typically yellow diamond-shaped.\n- Curve Ahead\n- School Zone\n- Slippery Road"],
                 ],
             ],
         ];
@@ -459,217 +456,118 @@ class DriveEdHubSeeder extends Seeder
 
     private function getPracticalModules(object $course): array
     {
-        $isManual = stripos($course->title, 'manual') !== false;
-
         return [
             [
-                'title' => 'Vehicle Familiarization',
-                'description' => 'Understanding vehicle controls, dashboard indicators, and pre-drive checks.',
-                'module_type' => 'practical_prep',
+                'title' => 'Vehicle Controls & Pre-Drive',
+                'description' => 'Familiarization with controls and safety checks.',
+                'module_type' => 'lesson',
                 'lessons' => [
-                    ['title' => 'Vehicle Controls and Dashboard', 'content' => "Familiarize yourself with all vehicle controls before driving.\n\n## Primary Controls\n- **Steering Wheel** - Turn to steer\n- **Accelerator** (right pedal) - Controls speed\n- **Brake** (middle pedal) - Slows and stops\n" . ($isManual ? "- **Clutch** (left pedal) - Transmission engagement\n" : "- **Gear Selector** - P, R, N, D\n") . "\n## Dashboard Indicators\n- Red = Stop immediately\n- Yellow = Caution\n- Green/Blue = Information\n\n## Pre-Drive Routine\n1. Adjust seat and mirrors\n2. Fasten seatbelt\n3. Check mirrors\n4. Start engine"],
-                    ['title' => 'Seat Position, Mirrors, and Safety', 'content' => "## Seat Adjustment\n- Feet reach all pedals comfortably\n- Knees slightly bent\n- Arms slightly bent at 9-and-3\n\n## Mirror Setup\n- Rearview: frame rear window\n- Left mirror: lean left, barely see car\n- Right mirror: lean right, barely see car\n\nAlways wear your seatbelt (RA 8750)."],
-                ],
-            ],
-            [
-                'title' => ($isManual ? 'Clutch Control and Gear Shifting' : 'Basic Driving Techniques'),
-                'description' => $isManual
-                    ? 'Master the friction zone, smooth gear changes, and hill starts.'
-                    : 'Steering, braking, accelerating, and basic maneuvering.',
-                'module_type' => 'practical_prep',
-                'lessons' => $isManual ? [
-                    ['title' => 'Understanding the Friction Zone', 'content' => "The friction zone is where the clutch begins to engage.\n\n## Finding It\n1. Press clutch fully\n2. Shift into 1st gear\n3. Slowly release clutch until car starts to pull\n4. That point = friction zone\n\n## Common Mistakes\n- Releasing clutch too fast = stall\n- Too much gas + slow clutch = excessive wear\n- Riding the clutch = premature wear"],
-                    ['title' => 'Gear Shifting Patterns', 'content' => "## Upshifting\n1. Release accelerator\n2. Press clutch fully\n3. Move gear lever to next gear\n4. Release clutch smoothly with gas\n\n## When to Shift\n| Gear | Speed Range |\n|------|------------|\n| 1st | 0-15 km/h |\n| 2nd | 15-30 km/h |\n| 3rd | 30-45 km/h |\n| 4th | 45-60 km/h |\n| 5th | 60+ km/h |"],
-                    ['title' => 'Hill Start Technique', 'content' => "## Handbrake Method\n1. Stop on hill with handbrake engaged\n2. Press clutch, shift to 1st\n3. Find friction zone\n4. Release handbrake while adding gas\n5. Fully release clutch once moving\n\n## Tips\n- Start on gentle inclines first\n- Use handbrake to prevent rolling"],
-                ] : [
-                    ['title' => 'Smooth Acceleration and Braking', 'content' => "## Acceleration\n- Press accelerator gradually\n- Maintain steady pressure for constant speed\n- Ease off before curves\n\n## Braking\n- Progressive braking: start light, increase, ease off before stop\n- Keep both hands on wheel\n- 3-second following distance rule"],
-                    ['title' => 'Steering Techniques', 'content' => "## Hand Position\n- 9-and-3 position (recommended for airbag safety)\n- Keep both hands on wheel\n\n## Methods\n- Push-pull: Push up one hand, pull down other\n- Hand-over-hand: For tight turns\n\n## Avoid\n- One-hand driving\n- Palming the wheel\n- Over-correcting"],
-                ],
-            ],
-            [
-                'title' => 'On-Road Driving Skills',
-                'description' => 'City driving, highway driving, parking, and real-world practice.',
-                'module_type' => 'practical_prep',
-                'lessons' => [
-                    ['title' => 'City and Urban Driving', 'content' => "City driving requires constant awareness.\n\n## Key Skills\n- Intersection management (check left-right-left)\n- Stay centered in lane\n- 3+ seconds following distance\n- Check blind spots before lane changes\n\n## Common Hazards\n- Pedestrians crossing unexpectedly\n- Motorcycles splitting lanes\n- Buses stopping suddenly\n- Doors opening from parked cars"],
-                    ['title' => 'Parking Techniques', 'content' => "## Perpendicular (90 degrees) Parking\n1. Signal and slow down\n2. Position 1m from parked cars\n3. When shoulder aligns with space, turn fully\n4. Straighten when centered\n\n## Parallel Parking\n1. Pull alongside car in front\n2. Reverse and turn toward curb\n3. Straighten briefly at 45 degrees\n4. Turn away from curb\n5. Straighten and center\n\n## Hill Parking\n- Uphill with curb: wheels LEFT\n- Downhill with curb: wheels RIGHT\n- Always engage parking brake", 'video_url' => 'https://www.youtube.com/watch?v=example_parking'],
+                    ['title' => 'Dashboard & Pedals', 'content' => "Identify all indicators and pedal functions.\n- Accelerator\n- Brake\n- Clutch (if Manual)"],
+                    ['title' => 'Safety Setup', 'content' => "Adjust seat, mirrors, and fasten seatbelt. Ensure full visibility."],
                 ],
             ],
         ];
     }
 
-    // ================================================================
-    //  OVERRIDE: Clean Scheduling (Today -> Friday, Unassigned)
-    // ================================================================
-
     protected function createTimeSlotsAndAssignments(School $school, array $instructors, array $courses, array $branches): void
     {
-        $this->command->info('   Generating clean scheduling blocks (Today until Friday)...');
+        $this->command->info('   Generating clean scheduling blocks (Mixed Past & Future)...');
 
-        $times = [
-            ['08:00:00', '10:00:00'],
-            ['10:00:00', '12:00:00'],
-            ['13:00:00', '15:00:00'],
-            ['15:00:00', '17:00:00'],
-        ];
-
-        // Start today, end when we process Friday
+        $times = [['08:00:00', '10:00:00'], ['10:00:00', '12:00:00'], ['13:00:00', '15:00:00'], ['15:00:00', '17:00:00']];
         $now = now();
-        $daysOffset = -3; // Start 3 days ago to show history
-        $branchIdx = 0;
         $allCreatedSlots = [];
 
-        for ($d = 0; $d < 8; $d++) { // 3 past + 5 future = 8 days
-            $dateObj = $now->copy()->addDays($daysOffset);
+        // Seed 4 days in past, 4 days in future
+        for ($d = -4; $d <= 4; $d++) {
+            $dateObj = $now->copy()->addDays($d);
+            if ($dateObj->dayOfWeek == 0) continue; // Skip Sunday
 
-            // Skip Sundays if applicable
-            if ($dateObj->dayOfWeek == 0) {
-                $daysOffset++;
-                continue;
+            foreach ($courses as $cIdx => $course) {
+                $branch = $branches[$cIdx % count($branches)];
+                $timeIndex = rand(0, 3);
+                
+                $slot = \App\Models\TimeSlot::create([
+                    'school_id' => $school->id,
+                    'branch_id' => $branch->id,
+                    'course_id' => $course->id,
+                    'session_type' => $course->course_type === 'combo' ? (rand(0,1) ? 'theoretical' : 'practical') : $course->course_type,
+                    'date' => $dateObj->format('Y-m-d'),
+                    'start_time' => $times[$timeIndex][0],
+                    'end_time' => $times[$timeIndex][1],
+                    'status' => 'open',
+                    'max_instructors' => 1,
+                    'max_students' => $course->course_type === 'theoretical' ? 20 : 1,
+                ]);
+
+                $instructor = $instructors[$cIdx % count($instructors)];
+                $slot->instructors()->attach($instructor->id, ['school_id' => $school->id, 'assignment_type' => 'admin_assigned']);
+                $allCreatedSlots[] = $slot;
             }
-
-            $date = $dateObj->format('Y-m-d');
-
-            // Create slots across all courses
-            foreach ($courses as $i => $course) {
-                // Determine 2 to 4 slots per course per day
-                $slotCount = rand(2, 4);
-                $timeIndices = (array) array_rand($times, $slotCount);
-
-                foreach ($timeIndices as $idx => $timeIndex) {
-                    $branch = $branches[$branchIdx % count($branches)];
-                    $branchIdx++;
-
-                    // Determine Session Type (No Guessing)
-                    $resolvedSessionType = $course->course_type;
-                    if ($course->course_type === 'combo') {
-                        // For combo, alternate based on index
-                        $resolvedSessionType = ($idx % 2 === 0) ? 'theoretical' : 'practical';
-                    }
-
-                    $isTheoretical = $resolvedSessionType === 'theoretical';
-
-                    $timeSlot = \App\Models\TimeSlot::create([
-                        'school_id' => $school->id,
-                        'branch_id' => $branch->id,
-                        'course_id' => $course->id,
-                        'session_type' => $resolvedSessionType, // Explicitly set to avoid guessing
-                        'date' => $date,
-                        'start_time' => $times[$timeIndex][0],
-                        'end_time' => $times[$timeIndex][1],
-                        'status' => 'open',
-                        'max_instructors' => 1,
-                        'max_students' => $isTheoretical ? rand(15, 25) : 1, // Classroom vs 1-on-1
-                    ]);
-
-                    // Assign an instructor to about 80% of slots
-                    if (($i + $idx) % 5 !== 0) {
-                        $instructor = $instructors[($i + $idx) % count($instructors)];
-                        $timeSlot->instructors()->attach($instructor->id, [
-                            'school_id' => $school->id,
-                            'assignment_type' => 'admin_assigned',
-                        ]);
-                        $allCreatedSlots[] = $timeSlot;
-                    }
-                }
-            }
-
-            if ($dateObj->dayOfWeek == 5) break;
-            $daysOffset++;
         }
 
-        // Now create some bookings to show the "Who is assigned to who" feature
         $this->createSampleBookings($school, $allCreatedSlots);
     }
 
     private function createSampleBookings(School $school, array $slots): void
     {
-        $this->command->info('   Creating distributed sample bookings (Done, Verified, Cancelled, Scheduled)...');
+        $this->command->info('   Creating distributed sample bookings (Done, Verified, Scheduled)...');
         
-        $students = \App\Models\Student::where('school_id', $school->id)
-            ->where('role', 'student')
-            ->limit(15)
-            ->get();
-
+        $students = Student::where('school_id', $school->id)->where('role', 'student')->get();
         if ($students->isEmpty()) return;
 
-        $studentIdx = 0;
-        $statuses = [
-            'done',       // Awaiting Verification
-            'completed',  // Verified
-            'scheduled',  // Future
-            'cancelled',  // Flagged
-            'no-show',    // Flagged
-            'scheduled',  // Future
-            'done',       // Awaiting Verification
-        ];
-
         foreach ($slots as $idx => $slot) {
-            // Only book for slots that have an instructor
             $instructor = $slot->instructors->first();
             if (!$instructor) continue;
 
-            // Determine if the slot is in the past or future
             $slotDate = \Carbon\Carbon::parse($slot->date);
             $isPast = $slotDate->isPast();
-
-            // Determine how many students to book
-            $numToBook = $slot->course->course_type === 'theoretical' ? rand(3, 5) : 1;
+            $numToBook = $slot->max_students > 1 ? rand(2, 4) : 1;
 
             for ($i = 0; $i < $numToBook; $i++) {
-                $student = $students[$studentIdx % $students->count()];
-                $studentIdx++;
-
-                // Logic-based status selection
+                $student = $students[($idx + $i) % $students->count()];
+                
                 if ($isPast) {
-                    // Past slots are either Completed (Verified), Done (Awaiting), No-Show, or Cancelled
-                    $pastRoll = rand(1, 100);
-                    if ($pastRoll <= 50) $status = 'completed';      // 50% Verified
-                    elseif ($pastRoll <= 75) $status = 'done';        // 25% Awaiting Verification
-                    elseif ($pastRoll <= 90) $status = 'no-show';     // 15% No-Show
-                    else $status = 'cancelled';                       // 10% Voided
+                    $roll = rand(1, 100);
+                    $status = $roll > 70 ? 'done' : 'completed'; // 30% awaiting verification
                 } else {
-                    // Future slots are always Scheduled
                     $status = 'scheduled';
                 }
 
-                // Find enrollment request for this student/course
-                $enrollmentRequest = \App\Models\EnrollmentRequest::where('learner_id', $student->id)
-                    ->where('course_id', $slot->course_id)
-                    ->first();
+                $enrollment = \App\Models\EnrollmentRequest::where('learner_id', $student->id)->where('course_id', $slot->course_id)->first();
 
-                $booking = \App\Models\Booking::create([
+                \App\Models\Booking::create([
                     'school_id' => $school->id,
                     'branch_id' => $slot->branch_id,
                     'student_id' => $student->id,
                     'instructor_id' => $instructor->id,
                     'course_id' => $slot->course_id,
-                    'enrollment_request_id' => $enrollmentRequest ? $enrollmentRequest->id : null,
+                    'enrollment_request_id' => $enrollment ? $enrollment->id : null,
                     'time_slot_id' => $slot->id,
                     'booking_date' => $slot->date,
-                    'scheduled_at' => \Carbon\Carbon::parse(($slot->date instanceof \Carbon\Carbon ? $slot->date->toDateString() : $slot->date) . ' ' . $slot->start_time),
+                    'scheduled_at' => \Carbon\Carbon::parse($slot->date)->format('Y-m-d') . ' ' . $slot->start_time,
                     'status' => $status,
-                    'attendance_status' => in_array($status, ['done', 'completed']) ? 'present' : ($status === 'no-show' ? 'absent' : 'pending'),
+                    'attendance_status' => in_array($status, ['done', 'completed']) ? 'present' : 'pending',
                     'payment_status' => 'paid',
                 ]);
 
-                // Create SessionCompletion for 'completed' bookings to populate training logs and hours
-                if ($status === 'completed' && $enrollmentRequest) {
+                if ($status === 'completed' && $enrollment) {
                     \App\Models\SessionCompletion::create([
                         'school_id' => $school->id,
-                        'enrollment_id' => $enrollmentRequest->id,
+                        'enrollment_id' => $enrollment->id,
                         'instructor_id' => $instructor->id,
                         'session_type' => $slot->session_type,
                         'session_date' => $slot->date,
                         'session_time' => $slot->start_time . ' - ' . $slot->end_time,
-                        'hours_completed' => 2.0, 
-                        'notes' => 'Session verified and completed.',
+                        'hours_completed' => 2.0,
+                        'notes' => 'Verified session.',
                     ]);
                 }
             }
-            
-            // Limit to a reasonable amount of data
-            if ($studentIdx > 60) break;
         }
+    }
+
+    private function createSampleNotifications(School $school, array $students, array $instructors, array $admins, array $guests): void
+    {
+        // Notifications logic...
     }
 }

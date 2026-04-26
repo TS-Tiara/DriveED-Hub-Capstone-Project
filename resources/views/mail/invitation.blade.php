@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Invitation to Join {{ $school->name }}</title>
+    <title>Account Setup for {{ $school->name }}</title>
     <style>
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -89,7 +89,7 @@
         </div>
         <div class="content">
             <p class="welcome-text">Hello!</p>
-            <p>You have been invited to join <span class="highlight">{{ $school->name }}</span> as a <span class="highlight">{{ ucfirst(str_replace('_', ' ', $invitation->role)) }}</span>.</p>
+            <p>An account has been created for you at <span class="highlight">{{ $school->name }}</span> as a <span class="highlight">{{ ucfirst(str_replace('_', ' ', $invitation->role)) }}</span>.</p>
             
             <p>To get started, please click the button below to complete your profile and activate your account.</p>
 
@@ -106,7 +106,7 @@
             </div>
 
             <p style="margin-top: 30px; font-size: 14px; color: #64748b;">
-                This invitation link will expire on {{ $invitation->expires_at->format('M d, Y H:i') }}.
+                This setup link will expire on {{ $invitation->expires_at->format('M d, Y H:i') }}.
             </p>
         </div>
         <div class="footer">

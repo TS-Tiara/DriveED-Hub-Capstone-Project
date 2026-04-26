@@ -879,11 +879,11 @@
         <div class="header-actions" style="display: flex; gap: 10px; align-items: center;">
             <button class="btn-create" onclick="openCreateModal('school_admin')">
                 <svg class="icon-18" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-                Invite Admin
+                Add Admin
             </button>
             <button class="btn-create" onclick="openCreateModal('branch_secretary')" style="background: {{ $secondaryColor }}; box-shadow: 0 4px 12px {{ $secondaryColor }}30;">
                 <svg class="icon-18" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-                Invite Manager
+                Add Manager
             </button>
         </div>
     </div>
@@ -943,7 +943,7 @@
         <div class="action-controls">
             <button type="button" class="btn-pending-toggle" id="pendingInvitationsToggle" onclick="openPendingInvitationsModal()">
                 <i class="bi bi-envelope-paper"></i>
-                Pending Invitations
+                Pending Accounts
                 <span class="pending-count-badge {{ $pendingInviteCount > 0 ? 'has-items' : '' }}">{{ $pendingInviteCount }}</span>
             </button>
             <div class="export-dropdown" id="adminExportDropdown">
@@ -1084,14 +1084,14 @@
 <div class="modal-overlay" id="pendingInvitationsModal">
     <div class="modal-content pending-modal-content">
         <div class="modal-header">
-            <h5>Pending Invitations</h5>
+            <h5>Pending Accounts</h5>
             <button class="btn-close-modal" onclick="closePendingInvitationsModal()">&times;</button>
         </div>
         <div class="modal-body pending-modal-body">
             <div class="pending-panel-header">
                 <div>
-                    <h3 class="pending-panel-title">{{ $pendingInviteCount }} Pending Invitation{{ $pendingInviteCount === 1 ? '' : 's' }}</h3>
-                    <p class="pending-panel-subtitle">Unaccepted invites count toward branch manager capacity until used, expired, or cancelled.</p>
+                    <h3 class="pending-panel-title">{{ $pendingInviteCount }} Pending Account{{ $pendingInviteCount === 1 ? '' : 's' }}</h3>
+                    <p class="pending-panel-subtitle">Accounts that haven't been set up yet. These count toward branch capacity until activated, expired, or removed.</p>
                 </div>
             </div>
             <div class="pending-panel-body">
@@ -1133,17 +1133,17 @@
                                             <div class="pending-invite-actions">
                                                 <form action="{{ route('schools.admin.invitations.resend', ['school' => $school, 'invitation' => $invitation]) }}" method="POST" class="inline-form native-form pending-invitation-form" data-no-ajax="1" data-no-submit-guard="1" data-protected="1">
                                                     @csrf
-                                                    <button type="button" class="btn-invite-action btn-invite-resend" title="Resend Invitation" data-pending-submit="1">
+                                                    <button type="button" class="btn-invite-action btn-invite-resend" title="Resend Setup Link" data-pending-submit="1">
                                                         <i class="bi bi-arrow-repeat"></i>
-                                                        Resend
+                                                        Resend Link
                                                     </button>
                                                 </form>
                                                 <form action="{{ route('schools.admin.invitations.cancel', ['school' => $school, 'invitation' => $invitation]) }}" method="POST" class="inline-form native-form pending-invitation-form" data-no-ajax="1" data-no-submit-guard="1" data-protected="1">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="button" class="btn-invite-action btn-invite-cancel" title="Cancel Invitation" data-pending-submit="1" data-confirm-message="Are you sure you want to cancel this invitation?">
+                                                    <button type="button" class="btn-invite-action btn-invite-cancel" title="Remove Account Setup" data-pending-submit="1" data-confirm-message="Are you sure you want to remove this pending account?">
                                                         <i class="bi bi-x-circle"></i>
-                                                        Cancel
+                                                        Remove
                                                     </button>
                                                 </form>
                                             </div>
@@ -1171,7 +1171,7 @@
     <div class="modal-content">
         <div class="modal-header">
             <h5>
-                <span id="modalTitle">Invite Staff Member</span>
+                <span id="modalTitle">Add Staff Member</span>
             </h5>
             <button class="btn-close-modal" onclick="closeCreateModal()">&times;</button>
         </div>
@@ -1179,24 +1179,24 @@
             @csrf
             <div class="modal-body">
                 <div class="form-group">
-                    <label for="create_name">Full Name</label>
+                    <label for="create_name">Full Name <span class="required-indicator">*</span></label>
                     <input type="text" id="create_name" name="name" required placeholder="Enter full name" value="{{ old('name') }}">
                 </div>
                 <div class="form-group">
-                    <label for="create_email">Email Address</label>
+                    <label for="create_email">Email Address <span class="required-indicator">*</span></label>
                     <input type="email" id="create_email" name="email" required placeholder="Enter email address" value="{{ old('email') }}">
-                    <p class="form-hint">An invitation link will be sent to this email for the user to set their password.</p>
+                    <p class="form-hint">A setup link will be sent to this email for the user to set their password.</p>
                 </div>
                 <div class="form-group">
-                    <label for="create_contact">Contact Number</label>
-                    <input type="text" id="create_contact" name="contact" placeholder="Enter contact number" value="{{ old('contact') }}" inputmode="numeric" pattern="[0-9]*" autocomplete="tel" maxlength="15">
+                    <label for="create_contact">Contact Number <span class="required-indicator">*</span></label>
+                    <input type="text" id="create_contact" name="contact" required placeholder="Enter contact number" value="{{ old('contact') }}" inputmode="numeric" pattern="[0-9]*" autocomplete="tel" maxlength="15">
                 </div>
                 <input type="hidden" id="create_role" name="role" value="{{ old('role', 'school_admin') }}">
                 
                 <div class="form-group branch-group-hidden" id="create_branch_group">
-                    <label for="create_branch_id">Assign to Branch</label>
+                    <label for="create_branch_id">Assign to Branch <span class="required-indicator">*</span></label>
                     <select id="create_branch_id" name="branch_id">
-                        <option value="">— Select Branch —</option>
+                        <option value="" disabled selected>— Select Branch —</option>
                         @foreach($branches as $branch)
                             @php
                                 $capacity = $branchCapacityMap[$branch->id] ?? [
@@ -1224,7 +1224,7 @@
             <div class="modal-footer">
                 <button type="button" class="btn-secondary" onclick="closeCreateModal()">Cancel</button>
                 <button type="submit" class="btn-primary" style="background: {{ $primaryColor }};">
-                    Send Invitation
+                    Add Account
                 </button>
             </div>
         </form>
@@ -1245,11 +1245,11 @@
             @method('PUT')
             <div class="modal-body">
                 <div class="form-group">
-                    <label for="edit_name">Full Name</label>
+                    <label for="edit_name">Full Name <span class="required-indicator">*</span></label>
                     <input type="text" id="edit_name" name="name" required placeholder="Enter full name">
                 </div>
                 <div class="form-group">
-                    <label for="edit_email">Email Address</label>
+                    <label for="edit_email">Email Address <span class="required-indicator">*</span></label>
                     <input type="email" id="edit_email" name="email" required placeholder="Enter email address">
                 </div>
                 <div class="form-group">
@@ -1262,15 +1262,15 @@
                     <input type="password" id="edit_password_confirmation" name="password_confirmation" placeholder="Confirm new password" minlength="8">
                 </div>
                 <div class="form-group">
-                    <label for="edit_contact">Contact Number</label>
-                    <input type="text" id="edit_contact" name="contact" placeholder="Enter contact number" inputmode="numeric" pattern="[0-9]*" autocomplete="tel" maxlength="15">
+                    <label for="edit_contact">Contact Number <span class="required-indicator">*</span></label>
+                    <input type="text" id="edit_contact" name="contact" required placeholder="Enter contact number" inputmode="numeric" pattern="[0-9]*" autocomplete="tel" maxlength="15">
                 </div>
                 <input type="hidden" id="edit_role" name="role">
                 
                 <div class="form-group branch-group-hidden" id="edit_branch_group">
-                    <label for="edit_branch_id">Assign to Branch</label>
+                    <label for="edit_branch_id">Assign to Branch <span class="required-indicator">*</span></label>
                     <select id="edit_branch_id" name="branch_id">
-                        <option value="">— Select Branch —</option>
+                        <option value="" disabled>— Select Branch —</option>
                         @foreach($branches as $branch)
                             <option value="{{ $branch->id }}">
                                 {{ $branch->name }}
@@ -1326,9 +1326,9 @@
             document.getElementById('create_role').value = role;
             const titleElem = document.getElementById('modalTitle');
             if (role === 'school_admin') {
-                titleElem.innerText = 'Invite School Admin';
+                titleElem.innerText = 'Add School Admin';
             } else if (role === 'branch_secretary') {
-                titleElem.innerText = 'Invite Branch Manager';
+                titleElem.innerText = 'Add Branch Manager';
             }
         }
         document.getElementById('createModal').classList.add('active');

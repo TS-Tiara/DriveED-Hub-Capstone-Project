@@ -221,8 +221,8 @@ class CourseModuleController extends Controller
             abort(403);
         }
 
-        // Verify module belongs to course and is an assessment
-        if ($module->course_id !== $course->id || $module->module_type !== 'assessment') {
+        // Verify module belongs to course
+        if ($module->course_id !== $course->id) {
             abort(404);
         }
 
@@ -237,14 +237,14 @@ class CourseModuleController extends Controller
             abort(403, 'You must be enrolled in this course to take assessments.');
         }
 
-        $module->load(['questions' => function($q) {
-            $q->orderBy('sort_order');
-        }]);
+        $questions = $module->questions()
+            ->orderBy('sort_order')
+            ->get();
 
         // Get navigation
         $navigation = $this->getLearningPathNavigation($course, $module);
 
-        return view($school->resolveView('student.modules.assessment'), compact('school', 'course', 'module', 'navigation'))
+        return view($school->resolveView('student.modules.assessment'), compact('school', 'course', 'module', 'questions', 'navigation'))
             ->with('isAjax', $request->ajax());
     }
 
@@ -579,4 +579,5 @@ class CourseModuleController extends Controller
             return back()->with('error', 'Failed to duplicate module: ' . $e->getMessage());
         }
     }
+
 }

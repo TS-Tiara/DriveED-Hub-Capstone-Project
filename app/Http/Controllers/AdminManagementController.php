@@ -78,7 +78,7 @@ class AdminManagementController extends Controller
                 Rule::unique('students', 'email')->where('school_id', $school->id),
                 Rule::unique('instructors', 'email')->where('school_id', $school->id),
             ],
-            'contact' => ['nullable', 'string', 'max:20', 'regex:/^[0-9]+$/'],
+            'contact' => ['required', 'string', 'max:20', 'regex:/^[0-9]+$/'],
             'role' => ['required', 'in:school_admin,branch_secretary'],
             'branch_id' => ['required_if:role,branch_secretary', 'nullable', 'exists:branches,id'],
         ]);
@@ -98,7 +98,7 @@ class AdminManagementController extends Controller
             if ($capacity['at_capacity']) {
                 return redirect()->back()->withInput()->with(
                     'error',
-                    "Cannot invite another branch manager for {$selectedBranch->name}. Capacity is full ({$capacity['used']}/{$capacity['limit']})."
+                    "Cannot add another branch manager for {$selectedBranch->name}. Capacity is full ({$capacity['used']}/{$capacity['limit']})."
                 );
             }
         }
@@ -126,20 +126,20 @@ class AdminManagementController extends Controller
             $roleLabel = $validated['role'] === Admin::ROLE_BRANCH_SECRETARY ? 'Branch Secretary' : 'School Admin';
 
             SystemLog::logInfo(
-                "Invitation sent to {$roleLabel}: {$invitation->email}",
+                "Account setup link sent to {$roleLabel}: {$invitation->email}",
                 'user_management',
                 [
                     'role' => $invitation->role,
                     'branch_id' => $invitation->branch_id,
-                    'invited_by' => $admin->id,
+                    'added_by' => $admin->id,
                 ],
                 $school->id,
-                'admin_invited'
+                'admin_added'
             );
 
             DB::commit();
 
-            return redirect()->back()->with('success', "Invitation successfully sent to {$invitation->email}.");
+            return redirect()->back()->with('success', "Account setup link successfully sent to {$invitation->email}.");
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error("Failed to send admin invitation in AdminManagementController: " . $e->getMessage());
@@ -180,7 +180,7 @@ class AdminManagementController extends Controller
                 Rule::unique('admins', 'email')->ignore($targetAdmin->id),
             ],
             'password' => ['nullable', 'string', 'confirmed', new StrongPassword()],
-            'contact' => ['nullable', 'string', 'max:20', 'regex:/^[0-9]+$/'],
+            'contact' => ['required', 'string', 'max:20', 'regex:/^[0-9]+$/'],
             'role' => ['required', 'in:school_admin,branch_secretary'],
             'branch_id' => ['required_if:role,branch_secretary', 'nullable', 'exists:branches,id'],
         ]);

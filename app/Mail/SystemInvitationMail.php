@@ -35,7 +35,7 @@ class SystemInvitationMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "Invitation to Join " . $this->school->name,
+            subject: "Account Setup for " . $this->school->name,
         );
     }
 
