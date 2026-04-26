@@ -773,6 +773,7 @@
         <form id="branchForm" method="POST" action="{{ route('schools.admin.branches.store', $school) }}">
             @csrf
             <input type="hidden" name="_method" id="branchMethod" value="POST">
+            <input type="hidden" name="branch_id" id="branchId" value="{{ old('branch_id') }}">
             <div class="modal-body">
                 <div class="form-group">
                     <label for="branchName">Branch Name <span class="required-mark">*</span></label>
@@ -822,13 +823,59 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         enforceNumericOnly(document.getElementById('branchContact'));
+
+        @if($errors->any())
+            @if(old('_method') === 'PUT')
+                restoreBranchModalFromValidation({
+                    id: @json(old('branch_id')),
+                    name: @json(old('name')),
+                    address: @json(old('address')),
+                    contact_number: @json(old('contact_number')),
+                    email: @json(old('email')),
+                    sort_order: @json(old('sort_order', 0))
+                }, true);
+            @else
+                restoreBranchModalFromValidation({
+                    name: @json(old('name')),
+                    address: @json(old('address')),
+                    contact_number: @json(old('contact_number')),
+                    email: @json(old('email')),
+                    sort_order: @json(old('sort_order', 0))
+                }, false);
+            @endif
+        @endif
     });
+
+    function restoreBranchModalFromValidation(data, isEdit) {
+        if (isEdit) {
+            document.getElementById('branchModalTitleText').textContent = 'Edit Branch';
+            document.getElementById('branchSubmitBtnText').textContent = 'Save Changes';
+            document.getElementById('branchForm').action = branchesBaseUrl + '/' + data.id;
+            document.getElementById('branchMethod').value = 'PUT';
+            document.getElementById('branchId').value = data.id || '';
+        } else {
+            document.getElementById('branchModalTitleText').textContent = 'Add New Branch';
+            document.getElementById('branchSubmitBtnText').textContent = 'Create Branch';
+            document.getElementById('branchForm').action = branchesBaseUrl;
+            document.getElementById('branchMethod').value = 'POST';
+            document.getElementById('branchId').value = '';
+        }
+
+        document.getElementById('branchName').value = data.name || '';
+        document.getElementById('branchAddress').value = data.address || '';
+        document.getElementById('branchContact').value = data.contact_number || '';
+        document.getElementById('branchEmail').value = data.email || '';
+        document.getElementById('branchSortOrder').value = data.sort_order || 0;
+
+        document.getElementById('branchModal').classList.add('active');
+    }
 
     function openBranchModal() {
         document.getElementById('branchModalTitleText').textContent = 'Add New Branch';
         document.getElementById('branchSubmitBtnText').textContent = 'Create Branch';
         document.getElementById('branchForm').action = branchesBaseUrl;
         document.getElementById('branchMethod').value = 'POST';
+        document.getElementById('branchId').value = '';
 
         document.getElementById('branchName').value = '';
         document.getElementById('branchAddress').value = '';
@@ -844,6 +891,7 @@
         document.getElementById('branchSubmitBtnText').textContent = 'Save Changes';
         document.getElementById('branchForm').action = branchesBaseUrl + '/' + branch.id;
         document.getElementById('branchMethod').value = 'PUT';
+        document.getElementById('branchId').value = branch.id;
 
         document.getElementById('branchName').value = branch.name || '';
         document.getElementById('branchAddress').value = branch.address || '';

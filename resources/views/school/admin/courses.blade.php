@@ -1938,6 +1938,7 @@
                     @csrf
                     <input type="hidden" name="_method" id="courseMethod" value="POST">
                     <input type="hidden" name="course_id" id="courseId" value="{{ old('course_id') }}">
+                    <input type="hidden" name="modal_type" value="course">
 
                     <div class="modal-body">
                         <div class="required-note">Fields marked with * are required.</div>
@@ -2134,6 +2135,9 @@
                 <form id="packageForm" method="POST">
                     @csrf
                     <input type="hidden" name="_method" id="packageMethod" value="POST">
+                    <input type="hidden" name="modal_type" value="package">
+                    <input type="hidden" name="course_id" id="packageCourseId" value="{{ old('course_id') }}">
+                    <input type="hidden" name="package_id" id="packagePackageId" value="{{ old('package_id') }}">
 
                     <div class="modal-body">
                         <div class="form-group">
@@ -2515,6 +2519,8 @@
                     document.getElementById('packageModalTitle').textContent = 'Edit Package';
                     document.getElementById('packageForm').action = `{{ url($school->slug . '/admin/courses') }}/${courseId}/packages/${packageId}`;
                     document.getElementById('packageMethod').value = 'PUT';
+                    document.getElementById('packageCourseId').value = courseId;
+                    document.getElementById('packagePackageId').value = packageId;
 
                     document.getElementById('packageName').value = package.name || '';
                     document.getElementById('packageVehicleCategory').value = package.vehicle_category_id || '';
@@ -2542,6 +2548,8 @@
                     document.getElementById('packageModalTitle').textContent = 'Add New Package';
                     document.getElementById('packageForm').action = `{{ url($school->slug . '/admin/courses') }}/${courseId}/packages`;
                     document.getElementById('packageMethod').value = 'POST';
+                    document.getElementById('packageCourseId').value = courseId;
+                    document.getElementById('packagePackageId').value = '';
                     document.getElementById('packageForm').reset();
 
                     const featuresContainer = document.getElementById('packageFeaturesContainer');
@@ -2769,6 +2777,37 @@
                 document.getElementById('courseModal').style.display = 'flex';
             }
 
+            function openPackageModalFromValidation(oldData) {
+                const courseId = oldData.course_id;
+                const packageId = oldData.package_id;
+                
+                openPackageModal(courseId, packageId);
+                
+                // Override with old values
+                document.getElementById('packageName').value = oldData.name || '';
+                document.getElementById('packageVehicleCategory').value = oldData.vehicle_category_id || '';
+                document.getElementById('packageLevel').value = oldData.package_level || '';
+                document.getElementById('packageTier').value = oldData.tier || '';
+                document.getElementById('packageTransmission').value = oldData.transmission_type || 'manual';
+                document.getElementById('packagePrice').value = oldData.price || '';
+                document.getElementById('packageTdcHours').value = oldData.tdc_hours || '';
+                document.getElementById('packagePdcHours').value = oldData.pdc_hours || '';
+                document.getElementById('packageDescription').value = oldData.description || '';
+                document.getElementById('packagePopular').checked = !!oldData.is_popular;
+
+                const featuresContainer = document.getElementById('packageFeaturesContainer');
+                featuresContainer.innerHTML = '';
+                const restoredFeatures = Array.isArray(oldData.features)
+                    ? oldData.features.filter(f => f !== null && String(f).trim() !== '')
+                    : [];
+
+                if (restoredFeatures.length > 0) {
+                    restoredFeatures.forEach(f => addPackageFeature(String(f)));
+                } else {
+                    addPackageFeature();
+                }
+            }
+
             // View Toggle Functions
             function switchView(view) {
                 const gridView = document.querySelector('.courses-grid');
@@ -2854,21 +2893,39 @@
                 }
 
                 @if($errors->any())
-                    openCourseModalFromValidation({
-                        method: @json(old('_method', 'POST')),
-                        course_id: @json(old('course_id')),
-                        title: @json(old('title')),
-                        description: @json(old('description')),
-                        type: @json(old('type', 'standard')),
-                        vehicle_type: @json(old('vehicle_type')),
-                        course_type: @json(old('course_type')),
-                        license_type: @json(old('license_type')),
-                        hours_required: @json(old('hours_required')),
-                        price: @json(old('price')),
-                        status: @json(old('status', 'active')),
-                        is_featured: @json((bool) old('is_featured')),
-                        features: @json(old('features', [])),
-                    });
+                    @if(old('modal_type') === 'package')
+                        openPackageModalFromValidation({
+                            course_id: @json(old('course_id')),
+                            package_id: @json(old('package_id')),
+                            name: @json(old('name')),
+                            vehicle_category_id: @json(old('vehicle_category_id')),
+                            package_level: @json(old('package_level')),
+                            tier: @json(old('tier')),
+                            transmission_type: @json(old('transmission_type')),
+                            price: @json(old('price')),
+                            tdc_hours: @json(old('tdc_hours')),
+                            pdc_hours: @json(old('pdc_hours')),
+                            description: @json(old('description')),
+                            is_popular: @json((bool) old('is_popular')),
+                            features: @json(old('features', [])),
+                        });
+                    @else
+                        openCourseModalFromValidation({
+                            method: @json(old('_method', 'POST')),
+                            course_id: @json(old('course_id')),
+                            title: @json(old('title')),
+                            description: @json(old('description')),
+                            type: @json(old('type', 'standard')),
+                            vehicle_type: @json(old('vehicle_type')),
+                            course_type: @json(old('course_type')),
+                            license_type: @json(old('license_type')),
+                            hours_required: @json(old('hours_required')),
+                            price: @json(old('price')),
+                            status: @json(old('status', 'active')),
+                            is_featured: @json((bool) old('is_featured')),
+                            features: @json(old('features', [])),
+                        });
+                    @endif
                 @endif
         });
 
