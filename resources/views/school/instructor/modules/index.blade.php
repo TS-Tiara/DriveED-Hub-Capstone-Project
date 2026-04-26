@@ -13,6 +13,7 @@
         </div>
         <div class="lms-actions">
             <a href="{{ school_route('instructor.materials.index') }}" class="lms-btn lms-btn-muted">Back to Course Materials</a>
+            <a href="{{ school_route('instructor.courses.modules.create', ['course' => $course->id]) }}" class="lms-btn lms-btn-primary">Create Module</a>
         </div>
     </div>
 
@@ -28,12 +29,19 @@
                     <div>
                         <p class="lms-item-title">{{ $module->title }}</p>
                         <p class="lms-item-meta">
-                            {{ $module->lessons->count() ?? 0 }} lesson(s)
-                            | {{ ucfirst($module->module_type ?? 'lesson') }}
+                            @if(($module->module_type ?? 'lesson') === 'assessment')
+                                <span style="color: #059669; font-weight: 600;">{{ $module->questions->count() ?? 0 }} Question(s)</span>
+                            @else
+                                <span style="color: #111827;">{{ $module->lessons->count() ?? 0 }} Lesson(s)</span>
+                            @endif
+                            | <span class="lms-chip" style="font-size: 0.7rem; background: {{ ($module->module_type ?? 'lesson') === 'assessment' ? '#ecfdf5' : '#eff6ff' }}; color: {{ ($module->module_type ?? 'lesson') === 'assessment' ? '#059669' : '#1d4ed8' }};">
+                                {{ ($module->module_type ?? 'lesson') === 'assessment' ? 'EXAM / QUIZ' : 'LESSON' }}
+                            </span>
                         </p>
                     </div>
                     <div class="lms-item-links">
-                        <a href="{{ school_route('instructor.courses.modules.show', ['course' => $course->id, 'module' => $module->id]) }}" class="lms-link lms-link-open">Open Module</a>
+                        <a href="{{ school_route('instructor.courses.modules.show', ['course' => $course->id, 'module' => $module->id]) }}" class="lms-link lms-link-view">View</a>
+                        <a href="{{ school_route('instructor.courses.modules.edit', ['course' => $course->id, 'module' => $module->id]) }}" class="lms-link lms-link-edit">Edit</a>
                     </div>
                 </li>
             @empty

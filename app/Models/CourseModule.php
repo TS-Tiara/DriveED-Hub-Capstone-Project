@@ -52,6 +52,17 @@ class CourseModule extends Model
     }
 
     /**
+     * Get all questions for this module (if it is an assessment)
+     */
+    public function questions()
+    {
+        return $this->belongsToMany(Question::class, 'assessment_questions', 'module_id', 'question_id')
+                    ->withPivot('id', 'sort_order', 'points')
+                    ->orderByPivot('sort_order')
+                    ->withTimestamps();
+    }
+
+    /**
      * Scope to get modules ordered by sort_order
      */
     public function scopeOrdered($query)

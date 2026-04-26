@@ -12,7 +12,7 @@
             <p class="lms-subtitle">Module: {{ $module->title ?? 'N/A' }}</p>
         </div>
         <div class="lms-actions">
-            <a href="{{ school_route('instructor.courses.modules.lessons.index', ['course' => $course->id, 'module' => $module->id]) }}" class="lms-btn lms-btn-muted">Back to Lessons</a>
+            <a href="{{ school_route('instructor.courses.modules.show', ['course' => $course->id, 'module' => $module->id]) }}" class="lms-btn lms-btn-muted">Back to Module</a>
             <a href="{{ school_route('instructor.courses.modules.lessons.create', ['course' => $course->id, 'module' => $module->id]) }}" class="lms-btn lms-btn-primary">Create Lesson</a>
             <a href="{{ school_route('instructor.courses.modules.lessons.edit', ['course' => $course->id, 'module' => $module->id, 'lesson' => $lesson->id]) }}" class="lms-btn lms-btn-warn">Edit Lesson</a>
             <form method="POST" action="{{ school_route('instructor.courses.modules.lessons.destroy', ['course' => $course->id, 'module' => $module->id, 'lesson' => $lesson->id]) }}" onsubmit="return confirm('Delete this lesson? This action cannot be undone.');" style="display: inline-flex;">

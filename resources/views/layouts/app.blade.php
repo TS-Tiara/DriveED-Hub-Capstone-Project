@@ -1048,9 +1048,10 @@
         }
 
         .breadcrumb-separator {
-            margin: 0 8px;
-            color: rgba(var(--primary-rgb), 0.35);
-            font-size: 11px;
+            margin: 0 10px;
+            color: #9ca3af;
+            font-size: 13px;
+            font-weight: 700;
         }
 
         .breadcrumb-current {
@@ -2028,6 +2029,8 @@
                             data-page="theoretical">Student Training List</a>
                         <a href="{{ $schoolRoute('instructor.materials.index') }}" class="nav-item"
                             data-page="materials">Course Materials</a>
+                        <a href="{{ $schoolRoute('instructor.questions.index') }}" class="nav-item"
+                            data-page="questions">Question Bank</a>
                     </div>
                 </div>
             @elseif(Auth::guard('student')->check())
@@ -2501,11 +2504,55 @@
                 const studentName = studentHeading ? studentHeading.textContent.trim() : '';
 
                 let html = '<a href="#" onclick="loadContent(\'' + dashUrl + '\'); return false;">Dashboard</a>';
-                html += '<span class="breadcrumb-separator">›</span>';
+                html += '<span class="breadcrumb-separator">></span>';
                 html += '<a href="#" onclick="loadContent(\'/' + schoolSlug + '/instructor/students\'); return false;">My Students</a>';
-                html += '<span class="breadcrumb-separator">›</span>';
+                html += '<span class="breadcrumb-separator">></span>';
                 html += '<span class="breadcrumb-current">' + escapeBreadcrumbLabel(studentName || 'Student Profile') + '</span>';
                 container.innerHTML = html;
+                return;
+            }
+
+            // Question Bank special case
+            const questionBankMatch = rolePath.match(/^(admin|instructor)\/questions(?:\/(.*))?$/);
+            if (questionBankMatch) {
+                const role = questionBankMatch[1];
+                const trailingPath = (questionBankMatch[2] || '').replace(/^\/+|\/+$/g, '');
+                const lmsPage = document.querySelector('#mainContent .lms-page');
+                const courseLabel = lmsPage ? lmsPage.getAttribute('data-breadcrumb-course') : '';
+                const moduleLabel = lmsPage ? lmsPage.getAttribute('data-breadcrumb-module') : '';
+                const moduleType = lmsPage ? lmsPage.getAttribute('data-breadcrumb-module-type') : '';
+
+                let qHtml = '<a href="#" onclick="loadContent(\'' + dashUrl + '\'); return false;">Dashboard</a>';
+                qHtml += '<span class="breadcrumb-separator">></span>';
+
+                if (courseLabel) {
+                    qHtml += '<a href="#" onclick="loadContent(\'/' + schoolSlug + '/' + role + '/materials\'); return false;">Course Materials</a>';
+                    qHtml += '<span class="breadcrumb-separator">></span>';
+                    qHtml += '<span>' + escapeBreadcrumbLabel(courseLabel) + '</span>';
+                    if (moduleLabel) {
+                        qHtml += '<span class="breadcrumb-separator">></span>';
+                        if (moduleType === 'assessment') {
+                            const modulePath = role + '/courses/' + (lmsPage.getAttribute('data-course-id') || '') + '/modules/' + (lmsPage.getAttribute('data-module-id') || '');
+                            qHtml += '<span>' + escapeBreadcrumbLabel(moduleLabel) + '</span>';
+                            qHtml += '<span class="breadcrumb-separator">></span>';
+                            qHtml += '<span>Exam Builder</span>';
+                        } else {
+                            qHtml += '<span>' + escapeBreadcrumbLabel(moduleLabel) + '</span>';
+                        }
+                    }
+                } else {
+                    qHtml += '<span>Training Resources</span>';
+                }
+
+                qHtml += '<span class="breadcrumb-separator">></span>';
+                if (!trailingPath) {
+                    qHtml += '<span class="breadcrumb-current">Question Bank</span>';
+                } else {
+                    qHtml += '<a href="#" onclick="loadContent(\'/' + schoolSlug + '/' + role + '/questions\'); return false;">Question Bank</a>';
+                    qHtml += '<span class="breadcrumb-separator">></span>';
+                    qHtml += '<span class="breadcrumb-current">' + (trailingPath === 'create' ? 'Create' : 'Edit') + '</span>';
+                }
+                container.innerHTML = qHtml;
                 return;
             }
 
@@ -2535,17 +2582,17 @@
                 let lessonLabel = (lessonLabelRaw || '').trim();
 
                 let materialsHtml = '<a href="#" onclick="loadContent(\'' + dashUrl + '\'); return false;">Dashboard</a>';
-                materialsHtml += '<span class="breadcrumb-separator">›</span>';
+                materialsHtml += '<span class="breadcrumb-separator">></span>';
                 materialsHtml += '<a href="#" onclick="loadContent(\'/' + schoolSlug + '/' + materialsPath + '\'); return false;">Course Materials</a>';
 
                 if (!trailingPath) {
-                    materialsHtml += '<span class="breadcrumb-separator">›</span>';
+                    materialsHtml += '<span class="breadcrumb-separator">></span>';
                     materialsHtml += '<span class="breadcrumb-current">' + escapeBreadcrumbLabel(courseLabel) + '</span>';
                     container.innerHTML = materialsHtml;
                     return;
                 }
 
-                materialsHtml += '<span class="breadcrumb-separator">›</span>';
+                materialsHtml += '<span class="breadcrumb-separator">></span>';
                 materialsHtml += '<a href="#" onclick="loadContent(\'/' + schoolSlug + '/' + modulesPath + '\'); return false;">' + escapeBreadcrumbLabel(courseLabel) + '</a>';
 
                 const segments = trailingPath.split('/').filter(Boolean);
@@ -2553,7 +2600,7 @@
 
                 if (['create', 'reorder'].includes(firstSegment)) {
                     const actionLabel = firstSegment === 'create' ? 'Create Module' : 'Reorder Modules';
-                    materialsHtml += '<span class="breadcrumb-separator">›</span>';
+                    materialsHtml += '<span class="breadcrumb-separator">></span>';
                     materialsHtml += '<span class="breadcrumb-current">' + actionLabel + '</span>';
                     container.innerHTML = materialsHtml;
                     return;
@@ -2566,32 +2613,42 @@
                 const modulePath = modulesPath + '/' + firstSegment;
 
                 if (segments.length === 1) {
-                    materialsHtml += '<span class="breadcrumb-separator">›</span>';
+                    materialsHtml += '<span class="breadcrumb-separator">></span>';
                     materialsHtml += '<span class="breadcrumb-current">' + escapeBreadcrumbLabel(moduleLabel) + '</span>';
                     container.innerHTML = materialsHtml;
                     return;
                 }
 
                 if (segments[1] === 'edit') {
-                    materialsHtml += '<span class="breadcrumb-separator">›</span>';
+                    materialsHtml += '<span class="breadcrumb-separator">></span>';
                     materialsHtml += '<a href="#" onclick="loadContent(\'/' + schoolSlug + '/' + modulePath + '\'); return false;">' + escapeBreadcrumbLabel(moduleLabel) + '</a>';
-                    materialsHtml += '<span class="breadcrumb-separator">›</span>';
+                    materialsHtml += '<span class="breadcrumb-separator">></span>';
                     materialsHtml += '<span class="breadcrumb-current">Edit</span>';
+                    container.innerHTML = materialsHtml;
+                    return;
+                }
+
+                // Special case for Exam Builder
+                if (segments[1] === 'assessments' && segments[2] === 'manage') {
+                    materialsHtml += '<span class="breadcrumb-separator">></span>';
+                    materialsHtml += '<a href="#" onclick="loadContent(\'/' + schoolSlug + '/' + modulePath + '\'); return false;">' + escapeBreadcrumbLabel(moduleLabel) + '</a>';
+                    materialsHtml += '<span class="breadcrumb-separator">></span>';
+                    materialsHtml += '<span class="breadcrumb-current">Exam Builder</span>';
                     container.innerHTML = materialsHtml;
                     return;
                 }
 
                 if (segments[1] !== 'lessons') {
                     const subLabel = segments.slice(1).map(formatSegmentLabel).join(' > ');
-                    materialsHtml += '<span class="breadcrumb-separator">›</span>';
+                    materialsHtml += '<span class="breadcrumb-separator">></span>';
                     materialsHtml += '<a href="#" onclick="loadContent(\'/' + schoolSlug + '/' + modulePath + '\'); return false;">' + escapeBreadcrumbLabel(moduleLabel) + '</a>';
-                    materialsHtml += '<span class="breadcrumb-separator">›</span>';
+                    materialsHtml += '<span class="breadcrumb-separator">></span>';
                     materialsHtml += '<span class="breadcrumb-current">' + subLabel + '</span>';
                     container.innerHTML = materialsHtml;
                     return;
                 }
 
-                materialsHtml += '<span class="breadcrumb-separator">›</span>';
+                materialsHtml += '<span class="breadcrumb-separator">></span>';
                 materialsHtml += '<a href="#" onclick="loadContent(\'/' + schoolSlug + '/' + modulePath + '\'); return false;">' + escapeBreadcrumbLabel(moduleLabel) + '</a>';
 
                 if (segments.length === 2) {

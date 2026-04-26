@@ -113,7 +113,8 @@ class CourseModuleController extends Controller
             abort(403);
         }
         
-        return view($school->resolveView('admin.modules.create'), compact('school', 'course'))->with('isAjax', $request->ajax());
+        $viewPath = $role === 'admin' ? 'admin.modules.create' : 'instructor.modules.create';
+        return view($school->resolveView($viewPath), compact('school', 'course'))->with('isAjax', $request->ajax());
     }
 
     /**
@@ -140,6 +141,7 @@ class CourseModuleController extends Controller
             $sortOrder = $request->sort_order ?? $course->modules()->max('sort_order') + 1;
             
             $module = CourseModule::create([
+                'school_id' => $school->id,
                 'course_id' => $course->id,
                 'title' => $request->title,
                 'description' => $request->description,
@@ -195,7 +197,7 @@ class CourseModuleController extends Controller
         
         $module->load(['lessons' => function($query) {
             $query->ordered();
-        }]);
+        }, 'questions']);
         
         $viewPath = match($role) {
             'student' => 'student.modules.show',
@@ -223,7 +225,8 @@ class CourseModuleController extends Controller
             abort(404);
         }
         
-        return view($school->resolveView('admin.modules.edit'), compact('school', 'course', 'module'))->with('isAjax', $request->ajax());
+        $viewPath = $role === 'admin' ? 'admin.modules.edit' : 'instructor.modules.edit';
+        return view($school->resolveView($viewPath), compact('school', 'course', 'module'))->with('isAjax', $request->ajax());
     }
 
     /**
