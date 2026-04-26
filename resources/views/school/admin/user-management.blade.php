@@ -1288,6 +1288,7 @@
                                             data-license="{{ $user->license_number }}" 
                                             data-address="{{ $user->address }}" 
                                             data-branch="{{ $user->branch_id }}"
+                                            data-specializations="{{ json_encode($user->course_specializations ?? []) }}"
                                             title="Edit Instructor">
                                             <i class="bi bi-pencil-square"></i>
                                             <span>Edit</span>
@@ -1410,9 +1411,9 @@
             </div>
             @if(isset($branches) && $branches->count() > 0)
             <div class="form-group">
-                <label>Branch:</label>
-                <select name="branch_id" class="branch-modal-select">
-                    <option value="">No Branch</option>
+                <label>Branch <span class="required-indicator">*</span></label>
+                <select name="branch_id" class="branch-modal-select" required>
+                    <option value="" disabled selected>Select Branch</option>
                     @foreach($branches as $branch)
                         <option value="{{ $branch->id }}" {{ $showStudentInviteErrors && (string) old('branch_id') === (string) $branch->id ? 'selected' : '' }}>{{ $branch->name }}</option>
                     @endforeach
@@ -1425,9 +1426,9 @@
 
             @if(isset($courses) && $courses->count() > 0)
             <div class="form-group">
-                <label>Assigned Course (Optional):</label>
-                <select name="course_id" class="branch-modal-select">
-                    <option value="">No Course Assigned</option>
+                <label>Assigned Course <span class="required-indicator">*</span></label>
+                <select name="course_id" class="branch-modal-select" required>
+                    <option value="" disabled selected>Select Course</option>
                     @foreach($courses as $course)
                         <option value="{{ $course->id }}" {{ $showStudentInviteErrors && (string) old('course_id') === (string) $course->id ? 'selected' : '' }}>
                             {{ $course->title }} ({{ ucfirst($course->course_type) }})
@@ -1457,15 +1458,15 @@
             @csrf
             @method('PUT')
             <div class="form-group">
-                <label>Name <span class="required-indicator">*</span>:</label>
+                <label>Name <span class="required-indicator">*</span></label>
                 <input type="text" id="edit_student_name" name="name" required>
             </div>
             <div class="form-group">
-                <label>Email <span class="required-indicator">*</span>:</label>
+                <label>Email <span class="required-indicator">*</span></label>
                 <input type="email" id="edit_student_email" name="email" required>
             </div>
             <div class="form-group">
-                <label>Contact <span class="required-indicator">*</span>:</label>
+                <label>Contact <span class="required-indicator">*</span></label>
                 <div class="contact-input-group">
                     <span class="contact-prefix">+63</span>
                     <input type="text" id="edit_student_contact" name="contact" required maxlength="10" placeholder="9123456789">
@@ -1473,14 +1474,14 @@
                 <p class="field-help">Enter the 10-digit number after +63 (e.g., 9123456789).</p>
             </div>
             <div class="form-group">
-                <label>Address <span class="required-indicator">*</span>:</label>
+                <label>Address <span class="required-indicator">*</span></label>
                 <input type="text" id="edit_student_address" name="address" required>
             </div>
             @if(isset($branches) && $branches->count() > 0)
             <div class="form-group">
-                <label>Branch:</label>
-                <select id="edit_student_branch" name="branch_id" class="branch-modal-select">
-                    <option value="">No Branch</option>
+                <label>Branch <span class="required-indicator">*</span></label>
+                <select id="edit_student_branch" name="branch_id" class="branch-modal-select" required>
+                    <option value="" disabled>Select Branch</option>
                     @foreach($branches as $branch)
                         <option value="{{ $branch->id }}">{{ $branch->name }}</option>
                     @endforeach
@@ -1495,7 +1496,7 @@
     </div>
 </div>
 
-<!-- INVITE INSTRUCTOR MODAL -->
+<!-- ADD INSTRUCTOR MODAL -->
 <div id="createInstructorModal" class="modal">
     <div class="modal-content">
         <h3>Add New Instructor</h3>
@@ -1565,9 +1566,9 @@
             </div>
             @if(isset($branches) && $branches->count() > 0)
             <div class="form-group">
-                <label>Branch:</label>
-                <select name="branch_id" class="branch-modal-select">
-                    <option value="">No Branch</option>
+                <label>Branch <span class="required-indicator">*</span></label>
+                <select name="branch_id" class="branch-modal-select" required>
+                    <option value="" disabled selected>Select Branch</option>
                     @foreach($branches as $branch)
                         <option value="{{ $branch->id }}" {{ $showInstructorInviteErrors && (string) old('branch_id') === (string) $branch->id ? 'selected' : '' }}>{{ $branch->name }}</option>
                     @endforeach
@@ -1575,6 +1576,20 @@
                 @if($showInstructorInviteErrors)
                     @error('branch_id') <p class="field-error">{{ $message }}</p> @enderror
                 @endif
+            </div>
+            @endif
+            @if(isset($courses) && $courses->count() > 0)
+            <div class="form-group">
+                <label>Course Specializations <span class="required-indicator">*</span></label>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px; background: #f8fafc;">
+                    @foreach($courses as $course)
+                        <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 0; cursor: pointer; font-weight: normal; font-size: 0.9rem;">
+                            <input type="checkbox" name="course_specializations[]" value="{{ $course->id }}" style="width: auto;">
+                            {{ $course->title }}
+                        </label>
+                    @endforeach
+                </div>
+                <p class="field-help">Select courses this instructor is qualified to teach.</p>
             </div>
             @endif
             <input type="hidden" name="role" value="instructor">
@@ -1594,15 +1609,15 @@
             @csrf
             @method('PUT')
             <div class="form-group">
-                <label>Name <span class="required-indicator">*</span>:</label>
+                <label>Name <span class="required-indicator">*</span></label>
                 <input type="text" id="edit_instructor_name" name="name" required>
             </div>
             <div class="form-group">
-                <label>Email <span class="required-indicator">*</span>:</label>
+                <label>Email <span class="required-indicator">*</span></label>
                 <input type="email" id="edit_instructor_email" name="email" required>
             </div>
             <div class="form-group">
-                <label>Contact <span class="required-indicator">*</span>:</label>
+                <label>Contact <span class="required-indicator">*</span></label>
                 <div class="contact-input-group">
                     <span class="contact-prefix">+63</span>
                     <input type="text" id="edit_instructor_contact" name="contact" required maxlength="10" placeholder="9123456789">
@@ -1610,23 +1625,37 @@
                 <p class="field-help">Enter the 10-digit number after +63 (e.g., 9123456789).</p>
             </div>
             <div class="form-group">
-                <label>License Number <span class="required-indicator">*</span>:</label>
+                <label>License Number <span class="required-indicator">*</span></label>
                 <input type="text" id="edit_instructor_license" name="license_number" required>
             </div>
             <div class="form-group">
-                <label>Address <span class="required-indicator">*</span>:</label>
+                <label>Address <span class="required-indicator">*</span></label>
                 <input type="text" id="edit_instructor_address" name="address" required>
             </div>
             <div class="form-group">
-                <label>License Image:</label>
+                <label>License Image</label>
                 <input type="file" name="license_image" accept="image/*">
                 <p class="field-help">Leave empty to keep current license image.</p>
             </div>
+            @if(isset($courses) && $courses->count() > 0)
+            <div class="form-group">
+                <label>Course Specializations <span class="required-indicator">*</span></label>
+                <div id="edit_instructor_specializations" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px; background: #f8fafc;">
+                    @foreach($courses as $course)
+                        <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 0; cursor: pointer; font-weight: normal; font-size: 0.9rem;">
+                            <input type="checkbox" name="course_specializations[]" value="{{ $course->id }}" style="width: auto;">
+                            {{ $course->title }}
+                        </label>
+                    @endforeach
+                </div>
+                <p class="field-help">Select courses this instructor is qualified to teach.</p>
+            </div>
+            @endif
             @if(isset($branches) && $branches->count() > 0)
             <div class="form-group">
-                <label>Branch:</label>
-                <select id="edit_instructor_branch" name="branch_id" class="branch-modal-select">
-                    <option value="">No Branch</option>
+                <label>Branch <span class="required-indicator">*</span></label>
+                <select id="edit_instructor_branch" name="branch_id" class="branch-modal-select" required>
+                    <option value="" disabled>Select Branch</option>
                     @foreach($branches as $branch)
                         <option value="{{ $branch->id }}">{{ $branch->name }}</option>
                     @endforeach
@@ -1928,7 +1957,8 @@
                     btn.dataset.contact, 
                     btn.dataset.license, 
                     btn.dataset.address, 
-                    btn.dataset.branch
+                    btn.dataset.branch,
+                    btn.dataset.specializations
                 );
             }
         }
@@ -2032,7 +2062,7 @@
         setInviteFormLoadingState(document.getElementById('createInstructorInviteForm'), false);
     }
     
-    function editInstructor(id, name, email, contact, license, address, branchId) {
+    function editInstructor(id, name, email, contact, license, address, branchId, specializations) {
         const form = document.getElementById('editInstructorForm');
         form.action = `${window.instructorBaseUrl}/${id}`;
         document.getElementById('edit_instructor_name').value = name || '';
@@ -2049,6 +2079,23 @@
         document.getElementById('edit_instructor_address').value = address || '';
         const branchSelect = document.getElementById('edit_instructor_branch');
         if (branchSelect) branchSelect.value = branchId || '';
+
+        // Reset and populate specializations
+        const specContainer = document.getElementById('edit_instructor_specializations');
+        if (specContainer) {
+            const checkboxes = specContainer.querySelectorAll('input[type="checkbox"]');
+            let specArray = [];
+            try {
+                specArray = JSON.parse(specializations || '[]');
+            } catch (e) {
+                console.error('Error parsing specializations:', e);
+            }
+            
+            checkboxes.forEach(cb => {
+                cb.checked = specArray.includes(parseInt(cb.value)) || specArray.includes(cb.value);
+            });
+        }
+
         document.getElementById('editInstructorModal').style.display = 'flex';
     }
     
@@ -2066,8 +2113,16 @@
     (function restoreInviteModalAfterValidationError() {
         const hasInviteValidationErrors = @json($errors->any());
         const inviteRole = @json($oldInviteRole);
+        const isEdit = @json(old('is_edit'));
 
         if (!hasInviteValidationErrors) {
+            return;
+        }
+
+        if (isEdit) {
+            // For edit modals, we'd need more data (ID, etc.) to restore perfectly.
+            // But usually validation errors happen on 'Create' because 'Edit' uses JS to pre-fill.
+            // If an edit fails, it redirects back.
             return;
         }
 

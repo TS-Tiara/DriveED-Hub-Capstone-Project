@@ -1167,7 +1167,7 @@
                 <div class="settings-group-header" onclick="toggleSettingsGroup(this)" role="button" aria-expanded="true" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleSettingsGroup(this)}">
                     <div class="settings-group-header-content">
                         <h2 class="settings-group-title">Operations</h2>
-                        <p class="settings-group-note">Scheduling, onboarding, staffing, alerts, email, payments, and invitations.</p>
+                        <p class="settings-group-note">Scheduling, onboarding, staffing, alerts, email, payments, and account setup.</p>
                     </div>
                     <span class="settings-group-toggle" aria-hidden="true"></span>
                 </div>
@@ -1253,10 +1253,10 @@
                     
                     <div class="section-inputs">
                         <div class="form-group">
-                            <label class="form-label">Invitation Expiry (Days)</label>
+                            <label class="form-label">Account Setup Link Expiry (Days)</label>
                             <input type="number" class="number-input" name="invitation_expiry_days" value="{{ old('invitation_expiry_days', $settings->invitation_expiry_days ?? 7) }}" min="1" max="30">
                             <small class="text-muted help-text-block">
-                                Number of days an invitation link remains valid after being sent (1-30 days)
+                                Number of days an account setup link remains valid after being sent (1-30 days)
                             </small>
                         </div>
 
@@ -1393,10 +1393,10 @@
                     </div>
                 </div>
 
-                <!-- Pending Invitations -->
+                <!-- Pending Accounts -->
                 <div class="operations-subsection" id="section-invitations" data-nav-section>
                     <div class="section-header" onclick="toggleSection(this)">
-                        <h3 class="section-title">Pending Invitations</h3>
+                        <h3 class="section-title">Pending Accounts</h3>
                     </div>
 
                     <div class="section-inputs">
@@ -1437,10 +1437,10 @@
                                             <td>{{ $invitation->expires_at->format('M d, Y H:i') }}</td>
                                             <td>
                                                 <div class="btn-group">
-                                                    <button type="button" class="btn btn-sm btn-outline-primary" title="Resend Invitation" onclick="submitInvitationAction('{{ route('schools.admin.invitations.resend', ['school' => $school, 'invitation' => $invitation]) }}', 'POST')">
+                                                    <button type="button" class="btn btn-sm btn-outline-primary" title="Resend Setup Link" onclick="submitInvitationAction('{{ route('schools.admin.invitations.resend', ['school' => $school, 'invitation' => $invitation]) }}', 'POST')">
                                                         <i class="fas fa-sync"></i>
                                                     </button>
-                                                    <button type="button" class="btn btn-sm btn-outline-danger" title="Cancel Invitation" onclick="submitInvitationAction('{{ route('schools.admin.invitations.cancel', ['school' => $school, 'invitation' => $invitation]) }}', 'DELETE', 'Are you sure you want to cancel this invitation?')">
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" title="Remove Account Setup" onclick="submitInvitationAction('{{ route('schools.admin.invitations.cancel', ['school' => $school, 'invitation' => $invitation]) }}', 'DELETE', 'Are you sure you want to remove this pending account?')">
                                                         <i class="fas fa-times"></i>
                                                     </button>
                                                 </div>
@@ -1449,7 +1449,7 @@
                                     @empty
                                         <tr>
                                             <td colspan="6" class="text-center py-4 text-muted">
-                                                No pending invitations found.
+                                                No pending accounts found.
                                             </td>
                                         </tr>
                                     @endforelse

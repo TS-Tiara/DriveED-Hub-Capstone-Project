@@ -5,7 +5,20 @@
 @section('content')
 @include('school.partials.lms-shared-styles')
 
-<div class="lms-page">
+@php 
+    $backUrl = request('return_url', school_route('instructor.dashboard'));
+@endphp
+
+<div class="lms-page"
+    @if($module) 
+        data-breadcrumb-course="{{ $module->course->title ?? '' }}"
+        data-breadcrumb-module="{{ $module->title }}"
+        data-breadcrumb-module-type="assessment"
+        data-course-id="{{ $module->course_id }}"
+        data-module-id="{{ $module->id }}"
+    @endif
+>
+    @if(!($isAjax ?? false))
     <div class="lms-header">
         <div>
             <h1 class="lms-title">Question Bank</h1>
@@ -15,22 +28,32 @@
             @if($isSelecting)
                 <button type="submit" form="bulkAddBankForm" class="lms-btn lms-btn-primary">Add Selected to Quiz</button>
             @endif
-            <a href="{{ request('return_url', $schoolRoute('instructor.dashboard')) }}" class="lms-btn lms-btn-muted">Back</a>
+            <a href="{{ $backUrl }}" class="lms-btn lms-btn-muted">Back</a>
             <a href="{{ school_route('instructor.questions.create', ['course_id' => $moduleId ? ($module->course_id ?? '') : '', 'module_id' => $moduleId, 'return_url' => url()->full()]) }}" class="lms-btn lms-btn-primary">Add Question</a>
         </div>
     </div>
-
-    @if($isSelecting && $module)
-        <div style="background: #eef2ff; border: 1px solid #c7d2fe; padding: 12px 18px; border-radius: 12px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
-            <div style="display: flex; align-items: center; gap: 12px;">
-                <div style="background: #6366f1; color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-weight: bold;">!</div>
-                <p style="margin: 0; font-size: 0.9rem; color: #3730a3;">
-                    You are picking questions for: <strong>{{ $module->title }}</strong>
-                </p>
+    @else
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; gap: 1rem; background: #f8fafc; padding: 10px 16px; border-radius: 12px; border: 1px solid #e2e8f0;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                @if($isSelecting && $module)
+                    <div style="background: var(--primary-color); color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-weight: bold; font-size: 0.75rem;">!</div>
+                    <p style="margin: 0; font-size: 0.85rem; color: #475569;">
+                        Picking for: <strong style="color: var(--primary-color);">{{ $module->title }}</strong>
+                    </p>
+                    <span style="color: #cbd5e1; margin: 0 4px;">|</span>
+                    <a href="{{ $backUrl }}" class="lms-link" style="font-size: 0.8rem; font-weight: 600;">Finish &raquo;</a>
+                @endif
             </div>
-            <a href="{{ request('return_url') }}" class="lms-link" style="font-size: 0.85rem;">Finish Selection &raquo;</a>
+            <div style="display: flex; gap: 0.5rem;">
+                @if($isSelecting)
+                    <button type="submit" form="bulkAddBankForm" class="lms-btn lms-btn-primary" style="font-size: 0.8rem; padding: 8px 14px;">Add Selected to Quiz</button>
+                @endif
+                <button type="button" onclick="openQuizDrawer('{{ school_route('instructor.questions.create', ['course_id' => $moduleId ? ($module->course_id ?? '') : '', 'module_id' => $moduleId, 'is_selecting' => 1]) }}', 'Create New Question')" class="lms-btn lms-btn-primary" style="font-size: 0.8rem; padding: 8px 14px;">+ Create New</button>
+            </div>
         </div>
     @endif
+
+
 
     <!-- Filters -->
     <div class="lms-card" style="margin-bottom: 1.5rem; padding: 1rem;">
@@ -118,7 +141,7 @@
                     </div>
                     <div class="lms-item-links">
                         @if($isSelecting && !$isAlreadyAttached)
-                            <button type="button" onclick="quickAdd({{ $question->id }})" class="lms-btn lms-btn-primary" style="padding: 0.25rem 0.75rem; font-size: 0.75rem;">Add to Quiz</button>
+                            <button type="button" onclick="quickAdd({{ $question->id }})" class="lms-btn lms-btn-primary" style="padding: 0.4rem 0.9rem; font-size: 0.8rem;">Add to Quiz</button>
                         @endif
                         <a href="{{ school_route('instructor.questions.edit', ['question' => $question->id, 'return_url' => url()->full()]) }}" class="lms-link lms-link-edit">Edit</a>
                         @if(!$isSelecting)
@@ -154,10 +177,18 @@
 
 <script>
 function quickAdd(id) {
-    if (confirm('Add this question to your quiz?')) {
-        document.getElementById('singleAddId').value = id;
-        document.getElementById('singleAddBankForm').submit();
-    }
+    const form = document.getElementById('singleAddBankForm');
+    const btn = event.currentTarget;
+    
+    // Show local loading state on the clicked button
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="btn-spinner" style="width:12px; height:12px; border-width:2px;"></span>';
+    btn.disabled = true;
+
+    document.getElementById('singleAddId').value = id;
+    
+    // Manually trigger the submit event so manage.blade.php catches it
+    form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -171,12 +202,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
-
-        @if($questions->hasPages())
-            <div style="padding: 1.5rem; border-top: 1px solid var(--border-color);">
-                {{ $questions->appends(request()->query())->links() }}
-            </div>
-        @endif
-    </div>
-</div>
 @endsection

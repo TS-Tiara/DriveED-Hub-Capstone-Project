@@ -447,30 +447,13 @@
         margin-bottom: 3px;
     }
 
-    @media (max-width: 768px) {
-        .lms-page {
-            padding: 14px;
-        }
-
-        .lms-title {
-            font-size: 1.35rem;
-        }
-
-        .lms-item {
-            flex-direction: column;
-            align-items: stretch;
-        }
-
-        .lms-item-links {
-            justify-content: flex-start;
-        }
-
-        .lms-actions {
-            width: 100%;
-        }
-
-        .lms-btn {
-            width: 100%;
-        }
+    .lms-modal-loader {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4rem;
+        color: var(--primary-color);
+        font-weight: 600;
+        gap: 12px;
     }
 </style>

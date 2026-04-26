@@ -271,8 +271,10 @@
         <div class="modal-header">
             <h5 id="detailModalTitle"><i class="bi bi-car-front"></i> Vehicle Information</h5>
         </div>
-        <form id="vehicleDetailForm" method="POST" enctype="multipart/form-data">
+        <form id="editVehicleForm" method="POST" action="" enctype="multipart/form-data">
             @csrf @method('PUT')
+            <input type="hidden" name="modal_type" value="edit">
+            <input type="hidden" name="vehicle_id" id="editVehicleId" value="{{ old('vehicle_id') }}">
             <div class="modal-body">
                 <div class="row">
                     <div class="col-md-5">
@@ -371,20 +373,21 @@
 <div class="modal-overlay" id="createVehicleModal">
     <div class="modal-content" style="width: 700px;">
         <div class="modal-header"><h5><i class="bi bi-car-front-fill"></i> Add New Vehicle</h5></div>
-        <form action="{{ route('schools.admin.vehicles.store', ['school' => $school->slug]) }}" method="POST" enctype="multipart/form-data">
+        <form id="createVehicleForm" method="POST" action="{{ route('schools.admin.vehicles.store', $school) }}" enctype="multipart/form-data">
             @csrf
+            <input type="hidden" name="modal_type" value="create">
             <div class="modal-body">
                 <div class="row">
-                    <div class="col-md-6"><div class="form-group"><label>Model / Name</label><input type="text" name="model" placeholder="e.g. Toyota Vios 2024" required></div></div>
-                    <div class="col-md-6"><div class="form-group"><label>Plate Number</label><input type="text" name="license_plate" placeholder="ABC-1234" required></div></div>
+                    <div class="col-md-6"><div class="form-group"><label>Model / Name *</label><input type="text" name="model" value="{{ old('model') }}" placeholder="e.g. Toyota Vios 2024" required></div></div>
+                    <div class="col-md-6"><div class="form-group"><label>Plate Number *</label><input type="text" name="license_plate" value="{{ old('license_plate') }}" placeholder="ABC-1234" required></div></div>
                 </div>
                 <div class="row">
-                    <div class="col-md-6"><div class="form-group"><label>Category</label><select name="category_id" required>@foreach($categories as $cat)<option value="{{ $cat->id }}">{{ $cat->name }}</option>@endforeach</select></div></div>
-                    <div class="col-md-6"><div class="form-group"><label>Transmission</label><select name="transmission" required><option value="manual">Manual</option><option value="automatic">Automatic</option></select></div></div>
+                    <div class="col-md-6"><div class="form-group"><label>Category *</label><select name="category_id" required>@foreach($categories as $cat)<option value="{{ $cat->id }}" {{ old('category_id') == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>@endforeach</select></div></div>
+                    <div class="col-md-6"><div class="form-group"><label>Transmission *</label><select name="transmission" required><option value="manual" {{ old('transmission') == 'manual' ? 'selected' : '' }}>Manual</option><option value="automatic" {{ old('transmission') == 'automatic' ? 'selected' : '' }}>Automatic</option></select></div></div>
                 </div>
                 <div class="row">
-                    <div class="col-md-6"><div class="form-group"><label>Branch</label><select name="branch_id" required>@foreach($branches as $branch)<option value="{{ $branch->id }}">{{ $branch->name }}</option>@endforeach</select></div></div>
-                    <div class="col-md-6"><div class="form-group"><label>Status</label><select name="status" required><option value="active">Active</option><option value="maintenance">Maintenance</option><option value="out_of_service">Out of Service</option></select></div></div>
+                    <div class="col-md-6"><div class="form-group"><label>Branch *</label><select name="branch_id" required>@foreach($branches as $branch)<option value="{{ $branch->id }}" {{ old('branch_id') == $branch->id ? 'selected' : '' }}>{{ $branch->name }}</option>@endforeach</select></div></div>
+                    <div class="col-md-6"><div class="form-group"><label>Status *</label><select name="status" required><option value="active" {{ old('status') == 'active' ? 'selected' : '' }}>Active</option><option value="maintenance" {{ old('status') == 'maintenance' ? 'selected' : '' }}>Maintenance</option><option value="out_of_service" {{ old('status') == 'out_of_service' ? 'selected' : '' }}>Out of Service</option></select></div></div>
                 </div>
                 <div class="form-group">
                     <label>Vehicle Images (Select up to 5)</label>
@@ -503,6 +506,8 @@
         document.getElementById('edit_v_branch').value = v.branch_id;
         document.getElementById('edit_v_status').value = v.status;
         document.getElementById('edit_v_notes').value = v.notes || '';
+        document.getElementById('editVehicleId').value = v.id;
+        document.getElementById('editVehicleForm').action = `{{ url($school->slug . '/admin/vehicles') }}/${v.id}`;
 
         // Handle Images
         renderGallery(v.images);
@@ -607,6 +612,29 @@
     }
 
     window.onclick = function(e) { if (e.target.classList.contains('modal-overlay')) closeVehicleModal(e.target.id); }
+
+    // Modal Restoration for Validation Errors
+    document.addEventListener('DOMContentLoaded', function() {
+        @if($errors->any())
+            @if(old('modal_type') === 'edit')
+                const vehicleId = @json(old('vehicle_id'));
+                const vehicle = @json($vehicles->items()).find(v => v.id == vehicleId);
+                if (vehicle) {
+                    editVehicle(vehicle);
+                    // Override with old values
+                    document.getElementById('edit_v_plate').value = @json(old('license_plate'));
+                    document.getElementById('edit_v_model').value = @json(old('model'));
+                    document.getElementById('edit_v_cat').value = @json(old('category_id'));
+                    document.getElementById('edit_v_trans').value = @json(old('transmission'));
+                    document.getElementById('edit_v_branch').value = @json(old('branch_id'));
+                    document.getElementById('edit_v_status').value = @json(old('status'));
+                    document.getElementById('edit_v_notes').value = @json(old('notes'));
+                }
+            @else
+                openVehicleModal('createVehicleModal');
+            @endif
+        @endif
+    });
 </script>
 
 @endsection

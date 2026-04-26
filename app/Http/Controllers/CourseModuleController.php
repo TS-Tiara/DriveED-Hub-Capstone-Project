@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CourseModule;
 use App\Models\Course;
+use App\Models\ModuleLesson;
 use App\Models\School;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -210,6 +211,182 @@ class CourseModuleController extends Controller
     }
 
     /**
+     * Allow students to take an assessment
+     */
+    public function takeAssessment(Request $request, School $school, Course $course, CourseModule $module)
+    {
+        $role = $this->resolveAuthRole();
+        
+        if ($role !== 'student') {
+            abort(403);
+        }
+
+        // Verify module belongs to course
+        if ($module->course_id !== $course->id) {
+            abort(404);
+        }
+
+        // Verify student is enrolled
+        $student = Auth::guard('student')->user();
+        $isEnrolled = $student->enrollments()
+            ->where('course_id', $course->id)
+            ->where('status', 'approved')
+            ->exists();
+
+        if (!$isEnrolled) {
+            abort(403, 'You must be enrolled in this course to take assessments.');
+        }
+
+        $questions = $module->questions()
+            ->orderBy('sort_order')
+            ->get();
+
+        // Get navigation
+        $navigation = $this->getLearningPathNavigation($course, $module);
+
+        return view($school->resolveView('student.modules.assessment'), compact('school', 'course', 'module', 'questions', 'navigation'))
+            ->with('isAjax', $request->ajax());
+    }
+
+    /**
+     * Get the next and previous items in the learning path
+     * @param Course $course
+     * @param CourseModule $module Current module
+     * @param ModuleLesson|null $lesson Current lesson (if any)
+     */
+    public function getLearningPathNavigation(Course $course, CourseModule $module, ?ModuleLesson $lesson = null)
+    {
+        $prev = null;
+        $next = null;
+
+        // If we are in a lesson
+        if ($lesson) {
+            // Find next lesson in same module
+            $nextLesson = $module->lessons()->where('sort_order', '>', $lesson->sort_order)->ordered()->first();
+            if ($nextLesson) {
+                $next = [
+                    'type' => 'lesson',
+                    'title' => $nextLesson->title,
+                    'url' => school_route('student.courses.modules.lessons.show', ['course' => $course->id, 'module' => $module->id, 'lesson' => $nextLesson->id])
+                ];
+            } else {
+                // End of lessons in this module. Is there an assessment in this module?
+                if ($module->module_type === 'assessment') {
+                    $next = [
+                        'type' => 'assessment',
+                        'title' => 'Module Assessment',
+                        'url' => school_route('student.courses.modules.assessment.take', ['course' => $course->id, 'module' => $module->id])
+                    ];
+                } else {
+                    // No assessment. Look for first lesson of next module
+                    $nextModule = $course->modules()->where('sort_order', '>', $module->sort_order)->ordered()->first();
+                    if ($nextModule) {
+                        $firstLesson = $nextModule->lessons()->ordered()->first();
+                        if ($firstLesson) {
+                            $next = [
+                                'type' => 'lesson',
+                                'title' => $firstLesson->title,
+                                'url' => school_route('student.courses.modules.lessons.show', ['course' => $course->id, 'module' => $nextModule->id, 'lesson' => $firstLesson->id])
+                            ];
+                        } elseif ($nextModule->module_type === 'assessment') {
+                            $next = [
+                                'type' => 'assessment',
+                                'title' => 'Next Module Assessment',
+                                'url' => school_route('student.courses.modules.assessment.take', ['course' => $course->id, 'module' => $nextModule->id])
+                            ];
+                        }
+                    }
+                }
+            }
+
+            // Find prev lesson in same module
+            $prevLesson = $module->lessons()->where('sort_order', '<', $lesson->sort_order)->orderBy('sort_order', 'desc')->first();
+            if ($prevLesson) {
+                $prev = [
+                    'type' => 'lesson',
+                    'title' => $prevLesson->title,
+                    'url' => school_route('student.courses.modules.lessons.show', ['course' => $course->id, 'module' => $module->id, 'lesson' => $prevLesson->id])
+                ];
+            } else {
+                // First lesson of this module. Look at previous module
+                $prevModule = $course->modules()->where('sort_order', '<', $module->sort_order)->orderBy('sort_order', 'desc')->first();
+                if ($prevModule) {
+                    if ($prevModule->module_type === 'assessment') {
+                        $prev = [
+                            'type' => 'assessment',
+                            'title' => 'Previous Module Quiz',
+                            'url' => school_route('student.courses.modules.assessment.take', ['course' => $course->id, 'module' => $prevModule->id])
+                        ];
+                    } else {
+                        $lastLesson = $prevModule->lessons()->orderBy('sort_order', 'desc')->first();
+                        if ($lastLesson) {
+                            $prev = [
+                                'type' => 'lesson',
+                                'title' => $lastLesson->title,
+                                'url' => school_route('student.courses.modules.lessons.show', ['course' => $course->id, 'module' => $prevModule->id, 'lesson' => $lastLesson->id])
+                            ];
+                        }
+                    }
+                }
+            }
+        } 
+        // If we are in an assessment
+        else {
+            // Next is first lesson of next module
+            $nextModule = $course->modules()->where('sort_order', '>', $module->sort_order)->ordered()->first();
+            if ($nextModule) {
+                $firstLesson = $nextModule->lessons()->ordered()->first();
+                if ($firstLesson) {
+                    $next = [
+                        'type' => 'lesson',
+                        'title' => $firstLesson->title,
+                        'url' => school_route('student.courses.modules.lessons.show', ['course' => $course->id, 'module' => $nextModule->id, 'lesson' => $firstLesson->id])
+                    ];
+                } elseif ($nextModule->module_type === 'assessment') {
+                    $next = [
+                        'type' => 'assessment',
+                        'title' => 'Next Assessment',
+                        'url' => school_route('student.courses.modules.assessment.take', ['course' => $course->id, 'module' => $nextModule->id])
+                    ];
+                }
+            }
+
+            // Prev is last lesson of current module
+            $lastLesson = $module->lessons()->orderBy('sort_order', 'desc')->first();
+            if ($lastLesson) {
+                $prev = [
+                    'type' => 'lesson',
+                    'title' => $lastLesson->title,
+                    'url' => school_route('student.courses.modules.lessons.show', ['course' => $course->id, 'module' => $module->id, 'lesson' => $lastLesson->id])
+                ];
+            } else {
+                // No lessons in this module? Look at previous module
+                $prevModule = $course->modules()->where('sort_order', '<', $module->sort_order)->orderBy('sort_order', 'desc')->first();
+                if ($prevModule) {
+                    if ($prevModule->module_type === 'assessment') {
+                        $prev = [
+                            'type' => 'assessment',
+                            'title' => 'Previous Quiz',
+                            'url' => school_route('student.courses.modules.assessment.take', ['course' => $course->id, 'module' => $prevModule->id])
+                        ];
+                    } else {
+                        $prevLastLesson = $prevModule->lessons()->orderBy('sort_order', 'desc')->first();
+                        if ($prevLastLesson) {
+                            $prev = [
+                                'type' => 'lesson',
+                                'title' => $prevLastLesson->title,
+                                'url' => school_route('student.courses.modules.lessons.show', ['course' => $course->id, 'module' => $prevModule->id, 'lesson' => $prevLastLesson->id])
+                            ];
+                        }
+                    }
+                }
+            }
+        }
+
+        return (object) ['prev' => $prev, 'next' => $next];
+    }
+
+    /**
      * Show the form for editing the specified module
      */
     public function edit(Request $request, School $school, Course $course, CourseModule $module)
@@ -402,4 +579,5 @@ class CourseModuleController extends Controller
             return back()->with('error', 'Failed to duplicate module: ' . $e->getMessage());
         }
     }
+
 }
