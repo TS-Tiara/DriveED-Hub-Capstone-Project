@@ -603,6 +603,9 @@ Route::prefix('{school:slug}')
                                     Route::get('/{lesson}', [ModuleLessonController::class , 'show'])->name('show');
                                 }
                                 );
+
+                            // Student Assessment
+                            Route::get('/{module}/assessment', [CourseModuleController::class, 'takeAssessment'])->name('assessment.take');
                             }
                             );
                         }

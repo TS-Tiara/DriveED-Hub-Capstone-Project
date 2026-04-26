@@ -71,7 +71,7 @@
             <div class="lms-card">
                 <div class="lms-card-head">
                     <h2 class="lms-card-title">Add Questions</h2>
-                    <a href="{{ school_route('instructor.questions.create', ['course_id' => $module->course_id, 'module_id' => $module->id, 'return_url' => url()->current()]) }}" class="lms-btn lms-btn-primary" style="font-size: 0.8rem; padding: 0.4rem 0.8rem;">+ Create New</a>
+                    <button type="button" onclick="openQuizDrawer('{{ school_route('instructor.questions.create', ['course_id' => $module->course_id, 'module_id' => $module->id, 'return_url' => url()->current()]) }}', 'Create New Question')" class="lms-btn lms-btn-primary" style="font-size: 0.8rem; padding: 0.4rem 0.8rem;">+ Create New</button>
                 </div>
                 
                 <div style="padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color); background: #fcfcfc;">
@@ -81,7 +81,7 @@
 
                 <form action="{{ school_route('instructor.courses.modules.assessments.add_multiple', ['course' => $course->id, 'module' => $module->id]) }}" method="POST" id="bulkAddForm">
                     @csrf
-                    <ul class="lms-list" style="max-height: 600px; overflow-y: auto;">
+                    <ul class="lms-list" id="suggestedList" style="max-height: 600px; overflow-y: auto;">
                         @forelse($suggestedQuestions as $question)
                             <li class="lms-item">
                                 <div style="margin-right: 1rem; display: flex; align-items: center;">
@@ -101,7 +101,7 @@
                         @empty
                             <li class="lms-empty" style="padding: 2rem 1.5rem;">
                                 No more suggested questions.<br>
-                                <a href="{{ school_route('instructor.questions.index', ['return_url' => url()->current(), 'module_id' => $module->id, 'is_selecting' => 1]) }}" class="lms-link" style="font-size: 0.85rem;">Browse entire Question Bank &raquo;</a>
+                                <button type="button" onclick="openQuizDrawer('{{ school_route('instructor.questions.index', ['return_url' => url()->current(), 'module_id' => $module->id, 'is_selecting' => 1]) }}', 'Browse Question Bank')" class="lms-link" style="background:none; border:none; padding:0; cursor:pointer; font-size: 0.85rem;">Browse entire Question Bank &raquo;</button>
                             </li>
                         @endforelse
                     </ul>
@@ -118,7 +118,7 @@
                 
                 @if($suggestedQuestions->count() > 0)
                     <div style="padding: 1.25rem; text-align: center; border-top: 1px solid var(--border-color); background: #fff;">
-                        <a href="{{ school_route('instructor.questions.index', ['return_url' => url()->current(), 'module_id' => $module->id, 'is_selecting' => 1]) }}" class="lms-link" style="font-size: 0.85rem; font-weight: 600;">View all questions in bank &raquo;</a>
+                        <button type="button" onclick="openQuizDrawer('{{ school_route('instructor.questions.index', ['return_url' => url()->current(), 'module_id' => $module->id, 'is_selecting' => 1]) }}', 'Browse Question Bank')" class="lms-link" style="background:none; border:none; padding:0; cursor:pointer; font-size: 0.85rem; font-weight: 600;">View all questions in bank &raquo;</button>
                     </div>
                 @endif
             </div>
@@ -193,4 +193,161 @@ document.addEventListener('DOMContentLoaded', function() {
     border: 1px dashed var(--primary-color) !important;
 }
 </style>
+
+{{-- Localized Drawer for Quiz Builder --}}
+<div id="lmsQuizDrawer" class="lms-modal-overlay">
+    <div class="lms-modal-window">
+        <div class="lms-modal-header">
+            <h3 class="lms-modal-title" id="lmsQuizDrawerTitle" style="margin:0; font-size:1.1rem; font-weight:700;">Loading...</h3>
+            <button type="button" class="lms-modal-close" onclick="closeQuizDrawer()">&times;</button>
+        </div>
+        <div class="lms-modal-body" id="lmsQuizDrawerBody">
+            <div class="lms-modal-loader">
+                <div class="btn-spinner"></div> Loading content...
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openQuizDrawer(url, title) {
+        const overlay = document.getElementById('lmsQuizDrawer');
+        const body = document.getElementById('lmsQuizDrawerBody');
+        const titleEl = document.getElementById('lmsQuizDrawerTitle');
+
+        titleEl.textContent = title;
+        overlay.classList.add('active');
+        body.innerHTML = '<div class="lms-modal-loader"><span class="btn-spinner"></span> Loading content...</div>';
+
+        fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(r => r.text())
+            .then(html => {
+                body.innerHTML = html;
+            });
+    }
+
+    function showDrawerLoader() {
+        const body = document.getElementById('lmsQuizDrawerBody');
+        body.style.position = 'relative';
+        const loader = document.createElement('div');
+        loader.id = 'drawerLoaderOverlay';
+        loader.style = 'position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.7); display:flex; align-items:center; justify-content:center; z-index:10; backdrop-filter:blur(2px);';
+        loader.innerHTML = '<div class="lms-modal-loader" style="padding:0;"><span class="btn-spinner"></span></div>';
+        body.appendChild(loader);
+    }
+
+    function closeQuizDrawer() {
+        document.getElementById('lmsQuizDrawer').classList.remove('active');
+        setTimeout(() => { document.getElementById('lmsQuizDrawerBody').innerHTML = ''; }, 400);
+    }
+
+    // Local Handlers for the Drawer
+    document.addEventListener('click', function(e) {
+        const link = e.target.closest('#lmsQuizDrawerBody a');
+        if (link && !link.onclick && link.href && !link.href.startsWith('javascript:')) {
+            if (link.target === '_blank' || link.hasAttribute('download')) return;
+            e.preventDefault();
+            showDrawerLoader();
+            fetch(link.href, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(r => r.text()).then(html => {
+                document.getElementById('lmsQuizDrawerBody').innerHTML = html;
+                if (typeof reinitializeJavaScript === 'function') reinitializeJavaScript();
+            });
+        }
+    });
+
+    document.addEventListener('submit', function(e) {
+        const body = document.getElementById('lmsQuizDrawerBody');
+        if (e.target.closest('#lmsQuizDrawerBody')) {
+            const form = e.target;
+            const method = (form.method || 'GET').toUpperCase();
+            e.preventDefault();
+            const formData = new FormData(form);
+            let url = form.action || window.location.href;
+
+            if (method === 'GET') {
+                const params = new URLSearchParams(formData).toString();
+                url = url.split('?')[0] + '?' + params;
+                showDrawerLoader();
+                fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(r => r.text()).then(html => {
+                    body.innerHTML = html;
+                    if (typeof reinitializeJavaScript === 'function') reinitializeJavaScript();
+                });
+                return;
+            }
+
+            const buttons = form.querySelectorAll('button[type="submit"]');
+            buttons.forEach(btn => {
+                btn.classList.add('btn-submitting');
+                btn.disabled = true;
+            });
+
+            showDrawerLoader();
+
+            fetch(url, {
+                method: 'POST',
+                body: formData,
+                headers: { 
+                    'X-Requested-With': 'XMLHttpRequest', 
+                    'Accept': 'application/json' 
+                }
+            })
+            .then(r => {
+                if (r.status === 422) return r.json().then(data => ({ errors: data.errors }));
+                if (r.redirected) return { success: true, redirect: true };
+                return r.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    if (typeof showToast === 'function') showToast(data.message || 'Success!', 'success');
+                    closeQuizDrawer();
+                    // Small delay to allow the toast to be seen before refresh
+                    setTimeout(() => {
+                        if (typeof loadContent === 'function') {
+                            loadContent(window.location.href);
+                        } else {
+                            window.location.reload();
+                        }
+                    }, 500);
+                } else if (data.errors) {
+                    // Handle validation errors
+                    displayErrorsInDrawer(data.errors, form);
+                    if (typeof showToast === 'function') showToast('Please correct the errors.', 'error');
+                }
+            })
+            .catch(err => {
+                console.error('Drawer Submit Error:', err);
+                if (typeof showToast === 'function') showToast('An error occurred. Please try again.', 'error');
+            })
+            .finally(() => {
+                buttons.forEach(btn => {
+                    btn.classList.remove('btn-submitting');
+                    btn.disabled = false;
+                });
+            });
+        }
+    });
+
+    function displayErrorsInDrawer(errors, form) {
+        // Clear existing errors
+        form.querySelectorAll('.lms-error-msg').forEach(e => e.remove());
+        form.querySelectorAll('.lms-input-error').forEach(e => e.classList.remove('lms-input-error'));
+
+        Object.keys(errors).forEach(field => {
+            const input = form.querySelector(`[name="${field}"]`) || form.querySelector(`[name="${field}[]"]`);
+            if (input) {
+                input.classList.add('lms-input-error');
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'lms-error-msg';
+                errorDiv.style.color = '#dc3545';
+                errorDiv.style.fontSize = '0.75rem';
+                errorDiv.style.marginTop = '4px';
+                errorDiv.style.fontWeight = '600';
+                errorDiv.textContent = errors[field][0];
+                input.parentNode.appendChild(errorDiv);
+            }
+        });
+    }
+</script>
 @endsection

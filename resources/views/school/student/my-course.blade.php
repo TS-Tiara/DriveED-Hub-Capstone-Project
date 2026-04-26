@@ -600,7 +600,31 @@
                                             </div>
                                         </li>
                                     @endforeach
+
+                                    {{-- If module has both lessons and questions --}}
+                                    @if($module->questions && $module->questions->count() > 0)
+                                        <li class="lesson-item" style="background: #eff6ff; border-top: 2px solid #bfdbfe;">
+                                            <div class="lesson-top">
+                                                <span class="lesson-number" style="background: #3b82f6; color: white;">?</span>
+                                                <span class="lesson-title">Module Assessment</span>
+                                            </div>
+                                            <div class="lesson-actions">
+                                                <a href="{{ school_route('student.courses.modules.assessment.take', ['course' => $course->id, 'module' => $module->id]) }}" class="action-btn" style="background: #3b82f6; color: white; border: none; padding: 8px 20px;">
+                                                    Start Quiz
+                                                </a>
+                                            </div>
+                                        </li>
+                                    @endif
                                 </ul>
+                            @elseif($module->module_type === 'assessment' || ($module->questions && $module->questions->count() > 0))
+                                <div class="lesson-list" style="padding: 20px; text-align: center; background: #eff6ff;">
+                                    <div style="margin-bottom: 15px; color: #1e40af; font-weight: 600;">
+                                        This module is an assessment to test your knowledge.
+                                    </div>
+                                    <a href="{{ school_route('student.courses.modules.assessment.take', ['course' => $course->id, 'module' => $module->id]) }}" class="enroll-btn" style="background: #3b82f6; display: inline-flex; align-items: center; gap: 8px;">
+                                        <i class="bi bi-pencil-square"></i> Take Assessment Quiz
+                                    </a>
+                                </div>
                             @endif
                         </div>
                     @endforeach

@@ -11,6 +11,7 @@
     @if(isset($module) && $module->module_type === 'assessment') data-breadcrumb-module-type="assessment" @endif
     @if(isset($lesson)) data-breadcrumb-lesson="{{ $lesson->title }}" @endif
 >
+    @if(!($isAjax ?? false))
     <div class="lms-header">
         <div>
             <h1 class="lms-title">Add New Question</h1>
@@ -20,6 +21,7 @@
             <a href="{{ request('return_url', school_route('instructor.questions.index')) }}" class="lms-btn lms-btn-muted">Cancel</a>
         </div>
     </div>
+    @endif
 
     <div class="lms-card" style="padding: 2rem;">
         <form action="{{ school_route('instructor.questions.store', request()->query()) }}" method="POST" id="questionForm">
@@ -156,6 +158,10 @@
 .lms-input-group .lms-input {
     border-radius: 0 6px 6px 0;
 }
+.lms-input.lms-input-error {
+    border-color: #dc3545 !important;
+    background-color: #fff8f8 !important;
+}
 </style>
 
 <script>
@@ -178,7 +184,8 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        fetch(`{{ url('/') }}/{{ $school->slug }}/instructor/questions/ajax/lessons/${courseId}`)
+        const url = "{{ school_route('instructor.questions.lessons.ajax', ['course' => ':courseId']) }}".replace(':courseId', courseId);
+        fetch(url)
             .then(response => response.json())
             .then(data => {
                 lessonSelect.innerHTML = '<option value="">No specific lesson</option>';

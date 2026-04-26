@@ -946,5 +946,16 @@
             });
         }
     });
+
+    // Modal Restoration Logic
+    document.addEventListener('DOMContentLoaded', function() {
+        @if($errors->any())
+            @if(old('student_name'))
+                openAddModal();
+            @elseif(old('student_id'))
+                openRemoveModal();
+            @endif
+        @endif
+    });
 </script>
 @endsection

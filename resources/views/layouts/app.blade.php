@@ -2557,13 +2557,24 @@
             }
 
             // LMS special case: modules/lessons should be grouped under Course Materials for both admin and instructor.
-            const materialsLmsPathMatch = rolePath.match(/^(admin|instructor)\/courses\/([^/]+)\/modules(?:\/(.*))?$/);
+            const materialsLmsPathMatch = rolePath.match(/^(admin|instructor|student|guest)\/courses\/([^/]+)\/modules(?:\/(.*))?$/);
             if (materialsLmsPathMatch) {
                 const role = materialsLmsPathMatch[1];
                 const courseId = materialsLmsPathMatch[2];
                 const trailingPath = (materialsLmsPathMatch[3] || '').replace(/^\/+|\/+$/g, '');
 
-                const materialsPath = role + '/materials';
+                const getParentLabel = function(role) {
+                    if (role === 'student') return 'Enrolled Course';
+                    if (role === 'guest') return 'Browse Courses';
+                    return 'Course Materials';
+                };
+
+                const getParentPath = function(role) {
+                    if (role === 'student') return 'student/my-course';
+                    if (role === 'guest') return 'guest/courses';
+                    return role + '/materials';
+                };
+
                 const modulesPath = role + '/courses/' + courseId + '/modules';
 
                 const lmsPage = document.querySelector('#mainContent .lms-page');
@@ -2583,7 +2594,7 @@
 
                 let materialsHtml = '<a href="#" onclick="loadContent(\'' + dashUrl + '\'); return false;">Dashboard</a>';
                 materialsHtml += '<span class="breadcrumb-separator">></span>';
-                materialsHtml += '<a href="#" onclick="loadContent(\'/' + schoolSlug + '/' + materialsPath + '\'); return false;">Course Materials</a>';
+                materialsHtml += '<a href="#" onclick="loadContent(\'/' + schoolSlug + '/' + getParentPath(role) + '\'); return false;">' + getParentLabel(role) + '</a>';
 
                 if (!trailingPath) {
                     materialsHtml += '<span class="breadcrumb-separator">></span>';
