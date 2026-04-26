@@ -1,6 +1,6 @@
 <style>
     .lms-page {
-        max-width: 1100px;
+        max-width: 1200px;
         margin: 0 auto;
         padding: 24px;
     }

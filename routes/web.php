@@ -25,6 +25,8 @@ use App\Http\Controllers\ModuleLessonController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PhaseProgressionController;
 use App\Http\Controllers\AdminManagementController;
+use App\Http\Controllers\QuestionBankController;
+use App\Http\Controllers\AssessmentController;
 use App\Models\School;
 
 Route::get('/', function () {
@@ -491,6 +493,17 @@ Route::prefix('{school:slug}')
                     Route::middleware(['ajax'])->group(function () {
                     Route::get('/materials', [CourseModuleController::class , 'materialsHub'])->name('materials.index');
 
+                    // Question Bank
+                    Route::prefix('questions')->name('questions.')->group(function () {
+                        Route::get('/', [QuestionBankController::class, 'index'])->name('index');
+                        Route::get('/create', [QuestionBankController::class, 'create'])->name('create');
+                        Route::post('/', [QuestionBankController::class, 'store'])->name('store');
+                        Route::get('/{question}/edit', [QuestionBankController::class, 'edit'])->name('edit');
+                        Route::put('/{question}', [QuestionBankController::class, 'update'])->name('update');
+                        Route::delete('/{question}', [QuestionBankController::class, 'destroy'])->name('destroy');
+                        Route::get('/ajax/lessons/{course}', [QuestionBankController::class, 'getLessons'])->name('ajax.lessons');
+                    });
+
                     Route::prefix('theoretical')->name('theoretical.')->group(function () {
                             Route::get('/', [TheoreticalCompletionController::class , 'index'])->name('index');
                             Route::get('/{enrollment}', [TheoreticalCompletionController::class , 'show'])->name('show');
@@ -498,9 +511,16 @@ Route::prefix('{school:slug}')
                         }
                         );
 
-                        // Instructor course modules (View course content)
+                        // Instructor course modules (Manage course content)
                         Route::prefix('courses/{course}/modules')->name('courses.modules.')->group(function () {
                             Route::get('/', [CourseModuleController::class , 'index'])->name('index');
+                            Route::get('/create', [CourseModuleController::class , 'create'])->name('create');
+                            Route::post('/', [CourseModuleController::class , 'store'])->name('store');
+                            Route::post('/reorder', [CourseModuleController::class , 'reorder'])->name('reorder');
+                            Route::get('/{module}/edit', [CourseModuleController::class , 'edit'])->name('edit');
+                            Route::put('/{module}', [CourseModuleController::class , 'update'])->name('update');
+                            Route::delete('/{module}', [CourseModuleController::class , 'destroy'])->name('destroy');
+                            Route::post('/{module}/duplicate', [CourseModuleController::class , 'duplicate'])->name('duplicate');
                             Route::get('/{module}', [CourseModuleController::class , 'show'])->name('show');
 
                             Route::prefix('{module}/lessons')->name('lessons.')->group(function () {
@@ -514,6 +534,15 @@ Route::prefix('{school:slug}')
                                     Route::get('/{lesson}', [ModuleLessonController::class , 'show'])->name('show');
                                 }
                                 );
+
+                                // Assessment Question management
+                                Route::prefix('{module}/assessments')->name('assessments.')->group(function () {
+                                    Route::get('/manage', [AssessmentController::class, 'manage'])->name('manage');
+                                    Route::post('/add', [AssessmentController::class, 'addQuestion'])->name('add');
+                                    Route::post('/add-multiple', [AssessmentController::class, 'addMultipleQuestions'])->name('add_multiple');
+                                    Route::delete('/{question}/remove', [AssessmentController::class, 'removeQuestion'])->name('remove');
+                                    Route::post('/reorder', [AssessmentController::class, 'reorder'])->name('reorder');
+                                });
                             }
                             );
                         }
