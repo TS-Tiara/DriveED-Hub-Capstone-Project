@@ -13,6 +13,8 @@ use App\Models\Progress;
 use App\Models\EnrollmentRequest;
 use App\Models\Notification;
 use App\Models\Student;
+use App\Models\Vehicle;
+use App\Models\VehicleCategory;
 
 trait HandlesSchoolSeeding
 {
@@ -185,6 +187,46 @@ trait HandlesSchoolSeeding
                 if ($prog) { $prog->update(['completion_percent' => min(100, $prog->completion_percent + rand(10, 25)), 'last_updated' => now(), 'notes' => 'Good progress.']); }
                 else { Progress::create(['school_id' => $school->id, 'student_id' => $student->id, 'course_id' => $course->id, 'completion_percent' => rand(10, 40), 'last_updated' => now(), 'notes' => 'Good progress.']); }
             }
+        }
+    }
+
+    protected function createVehicles(School $school, array $branches): void
+    {
+        $categories = $school->vehicleCategories;
+        if ($categories->isEmpty()) {
+            $defaults = ['Sedan', 'SUV', 'MPV', 'Hatchback', 'Motorcycle', 'Truck (Heavy)'];
+            foreach ($defaults as $cat) {
+                VehicleCategory::create([
+                    'school_id' => $school->id,
+                    'name' => $cat
+                ]);
+            }
+            $categories = $school->vehicleCategories()->get();
+        }
+
+        $vehicleData = [
+            ['model' => 'Toyota Vios 2024', 'plate' => 'NQA-1001', 'trans' => 'automatic', 'cat' => 'Sedan'],
+            ['model' => 'Mitsubishi Mirage G4', 'plate' => 'NQA-1002', 'trans' => 'manual', 'cat' => 'Sedan'],
+            ['model' => 'Toyota Fortuner', 'plate' => 'NQA-2001', 'trans' => 'automatic', 'cat' => 'SUV'],
+            ['model' => 'Honda Click 125i', 'plate' => 'NQA-3001', 'trans' => 'automatic', 'cat' => 'Motorcycle'],
+            ['model' => 'Suzuki Ertiga', 'plate' => 'NQA-4001', 'trans' => 'manual', 'cat' => 'MPV'],
+            ['model' => 'Isuzu Forward', 'plate' => 'NQA-5001', 'trans' => 'manual', 'cat' => 'Truck (Heavy)'],
+        ];
+
+        foreach ($vehicleData as $index => $v) {
+            $branch = $branches[$index % count($branches)];
+            $category = $categories->where('name', $v['cat'])->first() ?? $categories->first();
+            
+            Vehicle::updateOrCreate(
+                ['school_id' => $school->id, 'license_plate' => $v['plate']],
+                [
+                    'branch_id' => $branch->id,
+                    'category_id' => $category->id,
+                    'model' => $v['model'],
+                    'transmission' => $v['trans'],
+                    'status' => 'active',
+                ]
+            );
         }
     }
 
