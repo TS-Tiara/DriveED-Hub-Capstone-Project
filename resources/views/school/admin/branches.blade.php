@@ -606,6 +606,44 @@
             flex-direction: column;
         }
     }
+
+    .contact-input-group {
+        display: flex;
+        align-items: center;
+        border: 2px solid {{ $primaryColor }}15;
+        border-radius: 12px;
+        overflow: hidden;
+        background: {{ $primaryColor }}05;
+        transition: all 0.2s;
+    }
+
+    .contact-input-group:focus-within {
+        border-color: {{ $primaryColor }};
+        background: white;
+        box-shadow: 0 0 0 4px {{ $primaryColor }}15;
+    }
+
+    .contact-prefix {
+        background: #f1f5f9;
+        padding: 10px 16px;
+        color: #475569;
+        font-weight: 600;
+        border-right: 1px solid #e2e8f0;
+        font-size: 0.95rem;
+    }
+
+    .contact-input-group input {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 10px 16px !important;
+        background: transparent !important;
+    }
+
+    .field-help {
+        font-size: 0.8rem;
+        color: {{ $primaryColor }}70;
+        margin-top: 6px;
+    }
 </style>
 
 <div class="branches-container">
@@ -786,7 +824,11 @@
                 </div>
                 <div class="form-group">
                     <label for="branchContact">Contact Number</label>
-                    <input type="text" id="branchContact" name="contact_number" placeholder="09xx-xxx-xxxx" inputmode="numeric" pattern="[0-9]*" autocomplete="tel" maxlength="15">
+                    <div class="contact-input-group">
+                        <span class="contact-prefix">+63</span>
+                        <input type="text" id="branchContact" name="contact_number" placeholder="9123456789" inputmode="numeric" pattern="[0-9]*" autocomplete="tel" maxlength="10">
+                    </div>
+                    <p class="field-help">Enter the 10-digit number after +63 (e.g., 9123456789).</p>
                 </div>
                 <div class="form-group">
                     <label for="branchEmail">Email</label>
@@ -815,7 +857,11 @@
     function enforceNumericOnly(input) {
         if (!input) return;
         const sanitize = function() {
-            input.value = input.value.replace(/\D+/g, '');
+            let val = input.value;
+            if (val.startsWith('0')) {
+                val = val.substring(1);
+            }
+            input.value = val.replace(/\D+/g, '');
         };
         input.addEventListener('input', sanitize);
         input.addEventListener('paste', function() { setTimeout(sanitize, 0); });

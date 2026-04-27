@@ -175,6 +175,16 @@ class School extends Model
         return $this->hasMany(\App\Models\CourseModule::class);
     }
 
+    public function vehicleCategories()
+    {
+        return $this->hasMany(\App\Models\VehicleCategory::class);
+    }
+
+    public function vehicles()
+    {
+        return $this->hasMany(\App\Models\Vehicle::class);
+    }
+
     public function resolveView(string $view): string
     {
         $sluggedView = $this->slug . '.' . $view;
