@@ -144,8 +144,13 @@ class TheoreticalCompletionController extends Controller
             ? 'school.admin.theoretical.show'
             : 'school.instructor.theoretical.show';
 
+        // Check for any pending phase progression requests
+        $pendingProgression = \App\Models\PhaseProgression::where('enrollment_id', $enrollment->id)
+            ->where('status', 'pending')
+            ->first();
+
         return view($viewPath, array_merge(
-            compact('school', 'enrollment', 'student', 'allEnrollments', 'liveSession', 'validation'), 
+            compact('school', 'enrollment', 'student', 'allEnrollments', 'liveSession', 'validation', 'pendingProgression'), 
             ['isAjax' => $request->ajax()]
         ));
     }
@@ -231,15 +236,8 @@ class TheoreticalCompletionController extends Controller
 
         DB::beginTransaction();
         try {
-            // Final completion logic
-            $enrollment->update([
-                'status' => 'completed',
-                'completed_at' => now(),
-            ]);
-
-            if ($enrollment->learner) {
-                $enrollment->learner->unlockFromCourse();
-            }
+            // Use the centralized graduation logic which also resolves pending phase requests
+            $enrollment->markAsCompleted();
 
             DB::commit();
 

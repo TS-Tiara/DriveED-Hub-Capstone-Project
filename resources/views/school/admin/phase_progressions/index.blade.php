@@ -320,7 +320,7 @@
         <div class="content-card-body">
             <form id="filterForm" action="{{ school_route('admin.phase-progressions.index') }}" method="GET" class="filter-group phase-filters-row" onsubmit="return applyPhaseProgressionFilters(event)">
                 <div class="table-top-search">
-                    <input type="text" id="phaseProgressionLocalSearch" placeholder="Search student, course, phase, or reviewer...">
+                    <input type="text" id="phaseProgressionServerSearch" name="search" placeholder="Search student, course, phase..." value="{{ request('search') }}" oninput="debounceServerSearch(this.value)">
                 </div>
 
                 <select id="phaseProgressionStatusFilter" name="status" class="form-control form-control-auto" onchange="return applyPhaseProgressionFilters()">
@@ -358,8 +358,10 @@
                         @forelse($progressions as $request)
                             <tr>
                                 <td>
-                                    <div class="student-name-strong">{{ $request->enrollment->student->name }}</div>
-                                    <div class="student-email-muted">{{ $request->enrollment->student->email }}</div>
+                                    <a href="{{ school_route('admin.theoretical.show', $request->enrollment_id) }}" class="student-name-link" style="text-decoration: none; display: block;">
+                                        <div class="student-name-strong" style="color: {{ $primaryColor }}; font-weight: 700;">{{ $request->enrollment->student->name }}</div>
+                                        <div class="student-email-muted" style="color: #6b7280; font-size: 0.8rem;">{{ $request->enrollment->student->email }}</div>
+                                    </a>
                                 </td>
                                 <td>{{ $request->enrollment->course->name }}</td>
                                 <td>
@@ -436,18 +438,16 @@
                 
                 <div class="modal-section-label">Transition</div>
                 <div id="modalTransitionLabel" class="modal-transition-label"></div>
-        <div class="stat-card info card-filter {{ $activeFromPhaseFilter === '' ? 'card-filter-active' : '' }}" onclick="applyPhaseCardFilter('')">
-            <div class="stat-content">
-                <div class="stat-header">
-                    <div>
-                        <div class="stat-label">Total Records</div>
-                        <div class="stat-value">{{ $phaseStats['total_records'] ?? 0 }}</div>
-                    </div>
-                    <div class="stat-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#3b82f6" class="icon-24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg></div>
+            <form id="reviewForm" onsubmit="submitReview(this); return false;">
+                @csrf
+                <div class="form-group">
+                    <label class="modal-section-label">Admin Notes (Required for rejection)</label>
+                    <textarea name="admin_notes" class="form-control" rows="3" placeholder="Provide details or reason for the decision..."></textarea>
                 </div>
-                <div class="stat-detail">All records for current status scope</div>
-            </div>
-        </div>
+
+                <div class="modal-action-row">
+                    <button type="button" class="btn btn-success" onclick="setDecision('approve')">
+                        Approve Progression
                     </button>
                     <button type="button" class="btn btn-danger" onclick="setDecision('reject')">
                         Reject Request
@@ -465,10 +465,12 @@
     function getPhaseProgressionFilterState() {
         const params = new URLSearchParams(window.location.search);
         const statusFilter = document.getElementById('phaseProgressionStatusFilter');
+        const searchInput = document.getElementById('phaseProgressionServerSearch');
 
         return {
             status: statusFilter ? (statusFilter.value || '') : (params.get('status') || ''),
             from_phase: params.get('from_phase') || initialPhaseProgressionFromPhase || '',
+            search: searchInput ? (searchInput.value || '') : (params.get('search') || ''),
         };
     }
 
@@ -482,6 +484,10 @@
 
         if (merged.from_phase) {
             url.searchParams.set('from_phase', merged.from_phase);
+        }
+
+        if (merged.search) {
+            url.searchParams.set('search', merged.search);
         }
 
         if (!resetPage) {
@@ -564,33 +570,30 @@
         }
     }
 
-    function bindPhaseProgressionSearchEvents() {
-        const searchInput = document.getElementById('phaseProgressionLocalSearch');
-        if (!searchInput || searchInput.dataset.searchBound === '1') {
-            return;
+    let searchTimeout = null;
+    function debounceServerSearch(value) {
+        if (searchTimeout) {
+            clearTimeout(searchTimeout);
         }
-
-        searchInput.dataset.searchBound = '1';
-        searchInput.addEventListener('input', function(event) {
-            applyLocalPhaseProgressionSearch(event.target.value || '');
-        });
-        searchInput.addEventListener('keydown', function(event) {
-            if (event.key !== 'Enter') {
-                return;
-            }
-
-            event.preventDefault();
-            applyLocalPhaseProgressionSearch(event.target.value || '');
-        });
+        searchTimeout = setTimeout(() => {
+            navigateWithPhaseProgressionFilters({ search: value }, true);
+        }, 500);
     }
 
     function initializePhaseProgressionPage() {
-        bindPhaseProgressionSearchEvents();
-
-        const searchInput = document.getElementById('phaseProgressionLocalSearch');
-        if (searchInput) {
-            applyLocalPhaseProgressionSearch(searchInput.value || '');
-        }
+        // Intercept pagination links for AJAX loading
+        const paginationLinks = document.querySelectorAll('.pagination-wrap a, .admin-pagination-wrapper a');
+        paginationLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const url = this.getAttribute('href');
+                if (typeof loadContent === 'function') {
+                    loadContent(url);
+                } else {
+                    window.location.href = url;
+                }
+            });
+        });
     }
 
     if (document.readyState === 'loading') {

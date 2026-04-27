@@ -25,8 +25,21 @@ class PhaseProgressionController extends Controller
         $baseQuery = PhaseProgression::with(['enrollment.student', 'enrollment.course', 'reviewedBy'])
             ->forSchool($school->id)
             ->when($request->status, function ($query, $status) {
-            $query->where('status', $status);
-        })
+                $query->where('status', $status);
+            })
+            ->when($request->search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->whereHas('enrollment.student', function ($sq) use ($search) {
+                        $sq->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('enrollment.course', function ($cq) use ($search) {
+                        $cq->where('title', 'like', "%{$search}%");
+                    })
+                    ->orWhere('from_phase', 'like', "%{$search}%")
+                    ->orWhere('to_phase', 'like', "%{$search}%");
+                });
+            })
             ->latest('requested_at');
 
         // Branch secretary scope: filter by their branch

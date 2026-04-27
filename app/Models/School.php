@@ -167,12 +167,12 @@ class School extends Model
 
     public function questions()
     {
-        return $this->hasMany(Question::class);
+        return $this->hasMany(\App\Models\Question::class);
     }
 
     public function courseModules()
     {
-        return $this->hasMany(CourseModule::class);
+        return $this->hasMany(\App\Models\CourseModule::class);
     }
 
     public function resolveView(string $view): string
