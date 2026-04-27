@@ -127,7 +127,6 @@ class AssessmentController extends Controller
         $request->validate([
             'question_ids' => 'required|array',
             'question_ids.*' => [
-                'exists:questions,id',
                 Rule::exists('questions', 'id')
                     ->where('school_id', $school->id)
                     ->where(function ($query) use ($course) {

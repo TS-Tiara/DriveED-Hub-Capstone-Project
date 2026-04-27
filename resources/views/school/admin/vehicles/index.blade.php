@@ -10,8 +10,8 @@
     $school = $school ?? $currentSchool ?? null;
     $settings = $school?->schoolSetting;
     
-    $primaryColor = $settings->primary_color ?? '#6366f1'; 
-    $secondaryColor = $settings->secondary_color ?? '#4338ca';
+    $primaryColor = $settings?->primary_color ?? '#6366f1'; 
+    $secondaryColor = $settings?->secondary_color ?? '#4338ca';
     $useGradient = $settings?->use_gradient_header;
 
     $totalVehicles = $vehicles->count();
@@ -242,7 +242,7 @@
                             </div>
                         </td>
                         <td><span style="padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; background: #f1f5f9; color: #475569;">{{ ucfirst($vehicle->transmission) }}</span></td>
-                        <td><div style="font-weight: 500;">{{ $vehicle->branch->name }}</div></td>
+                        <td><div style="font-weight: 500;">{{ $vehicle->branch->name ?? 'N/A' }}</div></td>
                         <td><span class="status-badge status-{{ $vehicle->status }}">{{ ucfirst(str_replace('_', ' ', $vehicle->status)) }}</span></td>
                         <td>
                             <div style="display: flex; gap: 10px; justify-content: flex-end;">

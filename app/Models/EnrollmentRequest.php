@@ -210,7 +210,11 @@ class EnrollmentRequest extends Model
      */
     public function markAsCompleted(): void
     {
-        $this->complete();
+        $adminId = \Illuminate\Support\Facades\Auth::guard('admin')->id();
+        $this->complete($adminId);
+
+        // Automatically resolve any pending Phase Progression request for Graduation
+        $this->resolvePendingPhaseRequest('completed', $adminId);
 
         // Unlock the student
         if ($this->learner) {
@@ -241,8 +245,31 @@ class EnrollmentRequest extends Model
             'theoretical_pass_notes' => $notes,
         ]);
 
+        // Automatically resolve any pending Phase Progression request for Practical transition
+        $this->resolvePendingPhaseRequest('practical', $adminId, $notes);
+
         if ($this->learner && !$this->learner->hasPassedTheoretical()) {
             $this->learner->markTheoreticalPassed();
+        }
+    }
+
+    /**
+     * Resolve any pending phase progression request for a specific target phase
+     */
+    public function resolvePendingPhaseRequest(string $toPhase, int $adminId, string $notes = null): void
+    {
+        $request = \App\Models\PhaseProgression::where('enrollment_id', $this->id)
+            ->where('to_phase', $toPhase)
+            ->where('status', 'pending')
+            ->first();
+
+        if ($request) {
+            $request->update([
+                'status' => 'approved',
+                'reviewed_by' => $adminId,
+                'reviewed_at' => now(),
+                'admin_notes' => $notes ?? "Automatically approved via Training Hub action."
+            ]);
         }
     }
 

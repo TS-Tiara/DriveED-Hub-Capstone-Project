@@ -105,10 +105,7 @@ class QuestionBankController extends Controller
             ],
             'lesson_id' => [
                 'nullable',
-                Rule::exists('module_lessons', 'id')->where(function ($query) use ($school) {
-                    $query->join('course_modules', 'module_lessons.module_id', '=', 'course_modules.id')
-                        ->where('course_modules.school_id', $school->id);
-                })
+                Rule::exists('module_lessons', 'id')->where('school_id', $school->id)
             ],
             'question_text' => 'required|string',
             'question_type' => 'required|in:multiple_choice,true_false,enumeration,identification',
@@ -197,10 +194,7 @@ class QuestionBankController extends Controller
             ],
             'lesson_id' => [
                 'nullable',
-                Rule::exists('module_lessons', 'id')->where(function ($query) use ($school) {
-                    $query->join('course_modules', 'module_lessons.module_id', '=', 'course_modules.id')
-                        ->where('course_modules.school_id', $school->id);
-                })
+                Rule::exists('module_lessons', 'id')->where('school_id', $school->id)
             ],
             'question_text' => 'required|string',
             'question_type' => 'required|in:multiple_choice,true_false,enumeration,identification',

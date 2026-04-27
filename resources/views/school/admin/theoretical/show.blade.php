@@ -581,6 +581,17 @@
                                             {{ $validation['message'] ?? 'Student must meet all LTO requirements before graduation.' }}
                                         </div>
                                     @endif
+
+                                    @if($pendingProgression && $pendingProgression->to_phase === 'practical')
+                                        <div style="margin-top: 12px; padding: 10px; background: #eff6ff; border-radius: 8px; border: 1px dashed #3b82f6; display: flex; align-items: center; gap: 8px;">
+                                            <div style="background: #3b82f6; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem;">
+                                                <i class="bi bi-person-check-fill"></i>
+                                            </div>
+                                            <div style="font-size: 0.8rem; color: #1e40af; font-weight: 600;">
+                                                Formal progression request is pending review.
+                                            </div>
+                                        </div>
+                                    @endif
                                 </div>
 
                                 <form action="{{ school_route('admin.theoretical.markAsPassed') }}" method="POST">
@@ -589,8 +600,8 @@
                                     <div class="form-group" style="margin-bottom: 10px;">
                                         <textarea name="notes" class="form-control" rows="2" placeholder="Theoretical completion notes..." style="font-size: 0.85rem;" {{ !$tdcLtoProgress['is_compliant'] ? 'disabled' : '' }}></textarea>
                                     </div>
-                                    <button type="submit" class="btn btn-primary w-100" style="font-weight: 600;" {{ !$tdcLtoProgress['is_compliant'] ? 'disabled' : '' }} onclick="return confirm('Mark student as passed TDC? This will officially unlock PDC for them.')">
-                                        Mark TDC as Passed
+                                    <button type="submit" class="btn btn-primary w-100" style="font-weight: 600;" {{ !$tdcLtoProgress['is_compliant'] ? 'disabled' : '' }} onclick="return confirm('{{ $pendingProgression && $pendingProgression->to_phase === 'practical' ? 'Approve progression request and mark as passed?' : 'Mark student as passed TDC? This will officially unlock PDC for them.' }}')">
+                                        {{ $pendingProgression && $pendingProgression->to_phase === 'practical' ? 'Approve Request & Pass TDC' : 'Mark TDC as Passed' }}
                                     </button>
                                 </form>
                             @else
@@ -625,8 +636,8 @@
 
                                 <form action="{{ school_route('admin.theoretical.complete', $enrollment->id) }}" method="POST">
                                     @csrf
-                                    <button type="submit" class="btn btn-success w-100" style="font-weight: 600; background: #10b981; border: none;" {{ $pdcProgress < 100 ? 'disabled' : '' }} onclick="return confirm('Graduate student? This will mark the entire course as COMPLETED.')">
-                                        Graduate & Issue Certificate
+                                    <button type="submit" class="btn btn-success w-100" style="font-weight: 600; background: #10b981; border: none;" {{ $pdcProgress < 100 ? 'disabled' : '' }} onclick="return confirm('{{ $pendingProgression && $pendingProgression->to_phase === 'completed' ? 'Approve graduation request and complete course?' : 'Graduate student? This will mark the entire course as COMPLETED.' }}')">
+                                        {{ $pendingProgression && $pendingProgression->to_phase === 'completed' ? 'Approve Request & Graduate' : 'Graduate & Issue Certificate' }}
                                     </button>
                                 </form>
                             @else
