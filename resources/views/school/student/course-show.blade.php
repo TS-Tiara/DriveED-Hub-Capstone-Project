@@ -502,6 +502,31 @@
                     </select>
                 </div>
 
+                <div class="form-group">
+                    <label class="form-label">License Code</label>
+                    <select name="requested_dl_code" class="form-select" required>
+                        <option value="">Select DL Code...</option>
+                        @if($course->license_type === 'professional')
+                            <option value="A">A - Motorcycle</option>
+                            <option value="A1">A1 - Tricycle</option>
+                            <option value="B">B - Passenger Car</option>
+                            <option value="B1">B1 - Van/Jeepney</option>
+                            <option value="B2">B2 - Light Commercial Vehicle</option>
+                            <option value="C">C - Heavy Commercial Vehicle</option>
+                            <option value="D">D - Bus</option>
+                            <option value="BE">BE - Articulated Passenger Car</option>
+                            <option value="CE">CE - Articulated Heavy Commercial Vehicle</option>
+                        @else
+                            <option value="A">A - Motorcycle</option>
+                            <option value="A1">A1 - Tricycle</option>
+                            <option value="B">B - Passenger Car</option>
+                            <option value="B1">B1 - Van/Jeepney</option>
+                            <option value="B2">B2 - Light Commercial Vehicle</option>
+                        @endif
+                    </select>
+                    <small class="text-xs text-gray-500">Specific vehicle category for {{ ucfirst(str_replace('_', ' ', $course->license_type)) }} license.</small>
+                </div>
+
                 @if($mustUploadLicenseForPractical)
                 <div class="form-group">
                     <label class="form-label">Upload Student Driver's License</label>

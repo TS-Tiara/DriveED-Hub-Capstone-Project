@@ -8,6 +8,7 @@ use App\Models\Course;
 use App\Models\ModuleLesson;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class QuestionBankController extends Controller
 {
@@ -29,10 +30,12 @@ class QuestionBankController extends Controller
         $role = $this->resolveAuthRole();
         $isSelecting = $request->query('is_selecting');
         $moduleId = $request->query('module_id');
-        $module = $moduleId ? \App\Models\CourseModule::with('questions')->find($moduleId) : null;
+        
+        // Strictly scope the module lookup to the current school
+        $module = $moduleId ? $school->courseModules()->with('questions')->find($moduleId) : null;
         $attachedQuestionIds = $module ? $module->questions->pluck('id')->toArray() : [];
         
-        $query = Question::where('school_id', $school->id);
+        $query = $school->questions();
 
         if ($request->filled('course_id')) {
             $query->where('course_id', $request->course_id);
@@ -69,14 +72,18 @@ class QuestionBankController extends Controller
         $lessons = [];
         
         if ($selectedCourseId) {
-            $lessons = ModuleLesson::whereHas('module', function($q) use ($selectedCourseId) {
-                $q->where('course_id', $selectedCourseId);
+            // Strictly scope lessons to modules belonging to the current school
+            $lessons = ModuleLesson::whereHas('module', function($q) use ($selectedCourseId, $school) {
+                $q->where('course_id', $selectedCourseId)
+                  ->where('school_id', $school->id);
             })->get();
         }
 
-        $course = $selectedCourseId ? Course::find($selectedCourseId) : null;
-        $module = $selectedModuleId ? \App\Models\CourseModule::find($selectedModuleId) : null;
-        $lesson = $selectedLessonId ? ModuleLesson::find($selectedLessonId) : null;
+        $course = $selectedCourseId ? $school->courses()->find($selectedCourseId) : null;
+        $module = $selectedModuleId ? $school->courseModules()->find($selectedModuleId) : null;
+        $lesson = $selectedLessonId ? ModuleLesson::whereHas('module', function($q) use ($school) {
+            $q->where('school_id', $school->id);
+        })->find($selectedLessonId) : null;
         $isAjax = $request->ajax();
 
         return view($school->resolveView('instructor.questions.create'), compact(
@@ -92,8 +99,17 @@ class QuestionBankController extends Controller
         $this->resolveAuthRole();
 
         $validated = $request->validate([
-            'course_id' => 'nullable|exists:courses,id',
-            'lesson_id' => 'nullable|exists:module_lessons,id',
+            'course_id' => [
+                'nullable',
+                Rule::exists('courses', 'id')->where('school_id', $school->id)
+            ],
+            'lesson_id' => [
+                'nullable',
+                Rule::exists('module_lessons', 'id')->where(function ($query) use ($school) {
+                    $query->join('course_modules', 'module_lessons.module_id', '=', 'course_modules.id')
+                        ->where('course_modules.school_id', $school->id);
+                })
+            ],
             'question_text' => 'required|string',
             'question_type' => 'required|in:multiple_choice,true_false,enumeration,identification',
             'options' => 'nullable|array',
@@ -111,7 +127,8 @@ class QuestionBankController extends Controller
         $question = Question::create($validated);
 
         if ($request->filled('module_id')) {
-            $module = \App\Models\CourseModule::find($request->module_id);
+            // Strictly scope module lookup to the school
+            $module = $school->courseModules()->find($request->module_id);
             if ($module) {
                 // Get current max sort order
                 $maxSort = $module->questions()->max('sort_order') ?? 0;
@@ -145,6 +162,8 @@ class QuestionBankController extends Controller
      */
     public function edit(School $school, Question $question)
     {
+        // Enforce school ownership
+        if ($question->school_id !== $school->id) abort(403);
         $role = $this->resolveAuthRole();
         $courses = $school->courses()->get();
         
@@ -168,9 +187,21 @@ class QuestionBankController extends Controller
     {
         $this->resolveAuthRole();
 
+        // Enforce school ownership
+        if ($question->school_id !== $school->id) abort(403);
+
         $validated = $request->validate([
-            'course_id' => 'nullable|exists:courses,id',
-            'lesson_id' => 'nullable|exists:module_lessons,id',
+            'course_id' => [
+                'nullable',
+                Rule::exists('courses', 'id')->where('school_id', $school->id)
+            ],
+            'lesson_id' => [
+                'nullable',
+                Rule::exists('module_lessons', 'id')->where(function ($query) use ($school) {
+                    $query->join('course_modules', 'module_lessons.module_id', '=', 'course_modules.id')
+                        ->where('course_modules.school_id', $school->id);
+                })
+            ],
             'question_text' => 'required|string',
             'question_type' => 'required|in:multiple_choice,true_false,enumeration,identification',
             'options' => 'nullable|array',
@@ -202,6 +233,10 @@ class QuestionBankController extends Controller
     public function destroy(School $school, Question $question)
     {
         $this->resolveAuthRole();
+        
+        // Enforce school ownership
+        if ($question->school_id !== $school->id) abort(403);
+
         $question->delete();
 
         return redirect()->route('schools.instructor.questions.index', $school->slug)
@@ -213,8 +248,12 @@ class QuestionBankController extends Controller
      */
     public function getLessons(School $school, Course $course)
     {
-        $lessons = ModuleLesson::whereHas('module', function($q) use ($course) {
-            $q->where('course_id', $course->id);
+        // Enforce course ownership by school
+        if ($course->school_id !== $school->id) abort(403);
+
+        $lessons = ModuleLesson::whereHas('module', function($q) use ($course, $school) {
+            $q->where('course_id', $course->id)
+              ->where('school_id', $school->id);
         })->get(['id', 'title']);
 
         return response()->json($lessons);

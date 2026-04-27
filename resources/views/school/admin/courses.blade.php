@@ -1669,6 +1669,10 @@
                                                 </svg>
                                                 {{ $course->license_type === 'non_professional' ? 'Non-Pro' : 'Pro' }}
                                             </span>
+                                            <span class="matrix-badge badge-lto" title="Target DL Codes">
+                                                <i class="bi bi-shield-check"></i>
+                                                {{ $course->license_type === 'professional' ? 'A, A1, B, B1, B2, C, D, BE, CE' : 'A, A1, B, B1, B2' }}
+                                            </span>
                                         @endif
                                         @php
                                             $mainCategory = $course->packages->first()?->vehicleCategory?->name ?? $course->vehicle_type;
@@ -1802,8 +1806,13 @@
                                                     <path stroke-linecap="round" stroke-linejoin="round"
                                                         d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Zm6-10.125a1.875 1.875 0 1 1-3.75 0 1.875 1.875 0 0 1 3.75 0Zm1.294 6.336a6.721 6.721 0 0 1-3.17.789 6.721 6.721 0 0 1-3.168-.789 3.376 3.376 0 0 1 6.338 0Z" />
                                                 </svg>
-                                                {{ $course->license_type === 'non_professional' ? 'Non-Pro' : 'Pro' }}
+                                                                                                {{ $course->license_type === 'non_professional' ? 'Non-Pro' : 'Pro' }}
                                             </span>
+                                            <span class="matrix-badge badge-lto" title="Target DL Codes">
+                                                <i class="bi bi-shield-check"></i>
+                                                {{ $course->license_type === 'professional' ? 'A, A1, B, B1, B2, C, D, BE, CE' : 'A, A1, B, B1, B2' }}
+                                            </span>
+
                                         @endif
                                         @php
                                             $listCategory = $course->packages->first()?->vehicleCategory?->name ?? $course->vehicle_type;
@@ -1924,8 +1933,9 @@
                 <div class="mt-4">
                     {{ $courses->links() }}
                 </div>
+            </div>
         @endif
-        </div>
+    </div>
 
         <!-- Create/Edit Course Modal -->
         <div class="modal" id="courseModal">
@@ -2056,15 +2066,26 @@
                             <div class="form-group">
                                 <label class="form-label">License Type *</label>
                                 <select name="license_type" id="courseLicenseType"
-                                    class="form-control @error('license_type') is-invalid @enderror" required>
+                                    class="form-control @error('license_type') is-invalid @enderror" required
+                                    onchange="updateDlCodePreview()">
                                     <option value="">Select license type</option>
                                     <option value="non_professional">Non-Professional</option>
                                     <option value="professional">Professional</option>
                                 </select>
+                                <div id="dlCodePreview" style="margin-top: 5px; display: none; background: #f8fafc; padding: 8px; border-radius: 8px; border: 1px dashed #e2e8f0;">
+                                    <div style="font-size: 0.7rem; color: #64748b; font-weight: 600; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">Covered DL Codes</div>
+                                    <div id="dlCodeBadges" class="matrix-badge-container" style="margin-bottom: 0; gap: 4px;"></div>
+                                </div>
                                 @error('license_type')
                                     <div class="field-error">{{ $message }}</div>
                                 @enderror
                             </div>
+                        </div>
+
+
+                        <div style="display: none;">
+                            <input type="number" name="hours_required" id="courseHoursRequired" value="1">
+                            <input type="number" name="price" id="coursePrice" value="0">
                         </div>
 
                         <div class="form-grid-two">
@@ -2073,23 +2094,18 @@
                                 <input type="number" name="sort_order" id="courseSortOrder" class="form-control" min="0"
                                     value="0">
                             </div>
-                        </div>
 
-                        <div style="display: none;">
-                            <input type="number" name="hours_required" id="courseHoursRequired" value="1">
-                            <input type="number" name="price" id="coursePrice" value="0">
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Status *</label>
-                            <select name="status" id="courseStatus"
-                                class="form-control @error('status') is-invalid @enderror" required>
-                                <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
-                            </select>
-                            @error('status')
-                                <div class="field-error">{{ $message }}</div>
-                            @enderror
+                            <div class="form-group">
+                                <label class="form-label">Status *</label>
+                                <select name="status" id="courseStatus"
+                                    class="form-control @error('status') is-invalid @enderror" required>
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                </select>
+                                @error('status')
+                                    <div class="field-error">{{ $message }}</div>
+                                @enderror
+                            </div>
                         </div>
 
                         <div class="form-check">
@@ -2406,6 +2422,7 @@
                 document.getElementById('courseId').value = '';
                 document.getElementById('courseForm').reset();
                 document.getElementById('imagePreview').style.display = 'none';
+                updateDlCodePreview();
                 document.getElementById('courseModal').style.display = 'flex';
             }
 
@@ -2450,6 +2467,7 @@
                     preview.style.display = 'block';
                 }
 
+                updateDlCodePreview();
                 document.getElementById('courseModal').style.display = 'flex';
             }
 
@@ -2645,6 +2663,34 @@
                 }
             }
 
+            function updateDlCodePreview() {
+                const select = document.getElementById('courseLicenseType');
+                const preview = document.getElementById('dlCodePreview');
+                const container = document.getElementById('dlCodeBadges');
+                
+                if (!select || !preview || !container) return;
+
+                const value = select.value;
+                if (!value) {
+                    preview.style.display = 'none';
+                    return;
+                }
+
+                let codes = [];
+                let badgeClass = '';
+                
+                if (value === 'professional') {
+                    codes = ['A', 'A1', 'B', 'B1', 'B2', 'C', 'D', 'BE', 'CE'];
+                    badgeClass = 'badge-lto';
+                } else {
+                    codes = ['A', 'A1', 'B', 'B1', 'B2'];
+                    badgeClass = 'badge-license';
+                }
+
+                container.innerHTML = codes.map(code => `<span class="matrix-badge ${badgeClass}" style="margin-bottom: 5px;">${code}</span>`).join('');
+                preview.style.display = 'block';
+            }
+
             // Close modals when clicking outside
             window.onclick = function (event) {
                 const courseModal = document.getElementById('courseModal');
@@ -2774,6 +2820,7 @@
                 }
 
                 document.getElementById('imagePreview').style.display = 'none';
+                updateDlCodePreview();
                 document.getElementById('courseModal').style.display = 'flex';
             }
 

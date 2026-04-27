@@ -237,9 +237,7 @@ class CourseModuleController extends Controller
             abort(403, 'You must be enrolled in this course to take assessments.');
         }
 
-        $questions = $module->questions()
-            ->orderBy('sort_order')
-            ->get();
+        $questions = $module->questions;
 
         // Get navigation
         $navigation = $this->getLearningPathNavigation($course, $module);

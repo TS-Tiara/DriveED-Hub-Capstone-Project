@@ -210,6 +210,35 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 
 <script>
+    function setDrawerContent(html) {
+        const body = document.getElementById('lmsQuizDrawerBody');
+        if (!body) return;
+
+        body.innerHTML = html;
+
+        // Execute inline/external scripts from dynamically injected drawer content.
+        const scripts = body.querySelectorAll('script');
+        scripts.forEach(script => {
+            const newScript = document.createElement('script');
+            if (script.src) {
+                newScript.src = script.src;
+            } else {
+                newScript.textContent = script.textContent;
+            }
+            document.body.appendChild(newScript);
+            setTimeout(() => {
+                if (newScript.parentNode) {
+                    newScript.parentNode.removeChild(newScript);
+                }
+            }, 50);
+        });
+
+        // Allow page-specific initializers to bind events after content swap.
+        if (typeof window.initQuestionBankInteractions === 'function') {
+            window.initQuestionBankInteractions();
+        }
+    }
+
     function openQuizDrawer(url, title) {
         const overlay = document.getElementById('lmsQuizDrawer');
         const body = document.getElementById('lmsQuizDrawerBody');
@@ -220,9 +249,20 @@ document.addEventListener('DOMContentLoaded', function() {
         body.innerHTML = '<div class="lms-modal-loader"><span class="btn-spinner"></span> Loading content...</div>';
 
         fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-            .then(r => r.text())
+            .then(r => {
+                if (!r.ok) throw new Error('Network response was not ok');
+                return r.text();
+            })
             .then(html => {
-                body.innerHTML = html;
+                setDrawerContent(html);
+            })
+            .catch(err => {
+                console.error('Drawer Load Error:', err);
+                body.innerHTML = '<div class="lms-empty" style="padding: 2rem;">' +
+                                 '<p style="color:var(--danger-color); font-weight:600;">Failed to load content.</p>' +
+                                 '<p style="font-size:0.9rem; color:#666;">' + (err.message || 'An error occurred.') + '</p>' +
+                                 '<button onclick="openQuizDrawer(\'' + url + '\', \'' + title + '\')" class="lms-btn lms-btn-muted" style="margin-top:1rem;">Retry</button>' +
+                                 '</div>';
             });
     }
 
@@ -241,25 +281,57 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => { document.getElementById('lmsQuizDrawerBody').innerHTML = ''; }, 400);
     }
 
-    // Local Handlers for the Drawer
-    document.addEventListener('click', function(e) {
-        const link = e.target.closest('#lmsQuizDrawerBody a');
-        if (link && !link.onclick && link.href && !link.href.startsWith('javascript:')) {
+    function bindDrawerListeners() {
+        const overlay = document.getElementById('lmsQuizDrawer');
+        const body = document.getElementById('lmsQuizDrawerBody');
+
+        if (!overlay || !body || overlay.dataset.listenersBound === '1') {
+            return;
+        }
+
+        overlay.dataset.listenersBound = '1';
+
+        // Scoped click handling for links rendered inside the drawer.
+        body.addEventListener('click', function(e) {
+            const link = e.target.closest('a');
+            if (!link || !body.contains(link)) return;
             if (link.target === '_blank' || link.hasAttribute('download')) return;
+            if (link.hasAttribute('onclick') || !link.href || link.href.startsWith('javascript:')) return;
+
             e.preventDefault();
             showDrawerLoader();
             fetch(link.href, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-            .then(r => r.text()).then(html => {
-                document.getElementById('lmsQuizDrawerBody').innerHTML = html;
-                if (typeof reinitializeJavaScript === 'function') reinitializeJavaScript();
+            .then(r => {
+                if (!r.ok) throw new Error('Network response was not ok');
+                return r.text();
+            })
+            .then(html => {
+                setDrawerContent(html);
+            })
+            .catch(err => {
+                console.error('Drawer Link Error:', err);
+                body.innerHTML = '<div class="lms-empty" style="padding: 2rem;">' +
+                                 '<p style="color:var(--danger-color); font-weight:600;">Failed to load content.</p>' +
+                                 '<p style="font-size:0.9rem; color:#666;">' + (err.message || 'An error occurred.') + '</p>' +
+                                 '<button onclick="openQuizDrawer(\'' + link.href + '\')" class="lms-btn lms-btn-muted" style="margin-top:1rem;">Retry</button>' +
+                                 '</div>';
             });
-        }
-    });
+        });
 
-    document.addEventListener('submit', function(e) {
-        const body = document.getElementById('lmsQuizDrawerBody');
-        if (e.target.closest('#lmsQuizDrawerBody')) {
+        // Scoped change handling fallback for select-all checkbox within the drawer.
+        body.addEventListener('change', function(e) {
+            if (e.target.id !== 'selectAllBank') return;
+            const isChecked = e.target.checked;
+            body.querySelectorAll('.bank-checkbox:not(:disabled)').forEach(cb => {
+                cb.checked = isChecked;
+            });
+        });
+
+        // Scoped form submission handling for drawer forms.
+        body.addEventListener('submit', function(e) {
             const form = e.target;
+            if (!form || !body.contains(form)) return;
+
             const method = (form.method || 'GET').toUpperCase();
             e.preventDefault();
             const formData = new FormData(form);
@@ -271,7 +343,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 showDrawerLoader();
                 fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
                 .then(r => r.text()).then(html => {
-                    body.innerHTML = html;
+                    setDrawerContent(html);
                     if (typeof reinitializeJavaScript === 'function') reinitializeJavaScript();
                 });
                 return;
@@ -288,13 +360,19 @@ document.addEventListener('DOMContentLoaded', function() {
             fetch(url, {
                 method: 'POST',
                 body: formData,
-                headers: { 
-                    'X-Requested-With': 'XMLHttpRequest', 
-                    'Accept': 'application/json' 
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
                 }
             })
             .then(r => {
-                if (r.status === 422) return r.json().then(data => ({ errors: data.errors }));
+                if (r.status === 422) {
+                    return r.json().then(data => ({
+                        success: false,
+                        errors: data.errors,
+                        message: data.message
+                    }));
+                }
                 if (r.redirected) return { success: true, redirect: true };
                 return r.json();
             })
@@ -302,7 +380,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.success) {
                     if (typeof showToast === 'function') showToast(data.message || 'Success!', 'success');
                     closeQuizDrawer();
-                    // Small delay to allow the toast to be seen before refresh
                     setTimeout(() => {
                         if (typeof loadContent === 'function') {
                             loadContent(window.location.href);
@@ -310,10 +387,15 @@ document.addEventListener('DOMContentLoaded', function() {
                             window.location.reload();
                         }
                     }, 500);
-                } else if (data.errors) {
-                    // Handle validation errors
-                    displayErrorsInDrawer(data.errors, form);
-                    if (typeof showToast === 'function') showToast('Please correct the errors.', 'error');
+                } else {
+                    if (data.errors) {
+                        displayErrorsInDrawer(data.errors, form);
+                        if (typeof showToast === 'function') showToast('Please correct the errors.', 'error');
+                    } else if (data.message) {
+                        if (typeof showToast === 'function') showToast(data.message, 'error');
+                    } else {
+                        if (typeof showToast === 'function') showToast('An error occurred. Please try again.', 'error');
+                    }
                 }
             })
             .catch(err => {
@@ -326,8 +408,41 @@ document.addEventListener('DOMContentLoaded', function() {
                     btn.disabled = false;
                 });
             });
-        }
-    });
+        });
+    }
+
+    function quickAdd(event, id, btn = null) {
+        const form = document.getElementById('singleAddBankForm');
+        if (!form) return;
+
+        const targetBtn = btn || event.currentTarget;
+        if (!targetBtn) return;
+        
+        // Show local loading state on the clicked button
+        const originalHtml = targetBtn.innerHTML;
+        targetBtn.innerHTML = '<span class="btn-spinner" style="width:12px; height:12px; border-width:2px;"></span>';
+        targetBtn.disabled = true;
+
+        const input = document.getElementById('singleAddId');
+        if (input) input.value = id;
+        
+        // Safety: Reset button after 5 seconds
+        setTimeout(() => {
+            if (targetBtn.disabled) {
+                targetBtn.innerHTML = originalHtml;
+                targetBtn.disabled = false;
+            }
+        }, 5000);
+
+        // Manually trigger the submit event
+        form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+    }
+
+    function navigateQuestionBank(url, title = 'Browse Question Bank') {
+        openQuizDrawer(url, title);
+    }
+
+    bindDrawerListeners();
 
     function displayErrorsInDrawer(errors, form) {
         // Clear existing errors

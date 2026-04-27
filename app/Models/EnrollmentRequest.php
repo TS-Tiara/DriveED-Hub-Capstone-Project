@@ -25,6 +25,7 @@ class EnrollmentRequest extends Model
         'remarks',
         'location',
         'requested_license_type',
+        'requested_dl_code',
         'experience_level',
         'credentials_file_path',
         'verification_notes',

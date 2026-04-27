@@ -14,6 +14,7 @@ return new class extends Migration
             $table->foreignId('learner_id')->constrained('students')->onDelete('cascade');
             $table->foreignId('course_id')->constrained('courses')->onDelete('cascade');
             $table->enum('requested_license_type', ['non_professional', 'professional'])->default('non_professional');
+            $table->string('requested_dl_code')->nullable();
             $table->enum('experience_level', ['new_driver', 'experienced'])->default('new_driver');
             $table->string('credentials_file_path')->nullable();
             $table->text('verification_notes')->nullable();

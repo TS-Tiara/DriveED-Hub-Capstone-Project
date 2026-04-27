@@ -1086,7 +1086,10 @@ class EnrollmentRequestController extends Controller
             if ($student->role === 'guest') {
                 $student->promoteToStudent();
             }
-            $student->update(['is_course_locked' => true]);
+            $student->update([
+                'is_course_locked' => true,
+                'dl_code' => $enrollmentRequest->requested_dl_code
+            ]);
 
             // Promote staged license if present
             if ($enrollmentRequest->credentials_file_path) {
@@ -1327,6 +1330,7 @@ class EnrollmentRequestController extends Controller
             // Data
             'payment_method' => $enrollmentRequest->payment_method,
             'reference_number' => $enrollmentRequest->payment_reference,
+            'requested_dl_code' => $enrollmentRequest->requested_dl_code,
             'remarks' => $enrollmentRequest->remarks,
             // Paths/Routes
             'license_url' => $licenseUrl,

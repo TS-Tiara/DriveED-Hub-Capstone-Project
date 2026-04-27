@@ -1200,6 +1200,7 @@
                     <th>Learner</th>
                     <th>Experience</th>
                     <th>Course</th>
+                    <th>DL Code</th>
                     <th>Branch</th>
                     <th>Fee</th>
                     <th>Status</th>
@@ -1236,6 +1237,15 @@
                                 <div class="course-name">{{ $request->course->title ?: 'N/A' }}</div>
                                 <div class="course-type">{{ ucfirst($request->course->type ?? 'standard') }}</div>
                             </div>
+                        </td>
+                        <td>
+                            @if($request->requested_dl_code)
+                                <span class="badge bg-info text-dark" title="Requested License Code">
+                                    {{ $request->requested_dl_code }}
+                                </span>
+                            @else
+                                <span class="text-muted small">N/A</span>
+                            @endif
                         </td>
                         <td>{{ $request->branchRelation?->name ?: '—' }}</td>
                         <td>
@@ -1354,6 +1364,16 @@
             <div class="mobile-card-row">
                 <span class="mobile-card-label">Course</span>
                 <span class="mobile-card-value">{{ $request->course->title ?: 'N/A' }}</span>
+            </div>
+            <div class="mobile-card-row">
+                <span class="mobile-card-label">DL Code</span>
+                <span class="mobile-card-value">
+                    @if($request->requested_dl_code)
+                        <span class="badge bg-info text-dark" style="font-size: 0.75rem;">{{ $request->requested_dl_code }}</span>
+                    @else
+                        N/A
+                    @endif
+                </span>
             </div>
             <div class="mobile-card-row">
                 <span class="mobile-card-label">Branch</span>
@@ -1826,6 +1846,7 @@ function openVerificationModal(enrollmentId) {
             // Update Info Sidebar
             document.getElementById('v-student-name').textContent = data.student_name;
             document.getElementById('v-course-title').textContent = data.course_title;
+            document.getElementById('v-dl-code').textContent = data.requested_dl_code || 'N/A';
             document.getElementById('v-price').textContent = '₱' + data.total_price;
             const paymentMethod = data.payment_method === 'on_site' ? 'on_site' : 'gcash';
             document.getElementById('v-reference-label').textContent = paymentMethod === 'on_site' ? 'OR Number' : 'GCash Reference No.';
@@ -2116,6 +2137,10 @@ function finalApproveFromModal() {
                 <div class="mb-3">
                     <div class="v-info-label">Enrolled Course</div>
                     <div id="v-course-title" class="v-info-value">-</div>
+                </div>
+                <div class="mb-3">
+                    <div class="v-info-label">Requested DL Code</div>
+                    <div id="v-dl-code" class="v-info-value">-</div>
                 </div>
                 <div class="mb-3">
                     <div class="v-info-label">Total Amount</div>

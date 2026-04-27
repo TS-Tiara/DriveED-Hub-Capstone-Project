@@ -592,6 +592,14 @@
                     @if($course->vehicle_type)
                         <span class="badge-vehicle">{{ $course->vehicle_type }}</span>
                     @endif
+                    @if($course->license_type)
+                        <span class="badge-type" style="background: #fef3c7; color: #92400e;">
+                            {{ $course->license_type === 'non_professional' ? 'Non-Pro' : 'Pro' }}
+                        </span>
+                        <span class="badge-type" style="background: #fee2e2; color: #991b1b;" title="Target DL Codes">
+                            {{ $course->license_type === 'professional' ? 'A, A1, B, B1, B2, C, D, BE, CE' : 'A, A1, B, B1, B2' }}
+                        </span>
+                    @endif
                 </div>
                 
                 <h3 class="course-title">{{ $course->title }}</h3>

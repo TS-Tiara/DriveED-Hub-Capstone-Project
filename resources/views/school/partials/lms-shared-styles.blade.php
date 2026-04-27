@@ -456,4 +456,91 @@
         font-weight: 600;
         gap: 12px;
     }
+
+    /* Modal / Drawer Styles */
+    .lms-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        align-items: center;
+        justify-content: flex-end; /* Drawer effect from right */
+        z-index: 1050;
+        backdrop-filter: blur(4px);
+    }
+
+    .lms-modal-overlay.active {
+        display: flex;
+    }
+
+    .lms-modal-window {
+        width: 100%;
+        max-width: 800px;
+        height: 100%;
+        background: #ffffff;
+        box-shadow: -10px 0 30px rgba(0, 0, 0, 0.15);
+        display: flex;
+        flex-direction: column;
+        animation: lmsDrawerSlide 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes lmsDrawerSlide {
+        from { transform: translateX(100%); }
+        to { transform: translateX(0); }
+    }
+
+    .lms-modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 18px 24px;
+        border-bottom: 1px solid #eef2f7;
+        background: #fbfdff;
+    }
+
+    .lms-modal-title {
+        margin: 0;
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #111827;
+    }
+
+    .lms-modal-close {
+        background: none;
+        border: none;
+        font-size: 1.75rem;
+        line-height: 1;
+        color: #9ca3af;
+        cursor: pointer;
+        padding: 4px 8px;
+        border-radius: 8px;
+        transition: all 0.2s;
+    }
+
+    .lms-modal-close:hover {
+        background: #f3f4f6;
+        color: #111827;
+    }
+
+    .lms-modal-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 0; /* Let internal content manage padding */
+    }
+
+    .btn-spinner {
+        width: 20px;
+        height: 20px;
+        border: 2px solid rgba(var(--primary-rgb), 0.2);
+        border-top-color: var(--primary-color);
+        border-radius: 50%;
+        animation: btn-spinner-spin 0.6s linear infinite;
+    }
+
+    @keyframes btn-spinner-spin {
+        to { transform: rotate(360deg); }
+    }
 </style>

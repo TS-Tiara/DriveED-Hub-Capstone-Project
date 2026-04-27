@@ -176,7 +176,8 @@ document.addEventListener('DOMContentLoaded', function() {
             lessonSelect.innerHTML = '<option value="">No specific lesson</option>';
             return;
         }
-        fetch(`{{ url('/') }}/{{ $school->slug }}/instructor/questions/ajax/lessons/${courseId}`)
+        const url = "{{ school_route('instructor.questions.ajax.lessons', ['course' => ':courseId']) }}".replace(':courseId', courseId);
+        fetch(url)
             .then(response => response.json())
             .then(data => {
                 lessonSelect.innerHTML = '<option value="">No specific lesson</option>';

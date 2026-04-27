@@ -170,6 +170,11 @@ class School extends Model
         return $this->hasMany(Question::class);
     }
 
+    public function courseModules()
+    {
+        return $this->hasMany(CourseModule::class);
+    }
+
     public function resolveView(string $view): string
     {
         $sluggedView = $this->slug . '.' . $view;
