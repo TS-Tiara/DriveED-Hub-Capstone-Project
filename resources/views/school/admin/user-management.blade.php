@@ -1058,6 +1058,49 @@
         }
     }
 
+    /* Contact Input Styling */
+    .contact-input-group {
+        display: flex;
+        align-items: stretch;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        overflow: hidden;
+        background: #f9fafb;
+        transition: all 0.2s;
+    }
+
+    .contact-input-group:focus-within {
+        border-color: var(--primary-color);
+        background: white;
+        box-shadow: 0 0 0 4px var(--primary-shadow);
+    }
+
+    .contact-prefix {
+        background: #f1f5f9;
+        padding: 10px 16px;
+        color: #475569;
+        font-weight: 600;
+        border-right: 1px solid #e2e8f0;
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .contact-input-group input {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 10px 16px !important;
+        background: transparent !important;
+        width: 100%;
+        font-size: 0.95rem;
+    }
+
+    .field-help {
+        font-size: 0.8rem;
+        color: #6b7280;
+        margin-top: 6px;
+    }
+
     /* Pagination styles are inherited from shared admin-styles */
 </style>
 
@@ -1718,6 +1761,18 @@
             applyLocalUserTableSearch(searchInput.value || '');
         }
         console.log('User Management page initialized');
+        
+        // Auto-strip leading zero from contact inputs in modals
+        document.querySelectorAll('input[name="contact"], #edit_student_contact, #edit_instructor_contact').forEach(input => {
+            input.addEventListener('input', function(e) {
+                let val = e.target.value;
+                if (val.startsWith('0')) {
+                    e.target.value = val.substring(1);
+                }
+                // Allow only numbers
+                e.target.value = e.target.value.replace(/\D/g, '');
+            });
+        });
     }
 
     if (document.readyState === 'loading') {

@@ -113,6 +113,42 @@
         .requirement { display: flex; align-items: center; gap: 6px; }
         .requirement.valid { color: #10b981; }
         .requirement i { font-style: normal; }
+
+        .contact-input-group {
+            display: flex;
+            align-items: center;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+            background: white;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .contact-input-group:focus-within {
+            border-color: {{ $primaryColor }};
+            box-shadow: 0 0 0 3px {{ $primaryColor }}20;
+        }
+
+        .contact-prefix {
+            background: #f1f5f9;
+            padding: 12px 16px;
+            color: #475569;
+            font-weight: 600;
+            border-right: 1px solid #e2e8f0;
+            font-size: 15px;
+        }
+
+        .contact-input-group input {
+            border: none !important;
+            box-shadow: none !important;
+            padding: 12px 16px !important;
+        }
+
+        .field-help {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 4px;
+        }
     </style>
 </head>
 <body>
@@ -153,7 +189,11 @@
                 @if($invitation->role === 'student' || $invitation->role === 'instructor')
                 <div class="form-group">
                     <label class="label">Contact Number</label>
-                    <input type="text" name="contact" value="{{ old('contact', $invitePayload['contact'] ?? '') }}" placeholder="09123456789" required>
+                    <div class="contact-input-group">
+                        <span class="contact-prefix">+63</span>
+                        <input type="text" id="contact" name="contact" value="{{ old('contact', $invitePayload['contact'] ?? '') }}" placeholder="9123456789" required maxlength="10">
+                    </div>
+                    <p class="field-help">Enter the 10-digit number after +63 (e.g., 9123456789).</p>
                     @error('contact') <p class="error-text">{{ $message }}</p> @enderror
                 </div>
 
@@ -210,6 +250,19 @@
                 }
             });
         });
+
+        // Auto-strip leading zero from contact inputs
+        const contactInput = document.getElementById('contact');
+        if (contactInput) {
+            contactInput.addEventListener('input', function(e) {
+                let val = e.target.value;
+                if (val.startsWith('0')) {
+                    e.target.value = val.substring(1);
+                }
+                // Allow only numbers
+                e.target.value = e.target.value.replace(/\D/g, '');
+            });
+        }
     </script>
 </body>
 </html>

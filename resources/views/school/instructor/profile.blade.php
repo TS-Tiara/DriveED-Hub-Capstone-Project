@@ -266,6 +266,12 @@
         font-size: 0.8rem;
     }
 
+    .field-help {
+        font-size: 11px;
+        color: #6b7280;
+        margin-top: 4px;
+    }
+
     .form-field textarea {
         width: 100%;
         padding: 10px 12px;
@@ -402,6 +408,7 @@
                         <span class="contact-prefix">+63</span>
                         <input type="text" id="contact" name="contact" value="{{ old('contact', $instructor->contact) }}" inputmode="numeric" pattern="[0-9]*" autocomplete="tel" maxlength="10" required placeholder="9123456789">
                     </div>
+                    <p class="field-help">Enter the 10-digit number after +63 (e.g., 9123456789).</p>
                 </div>
 
                 <div class="form-field">

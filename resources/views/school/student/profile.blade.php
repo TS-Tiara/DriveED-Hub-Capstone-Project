@@ -575,6 +575,12 @@
         font-size: 0.82rem;
     }
 
+    .field-help {
+        font-size: 11px;
+        color: #6b7280;
+        margin-top: 4px;
+    }
+
     .success-message {
         background-color: #d4edda;
         color: #155724;
@@ -840,6 +846,7 @@
                         <span class="contact-prefix">+63</span>
                         <input type="text" id="contact" name="contact" value="{{ old('contact', $student->contact) }}" required maxlength="10" placeholder="9123456789">
                     </div>
+                    <p class="field-help">Enter the 10-digit number after +63 (e.g., 9123456789).</p>
                 </div>
                 
                 <div class="form-group">

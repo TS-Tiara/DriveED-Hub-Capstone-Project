@@ -162,6 +162,42 @@
             margin-top: 4px;
         }
 
+        .contact-input-group {
+            display: flex;
+            align-items: center;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+            background: white;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .contact-input-group:focus-within {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+        }
+
+        .contact-prefix {
+            background: #f3f4f6;
+            padding: 9px 12px;
+            color: #4b5563;
+            font-weight: 600;
+            border-right: 1px solid #e5e7eb;
+            font-size: 13px;
+        }
+
+        .contact-input-group input {
+            border: none !important;
+            box-shadow: none !important;
+            padding: 9px !important;
+        }
+
+        .field-help {
+            font-size: 11px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
         .success {
             padding: 10px 12px;
             border-radius: 8px;
@@ -544,7 +580,11 @@
 
                 <div class="form-group">
                     <label for="contact">Contact Number *</label>
-                    <input type="text" id="contact" name="contact" value="{{ old('contact') }}" required inputmode="numeric" pattern="[0-9]*" autocomplete="tel" maxlength="15">
+                    <div class="contact-input-group">
+                        <span class="contact-prefix">+63</span>
+                        <input type="text" id="contact" name="contact" value="{{ old('contact') }}" required inputmode="numeric" pattern="[0-9]*" autocomplete="tel" maxlength="10" placeholder="9123456789">
+                    </div>
+                    <p class="field-help">Enter the 10-digit number after +63 (e.g., 9123456789).</p>
                     @error('contact')
                         <div class="error">{{ $message }}</div>
                     @enderror
@@ -782,6 +822,14 @@
             trigger.addEventListener('click', function() {
                 togglePasswordVisibility(trigger.getAttribute('data-password-toggle'), trigger);
             });
+        });
+
+        // Auto-strip leading zero from contact inputs
+        document.getElementById('contact').addEventListener('input', function(e) {
+            let val = e.target.value;
+            if (val.startsWith('0')) {
+                e.target.value = val.substring(1);
+            }
         });
 
         enforceNumericOnly(document.getElementById('contact'));
