@@ -48,7 +48,6 @@ return new class extends Migration
             $table->string('profile_picture')->nullable();
             $table->string('status')->default('active');
             $table->enum('experience_level', ['new_driver', 'experienced'])->default('new_driver');
-            $table->string('dl_code')->nullable();
             $table->boolean('has_passed_theoretical')->default(false);
             $table->timestamp('theoretical_passed_at')->nullable();
             $table->unsignedBigInteger('active_enrollment_id')->nullable();

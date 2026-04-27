@@ -82,6 +82,10 @@ class DriveEdHubSeeder extends Seeder
         ]);
         $this->command->info('   ✓ Branches created');
 
+        // ── 2. VEHICLES ──
+        $this->createVehicles($school, $branches);
+        $this->command->info('   ✓ Fleet created');
+
         // ── 2. IDENTITY (All users first) ──
 
         // Admins
