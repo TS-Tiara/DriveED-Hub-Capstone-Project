@@ -494,9 +494,16 @@
         <div class="course-card">
             <div class="course-header">
                 <h2 class="course-title">{{ $course->title }}</h2>
-                <span class="course-type-badge course-type-{{ $course->course_type ?? 'theoretical' }}">
-                    {{ $course->course_type === 'theoretical' ? 'Theoretical' : 'Practical' }}
-                </span>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    @if($activeEnrollment && $activeEnrollment->requested_dl_code)
+                        <span class="course-type-badge" style="background: #fee2e2; color: #991b1b;">
+                            DL Code: {{ $activeEnrollment->requested_dl_code }}
+                        </span>
+                    @endif
+                    <span class="course-type-badge course-type-{{ $course->course_type ?? 'theoretical' }}">
+                        {{ $course->course_type === 'theoretical' ? 'Theoretical' : 'Practical' }}
+                    </span>
+                </div>
             </div>
 
             @if($course->description)
@@ -691,7 +698,6 @@
                         </div>
                     @endforeach
                 </div>
-            </div>
         @endif
 
     @else

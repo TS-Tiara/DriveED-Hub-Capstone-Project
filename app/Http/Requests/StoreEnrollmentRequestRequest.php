@@ -46,6 +46,7 @@ class StoreEnrollmentRequestRequest extends FormRequest
                 'max:5120' // 5MB in kilobytes
             ],
             'notes' => ['nullable', 'string', 'max:1000'],
+            'requested_dl_code' => ['nullable', 'string', 'in:A,A1,B,B1,B2,C,D,BE,CE'],
         ];
     }
 

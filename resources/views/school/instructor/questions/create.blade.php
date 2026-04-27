@@ -11,17 +11,25 @@
     @if(isset($module) && $module->module_type === 'assessment') data-breadcrumb-module-type="assessment" @endif
     @if(isset($lesson)) data-breadcrumb-lesson="{{ $lesson->title }}" @endif
 >
-    @if(!($isAjax ?? false))
     <div class="lms-header">
         <div>
             <h1 class="lms-title">Add New Question</h1>
-            <p class="lms-subtitle">Create a question for your question bank.</p>
+            <p class="lms-subtitle">
+                @if(isset($module))
+                    Adding to assessment: <strong>{{ $module->title }}</strong>
+                @else
+                    Create a question for your question bank.
+                @endif
+            </p>
         </div>
         <div class="lms-actions">
-            <a href="{{ request('return_url', school_route('instructor.questions.index')) }}" class="lms-btn lms-btn-muted">Cancel</a>
+            @if($isAjax)
+                <a href="{{ request('return_url', school_route('instructor.questions.index', ['is_selecting' => 1, 'module_id' => $selectedModuleId ?? ''])) }}" class="lms-btn lms-btn-muted">Back to Bank</a>
+            @else
+                <a href="{{ request('return_url', school_route('instructor.questions.index')) }}" class="lms-btn lms-btn-muted">Cancel</a>
+            @endif
         </div>
     </div>
-    @endif
 
     <div class="lms-card" style="padding: 2rem;">
         <form action="{{ school_route('instructor.questions.store', request()->query()) }}" method="POST" id="questionForm">
@@ -184,7 +192,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        const url = "{{ school_route('instructor.questions.lessons.ajax', ['course' => ':courseId']) }}".replace(':courseId', courseId);
+        const url = "{{ school_route('instructor.questions.ajax.lessons', ['course' => ':courseId']) }}".replace(':courseId', courseId);
         fetch(url)
             .then(response => response.json())
             .then(data => {

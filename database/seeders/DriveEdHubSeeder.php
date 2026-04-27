@@ -13,6 +13,7 @@ use App\Models\Course;
 use App\Models\CoursePackage;
 use App\Models\CourseModule;
 use App\Models\ModuleLesson;
+use App\Models\EnrollmentRequest;
 use Database\Seeders\Traits\HandlesSchoolSeeding;
 
 class DriveEdHubSeeder extends Seeder
@@ -186,7 +187,7 @@ class DriveEdHubSeeder extends Seeder
         // 1. TDC
         $tdc = Course::updateOrCreate(
             ['school_id' => $school->id, 'title' => 'Theoretical Driving Course (TDC)'],
-            ['description' => 'LTO-accredited 15-hour TDC for new applicants. Covers traffic rules, road signs, and defensive driving.', 'type' => 'Theoretical', 'course_type' => 'theoretical', 'vehicle_type' => 'Car', 'status' => 'active', 'is_featured' => true, 'features' => ['Traffic Rules & Regulations', 'Road Signs & Markings', 'Defensive Driving', 'LTO Written Exam Prep']]
+            ['description' => 'LTO-accredited 15-hour TDC for new applicants. Covers traffic rules, road signs, and defensive driving.', 'type' => 'Theoretical', 'course_type' => 'theoretical', 'license_type' => 'non_professional', 'vehicle_type' => 'Car', 'status' => 'active', 'is_featured' => true, 'features' => ['Traffic Rules & Regulations', 'Road Signs & Markings', 'Defensive Driving', 'LTO Written Exam Prep']]
         );
         $courses[] = $tdc;
         CoursePackage::updateOrCreate(['course_id' => $tdc->id, 'name' => 'TDC Standard 15-Hour'], ['transmission_type' => 'automatic', 'vehicle_type' => 'Car', 'training_hours' => 15, 'price' => 2000.00, 'description' => 'Complete 15-hour TDC for new license applicants.', 'is_popular' => true]);
@@ -194,7 +195,7 @@ class DriveEdHubSeeder extends Seeder
         // 2. PDC
         $pdc = Course::updateOrCreate(
             ['school_id' => $school->id, 'title' => 'Practical Driving Course (PDC)'],
-            ['description' => 'Hands-on practical driving. Master vehicle control, parking, and safe driving.', 'type' => 'Practical', 'course_type' => 'practical', 'vehicle_type' => 'Car', 'status' => 'active', 'is_featured' => true, 'features' => ['Vehicle Operation Basics', 'Parking Techniques', 'City Driving']]
+            ['description' => 'Hands-on practical driving. Master vehicle control, parking, and safe driving.', 'type' => 'Practical', 'course_type' => 'practical', 'license_type' => 'professional', 'vehicle_type' => 'Car', 'status' => 'active', 'is_featured' => true, 'features' => ['Vehicle Operation Basics', 'Parking Techniques', 'City Driving']]
         );
         $courses[] = $pdc;
         CoursePackage::updateOrCreate(['course_id' => $pdc->id, 'name' => 'PDC 10-Hour Manual'], ['transmission_type' => 'manual', 'vehicle_type' => 'Car', 'training_hours' => 10, 'price' => 5000.00, 'description' => 'Manual driving 10 hours', 'is_popular' => true]);
@@ -203,7 +204,7 @@ class DriveEdHubSeeder extends Seeder
         // 3. COMBO
         $combo = Course::updateOrCreate(
             ['school_id' => $school->id, 'title' => 'TDC + PDC Combo Course'],
-            ['description' => 'Complete beginner comprehensive package. TDC and PDC bundled together.', 'type' => 'Combo', 'course_type' => 'combo', 'vehicle_type' => 'Car', 'status' => 'active', 'features' => ['15H Theory Classes', '10H Practical Hand-on', 'License Full Processing Help']]
+            ['description' => 'Complete beginner comprehensive package. TDC and PDC bundled together.', 'type' => 'Combo', 'course_type' => 'combo', 'license_type' => 'non_professional', 'vehicle_type' => 'Car', 'status' => 'active', 'features' => ['15H Theory Classes', '10H Practical Hand-on', 'License Full Processing Help']]
         );
         $courses[] = $combo;
         CoursePackage::updateOrCreate(['course_id' => $combo->id, 'name' => 'Combo 15H TDC + 10H PDC'], ['transmission_type' => 'automatic', 'vehicle_type' => 'Car', 'training_hours' => 25, 'price' => 6800.00, 'description' => 'Full combined package.']);
@@ -248,6 +249,26 @@ class DriveEdHubSeeder extends Seeder
             $students[] = $student;
 
             $course = $courses[$i % count($courses)];
+            $package = $course->packages->first();
+
+            // Create a pending enrollment request with a DL Code
+            $dlCodes = $course->license_type === 'professional' 
+                ? ['A', 'A1', 'B', 'B1', 'B2', 'C', 'D', 'BE', 'CE'] 
+                : ['A', 'A1', 'B', 'B1', 'B2'];
+            
+            EnrollmentRequest::updateOrCreate(
+                ['learner_id' => $student->id, 'course_id' => $course->id],
+                [
+                    'package_id' => $package->id,
+                    'branch_id' => $student->branch_id,
+                    'status' => 'pending',
+                    'requested_dl_code' => $dlCodes[array_rand($dlCodes)],
+                    'experience_level' => $student->experience_level,
+                    'payment_status' => 'pending',
+                    'price' => $package->price,
+                    'created_at' => now()->subDays(rand(1, 5)),
+                ]
+            );
             $package = \App\Models\CoursePackage::where('course_id', $course->id)->first();
             
             $enrollment = \App\Models\EnrollmentRequest::updateOrCreate(

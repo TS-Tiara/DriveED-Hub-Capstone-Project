@@ -7,6 +7,7 @@ use App\Models\VehicleCategory;
 use App\Models\Branch;
 use App\Models\School;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class VehicleController extends Controller
 {
@@ -26,9 +27,19 @@ class VehicleController extends Controller
     {
         $validated = $request->validate([
             'model' => 'required|string|max:255',
-            'license_plate' => 'required|string|unique:vehicles,license_plate',
-            'category_id' => 'required|exists:vehicle_categories,id',
-            'branch_id' => 'required|exists:branches,id',
+            'license_plate' => [
+                'required',
+                'string',
+                Rule::unique('vehicles', 'license_plate')->where('school_id', $school->id)
+            ],
+            'category_id' => [
+                'required',
+                Rule::exists('vehicle_categories', 'id')->where('school_id', $school->id)
+            ],
+            'branch_id' => [
+                'required',
+                Rule::exists('branches', 'id')->where('school_id', $school->id)
+            ],
             'transmission' => 'required|in:manual,automatic',
             'status' => 'required|in:active,maintenance,out_of_service',
             'notes' => 'nullable|string',
@@ -67,6 +78,9 @@ class VehicleController extends Controller
 
     public function updateCategory(Request $request, School $school, VehicleCategory $category)
     {
+        // Enforce ownership
+        if ($category->school_id !== $school->id) abort(403);
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
         ]);
@@ -84,9 +98,19 @@ class VehicleController extends Controller
 
         $validated = $request->validate([
             'model' => 'required|string|max:255',
-            'license_plate' => 'required|string|unique:vehicles,license_plate,' . $vehicle->id,
-            'category_id' => 'required|exists:vehicle_categories,id',
-            'branch_id' => 'required|exists:branches,id',
+            'license_plate' => [
+                'required',
+                'string',
+                Rule::unique('vehicles', 'license_plate')->ignore($vehicle->id)->where('school_id', $school->id)
+            ],
+            'category_id' => [
+                'required',
+                Rule::exists('vehicle_categories', 'id')->where('school_id', $school->id)
+            ],
+            'branch_id' => [
+                'required',
+                Rule::exists('branches', 'id')->where('school_id', $school->id)
+            ],
             'transmission' => 'required|in:manual,automatic',
             'status' => 'required|in:active,maintenance,out_of_service',
             'notes' => 'nullable|string',

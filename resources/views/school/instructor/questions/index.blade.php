@@ -18,40 +18,42 @@
         data-module-id="{{ $module->id }}"
     @endif
 >
-    @if(!($isAjax ?? false))
     <div class="lms-header">
         <div>
             <h1 class="lms-title">Question Bank</h1>
-            <p class="lms-subtitle">Manage and reuse questions across your courses.</p>
+            <p class="lms-subtitle">
+                @if($isSelecting && $module)
+                    Picking questions for assessment: <strong>{{ $module->title }}</strong>
+                @else
+                    Manage and reuse questions across your courses.
+                @endif
+            </p>
         </div>
         <div class="lms-actions">
             @if($isSelecting)
-                <button type="submit" form="bulkAddBankForm" class="lms-btn lms-btn-primary">Add Selected to Quiz</button>
+                <button type="submit" form="bulkAddBankForm" class="lms-btn lms-btn-primary">
+                    <i class="fas fa-plus"></i> Add Selected to Quiz
+                </button>
             @endif
-            <a href="{{ $backUrl }}" class="lms-btn lms-btn-muted">Back</a>
-            <a href="{{ school_route('instructor.questions.create', ['course_id' => $moduleId ? ($module->course_id ?? '') : '', 'module_id' => $moduleId, 'return_url' => url()->full()]) }}" class="lms-btn lms-btn-primary">Add Question</a>
+
+            <a href="{{ $backUrl }}" class="lms-btn lms-btn-muted">
+                @if($isAjax && $isSelecting) Finish @else Back @endif
+            </a>
+
+            @if($isAjax)
+                <button type="button" 
+                        onclick="openQuizDrawer('{{ school_route('instructor.questions.create', ['course_id' => $moduleId ? ($module->course_id ?? '') : '', 'module_id' => $moduleId, 'is_selecting' => 1]) }}', 'Create New Question')" 
+                        class="lms-btn lms-btn-primary">
+                    <i class="fas fa-plus-circle"></i> + Create New
+                </button>
+            @else
+                <a href="{{ school_route('instructor.questions.create', ['course_id' => $moduleId ? ($module->course_id ?? '') : '', 'module_id' => $moduleId, 'return_url' => url()->full()]) }}" 
+                   class="lms-btn lms-btn-primary">
+                    <i class="fas fa-plus-circle"></i> Add Question
+                </a>
+            @endif
         </div>
     </div>
-    @else
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; gap: 1rem; background: #f8fafc; padding: 10px 16px; border-radius: 12px; border: 1px solid #e2e8f0;">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                @if($isSelecting && $module)
-                    <div style="background: var(--primary-color); color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-weight: bold; font-size: 0.75rem;">!</div>
-                    <p style="margin: 0; font-size: 0.85rem; color: #475569;">
-                        Picking for: <strong style="color: var(--primary-color);">{{ $module->title }}</strong>
-                    </p>
-                    <span style="color: #cbd5e1; margin: 0 4px;">|</span>
-                    <a href="{{ $backUrl }}" class="lms-link" style="font-size: 0.8rem; font-weight: 600;">Finish &raquo;</a>
-                @endif
-            </div>
-            <div style="display: flex; gap: 0.5rem;">
-                @if($isSelecting)
-                    <button type="submit" form="bulkAddBankForm" class="lms-btn lms-btn-primary" style="font-size: 0.8rem; padding: 8px 14px;">Add Selected to Quiz</button>
-                @endif
-                <button type="button" onclick="openQuizDrawer('{{ school_route('instructor.questions.create', ['course_id' => $moduleId ? ($module->course_id ?? '') : '', 'module_id' => $moduleId, 'is_selecting' => 1]) }}', 'Create New Question')" class="lms-btn lms-btn-primary" style="font-size: 0.8rem; padding: 8px 14px;">+ Create New</button>
-            </div>
-        </div>
-    @endif
 
 
 
@@ -59,7 +61,13 @@
     <div class="lms-card" style="margin-bottom: 1.5rem; padding: 1rem;">
         <form action="{{ url()->current() }}" method="GET" class="lms-filter-form" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end;">
             @foreach(request()->except(['search', 'course_id', 'question_type', 'page']) as $key => $value)
-                <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                @if(is_array($value))
+                    @foreach($value as $v)
+                        <input type="hidden" name="{{ $key }}[]" value="{{ $v }}">
+                    @endforeach
+                @else
+                    <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                @endif
             @endforeach
             <div style="flex: 1; min-width: 200px;">
                 <label class="lms-label">Search Questions</label>
@@ -141,7 +149,11 @@
                     </div>
                     <div class="lms-item-links">
                         @if($isSelecting && !$isAlreadyAttached)
-                            <button type="button" onclick="quickAdd({{ $question->id }})" class="lms-btn lms-btn-primary" style="padding: 0.4rem 0.9rem; font-size: 0.8rem;">Add to Quiz</button>
+                            <button type="button" 
+                                data-action="quick-add" 
+                                data-id="{{ $question->id }}"
+                                class="lms-btn lms-btn-primary" 
+                                style="padding: 0.4rem 0.9rem; font-size: 0.8rem;">Add to Quiz</button>
                         @endif
                         <a href="{{ school_route('instructor.questions.edit', ['question' => $question->id, 'return_url' => url()->full()]) }}" class="lms-link lms-link-edit">Edit</a>
                         @if(!$isSelecting)
@@ -176,30 +188,165 @@
 </div>
 
 <script>
-function quickAdd(id) {
-    const form = document.getElementById('singleAddBankForm');
-    const btn = event.currentTarget;
-    
-    // Show local loading state on the clicked button
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<span class="btn-spinner" style="width:12px; height:12px; border-width:2px;"></span>';
-    btn.disabled = true;
+/**
+ * Question Bank Standalone Page Logic
+ * Uses global event delegation where possible to remain robust during AJAX transitions.
+ */
+(function() {
+    // 1. Identify context and availability
+    function getAvailableDrawerHandler() {
+        // Try local drawer first (if we are in manage.blade.php)
+        const localDrawer = document.getElementById('lmsQuizDrawer');
+        if (localDrawer && typeof window.openQuizDrawer === 'function') {
+            return (url, title) => window.openQuizDrawer(url, title);
+        }
 
-    document.getElementById('singleAddId').value = id;
-    
-    // Manually trigger the submit event so manage.blade.php catches it
-    form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
-}
+        // Try parent drawer if we are in an iframe or AJAX-loaded content that has access to parent
+        if (window.parent && window.parent !== window) {
+            try {
+                const parentDrawer = window.parent.document.getElementById('lmsQuizDrawer');
+                if (parentDrawer && typeof window.parent.openQuizDrawer === 'function') {
+                    return (url, title) => window.parent.openQuizDrawer(url, title);
+                }
+            } catch (e) {
+                // Ignore cross-origin errors
+            }
+        }
+        return null;
+    }
 
-document.addEventListener('DOMContentLoaded', function() {
-    const selectAll = document.getElementById('selectAllBank');
-    if (selectAll) {
-        selectAll.addEventListener('change', function() {
-            document.querySelectorAll('.bank-checkbox:not(:disabled)').forEach(cb => {
-                cb.checked = this.checked;
+    /**
+     * Handles navigation (filtering, pagination) within the question bank
+     */
+    function navigateQuestionBank(url, title = 'Question Bank') {
+        const drawerHandler = getAvailableDrawerHandler();
+        if (drawerHandler) {
+            drawerHandler(url, title);
+            return true;
+        }
+
+        if (typeof window.loadContent === 'function') {
+            window.loadContent(url);
+            return true;
+        }
+
+        // Fallback to standard navigation
+        window.location.href = url;
+        return false;
+    }
+
+    /**
+     * Handles single question addition to a quiz
+     */
+    function submitQuickAdd(id, btn) {
+        const form = document.getElementById('singleAddBankForm');
+        const input = document.getElementById('singleAddId');
+        if (!form || !input || !btn) return;
+
+        // Visual feedback
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = '<span class="btn-spinner" style="width:12px; height:12px; border-width:2px; display:inline-block; border:2px solid currentColor; border-right-color:transparent; border-radius:50%; animation: btn-spin 0.6s linear infinite; vertical-align:middle;"></span>';
+        btn.disabled = true;
+        
+        input.value = id;
+
+        // Safety timeout to prevent permanent disabled state
+        setTimeout(() => {
+            if (btn && btn.disabled) {
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+            }
+        }, 8000);
+
+        // Submit via AJAX if handleFormSubmit is available, otherwise standard submit
+        if (typeof form.requestSubmit === 'function') {
+            form.requestSubmit();
+        } else {
+            form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+        }
+    }
+
+    /**
+     * Initializer for the Question Bank page.
+     * Can be called multiple times; use guards to avoid double-binding.
+     */
+    function initQuestionBankStandalone() {
+        const container = document.querySelector('.lms-page');
+        if (!container || container.dataset.qbStandaloneBound === '1') return;
+        
+        // Mark as bound
+        container.dataset.qbStandaloneBound = '1';
+
+        // 1. Select All / Bulk handling
+        const selectAll = container.querySelector('#selectAllBank');
+        if (selectAll) {
+            selectAll.addEventListener('change', function() {
+                container.querySelectorAll('.bank-checkbox:not(:disabled)').forEach(cb => {
+                    cb.checked = this.checked;
+                });
             });
+        }
+
+        // 2. Filter Form AJAX handling (if loadContent is available)
+        const filterForm = container.querySelector('.lms-filter-form');
+        if (filterForm) {
+            filterForm.addEventListener('submit', function(e) {
+                if (typeof window.loadContent !== 'function') return; // Let it submit normally
+
+                const formData = new FormData(this);
+                const params = new URLSearchParams();
+                for (const [key, value] of formData) {
+                    params.append(key, value);
+                }
+
+                const url = this.getAttribute('action') + '?' + params.toString();
+                if (navigateQuestionBank(url)) {
+                    e.preventDefault();
+                }
+            });
+        }
+
+        // 3. Delegation for dynamic buttons and links
+        container.addEventListener('click', function(e) {
+            // Quick Add button
+            const quickAddBtn = e.target.closest('[data-action="quick-add"]');
+            if (quickAddBtn) {
+                e.preventDefault();
+                submitQuickAdd(quickAddBtn.dataset.id, quickAddBtn);
+                return;
+            }
+
+            // Pagination links
+            const paginationLink = e.target.closest('.pagination a');
+            if (paginationLink && typeof window.loadContent === 'function') {
+                e.preventDefault();
+                navigateQuestionBank(paginationLink.getAttribute('href'));
+                return;
+            }
+
+            // "Clear" filter link
+            const clearLink = e.target.closest('.lms-filter-form a.lms-btn-muted');
+            if (clearLink && typeof window.loadContent === 'function') {
+                e.preventDefault();
+                navigateQuestionBank(clearLink.getAttribute('href'));
+                return;
+            }
         });
     }
-});
+
+    // Export to global scope for external calls if needed
+    window.navigateQuestionBank = navigateQuestionBank;
+    window.submitQuickAdd = submitQuickAdd;
+    window.initQuestionBankStandalone = initQuestionBankStandalone;
+
+    // Run immediately
+    initQuestionBankStandalone();
+
+    // Also run on DOMContentLoaded just in case of full page load timing
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initQuestionBankStandalone);
+    }
+})();
 </script>
+
 @endsection

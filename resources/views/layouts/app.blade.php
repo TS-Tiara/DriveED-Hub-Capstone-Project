@@ -2955,6 +2955,12 @@
         function isExcludedForm(form) {
             const action = form.action || '';
             const formHTML = form.outerHTML;
+            const method = (form.method || 'GET').toUpperCase();
+
+            // Never hijack GET forms (search/filter/navigation forms should work natively).
+            if (method === 'GET') {
+                return true;
+            }
 
             // Exclude login and registration forms from AJAX handling
             // These forms should submit normally to trigger full page redirects after session establishment
@@ -3002,6 +3008,12 @@
         // Universal form submission handler
         function handleFormSubmit(e) {
             const form = e.target;
+            const method = (form.method || 'GET').toUpperCase();
+
+            // Allow GET forms to submit normally.
+            if (method === 'GET') {
+                return;
+            }
 
             // Double-check exclusion (in case form was dynamically added)
             if (isExcludedForm(form)) {

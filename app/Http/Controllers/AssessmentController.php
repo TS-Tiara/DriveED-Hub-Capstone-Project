@@ -9,6 +9,7 @@ use App\Models\AssessmentQuestion;
 use App\Models\Course;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class AssessmentController extends Controller
 {
@@ -27,6 +28,10 @@ class AssessmentController extends Controller
      */
     public function manage(School $school, Course $course, CourseModule $module)
     {
+        // Enforce ownership
+        if ($course->school_id !== $school->id) abort(404);
+        if ($module->course_id !== $course->id) abort(404);
+
         $role = $this->resolveAuthRole();
         
         if ($module->module_type !== 'assessment') {
@@ -56,10 +61,22 @@ class AssessmentController extends Controller
      */
     public function addQuestion(Request $request, School $school, Course $course, CourseModule $module)
     {
+        // Enforce ownership
+        if ($course->school_id !== $school->id) abort(404);
+        if ($module->course_id !== $course->id) abort(404);
+
         $this->resolveAuthRole();
 
         $validated = $request->validate([
-            'question_id' => 'required|exists:questions,id',
+            'question_id' => [
+                'required',
+                Rule::exists('questions', 'id')
+                    ->where('school_id', $school->id)
+                    ->where(function ($query) use ($course) {
+                        $query->where('course_id', $course->id)
+                              ->orWhereNull('course_id');
+                    })
+            ],
             'points' => 'nullable|integer|min:1',
         ]);
 
@@ -101,11 +118,23 @@ class AssessmentController extends Controller
      */
     public function addMultipleQuestions(Request $request, School $school, Course $course, CourseModule $module)
     {
+        // Enforce ownership
+        if ($course->school_id !== $school->id) abort(404);
+        if ($module->course_id !== $course->id) abort(404);
+
         $this->resolveAuthRole();
 
         $request->validate([
             'question_ids' => 'required|array',
-            'question_ids.*' => 'exists:questions,id',
+            'question_ids.*' => [
+                'exists:questions,id',
+                Rule::exists('questions', 'id')
+                    ->where('school_id', $school->id)
+                    ->where(function ($query) use ($course) {
+                        $query->where('course_id', $course->id)
+                              ->orWhereNull('course_id');
+                    })
+            ],
         ]);
 
         $addedCount = 0;
@@ -117,7 +146,10 @@ class AssessmentController extends Controller
                 ->exists();
 
             if (!$exists) {
-                $question = Question::find($questionId);
+                // Scoped lookup
+                $question = $school->questions()->find($questionId);
+                if (!$question) continue;
+
                 AssessmentQuestion::create([
                     'module_id' => $module->id,
                     'question_id' => $questionId,
@@ -143,6 +175,11 @@ class AssessmentController extends Controller
      */
     public function removeQuestion(Request $request, School $school, Course $course, CourseModule $module, Question $question)
     {
+        // Enforce ownership
+        if ($course->school_id !== $school->id) abort(404);
+        if ($module->course_id !== $course->id) abort(404);
+        if ($question->school_id !== $school->id) abort(403);
+
         $this->resolveAuthRole();
         
         AssessmentQuestion::where('module_id', $module->id)
@@ -157,6 +194,10 @@ class AssessmentController extends Controller
      */
     public function reorder(Request $request, School $school, Course $course, CourseModule $module)
     {
+        // Enforce ownership
+        if ($course->school_id !== $school->id) abort(404);
+        if ($module->course_id !== $course->id) abort(404);
+
         $this->resolveAuthRole();
 
         $order = $request->order; // Array of question IDs
