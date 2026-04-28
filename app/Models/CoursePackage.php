@@ -14,8 +14,6 @@ class CoursePackage extends Model
         'course_id',
         'vehicle_category_id',
         'name',
-        'package_level',
-        'tier',
         'transmission_type',
         'vehicle_type',
         'price',

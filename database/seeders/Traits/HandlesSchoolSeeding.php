@@ -163,7 +163,7 @@ trait HandlesSchoolSeeding
                 'total_amount' => $package->price,
                 'notes' => $status == 'cancelled' ? 'Student requested cancellation' : null,
                 'cancelled_by' => $status == 'cancelled' ? 'student' : null,
-                'cancellation_reason' => $status == 'cancelled' ? 'Personal reasons' : null,
+                'cancellation_reason' => $status == 'cancelled' ? 'Personal emergency' : null,
                 'cancelled_at' => $status == 'cancelled' ? now() : null,
                 'attendance_status' => $status == 'completed' ? 'attended' : null,
                 'session_status' => $status == 'completed' ? 'completed' : null,
@@ -282,7 +282,7 @@ trait HandlesSchoolSeeding
 
                 if (isset($g['cancellation']) && $g['cancellation']) {
                     $ed['cancellation_requested'] = true;
-                    $ed['cancellation_reason'] = 'The student changed their mind about the schedule.';
+                    $ed['cancellation_reason'] = 'The student decided to enroll in a different branch.';
                 }
 
                 if ($g['enrollment_status'] === 'rejected') $ed['remarks'] = 'Incomplete documentation. Please re-submit with valid credentials.';

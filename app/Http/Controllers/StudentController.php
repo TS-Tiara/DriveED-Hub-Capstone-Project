@@ -362,6 +362,17 @@ class StudentController extends Controller
                 $data['contact'] = '+63' . substr($contact, 1);
             }
         }
+
+        // Check if this is a protected demo account
+        if (DemoAccountProtection::isProtectedAccount($student->email, 'student', $school)) {
+            $nameChanged = trim((string)($data['name'] ?? '')) !== trim((string)$student->name);
+            $emailChanged = strtolower(trim((string)($data['email'] ?? ''))) !== strtolower(trim((string)$student->email));
+            
+            if ($nameChanged || $emailChanged || $passwordChanged) {
+                return back()->with('error', 'This demo account has locked name, email, and password.');
+            }
+        }
+
         // Check current password if user wants to change password
         if ($request->filled('new_password')) {
             if (!$request->filled('current_password') || !Hash::check($request->current_password, $student->password)) {
@@ -370,19 +381,12 @@ class StudentController extends Controller
             $data['password'] = Hash::make($request->new_password);
         }
 
-        if (!$passwordChanged && $request->only(['name', 'email', 'contact', 'address', 'date_of_birth']) == $student->only(['name', 'email', 'contact', 'address', 'date_of_birth'])) {
-            return redirect()
-                ->route('schools.student.profile', $school)
-                ->with('success', 'No profile changes were detected.');
-        }
-
-        $student->update($data);
-
-        $message = 'Profile updated successfully.';
+        // Use direct update for reliability
+        \App\Models\Student::where('id', $student->id)->update($data);
 
         return redirect()
             ->route('schools.student.profile', $school)
-            ->with('success', $message);
+            ->with('success', 'Profile updated successfully.');
     }
 
     public function updateProfilePicture(Request $request, School $school)
