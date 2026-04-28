@@ -138,6 +138,7 @@ class OnboardingController extends Controller
                     $user = Instructor::create(array_merge($commonData, [
                         'license_number' => $payload['license_number'] ?? null,
                         'license_image' => $payload['license_image'] ?? null,
+                        'license_status' => ($payload['license_image'] ?? null) ? 'pending' : 'none',
                         'course_specializations' => $payload['course_specializations'] ?? null,
                         'contact' => $validated['contact'],
                         'address' => $validated['address'],
