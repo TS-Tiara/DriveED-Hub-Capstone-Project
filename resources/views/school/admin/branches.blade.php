@@ -1038,8 +1038,14 @@
         const rows = document.querySelectorAll('.branch-table tbody tr');
 
         rows.forEach(row => {
-            const text = row.textContent.toLowerCase();
-            row.style.display = text.includes(filter) ? '' : 'none';
+            const cells = row.querySelectorAll('td');
+            if (cells.length < 2) return;
+
+            const nameSlug = cells[0].textContent.toLowerCase();
+            const address = cells[1].textContent.toLowerCase();
+
+            const isVisible = nameSlug.includes(filter) || address.includes(filter);
+            row.style.display = isVisible ? '' : 'none';
         });
     }
 
