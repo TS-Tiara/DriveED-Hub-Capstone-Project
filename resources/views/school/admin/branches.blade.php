@@ -243,7 +243,7 @@
         box-shadow: 0 2px 12px {{ $primaryColor }}10;
         overflow: hidden;
         border: 1px solid {{ $primaryColor }}08;
-        margin-top: 16px;
+        margin-top: 25px;
     }
 
     .branch-table {
