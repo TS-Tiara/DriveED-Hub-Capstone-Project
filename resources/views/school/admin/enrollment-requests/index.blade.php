@@ -95,6 +95,11 @@
         letter-spacing: 0;
     }
 
+    .requests-table thead th:hover {
+        background: transparent;
+        color: inherit;
+    }
+
     .requests-table thead th:first-child {
         border-top-left-radius: 12px;
     }
