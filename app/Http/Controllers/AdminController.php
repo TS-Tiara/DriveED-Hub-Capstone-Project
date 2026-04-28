@@ -1325,6 +1325,10 @@ class AdminController extends Controller
                 'role_student_text' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
                 'role_instructor_bg' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
                 'role_instructor_text' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
+                'license_steps' => 'nullable|array',
+                'license_steps.*.title' => 'required|string|max:255',
+                'license_steps.*.description' => 'required|string|max:1000',
+                'license_steps.*.milestone' => 'nullable|string|in:none,tdc,permit,pdc,license',
                 // Login page settings
                 'login_header_layout' => 'nullable|in:horizontal,vertical,centered,logo-only',
                 'login_logo_image' => 'nullable|string|max:255',
@@ -1458,6 +1462,7 @@ class AdminController extends Controller
                 'enable_booking_queue' => $request->has('enable_booking_queue'),
                 'booking_queue_days' => $request->booking_queue_days ?? 3,
                 'contact_email' => $request->contact_email,
+                'license_instructions' => $request->license_steps ?? [],
                 'invitation_expiry_days' => $request->invitation_expiry_days ?? 7,
                 'branch_secretary_limit_per_branch' => $request->branch_secretary_limit_per_branch ?? 1,
                 'require_instructor_license' => $request->has('require_instructor_license'),

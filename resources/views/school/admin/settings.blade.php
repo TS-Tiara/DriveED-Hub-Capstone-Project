@@ -1260,6 +1260,90 @@
                             </small>
                         </div>
 
+                        <!-- Grouped License Roadmap Section -->
+                        <div class="roadmap-config-card" style="border: 2px solid #e5e7eb; border-radius: 15px; margin: 20px 0; overflow: hidden; background: #f8fafc;">
+                            <div class="roadmap-config-header" onclick="toggleRoadmapSection(this)" style="padding: 15px 20px; background: #f1f5f9; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e7eb;">
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <div style="background: var(--primary-color); color: white; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="20" height="20">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                                        </svg>
+                                    </div>
+                                    <h4 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #1e293b;">License Acquisition Roadmap</h4>
+                                </div>
+                                <svg class="roadmap-toggle-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="20" height="20" style="transition: transform 0.3s; transform: rotate(180deg);">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
+                            
+                            <div class="roadmap-config-body" style="padding: 20px;">
+                                <p class="help-text-muted" style="margin-bottom: 20px; font-size: 0.85rem; color: #64748b;">
+                                    Define the sequential steps for acquiring a license. These will be displayed as a visual progress timeline on student and guest dashboards.
+                                </p>
+                                
+                                <div id="licenseStepsContainer">
+                                    @php
+                                        $licenseSteps = $settings->license_instructions ?? [];
+                                        if (!is_array($licenseSteps)) $licenseSteps = [];
+                                        
+                                        $availableMilestones = [
+                                            'none' => 'Manual (No System Link)',
+                                            'tdc' => 'TDC Completion (Theoretical Course)',
+                                            'permit' => 'Student Permit Verified',
+                                            'pdc' => 'PDC Completion (Practical Course)',
+                                            'license' => 'Official License (Final Step)',
+                                        ];
+                                    @endphp
+                                    
+                                    @forelse($licenseSteps as $index => $step)
+                                        <div class="license-step-row" style="margin-bottom: 20px; padding: 18px; background: white; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                                <h5 style="margin: 0; font-size: 0.9rem; font-weight: 700; color: var(--primary-color); display: flex; align-items: center; gap: 8px;">
+                                                    <span class="step-index-badge" style="background: #e0e7ff; color: #4338ca; width: 22px; height: 22px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem;">{{ $index + 1 }}</span>
+                                                    Step Configuration
+                                                </h5>
+                                                <button type="button" class="nav-action-btn" style="padding: 4px 10px; border-color: #fee2e2; color: #991b1b; background: #fff1f1; font-size: 0.75rem;" onclick="removeLicenseStep(this)">Remove</button>
+                                            </div>
+                                            
+                                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 12px;">
+                                                <div>
+                                                    <label style="display: block; font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 6px;">Title</label>
+                                                    <input type="text" name="license_steps[{{ $index }}][title]" class="form-control" style="font-weight: 600;" placeholder="e.g., Theoretical Driving Course (TDC)" value="{{ $step['title'] ?? '' }}" required>
+                                                </div>
+                                                <div>
+                                                    <label style="display: block; font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 6px;">Link to System Progress</label>
+                                                    <select name="license_steps[{{ $index }}][milestone]" class="form-control" style="font-size: 0.85rem;">
+                                                        @foreach($availableMilestones as $val => $label)
+                                                            <option value="{{ $val }}" {{ ($step['milestone'] ?? 'none') == $val ? 'selected' : '' }}>{{ $label }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            
+                                            <div>
+                                                <label style="display: block; font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 6px;">Description</label>
+                                                <textarea name="license_steps[{{ $index }}][description]" class="form-control" rows="2" placeholder="Explain the requirements for this step..." required>{{ $step['description'] ?? '' }}</textarea>
+                                            </div>
+                                        </div>
+                                    @empty
+                                        <div class="no-steps-text" style="padding: 40px; text-align: center; background: #fff; border: 2px dashed #e2e8f0; border-radius: 12px; color: #94a3b8;">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="32" height="32" style="margin-bottom: 10px; opacity: 0.5;">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                                            </svg>
+                                            <p style="margin: 0; font-weight: 500;">No roadmap steps configured.</p>
+                                        </div>
+                                    @endforelse
+                                </div>
+                                
+                                <button type="button" class="nav-action-btn" style="margin-top: 15px; width: 100%; border-color: var(--primary-color); color: var(--primary-color); background: white; padding: 12px; font-weight: 700;" onclick="addLicenseStep()">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16" style="margin-right: 8px;">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                    </svg>
+                                    Add New Step
+                                </button>
+                            </div>
+                        </div>
+
                         <div class="form-group">
                             <label class="form-label">Max Branch Managers Per Branch</label>
                             <input type="number" class="number-input" name="branch_secretary_limit_per_branch" value="{{ old('branch_secretary_limit_per_branch', $settings->branch_secretary_limit_per_branch ?? 1) }}" min="1" max="50">
@@ -2931,6 +3015,90 @@ function resetToDefaults() {
     });
 }
 
+    function addLicenseStep() {
+        const container = document.getElementById('licenseStepsContainer');
+        const noStepsText = container.querySelector('.no-steps-text');
+        if (noStepsText) noStepsText.remove();
+        
+        const index = container.querySelectorAll('.license-step-row').length;
+        const row = document.createElement('div');
+        row.className = 'license-step-row';
+        row.style = 'margin-bottom: 20px; padding: 18px; background: white; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);';
+        
+        row.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h5 style="margin: 0; font-size: 0.9rem; font-weight: 700; color: var(--primary-color); display: flex; align-items: center; gap: 8px;">
+                    <span class="step-index-badge" style="background: #e0e7ff; color: #4338ca; width: 22px; height: 22px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem;">${index + 1}</span>
+                    Step Configuration
+                </h5>
+                <button type="button" class="nav-action-btn" style="padding: 4px 10px; border-color: #fee2e2; color: #991b1b; background: #fff1f1; font-size: 0.75rem;" onclick="removeLicenseStep(this)">Remove</button>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 12px;">
+                <div>
+                    <label style="display: block; font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 6px;">Title</label>
+                    <input type="text" name="license_steps[${index}][title]" class="form-control" style="font-weight: 600;" placeholder="e.g., Theoretical Driving Course (TDC)" required>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 6px;">Link to System Progress</label>
+                    <select name="license_steps[${index}][milestone]" class="form-control" style="font-size: 0.85rem;">
+                        <option value="none">Manual (No System Link)</option>
+                        <option value="tdc">TDC Completion (Theoretical Course)</option>
+                        <option value="permit">Student Permit Verified</option>
+                        <option value="pdc">PDC Completion (Practical Course)</option>
+                        <option value="license">Official License (Final Step)</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <label style="display: block; font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 6px;">Description</label>
+                <textarea name="license_steps[${index}][description]" class="form-control" rows="2" placeholder="Explain the requirements for this step..." required></textarea>
+            </div>
+        `;
+        
+        container.appendChild(row);
+        markSettingsDirty();
+    }
+
+    function removeLicenseStep(btn) {
+        const row = btn.closest('.license-step-row');
+        const container = document.getElementById('licenseStepsContainer');
+        row.remove();
+        
+        // Re-index steps
+        const rows = container.querySelectorAll('.license-step-row');
+        rows.forEach((r, i) => {
+            r.querySelector('.step-index-badge').textContent = i + 1;
+            const titleInput = r.querySelector('input[type="text"]');
+            const milestoneSelect = r.querySelector('select');
+            const descTextarea = r.querySelector('textarea');
+            titleInput.name = `license_steps[${i}][title]`;
+            milestoneSelect.name = `license_steps[${i}][milestone]`;
+            descTextarea.name = `license_steps[${i}][description]`;
+        });
+        
+        if (rows.length === 0) {
+            container.innerHTML = `
+                <div class="no-steps-text" style="padding: 40px; text-align: center; background: #fff; border: 2px dashed #e2e8f0; border-radius: 12px; color: #94a3b8;">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="32" height="32" style="margin-bottom: 10px; opacity: 0.5;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                    </svg>
+                    <p style="margin: 0; font-weight: 500;">No roadmap steps configured.</p>
+                </div>
+            `;
+        }
+        
+        markSettingsDirty();
+    }
+
+    function toggleRoadmapSection(header) {
+        const body = header.nextElementSibling;
+        const icon = header.querySelector('.roadmap-toggle-icon');
+        const isCollapsed = body.style.display === 'none';
+        
+        body.style.display = isCollapsed ? 'block' : 'none';
+        icon.style.transform = isCollapsed ? 'rotate(180deg)' : 'rotate(0deg)';
+        header.style.borderRadius = isCollapsed ? '0' : '15px'; // Adjust border radius based on state
+    }
 </script>
 
 @endsection

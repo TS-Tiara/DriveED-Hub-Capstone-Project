@@ -72,6 +72,29 @@ class DriveEdHubSeeder extends Seeder
                 'enable_branches' => true,
                 'booking_cutoff_hours' => 12,
                 'alert_threshold_pending' => 50,
+                'require_instructor_license' => true,
+                'license_instructions' => [
+                    [
+                        'title' => 'Theoretical Driving Course (TDC)',
+                        'milestone' => 'tdc',
+                        'description' => 'Attend 15 hours of classroom instruction across 3 sessions. Pass the final exam to get your TDC Certificate.'
+                    ],
+                    [
+                        'title' => 'Apply for Student Permit',
+                        'milestone' => 'permit',
+                        'description' => 'Visit any LTO branch with your TDC Certificate and Medical Certificate to secure your Student Permit.'
+                    ],
+                    [
+                        'title' => 'Practical Driving Course (PDC)',
+                        'milestone' => 'pdc',
+                        'description' => 'Once you have your permit, enroll in PDC to start hands-on driving with our professional instructors.'
+                    ],
+                    [
+                        'title' => 'LTO Driver\'s License Application',
+                        'milestone' => 'license',
+                        'description' => 'After finishing PDC and holding your permit for at least 31 days, you can apply for your Non-Professional License.'
+                    ],
+                ]
             ]
         );
 
@@ -142,6 +165,8 @@ class DriveEdHubSeeder extends Seeder
                     'contact' => $inst['contact'],
                     'password' => $hashedPassword,
                     'license_number' => $inst['license'],
+                    'license_status' => 'verified',
+                    'restriction_codes' => ['A', 'B'],
                     'bio' => $inst['bio'],
                     'status' => 'active',
                     'availability' => 'available',
@@ -219,16 +244,16 @@ class DriveEdHubSeeder extends Seeder
     private function createDriveEdHubStudents(School $school, array $branches, array $courses, string $password): array
     {
         $data = [
-            ['name' => 'Juan Miguel Dela Cruz', 'email' => 'student1@driveedhub.test', 'level' => 'new_driver', 'progress' => 100], // Star Student
-            ['name' => 'Maria Victoria Garcia', 'email' => 'student2@driveedhub.test', 'level' => 'new_driver', 'progress' => 45],
-            ['name' => 'Pedro Jose Santos', 'email' => 'student3@driveedhub.test', 'level' => 'new_driver', 'progress' => 12],
-            ['name' => 'Ana Patricia Reyes', 'email' => 'student4@driveedhub.test', 'level' => 'new_driver', 'progress' => 0],
-            ['name' => 'Carlos Manuel Mendoza', 'email' => 'student5@driveedhub.test', 'level' => 'experienced', 'progress' => 75],
-            ['name' => 'Sofia Angelica Torres', 'email' => 'student6@driveedhub.test', 'level' => 'experienced', 'progress' => 90],
-            ['name' => 'Miguel Francisco Ramos', 'email' => 'student7@driveedhub.test', 'level' => 'new_driver', 'progress' => 20],
-            ['name' => 'Isabella Rose Cruz', 'email' => 'student8@driveedhub.test', 'level' => 'new_driver', 'progress' => 5],
-            ['name' => 'Diego Emmanuel Fernandez', 'email' => 'student9@driveedhub.test', 'level' => 'new_driver', 'progress' => 0],
-            ['name' => 'Luna Marie Martinez', 'email' => 'student10@driveedhub.test', 'level' => 'experienced', 'progress' => 60],
+            ['name' => 'Juan Miguel Dela Cruz', 'email' => 'student1@driveedhub.test', 'level' => 'new_driver', 'progress' => 100, 'license' => 'verified', 'tdc' => true], // Star Student
+            ['name' => 'Maria Victoria Garcia', 'email' => 'student2@driveedhub.test', 'level' => 'new_driver', 'progress' => 45, 'license' => 'pending', 'tdc' => true],
+            ['name' => 'Pedro Jose Santos', 'email' => 'student3@driveedhub.test', 'level' => 'new_driver', 'progress' => 12, 'license' => 'none', 'tdc' => false],
+            ['name' => 'Ana Patricia Reyes', 'email' => 'student4@driveedhub.test', 'level' => 'new_driver', 'progress' => 0, 'license' => 'none', 'tdc' => false],
+            ['name' => 'Carlos Manuel Mendoza', 'email' => 'student5@driveedhub.test', 'level' => 'experienced', 'progress' => 75, 'license' => 'verified', 'tdc' => true],
+            ['name' => 'Sofia Angelica Torres', 'email' => 'student6@driveedhub.test', 'level' => 'experienced', 'progress' => 90, 'license' => 'verified', 'tdc' => true],
+            ['name' => 'Miguel Francisco Ramos', 'email' => 'student7@driveedhub.test', 'level' => 'new_driver', 'progress' => 20, 'license' => 'none', 'tdc' => false],
+            ['name' => 'Isabella Rose Cruz', 'email' => 'student8@driveedhub.test', 'level' => 'new_driver', 'progress' => 5, 'license' => 'none', 'tdc' => false],
+            ['name' => 'Diego Emmanuel Fernandez', 'email' => 'student9@driveedhub.test', 'level' => 'new_driver', 'progress' => 0, 'license' => 'none', 'tdc' => false],
+            ['name' => 'Luna Marie Martinez', 'email' => 'student10@driveedhub.test', 'level' => 'experienced', 'progress' => 60, 'license' => 'verified', 'tdc' => true],
         ];
 
         $students = [];
@@ -243,8 +268,10 @@ class DriveEdHubSeeder extends Seeder
                     'status' => 'active',
                     'experience_level' => $s['level'],
                     'enrollment_date' => now()->subDays(rand(7, 60)),
-                    'student_license_status' => 'verified',
-                    'student_license_verified_at' => now()->subDays(15),
+                    'student_license_status' => $s['license'],
+                    'student_license_verified_at' => $s['license'] === 'verified' ? now()->subDays(15) : null,
+                    'has_passed_theoretical' => $s['tdc'],
+                    'theoretical_passed_at' => $s['tdc'] ? now()->subDays(20) : null,
                 ]
             );
             $student->role = 'student';
