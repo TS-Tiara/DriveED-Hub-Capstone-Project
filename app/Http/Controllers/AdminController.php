@@ -291,7 +291,7 @@ class AdminController extends Controller
             $studentItems = collect();
             if ($activeRoleFilter !== 'instructor') {
                 $studentItems = $filteredStudentQuery
-                    ->select('id', 'branch_id', 'name', 'email', 'contact', 'address', 'status', 'last_login_at', 'last_logout_at')
+                    ->select('id', 'branch_id', 'name', 'email', 'contact', 'address', 'status', 'last_login_at', 'last_logout_at', 'profile_picture')
                     ->orderBy('name')
                     ->get()
                     ->map(function ($student) {
@@ -312,6 +312,7 @@ class AdminController extends Controller
                             'branch_id' => $student->branch_id,
                             'last_login_at' => $student->last_login_at,
                             'last_logout_at' => $student->last_logout_at,
+                            'profile_picture' => $student->profile_picture,
                         ];
                     });
             }
@@ -319,7 +320,7 @@ class AdminController extends Controller
             $instructorItems = collect();
             if ($activeRoleFilter !== 'student') {
                 $instructorItems = $filteredInstructorQuery
-                    ->select('id', 'branch_id', 'name', 'email', 'contact', 'license_number', 'license_image', 'license_status', 'license_rejection_reason', 'restriction_codes', 'status', 'availability', 'last_login_at', 'last_logout_at')
+                    ->select('id', 'branch_id', 'name', 'email', 'contact', 'license_number', 'license_image', 'license_status', 'license_rejection_reason', 'restriction_codes', 'status', 'availability', 'last_login_at', 'last_logout_at', 'profile_picture')
                     ->orderBy('name')
                     ->get()
                     ->map(function ($instructor) {
@@ -340,6 +341,7 @@ class AdminController extends Controller
                             'branch_id' => $instructor->branch_id,
                             'last_login_at' => $instructor->last_login_at,
                             'last_logout_at' => $instructor->last_logout_at,
+                            'profile_picture' => $instructor->profile_picture,
                         ];
                     });
             }

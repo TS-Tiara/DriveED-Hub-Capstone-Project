@@ -196,6 +196,265 @@
             flex: 1;
         }
 
+        /* --- ENHANCED USER PROFILE MODAL STYLES --- */
+        .profile-modal-container {
+            border-radius: 20px;
+            overflow: visible; /* Allow content to flow, handled by modal wrapper scroll */
+            border: none;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            display: flex;
+            flex-direction: column;
+            max-width: none !important;
+        }
+
+        .profile-modal-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            padding: 40px 30px;
+            text-align: center;
+            position: relative;
+            color: white;
+        }
+        
+        .profile-modal-header .btn-close-modal {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white !important;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.2s;
+            line-height: 1;
+        }
+        
+        .profile-modal-header .btn-close-modal:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(90deg);
+        }
+        
+        .profile-avatar-wrapper {
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            background: white;
+            margin: 0 auto 15px;
+            padding: 5px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+            position: relative;
+        }
+        
+        .profile-avatar-inner {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: #f1f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            font-size: 52px;
+            font-weight: 700;
+            color: var(--primary-color);
+            text-transform: uppercase;
+        }
+        
+        .profile-avatar-inner img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .profile-modal-name {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin: 0;
+            letter-spacing: -0.5px;
+        }
+        
+        .profile-modal-role {
+            display: inline-block;
+            padding: 5px 14px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-top: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .profile-modal-body {
+            padding: 35px;
+            background: white;
+        }
+        
+        .profile-section {
+            margin-bottom: 30px;
+        }
+        
+        .profile-section:last-child {
+            margin-bottom: 0;
+        }
+        
+        .profile-section-title {
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 18px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f1f5f9;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .profile-section-title i {
+            color: var(--primary-color);
+            font-size: 1rem;
+        }
+        
+        .profile-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 24px;
+        }
+        
+        .profile-info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .profile-info-label {
+            font-size: 0.75rem;
+            color: #64748b;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .profile-info-value {
+            font-size: 1rem;
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        .profile-info-value.masked {
+            font-family: monospace;
+            letter-spacing: 1px;
+        }
+        
+        .profile-license-card {
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            margin-top: 10px;
+        }
+
+        .profile-license-preview {
+            width: 100%;
+            height: 220px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #cbd5e1;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .profile-license-preview:hover {
+            transform: scale(1.02);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .profile-license-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .profile-license-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(15, 23, 42, 0.8);
+            color: white;
+            padding: 10px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-align: center;
+            backdrop-filter: blur(4px);
+        }
+
+        .profile-modal-footer {
+            padding: 20px 35px;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        /* Restriction Chip Styles */
+        .restriction-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+            gap: 10px;
+            width: 100%;
+        }
+
+        .restriction-chip {
+            cursor: pointer;
+            position: relative;
+        }
+
+        .restriction-chip input {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .restriction-chip .chip-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 40px;
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-weight: 700;
+            color: #64748b;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .restriction-chip input:checked + .chip-content {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 10px rgba(var(--primary-rgb), 0.3);
+        }
+
+        .status-btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
         .action-controls {
             display: flex;
             align-items: flex-end;
@@ -532,11 +791,12 @@
             top: 0;
             width: 100%;
             height: 100%;
-            overflow: auto;
+            overflow-y: auto;
             background-color: rgba(0, 0, 0, 0.7);
             backdrop-filter: blur(8px);
             justify-content: center;
-            align-items: center;
+            align-items: flex-start; /* Align to top for long content scrolling */
+            padding: 40px 10px; /* Add breathing room for scroll */
         }
 
         .icon-14 {
@@ -585,7 +845,7 @@
             padding: 0 !important;
             border: none !important;
             border-radius: 20px !important;
-            overflow: hidden;
+            overflow: visible;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
             background: white;
             transition: transform 0.2s ease-out;
@@ -1857,29 +2117,38 @@
                                     </td>
                                     <td class="actions-cell">
                                         <div class="action-buttons">
-                                            {{-- Global Edit Button --}}
+                                            {{-- Global View Button (replaces Edit) --}}
                                             @if($user->role === 'student' || $user->role === 'guest')
-                                                <button type="button" class="btn-action btn-info js-edit-user" data-role="student"
+                                                <button type="button" class="btn-action btn-info js-view-user" data-role="student"
                                                     data-id="{{ $user->id }}" data-name="{{ $user->name }}"
                                                     data-email="{{ $user->email }}" data-contact="{{ $user->contact }}"
                                                     data-address="{{ $user->address }}" data-branch="{{ $user->branch_id }}"
-                                                    title="Edit Student">
-                                                    <i class="bi bi-pencil-square"></i>
-                                                    <span>Edit</span>
+                                                    data-branch-name="{{ $branches->find($user->branch_id)->name ?? 'Not Assigned' }}"
+                                                    data-status="{{ $user->status }}"
+                                                    data-profile-picture="{{ $user->profile_picture ? asset('storage/' . $user->profile_picture) : '' }}"
+                                                    title="View Student">
+                                                    <i class="bi bi-eye"></i>
+                                                    <span>View</span>
                                                 </button>
                                             @elseif($user->role === 'instructor')
-                                                <button type="button" class="btn-action btn-info js-edit-user" data-role="instructor"
+                                                <button type="button" class="btn-action btn-info js-view-user" data-role="instructor"
                                                     data-id="{{ $user->id }}" data-name="{{ $user->name }}"
                                                     data-email="{{ $user->email }}" data-contact="{{ $user->contact }}"
                                                     data-license="{{ $user->license_number }}" data-address="{{ $user->address }}"
                                                     data-availability="{{ $user->availability }}" data-branch="{{ $user->branch_id }}"
+                                                    data-branch-name="{{ $branches->find($user->branch_id)->name ?? 'Not Assigned' }}"
+                                                    data-status="{{ $user->status }}"
                                                     data-specializations="{{ json_encode($user->course_specializations ?? []) }}"
-                                                    title="Edit Instructor">
-                                                    <i class="bi bi-pencil-square"></i>
-                                                    <span>Edit</span>
+                                                    data-license-image="{{ $user->license_image ? asset('storage/' . $user->license_image) : '' }}"
+                                                    data-license-status="{{ $user->license_status }}"
+                                                    data-restrictions="{{ json_encode($user->restriction_codes ?? []) }}"
+                                                    data-rejection-reason="{{ $user->license_rejection_reason }}"
+                                                    data-profile-picture="{{ $user->profile_picture ? asset('storage/' . $user->profile_picture) : '' }}"
+                                                    title="View Instructor">
+                                                    <i class="bi bi-eye"></i>
+                                                    <span>View</span>
                                                 </button>
 
-                                                {{-- Verify button moved to License column --}}
                                             @endif
 
                                             {{-- Global Status Toggle --}}
@@ -1944,7 +2213,20 @@
             @endif
         </div>
     </div>
-
+ 
+    <!-- USER VIEW MODAL (Unified with Inline Editing) -->
+    <div id="userViewModal" class="modal">
+        <div class="modal-content profile-modal-container" style="width: min(850px, 95%); padding: 0;">
+            <div id="userViewContent">
+                <!-- Content will be injected via JS -->
+                <div class="modal-body p-5 text-center">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="mt-2">Loading user details...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+ 
     <!-- INVITE STUDENT MODAL -->
     <div id="createStudentModal" class="modal">
         <div class="modal-content" style="width: min(600px, 95%);">
@@ -2325,340 +2607,487 @@
         </div>
     </div>
 
-
     <script>
+        // --- GLOBALS ---
         window.schoolSlug = '{{ $school->slug }}';
         window.studentBaseUrl = '/{{ $school->slug }}/admin/students';
         window.instructorBaseUrl = '/{{ $school->slug }}/admin/instructors';
-        window.__userMgmtInitialFilterState = {
+        
+        // State for persistence across AJAX loads
+        window.__userMgmtInitialFilterState = window.__userMgmtInitialFilterState || {
             search: @json($activeSearch ?? ''),
             status: @json($activeStatusFilter ?? 'all'),
             role: @json($activeRoleFilter ?? 'all'),
             branch: @json((string) ($activeBranchFilter ?? 'all'))
         };
 
-        function hardenUserManagementActionForms() {
-            const actionForms = document.querySelectorAll('form[data-no-ajax][action*="/toggle-status"], form[data-no-ajax][action*="/availability"]');
-            if (!actionForms.length) {
-                return;
+        // --- PAGE INITIALIZATION ---
+        function initializeUserManagementPage() {
+            console.log('User Management: Initializing...');
+            
+            const searchInput = document.getElementById('userSearch');
+            const branchFilter = document.getElementById('branchFilter');
+            const state = window.__userMgmtInitialFilterState;
+
+            if (searchInput) {
+                // Restore search value from global state
+                if (state.search) {
+                    searchInput.value = state.search;
+                }
+
+                // Preserve focus and cursor position if we have a search term
+                if (state.search && state.search.trim() !== '') {
+                    searchInput.focus();
+                    const len = searchInput.value.length;
+                    searchInput.setSelectionRange(len, len);
+                }
+
+                // Debounced real-time search
+                let debounceTimer;
+                searchInput.addEventListener('input', function() {
+                    clearTimeout(debounceTimer);
+                    // Sync state immediately while typing to avoid loss on rapid keystrokes
+                    state.search = this.value; 
+                    debounceTimer = setTimeout(() => {
+                        applyFilters();
+                    }, 600);
+                });
+                
+                searchInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        applyFilters();
+                    }
+                });
             }
 
-            let pageToken = '';
+            // Sync branch filter dropdown
+            if (branchFilter && state.branch) {
+                branchFilter.value = state.branch;
+            }
+            
+            // Close export dropdown on outside click
+            document.addEventListener('click', function(e) {
+                const exportDropdown = document.getElementById('exportDropdown');
+                if (exportDropdown && !exportDropdown.contains(e.target)) {
+                    exportDropdown.classList.remove('active');
+                }
+            });
 
+            // Harden forms (Hostinger hack)
+            hardenUserManagementActionForms();
+        }
+
+        function applyFilters() {
+            const state = window.__userMgmtInitialFilterState;
+            const search = document.getElementById('userSearch')?.value || '';
+            const branch = document.getElementById('branchFilter')?.value || 'all';
+            const role = state.role || 'all';
+            const status = state.status || 'all';
+            
+            // Save state for persistence across AJAX loads
+            window.__userMgmtInitialFilterState = { role, branch, search, status };
+
+            const params = new URLSearchParams();
+            if (role !== 'all') params.set('role', role);
+            if (branch !== 'all') params.set('branch', branch); 
+            if (search.trim()) params.set('search', search.trim());
+            if (status !== 'all') params.set('status', status);
+            
+            const url = '{{ school_route('admin.userManagement') }}' + '?' + params.toString();
+            
+            if (window.loadContent) {
+                loadContent(url);
+            } else {
+                window.location.href = url;
+            }
+        }
+
+        function applyBranchFilter() { applyFilters(); }
+        
+        function applyQuickFilter(type) {
+            const state = window.__userMgmtInitialFilterState;
+            const currentBranch = document.getElementById('branchFilter')?.value || 'all';
+            const currentSearch = document.getElementById('userSearch')?.value || '';
+            
+            // Reset filters based on card clicked
+            if (type === 'instructors') {
+                state.role = 'instructor';
+                state.status = 'all';
+            } else if (type === 'students') {
+                state.role = 'student';
+                state.status = 'all';
+            } else if (type === 'active') {
+                state.role = 'all';
+                state.status = 'active';
+            } else if (type === 'inactive') {
+                state.role = 'all';
+                state.status = 'inactive';
+            } else {
+                state.role = 'all';
+                state.status = 'all';
+            }
+            
+            state.branch = currentBranch;
+            state.search = currentSearch;
+            
+            applyFilters();
+        }
+
+        function toggleExportDropdown() {
+            const dropdown = document.getElementById('exportDropdown');
+            if (dropdown) dropdown.classList.toggle('active');
+        }
+
+        function hardenUserManagementActionForms() {
+            const actionForms = document.querySelectorAll('form[data-no-ajax][action*="/toggle-status"], form[data-no-ajax][action*="/availability"]');
             actionForms.forEach(form => {
                 form.classList.add('native-form');
                 form.setAttribute('data-no-ajax', '1');
-                form.setAttribute('data-no-submit-guard', '1');
-
-                const tokenInput = form.querySelector('input[name="_token"]');
-                if (!pageToken && tokenInput && tokenInput.value) {
-                    pageToken = tokenInput.value;
-                }
             });
+        }
 
-            if (pageToken) {
-                const csrfMeta = document.querySelector('meta[name="csrf-token"]');
-                if (csrfMeta && csrfMeta.getAttribute('content') !== pageToken) {
-                    csrfMeta.setAttribute('content', pageToken);
-                }
+        // --- USER VIEW & EDIT MODAL ---
+        let currentEditingData = null;
+
+        function openUserViewModal(data) {
+            currentEditingData = data;
+            const modal = document.getElementById('userViewModal');
+            if (modal) {
+                modal.style.display = 'flex';
+                renderUserViewState();
             }
         }
 
-        // Initialize user management page
-        function initializeUserManagementPage() {
-            console.log('User Management: Initializing...');
-            try {
-                hardenUserManagementActionForms();
-                
-                // Prioritize search binding
-                bindUserSearchEvents();
-                
-                const searchInput = document.getElementById('userSearch');
-                if (searchInput && searchInput.value) {
-                    applyLocalUserTableSearch(searchInput.value);
-                }
-
-                // Auto-strip leading zero from contact inputs in modals
-                document.querySelectorAll('input[name="contact"], #edit_student_contact, #edit_instructor_contact').forEach(input => {
-                    input.addEventListener('input', function (e) {
-                        let val = e.target.value;
-                        if (val.startsWith('0')) {
-                            e.target.value = val.substring(1);
-                        }
-                        // Allow only numbers
-                        e.target.value = e.target.value.replace(/\D/g, '');
-                    });
-                });
-                console.log('User Management: Initialized successfully');
-            } catch (err) {
-                console.error('User Management: Initialization error:', err);
-            }
+        function closeUserViewModal() {
+            const modal = document.getElementById('userViewModal');
+            if (modal) modal.style.display = 'none';
+            currentEditingData = null;
         }
 
-        // Robust initialization that works for both full-page loads and AJAX partials
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initializeUserManagementPage);
-        } else {
-            // If already loaded (AJAX), give a tiny breather for the DOM to be ready
-            setTimeout(initializeUserManagementPage, 10);
-        }
-
-        function getUserFilterState() {
-            const params = new URLSearchParams(window.location.search);
-            const initialUserFilterState = window.__userMgmtInitialFilterState || {};
-            const searchInput = document.getElementById('userSearch');
-            const liveSearch = searchInput ? searchInput.value : null;
-            return {
-                search: (liveSearch !== null ? liveSearch : (params.get('search') || initialUserFilterState.search || '')),
-                status: params.get('status') || initialUserFilterState.status || 'all',
-                role: params.get('role') || initialUserFilterState.role || 'all',
-                branch: params.get('branch') || initialUserFilterState.branch || 'all'
-            };
-        }
-
-        function buildUserManagementUrl(filters, resetPage = true) {
-            const merged = Object.assign({}, getUserFilterState(), filters || {});
-            const url = new URL(window.location.pathname, window.location.origin);
-
-            const search = (merged.search || '').trim();
-            if (search) {
-                url.searchParams.set('search', search);
-            }
-
-            if (merged.status && merged.status !== 'all') {
-                url.searchParams.set('status', merged.status);
-            }
-
-            if (merged.role && merged.role !== 'all') {
-                url.searchParams.set('role', merged.role);
-            }
-
-            if (merged.branch && merged.branch !== 'all') {
-                url.searchParams.set('branch', merged.branch);
-            }
-
-            if (!resetPage) {
-                const currentPage = new URLSearchParams(window.location.search).get('page');
-                if (currentPage) {
-                    url.searchParams.set('page', currentPage);
-                }
-            }
-
-            return url;
-        }
-
-        function navigateWithUserFilters(nextFilters, resetPage = true) {
-            const targetUrl = buildUserManagementUrl(nextFilters, resetPage);
-            const target = targetUrl.pathname + targetUrl.search;
-            if (typeof loadContent === 'function') {
-                loadContent(target);
-                return;
-            }
-
-            window.location.href = target;
-        }
-
-        function applyQuickFilter(type) {
-            let role = 'all';
-            let status = 'all';
-
-            if (type === 'students') {
-                role = 'student';
-            } else if (type === 'instructors') {
-                role = 'instructor';
-            } else if (type === 'active') {
-                status = 'active';
-            } else if (type === 'inactive') {
-                status = 'inactive';
-            }
-
-            navigateWithUserFilters({ role, status }, true);
-        }
-
-        function applyBranchFilter() {
-            const select = document.getElementById('branchFilter');
-            if (!select) {
-                return;
-            }
-
-            navigateWithUserFilters({ branch: select.value || 'all' }, true);
-        }
-
-        function bindUserSearchEvents() {
-            // Use event delegation on the document to ensure search works even if injected via AJAX
-            // and to avoid issues with direct binding if the script runs too early.
-            if (window._userSearchBound) return;
-            window._userSearchBound = true;
-
-            document.addEventListener('keydown', function(event) {
-                if (event.target && event.target.id === 'userSearch') {
-                    if (event.key === 'Enter') {
-                        event.preventDefault();
-                        applyLocalUserTableSearch(event.target.value || '');
-                    }
-                }
-            });
-
-            document.addEventListener('input', function(event) {
-                if (event.target && event.target.id === 'userSearch') {
-                    applyLocalUserTableSearch(event.target.value || '');
-                }
-            });
+        function renderUserViewState() {
+            const content = document.getElementById('userViewContent');
+            const data = currentEditingData;
+            if (!content || !data) return;
             
-            console.log('User search events bound (Delegated)');
+            const modal = document.getElementById('userViewModal');
+            const modalContent = modal.querySelector('.modal-content');
+            modalContent.style.width = 'min(750px, 95%)';
+
+            let instructorSection = '';
+            if (data.role === 'instructor') {
+                instructorSection = `
+                    <div class="profile-section">
+                        <div class="profile-section-title"><i class="bi bi-card-text"></i>Instructor Information</div>
+                        <div class="profile-info-grid">
+                            <div class="profile-info-item">
+                                <div class="profile-info-label">License Number</div>
+                                <div class="profile-info-value">${data.license || 'N/A'}</div>
+                            </div>
+                            <div class="profile-info-item">
+                                <div class="profile-info-label">Availability</div>
+                                <div class="profile-info-value">
+                                    <span class="status-badge status-${data.availability === 'available' ? 'active' : 'inactive'}">
+                                        ${data.availability === 'available' ? 'AVAILABLE' : 'UNAVAILABLE'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            content.innerHTML = `
+                <div class="profile-modal-header" style="padding: 25px;">
+                    <button type="button" class="btn-close-modal" onclick="closeUserViewModal()">×</button>
+                    <div style="display: flex; align-items: center; gap: 20px;">
+                        <div class="profile-modal-avatar">
+                            ${data.profilePicture ? `<img src="${data.profilePicture}" style="width: 100%; height: 100%; object-fit: cover;">` : data.name.charAt(0)}
+                        </div>
+                        <div>
+                            <h3 class="profile-modal-name">${data.name}</h3>
+                            <span class="profile-modal-role" style="background: ${data.role === 'instructor' ? '#e0f2fe' : '#fef3c7'}; color: ${data.role === 'instructor' ? '#0369a1' : '#92400e'};">
+                                ${data.role.toUpperCase()}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="profile-modal-body">
+                    <div class="profile-section">
+                        <div class="profile-section-title"><i class="bi bi-person-lines-fill"></i>Contact Information</div>
+                        <div class="profile-info-grid">
+                            <div class="profile-info-item">
+                                <div class="profile-info-label">Email Address</div>
+                                <div class="profile-info-value">${data.email}</div>
+                            </div>
+                            <div class="profile-info-item">
+                                <div class="profile-info-label">Contact Number</div>
+                                <div class="profile-info-value">
+                                    <span class="masked-pii" data-full="${data.contact}">${data.contact ? (data.contact.substring(0, 6) + '****') : 'N/A'}</span>
+                                    <button class="btn-reveal-pii" onclick="revealPII(this)"><i class="bi bi-eye"></i></button>
+                                </div>
+                            </div>
+                            <div class="profile-info-item" style="grid-column: span 2;">
+                                <div class="profile-info-label">Home Address</div>
+                                <div class="profile-info-value">${data.address || 'N/A'}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    ${instructorSection}
+
+                    <div class="profile-section">
+                        <div class="profile-section-title"><i class="bi bi-shield-lock"></i>Account Status</div>
+                        <div class="profile-info-grid">
+                            <div class="profile-info-item">
+                                <div class="profile-info-label">Assigned Branch</div>
+                                <div class="profile-info-value">${data.branchName || 'Not Assigned'}</div>
+                            </div>
+                            <div class="profile-info-item">
+                                <div class="profile-info-label">Current Status</div>
+                                <div class="profile-info-value">
+                                    <span class="status-badge status-${data.status}">${data.status.toUpperCase()}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="profile-modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeUserViewModal()" style="border-radius: 10px; font-weight: 600;">Close</button>
+                    ${data.role === 'instructor' && data.licenseStatus !== 'verified' ? `
+                        <button type="button" class="btn btn-success" onclick="toggleLicenseVerificationMode(true)" style="background: #10b981; border: none; border-radius: 10px; font-weight: 600; color: white;">
+                            <i class="bi bi-shield-check me-2"></i>Verify License
+                        </button>
+                    ` : ''}
+                </div>
+            `;
         }
 
-        function applyLocalUserTableSearch(rawValue) {
-            const table = document.getElementById('usersTable');
-            if (!table) {
+        function toggleLicenseVerificationMode(isVerify) {
+            if (!isVerify) {
+                renderUserViewState();
                 return;
             }
 
-            const tbody = table.querySelector('tbody');
-            if (!tbody) {
-                return;
-            }
+            const content = document.getElementById('userViewContent');
+            const data = currentEditingData;
 
-            const query = (rawValue || '').trim().toLowerCase();
-            const rows = Array.from(tbody.querySelectorAll('tr')).filter(function (row) {
-                return row.id !== 'userSearchNoResultRow';
+            let restrictions = [];
+            try {
+                restrictions = typeof data.restrictions === 'string' ? JSON.parse(data.restrictions) : (data.restrictions || []);
+            } catch (e) { restrictions = []; }
+
+            const restrictionCodes = ['A', 'A1', 'B', 'B1', 'B2', 'C', 'D', 'BE', 'CE'];
+            const restrictionHtml = restrictionCodes.map(code => `
+                <label class="restriction-chip" style="cursor: pointer;">
+                    <input type="checkbox" name="restriction_codes[]" value="${code}" ${restrictions.includes(code) ? 'checked' : ''} style="display: none;">
+                    <div class="chip-content" style="border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 20px; text-align: center; font-weight: 600; background: white; transition: all 0.2s; min-width: 80px;">
+                        ${code}
+                    </div>
+                </label>
+            `).join('');
+
+            const modal = document.getElementById('userViewModal');
+            const modalContent = modal.querySelector('.modal-content');
+            modalContent.style.width = 'min(1100px, 98%)';
+
+            content.innerHTML = `
+                <div class="profile-modal-header" style="padding: 20px 25px; background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); display: flex; align-items: center; justify-content: space-between; border-radius: 20px 20px 0 0;">
+                    <h3 style="font-size: 1.25rem; margin: 0; color: white !important; font-weight: 600;"><i class="bi bi-shield-check me-2"></i>Verify Instructor License</h3>
+                    <button type="button" onclick="closeUserViewModal()" style="background: rgba(255,255,255,0.2); border: none; border-radius: 8px; color: white; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 20px;">×</button>
+                </div>
+                
+                <form id="integratedVerifyForm" style="margin: 0;">
+                    <div class="profile-modal-body" style="padding: 35px; background: white; position: relative;">
+                        <div class="row">
+                            <!-- LEFT COLUMN: Details & Decision -->
+                            <div class="col-md-7">
+                                <div class="mb-4">
+                                    <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Instructor Details</p>
+                                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 20px; border-radius: 12px;">
+                                        <div style="margin-bottom: 8px; display: flex; align-items: center;">
+                                            <span style="font-weight: 700; color: #1e293b; width: 130px; font-size: 0.9rem;">Full Name:</span>
+                                            <span style="color: #334155; font-weight: 500;">${data.name}</span>
+                                        </div>
+                                        <div style="display: flex; align-items: center;">
+                                            <span style="font-weight: 700; color: #1e293b; width: 130px; font-size: 0.9rem;">License Number:</span>
+                                            <span style="color: #3b82f6; font-family: monospace; font-weight: 700;">${data.license || 'N/A'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-4">
+                                    <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Verification Decision</p>
+                                    <div style="display: flex; gap: 20px;">
+                                        <label style="flex: 1; cursor: pointer;">
+                                            <input type="radio" name="status" value="verified" ${data.licenseStatus === 'verified' ? 'checked' : ''} onchange="toggleIntegratedRejection(false)" style="display:none;">
+                                            <div class="decision-btn" style="border: 2px solid #10b981; background: #ecfdf5; color: #065f46; padding: 15px; border-radius: 12px; text-align: center; font-weight: 700; transition: 0.2s;">
+                                                <i class="bi bi-check-circle-fill me-1"></i> Approve
+                                            </div>
+                                        </label>
+                                        <label style="flex: 1; cursor: pointer;">
+                                            <input type="radio" name="status" value="rejected" ${data.licenseStatus === 'rejected' ? 'checked' : ''} onchange="toggleIntegratedRejection(true)" style="display:none;">
+                                            <div class="decision-btn" style="border: 2px solid #e2e8f0; background: white; color: #64748b; padding: 15px; border-radius: 12px; text-align: center; font-weight: 700; transition: 0.2s;">
+                                                <i class="bi bi-x-circle-fill me-1"></i> Reject
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- RIGHT COLUMN: License Image (Pinned Top Right) -->
+                            <div class="col-md-5">
+                                <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; text-align: right;">License Document</p>
+                                <div style="background: #0f172a; border-radius: 20px; height: 230px; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; border: 4px solid #f1f5f9; box-shadow: 0 10px 25px rgba(0,0,0,0.1);" onclick="openLightbox('${data.licenseImage}')">
+                                    <img src="${data.licenseImage}" style="max-width: 90%; max-height: 90%; border-radius: 8px; box-shadow: 0 15px 40px rgba(0,0,0,0.5);">
+                                </div>
+                                <p style="text-align: center; font-size: 0.8rem; color: #94a3b8; margin-top: 12px; font-style: italic;">Carefully verify the name and expiry date against the physical ID</p>
+                            </div>
+                        </div>
+
+                        <!-- RESTRICTIONS (Full Width) -->
+                        <div id="integrated_restrictions_group" style="margin-top: 40px; padding-top: 30px; border-top: 1px solid #f1f5f9;">
+                            <h5 style="font-weight: 700; font-size: 1.05rem; color: #1e293b; margin-bottom: 5px;">LTO Restriction Codes</h5>
+                            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 20px;">Check all codes indicated on the instructor's physical license.</p>
+                            <div style="display: flex; flex-wrap: wrap; gap: 12px;">
+                                ${restrictionHtml}
+                            </div>
+                        </div>
+
+                        <!-- REJECTION REASON (Full Width) -->
+                        <div id="integrated_rejection_group" style="margin-top: 40px; padding-top: 30px; border-top: 1px solid #f1f5f9; display: none;">
+                            <h5 style="font-weight: 700; font-size: 1.05rem; color: #ef4444; margin-bottom: 12px;">Reason for Rejection</h5>
+                            <textarea name="rejection_reason" class="form-control" rows="4" style="border-radius: 15px; border: 2px solid #fee2e2; padding: 20px; font-size: 0.95rem; background: #fffafb;" placeholder="Please provide a detailed reason for rejecting this license...">${data.rejectionReason || ''}</textarea>
+                        </div>
+                    </div>
+
+                    <div style="padding: 25px 35px; background: #f8fafc; border-top: 1px solid #f1f5f9; display: flex; justify-content: flex-end; gap: 15px; border-radius: 0 0 20px 20px;">
+                        <button type="button" class="btn" onclick="toggleLicenseVerificationMode(false)" style="background: #94a3b8; color: white; padding: 12px 30px; border-radius: 12px; font-weight: 700; font-size: 0.95rem; border: none; transition: 0.2s;">Cancel</button>
+                        <button type="submit" class="btn" id="saveVerifyBtn" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; padding: 12px 40px; border-radius: 12px; font-weight: 700; font-size: 0.95rem; border: none; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); transition: 0.2s;">Save Verification</button>
+                    </div>
+                </form>
+            `;
+
+            initIntegratedVerificationStyles();
+            document.getElementById('integratedVerifyForm').addEventListener('submit', saveIntegratedVerification);
+            
+            if (data.licenseStatus === 'rejected') {
+                toggleIntegratedRejection(true);
+            }
+        }
+
+        function initIntegratedVerificationStyles() {
+            const restrictionInputs = document.querySelectorAll('.restriction-chip input');
+            restrictionInputs.forEach(input => {
+                const chip = input.nextElementSibling;
+                const updateChip = () => {
+                    if (input.checked) {
+                        chip.style.borderColor = '#6366f1';
+                        chip.style.backgroundColor = '#eef2ff';
+                        chip.style.color = '#4f46e5';
+                    } else {
+                        chip.style.borderColor = '#e2e8f0';
+                        chip.style.backgroundColor = 'white';
+                        chip.style.color = '#1e293b';
+                    }
+                };
+                input.addEventListener('change', updateChip);
+                updateChip();
             });
-            const columnCount = table.querySelectorAll('thead th').length || 7;
 
-            let visibleCount = 0;
-            rows.forEach(function (row) {
-                const cells = row.querySelectorAll('td');
-                if (cells.length < 4) return;
-
-                const name = (cells[0].textContent || '').toLowerCase();
-                const email = (cells[1].textContent || '').toLowerCase();
-                const role = (cells[3].textContent || '').toLowerCase();
-
-                const visible = query === '' ||
-                    name.indexOf(query) !== -1 ||
-                    email.indexOf(query) !== -1 ||
-                    role.indexOf(query) !== -1;
-
-                row.style.display = visible ? '' : 'none';
-                if (visible) {
-                    visibleCount++;
-                }
-            });
-
-            let noResultRow = document.getElementById('userSearchNoResultRow');
-            if (visibleCount === 0 && rows.length > 0) {
-                if (!noResultRow) {
-                    noResultRow = document.createElement('tr');
-                    noResultRow.id = 'userSearchNoResultRow';
-                    noResultRow.innerHTML = '<td colspan="' + columnCount + '" style="text-align:center;padding:18px;color:#6b7280;">No users match your search on this page.</td>';
-                    tbody.appendChild(noResultRow);
-                }
-            } else if (noResultRow) {
-                noResultRow.remove();
-            }
-        }
-
-        function setInviteFormLoadingState(form, isLoading) {
-            if (!form) return;
-
-            const submitButton = form.querySelector('.btn-submit');
-            if (!submitButton) return;
-
-            const defaultText = submitButton.dataset.defaultText || submitButton.textContent.trim();
-            submitButton.dataset.defaultText = defaultText;
-            submitButton.disabled = isLoading;
-            submitButton.textContent = isLoading ? 'Adding...' : defaultText;
-        }
-
-        function bindInviteFormSubmit(formId) {
-            const form = document.getElementById(formId);
-            if (!form || form.dataset.loadingBound === '1') {
-                return;
-            }
-
-            form.dataset.loadingBound = '1';
-            form.addEventListener('submit', function () {
-                setInviteFormLoadingState(form, true);
+            const decisionOptions = document.querySelectorAll('input[name="status"]');
+            decisionOptions.forEach(input => {
+                const updateDecision = () => {
+                    decisionOptions.forEach(opt => {
+                        const btn = opt.nextElementSibling;
+                        if (opt.checked) {
+                            if (opt.value === 'verified') {
+                                btn.style.borderColor = '#10b981';
+                                btn.style.background = '#ecfdf5';
+                                btn.style.color = '#065f46';
+                            } else {
+                                btn.style.borderColor = '#ef4444';
+                                btn.style.background = '#fef2f2';
+                                btn.style.color = '#991b1b';
+                            }
+                        } else {
+                            btn.style.borderColor = '#e2e8f0';
+                            btn.style.background = 'white';
+                            btn.style.color = '#64748b';
+                        }
+                    });
+                };
+                input.addEventListener('change', updateDecision);
+                updateDecision();
             });
         }
 
-
-        // Student Modal Functions
-        function openCreateStudentModal() {
-            document.getElementById('createStudentModal').style.display = 'flex';
-            setInviteFormLoadingState(document.getElementById('createStudentInviteForm'), false);
+        function toggleIntegratedRejection(show) {
+            const restGrp = document.getElementById('integrated_restrictions_group');
+            const rejGrp = document.getElementById('integrated_rejection_group');
+            if (restGrp) restGrp.style.display = show ? 'none' : 'block';
+            if (rejGrp) rejGrp.style.display = show ? 'block' : 'none';
         }
 
-        function closeCreateStudentModal() {
-            document.getElementById('createStudentModal').style.display = 'none';
-            setInviteFormLoadingState(document.getElementById('createStudentInviteForm'), false);
-        }
+        async function saveIntegratedVerification(e) {
+            e.preventDefault();
+            const form = e.target;
+            const btn = document.getElementById('saveVerifyBtn');
+            const data = currentEditingData;
+            
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
 
-        function editStudent(id, name, email, contact, address, branchId) {
-            const form = document.getElementById('editStudentForm');
-            form.action = `${window.studentBaseUrl}/${id}`;
-            document.getElementById('edit_student_name').value = name || '';
-            document.getElementById('edit_student_email').value = email || '';
+            const formData = new FormData(form);
+            const url = `{{ school_route('admin.instructors.verify', ['id' => ':id']) }}`.replace(':id', data.id);
 
-            let displayContact = contact || '';
-            if (displayContact.startsWith('+63')) {
-                displayContact = displayContact.substring(3);
-            } else if (displayContact.startsWith('0')) {
-                displayContact = displayContact.substring(1);
-            }
-            document.getElementById('edit_student_contact').value = displayContact;
-            document.getElementById('edit_student_address').value = address || '';
-            const branchSelect = document.getElementById('edit_student_branch');
-            if (branchSelect) branchSelect.value = branchId || '';
-            document.getElementById('editStudentModal').style.display = 'flex';
-        }
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: formData
+                });
 
-        function closeEditStudentModal() {
-            document.getElementById('editStudentModal').style.display = 'none';
-        }
-
-        // Export Dropdown
-        function toggleExportDropdown() {
-            document.getElementById('exportDropdown').classList.toggle('open');
-        }
-
-        // Close dropdown when clicking outside
-        document.addEventListener('click', function (e) {
-            const btn = e.target.closest('.js-edit-user');
-            if (btn) {
-                const role = btn.dataset.role;
-                if (role === 'student') {
-                    editStudent(
-                        btn.dataset.id,
-                        btn.dataset.name,
-                        btn.dataset.email,
-                        btn.dataset.contact,
-                        btn.dataset.address,
-                        btn.dataset.branch
-                    );
-                } else if (role === 'instructor') {
-                    editInstructor(
-                        btn.dataset.id,
-                        btn.dataset.name,
-                        btn.dataset.email,
-                        btn.dataset.contact,
-                        btn.dataset.license,
-                        btn.dataset.address,
-                        btn.dataset.branch,
-                        btn.dataset.specializations,
-                        btn.dataset.availability
-                    );
+                if (response.ok) {
+                    showToast('success', 'License verification saved!');
+                    closeUserViewModal();
+                    loadContent('{{ school_route('admin.userManagement') }}');
+                } else {
+                    const res = await response.json();
+                    alert('Error: ' + (res.message || 'Unknown error'));
                 }
+            } catch (err) {
+                console.error(err);
+                alert('A network error occurred.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Save Verification';
             }
+        }
 
-            const dropdown = document.getElementById('exportDropdown');
-            if (dropdown && !dropdown.contains(e.target)) {
-                dropdown.classList.remove('open');
-            }
-        });
-
-        function viewStudent(id) {
-            Toast.info('Student details view coming soon!', 'Feature Info');
+        function revealPII(button) {
+            const span = button.previousElementSibling;
+            if (!span || span.classList.contains('revealed')) return;
+            const fullValue = span.getAttribute('data-full');
+            const originalMasked = span.textContent;
+            span.textContent = fullValue;
+            span.classList.add('revealed');
+            const originalIcon = button.innerHTML;
+            button.innerHTML = '<i class="bi bi-clock-history"></i>';
+            button.classList.add('timer-active');
+            button.disabled = true;
+            setTimeout(() => {
+                span.textContent = originalMasked;
+                span.classList.remove('revealed');
+                button.innerHTML = originalIcon;
+                button.classList.remove('timer-active');
+                button.disabled = false;
+            }, 5000);
         }
 
         function unifiedToggle(id, type, currentValue, role) {
@@ -2673,11 +3102,8 @@
                 title: `${action} ${role.charAt(0).toUpperCase() + role.slice(1)}`,
                 message: `Are you sure you want to ${action.toLowerCase()} this ${role}'s ${typeLabel.toLowerCase()}?`,
                 confirmText: `Yes, ${action}`,
-                onConfirm: () => {
-                    // Get fresh token from meta tag
+                onConfirm: async () => {
                     const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-
-                    // Determine correct route (Relative paths for Hostinger/CORS safety)
                     let url = '';
                     if (type === 'availability') {
                         url = '/' + window.schoolSlug + '/admin/instructors/' + id + '/availability';
@@ -2686,443 +3112,88 @@
                         url = '/' + window.schoolSlug + '/admin/' + basePart + '/' + id + '/toggle-status';
                     }
 
-                    fetch(url, {
-                        method: 'PATCH',
-                        redirect: 'manual', // <--- PREVENT 405 error by stopping automatic PATCH follow
-                        headers: {
-                            'X-CSRF-TOKEN': token,
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
-                    })
-                        .then(async response => {
-                            // Check for session timeouts (419/401)
-                            if (response.status === 419 || response.status === 401) {
-                                showConfirm({
-                                    type: 'error',
-                                    title: 'Session Expired',
-                                    message: 'Your session has timed out. Please refresh and log in again.',
-                                    confirmText: 'Log In Again',
-                                    onConfirm: () => window.location.reload()
-                                });
-                                return;
+                    try {
+                        const response = await fetch(url, {
+                            method: 'PATCH',
+                            headers: {
+                                'X-CSRF-TOKEN': token,
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json'
                             }
-
-                            // SUCCESS: In 'manual' mode, status 0 or 302 means the PATCH worked and Laravel is redirecting "Back"
-                            // Status 0 (opaque redirect) or ok (200) both mean SUCCESS here.
-                            if (response.ok || response.status === 0 || response.status === 302) {
-                                Toast.success(`${typeLabel} updated successfully!`);
-
-                                try {
-                                    // CLEAN REFRESH: Manually trigger a fresh GET request to reload the table
-                                    if (typeof loadContent === 'function') {
-                                        loadContent(window.location.pathname + window.location.search);
-                                    } else {
-                                        window.location.reload();
-                                    }
-                                } catch (refreshErr) {
-                                    console.warn('Silent refresh error:', refreshErr);
-                                    window.location.reload();
-                                }
-                            } else {
-                                const error = new Error(`Server error`);
-                                error.status = response.status;
-                                throw error;
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Toggle error:', error);
-                            // Forensic Reporting: No more "Unknown" if we have a status
-                            const detail = error.status ? `(Status ${error.status})` : `(${error.message})`;
-                            Toast.error('Failed to update ' + detail + '. Please refresh and try again.');
                         });
-                }
-            });
-        }
 
-        // Instructor Modal Functions
-        function openCreateInstructorModal() {
-            document.getElementById('createInstructorModal').style.display = 'flex';
-            setInviteFormLoadingState(document.getElementById('createInstructorInviteForm'), false);
-        }
-
-        function closeCreateInstructorModal() {
-            document.getElementById('createInstructorModal').style.display = 'none';
-            setInviteFormLoadingState(document.getElementById('createInstructorInviteForm'), false);
-        }
-
-        function editInstructor(id, name, email, contact, license, address, branchId, specializations, availability) {
-            const form = document.getElementById('editInstructorForm');
-            form.action = `${window.instructorBaseUrl}/${id}`;
-            document.getElementById('edit_instructor_name').value = name || '';
-            document.getElementById('edit_instructor_email').value = email || '';
-
-            let displayContact = contact || '';
-            if (displayContact.startsWith('+63')) {
-                displayContact = displayContact.substring(3);
-            } else if (displayContact.startsWith('0')) {
-                displayContact = displayContact.substring(1);
-            }
-            document.getElementById('edit_instructor_contact').value = displayContact;
-            document.getElementById('edit_instructor_license').value = license || '';
-            document.getElementById('edit_instructor_address').value = address || '';
-            const availabilitySelect = document.getElementById('edit_instructor_availability');
-            if (availabilitySelect) availabilitySelect.value = availability || 'available';
-            const branchSelect = document.getElementById('edit_instructor_branch');
-            if (branchSelect) branchSelect.value = branchId || '';
-
-            // Reset and populate specializations
-            const specContainer = document.getElementById('edit_instructor_specializations');
-            if (specContainer) {
-                const checkboxes = specContainer.querySelectorAll('input[type="checkbox"]');
-                let specArray = [];
-                try {
-                    specArray = JSON.parse(specializations || '[]');
-                } catch (e) {
-                    console.error('Error parsing specializations:', e);
-                }
-
-                checkboxes.forEach(cb => {
-                    cb.checked = specArray.includes(parseInt(cb.value)) || specArray.includes(cb.value);
-                });
-            }
-
-            document.getElementById('editInstructorModal').style.display = 'flex';
-        }
-
-        function closeEditInstructorModal() {
-            document.getElementById('editInstructorModal').style.display = 'none';
-        }
-
-        function viewInstructor(id) {
-            Toast.info('Instructor details view coming soon!', 'Feature Info');
-        }
-
-        bindInviteFormSubmit('createStudentInviteForm');
-        bindInviteFormSubmit('createInstructorInviteForm');
-
-        (function restoreInviteModalAfterValidationError() {
-            const hasInviteValidationErrors = @json($errors->any());
-            const inviteRole = @json($oldInviteRole);
-            const isEdit = @json(old('is_edit'));
-
-            if (!hasInviteValidationErrors) {
-                return;
-            }
-
-            if (isEdit) {
-                // For edit modals, we'd need more data (ID, etc.) to restore perfectly.
-                // But usually validation errors happen on 'Create' because 'Edit' uses JS to pre-fill.
-                // If an edit fails, it redirects back.
-                return;
-            }
-
-            if (inviteRole === 'student') {
-                openCreateStudentModal();
-            } else if (inviteRole === 'instructor') {
-                openCreateInstructorModal();
-            }
-        })();
-
-        // Close modal when clicking outside
-        window.onclick = function (e) {
-            if (e.target.classList.contains('modal')) {
-                e.target.style.display = 'none';
-            }
-        }
-
-        // Auto-strip leading zero from contact inputs
-        document.addEventListener('input', function (e) {
-            if (e.target.getAttribute('name') === 'contact' || e.target.id.includes('contact')) {
-                let value = e.target.value;
-                if (value.startsWith('0')) {
-                    e.target.value = value.substring(1);
-                }
-            }
-        });
-
-        // License Verification Modal Logic
-        function openVerifyLicenseModal(data) {
-            const modal = document.getElementById('verifyLicenseModal');
-            if (!modal) return;
-
-            // Fill base info
-            const nameEl = document.getElementById('verify_instructor_name');
-            const numEl = document.getElementById('verify_license_number');
-            const imgEl = document.getElementById('licenseImagePreview');
-            const idInput = document.getElementById('verify_instructor_id');
-
-            if (nameEl) nameEl.textContent = data.name || 'Unknown';
-            if (numEl) numEl.textContent = data.licenseNumber || 'N/A';
-            if (imgEl) imgEl.src = data.licenseImage || '';
-            if (idInput) idInput.value = data.id;
-
-            // Handle Status (Radio Buttons)
-            const statusVal = (data.status === 'rejected') ? 'rejected' : 'verified';
-            const statusRadios = document.querySelectorAll('input[name="status"]');
-            statusRadios.forEach(radio => {
-                if (radio.value === statusVal) {
-                    radio.checked = true;
-                }
-            });
-
-            const restrictionsGroup = document.getElementById('restrictions_group');
-            const rejectionGroup = document.getElementById('rejection_reason_group');
-            if (restrictionsGroup) restrictionsGroup.style.display = statusVal === 'rejected' ? 'none' : 'block';
-            if (rejectionGroup) rejectionGroup.style.display = statusVal === 'rejected' ? 'block' : 'none';
-
-            // Handle Rejection Reason
-            const reasonText = document.getElementById('rejection_reason');
-            if (reasonText) reasonText.value = data.rejectionReason || '';
-
-            // Handle Restrictions (Chips)
-            let currentRestrictions = [];
-            try {
-                currentRestrictions = JSON.parse(data.restrictions || '[]');
-            } catch (e) {
-                console.error('Error parsing restrictions:', e);
-            }
-
-            const checkboxes = document.querySelectorAll('input[name="restrictions[]"]');
-            checkboxes.forEach(cb => {
-                cb.checked = currentRestrictions.includes(cb.value);
-            });
-
-            modal.style.display = 'flex';
-        }
-
-        function toggleRejectionReason(show) {
-            const restrictionsGroup = document.getElementById('restrictions_group');
-            const rejectionGroup = document.getElementById('rejection_reason_group');
-            if (restrictionsGroup) restrictionsGroup.style.display = show ? 'none' : 'block';
-            if (rejectionGroup) rejectionGroup.style.display = show ? 'block' : 'none';
-            if (show) {
-                const textarea = document.getElementById('rejection_reason');
-                if (textarea) textarea.focus();
-            }
-        }
-
-        function closeVerifyLicenseModal() {
-            const modal = document.getElementById('verifyLicenseModal');
-            if (modal) modal.style.display = 'none';
-        }
-
-        // FORM SUBMIT
-        const verifyForm = document.getElementById('verifyLicenseForm');
-        if (verifyForm) {
-            verifyForm.addEventListener('submit', function (e) {
-                e.preventDefault();
-
-                const instructorId = document.getElementById('verify_instructor_id').value;
-                const statusInput = document.querySelector('input[name="status"]:checked');
-                const status = statusInput ? statusInput.value : 'verified';
-                const rejectionReason = document.getElementById('rejection_reason').value;
-
-                const selectedRestrictions = [];
-                document.querySelectorAll('input[name="restrictions[]"]:checked').forEach(cb => {
-                    selectedRestrictions.push(cb.value);
-                });
-
-                // Basic validation
-                if (status === 'rejected' && !rejectionReason.trim()) {
-                    if (typeof Toast !== 'undefined') Toast.error('Please provide a reason for rejection.');
-                    else alert('Please provide a reason for rejection.');
-                    return;
-                }
-
-                if (status === 'verified' && selectedRestrictions.length === 0) {
-                    if (typeof Toast !== 'undefined') Toast.error('Please select at least one restriction code.');
-                    else alert('Please select at least one restriction code.');
-                    return;
-                }
-
-                const submitBtn = this.querySelector('button[type="submit"]');
-                const originalContent = submitBtn.innerHTML;
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Saving...';
-
-                fetch(`/{{ $school->slug }}/admin/instructors/${instructorId}/verify`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: JSON.stringify({
-                        status: status,
-                        restriction_codes: selectedRestrictions,
-                        rejection_reason: rejectionReason
-                    })
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            if (typeof Toast !== 'undefined') Toast.success(data.message);
-                            closeVerifyLicenseModal();
-
-                            // Priority refresh
-                            if (typeof loadContent === 'function') {
-                                loadContent(window.location.pathname + window.location.search);
-                            } else {
-                                location.reload();
-                            }
+                        if (response.ok || response.status === 200) {
+                            showToast('success', `${typeLabel} updated successfully!`);
+                            loadContent(window.location.pathname + window.location.search);
                         } else {
-                            if (typeof Toast !== 'undefined') Toast.error(data.message || 'Verification failed.');
-                            else alert(data.message || 'Verification failed.');
+                            showToast('error', 'Failed to update. Please try again.');
                         }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        if (typeof Toast !== 'undefined') Toast.error('An unexpected error occurred.');
-                    })
-                    .finally(() => {
-                        submitBtn.disabled = false;
-                        submitBtn.innerHTML = originalContent;
-                    });
+                    } catch (error) {
+                        console.error('Toggle error:', error);
+                        showToast('error', 'A network error occurred.');
+                    }
+                }
             });
         }
 
-        // Delegate Verify Button clicks
+        // --- GLOBAL EVENT DELEGATION ---
         document.addEventListener('click', function (e) {
-            const btn = e.target.closest('.js-verify-license');
-            if (btn) {
+            const viewBtn = e.target.closest('.js-view-user');
+            if (viewBtn) {
                 e.preventDefault();
-                const data = {
-                    id: btn.dataset.id,
-                    name: btn.dataset.name,
-                    licenseNumber: btn.dataset.licenseNumber,
-                    licenseImage: btn.dataset.licenseImage,
-                    status: btn.dataset.status || 'pending',
-                    restrictions: btn.dataset.restrictions || '[]',
-                    rejectionReason: btn.dataset.rejectionReason || ''
-                };
-                openVerifyLicenseModal(data);
+                openUserViewModal({
+                    id: viewBtn.dataset.id,
+                    role: viewBtn.dataset.role,
+                    name: viewBtn.dataset.name,
+                    email: viewBtn.dataset.email,
+                    contact: viewBtn.dataset.contact,
+                    address: viewBtn.dataset.address,
+                    branchId: viewBtn.dataset.branch,
+                    branchName: viewBtn.dataset.branchName,
+                    status: viewBtn.dataset.status,
+                    license: viewBtn.dataset.license,
+                    availability: viewBtn.dataset.availability,
+                    licenseImage: viewBtn.dataset.licenseImage,
+                    licenseStatus: viewBtn.dataset.licenseStatus,
+                    restrictions: viewBtn.dataset.restrictions,
+                    rejectionReason: viewBtn.dataset.rejectionReason,
+                    profilePicture: viewBtn.dataset.profilePicture
+                });
+                return;
+            }
+
+            const verifyBtn = e.target.closest('.js-verify-license');
+            if (verifyBtn) {
+                e.preventDefault();
+                openUserViewModal({
+                    id: verifyBtn.dataset.id,
+                    role: 'instructor',
+                    name: verifyBtn.dataset.name,
+                    license: verifyBtn.dataset.licenseNumber,
+                    licenseImage: verifyBtn.dataset.licenseImage,
+                    licenseStatus: verifyBtn.dataset.status || 'pending',
+                    restrictions: verifyBtn.dataset.restrictions || '[]',
+                    rejectionReason: verifyBtn.dataset.rejectionReason || '',
+                    email: verifyBtn.closest('tr')?.querySelector('td:nth-child(2)')?.textContent?.trim() || '',
+                    contact: verifyBtn.closest('tr')?.querySelector('td:nth-child(3)')?.textContent?.trim() || '',
+                    branchName: verifyBtn.closest('tr')?.querySelector('td:nth-child(5)')?.textContent?.trim() || '',
+                    status: verifyBtn.closest('tr')?.dataset.status || 'active'
+                });
+                toggleLicenseVerificationMode(true);
+                return;
             }
         });
-        // PII Reveal Logic with 5s Timer
-        function revealPII(button) {
-            const span = button.previousElementSibling;
-            const fullValue = span.getAttribute('data-full');
-            const originalMasked = span.textContent;
 
-            if (span.classList.contains('revealed')) return;
+        // --- LEGACY MODAL HELPERS ---
+        function openCreateStudentModal() { document.getElementById('createStudentModal').style.display = 'flex'; }
+        function closeCreateStudentModal() { document.getElementById('createStudentModal').style.display = 'none'; }
+        function openCreateInstructorModal() { document.getElementById('createInstructorModal').style.display = 'flex'; }
+        function closeCreateInstructorModal() { document.getElementById('createInstructorModal').style.display = 'none'; }
 
-            // Show full value
-            span.textContent = fullValue;
-            span.classList.add('revealed');
-
-            // UI Feedback: Change icon to clock and disable button
-            const originalIcon = button.innerHTML;
-            button.innerHTML = '<i class="bi bi-clock-history"></i>';
-            button.classList.add('timer-active');
-            button.disabled = true;
-
-            // Auto-hide after 5 seconds
-            setTimeout(() => {
-                span.textContent = originalMasked;
-                span.classList.remove('revealed');
-                button.innerHTML = originalIcon;
-                button.classList.remove('timer-active');
-                button.disabled = false;
-            }, 5000);
-
-            console.log('PII Revealed (Temporary)');
-        }
+        // Final Initialization
+        initializeUserManagementPage();
     </script>
 
-    <!-- LICENSE VERIFICATION MODAL -->
-    <div id="verifyLicenseModal" class="modal">
-        <div class="modal-content" style="width: min(850px, 95%);">
-            <div class="modal-header">
-                <h3><i class="bi bi-shield-check me-2"></i>Verify Instructor License</h3>
-                <button type="button" class="btn-close-modal" onclick="closeVerifyLicenseModal()">×</button>
-            </div>
-            <form id="verifyLicenseForm">
-                <div class="modal-body">
-                    <input type="hidden" id="verify_instructor_id">
-
-                    <div class="verify-modal-grid">
-                        <!-- Left Column: Details -->
-                        <div class="d-flex flex-column gap-4">
-                            <div class="verification-info-card">
-                                <label class="fw-bold small text-muted text-uppercase mb-2 d-block">Instructor
-                                    Details</label>
-                                <div class="p-4 rounded-xl"
-                                    style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;">
-                                    <div class="mb-3">
-                                        <span class="d-block small text-muted">Full Name</span>
-                                        <span id="verify_instructor_name" class="fw-bold"
-                                            style="font-size: 1.1rem; color: #1e293b;"></span>
-                                    </div>
-                                    <div class="mb-0">
-                                        <span class="d-block small text-muted">License Number</span>
-                                        <span id="verify_license_number" class="fw-bold font-mono"
-                                            style="font-family: monospace; color: var(--primary-color);"></span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="verification-action-card">
-                                <label class="fw-bold small text-muted text-uppercase mb-2 d-block">Verification
-                                    Decision</label>
-                                <div class="status-badge-selector">
-                                    <label class="status-option">
-                                        <input type="radio" name="status" value="verified" checked
-                                            onchange="toggleRejectionReason(false)">
-                                        <span class="status-btn"><i class="bi bi-check-circle me-2"></i>Approve</span>
-                                    </label>
-                                    <label class="status-option">
-                                        <input type="radio" name="status" value="rejected"
-                                            onchange="toggleRejectionReason(true)">
-                                        <span class="status-btn"><i class="bi bi-x-circle me-2"></i>Reject</span>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Right Column: Image -->
-                        <div>
-                            <label class="fw-bold small text-muted text-uppercase mb-2 d-block">License Document</label>
-                            <div class="verification-preview-container" style="height: 220px; cursor: pointer;"
-                                onclick="openLightbox(document.getElementById('licenseImagePreview').src)">
-                                <img id="licenseImagePreview" src="" alt="License">
-                                <div class="verification-preview-overlay">
-                                    <i class="bi bi-zoom-in me-1"></i> Click to Enlarge
-                                </div>
-                            </div>
-                            <p class="text-center small text-muted mt-2">Carefully verify the name and expiry date</p>
-                        </div>
-                    </div>
-
-                    <!-- Bottom Section: Restrictions or Rejection Reason -->
-                    <div id="restrictions_group" class="border-top pt-4 mt-4">
-                        <label class="fw-bold mb-1 d-block">LTO Restriction Codes</label>
-                        <p class="small text-muted mb-3">Check all codes indicated on the instructor's physical license.</p>
-                        <div class="restriction-grid">
-                            @foreach(['A', 'A1', 'B', 'B1', 'B2', 'C', 'D', 'BE', 'CE'] as $code)
-                                <label class="restriction-chip" title="Motorcycle / Tricycle">
-                                    <input type="checkbox" name="restrictions[]" value="{{ $code }}" id="rest_{{ $code }}">
-                                    <span class="chip-content">{{ $code }}</span>
-                                </label>
-                            @endforeach
-                        </div>
-                    </div>
-
-                    <div id="rejection_reason_group" class="border-top pt-4 mt-4" style="display: none;">
-                        <div class="form-group">
-                            <label class="fw-bold mb-2 d-block text-danger">Reason for Rejection</label>
-                            <textarea id="rejection_reason" name="rejection_reason" class="form-control" rows="3"
-                                placeholder="Please provide a specific reason (e.g., Image too blurry, License expired, Wrong name, etc.)"
-                                style="border-radius: 12px; border: 2px solid #fee2e2;"></textarea>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="closeVerifyLicenseModal()">Cancel</button>
-                    <button type="submit" class="btn btn-primary"><i class="bi bi-shield-check me-2"></i>Save
-                        Verification</button>
-                </div>
-            </form>
-        </div>
-    </div>
+    
 
 @endsection
