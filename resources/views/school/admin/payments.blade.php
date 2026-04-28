@@ -8,6 +8,7 @@
     $schoolName = $school->name ?? 'Driving School';
     $settings = $school?->schoolSetting;
     $primaryColor = $settings?->primary_color ?? '#667eea';
+    $secondaryColor = $settings?->secondary_color ?? '#764ba2';
 @endphp
 
 @include('school.admin.partials.admin-styles')
@@ -109,6 +110,20 @@
 
     .table-scroll {
         overflow-x: auto;
+    }
+
+    .admin-table thead {
+        background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
+        color: #ffffff;
+    }
+
+    .admin-table th {
+        background: transparent;
+        color: inherit;
+        padding: 15px;
+        text-transform: none;
+        letter-spacing: 0;
+        font-size: 0.95rem;
     }
 
     .payment-status-paid {

@@ -304,6 +304,10 @@ class AdminController extends Controller
                             'role' => 'student',
                             'address' => $student->address,
                             'license_number' => null,
+                            'license_image' => null,
+                            'license_status' => null,
+                            'license_rejection_reason' => null,
+                            'restriction_codes' => null,
                             'availability' => null,
                             'branch_id' => $student->branch_id,
                             'last_login_at' => $student->last_login_at,
@@ -315,7 +319,7 @@ class AdminController extends Controller
             $instructorItems = collect();
             if ($activeRoleFilter !== 'student') {
                 $instructorItems = $filteredInstructorQuery
-                    ->select('id', 'branch_id', 'name', 'email', 'contact', 'license_number', 'status', 'availability', 'last_login_at', 'last_logout_at')
+                    ->select('id', 'branch_id', 'name', 'email', 'contact', 'license_number', 'license_image', 'license_status', 'license_rejection_reason', 'restriction_codes', 'status', 'availability', 'last_login_at', 'last_logout_at')
                     ->orderBy('name')
                     ->get()
                     ->map(function ($instructor) {
@@ -328,6 +332,10 @@ class AdminController extends Controller
                             'role' => 'instructor',
                             'address' => null,
                             'license_number' => $instructor->license_number,
+                            'license_image' => $instructor->license_image,
+                            'license_status' => $instructor->license_status,
+                            'license_rejection_reason' => $instructor->license_rejection_reason,
+                            'restriction_codes' => $instructor->restriction_codes,
                             'availability' => $instructor->availability,
                             'branch_id' => $instructor->branch_id,
                             'last_login_at' => $instructor->last_login_at,
@@ -338,7 +346,12 @@ class AdminController extends Controller
 
             $allUsers = $studentItems
                 ->concat($instructorItems)
-                ->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE)
+                ->sortBy([
+                    [function ($user) {
+                        return ($user->role === 'instructor' && ($user->license_status ?? '') === 'pending') ? 0 : 1;
+                    }, 'asc'],
+                    ['name', 'asc', SORT_NATURAL | SORT_FLAG_CASE]
+                ])
                 ->values();
 
             $perPage = 20;
@@ -467,6 +480,11 @@ class AdminController extends Controller
             ], [
                 'contact.regex' => 'Please provide a valid 10-digit mobile number starting with 9 (e.g., 9123456789).',
                 'address.required' => 'The address is required.',
+                'branch_id.required' => 'Please select a branch for this account.',
+                'branch_id.exists' => 'The selected branch is invalid or does not belong to your school.',
+                'course_id.required' => 'Students must be assigned to an initial course.',
+                'course_id.exists' => 'The selected course is invalid, inactive, or does not belong to your school.',
+                'course_specializations.required' => 'Instructors must have at least one course specialization.',
                 'license_number.required' => 'The license number is required for instructors.',
                 'license_image.required' => 'A photo of the instructor license is required.',
                 'license_image.image' => 'The license image must be a valid image file.',
@@ -591,6 +609,7 @@ class AdminController extends Controller
                 ],
             ], [
                 'contact.regex' => 'Please provide a valid 10-digit mobile number starting with 9 (e.g., 9123456789).',
+                'branch_id.exists' => 'The selected branch is invalid.',
             ]);
 
             $nameChanged = trim((string) ($validated['name'] ?? '')) !== trim((string) $student->name);
@@ -728,6 +747,8 @@ class AdminController extends Controller
             ], [
                 'contact.regex' => 'Please provide a valid 10-digit mobile number starting with 9 (e.g., 9123456789).',
                 'license_image.image' => 'The license image must be a valid image file.',
+                'branch_id.exists' => 'The selected branch is invalid.',
+                'course_specializations.*.exists' => 'One or more selected specializations are invalid.',
             ]);
 
             $nameChanged = trim((string) $request->input('name')) !== trim((string) $instructor->name);
@@ -957,12 +978,33 @@ class AdminController extends Controller
                         ->where('school_id', $school->id)
                         ->ignore($admin->id),
                 ],
-                'contact' => ['nullable', 'string', 'max:20', 'regex:/^(09\d{9}|\+639\d{9})$/'],
+                'contact' => ['nullable', 'string', 'max:20', 'regex:/^(09\d{9}|\+639\d{9}|9\d{9})$/'],
                 'current_password' => 'nullable|required_with:new_password|string',
                 'new_password' => ['nullable', 'confirmed', 'different:current_password', new StrongPassword()],
             ]);
 
             $data = $request->only(['name', 'email', 'contact']);
+
+            // Normalize contact number if provided
+            if (!empty($data['contact'])) {
+                $contact = trim((string) $data['contact']);
+                if (preg_match('/^9\d{9}$/', $contact)) {
+                    $data['contact'] = '+63' . $contact;
+                } elseif (preg_match('/^09\d{9}$/', $contact)) {
+                    $data['contact'] = '+63' . substr($contact, 1);
+                }
+            }
+
+            // Check if this is a protected demo account
+            if (DemoAccountProtection::isProtectedAccount($admin->email, 'admin', $school)) {
+                $nameChanged = trim((string) ($data['name'] ?? '')) !== trim((string) $admin->name);
+                $emailChanged = strtolower(trim((string) ($data['email'] ?? ''))) !== strtolower(trim((string) $admin->email));
+                $passwordChanged = $request->filled('new_password');
+
+                if ($nameChanged || $emailChanged || $passwordChanged) {
+                    return back()->with('error', 'This demo account has locked name, email, and password.');
+                }
+            }
 
             // Check current password if user wants to change password
             if ($request->filled('new_password')) {
@@ -972,7 +1014,16 @@ class AdminController extends Controller
                 $data['password'] = Hash::make($request->new_password);
             }
 
-            $admin->update($data);
+            // Use a direct update to ensure persistence
+            \App\Models\Admin::where('id', $admin->id)->update($data);
+
+            SystemLog::logInfo(
+                "Admin profile updated: {$admin->name}",
+                'database',
+                ['admin_id' => $admin->id, 'updated_fields' => array_keys($data)],
+                $school->id,
+                'update_profile'
+            );
 
             return redirect()
                 ->route('schools.admin.profile', $school)
@@ -1630,7 +1681,23 @@ class AdminController extends Controller
             $validated = $request->validate([
                 'date' => 'required|date|after_or_equal:today',
                 'start_time' => 'required',
-                'end_time' => 'required|after:start_time',
+                'end_time' => [
+                    'required',
+                    'after:start_time',
+                    function ($attribute, $value, $fail) use ($request) {
+                        try {
+                            $start = \Carbon\Carbon::createFromFormat('H:i', $request->start_time);
+                            $end = \Carbon\Carbon::createFromFormat('H:i', $value);
+                            $duration = $end->diffInMinutes($start);
+                            
+                            if ($duration < 60) {
+                                $fail("The session must be at least 1 hour long. (Detected: {$duration} mins)");
+                            }
+                        } catch (\Exception $e) {
+                            // Validation format errors handled by other rules
+                        }
+                    },
+                ],
                 'session_type' => 'nullable|in:theoretical,practical',
                 'course_id' => [
                     'required',
@@ -2275,21 +2342,17 @@ class AdminController extends Controller
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
                 'vehicle_category_id' => 'nullable|exists:vehicle_categories,id',
-                'package_level' => 'nullable|string|max:100',
-                'tier' => 'nullable|string|max:100',
                 'transmission_type' => 'required|in:manual,automatic',
                 'price' => 'required|numeric|min:0',
-                'training_hours' => 'nullable|numeric|min:0',
-                'tdc_hours' => 'nullable|numeric|min:0',
-                'pdc_hours' => 'nullable|numeric|min:0',
                 'description' => 'nullable|string',
-                'is_popular' => 'boolean',
+                'is_popular' => 'nullable',
                 'features' => 'nullable|array',
                 'features.*' => 'nullable|string',
             ]);
 
             $validated['course_id'] = $course->id;
             $validated['is_popular'] = $request->has('is_popular');
+            $validated['training_hours'] = ($validated['tdc_hours'] ?? 0) + ($validated['pdc_hours'] ?? 0);
 
             // Filter out empty features
             if (isset($validated['features'])) {
@@ -2330,20 +2393,16 @@ class AdminController extends Controller
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
                 'vehicle_category_id' => 'nullable|exists:vehicle_categories,id',
-                'package_level' => 'nullable|string|max:100',
-                'tier' => 'nullable|string|max:100',
                 'transmission_type' => 'required|in:manual,automatic',
                 'price' => 'required|numeric|min:0',
-                'training_hours' => 'nullable|numeric|min:0',
-                'tdc_hours' => 'nullable|numeric|min:0',
-                'pdc_hours' => 'nullable|numeric|min:0',
                 'description' => 'nullable|string',
-                'is_popular' => 'boolean',
+                'is_popular' => 'nullable',
                 'features' => 'nullable|array',
                 'features.*' => 'nullable|string',
             ]);
 
             $validated['is_popular'] = $request->has('is_popular');
+            $validated['training_hours'] = ($validated['tdc_hours'] ?? 0) + ($validated['pdc_hours'] ?? 0);
 
             // Filter out empty features
             if (isset($validated['features'])) {

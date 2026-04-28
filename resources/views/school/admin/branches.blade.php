@@ -227,14 +227,6 @@
     }
 
     /* Branch Table card */
-    .branch-table-card {
-        background: white;
-        border-radius: 20px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-        border: 1px solid {{ $primaryColor }}10;
-        overflow: hidden;
-    }
-
     .contact-email {
         font-size: 0.85rem;
         color: {{ $primaryColor }}80;
@@ -251,6 +243,7 @@
         box-shadow: 0 2px 12px {{ $primaryColor }}10;
         overflow: hidden;
         border: 1px solid {{ $primaryColor }}08;
+        margin-top: 16px;
     }
 
     .branch-table {
@@ -268,12 +261,14 @@
     }
 
     .branch-table thead th {
-        padding: 14px 18px;
+        background: transparent;
+        color: inherit;
+        padding: 15px;
         text-align: left;
         font-weight: 600;
-        font-size: 0.9rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+        font-size: 0.95rem;
+        text-transform: none;
+        letter-spacing: 0;
     }
 
     .branch-table tbody tr {

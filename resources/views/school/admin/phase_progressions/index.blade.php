@@ -168,10 +168,15 @@
 
     .table-top-search input {
         width: 100%;
-        border: 1px solid #d1d5db;
+        border: 2px solid #e1e5e9;
         border-radius: 8px;
         padding: 9px 10px;
         font-size: 0.88rem;
+    }
+
+    .table-top-search input:focus {
+        outline: none;
+        border-color: {{ $primaryColor }};
     }
 
     .card-filter {
@@ -199,6 +204,10 @@
         align-items: center;
         gap: 10px;
         flex-wrap: nowrap;
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 12px;
+        border: 1px solid #e5e7eb;
     }
 
     .phase-filters-row .table-top-search {
@@ -219,6 +228,28 @@
 
     .phase-filters-row .btn {
         white-space: nowrap;
+    }
+
+    .admin-table thead {
+        background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
+        color: #ffffff;
+    }
+
+    .admin-table th {
+        background: transparent;
+        color: inherit;
+        padding: 15px;
+        text-transform: none;
+        letter-spacing: 0;
+        font-size: 0.95rem;
+    }
+
+    .admin-table thead th:first-child {
+        border-top-left-radius: 12px;
+    }
+
+    .admin-table thead th:last-child {
+        border-top-right-radius: 12px;
     }
 
     @media (max-width: 992px) {
@@ -316,9 +347,8 @@
     </div>
 
     <!-- Filters -->
-    <div class="content-card content-card-mb">
-        <div class="content-card-body">
-            <form id="filterForm" action="{{ school_route('admin.phase-progressions.index') }}" method="GET" class="filter-group phase-filters-row" onsubmit="return applyPhaseProgressionFilters(event)">
+    <div class="content-card-mb">
+        <form id="filterForm" action="{{ school_route('admin.phase-progressions.index') }}" method="GET" class="filter-group phase-filters-row" onsubmit="return applyPhaseProgressionFilters(event)">
                 <div class="table-top-search">
                     <input type="text" id="phaseProgressionServerSearch" name="search" placeholder="Search student, course, phase..." value="{{ request('search') }}" oninput="debounceServerSearch(this.value)">
                 </div>
@@ -331,9 +361,7 @@
                 </select>
 
                 <div class="table-top-meta">Filtered records: {{ $progressions->total() }}</div>
-
             </form>
-        </div>
     </div>
 
 
@@ -358,7 +386,7 @@
                         @forelse($progressions as $request)
                             <tr>
                                 <td>
-                                    <a href="{{ school_route('admin.theoretical.show', $request->enrollment_id) }}" class="student-name-link" style="text-decoration: none; display: block;">
+                                    <a href="{{ school_route('admin.theoretical.show', ['enrollment' => $request->enrollment_id]) }}" class="student-name-link" style="text-decoration: none; display: block;">
                                         <div class="student-name-strong" style="color: {{ $primaryColor }}; font-weight: 700;">{{ $request->enrollment->student->name }}</div>
                                         <div class="student-email-muted" style="color: #6b7280; font-size: 0.8rem;">{{ $request->enrollment->student->email }}</div>
                                     </a>
