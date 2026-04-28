@@ -14,6 +14,7 @@ use App\Models\CoursePackage;
 use App\Models\CourseModule;
 use App\Models\ModuleLesson;
 use App\Models\EnrollmentRequest;
+use App\Models\GCashSetting;
 use Database\Seeders\Traits\HandlesSchoolSeeding;
 
 class DriveEdHubSeeder extends Seeder
@@ -23,16 +24,40 @@ class DriveEdHubSeeder extends Seeder
     public function run(): void
     {
         // Ensure seeder assets are available in storage
-        $storagePath = storage_path('app/public/instructor-licenses');
-        if (!file_exists($storagePath)) {
-            mkdir($storagePath, 0755, true);
+        $instructorStorage = storage_path('app/public/instructor-licenses');
+        $courseStorage = storage_path('app/public/courses');
+        $guestStorage = storage_path('app/public/guest-data');
+        
+        foreach ([$instructorStorage, $courseStorage, $guestStorage] as $path) {
+            if (!file_exists($path)) {
+                mkdir($path, 0755, true);
+            }
         }
         
-        $sourcePath = database_path('seeders/assets/license-placeholder.png');
-        $destPath = $storagePath . '/placeholder.png';
-        
-        if (file_exists($sourcePath)) {
-            copy($sourcePath, $destPath);
+        $assets = [
+            'male_profile.png' => $instructorStorage . '/male_profile.png',
+            'female_profile.png' => $instructorStorage . '/female_profile.png',
+            'license_tdc.png' => $instructorStorage . '/license_tdc.png',
+            'license_pdc.png' => $instructorStorage . '/license_pdc.png',
+            'license_combo.png' => $instructorStorage . '/license_combo.png',
+            'course_tdc.jpg' => $courseStorage . '/course_tdc.jpg',
+            'course_pdc.jpg' => $courseStorage . '/course_pdc.jpg',
+            'course_combo.jpg' => $courseStorage . '/course_combo.jpg',
+            'guest_receipt.jpg' => $guestStorage . '/guest_receipt.jpg',
+            'guest_permit.jpg' => $guestStorage . '/guest_permit.jpg',
+            'gcash_qr.jpg' => $instructorStorage . '/../branding/gcash_qr.jpg',
+        ];
+
+        // Ensure branding directory exists
+        if (!file_exists($instructorStorage . '/../branding')) {
+            mkdir($instructorStorage . '/../branding', 0755, true);
+        }
+
+        foreach ($assets as $asset => $dest) {
+            $source = database_path('seeders/assets/' . $asset);
+            if (file_exists($source)) {
+                copy($source, $dest);
+            }
         }
 
         $demoPassword = (string) env('DEMO_SEED_PASSWORD', 'DriveDemo123');
@@ -111,6 +136,17 @@ class DriveEdHubSeeder extends Seeder
             ]
         );
 
+        // GCash Settings
+        GCashSetting::updateOrCreate(
+            ['school_id' => $school->id, 'branch_id' => null],
+            [
+                'account_name' => 'DriveED Hub Admin',
+                'account_number' => '09193456789',
+                'qr_path' => 'branding/gcash_qr.jpg',
+                'is_active' => true,
+            ]
+        );
+
         // ── 1. INFRASTRUCTURE ──
         $branches = $this->createBranches($school, [
             ['name' => 'Main Campus - Clark', 'address' => '789 Del Pilar Street, Clark Freeport Zone, Pampanga', 'contact_number' => '+63-919-345-6789', 'email' => 'clark@drivedhub.com'],
@@ -161,11 +197,11 @@ class DriveEdHubSeeder extends Seeder
 
         // Instructors
         $dhInstructors = [
-            ['name' => 'Ricardo Antonio Cruz', 'email' => 'instructor1@driveedhub.test', 'contact' => '+63-919-777-3001', 'license' => 'LIC-DH-2024-001', 'bio' => 'Senior Instructor specializing in Manual Transmission and Motorcycle training. 8 years experience.', 'branch' => 0, 'course_idx' => 0], // TDC
-            ['name' => 'Maria Victoria Santos', 'email' => 'instructor2@driveedhub.test', 'contact' => '+63-919-777-3002', 'license' => 'LIC-DH-2024-002', 'bio' => 'Expert in Automatic Transmission and Practical Driving. Certified defensive driving instructor.', 'branch' => 0, 'course_idx' => 0], // TDC
-            ['name' => 'Angelo Miguel Ramos', 'email' => 'instructor3@driveedhub.test', 'contact' => '+63-919-777-3003', 'license' => 'LIC-DH-2024-003', 'bio' => 'TDC specialist. LTO-certified TDC instructor with 6 years experience.', 'branch' => 1, 'course_idx' => 1], // PDC
-            ['name' => 'Sofia Elena Torres', 'email' => 'instructor4@driveedhub.test', 'contact' => '+63-919-777-3004', 'license' => 'LIC-DH-2024-004', 'bio' => 'Motorcycle and Manual Transmission specialist. Former professional rider turned instructor.', 'branch' => 1, 'course_idx' => 1], // PDC
-            ['name' => 'Juan Dela Cruz Jr.', 'email' => 'instructor5@driveedhub.test', 'contact' => '+63-919-777-3005', 'license' => 'LIC-DH-2024-005', 'bio' => 'Defensive driving specialist.', 'branch' => 0, 'course_idx' => 2], // COMBO
+            ['name' => 'Ricardo Antonio Cruz', 'email' => 'instructor1@driveedhub.test', 'contact' => '+63-919-777-3001', 'license' => 'LIC-DH-2024-001', 'bio' => 'Senior Instructor specializing in Manual Transmission and Motorcycle training. 8 years experience.', 'branch' => 0, 'course_idx' => 0, 'status' => 'verified', 'avail' => 'available', 'gender' => 'male', 'l_type' => 'tdc'],
+            ['name' => 'Maria Victoria Santos', 'email' => 'instructor2@driveedhub.test', 'contact' => '+63-919-777-3002', 'license' => 'LIC-DH-2024-002', 'bio' => 'Expert in Automatic Transmission and Practical Driving. Certified defensive driving instructor.', 'branch' => 0, 'course_idx' => 0, 'status' => 'pending', 'avail' => 'available', 'gender' => 'female', 'l_type' => 'tdc'],
+            ['name' => 'Angelo Miguel Ramos', 'email' => 'instructor3@driveedhub.test', 'contact' => '+63-919-777-3003', 'license' => 'LIC-DH-2024-003', 'bio' => 'TDC specialist. LTO-certified TDC instructor with 6 years experience.', 'branch' => 1, 'course_idx' => 1, 'status' => 'verified', 'avail' => 'unavailable', 'gender' => 'male', 'l_type' => 'pdc'],
+            ['name' => 'Sofia Elena Torres', 'email' => 'instructor4@driveedhub.test', 'contact' => '+63-919-777-3004', 'license' => 'LIC-DH-2024-004', 'bio' => 'Motorcycle and Manual Transmission specialist. Former professional rider turned instructor.', 'branch' => 1, 'course_idx' => 1, 'status' => 'rejected', 'avail' => 'available', 'gender' => 'female', 'l_type' => 'pdc'],
+            ['name' => 'Juan Dela Cruz Jr.', 'email' => 'instructor5@driveedhub.test', 'contact' => '+63-919-777-3005', 'license' => 'LIC-DH-2024-005', 'bio' => 'Defensive driving specialist.', 'branch' => 0, 'course_idx' => 2, 'status' => 'verified', 'avail' => 'available', 'gender' => 'male', 'l_type' => 'combo'],
         ];
         $instructors = [];
         foreach ($dhInstructors as $inst) {
@@ -177,13 +213,15 @@ class DriveEdHubSeeder extends Seeder
                     'name' => $inst['name'],
                     'contact' => $inst['contact'],
                     'password' => $hashedPassword,
+                    'profile_image' => 'instructor-licenses/' . $inst['gender'] . '_profile.png',
                     'license_number' => $inst['license'],
-                    'license_image' => 'instructor-licenses/placeholder.png',
-                    'license_status' => 'verified',
+                    'license_image' => 'instructor-licenses/license_' . $inst['l_type'] . '.png',
+                    'license_status' => $inst['status'],
+                    'license_rejection_reason' => $inst['status'] === 'rejected' ? 'Expired document' : null,
                     'restriction_codes' => ['A', 'B'],
                     'bio' => $inst['bio'],
                     'status' => 'active',
-                    'availability' => 'available',
+                    'availability' => $inst['avail'],
                 ]
             );
         }
@@ -230,27 +268,27 @@ class DriveEdHubSeeder extends Seeder
         // 1. TDC
         $tdc = Course::updateOrCreate(
             ['school_id' => $school->id, 'title' => 'Theoretical Driving Course (TDC)'],
-            ['description' => 'LTO-accredited 15-hour TDC for new applicants. Covers traffic rules, road signs, and defensive driving.', 'type' => 'Theoretical', 'course_type' => 'theoretical', 'license_type' => 'non_professional', 'vehicle_type' => 'Car', 'status' => 'active', 'is_featured' => true, 'features' => ['Traffic Rules & Regulations', 'Road Signs & Markings', 'Defensive Driving', 'LTO Written Exam Prep']]
+            ['description' => 'LTO-accredited 15-hour TDC for new applicants. Covers traffic rules, road signs, and defensive driving.', 'type' => 'Theoretical', 'course_type' => 'theoretical', 'license_type' => 'non_professional', 'vehicle_type' => 'Car', 'status' => 'active', 'is_featured' => true, 'image_path' => 'courses/course_tdc.jpg', 'features' => ['Traffic Rules & Regulations', 'Road Signs & Markings', 'Defensive Driving', 'LTO Written Exam Prep']]
         );
         $courses[] = $tdc;
         CoursePackage::updateOrCreate(['course_id' => $tdc->id, 'name' => 'TDC Standard 15-Hour'], ['transmission_type' => 'automatic', 'vehicle_type' => 'Car', 'training_hours' => 15, 'price' => 2000.00, 'description' => 'Complete 15-hour TDC for new license applicants.', 'is_popular' => true]);
-
+ 
         // 2. PDC
         $pdc = Course::updateOrCreate(
             ['school_id' => $school->id, 'title' => 'Practical Driving Course (PDC)'],
-            ['description' => 'Hands-on practical driving. Master vehicle control, parking, and safe driving.', 'type' => 'Practical', 'course_type' => 'practical', 'license_type' => 'professional', 'vehicle_type' => 'Car', 'status' => 'active', 'is_featured' => true, 'features' => ['Vehicle Operation Basics', 'Parking Techniques', 'City Driving']]
+            ['description' => 'Hands-on practical driving. Master vehicle control, parking, and safe driving.', 'type' => 'Practical', 'course_type' => 'practical', 'license_type' => 'professional', 'vehicle_type' => 'Car', 'status' => 'active', 'is_featured' => true, 'image_path' => 'courses/course_pdc.jpg', 'features' => ['Vehicle Operation Basics', 'Parking Techniques', 'City Driving']]
         );
         $courses[] = $pdc;
         CoursePackage::updateOrCreate(['course_id' => $pdc->id, 'name' => 'PDC 10-Hour Manual'], ['transmission_type' => 'manual', 'vehicle_type' => 'Car', 'training_hours' => 10, 'price' => 5000.00, 'description' => 'Manual driving 10 hours', 'is_popular' => true]);
         CoursePackage::updateOrCreate(['course_id' => $pdc->id, 'name' => 'PDC 10-Hour Automatic'], ['transmission_type' => 'automatic', 'vehicle_type' => 'Car', 'training_hours' => 10, 'price' => 5500.00, 'description' => 'Automatic driving 10 hours']);
-
+ 
         // 3. COMBO
         $combo = Course::updateOrCreate(
             ['school_id' => $school->id, 'title' => 'TDC + PDC Combo Course'],
-            ['description' => 'Complete beginner comprehensive package. TDC and PDC bundled together.', 'type' => 'Combo', 'course_type' => 'combo', 'license_type' => 'non_professional', 'vehicle_type' => 'Car', 'status' => 'active', 'features' => ['15H Theory Classes', '10H Practical Hand-on', 'License Full Processing Help']]
+            ['description' => 'Complete beginner comprehensive package. TDC and PDC bundled together.', 'type' => 'Combo', 'course_type' => 'combo', 'license_type' => 'non_professional', 'vehicle_type' => 'Car', 'status' => 'active', 'image_path' => 'courses/course_combo.jpg', 'features' => ['15H Theory Classes', '10H Practical Hand-on', 'License Full Processing Help']]
         );
         $courses[] = $combo;
-        CoursePackage::updateOrCreate(['course_id' => $combo->id, 'name' => 'Combo 15H TDC + 10H PDC'], ['transmission_type' => 'automatic', 'vehicle_type' => 'Car', 'training_hours' => 25, 'price' => 6800.00, 'description' => 'Full combined package.']);
+        CoursePackage::updateOrCreate(['course_id' => $combo->id, 'name' => 'Combo 15H TDC + 10H PDC'], ['transmission_type' => 'automatic', 'vehicle_type' => 'Car', 'training_hours' => 25, 'price' => 6800.00, 'description' => 'Full combined package.']);ice' => 6800.00, 'description' => 'Full combined package.']);
 
         return $courses;
     }
@@ -409,6 +447,7 @@ class DriveEdHubSeeder extends Seeder
                         'price' => $package ? $package->price : 0,
                         'payment_method' => 'gcash',
                         'payment_reference' => 'DH-REF-' . strtoupper(\Illuminate\Support\Str::random(8)),
+                        'payment_proof' => $email === 'guest1@driveedhub.test' ? 'guest-data/guest_receipt.jpg' : null,
                         'approved_by' => ($data['status'] === 'approved' && !empty($admins)) ? $admins[0]->id : null,
                         'approved_at' => $data['status'] === 'approved' ? now()->subDays(5) : null,
                         'enrolled_at' => $data['status'] === 'approved' ? now()->subDays(5) : null,
@@ -416,6 +455,13 @@ class DriveEdHubSeeder extends Seeder
                         'cancellation_reason' => ($data['cancellation'] ?? false) ? 'Decided to enroll in a different branch.' : null,
                     ]
                 );
+
+                if ($email === 'guest1@driveedhub.test') {
+                    $g->update([
+                        'student_license_path' => 'guest-data/guest_permit.jpg',
+                        'student_license_status' => 'pending'
+                    ]);
+                }
             }
         }
 
