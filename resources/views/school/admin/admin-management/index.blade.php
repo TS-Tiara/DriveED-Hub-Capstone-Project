@@ -1414,8 +1414,15 @@
         const rows = document.querySelectorAll('.admin-table tbody tr');
 
         rows.forEach(row => {
-            const text = row.textContent.toLowerCase();
-            row.style.display = text.includes(filter) ? '' : 'none';
+            const cells = row.querySelectorAll('td');
+            if (cells.length < 3) return;
+
+            const name = cells[0].textContent.toLowerCase();
+            const email = cells[1].textContent.toLowerCase();
+            const role = cells[2].textContent.toLowerCase();
+
+            const isVisible = name.includes(filter) || email.includes(filter) || role.includes(filter);
+            row.style.display = isVisible ? '' : 'none';
         });
     }
 
