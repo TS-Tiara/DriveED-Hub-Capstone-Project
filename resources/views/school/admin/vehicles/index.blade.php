@@ -481,7 +481,7 @@
     function viewVehicle(v) {
         currentVehicle = v;
         const modal = document.getElementById('vehicleDetailModal');
-        const form = document.getElementById('vehicleDetailForm');
+        const form = document.getElementById('editVehicleForm');
         
         // Populate form fields
         form.action = `{{ url($school->slug . '/admin/vehicles') }}/${v.id}`;
@@ -523,7 +523,7 @@
         images.forEach(img => {
             const item = document.createElement('div');
             item.className = 'gallery-item';
-            const src = `{{ url($school->slug . '/admin/vehicle-image') }}/${img.id}`;
+            const src = `{{ url($school->slug . '/vehicle-image') }}/${img.id}`;
             item.innerHTML = `
                 <img src="${src}" onclick="window.open('${src}', '_blank')">
                 <button type="button" class="btn-remove-img" onclick="deleteVehicleImage(${img.id})">
@@ -620,7 +620,7 @@
                 const vehicleId = @json(old('vehicle_id'));
                 const vehicle = @json($vehicles->items()).find(v => v.id == vehicleId);
                 if (vehicle) {
-                    editVehicle(vehicle);
+                    viewVehicle(vehicle);
                     // Override with old values
                     document.getElementById('edit_v_plate').value = @json(old('license_plate'));
                     document.getElementById('edit_v_model').value = @json(old('model'));
