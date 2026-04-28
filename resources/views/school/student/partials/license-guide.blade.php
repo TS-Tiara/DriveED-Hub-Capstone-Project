@@ -112,42 +112,92 @@
     </h3>
     
     <div class="journey-steps">
-        <div class="journey-step {{ !($student->has_passed_theoretical ?? false) ? 'active' : '' }}">
-            <div class="step-number">1</div>
-            <div class="step-content">
-                <div class="step-title">Theoretical Driving Course (TDC)</div>
-                <div class="step-desc">Attend 15 hours of classroom instruction across 3 sessions. Pass the final exam to get your TDC Certificate.</div>
-                @if(!($student->has_passed_theoretical ?? false))
-                    <span class="step-badge">In Progress</span>
-                @else
-                    <span class="step-badge" style="background:#d1fae5; color:#065f46;">Completed</span>
-                @endif
-            </div>
-        </div>
+        @php
+            $steps = $settings->license_instructions ?? [];
+            if (!is_array($steps)) $steps = [];
+            
+            // 1. Fetch all system statuses once
+            $isTdcDone = $student->has_passed_theoretical ?? false;
+            $hasVerifiedPermit = ($student->student_license_status ?? '') === 'verified';
+            $isPdcDone = $student->enrollmentRequests()
+                ->whereHas('course', fn($q) => $q->where('course_type', 'practical'))
+                ->where('status', 'completed')
+                ->exists();
+            $hasLicenseCode = !empty($student->dl_code);
 
-        <div class="journey-step {{ ($student->has_passed_theoretical ?? false) && !$student->student_license_path ? 'active' : '' }}">
-            <div class="step-number">2</div>
-            <div class="step-content">
-                <div class="step-title">Apply for Student Permit</div>
-                <div class="step-desc">Visit any LTO branch with your TDC Certificate and Medical Certificate to secure your Student Permit.</div>
-            </div>
-        </div>
+            // 2. Process steps with sequential dependency
+            // A step can only be "Completed" if its milestone is met AND all previous milestones were met.
+            $processedSteps = [];
+            $previousMilestonesMet = true;
+            $foundCurrentStep = false;
 
-        <div class="journey-step {{ $student->student_license_path && !$student->has_passed_practical ? 'active' : '' }}">
-            <div class="step-number">3</div>
-            <div class="step-content">
-                <div class="step-title">Practical Driving Course (PDC)</div>
-                <div class="step-desc">Once you have your permit, enroll in PDC to start hands-on driving with our professional instructors.</div>
-                <span class="step-badge">Requires Student Permit</span>
-            </div>
-        </div>
+            foreach($steps as $index => $step) {
+                $milestone = $step['milestone'] ?? 'none';
+                $milestoneMet = false;
 
-        <div class="journey-step">
-            <div class="step-number">4</div>
-            <div class="step-content">
-                <div class="step-title">LTO Driver's License Application</div>
-                <div class="step-desc">After finishing PDC and holding your permit for at least 31 days, you can apply for your Non-Professional License.</div>
+                // Check if the specific milestone for THIS step is met
+                switch($milestone) {
+                    case 'tdc':     $milestoneMet = $isTdcDone; break;
+                    case 'permit':  $milestoneMet = $hasVerifiedPermit; break;
+                    case 'pdc':     $milestoneMet = $isPdcDone; break;
+                    case 'license': $milestoneMet = $hasLicenseCode; break;
+                    case 'none':    $milestoneMet = true; break; // Manual steps don't block
+                }
+
+                // Sequential Logic: A step is only 'Done' if its milestone is met AND previous were met
+                $isStepCompleted = $milestoneMet && $previousMilestonesMet;
+                
+                // If this milestone isn't met, the sequence is "broken" for future steps
+                if (!$milestoneMet && $milestone !== 'none') {
+                    $previousMilestonesMet = false;
+                }
+
+                $isActive = false;
+                if (!$isStepCompleted && !$foundCurrentStep) {
+                    $isActive = true;
+                    $foundCurrentStep = true;
+                }
+
+                $processedSteps[] = [
+                    'title' => $step['title'] ?? ('Step ' . ($index + 1)),
+                    'description' => $step['description'] ?? '',
+                    'isCompleted' => $isStepCompleted,
+                    'isActive' => $isActive,
+                    'index' => $index + 1
+                ];
+            }
+        @endphp
+
+        @forelse($processedSteps as $step)
+            <div class="journey-step {{ $step['isActive'] ? 'active' : '' }} {{ $step['isCompleted'] ? 'completed' : '' }}">
+                <div class="step-number">
+                    @if($step['isCompleted'])
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+                    @else
+                        {{ $step['index'] }}
+                    @endif
+                </div>
+                <div class="step-content">
+                    <div class="step-title" style="{{ $step['isCompleted'] ? 'color: #059669; text-decoration: line-through; opacity: 0.7;' : '' }}">
+                        {{ $step['title'] }}
+                    </div>
+                    <div class="step-desc" style="{{ $step['isCompleted'] ? 'opacity: 0.6;' : '' }}">
+                        {{ $step['description'] }}
+                    </div>
+                    
+                    @if($step['isCompleted'])
+                        <span class="step-badge" style="background:#d1fae5; color:#065f46; border: 1px solid #10b98144;">
+                            <i class="bi bi-check-circle-fill" style="margin-right: 4px;"></i> Completed
+                        </span>
+                    @elseif($step['isActive'])
+                        <span class="step-badge" style="background: {{ $primaryColor }}22; color: {{ $primaryColor }}; border: 1px solid {{ $primaryColor }}44;">
+                            <i class="bi bi-play-circle-fill" style="margin-right: 4px;"></i> Your Next Step
+                        </span>
+                    @endif
+                </div>
             </div>
-        </div>
+        @empty
+            <p class="text-muted">No roadmap steps configured by the school.</p>
+        @endforelse
     </div>
 </div>

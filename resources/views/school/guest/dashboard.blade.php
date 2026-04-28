@@ -918,6 +918,15 @@
     </div>
     @endif
     
+    <!-- License Roadmap Section -->
+    <div class="section" style="margin-top: 30px;">
+        <h2 class="section-title">Your Licensing Journey</h2>
+        <p class="section-description">
+            Follow these steps to acquire your official driver's license. This guide is provided by {{ $school->name }}.
+        </p>
+        @include('school.student.partials.license-guide', ['student' => $guest])
+    </div>
+    
 
 
     <!-- Browse Courses Section -->

@@ -132,15 +132,16 @@ class InstructorTimeSlotController extends Controller
             return redirect()->back()->with('error', 'This time slot is full.');
         }
 
-        // Check if instructor is qualified for this course
-        $instructorCourses = $instructor->course_specializations ?? [];
-        $isQualified = empty($instructorCourses) || in_array($timeSlot->course_id, $instructorCourses);
-
-        if (!$isQualified) {
+        // Check if instructor is legally accredited to teach this specific course (LTO Compliance)
+        if (!$instructor->canTeach($timeSlot->course)) {
+            $msg = ($instructor->license_status === 'verified') 
+                ? 'You do not have the required LTO restriction code for this course.' 
+                : 'Your license is not yet verified. Please update your profile with your driver\'s license.';
+            
             if ($isAjax) {
-                return response()->json(['success' => false, 'message' => 'You are not qualified for this course. Please contact your admin for course assignment approval.'], 400);
+                return response()->json(['success' => false, 'message' => $msg], 400);
             }
-            return redirect()->back()->with('error', 'You are not qualified for this course. Please contact your admin for course assignment approval.');
+            return redirect()->back()->with('error', $msg);
         }
 
         $hasConflict = TimeSlot::where('school_id', '=', $school->id)
@@ -346,6 +347,16 @@ class InstructorTimeSlotController extends Controller
             }
         }
 
+        // Check if this is a protected demo account
+        if (DemoAccountProtection::isProtectedAccount($instructor->email, 'instructor', $school)) {
+            $nameChanged = trim((string)($data['name'] ?? '')) !== trim((string)$instructor->name);
+            $emailChanged = strtolower(trim((string)($data['email'] ?? ''))) !== strtolower(trim((string)$instructor->email));
+            
+            if ($nameChanged || $emailChanged || $passwordChanged) {
+                return back()->with('error', 'This demo account has locked name, email, and password.');
+            }
+        }
+
         // Check current password if user wants to change password
         if ($request->filled('new_password')) {
             if (!$request->filled('current_password') || !Hash::check($request->current_password, $instructor->password)) {
@@ -354,25 +365,12 @@ class InstructorTimeSlotController extends Controller
             $data['password'] = Hash::make($request->new_password);
         }
 
-        if (!$passwordChanged && $request->only(['name', 'email', 'contact', 'license_number', 'address']) == $instructor->only(['name', 'email', 'contact', 'license_number', 'address'])) {
-            return redirect()
-                ->route('schools.instructor.profile', $school)
-                ->with('success', 'No profile changes were detected.');
-        }
+        // Use direct update for reliability
+        \App\Models\Instructor::where('id', $instructor->id)->update($data);
 
-        try {
-            $instructor->update($data);
-
-            $message = 'Profile updated successfully.';
-
-            return redirect()
-                ->route('schools.instructor.profile', $school)
-                ->with('success', $message);
-        }
-        catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Failed to update profile', ['error' => $e->getMessage()]);
-            return back()->with('error', 'An error occurred while updating profile.');
-        }
+        return redirect()
+            ->route('schools.instructor.profile', $school)
+            ->with('success', 'Profile updated successfully.');
     }
 
     public function updateProfilePicture(Request $request, School $school)
@@ -400,6 +398,39 @@ class InstructorTimeSlotController extends Controller
         catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Failed to update profile picture', ['error' => $e->getMessage()]);
             return response()->json(['success' => false, 'message' => 'An error occurred.'], 500);
+        }
+    }
+
+    public function uploadLicense(Request $request, School $school)
+    {
+        $instructor = Auth::guard('instructor')->user();
+        abort_unless($instructor && $instructor->school_id === $school->id, 403);
+
+        $request->validate([
+            'license_image' => 'required|image|mimes:png,jpg,jpeg,webp|max:2048',
+        ]);
+
+        try {
+            // Delete old license if exists
+            if ($instructor->license_image) {
+                Storage::disk('public')->delete($instructor->license_image);
+            }
+
+            $path = $request->file('license_image')->store('instructor_licenses', 'public');
+            
+            $instructor->update([
+                'license_image' => $path,
+                'license_status' => 'pending'
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'License uploaded successfully and is now pending verification.',
+                'path' => $path
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to upload license', ['error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'An error occurred during upload.'], 500);
         }
     }
 

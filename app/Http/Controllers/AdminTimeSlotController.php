@@ -69,7 +69,23 @@ class AdminTimeSlotController extends Controller
                 $validator = validator($timeslotData, [
                     'date' => 'required|date',
                     'start_time' => 'required|date_format:H:i',
-                    'end_time' => 'required|date_format:H:i',
+                    'end_time' => [
+                        'required',
+                        'date_format:H:i',
+                        'after:start_time',
+                        function ($attribute, $value, $fail) use ($timeslotData) {
+                            try {
+                                $start = \Carbon\Carbon::createFromFormat('H:i', $timeslotData['start_time']);
+                                $end = \Carbon\Carbon::createFromFormat('H:i', $value);
+                                $duration = $end->diffInMinutes($start);
+                                if ($duration < 60) {
+                                    $fail("The session must be at least 1 hour long. (Detected: {$duration} mins)");
+                                }
+                            } catch (\Exception $e) {
+                                // Handled by date_format rule
+                            }
+                        },
+                    ],
                     'max_instructors' => 'required|integer|min:1',
                 ]);
 
@@ -102,7 +118,23 @@ class AdminTimeSlotController extends Controller
             ],
             'date' => 'required|date|after_or_equal:today',
             'start_time' => 'required|date_format:H:i',
-            'end_time' => 'required|date_format:H:i|after:start_time',
+            'end_time' => [
+                'required',
+                'date_format:H:i',
+                'after:start_time',
+                function ($attribute, $value, $fail) use ($request) {
+                    try {
+                        $start = \Carbon\Carbon::createFromFormat('H:i', $request->start_time);
+                        $end = \Carbon\Carbon::createFromFormat('H:i', $value);
+                        $duration = $end->diffInMinutes($start);
+                        if ($duration < 60) {
+                            $fail("The session must be at least 1 hour long. (Detected: {$duration} mins)");
+                        }
+                    } catch (\Exception $e) {
+                        // Handled by date_format rule
+                    }
+                },
+            ],
             'max_instructors' => 'required|integer|min:1',
             'max_students' => 'nullable|integer|min:1',
             'notes' => 'nullable|string|max:500',

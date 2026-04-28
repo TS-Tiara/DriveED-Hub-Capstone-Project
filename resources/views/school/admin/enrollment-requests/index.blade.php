@@ -8,6 +8,7 @@
     $settings = $school?->schoolSetting;
     $schoolName = $school->name ?? 'Driving School';
     $primaryColor = $settings->primary_color ?? '#667eea';
+    $secondaryColor = $settings?->secondary_color ?? '#764ba2';
     use Illuminate\Support\Facades\Storage;
 @endphp
 
@@ -73,42 +74,55 @@
     
     .requests-table {
         width: 100%;
-        border-collapse: separate;
-        border-spacing: 0 10px;
-        margin-top: 20px;
+        border-collapse: collapse;
+        border-spacing: 0;
+        margin-top: 0;
     }
     
+    .requests-table thead {
+        background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
+        color: #ffffff;
+    }
+
     .requests-table thead th {
-        background: #f9fafb;
+        background: transparent;
+        color: inherit;
         padding: 15px;
         text-align: left;
         font-weight: 600;
-        color: #374151;
-        text-transform: uppercase;
-        font-size: 0.85rem;
-        letter-spacing: 0.5px;
-        border-bottom: 2px solid #e5e7eb;
+        text-transform: none;
+        font-size: 0.95rem;
+        letter-spacing: 0;
+    }
+
+    .requests-table thead th:hover {
+        background: transparent;
+        color: inherit;
+    }
+
+    .requests-table thead th:first-child {
+        border-top-left-radius: 12px;
+    }
+
+    .requests-table thead th:last-child {
+        border-top-right-radius: 12px;
     }
     
     .requests-table tbody tr {
-        background: white;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        background: transparent;
+        transition: background-color 0.2s ease;
     }
     
     .requests-table tbody tr:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        background-color: #f9fafb;
     }
 
     .requests-table tbody tr.has-cancellation-request {
-        background: #f8fafc;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+        background: #f9fafb;
     }
 
     .requests-table tbody tr.has-cancellation-request:hover {
-        transform: none;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        background: #f3f4f6;
     }
 
     .requests-table tbody tr.has-cancellation-request td {
@@ -128,16 +142,17 @@
     }
     
     .requests-table tbody td {
-        padding: 18px 15px;
+        padding: 14px 16px;
         vertical-align: middle;
+        border-bottom: 1px solid #e5e7eb;
     }
     
     .requests-table tbody tr td:first-child {
-        border-radius: 8px 0 0 8px;
+        border-radius: 0;
     }
     
     .requests-table tbody tr td:last-child {
-        border-radius: 0 8px 8px 0;
+        border-radius: 0;
     }
     
     .learner-info {
@@ -298,6 +313,12 @@
     }
 
     .payment-cancelled {
+        background: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #fecaca;
+    }
+
+    .payment-rejected {
         background: #fee2e2;
         color: #991b1b;
         border: 1px solid #fecaca;
@@ -465,9 +486,14 @@
         max-width: 300px;
         display: inline-block;
         padding: 8px 12px;
-        border: 2px solid #e5e7eb;
+        border: 2px solid #e1e5e9;
         border-radius: 8px;
         font-size: 0.9rem;
+    }
+
+    .branch-filter-select:focus {
+        outline: none;
+        border-color: {{ $primaryColor }};
     }
 
     .filters-row .branch-filter-select {
@@ -482,10 +508,19 @@
         align-items: center;
         margin-bottom: 20px;
         padding: 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+        gap: 10px;
+    }
+
+    .table-container {
         background: white;
         border-radius: 12px;
+        overflow-x: auto;
+        overflow-y: visible;
+        -webkit-overflow-scrolling: touch;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        gap: 10px;
     }
 
     .export-actions {
@@ -1271,15 +1306,9 @@
                             @endif
                         </td>
                         <td>
-                            @if($request->payment_status === 'pending' && empty($request->payment_proof_path) && (str_contains(strtolower($request->remarks ?? ''), 'reject') || $request->payments()->where('status', 'rejected')->exists()))
-                                <span class="payment-badge payment-rejected" title="{{ $request->remarks }}">
-                                    Rejected
-                                </span>
-                            @else
-                                <span class="payment-badge payment-{{ $request->payment_status }}">
-                                    {{ ucfirst(str_replace('_', ' ', $request->payment_status)) }}
-                                </span>
-                            @endif
+                            <span class="payment-badge payment-{{ $request->payment_status }}">
+                                {{ ucfirst(str_replace('_', ' ', $request->payment_status)) }}
+                            </span>
                         </td>
                         <td>
                             <div class="date-text">
@@ -1395,15 +1424,9 @@
             </div>
             <div class="mobile-card-row">
                 <span class="mobile-card-label">Payment</span>
-                @if($request->payment_status === 'pending' && empty($request->payment_proof_path) && (str_contains(strtolower($request->remarks ?? ''), 'reject') || $request->payments()->where('status', 'rejected')->exists()))
-                    <span class="payment-badge payment-rejected" title="{{ $request->remarks }}">
-                        Rejected
-                    </span>
-                @else
-                    <span class="payment-badge payment-{{ $request->payment_status }}">
-                        {{ ucfirst(str_replace('_', ' ', $request->payment_status)) }}
-                    </span>
-                @endif
+                <span class="payment-badge payment-{{ $request->payment_status }}">
+                    {{ ucfirst(str_replace('_', ' ', $request->payment_status)) }}
+                </span>
             </div>
             <div class="mobile-card-row">
                 <span class="mobile-card-label">Date</span>
@@ -1865,13 +1888,21 @@ function openVerificationModal(enrollmentId) {
             const paymentActions = document.getElementById('v-payment-actions');
             
             // Show license actions if document exists and is pending
-            // Show actions if a license is present and it hasn't been finalized (pending OR none)
             licenseActions.style.display = (data.license_url && (data.license_status === 'pending' || data.license_status === 'none')) ? 'flex' : 'none';
             // Show payment actions if document exists and is pending
             paymentActions.style.display = (data.receipt_url && data.payment_status === 'pending') ? 'flex' : 'none';
             
+            // Show/Hide cancellation warning in sidebar
+            const cancellationWarning = document.getElementById('v-cancellation-warning');
+            if (cancellationWarning) {
+                cancellationWarning.style.display = data.cancellation_requested ? 'block' : 'none';
+                if (data.cancellation_requested) {
+                    document.getElementById('v-cancellation-reason').textContent = data.cancellation_reason || 'No reason provided.';
+                }
+            }
+
             // Initial check for final approval
-            checkIfFullyVerified(enrollmentId, data.license_status, data.payment_status);
+            checkIfFullyVerified(enrollmentId, data.license_status, data.payment_status, data.cancellation_requested);
             
             // Show content
             document.getElementById('v-modal-loading').style.display = 'none';
@@ -1898,6 +1929,7 @@ function updatePanelStatus(type, status) {
     badge.className = 'v-panel-status';
     if (status === 'verified' || status === 'paid') badge.classList.add('bg-success', 'text-white');
     else if (status === 'pending') badge.classList.add('bg-warning', 'text-dark');
+    else if (status === 'rejected') badge.classList.add('bg-danger', 'text-white');
     else badge.classList.add('bg-secondary', 'text-white');
 }
 
@@ -2016,12 +2048,12 @@ function updateTableRowStatus(id, type, status) {
     checkIfFullyVerified(id);
 }
 
-function checkIfFullyVerified(id, licenseStatus, paymentStatus) {
+function checkIfFullyVerified(id, licenseStatus, paymentStatus, cancellationRequested) {
     const row = document.querySelector(`tr[data-request-id="${id}"]`);
     if (!row) return;
 
     // Determine current statuses if not provided
-    if (!licenseStatus) {
+    if (licenseStatus === undefined || licenseStatus === null) {
         const badge = row.querySelector('.license-badge');
         if (badge) {
             if (badge.classList.contains('license-verified')) licenseStatus = 'verified';
@@ -2031,7 +2063,7 @@ function checkIfFullyVerified(id, licenseStatus, paymentStatus) {
             licenseStatus = 'verified'; // Default if no badge
         }
     }
-    if (!paymentStatus) {
+    if (paymentStatus === undefined || paymentStatus === null) {
         const badge = row.querySelector('.payment-badge');
         if (badge) {
             if (badge.classList.contains('payment-paid')) paymentStatus = 'paid';
@@ -2041,9 +2073,15 @@ function checkIfFullyVerified(id, licenseStatus, paymentStatus) {
             paymentStatus = 'paid'; // Default if no badge
         }
     }
+    
+    // If not provided from API, check the row class
+    if (cancellationRequested === undefined || cancellationRequested === null) {
+        cancellationRequested = row.classList.contains('has-cancellation-request');
+    }
 
     const isFullyVerified = (licenseStatus === 'verified' || licenseStatus === 'none') && 
-                            (paymentStatus === 'paid' || paymentStatus === 'none');
+                            (paymentStatus === 'paid' || paymentStatus === 'none') &&
+                            !cancellationRequested;
 
     const atLeastOneProcessed = (licenseStatus !== 'pending') || (paymentStatus !== 'pending');
 
@@ -2080,14 +2118,11 @@ function checkIfFullyVerified(id, licenseStatus, paymentStatus) {
 
 function rejectLicenseFromModal() {
     if (!currentEnrollmentId) return;
-    const studentName = document.getElementById('v-student-name').textContent;
-    // We need the student ID. It might be better to fetch it or pass it.
-    // For now, let's close and open the existing license reject modal.
+    const idToReject = currentEnrollmentId;
     closeVerificationModal();
-    // Since we don't have studentId easily here without extra data, we can just trigger the full rejection modal
-    // but pre-check "Reject License".
+    
     setTimeout(() => {
-        showRejectModal(currentEnrollmentId);
+        showRejectModal(idToReject);
         document.querySelector('input[name="reject_license"]').checked = true;
         document.querySelector('input[name="reject_payment"]').checked = false;
     }, 100);
@@ -2095,9 +2130,11 @@ function rejectLicenseFromModal() {
 
 function rejectPaymentFromModal() {
     if (!currentEnrollmentId) return;
+    const idToReject = currentEnrollmentId;
     closeVerificationModal();
+    
     setTimeout(() => {
-        showRejectModal(currentEnrollmentId);
+        showRejectModal(idToReject);
         document.querySelector('input[name="reject_license"]').checked = false;
         document.querySelector('input[name="reject_payment"]').checked = true;
     }, 100);
@@ -2150,6 +2187,18 @@ function finalApproveFromModal() {
                 <div class="mb-3">
                     <div id="v-reference-label" class="v-info-label">GCash Reference No.</div>
                     <div id="v-reference" class="v-info-value" style="font-family: monospace; font-size: 1.1rem; color: #2563eb;">-</div>
+                
+                <!-- Cancellation Warning -->
+                <div id="v-cancellation-warning" style="display: none; margin-top: 20px; padding: 12px; background: #fff5f5; border-radius: 8px; border: 1px solid #fed7d7;">
+                    <div class="v-info-label" style="color: #c53030; display: flex; align-items: center; gap: 4px;">
+                        <svg class="icon-14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        Withdrawal Requested
+                    </div>
+                    <div id="v-cancellation-reason" style="font-size: 0.85rem; color: #742a2a; margin-top: 5px; line-height: 1.4;">-</div>
+                    <div style="margin-top: 8px; font-size: 0.75rem; color: #9b1c1c; font-style: italic;">
+                        Approval is blocked until this request is resolved.
+                    </div>
+                </div>
                 </div>
                 <div class="mt-auto">
                     <p class="text-muted small" style="line-height: 1.4;">

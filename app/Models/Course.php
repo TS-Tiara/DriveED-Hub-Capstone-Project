@@ -26,6 +26,7 @@ class Course extends Model
         'max_students',
         'type',
         'vehicle_type',
+        'required_restriction',
         'status',
         'is_featured',
         'sort_order',
