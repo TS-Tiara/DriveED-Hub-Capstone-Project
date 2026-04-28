@@ -536,7 +536,7 @@
         // Add empty slots/upload placeholder if < 5
         if (images.length < 5) {
             const placeholder = document.createElement('div');
-            placeholder.className = 'upload-box';
+            placeholder.className = 'upload-box edit-only';
             placeholder.innerHTML = `
                 <i class="bi bi-plus-lg"></i>
                 <span>${5 - images.length} More</span>
