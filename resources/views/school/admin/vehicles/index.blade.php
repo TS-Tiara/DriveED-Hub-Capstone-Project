@@ -608,7 +608,17 @@
 
     function filterVehicleTable() {
         const f = document.getElementById('vehicleSearch').value.toLowerCase();
-        document.querySelectorAll('#vehicleTableBody tr').forEach(r => { r.style.display = r.textContent.toLowerCase().includes(f) ? '' : 'none'; });
+        document.querySelectorAll('#vehicleTableBody tr').forEach(r => {
+            const cells = r.querySelectorAll('td');
+            if (cells.length < 4) return;
+
+            const plate = cells[0].textContent.toLowerCase();
+            const model = cells[1].textContent.toLowerCase();
+            const branch = cells[3].textContent.toLowerCase();
+
+            const isVisible = plate.includes(f) || model.includes(f) || branch.includes(f);
+            r.style.display = isVisible ? '' : 'none';
+        });
     }
 
     window.onclick = function(e) { if (e.target.classList.contains('modal-overlay')) closeVehicleModal(e.target.id); }
