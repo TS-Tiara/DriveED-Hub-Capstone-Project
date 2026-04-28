@@ -2366,31 +2366,41 @@
 
         // Initialize user management page
         function initializeUserManagementPage() {
-            hardenUserManagementActionForms();
-            bindUserSearchEvents();
-            const searchInput = document.getElementById('userSearch');
-            if (searchInput) {
-                applyLocalUserTableSearch(searchInput.value || '');
-            }
-            console.log('User Management page initialized');
+            console.log('User Management: Initializing...');
+            try {
+                hardenUserManagementActionForms();
+                
+                // Prioritize search binding
+                bindUserSearchEvents();
+                
+                const searchInput = document.getElementById('userSearch');
+                if (searchInput && searchInput.value) {
+                    applyLocalUserTableSearch(searchInput.value);
+                }
 
-            // Auto-strip leading zero from contact inputs in modals
-            document.querySelectorAll('input[name="contact"], #edit_student_contact, #edit_instructor_contact').forEach(input => {
-                input.addEventListener('input', function (e) {
-                    let val = e.target.value;
-                    if (val.startsWith('0')) {
-                        e.target.value = val.substring(1);
-                    }
-                    // Allow only numbers
-                    e.target.value = e.target.value.replace(/\D/g, '');
+                // Auto-strip leading zero from contact inputs in modals
+                document.querySelectorAll('input[name="contact"], #edit_student_contact, #edit_instructor_contact').forEach(input => {
+                    input.addEventListener('input', function (e) {
+                        let val = e.target.value;
+                        if (val.startsWith('0')) {
+                            e.target.value = val.substring(1);
+                        }
+                        // Allow only numbers
+                        e.target.value = e.target.value.replace(/\D/g, '');
+                    });
                 });
-            });
+                console.log('User Management: Initialized successfully');
+            } catch (err) {
+                console.error('User Management: Initialization error:', err);
+            }
         }
 
+        // Robust initialization that works for both full-page loads and AJAX partials
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', initializeUserManagementPage);
         } else {
-            initializeUserManagementPage();
+            // If already loaded (AJAX), give a tiny breather for the DOM to be ready
+            setTimeout(initializeUserManagementPage, 10);
         }
 
         function getUserFilterState() {
@@ -2475,27 +2485,27 @@
         }
 
         function bindUserSearchEvents() {
-            const searchInput = document.getElementById('userSearch');
-            if (!searchInput || searchInput.dataset.searchBound === '1') {
-                return;
-            }
+            // Use event delegation on the document to ensure search works even if injected via AJAX
+            // and to avoid issues with direct binding if the script runs too early.
+            if (window._userSearchBound) return;
+            window._userSearchBound = true;
 
-            searchInput.dataset.searchBound = '1';
-            searchInput.addEventListener('keydown', handleUserSearchKeydown);
-            searchInput.addEventListener('input', handleUserSearchInput);
-        }
+            document.addEventListener('keydown', function(event) {
+                if (event.target && event.target.id === 'userSearch') {
+                    if (event.key === 'Enter') {
+                        event.preventDefault();
+                        applyLocalUserTableSearch(event.target.value || '');
+                    }
+                }
+            });
 
-        function handleUserSearchKeydown(event) {
-            if (event.key !== 'Enter') {
-                return;
-            }
-
-            event.preventDefault();
-            applyLocalUserTableSearch(event.target.value || '');
-        }
-
-        function handleUserSearchInput(event) {
-            applyLocalUserTableSearch(event.target.value || '');
+            document.addEventListener('input', function(event) {
+                if (event.target && event.target.id === 'userSearch') {
+                    applyLocalUserTableSearch(event.target.value || '');
+                }
+            });
+            
+            console.log('User search events bound (Delegated)');
         }
 
         function applyLocalUserTableSearch(rawValue) {
