@@ -1813,7 +1813,7 @@
                                                     <span class="license-badge {{ $lStatus }}">
                                                         {{ $lLabels[$lStatus] }}
                                                     </span>
-                                                    @if(($lStatus === 'pending' || $lStatus === 'none') && $user->license_image)
+                                                    @if(($lStatus === 'pending' || $lStatus === 'none' || $lStatus === 'rejected') && $user->license_image)
                                                         <button type="button" class="btn-action btn-success js-verify-license"
                                                            style="padding: 4px 10px; font-size: 0.75rem;"
                                                            data-id="{{ $user->id }}" data-name="{{ $user->name }}"
@@ -2845,15 +2845,21 @@
             const modal = document.getElementById('verifyLicenseModal');
             if (!modal) return;
 
-            // Fill base info
-            const nameEl = document.getElementById('verify_instructor_name');
-            const numEl = document.getElementById('verify_license_number');
-            const imgEl = document.getElementById('licenseImagePreview');
-            const idInput = document.getElementById('verify_instructor_id');
+            const form = document.getElementById('verifyLicenseForm');
+            if (form) {
+                form.action = `${window.instructorBaseUrl}/${data.id}/verify`;
+            }
 
-            if (nameEl) nameEl.textContent = data.name || 'Unknown';
-            if (numEl) numEl.textContent = data.licenseNumber || 'N/A';
+            const nameEl = document.getElementById('verify_instructor_name');
+            if (nameEl) nameEl.textContent = data.name || '';
+
+            const licenseEl = document.getElementById('verify_license_number');
+            if (licenseEl) licenseEl.textContent = data.licenseNumber || 'Not Provided';
+
+            const imgEl = document.getElementById('licenseImagePreview');
             if (imgEl) imgEl.src = data.licenseImage || '';
+
+            const idInput = document.getElementById('verify_instructor_id');
             if (idInput) idInput.value = data.id;
 
             // Handle Status (Radio Buttons)
@@ -2865,16 +2871,16 @@
                 }
             });
 
+            // Toggle Groups Based on Status
             const restrictionsGroup = document.getElementById('restrictions_group');
             const rejectionGroup = document.getElementById('rejection_reason_group');
             if (restrictionsGroup) restrictionsGroup.style.display = statusVal === 'rejected' ? 'none' : 'block';
             if (rejectionGroup) rejectionGroup.style.display = statusVal === 'rejected' ? 'block' : 'none';
 
-            // Handle Rejection Reason
-            const reasonText = document.getElementById('rejection_reason');
-            if (reasonText) reasonText.value = data.rejectionReason || '';
+            const rejectionInput = document.getElementById('rejection_reason');
+            if (rejectionInput) rejectionInput.value = data.rejectionReason || '';
 
-            // Handle Restrictions (Chips)
+            // Handle Restrictions
             let currentRestrictions = [];
             try {
                 currentRestrictions = JSON.parse(data.restrictions || '[]');
@@ -2882,7 +2888,7 @@
                 console.error('Error parsing restrictions:', e);
             }
 
-            const checkboxes = document.querySelectorAll('input[name="restrictions[]"]');
+            const checkboxes = document.querySelectorAll('input[name="restriction_codes[]"]');
             checkboxes.forEach(cb => {
                 cb.checked = currentRestrictions.includes(cb.value);
             });
@@ -2895,90 +2901,11 @@
             const rejectionGroup = document.getElementById('rejection_reason_group');
             if (restrictionsGroup) restrictionsGroup.style.display = show ? 'none' : 'block';
             if (rejectionGroup) rejectionGroup.style.display = show ? 'block' : 'none';
-            if (show) {
-                const textarea = document.getElementById('rejection_reason');
-                if (textarea) textarea.focus();
-            }
         }
 
         function closeVerifyLicenseModal() {
             const modal = document.getElementById('verifyLicenseModal');
             if (modal) modal.style.display = 'none';
-        }
-
-        // FORM SUBMIT
-        const verifyForm = document.getElementById('verifyLicenseForm');
-        if (verifyForm) {
-            verifyForm.addEventListener('submit', function (e) {
-                e.preventDefault();
-
-                const instructorId = document.getElementById('verify_instructor_id').value;
-                const statusInput = document.querySelector('input[name="status"]:checked');
-                const status = statusInput ? statusInput.value : 'verified';
-                const rejectionReason = document.getElementById('rejection_reason').value;
-
-                const selectedRestrictions = [];
-                document.querySelectorAll('input[name="restrictions[]"]:checked').forEach(cb => {
-                    selectedRestrictions.push(cb.value);
-                });
-
-                // Basic validation
-                if (status === 'rejected' && !rejectionReason.trim()) {
-                    if (typeof Toast !== 'undefined') Toast.error('Please provide a reason for rejection.');
-                    else alert('Please provide a reason for rejection.');
-                    return;
-                }
-
-                if (status === 'verified' && selectedRestrictions.length === 0) {
-                    if (typeof Toast !== 'undefined') Toast.error('Please select at least one restriction code.');
-                    else alert('Please select at least one restriction code.');
-                    return;
-                }
-
-                const submitBtn = this.querySelector('button[type="submit"]');
-                const originalContent = submitBtn.innerHTML;
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Saving...';
-
-                fetch(`/{{ $school->slug }}/admin/instructors/${instructorId}/verify`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: JSON.stringify({
-                        status: status,
-                        restriction_codes: selectedRestrictions,
-                        rejection_reason: rejectionReason
-                    })
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            if (typeof Toast !== 'undefined') Toast.success(data.message);
-                            closeVerifyLicenseModal();
-
-                            // Priority refresh
-                            if (typeof loadContent === 'function') {
-                                loadContent(window.location.pathname + window.location.search);
-                            } else {
-                                location.reload();
-                            }
-                        } else {
-                            if (typeof Toast !== 'undefined') Toast.error(data.message || 'Verification failed.');
-                            else alert(data.message || 'Verification failed.');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        if (typeof Toast !== 'undefined') Toast.error('An unexpected error occurred.');
-                    })
-                    .finally(() => {
-                        submitBtn.disabled = false;
-                        submitBtn.innerHTML = originalContent;
-                    });
-            });
         }
 
         // Delegate Verify Button clicks
@@ -3036,7 +2963,8 @@
                 <h3><i class="bi bi-shield-check me-2"></i>Verify Instructor License</h3>
                 <button type="button" class="btn-close-modal" onclick="closeVerifyLicenseModal()">×</button>
             </div>
-            <form id="verifyLicenseForm">
+            <form id="verifyLicenseForm" method="POST" action="">
+                @csrf
                 <div class="modal-body">
                     <input type="hidden" id="verify_instructor_id">
 
@@ -3100,7 +3028,7 @@
                         <div class="restriction-grid">
                             @foreach(['A', 'A1', 'B', 'B1', 'B2', 'C', 'D', 'BE', 'CE'] as $code)
                                 <label class="restriction-chip" title="Motorcycle / Tricycle">
-                                    <input type="checkbox" name="restrictions[]" value="{{ $code }}" id="rest_{{ $code }}">
+                                    <input type="checkbox" name="restriction_codes[]" value="{{ $code }}" id="rest_{{ $code }}">
                                     <span class="chip-content">{{ $code }}</span>
                                 </label>
                             @endforeach

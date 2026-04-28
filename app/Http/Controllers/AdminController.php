@@ -886,19 +886,38 @@ class AdminController extends Controller
                 'verify_instructor'
             );
 
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed: ' . implode(' ', \Illuminate\Support\Arr::flatten($e->errors()))
+                ], 422);
+            }
+            throw $e;
+        } catch (\Exception $e) {
+            SystemLog::logError('Failed to verify instructor license: ' . $e->getMessage(), 'database', $e, [
+                'school_id' => $school->id,
+                'instructor_id' => $id,
+                'status' => $request->get('status')
+            ], $school->id, 'verify_instructor');
+
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'An error occurred.'], 500);
+            }
+            
+            return back()->withInput()->with('error', 'An unexpected error occurred during verification.');
+        }
+
+        $message = 'Instructor license ' . $validated['status'] . ' successfully.';
+        
+        if ($request->expectsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Instructor license ' . $validated['status'] . ' successfully.'
+                'message' => $message
             ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed: ' . implode(' ', \Illuminate\Support\Arr::flatten($e->errors()))
-            ], 422);
-        } catch (\Exception $e) {
-            LogFacade::error('Failed to verify instructor license: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => 'An error occurred.'], 500);
         }
+
+        return redirect()->back()->with('success', $message);
     }
 
     public function toggleAvailability(School $school, $id)
