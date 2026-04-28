@@ -222,11 +222,23 @@ class EnrollmentRequestController extends Controller
             abort(403, 'You do not have access to this enrollment request.');
         }
 
-        // Security Check 3: Prevent duplicate approvals
-        if ($enrollmentRequest->status === 'approved') {
+        // Security Check 3: Prevent finalized or withdrawing approvals
+        if (in_array($enrollmentRequest->status, ['approved', 'completed'])) {
             return redirect()
                 ->back()
-                ->with('error', 'This enrollment request has already been approved.');
+                ->with('error', 'This enrollment request has already been finalized.');
+        }
+
+        if (in_array($enrollmentRequest->status, ['cancelled', 'rejected'])) {
+            return redirect()
+                ->back()
+                ->with('error', 'Cannot approve a cancelled or rejected enrollment request.');
+        }
+
+        if ($enrollmentRequest->cancellation_requested) {
+            return redirect()
+                ->back()
+                ->with('error', 'Cannot approve an enrollment request that has a pending withdrawal request. Please resolve the withdrawal first.');
         }
 
         // Security Check 4: Verify the student still exists and is a guest
@@ -352,7 +364,7 @@ class EnrollmentRequestController extends Controller
                 }
                 if ($rejectPayment) {
                     $enrollmentRequest->update([
-                        'payment_status' => 'pending',
+                        'payment_status' => 'rejected',
                         'payment_proof_path' => null,
                         'payment_reference' => null,
                         'remarks' => $validated['remarks']
@@ -813,8 +825,12 @@ class EnrollmentRequestController extends Controller
                     continue;
                 }
 
-                // Skip finalized states (defense-in-depth against crafted requests)
-                if (in_array((string) $enrollment->status, ['approved', 'rejected', 'cancelled'], true)) {
+                // Skip finalized states or those with pending withdrawals
+                if (in_array((string) $enrollment->status, ['approved', 'rejected', 'cancelled', 'completed'], true)) {
+                    continue;
+                }
+
+                if ($enrollment->cancellation_requested) {
                     continue;
                 }
 
@@ -1332,6 +1348,8 @@ class EnrollmentRequestController extends Controller
             'reference_number' => $enrollmentRequest->payment_reference,
             'requested_dl_code' => $enrollmentRequest->requested_dl_code,
             'remarks' => $enrollmentRequest->remarks,
+            'cancellation_requested' => (bool) $enrollmentRequest->cancellation_requested,
+            'cancellation_reason' => $enrollmentRequest->cancellation_reason,
             // Paths/Routes
             'license_url' => $licenseUrl,
             'receipt_url' => $enrollmentRequest->payment_proof_path

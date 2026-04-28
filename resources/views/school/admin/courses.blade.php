@@ -1722,11 +1722,7 @@
                                                 <div class="package-item">
                                                     <div class="package-info">
                                                         <div class="package-name">
-                                                            @if($package->package_level) <strong>[{{ $package->package_level }}]</strong>
-                                                            @endif
                                                             {{ $package->name }}
-                                                            @if($package->tier) <span class="text-muted"
-                                                            style="font-size: 0.8rem">({{ $package->tier }})</span> @endif
                                                         </div>
                                                         <div class="package-details">
                                                             <span
@@ -2181,18 +2177,6 @@
                             </div>
                         </div>
 
-                        <div class="form-grid-two">
-                            <div class="form-group">
-                                <label class="form-label">Package Level</label>
-                                <input type="text" name="package_level" id="packageLevel" class="form-control"
-                                    placeholder="e.g., Smart Basic">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Pricing Tier</label>
-                                <input type="text" name="tier" id="packageTier" class="form-control"
-                                    placeholder="e.g., Special, Rush">
-                            </div>
-                        </div>
 
                         <div class="form-group">
                             <label class="form-label">Price (₱) *</label>
@@ -2240,7 +2224,7 @@
                         </div>
 
                         <div class="form-check">
-                            <input type="checkbox" name="is_popular" id="packagePopular">
+                            <input type="checkbox" name="is_popular" id="packagePopular" value="1">
                             <label for="packagePopular" class="form-label form-label-inline">Mark as Popular Package</label>
                         </div>
                     </div>
@@ -2542,8 +2526,6 @@
 
                     document.getElementById('packageName').value = package.name || '';
                     document.getElementById('packageVehicleCategory').value = package.vehicle_category_id || '';
-                    document.getElementById('packageLevel').value = package.package_level || '';
-                    document.getElementById('packageTier').value = package.tier || '';
                     document.getElementById('packageTransmission').value = package.transmission_type || 'manual';
                     document.getElementById('packagePrice').value = package.price || '';
                     document.getElementById('packageTdcHours').value = package.tdc_hours || '';
@@ -2833,8 +2815,6 @@
                 // Override with old values
                 document.getElementById('packageName').value = oldData.name || '';
                 document.getElementById('packageVehicleCategory').value = oldData.vehicle_category_id || '';
-                document.getElementById('packageLevel').value = oldData.package_level || '';
-                document.getElementById('packageTier').value = oldData.tier || '';
                 document.getElementById('packageTransmission').value = oldData.transmission_type || 'manual';
                 document.getElementById('packagePrice').value = oldData.price || '';
                 document.getElementById('packageTdcHours').value = oldData.tdc_hours || '';
@@ -2946,8 +2926,6 @@
                             package_id: @json(old('package_id')),
                             name: @json(old('name')),
                             vehicle_category_id: @json(old('vehicle_category_id')),
-                            package_level: @json(old('package_level')),
-                            tier: @json(old('tier')),
                             transmission_type: @json(old('transmission_type')),
                             price: @json(old('price')),
                             tdc_hours: @json(old('tdc_hours')),
