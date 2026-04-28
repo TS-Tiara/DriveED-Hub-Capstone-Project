@@ -73,6 +73,7 @@
     .modal-header h5 { font-size: 1.25rem; font-weight: 600; margin: 0; display: flex; align-items: center; gap: 12px; }
     .modal-body { padding: 32px; background: white; max-height: 75vh; overflow-y: auto; }
     .modal-footer { padding: 20px 32px; display: flex; gap: 12px; background: #f8fafc; border-top: 1px solid #f1f5f9; justify-content: flex-end; }
+    .modal-footer button { position: relative; top: -15px; }
 
     /* Table Styles */
     .vehicle-table-card { background: white; border-radius: 16px; box-shadow: 0 2px 12px {{ $primaryColor }}10; overflow: hidden; border: 1px solid {{ $primaryColor }}08; }
@@ -111,8 +112,8 @@
     .form-group input:read-only { background: #f8fafc !important; border-color: #f1f5f9 !important; cursor: default; }
 
     .btn-primary, .btn-secondary, .btn-danger { height: 44px; padding: 0 20px; border-radius: 12px; font-size: 0.95rem; font-weight: 600; cursor: pointer; border: none; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
-    .btn-secondary { background: #f1f5f9; color: #475569; }
-    .btn-secondary:hover { background: #e2e8f0; }
+    .btn-secondary { background: #64748b !important; color: #ffffff !important; border: 1px solid #475569 !important; }
+    .btn-secondary:hover { background: #64748b !important; color: #ffffff !important; transform: none !important; opacity: 0.9 !important; }
     .btn-danger { background: #fef2f2; color: #ef4444; border: 1px solid #fee2e2; }
     .btn-danger:hover { background: #ef4444; color: white; }
     .btn-deactivate { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; height: 34px; padding: 0 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.2s; }
