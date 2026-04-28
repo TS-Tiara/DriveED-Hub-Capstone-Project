@@ -45,7 +45,7 @@ class BranchController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'address' => 'nullable|string|max:500',
-            'contact_number' => 'nullable|string|max:50|regex:/^[0-9]+$/',
+            'contact_number' => 'nullable|string|max:13|regex:/^(09\d{9}|\+639\d{9}|9\d{9})$/',
             'email' => 'nullable|email|max:255',
             'is_active' => 'sometimes|boolean',
             'sort_order' => 'sometimes|integer|min:0',
@@ -55,6 +55,16 @@ class BranchController extends Controller
 
         if (!isset($validated['is_active'])) {
             $validated['is_active'] = true;
+        }
+
+        // Normalize contact number
+        if (!empty($validated['contact_number'])) {
+            $contact = trim((string) $validated['contact_number']);
+            if (preg_match('/^9\d{9}$/', $contact)) {
+                $validated['contact_number'] = '+63' . $contact;
+            } elseif (preg_match('/^09\d{9}$/', $contact)) {
+                $validated['contact_number'] = '+63' . substr($contact, 1);
+            }
         }
 
         try {
@@ -95,11 +105,21 @@ class BranchController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'address' => 'nullable|string|max:500',
-            'contact_number' => 'nullable|string|max:50|regex:/^[0-9]+$/',
+            'contact_number' => 'nullable|string|max:13|regex:/^(09\d{9}|\+639\d{9}|9\d{9})$/',
             'email' => 'nullable|email|max:255',
             'is_active' => 'sometimes|boolean',
             'sort_order' => 'sometimes|integer|min:0',
         ]);
+
+        // Normalize contact number
+        if (!empty($validated['contact_number'])) {
+            $contact = trim((string) $validated['contact_number']);
+            if (preg_match('/^9\d{9}$/', $contact)) {
+                $validated['contact_number'] = '+63' . $contact;
+            } elseif (preg_match('/^09\d{9}$/', $contact)) {
+                $validated['contact_number'] = '+63' . substr($contact, 1);
+            }
+        }
 
         try {
             $branch->update($validated);

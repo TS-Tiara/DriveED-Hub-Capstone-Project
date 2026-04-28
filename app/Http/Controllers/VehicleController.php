@@ -43,7 +43,7 @@ class VehicleController extends Controller
             'transmission' => 'required|in:manual,automatic',
             'status' => 'required|in:active,maintenance,out_of_service',
             'notes' => 'nullable|string',
-            'images.*' => 'nullable|image|max:2048',
+            'images.*' => 'nullable|image|max:5120',
         ]);
 
         $validated['school_id'] = $school->id;
@@ -114,7 +114,7 @@ class VehicleController extends Controller
             'transmission' => 'required|in:manual,automatic',
             'status' => 'required|in:active,maintenance,out_of_service',
             'notes' => 'nullable|string',
-            'images.*' => 'nullable|image|max:2048',
+            'images.*' => 'nullable|image|max:5120',
         ]);
 
         if ($request->hasFile('images')) {

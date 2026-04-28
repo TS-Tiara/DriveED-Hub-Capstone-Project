@@ -29,7 +29,8 @@ class AdminTimeSlotController extends Controller
             ->get();
 
         $instructorsQuery = Instructor::where('school_id', '=', $school->id)
-            ->where('status', '=', 'active');
+            ->where('status', '=', 'active')
+            ->where('availability', '=', 'available');
 
         if ($admin->isBranchSecretary() && $admin->branch_id) {
             $instructorsQuery->where('branch_id', '=', $admin->branch_id);
@@ -73,13 +74,18 @@ class AdminTimeSlotController extends Controller
                         'required',
                         'date_format:H:i',
                         'after:start_time',
-                        function ($attribute, $value, $fail) use ($timeslotData) {
+                        function ($attribute, $value, $fail) use ($timeslotData, $school) {
                             try {
                                 $start = \Carbon\Carbon::createFromFormat('H:i', $timeslotData['start_time']);
                                 $end = \Carbon\Carbon::createFromFormat('H:i', $value);
                                 $duration = $end->diffInMinutes($start);
-                                if ($duration < 60) {
-                                    $fail("The session must be at least 1 hour long. (Detected: {$duration} mins)");
+                                
+                                $settings = $school->schoolSetting;
+                                // For bulk creation, we use a generic 60min or the TDC min if no course is specified
+                                $minDuration = $settings->min_tdc_duration_minutes ?? 60;
+                                
+                                if ($duration < $minDuration) {
+                                    $fail("The session must be at least {$minDuration} minutes long. (Detected: {$duration} mins)");
                                 }
                             } catch (\Exception $e) {
                                 // Handled by date_format rule
@@ -122,13 +128,24 @@ class AdminTimeSlotController extends Controller
                 'required',
                 'date_format:H:i',
                 'after:start_time',
-                function ($attribute, $value, $fail) use ($request) {
+                function ($attribute, $value, $fail) use ($request, $school) {
                     try {
                         $start = \Carbon\Carbon::createFromFormat('H:i', $request->start_time);
                         $end = \Carbon\Carbon::createFromFormat('H:i', $value);
                         $duration = $end->diffInMinutes($start);
-                        if ($duration < 60) {
-                            $fail("The session must be at least 1 hour long. (Detected: {$duration} mins)");
+                        
+                        $course = \App\Models\Course::find($request->course_id);
+                        $settings = $school->schoolSetting;
+                        
+                        $minDuration = 60;
+                        if ($course) {
+                            $minDuration = $course->course_type === 'theoretical' 
+                                ? ($settings->min_tdc_duration_minutes ?? 60) 
+                                : ($settings->min_pdc_duration_minutes ?? 60);
+                        }
+
+                        if ($duration < $minDuration) {
+                            $fail("The session must be at least {$minDuration} minutes long. (Detected: {$duration} mins)");
                         }
                     } catch (\Exception $e) {
                         // Handled by date_format rule

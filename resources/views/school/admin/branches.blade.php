@@ -819,11 +819,15 @@
                 </div>
                 <div class="form-group">
                     <label for="branchContact">Contact Number</label>
-                    <div class="contact-input-group">
-                        <span class="contact-prefix">+63</span>
-                        <input type="text" id="branchContact" name="contact_number" placeholder="9123456789" inputmode="numeric" pattern="[0-9]*" autocomplete="tel" maxlength="10">
-                    </div>
-                    <p class="field-help">Enter the 10-digit number after +63 (e.g., 9123456789).</p>
+                    @if($settings->enforce_ph_contact ?? true)
+                        <div class="contact-input-group">
+                            <span class="contact-prefix">+63</span>
+                            <input type="text" id="branchContact" name="contact_number" placeholder="9123456789" inputmode="numeric" pattern="[0-9]*" autocomplete="tel" maxlength="10">
+                        </div>
+                        <p class="field-help">Enter the 10-digit number after +63 (e.g., 9123456789).</p>
+                    @else
+                        <input type="text" id="branchContact" name="contact_number" placeholder="Enter contact number">
+                    @endif
                 </div>
                 <div class="form-group">
                     <label for="branchEmail">Email</label>
@@ -852,11 +856,11 @@
     function enforceNumericOnly(input) {
         if (!input) return;
         const sanitize = function() {
-            let val = input.value;
+            let val = input.value.replace(/\D+/g, '');
             if (val.startsWith('0')) {
                 val = val.substring(1);
             }
-            input.value = val.replace(/\D+/g, '');
+            input.value = val;
         };
         input.addEventListener('input', sanitize);
         input.addEventListener('paste', function() { setTimeout(sanitize, 0); });

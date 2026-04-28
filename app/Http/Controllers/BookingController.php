@@ -328,6 +328,7 @@ class BookingController extends Controller
 
         $instructors = Instructor::where('school_id', $school->id)
             ->where('status', 'active')
+            ->where('availability', 'available')
             ->select('id', 'name', 'email', 'availability')
             ->orderBy('name')
             ->get();

@@ -729,6 +729,7 @@ class AdminController extends Controller
                 'license_number' => 'required|string|max:50',
                 'license_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
                 'address' => 'required|string|max:255',
+                'availability' => 'required|in:available,unavailable',
                 'password' => ['nullable', 'string', new StrongPassword()],
                 'branch_id' => [
                     'nullable',
@@ -760,7 +761,7 @@ class AdminController extends Controller
                     ->with('error', 'This demo account has locked name, email, and password.');
             }
 
-            $data = $request->only('name', 'email', 'contact', 'license_number', 'address', 'branch_id', 'course_specializations');
+            $data = $request->only('name', 'email', 'contact', 'license_number', 'address', 'branch_id', 'course_specializations', 'availability');
 
             // Normalize contact
             if (!empty($data['contact'])) {
@@ -969,7 +970,7 @@ class AdminController extends Controller
                 return redirect()->route('schools.admin.login', $school);
             }
 
-            $request->validate([
+            $rules = [
                 'name' => 'required|string|max:255',
                 'email' => [
                     'required',
@@ -978,15 +979,22 @@ class AdminController extends Controller
                         ->where('school_id', $school->id)
                         ->ignore($admin->id),
                 ],
-                'contact' => ['nullable', 'string', 'max:20', 'regex:/^(09\d{9}|\+639\d{9}|9\d{9})$/'],
                 'current_password' => 'nullable|required_with:new_password|string',
                 'new_password' => ['nullable', 'confirmed', 'different:current_password', new StrongPassword()],
-            ]);
+            ];
+
+            if ($school->schoolSetting->enforce_ph_contact ?? true) {
+                $rules['contact'] = ['nullable', 'string', 'max:13', 'regex:/^(09\d{9}|\+639\d{9}|9\d{9})$/'];
+            } else {
+                $rules['contact'] = 'nullable|string|max:20';
+            }
+
+            $request->validate($rules);
 
             $data = $request->only(['name', 'email', 'contact']);
 
-            // Normalize contact number if provided
-            if (!empty($data['contact'])) {
+            // Normalize contact number if provided and enforced
+            if (($school->schoolSetting->enforce_ph_contact ?? true) && !empty($data['contact'])) {
                 $contact = trim((string) $data['contact']);
                 if (preg_match('/^9\d{9}$/', $contact)) {
                     $data['contact'] = '+63' . $contact;
@@ -1044,8 +1052,9 @@ class AdminController extends Controller
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
         }
 
+        $maxSize = ($school->schoolSetting->max_file_size_mb ?? 5) * 1024;
         $request->validate([
-            'profile_picture' => 'required|image|mimes:png,jpg,jpeg,webp|max:2048|dimensions:max_width=2000,max_height=2000',
+            'profile_picture' => "required|image|mimes:png,jpg,jpeg,webp|max:{$maxSize}|dimensions:max_width=2000,max_height=2000",
         ]);
 
         // Delete old profile picture if exists
@@ -1292,7 +1301,7 @@ class AdminController extends Controller
                 'accent_color' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
                 'background_type' => 'required|in:color,image',
                 'background_color' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
-                'background_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048|dimensions:max_width=4000,max_height=4000',
+                'background_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:' . (($school->schoolSetting->max_file_size_mb ?? 5) * 1024) . '|dimensions:max_width=4000,max_height=4000',
                 'background_opacity' => 'required|integer|min:0|max:100',
                 'sidebar_bg_color' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
                 'sidebar_text_color' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
@@ -1352,12 +1361,12 @@ class AdminController extends Controller
                 'register_subtitle_text' => 'nullable|string|max:255',
                 'login_page_bg_type' => 'nullable|in:color,image',
                 'login_page_bg_color' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
-                'login_page_bg_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048|dimensions:max_width=4000,max_height=4000',
+                'login_page_bg_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:' . (($school->schoolSetting->max_file_size_mb ?? 5) * 1024) . '|dimensions:max_width=4000,max_height=4000',
                 'login_page_bg_opacity' => 'nullable|integer|min:0|max:100',
                 // School-level GCash settings
                 'gcash_account_name' => 'nullable|string|max:120',
                 'gcash_account_number' => 'nullable|string|max:40',
-                'gcash_qr' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+                'gcash_qr' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:' . (($school->schoolSetting->max_file_size_mb ?? 5) * 1024),
                 'gcash_enabled' => 'nullable|boolean',
                 'booking_cutoff_hours' => 'required|integer|min:0|max:168',
                 'alert_threshold_pending' => 'required|integer|min:0|max:999',
@@ -1365,6 +1374,8 @@ class AdminController extends Controller
                 'invitation_expiry_days' => 'required|integer|min:1|max:30',
                 'branch_secretary_limit_per_branch' => 'required|integer|min:1|max:50',
                 'require_instructor_license' => 'nullable|boolean',
+                'max_file_size_mb' => 'required|integer|min:1|max:20',
+                'enforce_ph_contact' => 'nullable|boolean',
             ], [
                 'instructor_removal_notice_days.required' => 'Minimum notice period is required.',
                 'instructor_removal_notice_days.integer' => 'Notice period must be a number.',
@@ -1466,6 +1477,11 @@ class AdminController extends Controller
                 'invitation_expiry_days' => $request->invitation_expiry_days ?? 7,
                 'branch_secretary_limit_per_branch' => $request->branch_secretary_limit_per_branch ?? 1,
                 'require_instructor_license' => $request->has('require_instructor_license'),
+                'max_file_size_mb' => $request->max_file_size_mb ?? 5,
+                'enforce_ph_contact' => $request->has('enforce_ph_contact'),
+                'enable_pii_masking' => $request->has('enable_pii_masking'),
+                'min_tdc_duration_minutes' => $request->min_tdc_duration_minutes ?? 60,
+                'min_pdc_duration_minutes' => $request->min_pdc_duration_minutes ?? 60,
                 // Login page settings
                 'login_header_layout' => $request->login_header_layout ?? 'horizontal',
                 'login_logo_image' => $request->login_logo_image,
@@ -1649,6 +1665,7 @@ class AdminController extends Controller
 
         $instructors = $admin->scopeToBranch(Instructor::where('school_id', $school->id))
             ->where('status', 'active')
+            ->where('availability', 'available')
             ->get();
 
         $courses = \App\Models\Course::where('school_id', $school->id)
@@ -2154,7 +2171,7 @@ class AdminController extends Controller
             $validated = $request->validate([
                 'title' => 'required|string|max:255',
                 'description' => 'nullable|string',
-                'banner_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048|dimensions:max_width=4000,max_height=4000',
+                'banner_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:' . (($school->schoolSetting->max_file_size_mb ?? 5) * 1024) . '|dimensions:max_width=4000,max_height=4000',
                 'type' => 'required|string',
                 'vehicle_type' => 'nullable|string',
                 'course_type' => 'required|in:theoretical,practical,combo',
@@ -2232,7 +2249,7 @@ class AdminController extends Controller
             $validated = $request->validate([
                 'title' => 'required|string|max:255',
                 'description' => 'nullable|string',
-                'banner_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048|dimensions:max_width=4000,max_height=4000',
+                'banner_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:' . (($school->schoolSetting->max_file_size_mb ?? 5) * 1024) . '|dimensions:max_width=4000,max_height=4000',
                 'type' => 'required|string',
                 'vehicle_type' => 'nullable|string',
                 'course_type' => 'required|in:theoretical,practical,combo',

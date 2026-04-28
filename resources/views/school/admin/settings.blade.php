@@ -1111,29 +1111,21 @@
             <p class="page-subtitle">Personalize your school's appearance with colors, styles, and branding</p>
         </div>
     </div>
-
-    @if(session('success'))
-        <div class="alert alert-success" role="alert">
-            {{ session('success') }}
-        </div>
-    @endif
-
-    @if(session('error'))
-        <div class="alert alert-danger" role="alert">
-            {{ session('error') }}
-        </div>
-    @endif
-
-    @if($errors->any())
-        <div class="alert alert-danger" role="alert">
-            <strong>Unable to save settings.</strong>
-            <ul style="margin:8px 0 0 20px;">
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            @if(session('success'))
+                Toast.success("{{ session('success') }}");
+            @endif
+            @if(session('error'))
+                Toast.error("{{ session('error') }}");
+            @endif
+            @if($errors->any())
                 @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
+                    Toast.error("{{ $error }}");
                 @endforeach
-            </ul>
-        </div>
-    @endif
+            @endif
+        });
+    </script>
 
     <!-- Section Navigation -->
     <div class="tabs-container tabs-container-frame" id="settingsNavigation">
@@ -1259,6 +1251,53 @@
                                 Number of days an account setup link remains valid after being sent (1-30 days)
                             </small>
                         </div>
+                        <div class="form-group">
+                            <label class="form-label">Maximum File Upload Size (MB)</label>
+                            <input type="number" class="number-input" name="max_file_size_mb" value="{{ old('max_file_size_mb', $settings->max_file_size_mb ?? 5) }}" min="1" max="20">
+                            <small class="text-muted help-text-block">
+                                Sets the platform-wide limit for images (profile pictures, banners, licenses, etc.)
+                            </small>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">
+                                <input type="checkbox" name="enforce_ph_contact" value="1" {{ old('enforce_ph_contact', $settings->enforce_ph_contact ?? true) ? 'checked' : '' }} class="checkbox-inline">
+                                Enforce Philippine Mobile Format (+63)
+                            </label>
+                            <small class="text-muted help-text-block">
+                                When enabled, all contact inputs will show the +63 prefix and validate for PH mobile numbers.
+                            </small>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">
+                                <input type="checkbox" name="enable_pii_masking" value="1" {{ old('enable_pii_masking', $settings->enable_pii_masking ?? false) ? 'checked' : '' }} class="checkbox-inline">
+                                Mask Sensitive PII (Personally Identifiable Information)
+                            </label>
+                            <small class="text-muted help-text-block">
+                                When enabled, sensitive fields like Phone and Email will be masked in management tables. Admins can click to reveal.
+                            </small>
+                        </div>
+
+                        <div class="nav-divider"></div>
+
+                        <div class="form-group">
+                            <label class="form-label">Minimum TDC (Theoretical) Session Duration (Minutes)</label>
+                            <input type="number" class="number-input" name="min_tdc_duration_minutes" value="{{ old('min_tdc_duration_minutes', $settings->min_tdc_duration_minutes ?? 60) }}" min="1" max="720">
+                            <small class="text-muted help-text-block">
+                                Minimum required duration for classroom/theoretical sessions.
+                            </small>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Minimum PDC (Practical) Session Duration (Minutes)</label>
+                            <input type="number" class="number-input" name="min_pdc_duration_minutes" value="{{ old('min_pdc_duration_minutes', $settings->min_pdc_duration_minutes ?? 60) }}" min="1" max="720">
+                            <small class="text-muted help-text-block">
+                                Minimum required duration for driving/practical sessions.
+                            </small>
+                        </div>
+
+                        <div class="nav-divider"></div>
 
                         <!-- Grouped License Roadmap Section -->
                         <div class="roadmap-config-card" style="border: 2px solid #e5e7eb; border-radius: 15px; margin: 20px 0; overflow: hidden; background: #f8fafc;">

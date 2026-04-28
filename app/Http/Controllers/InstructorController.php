@@ -620,25 +620,38 @@ class InstructorController extends Controller
                 'email',
                 Rule::unique('instructors', 'email')->ignore($instructor->id),
             ],
-            'contact' => 'nullable|string|max:20|regex:/^[0-9]+$/',
+            'contact' => 'nullable|string|max:13|regex:/^(09\d{9}|\+639\d{9}|9\d{9})$/',
             'license_number' => 'nullable|string|max:50',
+            'availability' => 'required|in:available,unavailable',
             'current_password' => 'nullable|required_with:new_password',
             'new_password' => ['nullable', 'string', 'confirmed', new StrongPassword()],
         ]);
+
+        $data = [
+            'name' => $request->name,
+            'email' => $request->email,
+            'availability' => $request->availability,
+            'contact' => (function ($contact) {
+                if (empty($contact)) return null;
+                $contact = trim((string) $contact);
+                if (preg_match('/^9\d{9}$/', $contact)) {
+                    return '+63' . $contact;
+                } elseif (preg_match('/^09\d{9}$/', $contact)) {
+                    return '+63' . substr($contact, 1);
+                }
+                return $contact;
+            })($request->contact),
+            'license_number' => $request->license_number,
+        ];
 
         if ($request->filled('new_password')) {
             if (!Hash::check($request->current_password, $instructor->password)) {
                 return back()->withErrors(['current_password' => 'Current password is incorrect.']);
             }
-            $instructor->password = Hash::make($request->new_password);
+            $data['password'] = Hash::make($request->new_password);
         }
 
-        $instructor->update([
-            'name' => $request->name,
-            'email' => $request->email,
-            'contact' => $request->contact,
-            'license_number' => $request->license_number,
-        ]);
+        $instructor->update($data);
 
         return back()->with('success', 'Profile updated successfully!');
     }

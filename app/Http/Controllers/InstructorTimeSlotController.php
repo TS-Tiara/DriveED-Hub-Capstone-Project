@@ -314,15 +314,23 @@ class InstructorTimeSlotController extends Controller
     {
         $instructor = Auth::guard('instructor')->user();
 
-        $request->validate([
+        $rules = [
             'name' => 'required|string|max:255',
             'email' => 'required|email',
-            'contact' => ['required', 'string', 'max:20', 'regex:/^(09\d{9}|\+639\d{9}|9\d{9})$/'],
             'license_number' => 'required|string|max:50',
             'address' => 'required|string|max:255',
             'current_password' => 'nullable|required_with:new_password|string',
             'new_password' => ['nullable', 'confirmed', 'different:current_password', new StrongPassword()],
-        ]);
+            'availability' => 'required|in:available,unavailable',
+        ];
+
+        if ($school->schoolSetting->enforce_ph_contact ?? true) {
+            $rules['contact'] = ['required', 'string', 'max:20', 'regex:/^(09\d{9}|\+639\d{9}|9\d{9})$/'];
+        } else {
+            $rules['contact'] = 'required|string|max:20';
+        }
+
+        $request->validate($rules);
 
         $normalize = static function ($value) {
             if (is_string($value)) {
@@ -335,10 +343,10 @@ class InstructorTimeSlotController extends Controller
 
         $passwordChanged = $request->filled('new_password');
 
-        $data = $request->only(['name', 'email', 'contact', 'license_number', 'address']);
+        $data = $request->only(['name', 'email', 'contact', 'license_number', 'address', 'availability']);
         
-        // Normalize contact number
-        if (!empty($data['contact'])) {
+        // Normalize contact number if enforced
+        if (($school->schoolSetting->enforce_ph_contact ?? true) && !empty($data['contact'])) {
             $contact = trim((string)$data['contact']);
             if (preg_match('/^9\d{9}$/', $contact)) {
                 $data['contact'] = '+63' . $contact;
@@ -377,8 +385,9 @@ class InstructorTimeSlotController extends Controller
     {
         $instructor = Auth::guard('instructor')->user();
 
+        $maxSize = ($school->schoolSetting->max_file_size_mb ?? 5) * 1024;
         $request->validate([
-            'profile_picture' => 'required|image|mimes:png,jpg,jpeg,webp|max:2048|dimensions:max_width=2000,max_height=2000',
+            'profile_picture' => "required|image|mimes:png,jpg,jpeg,webp|max:{$maxSize}|dimensions:max_width=2000,max_height=2000",
         ]);
 
         // Delete old profile picture if exists
@@ -406,8 +415,9 @@ class InstructorTimeSlotController extends Controller
         $instructor = Auth::guard('instructor')->user();
         abort_unless($instructor && $instructor->school_id === $school->id, 403);
 
+        $maxSize = ($school->schoolSetting->max_file_size_mb ?? 5) * 1024;
         $request->validate([
-            'license_image' => 'required|image|mimes:png,jpg,jpeg,webp|max:2048',
+            'license_image' => "required|image|mimes:png,jpg,jpeg,webp|max:{$maxSize}",
         ]);
 
         try {

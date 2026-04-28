@@ -792,6 +792,43 @@
         margin-top: 6px;
     }
 
+    .contact-input-group {
+        display: flex;
+        align-items: center;
+        background: {{ $primaryColor }}05;
+        border: 2px solid {{ $primaryColor }}15;
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.2s;
+    }
+
+    .contact-input-group:focus-within {
+        border-color: {{ $primaryColor }};
+        background: white;
+        box-shadow: 0 0 0 4px {{ $primaryColor }}15;
+    }
+
+    .contact-prefix {
+        padding: 0 15px;
+        background: {{ $primaryColor }}10;
+        color: {{ $primaryColor }};
+        font-weight: 700;
+        font-size: 0.95rem;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        border-right: 2px solid {{ $primaryColor }}15;
+    }
+
+    .contact-input-group input {
+        flex: 1;
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        height: 44px !important;
+        padding: 0 15px !important;
+    }
+
     /* Restoring Compact Buttons */
     .btn-secondary, .btn-primary {
         height: 40px !important;
@@ -868,6 +905,56 @@
         .action-buttons {
             flex-direction: column;
         }
+    }
+    .btn-reveal-pii {
+        background: none;
+        border: none;
+        padding: 0;
+        color: {{ $primaryColor }};
+        cursor: pointer;
+        opacity: 0.6;
+        transition: all 0.2s;
+        font-size: 1rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        vertical-align: middle;
+    }
+
+    .btn-reveal-pii:hover {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+
+    .btn-reveal-pii.timer-active {
+        color: #94a3b8;
+        cursor: wait;
+    }
+
+    .masked-pii {
+        font-family: 'JetBrains Mono', 'Courier New', monospace;
+        letter-spacing: 0.5px;
+        font-size: 0.9rem;
+        vertical-align: middle;
+    }
+
+    .pii-wrapper {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 24px;
+        vertical-align: middle;
+    }
+
+    /* Improved Table Spacing */
+    .admin-table th, 
+    .admin-table td {
+        vertical-align: middle !important;
+        padding: 18px 15px !important;
+    }
+
+    .admin-table thead th {
+        white-space: nowrap;
     }
 </style>
 
@@ -977,7 +1064,12 @@
             <thead>
                 <tr>
                     <th>Name</th>
-                    <th>Email</th>
+                    <th>
+                        Email
+                        @if($settings->enable_pii_masking ?? false)
+                            <i class="bi bi-shield-lock" style="font-size: 0.75rem; color: rgba(255,255,255,0.8); margin-left: 4px;" title="Privacy Protected (PII Masking Active)"></i>
+                        @endif
+                    </th>
                     <th>Role</th>
                     <th>Branch</th>
                     <th>Status</th>
@@ -991,7 +1083,22 @@
                     <td>
                         <span class="admin-name">{{ $adminRow->name }}</span>
                     </td>
-                    <td>{{ $adminRow->email }}</td>
+                    <td>
+                        @if(($settings->enable_pii_masking ?? false) && $adminRow->email)
+                            @php
+                                $emailParts = explode('@', $adminRow->email);
+                                $maskedEmail = substr($emailParts[0], 0, 2) . str_repeat('*', max(0, strlen($emailParts[0]) - 2)) . '@' . $emailParts[1];
+                            @endphp
+                            <div class="pii-wrapper">
+                                <span class="masked-pii" data-full="{{ $adminRow->email }}">{{ $maskedEmail }}</span>
+                                <button type="button" class="btn-reveal-pii" onclick="revealPII(this)" title="Click to reveal (5s)">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                        @else
+                            {{ $adminRow->email }}
+                        @endif
+                    </td>
                     <td>
                         @if($adminRow->role === 'school_admin')
                             <span class="role-badge role-school-admin">
@@ -1191,7 +1298,15 @@
                 </div>
                 <div class="form-group">
                     <label for="create_contact">Contact Number <span class="required-indicator">*</span></label>
-                    <input type="text" id="create_contact" name="contact" required placeholder="Enter contact number" value="{{ old('contact') }}" inputmode="numeric" pattern="[0-9]*" autocomplete="tel" maxlength="15">
+                    @if($settings->enforce_ph_contact ?? true)
+                        <div class="contact-input-group">
+                            <span class="contact-prefix">+63</span>
+                            <input type="text" id="create_contact" name="contact" required placeholder="9123456789" value="{{ old('contact') }}" inputmode="numeric" autocomplete="tel" maxlength="10">
+                        </div>
+                        <p class="form-hint">Enter the 10-digit number after +63 (e.g., 9123456789).</p>
+                    @else
+                        <input type="text" id="create_contact" name="contact" required placeholder="Enter contact number" value="{{ old('contact') }}">
+                    @endif
                 </div>
                 <input type="hidden" id="create_role" name="role" value="{{ old('role', 'school_admin') }}">
                 
@@ -1265,7 +1380,15 @@
                 </div>
                 <div class="form-group">
                     <label for="edit_contact">Contact Number <span class="required-indicator">*</span></label>
-                    <input type="text" id="edit_contact" name="contact" required placeholder="Enter contact number" inputmode="numeric" pattern="[0-9]*" autocomplete="tel" maxlength="15">
+                    @if($settings->enforce_ph_contact ?? true)
+                        <div class="contact-input-group">
+                            <span class="contact-prefix">+63</span>
+                            <input type="text" id="edit_contact" name="contact" required placeholder="9123456789" inputmode="numeric" autocomplete="tel" maxlength="10">
+                        </div>
+                        <p class="form-hint">Enter the 10-digit number after +63 (e.g., 9123456789).</p>
+                    @else
+                        <input type="text" id="edit_contact" name="contact" required placeholder="Enter contact number">
+                    @endif
                 </div>
                 <input type="hidden" id="edit_role" name="role">
                 
@@ -1295,7 +1418,11 @@
     function enforceNumericOnly(input) {
         if (!input) return;
         const sanitize = function() {
-            input.value = input.value.replace(/\D+/g, '');
+            let val = input.value.replace(/\D+/g, '');
+            if (val.startsWith('0')) {
+                val = val.substring(1);
+            }
+            input.value = val;
         };
         input.addEventListener('input', sanitize);
         input.addEventListener('paste', function() { setTimeout(sanitize, 0); });
@@ -1493,5 +1620,34 @@
             openCreateModal(@json(old('role')));
         }
     });
+    // PII Reveal Logic with 5s Timer
+    function revealPII(button) {
+        const span = button.previousElementSibling;
+        const fullValue = span.getAttribute('data-full');
+        const originalMasked = span.textContent;
+        
+        if (span.classList.contains('revealed')) return;
+
+        // Show full value
+        span.textContent = fullValue;
+        span.classList.add('revealed');
+        
+        // UI Feedback: Change icon to clock and disable button
+        const originalIcon = button.innerHTML;
+        button.innerHTML = '<i class="bi bi-clock-history"></i>';
+        button.classList.add('timer-active');
+        button.disabled = true;
+
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+            span.textContent = originalMasked;
+            span.classList.remove('revealed');
+            button.innerHTML = originalIcon;
+            button.classList.remove('timer-active');
+            button.disabled = false;
+        }, 5000);
+        
+        console.log('PII Revealed (Temporary)');
+    }
 </script>
 @endsection

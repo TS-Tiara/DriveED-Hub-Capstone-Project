@@ -78,7 +78,7 @@ class AdminManagementController extends Controller
                 Rule::unique('students', 'email')->where('school_id', $school->id),
                 Rule::unique('instructors', 'email')->where('school_id', $school->id),
             ],
-            'contact' => ['required', 'string', 'max:20', 'regex:/^[0-9]+$/'],
+            'contact' => ['required', 'string', 'max:13', 'regex:/^(09\d{9}|\+639\d{9}|9\d{9})$/'],
             'role' => ['required', 'in:school_admin,branch_secretary'],
             'branch_id' => ['required_if:role,branch_secretary', 'nullable', 'exists:branches,id'],
         ]);
@@ -115,7 +115,15 @@ class AdminManagementController extends Controller
                 'token' => \Illuminate\Support\Str::random(40),
                 'payload' => [
                     'name' => trim($validated['name']),
-                    'contact' => trim((string)($validated['contact'] ?? '')),
+                    'contact' => (function ($contact) {
+                        $contact = trim((string) $contact);
+                        if (preg_match('/^9\d{9}$/', $contact)) {
+                            return '+63' . $contact;
+                        } elseif (preg_match('/^09\d{9}$/', $contact)) {
+                            return '+63' . substr($contact, 1);
+                        }
+                        return $contact;
+                    })($validated['contact'] ?? ''),
                 ],
                 'expires_at' => now()->addDays($invitationExpiryDays),
             ]);
@@ -180,7 +188,7 @@ class AdminManagementController extends Controller
                 Rule::unique('admins', 'email')->ignore($targetAdmin->id),
             ],
             'password' => ['nullable', 'string', 'confirmed', new StrongPassword()],
-            'contact' => ['required', 'string', 'max:20', 'regex:/^[0-9]+$/'],
+            'contact' => ['required', 'string', 'max:13', 'regex:/^(09\d{9}|\+639\d{9}|9\d{9})$/'],
             'role' => ['required', 'in:school_admin,branch_secretary'],
             'branch_id' => ['required_if:role,branch_secretary', 'nullable', 'exists:branches,id'],
         ]);
@@ -216,7 +224,16 @@ class AdminManagementController extends Controller
         $updateData = [
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'contact' => $validated['contact'] ?? null,
+            'contact' => (function ($contact) {
+                if (empty($contact)) return null;
+                $contact = trim((string) $contact);
+                if (preg_match('/^9\d{9}$/', $contact)) {
+                    return '+63' . $contact;
+                } elseif (preg_match('/^09\d{9}$/', $contact)) {
+                    return '+63' . substr($contact, 1);
+                }
+                return $contact;
+            })($validated['contact'] ?? ''),
             'role' => $validated['role'],
             'branch_id' => $validated['role'] === Admin::ROLE_BRANCH_SECRETARY ? $validated['branch_id'] : null,
         ];

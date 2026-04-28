@@ -51,7 +51,7 @@ class GuestController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:students,email'],
             'password' => ['required', 'confirmed', new StrongPassword()],
-            'contact' => ['required', 'string', 'max:20', 'regex:/^[0-9]+$/'],
+            'contact' => ['required', 'string', 'max:13', 'regex:/^(09\d{9}|\+639\d{9}|9\d{9})$/'],
             'address' => ['nullable', 'string', 'max:500'],
             'location' => ['nullable', 'string', 'max:255'],
             'accept_privacy' => ['required', 'accepted'],
@@ -69,7 +69,15 @@ class GuestController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
-            'contact' => $validated['contact'],
+            'contact' => (function ($contact) {
+                $contact = trim((string) $contact);
+                if (preg_match('/^9\d{9}$/', $contact)) {
+                    return '+63' . $contact;
+                } elseif (preg_match('/^09\d{9}$/', $contact)) {
+                    return '+63' . substr($contact, 1);
+                }
+                return $contact;
+            })($validated['contact']),
             'address' => $validated['address'] ?? null,
             'location' => $validated['location'] ?? null,
             'status' => 'active',

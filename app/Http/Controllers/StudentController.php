@@ -329,15 +329,22 @@ class StudentController extends Controller
 
         $supportsDateOfBirth = Schema::hasColumn('students', 'date_of_birth');
 
-        $request->validate([
+        $rules = [
             'name' => 'required|string|max:255',
             'email' => 'required|email',
-            'contact' => ['required', 'string', 'max:20', 'regex:/^(09\d{9}|\+639\d{9}|9\d{9})$/'],
-            'address' => 'nullable|string|max:255',
+            'address' => $supportsDateOfBirth ? 'nullable|string|max:255' : 'required|string|max:255',
             'date_of_birth' => $supportsDateOfBirth ? 'nullable|date|before:today' : 'nullable',
             'current_password' => 'nullable|required_with:new_password|string',
             'new_password' => ['nullable', 'confirmed', 'different:current_password', new StrongPassword()],
-        ]);
+        ];
+
+        if ($school->schoolSetting->enforce_ph_contact ?? true) {
+            $rules['contact'] = ['required', 'string', 'max:13', 'regex:/^(09\d{9}|\+639\d{9}|9\d{9})$/'];
+        } else {
+            $rules['contact'] = 'required|string|max:20';
+        }
+
+        $request->validate($rules);
 
         $normalize = static function ($value) {
             if (is_string($value)) {
@@ -353,8 +360,8 @@ class StudentController extends Controller
 
         $data = $request->only(['name', 'email', 'contact', 'address', 'date_of_birth']);
         
-        // Normalize contact number
-        if (!empty($data['contact'])) {
+        // Normalize contact number if enforced
+        if (($school->schoolSetting->enforce_ph_contact ?? true) && !empty($data['contact'])) {
             $contact = trim((string)$data['contact']);
             if (preg_match('/^9\d{9}$/', $contact)) {
                 $data['contact'] = '+63' . $contact;
@@ -393,8 +400,9 @@ class StudentController extends Controller
     {
         $student = Auth::guard('student')->user();
 
+        $maxSize = ($school->schoolSetting->max_file_size_mb ?? 5) * 1024;
         $request->validate([
-            'profile_picture' => 'required|image|mimes:png,jpg,jpeg,webp|max:2048|dimensions:max_width=2000,max_height=2000',
+            'profile_picture' => "required|image|mimes:png,jpg,jpeg,webp|max:{$maxSize}|dimensions:max_width=2000,max_height=2000",
         ]);
 
         // Delete old profile picture if exists

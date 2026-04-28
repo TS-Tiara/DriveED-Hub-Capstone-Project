@@ -152,7 +152,7 @@ class CourseController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string|max:5000',
-            'banner_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048|dimensions:max_width=4000,max_height=4000',
+            'banner_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120|dimensions:max_width=4000,max_height=4000',
             'price' => 'nullable|numeric|min:0',
             'duration_hours' => 'nullable|numeric|min:0',
             'max_students' => 'nullable|integer|min:1',
@@ -262,7 +262,7 @@ class CourseController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string|max:5000',
-            'banner_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048|dimensions:max_width=4000,max_height=4000',
+            'banner_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120|dimensions:max_width=4000,max_height=4000',
             'price' => 'nullable|numeric|min:0',
             'duration_hours' => 'nullable|numeric|min:0',
             'max_students' => 'nullable|integer|min:1',

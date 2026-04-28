@@ -467,23 +467,21 @@
             </div>
         </div>
 
-        @if(session('success'))
-            <div class="alert alert-success">{{ session('success') }}</div>
-        @endif
-
-        @if(session('error'))
-            <div class="alert alert-error">{{ session('error') }}</div>
-        @endif
-
-        @if($errors->any())
-            <div class="alert alert-error">
-                <ul class="error-list-compact">
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                @if(session('success'))
+                    showToast("{{ session('success') }}", 'success');
+                @endif
+                @if(session('error'))
+                    showToast("{{ session('error') }}", 'error');
+                @endif
+                @if($errors->any())
                     @foreach($errors->all() as $error)
-                        <li>{{ $error }}</li>
+                        showToast("{{ $error }}", 'error');
                     @endforeach
-                </ul>
-            </div>
-        @endif
+                @endif
+            });
+        </script>
 
 
 
@@ -590,7 +588,16 @@
                     <div class="profile-field">
                         <div class="profile-field-label">Availability:</div>
                         <div class="profile-field-value">
-                            {{ ucfirst(str_replace('_', ' ', $instructor->availability ?? 'Not Set')) }}</div>
+                            @if(($instructor->availability ?? 'available') === 'available')
+                                <span class="badge bg-success" style="font-size: 0.75rem; padding: 4px 10px; border-radius: 6px;">
+                                    <i class="bi bi-check-circle me-1"></i> Available
+                                </span>
+                            @else
+                                <span class="badge bg-secondary" style="font-size: 0.75rem; padding: 4px 10px; border-radius: 6px;">
+                                    <i class="bi bi-dash-circle me-1"></i> Unavailable
+                                </span>
+                            @endif
+                        </div>
                     </div>
 
                     <div class="profile-field">
@@ -630,13 +637,17 @@
 
                     <div class="form-field">
                         <label for="contact">Contact <span class="required-indicator">*</span></label>
-                        <div class="contact-input-group">
-                            <span class="contact-prefix">+63</span>
-                            <input type="text" id="contact" name="contact"
-                                value="{{ old('contact', $instructor->contact) }}" inputmode="numeric" pattern="[0-9]*"
-                                autocomplete="tel" maxlength="10" required placeholder="9123456789">
-                        </div>
-                        <p class="field-help">Enter the 10-digit number after +63 (e.g., 9123456789).</p>
+                        @if($settings->enforce_ph_contact ?? true)
+                            <div class="contact-input-group">
+                                <span class="contact-prefix">+63</span>
+                                <input type="text" id="contact" name="contact"
+                                    value="{{ old('contact', $instructor->contact) }}" inputmode="numeric" pattern="[0-9]*"
+                                    autocomplete="tel" maxlength="10" required placeholder="9123456789">
+                            </div>
+                            <p class="field-help">Enter the 10-digit number after +63 (e.g., 9123456789).</p>
+                        @else
+                            <input type="text" id="contact" name="contact" value="{{ old('contact', $instructor->contact) }}" required placeholder="Enter contact number">
+                        @endif
                     </div>
 
                     <div class="form-field">
@@ -649,6 +660,15 @@
                         <label for="license_number">License Number <span class="required-indicator">*</span></label>
                         <input type="text" id="license_number" name="license_number"
                             value="{{ old('license_number', $instructor->license_number) }}" required>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="availability">Teaching Availability <span class="required-indicator">*</span></label>
+                        <select id="availability" name="availability" class="form-control" style="width: 100%; padding: 10px 12px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 0.88rem; outline: none; background: white;" required>
+                            <option value="available" {{ old('availability', $instructor->availability) === 'available' ? 'selected' : '' }}>Available (Visible for Bookings)</option>
+                            <option value="unavailable" {{ old('availability', $instructor->availability) === 'unavailable' ? 'selected' : '' }}>Unavailable (Hidden from Bookings)</option>
+                        </select>
+                        <p class="field-help" style="margin-top: 6px; font-size: 0.8rem; color: #6b7280;">When set to "Unavailable", you will not appear in the booking schedules for students.</p>
                     </div>
 
 
@@ -709,7 +729,11 @@
         function enforceNumericOnly(input) {
             if (!input) return;
             const sanitize = function () {
-                input.value = input.value.replace(/\D+/g, '');
+                let val = input.value.replace(/\D+/g, '');
+                if (val.startsWith('0')) {
+                    val = val.substring(1);
+                }
+                input.value = val;
             };
             input.addEventListener('input', sanitize);
             input.addEventListener('paste', function () { setTimeout(sanitize, 0); });
@@ -795,7 +819,9 @@
         }
 
         document.addEventListener('DOMContentLoaded', function () {
+            @if($settings->enforce_ph_contact ?? true)
             enforceNumericOnly(document.getElementById('contact'));
+            @endif
 
             const hasErrors = {{ $errors->any() ? 'true' : 'false' }};
             const hasPasswordErrors = {{ ($errors->has('current_password') || $errors->has('new_password') || $errors->has('new_password_confirmation')) ? 'true' : 'false' }};
@@ -821,14 +847,15 @@
             // Validate file type
             const allowedTypes = ['image/png', 'image/jpg', 'image/jpeg', 'image/webp'];
             if (!allowedTypes.includes(file.type)) {
-                alert('Please upload a valid image file (PNG, JPG, JPEG, or WebP).');
+                showToast('Please upload a valid image file (PNG, JPG, JPEG, or WebP).', 'error');
                 input.value = '';
                 return;
             }
 
-            // Validate file size (2MB)
-            if (file.size > 2 * 1024 * 1024) {
-                alert('File size must be less than 2MB.');
+            // Validate file size
+            const maxFileSizeMB = {{ $settings->max_file_size_mb ?? 5 }};
+            if (file.size > maxFileSizeMB * 1024 * 1024) {
+                showToast('File size must be less than ' + maxFileSizeMB + 'MB.', 'error');
                 input.value = '';
                 return;
             }
@@ -872,31 +899,23 @@
                         }
 
                         overlay.textContent = originalText;
-                        alert(data.message);
+                        showToast(data.message, 'success');
                     } else {
                         overlay.textContent = originalText;
-                        alert(data.message || 'Failed to upload profile picture.');
+                        showToast(data.message || 'Failed to upload profile picture.', 'error');
                     }
                 })
                 .catch(error => {
                     overlay.textContent = originalText;
                     console.error('Error:', error);
-                    alert('An error occurred while uploading the profile picture.');
+                    showToast('An error occurred while uploading the profile picture.', 'error');
                 })
                 .finally(() => {
                     input.value = '';
                 });
         }
 
-        // Auto-strip leading zero from contact inputs
-        document.addEventListener('input', function (e) {
-            if (e.target.getAttribute('name') === 'contact' || e.target.id.includes('contact')) {
-                let value = e.target.value;
-                if (value.startsWith('0')) {
-                    e.target.value = value.substring(1);
-                }
-            }
-        });
+
 
         function uploadLicense(input) {
             if (!input.files || !input.files[0]) return;
@@ -906,16 +925,15 @@
             // Validate file type
             const allowedTypes = ['image/png', 'image/jpg', 'image/jpeg', 'image/webp'];
             if (!allowedTypes.includes(file.type)) {
-                if (typeof showToast === 'function') showToast('Please upload a valid image file.', 'error');
-                else alert('Please upload a valid image file (PNG, JPG, JPEG, or WebP).');
+                showToast('Please upload a valid image file (PNG, JPG, JPEG, or WebP).', 'error');
                 input.value = '';
                 return;
             }
 
-            // Validate file size (2MB)
-            if (file.size > 2 * 1024 * 1024) {
-                if (typeof showToast === 'function') showToast('File size must be less than 2MB.', 'error');
-                else alert('File size must be less than 2MB.');
+            // Validate file size
+            const maxFileSizeMB = {{ $settings->max_file_size_mb ?? 5 }};
+            if (file.size > maxFileSizeMB * 1024 * 1024) {
+                showToast('File size must be less than ' + maxFileSizeMB + 'MB.', 'error');
                 input.value = '';
                 return;
             }
@@ -945,8 +963,7 @@
                     if (data.success) {
                         showSuccessModal('Upload Successful', data.message, file);
                     } else {
-                        if (typeof showToast === 'function') showToast(data.message || 'Failed to upload license.', 'error');
-                        else alert(data.message || 'Failed to upload license.');
+                        showToast(data.message || 'Failed to upload license.', 'error');
                         if (btn) {
                             btn.innerHTML = originalBtnText;
                             btn.disabled = false;
@@ -955,8 +972,7 @@
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    if (typeof showToast === 'function') showToast('An error occurred while uploading the license.', 'error');
-                    else alert('An error occurred while uploading the license.');
+                    showToast('An error occurred while uploading the license.', 'error');
                     if (btn) {
                         btn.innerHTML = originalBtnText;
                         btn.disabled = false;
