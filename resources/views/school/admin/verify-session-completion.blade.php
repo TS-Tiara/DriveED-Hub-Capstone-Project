@@ -8,6 +8,7 @@
         $schoolName = $school->name ?? 'Driving School';
         $settings = $school?->schoolSetting;
         $primaryColor = $settings?->primary_color ?? '#667eea';
+        $secondaryColor = $settings?->secondary_color ?? '#764ba2';
     @endphp
 
     @include('school.admin.partials.admin-styles')
@@ -128,16 +129,26 @@
             border-collapse: collapse;
         }
 
+        .history-table thead {
+            background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
+            color: #ffffff;
+        }
+
         .history-table th {
-            background: #f9fafb;
-            padding: 14px 16px;
+            background: transparent;
+            color: inherit;
+            padding: 15px;
             text-align: left;
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: #6b7280;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-transform: none;
+            letter-spacing: 0;
             border-bottom: 2px solid #e5e7eb;
+        }
+
+        .history-table th:hover {
+            background: transparent;
+            color: inherit;
         }
 
         .history-table td {
@@ -147,7 +158,7 @@
             color: #1f2937;
         }
 
-        .history-table tr:hover {
+        .history-table tbody tr:hover {
             background: #fcfcfc;
         }
 
