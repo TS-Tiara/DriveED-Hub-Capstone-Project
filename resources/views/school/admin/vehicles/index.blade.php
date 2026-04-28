@@ -644,6 +644,12 @@
                 openVehicleModal('createVehicleModal');
             @endif
         @endif
+        // Auto-replace space with dash in Plate Number
+        document.querySelectorAll('input[name="license_plate"]').forEach(input => {
+            input.addEventListener('input', function() {
+                this.value = this.value.replace(/\s+/g, '-');
+            });
+        });
     });
 </script>
 
