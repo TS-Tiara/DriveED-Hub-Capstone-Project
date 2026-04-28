@@ -92,6 +92,7 @@ class SchoolSetting extends Model
         'invitation_expiry_days',
         'branch_secretary_limit_per_branch',
         'require_instructor_license',
+        'license_instructions',
     ];
 
     protected $casts = [
@@ -108,6 +109,7 @@ class SchoolSetting extends Model
         'require_instructor_license' => 'boolean',
         'custom_css' => 'array',
         'additional_settings' => 'array',
+        'license_instructions' => 'array',
     ];
 
     public function school(): BelongsTo

@@ -397,6 +397,14 @@ class BookingController extends Controller
 
         if (!empty($validated['instructor_id'])) {
             $instructor = $school->instructors()->findOrFail($validated['instructor_id']);
+            
+            if (!$instructor->canTeach($course)) {
+                $message = "Instructor {$instructor->name} is not accredited to teach this course.";
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json(['success' => false, 'message' => $message], 422);
+                }
+                return back()->withErrors(['instructor_id' => $message]);
+            }
         }
 
         if (!empty($validated['time_slot_id'])) {
@@ -764,6 +772,14 @@ class BookingController extends Controller
         $course = $school->courses()->findOrFail($validated['course_id']);
         if (!empty($validated['instructor_id'])) {
             $instructor = $school->instructors()->findOrFail($validated['instructor_id']);
+
+            if (!$instructor->canTeach($course)) {
+                $message = "Instructor {$instructor->name} is not accredited to teach this course.";
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json(['success' => false, 'message' => $message], 422);
+                }
+                return back()->withErrors(['instructor_id' => $message]);
+            }
         }
 
         // If status is being changed to cancelled, track who cancelled it

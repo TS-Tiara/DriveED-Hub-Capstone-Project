@@ -526,12 +526,14 @@
     }
 
     .admin-table thead th {
-        padding: 14px 18px;
+        background: transparent;
+        color: inherit;
+        padding: 15px;
         text-align: left;
         font-weight: 600;
-        font-size: 0.9rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+        font-size: 0.95rem;
+        text-transform: none;
+        letter-spacing: 0;
     }
 
     /* Badges & Actions - Color Theory */

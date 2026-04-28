@@ -1749,9 +1749,7 @@
                                     @endphp
                                     <div class="slot-bar {{ $statusClass }}">
                                         {{ \Carbon\Carbon::parse($slot->start_time)->format('g:i A') }} 
-                                        @if($instructorCount === 0)
-                                            (No Instructor)
-                                        @else
+                                        @if($instructorCount > 0)
                                             ({{ $totalAssigned }}/{{ $maxCapacity }})
                                         @endif
                                     </div>
@@ -1781,7 +1779,7 @@
                         <span style="font-weight: 500; color: #64748b;">Fully Assigned</span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="width: 16px; height: 16px; background: #cbd5e1; border-radius: 4px;"></span>
+                        <span style="width: 16px; height: 16px; background: #94a3b8; border-radius: 4px;"></span>
                         <span style="font-weight: 500; color: #64748b;">No Instructor (No Room)</span>
                     </div>
                 </div>
@@ -1804,10 +1802,7 @@
 
                     <div class="agenda-day-group {{ $isToday ? 'is-today' : 'collapsed' }}" id="day-{{ \Carbon\Carbon::parse($date)->format('Y-m-d') }}">
                         {{-- Branded Day Header --}}
-                        <div class="agenda-header" onclick="toggleAgendaDay(this)" 
-                             style="background: {{ $isToday ? $primaryColor : '#f8fafc' }}; 
-                                    color: {{ $isToday ? '#ffffff' : '#1e293b' }};
-                                    border-bottom: 1px solid #e2e8f0; padding: 14px 24px;">
+                        <div class="agenda-header" onclick="toggleAgendaDay(this)">
                             <div class="header-main" style="display: flex; align-items: center;">
                                 <span class="full-date" style="font-weight: 700; font-size: 1.05rem;">
                                     {{ \Carbon\Carbon::parse($date)->format('F j, Y') }}
@@ -1948,11 +1943,43 @@
 
         <style>
             .agenda-day-group { transition: all 0.3s ease; }
-            .agenda-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: all 0.2s; }
-            .agenda-header:hover { opacity: 0.95; }
+            .agenda-header { 
+                display: flex; 
+                justify-content: space-between; 
+                align-items: center; 
+                cursor: pointer; 
+                transition: all 0.2s; 
+                padding: 14px 24px;
+                border-bottom: 1px solid #e2e8f0;
+                border-left: 6px solid transparent;
+            }
+            .agenda-header:hover { filter: brightness(0.98); }
+            
+            /* Not Today - Collapsed */
+            .agenda-day-group:not(.is-today).collapsed .agenda-header {
+                background: #f1f5f9;
+                color: #475569;
+                border-left-color: #cbd5e1;
+            }
+            
+            /* Not Today - Expanded */
+            .agenda-day-group:not(.is-today):not(.collapsed) .agenda-header {
+                background: #f8fafc;
+                color: #1e293b;
+                border-left-color: {{ $primaryColor }};
+            }
+            
+            /* Today - Always Branded */
+            .agenda-day-group.is-today .agenda-header {
+                background: {{ $primaryColor }};
+                color: #ffffff;
+                border-left-color: rgba(255,255,255,0.4);
+                border-bottom-color: rgba(255,255,255,0.1);
+            }
+            
+            .agenda-day-group.collapsed .agenda-content { display: none; }
             .chevron { transition: transform 0.3s; }
             .collapsed .chevron { transform: rotate(-90deg); }
-            .collapsed .agenda-content { display: none; }
             .agenda-content { background: #ffffff; }
             .schedule-table { width: 100%; border-collapse: collapse; }
             .schedule-table th { background: #f8fafc; padding: 8px 20px; text-align: left; font-size: 0.65rem; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #e2e8f0; }
@@ -1963,11 +1990,6 @@
         <script>
             function toggleAgendaDay(header) {
                 const group = header.parentElement;
-                document.querySelectorAll('.agenda-day-group').forEach(otherGroup => {
-                    if (otherGroup !== group) {
-                        otherGroup.classList.add('collapsed');
-                    }
-                });
                 group.classList.toggle('collapsed');
             }
         </script>
@@ -2178,9 +2200,23 @@
                             const submitBtn = document.getElementById('submitCreateBtn');
                             
                             if (start && end) {
-                                // Simple string comparison works for HH:mm format
+                                const startTimeParts = start.split(':');
+                                const endTimeParts = end.split(':');
+                                
+                                const startMinutes = parseInt(startTimeParts[0], 10) * 60 + parseInt(startTimeParts[1], 10);
+                                const endMinutes = parseInt(endTimeParts[0], 10) * 60 + parseInt(endTimeParts[1], 10);
+                                const duration = endMinutes - startMinutes;
+
+                                console.log(`Validating Time Range: ${start} to ${end} | Duration: ${duration} mins`);
+                                
                                 if (start >= end) {
                                     errorMsg.textContent = 'End time must be after start time.';
+                                    errorMsg.style.display = 'block';
+                                    document.getElementById('startTimeContainer').querySelector('.custom-select-trigger').style.borderColor = '#ef4444';
+                                    document.getElementById('endTimeContainer').querySelector('.custom-select-trigger').style.borderColor = '#ef4444';
+                                    if(submitBtn) submitBtn.disabled = true;
+                                } else if (duration < 60) {
+                                    errorMsg.textContent = 'The session must be at least 1 hour long. (Current: ' + duration + ' mins)';
                                     errorMsg.style.display = 'block';
                                     document.getElementById('startTimeContainer').querySelector('.custom-select-trigger').style.borderColor = '#ef4444';
                                     document.getElementById('endTimeContainer').querySelector('.custom-select-trigger').style.borderColor = '#ef4444';
