@@ -2236,8 +2236,18 @@
 
             let visibleCount = 0;
             rows.forEach(function (row) {
-                const rowText = (row.textContent || '').toLowerCase();
-                const visible = query === '' || rowText.indexOf(query) !== -1;
+                const cells = row.querySelectorAll('td');
+                if (cells.length < 4) return;
+
+                const name = (cells[0].textContent || '').toLowerCase();
+                const email = (cells[1].textContent || '').toLowerCase();
+                const role = (cells[3].textContent || '').toLowerCase();
+
+                const visible = query === '' ||
+                                name.indexOf(query) !== -1 ||
+                                email.indexOf(query) !== -1 ||
+                                role.indexOf(query) !== -1;
+
                 row.style.display = visible ? '' : 'none';
                 if (visible) {
                     visibleCount++;
