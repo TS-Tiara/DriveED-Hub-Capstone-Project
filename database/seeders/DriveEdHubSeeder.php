@@ -371,7 +371,7 @@ class DriveEdHubSeeder extends Seeder
                         'approved_at' => $data['status'] === 'approved' ? now()->subDays(5) : null,
                         'enrolled_at' => $data['status'] === 'approved' ? now()->subDays(5) : null,
                         'cancellation_requested' => $data['cancellation'] ?? false,
-                        'cancellation_reason' => ($data['cancellation'] ?? false) ? 'Personal emergency, need to reschedule later.' : null,
+                        'cancellation_reason' => ($data['cancellation'] ?? false) ? 'Decided to enroll in a different branch.' : null,
                     ]
                 );
             }

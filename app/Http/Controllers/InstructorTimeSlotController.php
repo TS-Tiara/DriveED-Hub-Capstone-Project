@@ -132,15 +132,16 @@ class InstructorTimeSlotController extends Controller
             return redirect()->back()->with('error', 'This time slot is full.');
         }
 
-        // Check if instructor is qualified for this course
-        $instructorCourses = $instructor->course_specializations ?? [];
-        $isQualified = empty($instructorCourses) || in_array($timeSlot->course_id, $instructorCourses);
-
-        if (!$isQualified) {
+        // Check if instructor is legally accredited to teach this specific course (LTO Compliance)
+        if (!$instructor->canTeach($timeSlot->course)) {
+            $msg = ($instructor->license_status === 'verified') 
+                ? 'You do not have the required LTO restriction code for this course.' 
+                : 'Your license is not yet verified. Please update your profile with your driver\'s license.';
+            
             if ($isAjax) {
-                return response()->json(['success' => false, 'message' => 'You are not qualified for this course. Please contact your admin for course assignment approval.'], 400);
+                return response()->json(['success' => false, 'message' => $msg], 400);
             }
-            return redirect()->back()->with('error', 'You are not qualified for this course. Please contact your admin for course assignment approval.');
+            return redirect()->back()->with('error', $msg);
         }
 
         $hasConflict = TimeSlot::where('school_id', '=', $school->id)
@@ -400,6 +401,39 @@ class InstructorTimeSlotController extends Controller
         catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Failed to update profile picture', ['error' => $e->getMessage()]);
             return response()->json(['success' => false, 'message' => 'An error occurred.'], 500);
+        }
+    }
+
+    public function uploadLicense(Request $request, School $school)
+    {
+        $instructor = Auth::guard('instructor')->user();
+        abort_unless($instructor && $instructor->school_id === $school->id, 403);
+
+        $request->validate([
+            'license_image' => 'required|image|mimes:png,jpg,jpeg,webp|max:2048',
+        ]);
+
+        try {
+            // Delete old license if exists
+            if ($instructor->license_image) {
+                Storage::disk('public')->delete($instructor->license_image);
+            }
+
+            $path = $request->file('license_image')->store('instructor_licenses', 'public');
+            
+            $instructor->update([
+                'license_image' => $path,
+                'license_status' => 'pending'
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'License uploaded successfully and is now pending verification.',
+                'path' => $path
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to upload license', ['error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'An error occurred during upload.'], 500);
         }
     }
 

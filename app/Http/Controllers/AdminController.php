@@ -806,6 +806,73 @@ class AdminController extends Controller
         }
     }
 
+    public function toggleInstructorAvailability(School $school, $id)
+    {
+        try {
+            $admin = Auth::guard('admin')->user();
+            if (!$admin) {
+                return redirect()->route('schools.admin.login', $school);
+            }
+            $instructor = \App\Models\Instructor::where('school_id', $school->id)->findOrFail($id);
+
+            if ($admin->isBranchSecretary() && $instructor->branch_id !== $admin->branch_id) {
+                abort(403, 'You do not have permission to manage instructors in this branch.');
+            }
+
+            $instructor->update(['availability' => $instructor->availability === 'available' ? 'unavailable' : 'available']);
+
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function verifyInstructor(Request $request, School $school, $id)
+    {
+        try {
+            $admin = Auth::guard('admin')->user();
+            if (!$admin) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+            }
+
+            $instructor = Instructor::where('school_id', $school->id)->findOrFail($id);
+            
+            if ($admin->isBranchSecretary() && (int) $instructor->branch_id !== (int) $admin->branch_id) {
+                return response()->json(['success' => false, 'message' => 'Forbidden'], 403);
+            }
+
+            $validated = $request->validate([
+                'status' => 'required|in:verified,rejected',
+                'restriction_codes' => 'required_if:status,verified|array',
+                'rejection_reason' => 'required_if:status,rejected|nullable|string|max:500',
+            ]);
+
+            $updateData = [
+                'license_status' => $validated['status'],
+                'restriction_codes' => $validated['status'] === 'verified' ? $validated['restriction_codes'] : [],
+                'license_rejection_reason' => $validated['status'] === 'rejected' ? $validated['rejection_reason'] : null,
+            ];
+
+            $instructor->update($updateData);
+
+            SystemLog::logInfo(
+                "Instructor license " . $validated['status'] . ": {$instructor->name}",
+                'database',
+                ['instructor_id' => $instructor->id, 'status' => $validated['status']],
+                $school->id,
+                'verify_instructor'
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Instructor license ' . $validated['status'] . ' successfully.'
+            ]);
+        } catch (\Exception $e) {
+            LogFacade::error('Failed to verify instructor license: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'An error occurred.'], 500);
+        }
+    }
+
     public function toggleAvailability(School $school, $id)
     {
         try {
@@ -1637,6 +1704,14 @@ class AdminController extends Controller
                     return redirect()->back()->withInput()->with('error', 'Some selected instructors are invalid or inactive.');
                 }
 
+                // Accreditation Check
+                foreach ($instructors as $instructor) {
+                    if (!$instructor->canTeach($course)) {
+                        DB::rollBack();
+                        return redirect()->back()->withInput()->with('error', "Instructor {$instructor->name} is not accredited to teach this course (License status: {$instructor->license_status}).");
+                    }
+                }
+
                 // Check if not exceeding max capacity (for TDC)
                 if ($resolvedSessionType === 'theoretical' && $instructors->count() > $maxInstructors) {
                     DB::rollBack();
@@ -1794,6 +1869,17 @@ class AdminController extends Controller
                     return redirect()->back()
                         ->withErrors(['instructor_ids' => 'One or more selected instructors are invalid or inactive.'])
                         ->withInput();
+                }
+
+                // Accreditation Check
+                $course = $timeslot->course;
+                foreach ($instructors as $instructor) {
+                    if (!$instructor->canTeach($course)) {
+                        DB::rollBack();
+                        return redirect()->back()
+                            ->withErrors(['instructor_ids' => "Instructor {$instructor->name} is not accredited to teach this course (License status: {$instructor->license_status})."])
+                            ->withInput();
+                    }
                 }
 
                 // Remove all admin-assigned instructors

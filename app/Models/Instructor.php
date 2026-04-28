@@ -23,6 +23,7 @@ class Instructor extends Authenticatable
         'status',
         'availability',
         'license_number',
+        'license_image',
         'bio',
         'profile_picture',
         'course_specializations',
@@ -30,8 +31,11 @@ class Instructor extends Authenticatable
         'locked_until',
         'last_login_at',
         'last_logout_at',
-        'address', // Added address field
+        'address',
         'must_reset_password',
+        'license_status',
+        'restriction_codes',
+        'license_rejection_reason',
     ];
 
     protected $hidden = [
@@ -47,6 +51,7 @@ class Instructor extends Authenticatable
             'locked_until' => 'datetime',
             'last_login_at' => 'datetime',
             'last_logout_at' => 'datetime',
+            'restriction_codes' => 'array',
         ];
     }
 
@@ -80,5 +85,25 @@ class Instructor extends Authenticatable
     public function removalRequests()
     {
         return $this->hasMany(InstructorRemovalRequest::class);
+    }
+
+    /**
+     * Check if the instructor is legally authorized to teach a specific course.
+     */
+    public function canTeach($course)
+    {
+        // 1. Basic Verification Check
+        if ($this->license_status !== 'verified') {
+            return false;
+        }
+
+        // 2. Theoretical (TDC) Exception: Theory only needs a verified Pro license
+        if ($course->type === 'theoretical') {
+            return true;
+        }
+
+        // 3. Practical (PDC) Matching: Check if instructor has the required Code (A, B, C...)
+        // This assumes Course model has a 'required_restriction' field or similar logic
+        return in_array($course->required_restriction, $this->restriction_codes ?? []);
     }
 }

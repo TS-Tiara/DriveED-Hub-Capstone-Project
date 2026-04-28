@@ -352,6 +352,66 @@
         <div id="profileView">
 
             <div class="profile-card-body">
+                <!-- Accreditation Status Section -->
+                <div class="mb-4 p-3 rounded-3" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-bold text-dark small text-uppercase">LTO Accreditation</span>
+                        @php
+                            $statusColors = [
+                                'none' => 'secondary',
+                                'pending' => 'warning',
+                                'verified' => 'success',
+                                'rejected' => 'danger'
+                            ];
+                            $statusLabels = [
+                                'none' => 'Not Uploaded',
+                                'pending' => 'Pending Review',
+                                'verified' => 'Verified',
+                                'rejected' => 'Rejected'
+                            ];
+                        @endphp
+                        <span class="badge bg-{{ $statusColors[$instructor->license_status ?? 'none'] }} px-2 py-1" style="font-size: 0.7rem;">
+                            {{ $statusLabels[$instructor->license_status ?? 'none'] }}
+                        </span>
+                    </div>
+
+                    @if($instructor->license_status === 'verified' && !empty($instructor->restriction_codes))
+                        <div class="mt-2 d-flex flex-wrap gap-1">
+                            @foreach($instructor->restriction_codes as $code)
+                                <span class="badge bg-primary d-inline-flex align-items-center" style="font-size: 0.7rem; border-radius: 4px;">
+                                    <i class="bi bi-shield-check me-1"></i> Code {{ $code }}
+                                </span>
+                            @endforeach
+                        </div>
+                    @endif
+
+                    @if($instructor->license_status !== 'verified')
+                        <div class="mt-3">
+                            @if($instructor->license_image)
+                                <div class="mb-2 text-center">
+                                    <img src="{{ asset('storage/' . $instructor->license_image) }}" alt="License Preview" class="rounded border" style="max-height: 120px; width: 100%; object-fit: cover; cursor: pointer;" onclick="window.open(this.src, '_blank')">
+                                    <p class="small text-muted mt-1">Current Upload</p>
+                                </div>
+                            @endif
+                            
+                            @if($instructor->license_status !== 'pending')
+                                <button type="button" class="btn btn-outline-primary btn-sm w-100 fw-bold" style="border-radius: 8px;" onclick="document.getElementById('licenseUploadInput').click()">
+                                    {{ $instructor->license_image ? 'Update License Photo' : 'Upload Driver\'s License' }}
+                                </button>
+                                <input type="file" id="licenseUploadInput" class="hidden-file-input" accept="image/*" onchange="uploadLicense(this)">
+                            @else
+                                <div class="text-center py-2">
+                                    <span class="small text-muted"><i class="bi bi-clock-history me-1"></i> Waiting for Admin to verify...</span>
+                                </div>
+                            @endif
+                        </div>
+                    @else
+                        <div class="mt-2 text-center py-2 bg-white rounded border border-success border-opacity-25">
+                            <span class="text-success small fw-bold"><i class="bi bi-check-circle-fill me-1"></i> Your account is fully accredited</span>
+                        </div>
+                    @endif
+                </div>
+
                 <div class="profile-field">
                     <div class="profile-field-label">Email:</div>
                     <div class="profile-field-value">{{ $instructor->email ?? 'N/A' }}</div>
@@ -661,6 +721,67 @@
             }
         }
     });
+
+    function uploadLicense(input) {
+        if (!input.files || !input.files[0]) return;
+        
+        const file = input.files[0];
+        
+        // Validate file type
+        const allowedTypes = ['image/png', 'image/jpg', 'image/jpeg', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+            alert('Please upload a valid image file (PNG, JPG, JPEG, or WebP).');
+            input.value = '';
+            return;
+        }
+        
+        // Validate file size (2MB)
+        if (file.size > 2 * 1024 * 1024) {
+            alert('File size must be less than 2MB.');
+            input.value = '';
+            return;
+        }
+        
+        const formData = new FormData();
+        formData.append('license_image', file);
+        formData.append('_token', '{{ csrf_token() }}');
+        
+        // Show loading state
+        const originalBtnText = event.target.textContent;
+        const btn = event.target.tagName === 'BUTTON' ? event.target : event.target.previousElementSibling;
+        if (btn) btn.textContent = 'Uploading...';
+        
+        fetch('{{ $schoolRoute('instructor.uploadLicense') }}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                // Refresh content to show pending status
+                if (typeof loadContent === 'function') {
+                    loadContent(window.location.href);
+                } else {
+                    window.location.reload();
+                }
+            } else {
+                alert(data.message || 'Failed to upload license.');
+                if (btn) btn.textContent = originalBtnText;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while uploading the license.');
+            if (btn) btn.textContent = originalBtnText;
+        })
+        .finally(() => {
+            input.value = '';
+        });
+    }
 </script>
 
 @endsection
