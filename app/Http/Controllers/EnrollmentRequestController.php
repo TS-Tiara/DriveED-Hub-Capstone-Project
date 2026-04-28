@@ -352,7 +352,7 @@ class EnrollmentRequestController extends Controller
                 }
                 if ($rejectPayment) {
                     $enrollmentRequest->update([
-                        'payment_status' => 'pending',
+                        'payment_status' => 'rejected',
                         'payment_proof_path' => null,
                         'payment_reference' => null,
                         'remarks' => $validated['remarks']

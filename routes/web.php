@@ -197,8 +197,9 @@ Route::prefix('{school:slug}')
 
                     Route::post('/instructors', [AdminController::class , 'storeAccount'])->name('instructors.store');
                     Route::put('/instructors/{id}', [AdminController::class , 'updateInstructor'])->name('instructors.update');
-                    Route::patch('/instructors/{id}/toggle-status', [AdminController::class , 'toggleInstructorStatus'])->name('instructors.toggleStatus');
-                    Route::patch('/instructors/{id}/availability', [AdminController::class , 'toggleAvailability'])->name('userManagement.toggleAvailability');
+                    Route::patch('/instructors/{id}/toggle-status', [AdminController::class, 'toggleInstructorStatus'])->name('instructors.toggleStatus');
+                    Route::post('/instructors/{id}/verify', [AdminController::class, 'verifyInstructor'])->name('instructors.verify');
+                    Route::patch('/instructors/{id}/availability', [AdminController::class, 'toggleInstructorAvailability'])->name('instructors.toggleAvailability');
 
                     // Schedule management (unified system: admin creates, can pre-assign, instructors self-select remaining spots)
                     Route::get('/schedules', [AdminController::class , 'schedules'])->name('schedules');
@@ -434,6 +435,7 @@ Route::prefix('{school:slug}')
                     Route::get('/profile', [InstructorTimeSlotController::class , 'profile'])->name('profile');
                     Route::put('/profile', [InstructorTimeSlotController::class , 'updateProfile'])->name('profile.update');
                     Route::post('/profile/picture', [InstructorTimeSlotController::class , 'updateProfilePicture'])->name('profile.picture');
+                    Route::post('/upload-license', [InstructorTimeSlotController::class , 'uploadLicense'])->name('uploadLicense');
 
                     // Instructor attendance and feedback (used from schedule page)
                     Route::post('/bookings/{booking}/attendance', [InstructorTimeSlotController::class , 'updateAttendance'])->name('bookings.attendance');

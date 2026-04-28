@@ -1266,6 +1266,7 @@
                             <th>Contact</th>
                             <th>Role</th>
                             <th>Branch</th>
+                            <th>License</th>
                             <th>Status</th>
                             <th>Portal Activity</th>
                             <th>Actions</th>
@@ -1287,6 +1288,39 @@
                                     $branchName = $user->branch_id ? ($branches->firstWhere('id', $user->branch_id)?->name ?? null) : null;
                                 @endphp
                                 <span class="branch-label {{ $branchName ? 'branch-assigned' : 'branch-unassigned' }}">{{ $branchName ?? '—' }}</span>
+                            </td>
+                            <td>
+                                @if($user->role === 'instructor')
+                                    @php
+                                        $lStatus = $user->license_status ?? 'none';
+                                        $lColors = [
+                                            'none' => 'bg-secondary',
+                                            'pending' => 'bg-warning text-dark',
+                                            'verified' => 'bg-success',
+                                            'rejected' => 'bg-danger'
+                                        ];
+                                        $lLabels = [
+                                            'none' => 'None',
+                                            'pending' => 'Pending',
+                                            'verified' => 'Verified',
+                                            'rejected' => 'Rejected'
+                                        ];
+                                    @endphp
+                                    <div class="d-flex flex-column gap-1">
+                                        <span class="badge {{ $lColors[$lStatus] }}" style="font-size: 0.75rem;">
+                                            {{ $lLabels[$lStatus] }}
+                                        </span>
+                                        @if($lStatus === 'verified' && !empty($user->restriction_codes))
+                                            <div class="d-flex flex-wrap gap-1 mt-1" style="max-width: 120px;">
+                                                @foreach($user->restriction_codes as $code)
+                                                    <span class="badge bg-primary" style="font-size: 0.65rem;">{{ $code }}</span>
+                                                @endforeach
+                                            </div>
+                                        @endif
+                                    </div>
+                                @else
+                                    <span class="text-muted small">—</span>
+                                @endif
                             </td>
                             <td>
                                 <span class="status-badge status-{{ $user->status }}">
@@ -1336,6 +1370,21 @@
                                             <i class="bi bi-pencil-square"></i>
                                             <span>Edit</span>
                                         </button>
+
+                                        @if($user->role === 'instructor' && $user->license_image)
+                                            <button type="button" class="btn-action btn-success js-verify-license" 
+                                                data-id="{{ $user->id }}" 
+                                                data-name="{{ $user->name }}" 
+                                                data-license-number="{{ $user->license_number }}"
+                                                data-license-image="{{ asset('storage/' . $user->license_image) }}"
+                                                data-status="{{ $user->license_status }}"
+                                                data-restrictions="{{ json_encode($user->restriction_codes ?? []) }}"
+                                                data-rejection-reason="{{ $user->license_rejection_reason }}"
+                                                title="Verify License">
+                                                <i class="bi bi-shield-check"></i>
+                                                <span>Verify</span>
+                                            </button>
+                                        @endif
                                     @endif
 
                                     {{-- Global Status Toggle --}}
@@ -2204,7 +2253,184 @@
             }
         }
     });
-    
+
+    // License Verification Modal Logic
+    function openVerifyLicenseModal(data) {
+        const modal = document.getElementById('verifyLicenseModal');
+        const form = document.getElementById('verifyLicenseForm');
+        
+        // Fill data
+        document.getElementById('verify_instructor_name').textContent = data.name;
+        document.getElementById('verify_license_number').textContent = data.licenseNumber;
+        document.getElementById('licenseImagePreview').src = data.licenseImage;
+        document.getElementById('verify_instructor_id').value = data.id;
+        
+        // Reset form
+        document.getElementById('verification_status').value = data.status === 'verified' ? 'verified' : (data.status === 'rejected' ? 'rejected' : 'verified');
+        document.getElementById('rejection_reason_group').style.display = data.status === 'rejected' ? 'block' : 'none';
+        document.getElementById('rejection_reason').value = data.rejectionReason || '';
+        
+        // Restrictions logic
+        const restrictionsGroup = document.getElementById('restrictions_group');
+        restrictionsGroup.style.display = data.status === 'rejected' ? 'none' : 'block';
+        
+        const checkboxes = restrictionsGroup.querySelectorAll('input[type="checkbox"]');
+        let currentRestrictions = [];
+        try {
+            currentRestrictions = JSON.parse(data.restrictions || '[]');
+        } catch(e) {}
+        
+        checkboxes.forEach(cb => {
+            cb.checked = currentRestrictions.includes(cb.value);
+        });
+        
+        modal.style.display = 'flex';
+    }
+
+    function closeVerifyLicenseModal() {
+        document.getElementById('verifyLicenseModal').style.display = 'none';
+    }
+
+    document.getElementById('verification_status').addEventListener('change', function() {
+        const isRejected = this.value === 'rejected';
+        document.getElementById('rejection_reason_group').style.display = isRejected ? 'block' : 'none';
+        document.getElementById('restrictions_group').style.display = isRejected ? 'none' : 'block';
+    });
+
+    document.addEventListener('click', function(e) {
+        const btn = e.target.closest('.js-verify-license');
+        if (btn) {
+            openVerifyLicenseModal({
+                id: btn.dataset.id,
+                name: btn.dataset.name,
+                licenseNumber: btn.dataset.licenseNumber,
+                licenseImage: btn.dataset.licenseImage,
+                status: btn.dataset.status,
+                restrictions: btn.dataset.restrictions,
+                rejectionReason: btn.dataset.rejectionReason
+            });
+        }
+    });
+
+    document.getElementById('verifyLicenseForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const instructorId = document.getElementById('verify_instructor_id').value;
+        const status = document.getElementById('verification_status').value;
+        const reason = document.getElementById('rejection_reason').value;
+        
+        const restrictions = [];
+        if (status === 'verified') {
+            document.querySelectorAll('#restrictions_group input[type="checkbox"]:checked').forEach(cb => {
+                restrictions.push(cb.value);
+            });
+        }
+        
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Processing...';
+        
+        fetch(`/{{ $school->slug }}/admin/instructors/${instructorId}/verify`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                status: status,
+                restriction_codes: restrictions,
+                rejection_reason: reason
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                Toast.success(data.message);
+                closeVerifyLicenseModal();
+                if (typeof loadContent === 'function') {
+                    loadContent(window.location.href);
+                } else {
+                    window.location.reload();
+                }
+            } else {
+                Toast.error(data.message || 'Failed to update verification status.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Toast.error('An error occurred.');
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+        });
+    });
 </script>
+
+<!-- LICENSE VERIFICATION MODAL -->
+<div id="verifyLicenseModal" class="modal">
+    <div class="modal-content" style="width: min(700px, 95%);">
+        <h3>Verify Instructor License</h3>
+        <form id="verifyLicenseForm">
+            <input type="hidden" id="verify_instructor_id">
+            
+            <div class="mb-4 d-flex gap-4">
+                <div style="flex: 1;">
+                    <label class="fw-bold small text-muted text-uppercase mb-2 d-block">Instructor Info</label>
+                    <div class="p-3 rounded bg-light border">
+                        <div class="mb-2"><strong>Name:</strong> <span id="verify_instructor_name"></span></div>
+                        <div><strong>License #:</strong> <span id="verify_license_number"></span></div>
+                    </div>
+                    
+                    <div class="form-group mt-4">
+                        <label>Verification Decision</label>
+                        <select id="verification_status" class="form-select">
+                            <option value="verified">Verify & Approve</option>
+                            <option value="rejected">Reject License</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div style="flex: 1;">
+                    <label class="fw-bold small text-muted text-uppercase mb-2 d-block">License Photo</label>
+                    <div class="rounded border overflow-hidden bg-dark d-flex align-items-center justify-content-center" style="height: 200px;">
+                        <img id="licenseImagePreview" src="" alt="License" style="max-width: 100%; max-height: 100%; object-fit: contain; cursor: pointer;" onclick="window.open(this.src, '_blank')">
+                    </div>
+                    <p class="text-center small text-muted mt-1">Click image to expand</p>
+                </div>
+            </div>
+
+            <div id="restrictions_group">
+                <label class="fw-bold mb-3 d-block">LTO Restriction Codes (Select all that apply)</label>
+                <div class="row g-3">
+                    @foreach(['A', 'A1', 'B', 'B1', 'B2', 'C', 'D', 'BE', 'CE'] as $code)
+                        <div class="col-4 col-md-3">
+                            <div class="form-check p-2 border rounded hover-bg-light transition-all">
+                                <input class="form-check-input ms-0 me-2" type="checkbox" value="{{ $code }}" id="rest_{{ $code }}">
+                                <label class="form-check-label stretched-link" for="rest_{{ $code }}">
+                                    Code {{ $code }}
+                                </label>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+                <p class="field-help mt-3"><i class="bi bi-info-circle me-1"></i> Selecting these codes allows the instructor to be assigned to corresponding PDC courses.</p>
+            </div>
+
+            <div id="rejection_reason_group" style="display: none;">
+                <div class="form-group">
+                    <label>Reason for Rejection</label>
+                    <textarea id="rejection_reason" class="form-control" rows="3" placeholder="Explain why the license was rejected (e.g., Image too blurry, Expired license, etc.)"></textarea>
+                </div>
+            </div>
+
+            <div class="modal-buttons mt-4">
+                <button type="button" class="btn-cancel" onclick="closeVerifyLicenseModal()">Cancel</button>
+                <button type="submit" class="btn-submit">Save Verification</button>
+            </div>
+        </form>
+    </div>
+</div>
 
 @endsection

@@ -230,6 +230,47 @@
         </div>
     </div>
 
+    @if($instructor->license_status !== 'verified')
+        <div class="alert alert-{{ $instructor->license_status === 'rejected' ? 'danger' : 'warning' }} mb-4 border-0 shadow-sm d-flex align-items-center" style="border-radius: 12px; padding: 16px 20px;">
+            <div class="alert-icon-wrapper me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background: rgba(255,255,255,0.3); border-radius: 10px;">
+                @if($instructor->license_status === 'rejected')
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-x-circle-fill text-white" viewBox="0 0 16 16">
+                        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z"/>
+                    </svg>
+                @else
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-exclamation-triangle-fill text-white" viewBox="0 0 16 16">
+                        <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                    </svg>
+                @endif
+            </div>
+            <div class="alert-content flex-grow-1">
+                <h5 class="alert-heading mb-1 fw-bold text-white">
+                    @if($instructor->license_status === 'none')
+                        Accreditation Required
+                    @elseif($instructor->license_status === 'pending')
+                        Accreditation Pending
+                    @elseif($instructor->license_status === 'rejected')
+                        Accreditation Rejected
+                    @endif
+                </h5>
+                <p class="mb-0 text-white opacity-90">
+                    @if($instructor->license_status === 'none')
+                        Please upload your Professional Driver's License to be eligible for session assignments.
+                    @elseif($instructor->license_status === 'pending')
+                        Your license is currently under review by the administration. You will be notified once verified.
+                    @elseif($instructor->license_status === 'rejected')
+                        <strong>Reason:</strong> {{ $instructor->license_rejection_reason ?? 'No reason provided.' }} Please re-upload a clear copy of your license.
+                    @endif
+                </p>
+            </div>
+            @if($instructor->license_status !== 'pending')
+                <div class="alert-actions ms-3">
+                    <a href="{{ $schoolRoute('instructor.profile') }}" class="btn btn-light btn-sm fw-bold px-3" style="border-radius: 8px;">Upload Now</a>
+                </div>
+            @endif
+        </div>
+    @endif
+
     <!-- Stats Cards -->
     <div class="stats-grid">
         <div class="stat-card active">

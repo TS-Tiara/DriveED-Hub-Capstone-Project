@@ -302,6 +302,12 @@
         color: #991b1b;
         border: 1px solid #fecaca;
     }
+
+    .payment-rejected {
+        background: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #fecaca;
+    }
     
     .action-buttons {
         display: flex;
@@ -1271,15 +1277,9 @@
                             @endif
                         </td>
                         <td>
-                            @if($request->payment_status === 'pending' && empty($request->payment_proof_path) && (str_contains(strtolower($request->remarks ?? ''), 'reject') || $request->payments()->where('status', 'rejected')->exists()))
-                                <span class="payment-badge payment-rejected" title="{{ $request->remarks }}">
-                                    Rejected
-                                </span>
-                            @else
-                                <span class="payment-badge payment-{{ $request->payment_status }}">
-                                    {{ ucfirst(str_replace('_', ' ', $request->payment_status)) }}
-                                </span>
-                            @endif
+                            <span class="payment-badge payment-{{ $request->payment_status }}">
+                                {{ ucfirst(str_replace('_', ' ', $request->payment_status)) }}
+                            </span>
                         </td>
                         <td>
                             <div class="date-text">
@@ -1395,15 +1395,9 @@
             </div>
             <div class="mobile-card-row">
                 <span class="mobile-card-label">Payment</span>
-                @if($request->payment_status === 'pending' && empty($request->payment_proof_path) && (str_contains(strtolower($request->remarks ?? ''), 'reject') || $request->payments()->where('status', 'rejected')->exists()))
-                    <span class="payment-badge payment-rejected" title="{{ $request->remarks }}">
-                        Rejected
-                    </span>
-                @else
-                    <span class="payment-badge payment-{{ $request->payment_status }}">
-                        {{ ucfirst(str_replace('_', ' ', $request->payment_status)) }}
-                    </span>
-                @endif
+                <span class="payment-badge payment-{{ $request->payment_status }}">
+                    {{ ucfirst(str_replace('_', ' ', $request->payment_status)) }}
+                </span>
             </div>
             <div class="mobile-card-row">
                 <span class="mobile-card-label">Date</span>
@@ -1898,6 +1892,7 @@ function updatePanelStatus(type, status) {
     badge.className = 'v-panel-status';
     if (status === 'verified' || status === 'paid') badge.classList.add('bg-success', 'text-white');
     else if (status === 'pending') badge.classList.add('bg-warning', 'text-dark');
+    else if (status === 'rejected') badge.classList.add('bg-danger', 'text-white');
     else badge.classList.add('bg-secondary', 'text-white');
 }
 
@@ -2080,14 +2075,11 @@ function checkIfFullyVerified(id, licenseStatus, paymentStatus) {
 
 function rejectLicenseFromModal() {
     if (!currentEnrollmentId) return;
-    const studentName = document.getElementById('v-student-name').textContent;
-    // We need the student ID. It might be better to fetch it or pass it.
-    // For now, let's close and open the existing license reject modal.
+    const idToReject = currentEnrollmentId;
     closeVerificationModal();
-    // Since we don't have studentId easily here without extra data, we can just trigger the full rejection modal
-    // but pre-check "Reject License".
+    
     setTimeout(() => {
-        showRejectModal(currentEnrollmentId);
+        showRejectModal(idToReject);
         document.querySelector('input[name="reject_license"]').checked = true;
         document.querySelector('input[name="reject_payment"]').checked = false;
     }, 100);
@@ -2095,9 +2087,11 @@ function rejectLicenseFromModal() {
 
 function rejectPaymentFromModal() {
     if (!currentEnrollmentId) return;
+    const idToReject = currentEnrollmentId;
     closeVerificationModal();
+    
     setTimeout(() => {
-        showRejectModal(currentEnrollmentId);
+        showRejectModal(idToReject);
         document.querySelector('input[name="reject_license"]').checked = false;
         document.querySelector('input[name="reject_payment"]').checked = true;
     }, 100);
