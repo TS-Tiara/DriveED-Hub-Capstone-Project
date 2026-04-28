@@ -1884,13 +1884,12 @@ function openVerificationModal(enrollmentId) {
             updatePanelImage('payment', data.receipt_url, paymentMethod === 'on_site' ? 'On-site Receipt' : 'GCash Receipt');
             
             // Update Action Buttons Visibility
-            const licenseActions = document.getElementById('v-license-actions');
-            const paymentActions = document.getElementById('v-payment-actions');
+            const isFinalized = ['approved', 'rejected', 'cancelled', 'completed'].includes(data.status);
             
-            // Show license actions if document exists and is pending
-            licenseActions.style.display = (data.license_url && (data.license_status === 'pending' || data.license_status === 'none')) ? 'flex' : 'none';
-            // Show payment actions if document exists and is pending
-            paymentActions.style.display = (data.receipt_url && data.payment_status === 'pending') ? 'flex' : 'none';
+            // Show license actions if document exists, is pending, and request is not finalized
+            licenseActions.style.display = (data.license_url && (data.license_status === 'pending' || data.license_status === 'none') && !isFinalized) ? 'flex' : 'none';
+            // Show payment actions if document exists, is pending, and request is not finalized
+            paymentActions.style.display = (data.receipt_url && data.payment_status === 'pending' && !isFinalized) ? 'flex' : 'none';
             
             // Show/Hide cancellation warning in sidebar
             const cancellationWarning = document.getElementById('v-cancellation-warning');
@@ -1902,7 +1901,7 @@ function openVerificationModal(enrollmentId) {
             }
 
             // Initial check for final approval
-            checkIfFullyVerified(enrollmentId, data.license_status, data.payment_status, data.cancellation_requested);
+            checkIfFullyVerified(enrollmentId, data.license_status, data.payment_status, data.cancellation_requested, data.status);
             
             // Show content
             document.getElementById('v-modal-loading').style.display = 'none';
@@ -2048,7 +2047,7 @@ function updateTableRowStatus(id, type, status) {
     checkIfFullyVerified(id);
 }
 
-function checkIfFullyVerified(id, licenseStatus, paymentStatus, cancellationRequested) {
+function checkIfFullyVerified(id, licenseStatus, paymentStatus, cancellationRequested, enrollmentStatus) {
     const row = document.querySelector(`tr[data-request-id="${id}"]`);
     if (!row) return;
 
@@ -2079,9 +2078,17 @@ function checkIfFullyVerified(id, licenseStatus, paymentStatus, cancellationRequ
         cancellationRequested = row.classList.contains('has-cancellation-request');
     }
 
+    // Determine enrollment status if not provided
+    if (enrollmentStatus === undefined || enrollmentStatus === null) {
+        enrollmentStatus = row.getAttribute('data-status');
+    }
+
+    const isFinalized = ['approved', 'rejected', 'cancelled', 'completed'].includes(enrollmentStatus);
+
     const isFullyVerified = (licenseStatus === 'verified' || licenseStatus === 'none') && 
                             (paymentStatus === 'paid' || paymentStatus === 'none') &&
-                            !cancellationRequested;
+                            !cancellationRequested &&
+                            !isFinalized;
 
     const atLeastOneProcessed = (licenseStatus !== 'pending') || (paymentStatus !== 'pending');
 
