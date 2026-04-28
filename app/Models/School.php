@@ -180,6 +180,12 @@ class School extends Model
         return $this->hasMany(\App\Models\VehicleCategory::class);
     }
 
+    // Alias for scoped route model binding
+    public function categories()
+    {
+        return $this->vehicleCategories();
+    }
+
     public function vehicles()
     {
         return $this->hasMany(\App\Models\Vehicle::class);

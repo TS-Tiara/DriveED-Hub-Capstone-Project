@@ -176,11 +176,16 @@ Route::prefix('{school:slug}')
                     Route::get('/credential/{enrollment}', [\App\Http\Controllers\StorageController::class, 'streamCredential'])->name('storage.credential');
                     Route::get('/gcash-qr/{gcashSetting}', [\App\Http\Controllers\StorageController::class, 'streamGcashQr'])->name('storage.gcash-qr');
                     Route::get('/receipt', [\App\Http\Controllers\StorageController::class, 'streamReceipt'])->name('storage.receipt');
-                    Route::get('/vehicle-image/{image}', [\App\Http\Controllers\StorageController::class, 'streamVehicleImage'])->name('storage.vehicle-image');
-                    Route::delete('/vehicles/{vehicle}/images/{image}', [\App\Http\Controllers\VehicleController::class, 'deleteImage'])->name('schools.admin.vehicles.images.destroy');
                 });
             }
             );
+
+            // Shared Vehicle Image Access
+            Route::middleware(['auth:student,admin', 'nocache'])->group(function (): void {
+                Route::get('/vehicle-image/{image}', [\App\Http\Controllers\StorageController::class, 'streamVehicleImage'])
+                    ->name('storage.vehicle-image')
+                    ->withoutScopedBindings();
+            });
 
             Route::prefix('admin')->name('admin.')->middleware(['school.context', 'auth:admin', 'redirect.system.admin', 'branch.access', 'nocache'])->group(function (): void {
             // Routes that need ajax middleware (existing modal-based pages)
@@ -250,6 +255,7 @@ Route::prefix('{school:slug}')
                         Route::post('/categories', [\App\Http\Controllers\VehicleController::class, 'storeCategory'])->name('categories.store');
                         Route::put('/categories/{category}', [\App\Http\Controllers\VehicleController::class, 'updateCategory'])->name('categories.update');
                         Route::delete('/categories/{category}', [\App\Http\Controllers\VehicleController::class, 'destroyCategory'])->name('categories.destroy');
+                        Route::delete('/{vehicle}/images/{image}', [\App\Http\Controllers\VehicleController::class, 'deleteImage'])->name('images.destroy');
                     });
 
                     // Reports & Analytics - Grouped for clarity and robust naming
