@@ -347,6 +347,16 @@ class InstructorTimeSlotController extends Controller
             }
         }
 
+        // Check if this is a protected demo account
+        if (DemoAccountProtection::isProtectedAccount($instructor->email, 'instructor', $school)) {
+            $nameChanged = trim((string)($data['name'] ?? '')) !== trim((string)$instructor->name);
+            $emailChanged = strtolower(trim((string)($data['email'] ?? ''))) !== strtolower(trim((string)$instructor->email));
+            
+            if ($nameChanged || $emailChanged || $passwordChanged) {
+                return back()->with('error', 'This demo account has locked name, email, and password.');
+            }
+        }
+
         // Check current password if user wants to change password
         if ($request->filled('new_password')) {
             if (!$request->filled('current_password') || !Hash::check($request->current_password, $instructor->password)) {
@@ -355,25 +365,12 @@ class InstructorTimeSlotController extends Controller
             $data['password'] = Hash::make($request->new_password);
         }
 
-        if (!$passwordChanged && $request->only(['name', 'email', 'contact', 'license_number', 'address']) == $instructor->only(['name', 'email', 'contact', 'license_number', 'address'])) {
-            return redirect()
-                ->route('schools.instructor.profile', $school)
-                ->with('success', 'No profile changes were detected.');
-        }
+        // Use direct update for reliability
+        \App\Models\Instructor::where('id', $instructor->id)->update($data);
 
-        try {
-            $instructor->update($data);
-
-            $message = 'Profile updated successfully.';
-
-            return redirect()
-                ->route('schools.instructor.profile', $school)
-                ->with('success', $message);
-        }
-        catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Failed to update profile', ['error' => $e->getMessage()]);
-            return back()->with('error', 'An error occurred while updating profile.');
-        }
+        return redirect()
+            ->route('schools.instructor.profile', $school)
+            ->with('success', 'Profile updated successfully.');
     }
 
     public function updateProfilePicture(Request $request, School $school)
