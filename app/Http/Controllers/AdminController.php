@@ -784,6 +784,7 @@ class AdminController extends Controller
                     Storage::disk('public')->delete($instructor->license_image);
                 }
                 $data['license_image'] = $request->file('license_image')->store('instructor_licenses', 'public');
+                $data['license_status'] = 'pending';
             }
 
             $instructor->update($data);
@@ -889,6 +890,11 @@ class AdminController extends Controller
                 'success' => true,
                 'message' => 'Instructor license ' . $validated['status'] . ' successfully.'
             ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed: ' . implode(' ', \Illuminate\Support\Arr::flatten($e->errors()))
+            ], 422);
         } catch (\Exception $e) {
             LogFacade::error('Failed to verify instructor license: ' . $e->getMessage());
             return response()->json(['success' => false, 'message' => 'An error occurred.'], 500);

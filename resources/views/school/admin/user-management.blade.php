@@ -1813,7 +1813,7 @@
                                                     <span class="license-badge {{ $lStatus }}">
                                                         {{ $lLabels[$lStatus] }}
                                                     </span>
-                                                    @if($lStatus === 'pending' && $user->license_image)
+                                                    @if(($lStatus === 'pending' || $lStatus === 'none') && $user->license_image)
                                                         <button type="button" class="btn-action btn-success js-verify-license"
                                                            style="padding: 4px 10px; font-size: 0.75rem;"
                                                            data-id="{{ $user->id }}" data-name="{{ $user->name }}"
@@ -2926,6 +2926,12 @@
                 if (status === 'rejected' && !rejectionReason.trim()) {
                     if (typeof Toast !== 'undefined') Toast.error('Please provide a reason for rejection.');
                     else alert('Please provide a reason for rejection.');
+                    return;
+                }
+
+                if (status === 'verified' && selectedRestrictions.length === 0) {
+                    if (typeof Toast !== 'undefined') Toast.error('Please select at least one restriction code.');
+                    else alert('Please select at least one restriction code.');
                     return;
                 }
 
