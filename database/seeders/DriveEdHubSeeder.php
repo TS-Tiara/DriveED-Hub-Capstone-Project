@@ -22,6 +22,19 @@ class DriveEdHubSeeder extends Seeder
 
     public function run(): void
     {
+        // Ensure seeder assets are available in storage
+        $storagePath = storage_path('app/public/instructor-licenses');
+        if (!file_exists($storagePath)) {
+            mkdir($storagePath, 0755, true);
+        }
+        
+        $sourcePath = database_path('seeders/assets/license-placeholder.png');
+        $destPath = $storagePath . '/placeholder.png';
+        
+        if (file_exists($sourcePath)) {
+            copy($sourcePath, $destPath);
+        }
+
         $demoPassword = (string) env('DEMO_SEED_PASSWORD', 'DriveDemo123');
         $hashedPassword = Hash::make($demoPassword);
 
@@ -165,6 +178,7 @@ class DriveEdHubSeeder extends Seeder
                     'contact' => $inst['contact'],
                     'password' => $hashedPassword,
                     'license_number' => $inst['license'],
+                    'license_image' => 'instructor-licenses/placeholder.png',
                     'license_status' => 'verified',
                     'restriction_codes' => ['A', 'B'],
                     'bio' => $inst['bio'],
@@ -268,6 +282,7 @@ class DriveEdHubSeeder extends Seeder
                     'status' => 'active',
                     'experience_level' => $s['level'],
                     'enrollment_date' => now()->subDays(rand(7, 60)),
+                    'student_license_path' => 'instructor-licenses/placeholder.png',
                     'student_license_status' => $s['license'],
                     'student_license_verified_at' => $s['license'] === 'verified' ? now()->subDays(15) : null,
                     'has_passed_theoretical' => $s['tdc'],
