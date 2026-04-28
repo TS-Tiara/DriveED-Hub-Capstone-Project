@@ -146,6 +146,48 @@
         font-size: 15px;
     }
 
+    .contact-input-group {
+        display: flex;
+        align-items: center;
+        background: {{ $settings->primary_color ?? '#667eea' }}05;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        overflow: hidden;
+        transition: all 0.2s;
+    }
+
+    .contact-input-group:focus-within {
+        border-color: {{ $settings->primary_color ?? '#667eea' }};
+        background: white;
+    }
+
+    .contact-prefix {
+        padding: 0 12px;
+        background: #f3f4f6;
+        color: #4b5563;
+        font-weight: 600;
+        font-size: 0.9rem;
+        height: 38px;
+        display: flex;
+        align-items: center;
+        border-right: 1px solid #ddd;
+    }
+
+    .contact-input-group input {
+        flex: 1;
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        height: 38px !important;
+        padding: 0 12px !important;
+    }
+
+    .field-help {
+        font-size: 0.8rem;
+        color: #6b7280;
+        margin-top: 6px;
+    }
+
     .profile-actions {
         text-align: center;
         padding: 20px 30px 30px;
@@ -310,23 +352,21 @@
         <h1 class="profile-page-title">Profile</h1>
     </div>
 
-    @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
-
-    @if(session('error'))
-        <div class="alert alert-error">{{ session('error') }}</div>
-    @endif
-
-    @if($errors->any())
-        <div class="alert alert-error">
-            <ul class="error-list">
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            @if(session('success'))
+                Toast.success("{{ session('success') }}");
+            @endif
+            @if(session('error'))
+                Toast.error("{{ session('error') }}");
+            @endif
+            @if($errors->any())
                 @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
+                    Toast.error("{{ $error }}");
                 @endforeach
-            </ul>
-        </div>
-    @endif
+            @endif
+        });
+    </script>
     <div class="profile-card">
         <div id="profileView">
             <div class="profile-card-header">
@@ -393,7 +433,15 @@
 
                 <div class="form-field">
                     <label for="contact">Contact</label>
-                    <input type="text" id="contact" name="contact" value="{{ old('contact', $admin->contact) }}">
+                    @if($settings->enforce_ph_contact ?? true)
+                        <div class="contact-input-group">
+                            <span class="contact-prefix">+63</span>
+                            <input type="text" id="contact" name="contact" value="{{ old('contact', $admin->contact) }}" maxlength="10" placeholder="9123456789" inputmode="numeric">
+                        </div>
+                        <p class="field-help">Enter the 10-digit number after +63 (e.g., 9123456789).</p>
+                    @else
+                        <input type="text" id="contact" name="contact" value="{{ old('contact', $admin->contact) }}" placeholder="Enter contact number">
+                    @endif
                 </div>
 
                 <div class="password-toggle-row">
@@ -439,6 +487,15 @@
 
 <script>
     function showEditForm() {
+        // Strip +63 or leading 0 from contact for display
+        const contactInput = document.getElementById('contact');
+        if (contactInput) {
+            let val = contactInput.value;
+            if (val.startsWith('+63')) val = val.substring(3);
+            else if (val.startsWith('0')) val = val.substring(1);
+            contactInput.value = val;
+        }
+
         document.getElementById('profileView').style.display = 'none';
         document.getElementById('editForm').style.display = 'block';
     }
@@ -513,9 +570,10 @@
                 return;
             }
             
-            // Validate file size (2MB)
-            if (file.size > 2 * 1024 * 1024) {
-                Toast.error('File size must be less than 2MB');
+            // Validate file size
+            const maxFileSizeMB = {{ $settings->max_file_size_mb ?? 5 }};
+            if (file.size > maxFileSizeMB * 1024 * 1024) {
+                Toast.error('File size must be less than ' + maxFileSizeMB + 'MB');
                 return;
             }
             
@@ -582,6 +640,19 @@
 
         handleNewPasswordInput();
     });
+
+    @if($settings->enforce_ph_contact ?? true)
+    // Auto-strip leading zero from contact inputs
+    document.addEventListener('input', function(e) {
+        if (e.target.getAttribute('name') === 'contact' || e.target.id === 'contact') {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.startsWith('0')) {
+                value = value.substring(1);
+            }
+            e.target.value = value;
+        }
+    });
+    @endif
 </script>
 
 @endsection

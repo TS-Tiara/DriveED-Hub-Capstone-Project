@@ -26,17 +26,31 @@
 
     <style>
         :root {
-            --primary-color: {{ $primaryColor }};
-            --secondary-color: {{ $secondaryColor }};
-            --primary-rgb: {{ implode(',', sscanf($primaryColor, '#%02x%02x%02x')) }};
-            --header-gradient: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
+            --primary-color:
+                {{ $primaryColor }}
+            ;
+            --secondary-color:
+                {{ $secondaryColor }}
+            ;
+            --primary-rgb:
+                {{ implode(',', sscanf($primaryColor, '#%02x%02x%02x')) }}
+            ;
+            --header-gradient: linear-gradient(135deg,
+                    {{ $primaryColor }}
+                    0%,
+                    {{ $secondaryColor }}
+                    100%);
             --border-radius: 20px;
             --button-border-radius: 12px;
-            
+
             /* Branded Button Variables */
-            --btn-primary-bg: {{ $primaryColor }};
+            --btn-primary-bg:
+                {{ $primaryColor }}
+            ;
             --btn-primary-text: #ffffff;
-            --btn-secondary-bg: {{ $secondaryColor }};
+            --btn-secondary-bg:
+                {{ $secondaryColor }}
+            ;
             --btn-secondary-text: #ffffff;
             --btn-gradient: var(--header-gradient);
         }
@@ -521,20 +535,50 @@
             overflow: auto;
             background-color: rgba(0, 0, 0, 0.7);
             backdrop-filter: blur(8px);
-        justify-content: center;
-        align-items: center;
-    }
+            justify-content: center;
+            align-items: center;
+        }
 
-        .icon-14 { width: 14px; height: 14px; }
-        .icon-18 { width: 18px; height: 18px; }
-        .icon-20 { width: 20px; height: 20px; }
-        .icon-24 { width: 24px; height: 24px; }
-        .icon-32 { width: 32px; height: 32px; }
+        .icon-14 {
+            width: 14px;
+            height: 14px;
+        }
 
-        .ms-auto { margin-left: auto !important; }
-        .me-1 { margin-right: 0.25rem !important; }
-        .me-2 { margin-right: 0.5rem !important; }
-        .me-3 { margin-right: 1rem !important; }
+        .icon-18 {
+            width: 18px;
+            height: 18px;
+        }
+
+        .icon-20 {
+            width: 20px;
+            height: 20px;
+        }
+
+        .icon-24 {
+            width: 24px;
+            height: 24px;
+        }
+
+        .icon-32 {
+            width: 32px;
+            height: 32px;
+        }
+
+        .ms-auto {
+            margin-left: auto !important;
+        }
+
+        .me-1 {
+            margin-right: 0.25rem !important;
+        }
+
+        .me-2 {
+            margin-right: 0.5rem !important;
+        }
+
+        .me-3 {
+            margin-right: 1rem !important;
+        }
 
         /* Consolidate Modal Content styles */
         .modal-content {
@@ -564,8 +608,15 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
 
@@ -662,7 +713,8 @@
             color: white;
         }
 
-        .btn-primary:hover, .btn-secondary:hover {
+        .btn-primary:hover,
+        .btn-secondary:hover {
             filter: brightness(1.1);
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -1339,6 +1391,121 @@
         }
 
         /* Pagination styles are inherited from shared admin-styles */
+        .btn-reveal-pii {
+            background: none;
+            border: none;
+            padding: 0;
+            color: var(--primary-color);
+            cursor: pointer;
+            opacity: 0.6;
+            transition: all 0.2s;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-reveal-pii:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        .btn-reveal-pii.timer-active {
+            color: #94a3b8;
+            cursor: wait;
+        }
+
+        .masked-pii {
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            letter-spacing: 0.5px;
+            font-size: 0.9rem;
+        }
+
+        .pii-wrapper {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            min-height: 24px;
+        }
+
+        .pii-indicator {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-left: 4px;
+            cursor: help;
+        }
+
+        /* Improved Table Spacing */
+        #usersTable th,
+        #usersTable td {
+            vertical-align: middle !important;
+            padding: 16px 12px;
+        }
+
+        #usersTable thead th {
+            white-space: nowrap;
+        }
+
+        .availability-indicator {
+            position: relative;
+            display: inline-block;
+        }
+
+        .availability-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            position: absolute;
+            top: -4px;
+            left: -14px;
+            border: 2px solid white;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+        }
+
+        .availability-dot.available {
+            background-color: #10b981;
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+        }
+
+        .availability-dot.unavailable {
+            background-color: #94a3b8;
+        }
+
+        /* License Badges */
+        .license-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .license-badge.pending {
+            background-color: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fde68a;
+        }
+
+        .license-badge.verified {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+
+        .license-badge.rejected {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        .license-badge.none {
+            background-color: #f3f4f6;
+            color: #374151;
+            border: 1px solid #e5e7eb;
+        }
     </style>
 
     <div class="admin-mgmt-container">
@@ -1369,7 +1536,8 @@
                         </div>
                     </div>
                     <div class="stat-detail"><strong>{{ $totalStudents }}</strong> Students &middot;
-                        <strong>{{ $totalInstructors }}</strong> Instructors</div>
+                        <strong>{{ $totalInstructors }}</strong> Instructors
+                    </div>
                 </div>
             </div>
 
@@ -1390,7 +1558,8 @@
                         </div>
                     </div>
                     <div class="stat-detail"><strong>{{ $activeStudents }}</strong> Students &middot;
-                        <strong>{{ $activeInstructors }}</strong> Instructors</div>
+                        <strong>{{ $activeInstructors }}</strong> Instructors
+                    </div>
                 </div>
             </div>
 
@@ -1411,7 +1580,8 @@
                         </div>
                     </div>
                     <div class="stat-detail"><strong>{{ $inactiveStudents }}</strong> Students &middot;
-                        <strong>{{ $inactiveInstructors }}</strong> Instructors</div>
+                        <strong>{{ $inactiveInstructors }}</strong> Instructors
+                    </div>
                 </div>
             </div>
 
@@ -1432,7 +1602,8 @@
                         </div>
                     </div>
                     <div class="stat-detail"><strong>{{ $activeStudents }}</strong> Active &middot;
-                        <strong>{{ $inactiveStudents }}</strong> Inactive</div>
+                        <strong>{{ $inactiveStudents }}</strong> Inactive
+                    </div>
                 </div>
             </div>
 
@@ -1453,7 +1624,8 @@
                         </div>
                     </div>
                     <div class="stat-detail"><strong>{{ $activeInstructors }}</strong> Active &middot;
-                        <strong>{{ $inactiveInstructors }}</strong> Inactive</div>
+                        <strong>{{ $inactiveInstructors }}</strong> Inactive
+                    </div>
                 </div>
             </div>
         </div>
@@ -1538,8 +1710,20 @@
                         <thead>
                             <tr>
                                 <th>Name</th>
-                                <th>Email</th>
-                                <th>Contact</th>
+                                <th>
+                                    Email
+                                    @if($settings->enable_pii_masking ?? false)
+                                        <i class="bi bi-shield-lock pii-indicator"
+                                            title="Privacy Protected (PII Masking Active)"></i>
+                                    @endif
+                                </th>
+                                <th>
+                                    Contact
+                                    @if($settings->enable_pii_masking ?? false)
+                                        <i class="bi bi-shield-lock pii-indicator"
+                                            title="Privacy Protected (PII Masking Active)"></i>
+                                    @endif
+                                </th>
                                 <th>Role</th>
                                 <th>Branch</th>
                                 <th>License</th>
@@ -1552,9 +1736,49 @@
                             @foreach($users as $user)
                                 <tr data-role="{{ $user->role }}" data-status="{{ $user->status }}"
                                     data-branch="{{ $user->branch_id ?? 'unassigned' }}">
-                                    <td><strong>{{ $user->name }}</strong></td>
-                                    <td>{{ $user->email }}</td>
-                                    <td>{{ $user->contact ?: '—' }}</td>
+                                    <td>
+                                        <div class="availability-indicator" style="{{ $user->role === 'instructor' ? 'margin-left: 16px;' : '' }}">
+                                            @if($user->role === 'instructor')
+                                                <span class="availability-dot {{ ($user->availability ?? 'available') === 'available' ? 'available' : 'unavailable' }}" 
+                                                      title="{{ ($user->availability ?? 'available') === 'available' ? 'Available' : 'Unavailable' }}"></span>
+                                            @endif
+                                            <strong>{{ $user->name }}</strong>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        @if(($settings->enable_pii_masking ?? false) && $user->email)
+                                            @php
+                                                $emailParts = explode('@', $user->email);
+                                                $maskedEmail = substr($emailParts[0], 0, 2) . str_repeat('*', max(0, strlen($emailParts[0]) - 2)) . '@' . $emailParts[1];
+                                            @endphp
+                                            <div class="pii-wrapper">
+                                                <span class="masked-pii" data-full="{{ $user->email }}">{{ $maskedEmail }}</span>
+                                                <button type="button" class="btn-reveal-pii" onclick="revealPII(this)"
+                                                    title="Click to reveal (5s)">
+                                                    <i class="bi bi-eye"></i>
+                                                </button>
+                                            </div>
+                                        @else
+                                            {{ $user->email }}
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if(($settings->enable_pii_masking ?? false) && $user->contact)
+                                            @php
+                                                $contactValue = $user->contact;
+                                                $maskedContact = substr($contactValue, 0, 4) . '****' . substr($contactValue, -2);
+                                            @endphp
+                                            <div class="pii-wrapper">
+                                                <span class="masked-pii" data-full="{{ $contactValue }}">{{ $maskedContact }}</span>
+                                                <button type="button" class="btn-reveal-pii" onclick="revealPII(this)"
+                                                    title="Click to reveal (5s)">
+                                                    <i class="bi bi-eye"></i>
+                                                </button>
+                                            </div>
+                                        @else
+                                            {{ $user->contact ?: '—' }}
+                                        @endif
+                                    </td>
                                     <td>
                                         <span class="role-badge role-{{ $user->role }}">
                                             {{ ucfirst($user->role) }}
@@ -1585,9 +1809,23 @@
                                                 ];
                                             @endphp
                                             <div class="d-flex flex-column gap-1">
-                                                <span class="badge {{ $lColors[$lStatus] }}" style="font-size: 0.75rem;">
-                                                    {{ $lLabels[$lStatus] }}
-                                                </span>
+                                                <div class="d-flex flex-wrap align-items-center gap-2">
+                                                    <span class="license-badge {{ $lStatus }}">
+                                                        {{ $lLabels[$lStatus] }}
+                                                    </span>
+                                                    @if($lStatus === 'pending' && $user->license_image)
+                                                        <button type="button" class="btn-action btn-success js-verify-license"
+                                                           style="padding: 4px 10px; font-size: 0.75rem;"
+                                                           data-id="{{ $user->id }}" data-name="{{ $user->name }}"
+                                                           data-license-number="{{ $user->license_number }}"
+                                                           data-license-image="{{ asset('storage/' . $user->license_image) }}"
+                                                           data-status="{{ $user->license_status }}"
+                                                           data-restrictions="{{ json_encode($user->restriction_codes ?? []) }}"
+                                                           data-rejection-reason="{{ $user->license_rejection_reason }}">
+                                                           <i class="bi bi-shield-check me-1"></i> Verify
+                                                        </button>
+                                                    @endif
+                                                </div>
                                                 @if($lStatus === 'verified' && !empty($user->restriction_codes))
                                                     <div class="d-flex flex-wrap gap-1 mt-1" style="max-width: 120px;">
                                                         @foreach($user->restriction_codes as $code)
@@ -1634,26 +1872,14 @@
                                                     data-id="{{ $user->id }}" data-name="{{ $user->name }}"
                                                     data-email="{{ $user->email }}" data-contact="{{ $user->contact }}"
                                                     data-license="{{ $user->license_number }}" data-address="{{ $user->address }}"
-                                                    data-branch="{{ $user->branch_id }}"
+                                                    data-availability="{{ $user->availability }}" data-branch="{{ $user->branch_id }}"
                                                     data-specializations="{{ json_encode($user->course_specializations ?? []) }}"
                                                     title="Edit Instructor">
                                                     <i class="bi bi-pencil-square"></i>
                                                     <span>Edit</span>
                                                 </button>
 
-                                                @if($user->role === 'instructor' && $user->license_image)
-                                                    <button type="button" class="btn-action btn-success js-verify-license"
-                                                        data-id="{{ $user->id }}" data-name="{{ $user->name }}"
-                                                        data-license-number="{{ $user->license_number }}"
-                                                        data-license-image="{{ asset('storage/' . $user->license_image) }}"
-                                                        data-status="{{ $user->license_status }}"
-                                                        data-restrictions="{{ json_encode($user->restriction_codes ?? []) }}"
-                                                        data-rejection-reason="{{ $user->license_rejection_reason }}"
-                                                        title="Verify License">
-                                                        <i class="bi bi-shield-check"></i>
-                                                        <span>Verify</span>
-                                                    </button>
-                                                @endif
+                                                {{-- Verify button moved to License column --}}
                                             @endif
 
                                             {{-- Global Status Toggle --}}
@@ -1726,10 +1952,12 @@
                 <h3><i class="bi bi-person-plus me-2"></i>Invite New Student</h3>
                 <button type="button" class="btn-close-modal" onclick="closeCreateStudentModal()">×</button>
             </div>
-            <form id="createStudentInviteForm" method="POST" action="{{ school_route('admin.storeAccount') }}" data-no-ajax="1">
+            <form id="createStudentInviteForm" method="POST" action="{{ school_route('admin.storeAccount') }}"
+                data-no-ajax="1">
                 @csrf
                 <div class="modal-body">
-                    <p class="modal-required-note">Fields marked with <span class="required-indicator">*</span> are required.</p>
+                    <p class="modal-required-note">Fields marked with <span class="required-indicator">*</span> are
+                        required.</p>
 
                     @if($showStudentInviteErrors)
                         <div class="modal-error-summary" role="alert">
@@ -1744,24 +1972,32 @@
 
                     <div class="form-group">
                         <label>Name <span class="required-indicator">*</span></label>
-                        <input type="text" name="name" value="{{ $showStudentInviteErrors ? old('name') : '' }}" placeholder="Enter student's full name" required class="{{ $showStudentInviteErrors && $errors->has('name') ? 'is-invalid' : '' }}">
+                        <input type="text" name="name" value="{{ $showStudentInviteErrors ? old('name') : '' }}"
+                            placeholder="Enter student's full name" required
+                            class="{{ $showStudentInviteErrors && $errors->has('name') ? 'is-invalid' : '' }}">
                     </div>
                     <div class="form-group">
                         <label>Email <span class="required-indicator">*</span></label>
-                        <input type="email" name="email" value="{{ $showStudentInviteErrors ? old('email') : '' }}" placeholder="student@example.com" required class="{{ $showStudentInviteErrors && $errors->has('email') ? 'is-invalid' : '' }}">
+                        <input type="email" name="email" value="{{ $showStudentInviteErrors ? old('email') : '' }}"
+                            placeholder="student@example.com" required
+                            class="{{ $showStudentInviteErrors && $errors->has('email') ? 'is-invalid' : '' }}">
                         <p class="field-help">An account setup link will be sent to this email address.</p>
                     </div>
                     <div class="form-group">
                         <label>Contact <span class="required-indicator">*</span></label>
                         <div class="contact-input-group">
                             <span class="contact-prefix">+63</span>
-                            <input type="text" name="contact" value="{{ $showStudentInviteErrors ? old('contact') : '' }}" placeholder="9123456789" required maxlength="10" class="{{ $showStudentInviteErrors && $errors->has('contact') ? 'is-invalid' : '' }}">
+                            <input type="text" name="contact" value="{{ $showStudentInviteErrors ? old('contact') : '' }}"
+                                placeholder="9123456789" required maxlength="10"
+                                class="{{ $showStudentInviteErrors && $errors->has('contact') ? 'is-invalid' : '' }}">
                         </div>
                         <p class="field-help">Enter the 10-digit number after +63 (e.g., 9123456789).</p>
                     </div>
                     <div class="form-group">
                         <label>Address <span class="required-indicator">*</span></label>
-                        <input type="text" name="address" value="{{ $showStudentInviteErrors ? old('address') : '' }}" placeholder="Enter full address" required class="{{ $showStudentInviteErrors && $errors->has('address') ? 'is-invalid' : '' }}">
+                        <input type="text" name="address" value="{{ $showStudentInviteErrors ? old('address') : '' }}"
+                            placeholder="Enter full address" required
+                            class="{{ $showStudentInviteErrors && $errors->has('address') ? 'is-invalid' : '' }}">
                     </div>
                     @if(isset($branches) && $branches->count() > 0)
                         <div class="form-group">
@@ -1776,7 +2012,8 @@
                     @else
                         <div class="alert alert-warning" style="margin-bottom: 20px; font-size: 0.9rem;">
                             <i class="bi bi-exclamation-triangle me-2"></i>
-                            <strong>No branches available.</strong> Please <a href="{{ school_route('admin.branches.index') }}" class="fw-bold">create a branch</a> first to add users.
+                            <strong>No branches available.</strong> Please <a href="{{ school_route('admin.branches.index') }}"
+                                class="fw-bold">create a branch</a> first to add users.
                         </div>
                     @endif
 
@@ -1796,16 +2033,21 @@
                     @else
                         <div class="alert alert-warning" style="margin-bottom: 20px; font-size: 0.9rem;">
                             <i class="bi bi-exclamation-triangle me-2"></i>
-                            <strong>No active courses available.</strong> Please <a href="{{ school_route('admin.courses.index') }}" class="fw-bold">create a course</a> first to add students.
+                            <strong>No active courses available.</strong> Please <a
+                                href="{{ school_route('admin.courses.index') }}" class="fw-bold">create a course</a> first to
+                            add students.
                         </div>
                     @endif
                     <input type="hidden" name="role" value="student">
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="closeCreateStudentModal()" style="background: #64748b; color: white; border: none; height: 42px; padding: 0 20px; border-radius: 10px; font-weight: 600;">
+                    <button type="button" class="btn btn-secondary" onclick="closeCreateStudentModal()"
+                        style="background: #64748b; color: white; border: none; height: 42px; padding: 0 20px; border-radius: 10px; font-weight: 600;">
                         Cancel
                     </button>
-                    <button type="submit" class="btn btn-primary" style="background: var(--btn-gradient); color: var(--btn-primary-text); border: none; height: 42px; padding: 0 20px; border-radius: 10px; font-weight: 600;" {{ (!isset($branches) || $branches->count() == 0 || !isset($courses) || $courses->count() == 0) ? 'disabled' : '' }}>
+                    <button type="submit" class="btn btn-primary"
+                        style="background: var(--btn-gradient); color: var(--btn-primary-text); border: none; height: 42px; padding: 0 20px; border-radius: 10px; font-weight: 600;"
+                        {{ (!isset($branches) || $branches->count() == 0 || !isset($courses) || $courses->count() == 0) ? 'disabled' : '' }}>
                         Add Student
                     </button>
                 </div>
@@ -1814,59 +2056,62 @@
     </div>
 
     <!-- EDIT STUDENT MODAL -->
-<div id="editStudentModal" class="modal">
-    <div class="modal-content" style="width: min(600px, 95%);">
-        <div class="modal-header">
-            <h3><i class="bi bi-pencil-square me-2"></i>Edit Student</h3>
-            <button type="button" class="btn-close-modal" onclick="closeEditStudentModal()">×</button>
-        </div>
-        <form id="editStudentForm" method="POST" action="">
-            @csrf
-            @method('PUT')
-            <div class="modal-body">
-                <div class="form-group">
-                    <label>Name <span class="required-indicator">*</span></label>
-                    <input type="text" id="edit_student_name" name="name" required>
-                </div>
-                <div class="form-group">
-                    <label>Email <span class="required-indicator">*</span></label>
-                    <input type="email" id="edit_student_email" name="email" required>
-                </div>
-                <div class="form-group">
-                    <label>Contact <span class="required-indicator">*</span></label>
-                    <div class="contact-input-group">
-                        <span class="contact-prefix">+63</span>
-                        <input type="text" id="edit_student_contact" name="contact" required maxlength="10" placeholder="9123456789">
+    <div id="editStudentModal" class="modal">
+        <div class="modal-content" style="width: min(600px, 95%);">
+            <div class="modal-header">
+                <h3><i class="bi bi-pencil-square me-2"></i>Edit Student</h3>
+                <button type="button" class="btn-close-modal" onclick="closeEditStudentModal()">×</button>
+            </div>
+            <form id="editStudentForm" method="POST" action="">
+                @csrf
+                @method('PUT')
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Name <span class="required-indicator">*</span></label>
+                        <input type="text" id="edit_student_name" name="name" required>
                     </div>
-                    <p class="field-help">Enter the 10-digit number after +63 (e.g., 9123456789).</p>
+                    <div class="form-group">
+                        <label>Email <span class="required-indicator">*</span></label>
+                        <input type="email" id="edit_student_email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Contact <span class="required-indicator">*</span></label>
+                        <div class="contact-input-group">
+                            <span class="contact-prefix">+63</span>
+                            <input type="text" id="edit_student_contact" name="contact" required maxlength="10"
+                                placeholder="9123456789">
+                        </div>
+                        <p class="field-help">Enter the 10-digit number after +63 (e.g., 9123456789).</p>
+                    </div>
+                    <div class="form-group">
+                        <label>Address <span class="required-indicator">*</span></label>
+                        <input type="text" id="edit_student_address" name="address" required>
+                    </div>
+                    @if(isset($branches) && $branches->count() > 0)
+                        <div class="form-group">
+                            <label>Branch <span class="required-indicator">*</span></label>
+                            <select id="edit_student_branch" name="branch_id" class="branch-modal-select" required>
+                                <option value="" disabled>Select Branch</option>
+                                @foreach($branches as $branch)
+                                    <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    @endif
                 </div>
-                <div class="form-group">
-                    <label>Address <span class="required-indicator">*</span></label>
-                    <input type="text" id="edit_student_address" name="address" required>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditStudentModal()"
+                        style="background: #64748b; color: white; border: none; height: 42px; padding: 0 20px; border-radius: 10px; font-weight: 600;">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary"
+                        style="background: var(--header-gradient); color: white; border: none; height: 42px; padding: 0 20px; border-radius: 10px; font-weight: 600;">
+                        Update Student
+                    </button>
                 </div>
-                @if(isset($branches) && $branches->count() > 0)
-                <div class="form-group">
-                    <label>Branch <span class="required-indicator">*</span></label>
-                    <select id="edit_student_branch" name="branch_id" class="branch-modal-select" required>
-                        <option value="" disabled>Select Branch</option>
-                        @foreach($branches as $branch)
-                            <option value="{{ $branch->id }}">{{ $branch->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                @endif
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeEditStudentModal()" style="background: #64748b; color: white; border: none; height: 42px; padding: 0 20px; border-radius: 10px; font-weight: 600;">
-                    Cancel
-                </button>
-                <button type="submit" class="btn btn-primary" style="background: var(--header-gradient); color: white; border: none; height: 42px; padding: 0 20px; border-radius: 10px; font-weight: 600;">
-                    Update Student
-                </button>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
-</div>
 
     <!-- ADD INSTRUCTOR MODAL -->
     <div id="createInstructorModal" class="modal">
@@ -1875,10 +2120,12 @@
                 <h3><i class="bi bi-person-plus me-2"></i>Add New Instructor</h3>
                 <button type="button" class="btn-close-modal" onclick="closeCreateInstructorModal()">×</button>
             </div>
-            <form id="createInstructorInviteForm" method="POST" action="{{ school_route('admin.storeAccount') }}" data-no-ajax="1" enctype="multipart/form-data">
+            <form id="createInstructorInviteForm" method="POST" action="{{ school_route('admin.storeAccount') }}"
+                data-no-ajax="1" enctype="multipart/form-data">
                 @csrf
                 <div class="modal-body">
-                    <p class="modal-required-note">Fields marked with <span class="required-indicator">*</span> are required.</p>
+                    <p class="modal-required-note">Fields marked with <span class="required-indicator">*</span> are
+                        required.</p>
 
                     @if($showInstructorInviteErrors)
                         <div class="modal-error-summary" role="alert">
@@ -1893,32 +2140,45 @@
 
                     <div class="form-group">
                         <label>Name <span class="required-indicator">*</span></label>
-                        <input type="text" name="name" value="{{ $showInstructorInviteErrors ? old('name') : '' }}" placeholder="Enter instructor's full name" required class="{{ $showInstructorInviteErrors && $errors->has('name') ? 'is-invalid' : '' }}">
+                        <input type="text" name="name" value="{{ $showInstructorInviteErrors ? old('name') : '' }}"
+                            placeholder="Enter instructor's full name" required
+                            class="{{ $showInstructorInviteErrors && $errors->has('name') ? 'is-invalid' : '' }}">
                     </div>
                     <div class="form-group">
                         <label>Email <span class="required-indicator">*</span></label>
-                        <input type="email" name="email" value="{{ $showInstructorInviteErrors ? old('email') : '' }}" placeholder="instructor@example.com" required class="{{ $showInstructorInviteErrors && $errors->has('email') ? 'is-invalid' : '' }}">
+                        <input type="email" name="email" value="{{ $showInstructorInviteErrors ? old('email') : '' }}"
+                            placeholder="instructor@example.com" required
+                            class="{{ $showInstructorInviteErrors && $errors->has('email') ? 'is-invalid' : '' }}">
                         <p class="field-help">An account setup link will be sent to this email address.</p>
                     </div>
                     <div class="form-group">
                         <label>Contact <span class="required-indicator">*</span></label>
                         <div class="contact-input-group">
                             <span class="contact-prefix">+63</span>
-                            <input type="text" name="contact" value="{{ $showInstructorInviteErrors ? old('contact') : '' }}" placeholder="9123456789" required maxlength="10" class="{{ $showInstructorInviteErrors && $errors->has('contact') ? 'is-invalid' : '' }}">
+                            <input type="text" name="contact"
+                                value="{{ $showInstructorInviteErrors ? old('contact') : '' }}" placeholder="9123456789"
+                                required maxlength="10"
+                                class="{{ $showInstructorInviteErrors && $errors->has('contact') ? 'is-invalid' : '' }}">
                         </div>
                         <p class="field-help">Enter the 10-digit number after +63 (e.g., 9123456789).</p>
                     </div>
                     <div class="form-group">
                         <label>License Number <span class="required-indicator">*</span></label>
-                        <input type="text" name="license_number" value="{{ $showInstructorInviteErrors ? old('license_number') : '' }}" placeholder="Enter license number" required class="{{ $showInstructorInviteErrors && $errors->has('license_number') ? 'is-invalid' : '' }}">
+                        <input type="text" name="license_number"
+                            value="{{ $showInstructorInviteErrors ? old('license_number') : '' }}"
+                            placeholder="Enter license number" required
+                            class="{{ $showInstructorInviteErrors && $errors->has('license_number') ? 'is-invalid' : '' }}">
                     </div>
                     <div class="form-group">
                         <label>Address <span class="required-indicator">*</span></label>
-                        <input type="text" name="address" value="{{ $showInstructorInviteErrors ? old('address') : '' }}" placeholder="Enter full address" required class="{{ $showInstructorInviteErrors && $errors->has('address') ? 'is-invalid' : '' }}">
+                        <input type="text" name="address" value="{{ $showInstructorInviteErrors ? old('address') : '' }}"
+                            placeholder="Enter full address" required
+                            class="{{ $showInstructorInviteErrors && $errors->has('address') ? 'is-invalid' : '' }}">
                     </div>
                     <div class="form-group">
                         <label>License Image <span class="required-indicator">*</span></label>
-                        <input type="file" name="license_image" accept="image/*" required class="{{ $showInstructorInviteErrors && $errors->has('license_image') ? 'is-invalid' : '' }}">
+                        <input type="file" name="license_image" accept="image/*" required
+                            class="{{ $showInstructorInviteErrors && $errors->has('license_image') ? 'is-invalid' : '' }}">
                         <p class="field-help">Upload a photo of the instructor's license.</p>
                     </div>
                     @if(isset($branches) && $branches->count() > 0)
@@ -1934,16 +2194,20 @@
                     @else
                         <div class="alert alert-warning" style="margin-bottom: 20px; font-size: 0.9rem;">
                             <i class="bi bi-exclamation-triangle me-2"></i>
-                            <strong>No branches available.</strong> Please <a href="{{ school_route('admin.branches.index') }}" class="fw-bold">create a branch</a> first to add instructors.
+                            <strong>No branches available.</strong> Please <a href="{{ school_route('admin.branches.index') }}"
+                                class="fw-bold">create a branch</a> first to add instructors.
                         </div>
                     @endif
                     @if(isset($courses) && $courses->count() > 0)
                         <div class="form-group">
                             <label>Course Specializations <span class="required-indicator">*</span></label>
-                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px; background: #f8fafc;">
+                            <div
+                                style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px; background: #f8fafc;">
                                 @foreach($courses as $course)
-                                    <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 0; cursor: pointer; font-weight: normal; font-size: 0.9rem;">
-                                        <input type="checkbox" name="course_specializations[]" value="{{ $course->id }}" style="width: auto;">
+                                    <label
+                                        style="display: flex; align-items: center; gap: 8px; margin-bottom: 0; cursor: pointer; font-weight: normal; font-size: 0.9rem;">
+                                        <input type="checkbox" name="course_specializations[]" value="{{ $course->id }}"
+                                            style="width: auto;">
                                         {{ $course->title }}
                                     </label>
                                 @endforeach
@@ -1953,16 +2217,21 @@
                     @else
                         <div class="alert alert-warning" style="margin-bottom: 20px; font-size: 0.9rem;">
                             <i class="bi bi-exclamation-triangle me-2"></i>
-                            <strong>No active courses available.</strong> Please <a href="{{ school_route('admin.courses.index') }}" class="fw-bold">create a course</a> first to assign specializations.
+                            <strong>No active courses available.</strong> Please <a
+                                href="{{ school_route('admin.courses.index') }}" class="fw-bold">create a course</a> first to
+                            assign specializations.
                         </div>
                     @endif
                     <input type="hidden" name="role" value="instructor">
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="closeCreateInstructorModal()" style="background: #64748b; color: white; border: none; height: 42px; padding: 0 20px; border-radius: 10px; font-weight: 600;">
+                    <button type="button" class="btn btn-secondary" onclick="closeCreateInstructorModal()"
+                        style="background: #64748b; color: white; border: none; height: 42px; padding: 0 20px; border-radius: 10px; font-weight: 600;">
                         Cancel
                     </button>
-                    <button type="submit" class="btn btn-primary" style="background: var(--btn-gradient); color: var(--btn-primary-text); border: none; height: 42px; padding: 0 20px; border-radius: 10px; font-weight: 600;" {{ (!isset($branches) || $branches->count() == 0 || !isset($courses) || $courses->count() == 0) ? 'disabled' : '' }}>
+                    <button type="submit" class="btn btn-primary"
+                        style="background: var(--btn-gradient); color: var(--btn-primary-text); border: none; height: 42px; padding: 0 20px; border-radius: 10px; font-weight: 600;"
+                        {{ (!isset($branches) || $branches->count() == 0 || !isset($courses) || $courses->count() == 0) ? 'disabled' : '' }}>
                         Add Instructor
                     </button>
                 </div>
@@ -1993,7 +2262,8 @@
                         <label>Contact <span class="required-indicator">*</span></label>
                         <div class="contact-input-group">
                             <span class="contact-prefix">+63</span>
-                            <input type="text" id="edit_instructor_contact" name="contact" required maxlength="10" placeholder="9123456789">
+                            <input type="text" id="edit_instructor_contact" name="contact" required maxlength="10"
+                                placeholder="9123456789">
                         </div>
                         <p class="field-help">Enter the 10-digit number after +63 (e.g., 9123456789).</p>
                     </div>
@@ -2006,6 +2276,14 @@
                         <input type="text" id="edit_instructor_address" name="address" required>
                     </div>
                     <div class="form-group">
+                        <label>Availability <span class="required-indicator">*</span></label>
+                        <select id="edit_instructor_availability" name="availability" required>
+                            <option value="available">Available (Visible for Bookings)</option>
+                            <option value="unavailable">Unavailable (Hidden from Bookings)</option>
+                        </select>
+                        <p class="field-help">Set if this instructor is currently available for session assignments.</p>
+                    </div>
+                    <div class="form-group">
                         <label>License Image</label>
                         <input type="file" name="license_image" accept="image/*">
                         <p class="field-help">Leave empty to keep current license image.</p>
@@ -2013,10 +2291,13 @@
                     @if(isset($courses) && $courses->count() > 0)
                         <div class="form-group">
                             <label>Course Specializations <span class="required-indicator">*</span></label>
-                            <div id="edit_instructor_specializations" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px; background: #f8fafc;">
+                            <div id="edit_instructor_specializations"
+                                style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px; background: #f8fafc;">
                                 @foreach($courses as $course)
-                                    <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 0; cursor: pointer; font-weight: normal; font-size: 0.9rem;">
-                                        <input type="checkbox" name="course_specializations[]" value="{{ $course->id }}" style="width: auto;">
+                                    <label
+                                        style="display: flex; align-items: center; gap: 8px; margin-bottom: 0; cursor: pointer; font-weight: normal; font-size: 0.9rem;">
+                                        <input type="checkbox" name="course_specializations[]" value="{{ $course->id }}"
+                                            style="width: auto;">
                                         {{ $course->title }}
                                     </label>
                                 @endforeach
@@ -2244,9 +2525,9 @@
                 const role = (cells[3].textContent || '').toLowerCase();
 
                 const visible = query === '' ||
-                                name.indexOf(query) !== -1 ||
-                                email.indexOf(query) !== -1 ||
-                                role.indexOf(query) !== -1;
+                    name.indexOf(query) !== -1 ||
+                    email.indexOf(query) !== -1 ||
+                    role.indexOf(query) !== -1;
 
                 row.style.display = visible ? '' : 'none';
                 if (visible) {
@@ -2354,7 +2635,8 @@
                         btn.dataset.license,
                         btn.dataset.address,
                         btn.dataset.branch,
-                        btn.dataset.specializations
+                        btn.dataset.specializations,
+                        btn.dataset.availability
                     );
                 }
             }
@@ -2458,7 +2740,7 @@
             setInviteFormLoadingState(document.getElementById('createInstructorInviteForm'), false);
         }
 
-        function editInstructor(id, name, email, contact, license, address, branchId, specializations) {
+        function editInstructor(id, name, email, contact, license, address, branchId, specializations, availability) {
             const form = document.getElementById('editInstructorForm');
             form.action = `${window.instructorBaseUrl}/${id}`;
             document.getElementById('edit_instructor_name').value = name || '';
@@ -2473,6 +2755,8 @@
             document.getElementById('edit_instructor_contact').value = displayContact;
             document.getElementById('edit_instructor_license').value = license || '';
             document.getElementById('edit_instructor_address').value = address || '';
+            const availabilitySelect = document.getElementById('edit_instructor_availability');
+            if (availabilitySelect) availabilitySelect.value = availability || 'available';
             const branchSelect = document.getElementById('edit_instructor_branch');
             if (branchSelect) branchSelect.value = branchId || '';
 
@@ -2698,6 +2982,35 @@
                 openVerifyLicenseModal(data);
             }
         });
+        // PII Reveal Logic with 5s Timer
+        function revealPII(button) {
+            const span = button.previousElementSibling;
+            const fullValue = span.getAttribute('data-full');
+            const originalMasked = span.textContent;
+
+            if (span.classList.contains('revealed')) return;
+
+            // Show full value
+            span.textContent = fullValue;
+            span.classList.add('revealed');
+
+            // UI Feedback: Change icon to clock and disable button
+            const originalIcon = button.innerHTML;
+            button.innerHTML = '<i class="bi bi-clock-history"></i>';
+            button.classList.add('timer-active');
+            button.disabled = true;
+
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                span.textContent = originalMasked;
+                span.classList.remove('revealed');
+                button.innerHTML = originalIcon;
+                button.classList.remove('timer-active');
+                button.disabled = false;
+            }, 5000);
+
+            console.log('PII Revealed (Temporary)');
+        }
     </script>
 
     <!-- LICENSE VERIFICATION MODAL -->
@@ -2715,28 +3028,35 @@
                         <!-- Left Column: Details -->
                         <div class="d-flex flex-column gap-4">
                             <div class="verification-info-card">
-                                <label class="fw-bold small text-muted text-uppercase mb-2 d-block">Instructor Details</label>
-                                <div class="p-4 rounded-xl" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;">
+                                <label class="fw-bold small text-muted text-uppercase mb-2 d-block">Instructor
+                                    Details</label>
+                                <div class="p-4 rounded-xl"
+                                    style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;">
                                     <div class="mb-3">
                                         <span class="d-block small text-muted">Full Name</span>
-                                        <span id="verify_instructor_name" class="fw-bold" style="font-size: 1.1rem; color: #1e293b;"></span>
+                                        <span id="verify_instructor_name" class="fw-bold"
+                                            style="font-size: 1.1rem; color: #1e293b;"></span>
                                     </div>
                                     <div class="mb-0">
                                         <span class="d-block small text-muted">License Number</span>
-                                        <span id="verify_license_number" class="fw-bold font-mono" style="font-family: monospace; color: var(--primary-color);"></span>
+                                        <span id="verify_license_number" class="fw-bold font-mono"
+                                            style="font-family: monospace; color: var(--primary-color);"></span>
                                     </div>
                                 </div>
                             </div>
 
                             <div class="verification-action-card">
-                                <label class="fw-bold small text-muted text-uppercase mb-2 d-block">Verification Decision</label>
+                                <label class="fw-bold small text-muted text-uppercase mb-2 d-block">Verification
+                                    Decision</label>
                                 <div class="status-badge-selector">
                                     <label class="status-option">
-                                        <input type="radio" name="status" value="verified" checked onchange="toggleRejectionReason(false)">
+                                        <input type="radio" name="status" value="verified" checked
+                                            onchange="toggleRejectionReason(false)">
                                         <span class="status-btn"><i class="bi bi-check-circle me-2"></i>Approve</span>
                                     </label>
                                     <label class="status-option">
-                                        <input type="radio" name="status" value="rejected" onchange="toggleRejectionReason(true)">
+                                        <input type="radio" name="status" value="rejected"
+                                            onchange="toggleRejectionReason(true)">
                                         <span class="status-btn"><i class="bi bi-x-circle me-2"></i>Reject</span>
                                     </label>
                                 </div>
@@ -2746,7 +3066,8 @@
                         <!-- Right Column: Image -->
                         <div>
                             <label class="fw-bold small text-muted text-uppercase mb-2 d-block">License Document</label>
-                            <div class="verification-preview-container" style="height: 220px; cursor: pointer;" onclick="openLightbox(document.getElementById('licenseImagePreview').src)">
+                            <div class="verification-preview-container" style="height: 220px; cursor: pointer;"
+                                onclick="openLightbox(document.getElementById('licenseImagePreview').src)">
                                 <img id="licenseImagePreview" src="" alt="License">
                                 <div class="verification-preview-overlay">
                                     <i class="bi bi-zoom-in me-1"></i> Click to Enlarge
@@ -2773,13 +3094,16 @@
                     <div id="rejection_reason_group" class="border-top pt-4 mt-4" style="display: none;">
                         <div class="form-group">
                             <label class="fw-bold mb-2 d-block text-danger">Reason for Rejection</label>
-                            <textarea id="rejection_reason" name="rejection_reason" class="form-control" rows="3" placeholder="Please provide a specific reason (e.g., Image too blurry, License expired, Wrong name, etc.)" style="border-radius: 12px; border: 2px solid #fee2e2;"></textarea>
+                            <textarea id="rejection_reason" name="rejection_reason" class="form-control" rows="3"
+                                placeholder="Please provide a specific reason (e.g., Image too blurry, License expired, Wrong name, etc.)"
+                                style="border-radius: 12px; border: 2px solid #fee2e2;"></textarea>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeVerifyLicenseModal()">Cancel</button>
-                    <button type="submit" class="btn btn-primary"><i class="bi bi-shield-check me-2"></i>Save Verification</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-shield-check me-2"></i>Save
+                        Verification</button>
                 </div>
             </form>
         </div>

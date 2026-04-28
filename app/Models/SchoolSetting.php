@@ -92,6 +92,11 @@ class SchoolSetting extends Model
         'invitation_expiry_days',
         'branch_secretary_limit_per_branch',
         'require_instructor_license',
+        'max_file_size_mb',
+        'enforce_ph_contact',
+        'min_tdc_duration_minutes',
+        'min_pdc_duration_minutes',
+        'enable_pii_masking',
         'license_instructions',
     ];
 
@@ -107,6 +112,11 @@ class SchoolSetting extends Model
         'invitation_expiry_days' => 'integer',
         'branch_secretary_limit_per_branch' => 'integer',
         'require_instructor_license' => 'boolean',
+        'max_file_size_mb' => 'integer',
+        'enforce_ph_contact' => 'boolean',
+        'min_tdc_duration_minutes' => 'integer',
+        'min_pdc_duration_minutes' => 'integer',
+        'enable_pii_masking' => 'boolean',
         'custom_css' => 'array',
         'additional_settings' => 'array',
         'license_instructions' => 'array',
