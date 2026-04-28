@@ -288,7 +288,7 @@ class DriveEdHubSeeder extends Seeder
             ['description' => 'Complete beginner comprehensive package. TDC and PDC bundled together.', 'type' => 'Combo', 'course_type' => 'combo', 'license_type' => 'non_professional', 'vehicle_type' => 'Car', 'status' => 'active', 'image_path' => 'courses/course_combo.jpg', 'features' => ['15H Theory Classes', '10H Practical Hand-on', 'License Full Processing Help']]
         );
         $courses[] = $combo;
-        CoursePackage::updateOrCreate(['course_id' => $combo->id, 'name' => 'Combo 15H TDC + 10H PDC'], ['transmission_type' => 'automatic', 'vehicle_type' => 'Car', 'training_hours' => 25, 'price' => 6800.00, 'description' => 'Full combined package.']);ice' => 6800.00, 'description' => 'Full combined package.']);
+        CoursePackage::updateOrCreate(['course_id' => $combo->id, 'name' => 'Combo 15H TDC + 10H PDC'], ['transmission_type' => 'automatic', 'vehicle_type' => 'Car', 'training_hours' => 25, 'price' => 6800.00, 'description' => 'Full combined package.']);
 
         return $courses;
     }
