@@ -87,6 +87,12 @@
     .vehicle-table tbody tr:hover { background: #f9fafb; }
     .vehicle-table td { padding: 16px 20px; font-size: 0.95rem; color: #374151; vertical-align: middle; }
 
+    /* Status Badges */
+    .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 5px; }
+    .status-active { background: #d1fae5; color: #065f46; }
+    .status-maintenance { background: #fef3c7; color: #92400e; }
+    .status-out_of_service { background: #fee2e2; color: #991b1b; }
+
     /* Action Buttons in Table */
     .btn-view-details { background: {{ $primaryColor }}08; color: {{ $primaryColor }}; padding: 6px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; border: 1px solid {{ $primaryColor }}20; transition: all 0.2s; cursor: pointer; }
     .btn-view-details:hover { background: {{ $primaryColor }}; color: white; border-color: {{ $primaryColor }}; }
@@ -109,6 +115,10 @@
     .btn-secondary:hover { background: #e2e8f0; }
     .btn-danger { background: #fef2f2; color: #ef4444; border: 1px solid #fee2e2; }
     .btn-danger:hover { background: #ef4444; color: white; }
+    .btn-deactivate { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; height: 34px; padding: 0 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.2s; }
+    .btn-deactivate:hover { transform: translateY(-1px); filter: brightness(0.95); }
+    .btn-activate { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; height: 34px; padding: 0 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.2s; }
+    .btn-activate:hover { transform: translateY(-1px); filter: brightness(0.95); }
     .btn-primary { 
         @if($useGradient) background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
         @else background: {{ $primaryColor }}; @endif
@@ -249,9 +259,15 @@
                                 <button class="btn-view-details" onclick="viewVehicle({{ json_encode($vehicle->load(['category', 'branch', 'images'])) }})">
                                     <i class="bi bi-eye"></i> View Details
                                 </button>
-                                <form action="{{ route('schools.admin.vehicles.destroy', ['school' => $school->slug, 'vehicle' => $vehicle]) }}" method="POST" onsubmit="return confirm('Permanently delete this vehicle?')">
+
+                                <button type="button" class="{{ $vehicle->status === 'active' ? 'btn-deactivate' : 'btn-activate' }}" onclick="toggleVehicleStatus({{ $vehicle->id }}, '{{ $vehicle->status }}')" title="{{ $vehicle->status === 'active' ? 'Deactivate' : 'Activate' }}">
+                                    <i class="bi bi-{{ $vehicle->status === 'active' ? 'pause-circle' : 'play-circle' }}"></i>
+                                    {{ $vehicle->status === 'active' ? 'Deactivate' : 'Activate' }}
+                                </button>
+
+                                <form id="delete-form-{{ $vehicle->id }}" action="{{ route('schools.admin.vehicles.destroy', ['school' => $school->slug, 'vehicle' => $vehicle]) }}" method="POST">
                                     @csrf @method('DELETE')
-                                    <button type="submit" class="btn-danger" style="height: 34px; padding: 0 12px; font-size: 0.85rem;" title="Delete">
+                                    <button type="button" class="btn-danger" style="height: 34px; padding: 0 12px; font-size: 0.85rem;" title="Delete" onclick="confirmDeleteVehicle({{ $vehicle->id }}, '{{ $vehicle->license_plate }}')">
                                         <i class="bi bi-trash-fill"></i> Delete
                                     </button>
                                 </form>
@@ -424,9 +440,9 @@
                             <button onclick="editCategory({{ json_encode($category) }})" style="border: none; background: #eef2ff; color: #4338ca; width: 28px; height: 28px; border-radius: 6px; cursor: pointer;">
                                 <i class="bi bi-pencil"></i>
                             </button>
-                            <form action="{{ route('schools.admin.vehicles.categories.destroy', ['school' => $school->slug, 'category' => $category]) }}" method="POST" onsubmit="return confirm('Delete this category?')">
+                            <form id="delete-cat-form-{{ $category->id }}" action="{{ route('schools.admin.vehicles.categories.destroy', ['school' => $school->slug, 'category' => $category]) }}" method="POST">
                                 @csrf @method('DELETE')
-                                <button type="submit" style="border: none; background: #fef2f2; color: #b91c1c; width: 28px; height: 28px; border-radius: 6px; cursor: pointer;">
+                                <button type="button" style="border: none; background: #fef2f2; color: #b91c1c; width: 28px; height: 28px; border-radius: 6px; cursor: pointer;" onclick="confirmDeleteCategory({{ $category->id }}, '{{ $category->name }}')">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </form>
@@ -588,6 +604,68 @@
         document.getElementById('edit_cat_name').value = cat.name;
         document.getElementById('editCategoryForm').action = `{{ url($school->slug . '/admin/vehicles/categories') }}/${cat.id}`;
         openVehicleModal('editCategoryModal');
+    }
+
+    function toggleVehicleStatus(id, currentStatus) {
+        const newStatus = currentStatus === 'active' ? 'out_of_service' : 'active';
+        const action = currentStatus === 'active' ? 'Deactivate' : 'Activate';
+        
+        showConfirm({
+            type: currentStatus === 'active' ? 'warning' : 'success',
+            title: `${action} Vehicle`,
+            message: `Are you sure you want to ${action.toLowerCase()} this vehicle?`,
+            confirmText: `Yes, ${action}`,
+            onConfirm: async () => {
+                try {
+                    const response = await fetch(`{{ url($school->slug . '/admin/vehicles') }}/${id}/toggle-status`, {
+                        method: 'PATCH',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({ status: newStatus })
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        if (typeof loadContent === 'function') {
+                            loadContent(window.location.pathname + window.location.search);
+                        } else {
+                            window.location.reload();
+                        }
+                    } else {
+                        alert(data.message || 'Error updating status');
+                    }
+                } catch (error) {
+                    console.error('Toggle error:', error);
+                    alert('Failed to update status. Please try again.');
+                }
+            }
+        });
+    }
+
+    function confirmDeleteVehicle(id, plate) {
+        showConfirm({
+            type: 'danger',
+            title: 'Delete Vehicle',
+            message: `Are you sure you want to permanently delete vehicle "${plate}"? This action cannot be undone.`,
+            confirmText: 'Yes, Delete',
+            onConfirm: () => {
+                document.getElementById('delete-form-' + id).submit();
+            }
+        });
+    }
+
+    function confirmDeleteCategory(id, name) {
+        showConfirm({
+            type: 'danger',
+            title: 'Delete Category',
+            message: `Are you sure you want to delete category "${name}"? This action cannot be undone.`,
+            confirmText: 'Yes, Delete',
+            onConfirm: () => {
+                document.getElementById('delete-cat-form-' + id).submit();
+            }
+        });
     }
 
     function filterFleet(status, el) {
