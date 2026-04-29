@@ -102,8 +102,19 @@ class Instructor extends Authenticatable
             return true;
         }
 
-        // 3. Practical (PDC) Matching: Check if instructor has the required Code (A, B, C...)
-        // This assumes Course model has a 'required_restriction' field or similar logic
-        return in_array($course->required_restriction, $this->restriction_codes ?? []);
+        // 3. Practical (PDC) Matching: Check if instructor has the required Code
+        $required = $course->required_restriction;
+        if (empty($required)) return true;
+
+        $codes = $this->restriction_codes ?? [];
+        if (in_array($required, $codes)) return true;
+
+        // Handle LTO sub-codes (e.g., B1/B2 covers B)
+        if ($required === 'B') return count(array_intersect(['B', 'B1', 'B2', 'BE'], $codes)) > 0;
+        if ($required === 'A') return count(array_intersect(['A', 'A1'], $codes)) > 0;
+        if ($required === 'C') return count(array_intersect(['C', 'CE'], $codes)) > 0;
+        if ($required === 'D') return count(array_intersect(['D', 'DE'], $codes)) > 0;
+
+        return false;
     }
 }
