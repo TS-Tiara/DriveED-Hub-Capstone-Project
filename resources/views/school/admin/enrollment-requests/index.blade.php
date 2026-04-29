@@ -1887,9 +1887,11 @@ function openVerificationModal(enrollmentId) {
             const isFinalized = ['approved', 'rejected', 'cancelled', 'completed'].includes(data.status);
             
             // Show license actions if document exists, is pending, and request is not finalized
-            licenseActions.style.display = (data.license_url && (data.license_status === 'pending' || data.license_status === 'none') && !isFinalized) ? 'flex' : 'none';
+            const licenseActions = document.getElementById('v-license-actions');
+            if (licenseActions) licenseActions.style.display = (data.license_url && (data.license_status === 'pending' || data.license_status === 'none') && !isFinalized) ? 'flex' : 'none';
             // Show payment actions if document exists, is pending, and request is not finalized
-            paymentActions.style.display = (data.receipt_url && data.payment_status === 'pending' && !isFinalized) ? 'flex' : 'none';
+            const paymentActions = document.getElementById('v-payment-actions');
+            if (paymentActions) paymentActions.style.display = (data.receipt_url && data.payment_status === 'pending' && !isFinalized) ? 'flex' : 'none';
             
             // Show/Hide cancellation warning in sidebar
             const cancellationWarning = document.getElementById('v-cancellation-warning');
@@ -1922,6 +1924,8 @@ function openVerificationModal(enrollmentId) {
 
 function updatePanelStatus(type, status) {
     const badge = document.getElementById(`v-${type}-status`);
+    if (!badge) return;
+    status = status || 'none';
     badge.textContent = status.replace('_', ' ').toUpperCase();
     
     // Reset classes
