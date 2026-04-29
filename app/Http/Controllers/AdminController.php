@@ -291,7 +291,7 @@ class AdminController extends Controller
             $studentItems = collect();
             if ($activeRoleFilter !== 'instructor') {
                 $studentItems = $filteredStudentQuery
-                    ->select('id', 'branch_id', 'name', 'email', 'contact', 'address', 'status', 'last_login_at', 'last_logout_at')
+                    ->select('id', 'branch_id', 'name', 'email', 'contact', 'address', 'status', 'profile_picture', 'last_login_at', 'last_logout_at')
                     ->orderBy('name')
                     ->get()
                     ->map(function ($student) {
@@ -303,6 +303,7 @@ class AdminController extends Controller
                             'status' => $student->status,
                             'role' => 'student',
                             'address' => $student->address,
+                            'profile_picture' => $student->profile_picture,
                             'license_number' => null,
                             'license_image' => null,
                             'license_status' => null,
@@ -319,7 +320,7 @@ class AdminController extends Controller
             $instructorItems = collect();
             if ($activeRoleFilter !== 'student') {
                 $instructorItems = $filteredInstructorQuery
-                    ->select('id', 'branch_id', 'name', 'email', 'contact', 'license_number', 'license_image', 'license_status', 'license_rejection_reason', 'restriction_codes', 'status', 'availability', 'last_login_at', 'last_logout_at')
+                    ->select('id', 'branch_id', 'name', 'email', 'contact', 'address', 'license_number', 'license_image', 'license_status', 'license_rejection_reason', 'restriction_codes', 'course_specializations', 'status', 'availability', 'profile_picture', 'last_login_at', 'last_logout_at')
                     ->orderBy('name')
                     ->get()
                     ->map(function ($instructor) {
@@ -330,12 +331,14 @@ class AdminController extends Controller
                             'contact' => $instructor->contact,
                             'status' => $instructor->status,
                             'role' => 'instructor',
-                            'address' => null,
+                            'address' => $instructor->address,
+                            'profile_picture' => $instructor->profile_picture,
                             'license_number' => $instructor->license_number,
                             'license_image' => $instructor->license_image,
                             'license_status' => $instructor->license_status,
                             'license_rejection_reason' => $instructor->license_rejection_reason,
                             'restriction_codes' => $instructor->restriction_codes,
+                            'specializations' => $instructor->course_specializations,
                             'availability' => $instructor->availability,
                             'branch_id' => $instructor->branch_id,
                             'last_login_at' => $instructor->last_login_at,
