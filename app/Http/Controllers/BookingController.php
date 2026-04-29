@@ -55,25 +55,22 @@ class BookingController extends Controller
         $activeFilter = (string) $request->query('status', 'all');
 
         if ($activeTab === 'verify') {
-            // If no specific filter is selected, we default to showing 'done' and 'no-show' sessions.
-            // If 'all' is explicitly selected, we show EVERYTHING as cards.
-            if (!request('filter')) {
+            // Default to 'all' if no status is provided, to show everything as requested by the user.
+            if (!request('status') || $activeFilter === 'all') {
+                $activeFilter = 'all'; 
+                // No additional where clauses, show all statuses for this school/role.
+            } elseif ($activeFilter === 'done') {
                 $query->whereIn('bookings.status', ['done', 'no-show', 'no_show']);
-                $activeFilter = 'done'; 
-            } elseif ($activeFilter === 'all') {
-                // Do nothing, show all statuses
+            } elseif ($activeFilter === 'flagged') {
+                $query->whereIn('bookings.status', ['cancelled', 'no_show', 'no-show']);
             } else {
                 $query->where('bookings.status', $activeFilter);
             }
         }
 
         // Additional filters (server-side so pagination and filters stay in sync)
-        if ($activeFilter !== '' && $activeFilter !== 'all') {
-            if ($activeFilter === 'flagged') {
-                $query->whereIn('bookings.status', ['cancelled', 'no_show', 'no-show']);
-            } else {
-                $query->where('bookings.status', $activeFilter);
-            }
+        if ($activeFilter !== '' && $activeFilter !== 'all' && $activeFilter !== 'done' && $activeFilter !== 'flagged') {
+            $query->where('bookings.status', $activeFilter);
         }
 
         // Fetch instructors and branches for filters
