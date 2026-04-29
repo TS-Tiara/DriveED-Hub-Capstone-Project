@@ -340,6 +340,10 @@ class DriveEdHubSeeder extends Seeder
             $enrollmentStatus = $isEligible ? 'approved' : 'pending';
             $paymentStatus = $isEligible ? 'paid' : 'pending';
 
+            $dlCodes = $course->license_type === 'professional' 
+                ? ['A', 'A1', 'B', 'B1', 'B2', 'C', 'D', 'BE', 'CE'] 
+                : ['A', 'A1', 'B', 'B1', 'B2'];
+
             $enrollment = EnrollmentRequest::updateOrCreate(
                 ['school_id' => $school->id, 'learner_id' => $student->id, 'course_id' => $course->id],
                 [
@@ -348,6 +352,7 @@ class DriveEdHubSeeder extends Seeder
                     'payment_status' => $paymentStatus,
                     'experience_level' => $s['level'],
                     'requested_license_type' => 'non_professional',
+                    'requested_dl_code' => $dlCodes[array_rand($dlCodes)],
                     'branch_id' => $student->branch_id,
                     'price' => $package ? $package->price : 0,
                     'payment_method' => $isEligible ? 'cash' : 'gcash',
