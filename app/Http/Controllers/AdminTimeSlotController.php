@@ -78,7 +78,7 @@ class AdminTimeSlotController extends Controller
                             try {
                                 $start = \Carbon\Carbon::createFromFormat('H:i', $timeslotData['start_time']);
                                 $end = \Carbon\Carbon::createFromFormat('H:i', $value);
-                                $duration = $end->diffInMinutes($start);
+                                $duration = $start->diffInMinutes($end);
                                 
                                 $settings = $school->schoolSetting;
                                 // For bulk creation, we use a generic 60min or the TDC min if no course is specified
@@ -132,7 +132,7 @@ class AdminTimeSlotController extends Controller
                     try {
                         $start = \Carbon\Carbon::createFromFormat('H:i', $request->start_time);
                         $end = \Carbon\Carbon::createFromFormat('H:i', $value);
-                        $duration = $end->diffInMinutes($start);
+                        $duration = $start->diffInMinutes($end);
                         
                         $course = \App\Models\Course::find($request->course_id);
                         $settings = $school->schoolSetting;
