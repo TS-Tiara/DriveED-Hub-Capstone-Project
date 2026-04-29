@@ -818,7 +818,7 @@
                 : 'Are you sure you want to void this session? These hours will not count towards student graduation.';
 
             showConfirm({
-                type: isVerify ? 'info' : 'warning',
+                type: isVerify ? 'success' : 'warning',
                 title: actionTitle,
                 message: actionMsg,
                 confirmText: isVerify ? 'Yes, Verify Session' : 'Yes, Void Session',
