@@ -473,7 +473,7 @@ class AdminController extends Controller
                     $request->role === 'student' ? 'required' : 'nullable',
                     Rule::exists('courses', 'id')->where('school_id', $school->id)->where('status', 'active')
                 ],
-                'course_specializations' => $request->role === 'instructor' ? 'required|array|min:1' : 'nullable|array',
+                'course_specializations' => 'nullable|array',
                 'course_specializations.*' => [
                     'required',
                     Rule::exists('courses', 'id')->where('school_id', $school->id)->where('status', 'active')
