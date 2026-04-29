@@ -2421,6 +2421,8 @@
                                 class="fw-bold">create a branch</a> first to add instructors.
                         </div>
                     @endif
+                    {{-- Course Specializations hidden: does not affect scheduling (LTO restriction codes are the hard gate) --}}
+                    <div style="display: none;">
                     @if(isset($courses) && $courses->count() > 0)
                         <div class="form-group">
                             <label>Course Specializations <span class="required-indicator">*</span></label>
@@ -2445,6 +2447,7 @@
                             assign specializations.
                         </div>
                     @endif
+                    </div>
                     <input type="hidden" name="role" value="instructor">
                 </div>
                 <div class="modal-footer">
@@ -2507,10 +2510,12 @@
                         <p class="field-help">Set if this instructor is currently available for session assignments.</p>
                     </div>
                     <div class="form-group">
-                        <label>License Image</label>
+                        <label>License Image <span class="required-indicator">*</span></label>
                         <input type="file" name="license_image" accept="image/*">
-                        <p class="field-help">Leave empty to keep current license image.</p>
+                        <p class="field-help">Upload a photo of the instructor's license.</p>
                     </div>
+                    {{-- Course Specializations hidden: does not affect scheduling (LTO restriction codes are the hard gate) --}}
+                    <div style="display: none;">
                     @if(isset($courses) && $courses->count() > 0)
                         <div class="form-group">
                             <label>Course Specializations <span class="required-indicator">*</span></label>
@@ -2528,6 +2533,7 @@
                             <p class="field-help">Select courses this instructor is qualified to teach.</p>
                         </div>
                     @endif
+                    </div>
                     @if(isset($branches) && $branches->count() > 0)
                         <div class="form-group">
                             <label>Branch <span class="required-indicator">*</span></label>
