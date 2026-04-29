@@ -98,7 +98,7 @@ class Instructor extends Authenticatable
         }
 
         // 2. Theoretical (TDC) Exception: Theory only needs a verified Pro license
-        if ($course->type === 'theoretical') {
+        if ($course->course_type === 'theoretical') {
             return true;
         }
 

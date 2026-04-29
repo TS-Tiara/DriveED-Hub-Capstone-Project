@@ -764,7 +764,8 @@ class AdminController extends Controller
                     ->with('error', 'This demo account has locked name, email, and password.');
             }
 
-            $data = $request->only('name', 'email', 'contact', 'license_number', 'address', 'branch_id', 'course_specializations', 'availability');
+            $data = $request->only('name', 'email', 'contact', 'license_number', 'address', 'branch_id', 'availability');
+            $data['course_specializations'] = $request->input('course_specializations', []);
 
             // Normalize contact
             if (!empty($data['contact'])) {
@@ -1738,7 +1739,7 @@ class AdminController extends Controller
                         try {
                             $start = \Carbon\Carbon::createFromFormat('H:i', $request->start_time);
                             $end = \Carbon\Carbon::createFromFormat('H:i', $value);
-                            $duration = $end->diffInMinutes($start);
+                            $duration = $start->diffInMinutes($end);
                             
                             if ($duration < 60) {
                                 $fail("The session must be at least 1 hour long. (Detected: {$duration} mins)");
@@ -1818,21 +1819,21 @@ class AdminController extends Controller
 
                 if ($instructors->count() !== count($validated['instructor_ids'])) {
                     DB::rollBack();
-                    return redirect()->back()->withInput()->with('error', 'Some selected instructors are invalid or inactive.');
+                    throw \Illuminate\Validation\ValidationException::withMessages(['instructor_ids' => 'Some selected instructors are invalid or inactive.']);
                 }
 
                 // Accreditation Check
                 foreach ($instructors as $instructor) {
                     if (!$instructor->canTeach($course)) {
                         DB::rollBack();
-                        return redirect()->back()->withInput()->with('error', "Instructor {$instructor->name} is not accredited to teach this course (License status: {$instructor->license_status}).");
+                        throw \Illuminate\Validation\ValidationException::withMessages(['instructor_ids' => "Instructor {$instructor->name} is not accredited to teach this course (License status: {$instructor->license_status})."]);
                     }
                 }
 
                 // Check if not exceeding max capacity (for TDC)
                 if ($resolvedSessionType === 'theoretical' && $instructors->count() > $maxInstructors) {
                     DB::rollBack();
-                    return redirect()->back()->withInput()->with('error', 'Cannot assign more instructors than the maximum capacity.');
+                    throw \Illuminate\Validation\ValidationException::withMessages(['instructor_ids' => 'Cannot assign more instructors than the maximum capacity.']);
                 }
 
                 // Assign instructors with admin_assigned type
@@ -1970,9 +1971,7 @@ class AdminController extends Controller
                 $totalInstructors = $selfSelectedCount + count($validated['instructor_ids']);
                 if ($totalInstructors > $maxInstructors) {
                     DB::rollBack();
-                    return redirect()->back()
-                        ->withErrors(['instructor_ids' => "Cannot assign {$totalInstructors} instructors. Maximum capacity is {$maxInstructors}. Currently {$selfSelectedCount} instructors are self-selected."])
-                        ->withInput();
+                    throw \Illuminate\Validation\ValidationException::withMessages(['instructor_ids' => "Cannot assign {$totalInstructors} instructors. Maximum capacity is {$maxInstructors}. Currently {$selfSelectedCount} instructors are self-selected."]);
                 }
 
                 // Validate instructors belong to school and are active
@@ -1983,9 +1982,7 @@ class AdminController extends Controller
 
                 if ($instructors->count() !== count($validated['instructor_ids'])) {
                     DB::rollBack();
-                    return redirect()->back()
-                        ->withErrors(['instructor_ids' => 'One or more selected instructors are invalid or inactive.'])
-                        ->withInput();
+                    throw \Illuminate\Validation\ValidationException::withMessages(['instructor_ids' => 'One or more selected instructors are invalid or inactive.']);
                 }
 
                 // Accreditation Check
@@ -1993,9 +1990,7 @@ class AdminController extends Controller
                 foreach ($instructors as $instructor) {
                     if (!$instructor->canTeach($course)) {
                         DB::rollBack();
-                        return redirect()->back()
-                            ->withErrors(['instructor_ids' => "Instructor {$instructor->name} is not accredited to teach this course (License status: {$instructor->license_status})."])
-                            ->withInput();
+                        throw \Illuminate\Validation\ValidationException::withMessages(['instructor_ids' => "Instructor {$instructor->name} is not accredited to teach this course (License status: {$instructor->license_status})."]);
                     }
                 }
 

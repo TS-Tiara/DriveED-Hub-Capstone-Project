@@ -1847,6 +1847,7 @@
                                             @endphp
                                             <tr class="timeslot-table-row timeslot-item" 
                                                 data-slot-id="{{ $timeslot->id }}"
+                                                data-course-id="{{ $timeslot->course_id }}"
                                                 data-start-time="{{ $timeslot->start_time }}"
                                                 data-end-time="{{ $timeslot->end_time }}"
                                                 data-session-type="{{ $sessionType }}"
@@ -2259,7 +2260,15 @@
                         @else
                             <select name="instructor_ids[]" class="form-control" multiple size="6">
                                 @foreach($instructors as $instructor)
-                                    <option value="{{ $instructor->id }}">
+                                    @php
+                                        $accreditedCourseIds = [];
+                                        foreach($courses as $course) {
+                                            if ($instructor->canTeach($course)) {
+                                                $accreditedCourseIds[] = $course->id;
+                                            }
+                                        }
+                                    @endphp
+                                    <option value="{{ $instructor->id }}" data-accredited-courses="{{ json_encode($accreditedCourseIds) }}">
                                         {{ $instructor->name }} ({{ $instructor->email }})
                                     </option>
                                 @endforeach
@@ -2396,7 +2405,28 @@
                 const selectedOption = courseSelect.options[courseSelect.selectedIndex];
                 if (!selectedOption || !selectedOption.value) return;
 
+                const courseId = selectedOption.value;
                 const type = selectedOption.getAttribute('data-type');
+                
+                if (instructorSelect) {
+                    Array.from(instructorSelect.options).forEach(opt => {
+                        let accreditedCourses = [];
+                        try { accreditedCourses = JSON.parse(opt.dataset.accreditedCourses || '[]'); } catch(e) {}
+                        
+                        if (accreditedCourses.includes(parseInt(courseId))) {
+                            opt.disabled = false;
+                            opt.text = opt.dataset.originalText || opt.text;
+                        } else {
+                            if (!opt.dataset.originalText) {
+                                opt.dataset.originalText = opt.text;
+                            }
+                            opt.disabled = true;
+                            opt.selected = false;
+                            opt.text = opt.dataset.originalText + ' (Not Accredited)';
+                        }
+                    });
+                }
+
                 const selectedInstructors = instructorSelect ? Array.from(instructorSelect.selectedOptions).length : 0;
                 const sessionTypeHidden = document.getElementById('createSessionTypeHidden');
 
@@ -2803,6 +2833,7 @@
             // Extract data from data attributes and DOM
             const startTime = slotItem.dataset.startTime || '';
             const endTime = slotItem.dataset.endTime || '';
+            const courseId = slotItem.dataset.courseId || '';
             const sessionType = slotItem.dataset.sessionType || 'theoretical';
             let maxInstructors = slotItem.dataset.maxInstructors || '';
             const notes = slotItem.dataset.notes || 'No notes';
@@ -2834,6 +2865,7 @@
             // Store data for edit modal
             window.currentSlotData = {
                 id: slotId,
+                courseId: courseId,
                 time: timeText,
                 sessionType: sessionType,
                 instructors: instructorsList,
@@ -3096,7 +3128,8 @@
             const createModalSelect = document.querySelector('#createModal select[name="instructor_ids[]"]');
             const allInstructors = createModalSelect ? Array.from(createModalSelect.options).map(opt => ({
                 id: opt.value,
-                name: opt.text
+                name: opt.dataset.originalText || opt.text,
+                accreditedCourses: opt.dataset.accreditedCourses || '[]'
             })) : [];
 
             // Build instructor multi-select
@@ -3107,7 +3140,18 @@
                     const assignedName = assigned.name.replace(/[🔵🟢]\s*/, '').trim();
                     return assignedName === instructorName;
                 });
-                return `<option value="${inst.id}" ${isSelected ? 'selected' : ''}>${inst.name}</option>`;
+                
+                let isAccredited = false;
+                try {
+                    const courses = JSON.parse(inst.accreditedCourses);
+                    isAccredited = courses.includes(parseInt(slotData.courseId));
+                } catch(e) {}
+                
+                if (isAccredited) {
+                    return `<option value="${inst.id}" ${isSelected ? 'selected' : ''}>${inst.name}</option>`;
+                } else {
+                    return `<option value="${inst.id}" disabled>${inst.name} (Not Accredited)</option>`;
+                }
             }).join('');
 
             document.getElementById('editModalContent').innerHTML = `

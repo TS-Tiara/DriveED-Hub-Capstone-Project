@@ -2068,7 +2068,8 @@
                                                     data-license-image="{{ $user->license_image ? asset('storage/' . $user->license_image) : '' }}"
                                                     data-license-status="{{ $user->license_status }}"
                                                     data-restrictions="{{ json_encode($user->restriction_codes ?? []) }}"
-                                                    data-specializations="{{ json_encode($user->specializations ?? []) }}"
+                                                    data-specializations="{{ json_encode($user->course_specializations ?? []) }}"
+                                                    data-availability="{{ $user->availability ?? 'available' }}"
                                                     data-rejection-reason="{{ $user->license_rejection_reason }}"
                                                     data-profile-picture="{{ $user->profile_picture ? asset('storage/' . $user->profile_picture) : '' }}"
                                                     data-last-login="{{ ($user->last_login_at ?? null) ? \Illuminate\Support\Carbon::parse($user->last_login_at)->diffForHumans() : 'Never' }}"
@@ -2553,6 +2554,7 @@
         window.schoolSlug = '{{ $school->slug }}';
         window.studentBaseUrl = '/{{ $school->slug }}/admin/students';
         window.instructorBaseUrl = '/{{ $school->slug }}/admin/instructors';
+        window.courseTitles = {!! isset($courses) ? json_encode($courses->pluck('title', 'id')) : '{}' !!};
         window.__userMgmtInitialFilterState = {
             search: @json($activeSearch ?? ''),
             status: @json($activeStatusFilter ?? 'all'),
@@ -2977,8 +2979,11 @@
             document.getElementById('edit_instructor_email').value = email || '';
 
             let displayContact = contact || '';
-            if (displayContact.startsWith('+63')) {
-                displayContact = displayContact.substring(3);
+            // Remove any non-digit characters (like dashes or spaces from seeders)
+            displayContact = displayContact.replace(/\D/g, '');
+            
+            if (displayContact.startsWith('63')) {
+                displayContact = displayContact.substring(2);
             } else if (displayContact.startsWith('0')) {
                 displayContact = displayContact.substring(1);
             }
@@ -3148,7 +3153,7 @@
                                 <div class="profile-info-item" style="grid-column: span 2;">
                                     <div class="profile-info-label">Course Specializations</div>
                                     <div class="profile-info-value">
-                                        ${specializations.length > 0 ? specializations.map(s => `<span class="badge bg-info text-white me-1">${s}</span>`).join('') : '<span class="text-muted">None listed</span>'}
+                                        ${specializations.length > 0 ? specializations.map(s => `<span class="badge bg-info text-white me-1">${window.courseTitles[s] || s}</span>`).join('') : '<span class="text-muted">None listed</span>'}
                                     </div>
                                 </div>
                             </div>
@@ -3356,6 +3361,8 @@
                     licenseImage: viewBtn.dataset.licenseImage,
                     licenseStatus: viewBtn.dataset.licenseStatus,
                     restrictions: viewBtn.dataset.restrictions,
+                    specializations: viewBtn.dataset.specializations,
+                    availability: viewBtn.dataset.availability,
                     rejectionReason: viewBtn.dataset.rejectionReason,
                     lastLogin: viewBtn.dataset.lastLogin,
                     lastLogout: viewBtn.dataset.lastLogout,
@@ -3439,6 +3446,26 @@
                 setTimeout(() => lightbox.style.display = 'none', 300);
             }
         }
+        
+        // Ensure validation errors are visible even if modal is closed
+        document.addEventListener('DOMContentLoaded', function() {
+            const hasErrors = @json($errors->any());
+            if (hasErrors) {
+                const errorMessages = {!! json_encode($errors->all()) !!};
+                let errorHtml = '<ul style="text-align: left; margin: 0; padding-left: 20px;">';
+                errorMessages.forEach(msg => {
+                    errorHtml += `<li>${msg}</li>`;
+                });
+                errorHtml += '</ul>';
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Validation Error',
+                    html: `Please fix the following issues:<br><br>${errorHtml}`,
+                    confirmButtonColor: 'var(--primary-color)'
+                });
+            }
+        });
     </script>
 
     <!-- LICENSE VERIFICATION MODAL -->
