@@ -335,10 +335,6 @@ class DriveEdHubSeeder extends Seeder
             $course = $courses[$i % count($courses)];
             $package = $course->packages->first();
 
-            $dlCodes = $course->license_type === 'professional' 
-                ? ['A', 'A1', 'B', 'B1', 'B2', 'C', 'D', 'BE', 'CE'] 
-                : ['A', 'A1', 'B', 'B1', 'B2'];
-
             // Only fully approve students who have verified licenses and passed TDC
             $isEligible = $s['license'] === 'verified' && $s['tdc'];
             $enrollmentStatus = $isEligible ? 'approved' : 'pending';
@@ -352,7 +348,6 @@ class DriveEdHubSeeder extends Seeder
                     'payment_status' => $paymentStatus,
                     'experience_level' => $s['level'],
                     'requested_license_type' => 'non_professional',
-                    'requested_dl_code' => $dlCodes[array_rand($dlCodes)],
                     'branch_id' => $student->branch_id,
                     'price' => $package ? $package->price : 0,
                     'payment_method' => $isEligible ? 'cash' : 'gcash',
