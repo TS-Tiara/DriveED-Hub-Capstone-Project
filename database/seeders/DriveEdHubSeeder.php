@@ -394,7 +394,7 @@ class DriveEdHubSeeder extends Seeder
 
         $guestData = [
             'guest1@driveedhub.test' => ['name' => 'Elena Joy Reyes', 'license' => 'none', 'exp' => 'new_driver', 'course_idx' => 0, 'status' => 'pending', 'pay' => 'pending'],
-            'guest2@driveedhub.test' => ['name' => 'Mark Anthony Dizon', 'license' => 'pending', 'exp' => 'experienced', 'course_idx' => 2, 'status' => 'approved', 'pay' => 'paid', 'cancellation' => true], // Added cancellation request
+            'guest2@driveedhub.test' => ['name' => 'Mark Anthony Dizon', 'license' => 'pending', 'exp' => 'experienced', 'course_idx' => 2, 'status' => 'pending', 'pay' => 'paid', 'cancellation' => true], // Cancellation requested — status must stay pending
             'guest3@driveedhub.test' => ['name' => 'Jamie Lyn Pascual', 'license' => 'none', 'exp' => 'new_driver', 'course_idx' => 1, 'status' => 'pending', 'pay' => 'paid'],
             'guest4@driveedhub.test' => ['name' => 'Carlo Miguel Bautista', 'license' => 'verified', 'exp' => 'new_driver'], // Registered but no request yet
             'guest5@driveedhub.test' => ['name' => 'Angelica Mae Soriano', 'license' => 'rejected', 'exp' => 'new_driver', 'course_idx' => 2, 'status' => 'rejected', 'pay' => 'cancelled'],
