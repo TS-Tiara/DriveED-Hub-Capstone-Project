@@ -90,7 +90,7 @@ class EnrollmentRequestController extends Controller
                     WHEN status = 'cancelled' THEN 6
                     ELSE 7
                 END")
-                ->orderBy('created_at', 'desc');
+                    ->orderBy('created_at', 'desc');
                 break;
 
             case 'oldest':
@@ -1116,7 +1116,7 @@ class EnrollmentRequestController extends Controller
                 try {
                     if (Storage::disk('local')->exists($stagedPath)) {
                         Storage::disk('local')->move($stagedPath, $permanentPath);
-                        
+
                         $student->update([
                             'student_license_path' => $permanentPath,
                             'student_license_status' => 'verified',

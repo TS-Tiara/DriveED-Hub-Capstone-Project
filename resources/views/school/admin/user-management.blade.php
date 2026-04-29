@@ -1142,6 +1142,176 @@
         }
 
         /* Mobile Responsive Styles */
+        /* --- ENHANCED USER PROFILE MODAL STYLES --- */
+        .profile-modal-container {
+            border-radius: 20px;
+            overflow: hidden;
+            border: none;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .profile-modal-header {
+            background: linear-gradient(135deg, var(--primary-color), #4f46e5);
+            padding: 35px 30px;
+            position: relative;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .profile-modal-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(8px);
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            overflow: hidden;
+            flex-shrink: 0;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .profile-modal-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .profile-header-info h3 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin: 0 0 8px 0;
+            letter-spacing: -0.025em;
+            color: white !important;
+        }
+
+        .profile-role-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 12px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            backdrop-filter: blur(4px);
+        }
+
+        .profile-modal-body {
+            padding: 30px;
+            background: white;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .profile-section {
+            margin-bottom: 30px;
+        }
+
+        .profile-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .profile-section-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .profile-info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .profile-info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .profile-info-label {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            font-weight: 600;
+        }
+
+        .profile-info-value {
+            font-size: 0.95rem;
+            color: #1e293b;
+            font-weight: 500;
+        }
+
+        .profile-info-value.pii-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .profile-modal-footer {
+            padding: 20px 30px;
+            background: #f8fafc;
+            border-top: 1px solid #f1f5f9;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .verification-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .license-image-container {
+            width: 100%;
+            height: 200px;
+            background: #1e293b;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: zoom-in;
+        }
+
+        .license-image-container img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        @media (max-width: 640px) {
+            .profile-modal-header {
+                flex-direction: column;
+                text-align: center;
+                padding: 30px 20px;
+            }
+            .profile-info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
         @media (max-width: 768px) {
             .admin-mgmt-container {
                 padding: 15px;
@@ -1813,15 +1983,24 @@
                                                     <span class="license-badge {{ $lStatus }}">
                                                         {{ $lLabels[$lStatus] }}
                                                     </span>
-                                                    @if(($lStatus === 'pending' || $lStatus === 'none') && $user->license_image)
+                                                    @if(($lStatus === 'pending' || $lStatus === 'none' || $lStatus === 'rejected') && $user->license_image)
                                                         <button type="button" class="btn-action btn-success js-verify-license"
                                                            style="padding: 4px 10px; font-size: 0.75rem;"
-                                                           data-id="{{ $user->id }}" data-name="{{ $user->name }}"
+                                                           data-id="{{ $user->id }}" 
+                                                           data-role="instructor"
+                                                           data-name="{{ $user->name }}"
+                                                           data-email="{{ $user->email }}"
+                                                           data-contact="{{ $user->contact }}"
+                                                           data-address="{{ $user->address }}"
+                                                           data-branch="{{ $branches->find($user->branch_id)->name ?? 'Not Assigned' }}"
+                                                           data-status="{{ $user->status }}"
                                                            data-license-number="{{ $user->license_number }}"
                                                            data-license-image="{{ asset('storage/' . $user->license_image) }}"
-                                                           data-status="{{ $user->license_status }}"
+                                                           data-license-status="{{ $user->license_status }}"
                                                            data-restrictions="{{ json_encode($user->restriction_codes ?? []) }}"
-                                                           data-rejection-reason="{{ $user->license_rejection_reason }}">
+                                                           data-rejection-reason="{{ $user->license_rejection_reason }}"
+                                                           data-last-login="{{ ($user->last_login_at ?? null) ? \Illuminate\Support\Carbon::parse($user->last_login_at)->diffForHumans() : 'Never' }}"
+                                                           data-last-logout="{{ ($user->last_logout_at ?? null) ? \Illuminate\Support\Carbon::parse($user->last_logout_at)->diffForHumans() : 'Never' }}">
                                                            <i class="bi bi-shield-check me-1"></i> Verify
                                                         </button>
                                                     @endif
@@ -1857,6 +2036,49 @@
                                     </td>
                                     <td class="actions-cell">
                                         <div class="action-buttons">
+                                            {{-- Global View Button --}}
+                                            @if($user->role === 'student' || $user->role === 'guest')
+                                                <button type="button" class="btn-action btn-primary js-view-user" 
+                                                    data-id="{{ $user->id }}" 
+                                                    data-role="student"
+                                                    data-name="{{ $user->name }}"
+                                                    data-email="{{ $user->email }}"
+                                                    data-contact="{{ $user->contact }}"
+                                                    data-address="{{ $user->address }}"
+                                                    data-branch="{{ $branches->find($user->branch_id)->name ?? 'Not Assigned' }}"
+                                                    data-status="{{ $user->status }}"
+                                                    data-profile-picture="{{ $user->profile_picture ? asset('storage/' . $user->profile_picture) : '' }}"
+                                                    data-last-login="{{ ($user->last_login_at ?? null) ? \Illuminate\Support\Carbon::parse($user->last_login_at)->diffForHumans() : 'Never' }}"
+                                                    data-last-logout="{{ ($user->last_logout_at ?? null) ? \Illuminate\Support\Carbon::parse($user->last_logout_at)->diffForHumans() : 'Never' }}"
+                                                    title="View Student">
+                                                    <i class="bi bi-eye"></i>
+                                                    <span>View</span>
+                                                </button>
+                                            @elseif($user->role === 'instructor')
+                                                <button type="button" class="btn-action btn-primary js-view-user" 
+                                                    data-id="{{ $user->id }}" 
+                                                    data-role="instructor"
+                                                    data-name="{{ $user->name }}"
+                                                    data-email="{{ $user->email }}"
+                                                    data-contact="{{ $user->contact }}"
+                                                    data-address="{{ $user->address }}"
+                                                    data-branch="{{ $branches->find($user->branch_id)->name ?? 'Not Assigned' }}"
+                                                    data-status="{{ $user->status }}"
+                                                    data-license="{{ $user->license_number }}"
+                                                    data-license-image="{{ $user->license_image ? asset('storage/' . $user->license_image) : '' }}"
+                                                    data-license-status="{{ $user->license_status }}"
+                                                    data-restrictions="{{ json_encode($user->restriction_codes ?? []) }}"
+                                                    data-specializations="{{ json_encode($user->specializations ?? []) }}"
+                                                    data-rejection-reason="{{ $user->license_rejection_reason }}"
+                                                    data-profile-picture="{{ $user->profile_picture ? asset('storage/' . $user->profile_picture) : '' }}"
+                                                    data-last-login="{{ ($user->last_login_at ?? null) ? \Illuminate\Support\Carbon::parse($user->last_login_at)->diffForHumans() : 'Never' }}"
+                                                    data-last-logout="{{ ($user->last_logout_at ?? null) ? \Illuminate\Support\Carbon::parse($user->last_logout_at)->diffForHumans() : 'Never' }}"
+                                                    title="View Instructor">
+                                                    <i class="bi bi-eye"></i>
+                                                    <span>View</span>
+                                                </button>
+@endif
+
                                             {{-- Global Edit Button --}}
                                             @if($user->role === 'student' || $user->role === 'guest')
                                                 <button type="button" class="btn-action btn-info js-edit-user" data-role="student"
@@ -2327,6 +2549,7 @@
 
 
     <script>
+        window.piiMaskingEnabled = {{ ($settings->enable_pii_masking ?? false) ? 'true' : 'false' }};
         window.schoolSlug = '{{ $school->slug }}';
         window.studentBaseUrl = '/{{ $school->slug }}/admin/students';
         window.instructorBaseUrl = '/{{ $school->slug }}/admin/instructors';
@@ -2379,16 +2602,7 @@
                 }
 
                 // Auto-strip leading zero from contact inputs in modals
-                document.querySelectorAll('input[name="contact"], #edit_student_contact, #edit_instructor_contact').forEach(input => {
-                    input.addEventListener('input', function (e) {
-                        let val = e.target.value;
-                        if (val.startsWith('0')) {
-                            e.target.value = val.substring(1);
-                        }
-                        // Allow only numbers
-                        e.target.value = e.target.value.replace(/\D/g, '');
-                    });
-                });
+                // (Consolidated with global delegation at the end of the script)
                 console.log('User Management: Initialized successfully');
             } catch (err) {
                 console.error('User Management: Initialization error:', err);
@@ -2486,7 +2700,6 @@
 
         function bindUserSearchEvents() {
             // Use event delegation on the document to ensure search works even if injected via AJAX
-            // and to avoid issues with direct binding if the script runs too early.
             if (window._userSearchBound) return;
             window._userSearchBound = true;
 
@@ -2494,7 +2707,9 @@
                 if (event.target && event.target.id === 'userSearch') {
                     if (event.key === 'Enter') {
                         event.preventDefault();
-                        applyLocalUserTableSearch(event.target.value || '');
+                        const val = event.target.value.trim();
+                        // Trigger server-side search on Enter
+                        navigateWithUserFilters({ search: val });
                     }
                 }
             });
@@ -2510,14 +2725,10 @@
 
         function applyLocalUserTableSearch(rawValue) {
             const table = document.getElementById('usersTable');
-            if (!table) {
-                return;
-            }
+            if (!table) return;
 
             const tbody = table.querySelector('tbody');
-            if (!tbody) {
-                return;
-            }
+            if (!tbody) return;
 
             const query = (rawValue || '').trim().toLowerCase();
             const rows = Array.from(tbody.querySelectorAll('tr')).filter(function (row) {
@@ -2530,13 +2741,22 @@
                 const cells = row.querySelectorAll('td');
                 if (cells.length < 4) return;
 
+                // For Name, search the text content
                 const name = (cells[0].textContent || '').toLowerCase();
-                const email = (cells[1].textContent || '').toLowerCase();
+                
+                // For Email and Contact, check for masked-pii spans first to get the full value
+                const emailSpan = cells[1].querySelector('.masked-pii');
+                const email = (emailSpan ? emailSpan.dataset.full : cells[1].textContent || '').toLowerCase();
+                
+                const contactSpan = cells[2].querySelector('.masked-pii');
+                const contact = (contactSpan ? contactSpan.dataset.full : cells[2].textContent || '').toLowerCase();
+                
                 const role = (cells[3].textContent || '').toLowerCase();
 
                 const visible = query === '' ||
                     name.indexOf(query) !== -1 ||
                     email.indexOf(query) !== -1 ||
+                    contact.indexOf(query) !== -1 ||
                     role.indexOf(query) !== -1;
 
                 row.style.display = visible ? '' : 'none';
@@ -2793,8 +3013,244 @@
             document.getElementById('editInstructorModal').style.display = 'none';
         }
 
-        function viewInstructor(id) {
-            Toast.info('Instructor details view coming soon!', 'Feature Info');
+        function closeEditInstructorModal() {
+            document.getElementById('editInstructorModal').style.display = 'none';
+        }
+
+        // --- UNIFIED USER VIEW MODAL LOGIC ---
+        let currentEditingData = null;
+
+        function openUserViewModal(data) {
+            currentEditingData = data;
+            const modal = document.getElementById('userViewModal');
+            if (modal) {
+                modal.style.display = 'flex';
+                renderUserViewState();
+            }
+        }
+
+        function closeUserViewModal() {
+            const modal = document.getElementById('userViewModal');
+            if (modal) modal.style.display = 'none';
+            currentEditingData = null;
+        }
+
+        function renderUserViewState() {
+            const content = document.getElementById('userViewContent');
+            const data = currentEditingData;
+            if (!content || !data) return;
+
+            const isInstructor = data.role === 'instructor';
+            
+            const maskPII = (val, type) => {
+                if (!window.piiMaskingEnabled || !val) return val;
+                if (type === 'email') {
+                    const parts = val.split('@');
+                    if (parts.length < 2) return val;
+                    return parts[0].substring(0, 2) + '*'.repeat(Math.max(0, parts[0].length - 2)) + '@' + parts[1];
+                }
+                if (type === 'contact') {
+                    return val.substring(0, 4) + '****' + val.substring(Math.max(0, val.length - 2));
+                }
+                return val;
+            };
+
+            const emailDisplay = maskPII(data.email, 'email');
+            const contactDisplay = maskPII(data.contact, 'contact');
+
+            const parseJson = (val) => {
+                if (!val) return [];
+                if (Array.isArray(val)) return val;
+                try { return JSON.parse(val); } catch (e) { return []; }
+            };
+
+            const restrictions = parseJson(data.restrictions);
+            const specializations = parseJson(data.specializations);
+
+            content.innerHTML = `
+                <div class="profile-modal-header">
+                    <button type="button" class="btn-close-modal" onclick="closeUserViewModal()" style="position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.2); border: none; border-radius: 8px; color: white; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer;">×</button>
+                    <div class="profile-modal-avatar">
+                        ${data.profilePicture ? `<img src="${data.profilePicture}">` : data.name.charAt(0)}
+                    </div>
+                    <div class="profile-header-info">
+                        <h3>${data.name}</h3>
+                        <span class="profile-role-badge">${data.role.toUpperCase()}</span>
+                    </div>
+                </div>
+                
+                <div class="profile-modal-body">
+                    <div class="profile-section">
+                        <div class="profile-section-title"><i class="bi bi-person-lines-fill"></i>Personal Information</div>
+                        <div class="profile-info-grid">
+                            <div class="profile-info-item">
+                                <div class="profile-info-label">Email Address</div>
+                                <div class="profile-info-value pii-wrapper">
+                                    <span class="masked-pii" data-full="${data.email}">${emailDisplay}</span>
+                                    ${window.piiMaskingEnabled ? `<button type="button" class="btn-reveal-pii" onclick="revealPII(this)" title="Reveal (5s)"><i class="bi bi-eye"></i></button>` : ''}
+                                </div>
+                            </div>
+                            <div class="profile-info-item">
+                                <div class="profile-info-label">Contact Number</div>
+                                <div class="profile-info-value pii-wrapper">
+                                    <span class="masked-pii" data-full="${data.contact}">${contactDisplay}</span>
+                                    ${window.piiMaskingEnabled ? `<button type="button" class="btn-reveal-pii" onclick="revealPII(this)" title="Reveal (5s)"><i class="bi bi-eye"></i></button>` : ''}
+                                </div>
+                            </div>
+                            <div class="profile-info-item" style="grid-column: span 2;">
+                                <div class="profile-info-label">Current Address</div>
+                                <div class="profile-info-value">${data.address || 'Not Provided'}</div>
+                            </div>
+                            <div class="profile-info-item">
+                                <div class="profile-info-label">Branch Assignment</div>
+                                <div class="profile-info-value">${data.branch || 'Unassigned'}</div>
+                            </div>
+                            <div class="profile-info-item">
+                                <div class="profile-info-label">Account Status</div>
+                                <div class="profile-info-value">
+                                    <span class="status-badge ${data.status}">
+                                        ${data.status.toUpperCase()}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="profile-info-item">
+                                <div class="profile-info-label">Last Activity</div>
+                                <div class="profile-info-value" style="font-size: 0.8rem;">
+                                    <div>In: ${data.lastLogin || 'Never'}</div>
+                                    <div>Out: ${data.lastLogout || 'Never'}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    ${isInstructor ? `
+                        <div class="profile-section">
+                            <div class="profile-section-title"><i class="bi bi-card-heading"></i>Instructor Credentials</div>
+                            <div class="profile-info-grid">
+                                <div class="profile-info-item">
+                                    <div class="profile-info-label">License Number</div>
+                                    <div class="profile-info-value" style="font-family: monospace; font-weight: 700; color: #4f46e5;">${data.license || 'N/A'}</div>
+                                </div>
+                                <div class="profile-info-item">
+                                    <div class="profile-info-label">License Status</div>
+                                    <div class="profile-info-value">
+                                        <span class="license-badge ${data.licenseStatus || 'none'}">
+                                            ${(data.licenseStatus || 'NONE').toUpperCase()}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="profile-info-item" style="grid-column: span 2;">
+                                    <div class="profile-info-label">Restriction Codes</div>
+                                    <div class="profile-info-value">
+                                        ${restrictions.length > 0 ? restrictions.map(r => `<span class="badge bg-primary text-white me-1">${r}</span>`).join('') : '<span class="text-muted">No restrictions</span>'}
+                                    </div>
+                                </div>
+                                <div class="profile-info-item" style="grid-column: span 2;">
+                                    <div class="profile-info-label">Course Specializations</div>
+                                    <div class="profile-info-value">
+                                        ${specializations.length > 0 ? specializations.map(s => `<span class="badge bg-info text-white me-1">${s}</span>`).join('') : '<span class="text-muted">None listed</span>'}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="verification-card mt-3">
+                                <div class="profile-info-label">License Image Preview</div>
+                                ${data.licenseImage ? `
+                                    <div class="license-image-container" onclick="openLightbox('${data.licenseImage}')">
+                                        <img src="${data.licenseImage}">
+                                        <div style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.6); color: white; padding: 4px; text-align: center; font-size: 0.7rem;">Click to enlarge</div>
+                                    </div>
+                                ` : '<div class="text-center py-4 text-muted">No license image uploaded</div>'}
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+                
+                <div class="profile-modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeUserViewModal()" style="border-radius: 10px; font-weight: 600;">Close</button>
+                    ${isInstructor && (data.licenseStatus === 'pending' || data.licenseStatus === 'rejected' || data.licenseStatus === 'none') ? `
+                        <button type="button" class="btn btn-success" onclick="toggleLicenseVerificationMode(true)" style="background: #10b981; border: none; border-radius: 10px; font-weight: 600; color: white;">
+                            <i class="bi bi-shield-check me-2"></i>Verify License
+                        </button>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        function toggleLicenseVerificationMode(show) {
+            if (!show) {
+                renderUserViewState();
+                return;
+            }
+
+            const content = document.getElementById('userViewContent');
+            const data = currentEditingData;
+            if (!content || !data) return;
+
+            const restrictionCodes = ['A', 'A1', 'B', 'B1', 'B2', 'C', 'D', 'BE', 'CE'];
+            let currentRestrictions = [];
+            try {
+                currentRestrictions = JSON.parse(data.restrictions || '[]');
+            } catch (e) { console.error(e); }
+
+            content.innerHTML = `
+                <div class="profile-modal-header" style="padding: 20px 25px; background: linear-gradient(135deg, #6366f1, #a855f7);">
+                    <h3 style="margin: 0; color: white !important;"><i class="bi bi-shield-check me-2"></i>Verify License</h3>
+                    <button type="button" class="btn-close-modal" onclick="toggleLicenseVerificationMode(false)" style="position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.2); border: none; border-radius: 8px; color: white; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer;">×</button>
+                </div>
+                
+                <form id="integratedVerifyForm" method="POST" action="${window.instructorBaseUrl}/${data.id}/verify" style="margin: 0;">
+                    <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                    <div class="profile-modal-body" style="background: #f8fafc;">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Verification Decision</label>
+                                    <div class="status-badge-selector">
+                                        <label class="status-option">
+                                            <input type="radio" name="status" value="verified" ${data.licenseStatus !== 'rejected' ? 'checked' : ''} onchange="document.getElementById('integrated_rejection_group').style.display='none'; document.getElementById('integrated_restrictions_group').style.display='block';">
+                                            <span class="status-btn"><i class="bi bi-check-circle me-1"></i> Approve</span>
+                                        </label>
+                                        <label class="status-option">
+                                            <input type="radio" name="status" value="rejected" ${data.licenseStatus === 'rejected' ? 'checked' : ''} onchange="document.getElementById('integrated_rejection_group').style.display='block'; document.getElementById('integrated_restrictions_group').style.display='none';">
+                                            <span class="status-btn"><i class="bi bi-x-circle me-1"></i> Reject</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div id="integrated_restrictions_group" class="form-group" style="display: ${data.licenseStatus === 'rejected' ? 'none' : 'block'};">
+                                    <label>Restriction Codes</label>
+                                    <div class="restriction-grid">
+                                        ${restrictionCodes.map(code => `
+                                            <label class="restriction-chip">
+                                                <input type="checkbox" name="restriction_codes[]" value="${code}" ${currentRestrictions.includes(code) ? 'checked' : ''}>
+                                                <span class="chip-content">${code}</span>
+                                            </label>
+                                        `).join('')}
+                                    </div>
+                                </div>
+
+                                <div id="integrated_rejection_group" class="form-group" style="display: ${data.licenseStatus === 'rejected' ? 'block' : 'none'};">
+                                    <label>Rejection Reason</label>
+                                    <textarea name="rejection_reason" class="form-control" rows="4" placeholder="Explain why the license was rejected...">${data.rejectionReason || ''}</textarea>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label>License Document Preview</label>
+                                <div class="license-image-container" style="height: 300px;" onclick="openLightbox('${data.licenseImage || ''}')">
+                                    <img src="${data.licenseImage || ''}" onerror="this.src='/images/placeholder-license.png'">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="profile-modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="toggleLicenseVerificationMode(false)" style="border-radius: 10px;">Back to Profile</button>
+                        <button type="submit" class="btn btn-primary" style="border-radius: 10px; background: var(--header-gradient); border: none;">Save Verification</button>
+                    </div>
+                </form>
+            `;
         }
 
         bindInviteFormSubmit('createStudentInviteForm');
@@ -2840,164 +3296,101 @@
             }
         });
 
-        // License Verification Modal Logic
-        function openVerifyLicenseModal(data) {
-            const modal = document.getElementById('verifyLicenseModal');
-            if (!modal) return;
-
-            // Fill base info
-            const nameEl = document.getElementById('verify_instructor_name');
-            const numEl = document.getElementById('verify_license_number');
-            const imgEl = document.getElementById('licenseImagePreview');
-            const idInput = document.getElementById('verify_instructor_id');
-
-            if (nameEl) nameEl.textContent = data.name || 'Unknown';
-            if (numEl) numEl.textContent = data.licenseNumber || 'N/A';
-            if (imgEl) imgEl.src = data.licenseImage || '';
-            if (idInput) idInput.value = data.id;
-
-            // Handle Status (Radio Buttons)
-            const statusVal = (data.status === 'rejected') ? 'rejected' : 'verified';
-            const statusRadios = document.querySelectorAll('input[name="status"]');
-            statusRadios.forEach(radio => {
-                if (radio.value === statusVal) {
-                    radio.checked = true;
+        // --- GLOBAL EVENT DELEGATION ---
+        document.addEventListener('input', function (e) {
+            // Auto-strip leading zero from contact inputs
+            if (e.target.getAttribute('name') === 'contact' || e.target.id.includes('contact')) {
+                let value = e.target.value;
+                if (value.startsWith('0')) {
+                    e.target.value = value.substring(1);
                 }
-            });
-
-            const restrictionsGroup = document.getElementById('restrictions_group');
-            const rejectionGroup = document.getElementById('rejection_reason_group');
-            if (restrictionsGroup) restrictionsGroup.style.display = statusVal === 'rejected' ? 'none' : 'block';
-            if (rejectionGroup) rejectionGroup.style.display = statusVal === 'rejected' ? 'block' : 'none';
-
-            // Handle Rejection Reason
-            const reasonText = document.getElementById('rejection_reason');
-            if (reasonText) reasonText.value = data.rejectionReason || '';
-
-            // Handle Restrictions (Chips)
-            let currentRestrictions = [];
-            try {
-                currentRestrictions = JSON.parse(data.restrictions || '[]');
-            } catch (e) {
-                console.error('Error parsing restrictions:', e);
-            }
-
-            const checkboxes = document.querySelectorAll('input[name="restrictions[]"]');
-            checkboxes.forEach(cb => {
-                cb.checked = currentRestrictions.includes(cb.value);
-            });
-
-            modal.style.display = 'flex';
-        }
-
-        function toggleRejectionReason(show) {
-            const restrictionsGroup = document.getElementById('restrictions_group');
-            const rejectionGroup = document.getElementById('rejection_reason_group');
-            if (restrictionsGroup) restrictionsGroup.style.display = show ? 'none' : 'block';
-            if (rejectionGroup) rejectionGroup.style.display = show ? 'block' : 'none';
-            if (show) {
-                const textarea = document.getElementById('rejection_reason');
-                if (textarea) textarea.focus();
-            }
-        }
-
-        function closeVerifyLicenseModal() {
-            const modal = document.getElementById('verifyLicenseModal');
-            if (modal) modal.style.display = 'none';
-        }
-
-        // FORM SUBMIT
-        const verifyForm = document.getElementById('verifyLicenseForm');
-        if (verifyForm) {
-            verifyForm.addEventListener('submit', function (e) {
-                e.preventDefault();
-
-                const instructorId = document.getElementById('verify_instructor_id').value;
-                const statusInput = document.querySelector('input[name="status"]:checked');
-                const status = statusInput ? statusInput.value : 'verified';
-                const rejectionReason = document.getElementById('rejection_reason').value;
-
-                const selectedRestrictions = [];
-                document.querySelectorAll('input[name="restrictions[]"]:checked').forEach(cb => {
-                    selectedRestrictions.push(cb.value);
-                });
-
-                // Basic validation
-                if (status === 'rejected' && !rejectionReason.trim()) {
-                    if (typeof Toast !== 'undefined') Toast.error('Please provide a reason for rejection.');
-                    else alert('Please provide a reason for rejection.');
-                    return;
-                }
-
-                if (status === 'verified' && selectedRestrictions.length === 0) {
-                    if (typeof Toast !== 'undefined') Toast.error('Please select at least one restriction code.');
-                    else alert('Please select at least one restriction code.');
-                    return;
-                }
-
-                const submitBtn = this.querySelector('button[type="submit"]');
-                const originalContent = submitBtn.innerHTML;
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Saving...';
-
-                fetch(`/{{ $school->slug }}/admin/instructors/${instructorId}/verify`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: JSON.stringify({
-                        status: status,
-                        restriction_codes: selectedRestrictions,
-                        rejection_reason: rejectionReason
-                    })
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            if (typeof Toast !== 'undefined') Toast.success(data.message);
-                            closeVerifyLicenseModal();
-
-                            // Priority refresh
-                            if (typeof loadContent === 'function') {
-                                loadContent(window.location.pathname + window.location.search);
-                            } else {
-                                location.reload();
-                            }
-                        } else {
-                            if (typeof Toast !== 'undefined') Toast.error(data.message || 'Verification failed.');
-                            else alert(data.message || 'Verification failed.');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        if (typeof Toast !== 'undefined') Toast.error('An unexpected error occurred.');
-                    })
-                    .finally(() => {
-                        submitBtn.disabled = false;
-                        submitBtn.innerHTML = originalContent;
-                    });
-            });
-        }
-
-        // Delegate Verify Button clicks
-        document.addEventListener('click', function (e) {
-            const btn = e.target.closest('.js-verify-license');
-            if (btn) {
-                e.preventDefault();
-                const data = {
-                    id: btn.dataset.id,
-                    name: btn.dataset.name,
-                    licenseNumber: btn.dataset.licenseNumber,
-                    licenseImage: btn.dataset.licenseImage,
-                    status: btn.dataset.status || 'pending',
-                    restrictions: btn.dataset.restrictions || '[]',
-                    rejectionReason: btn.dataset.rejectionReason || ''
-                };
-                openVerifyLicenseModal(data);
+                // Allow only numbers
+                e.target.value = e.target.value.replace(/\D/g, '');
             }
         });
+
+        document.addEventListener('click', function (e) {
+            // Edit User Delegation
+            const editBtn = e.target.closest('.js-edit-user');
+            if (editBtn) {
+                const role = editBtn.dataset.role;
+                if (role === 'student') {
+                    editStudent(
+                        editBtn.dataset.id,
+                        editBtn.dataset.name,
+                        editBtn.dataset.email,
+                        editBtn.dataset.contact,
+                        editBtn.dataset.address,
+                        editBtn.dataset.branch
+                    );
+                } else if (role === 'instructor') {
+                    editInstructor(
+                        editBtn.dataset.id,
+                        editBtn.dataset.name,
+                        editBtn.dataset.email,
+                        editBtn.dataset.contact,
+                        editBtn.dataset.license,
+                        editBtn.dataset.address,
+                        editBtn.dataset.branch,
+                        editBtn.dataset.specializations,
+                        editBtn.dataset.availability
+                    );
+                }
+                return;
+            }
+
+            // View User Delegation
+            const viewBtn = e.target.closest('.js-view-user');
+            if (viewBtn) {
+                e.preventDefault();
+                openUserViewModal({
+                    id: viewBtn.dataset.id,
+                    role: viewBtn.dataset.role,
+                    name: viewBtn.dataset.name,
+                    email: viewBtn.dataset.email,
+                    contact: viewBtn.dataset.contact,
+                    address: viewBtn.dataset.address,
+                    branch: viewBtn.dataset.branch,
+                    status: viewBtn.dataset.status,
+                    license: viewBtn.dataset.license,
+                    licenseImage: viewBtn.dataset.licenseImage,
+                    licenseStatus: viewBtn.dataset.licenseStatus,
+                    restrictions: viewBtn.dataset.restrictions,
+                    rejectionReason: viewBtn.dataset.rejectionReason,
+                    lastLogin: viewBtn.dataset.lastLogin,
+                    lastLogout: viewBtn.dataset.lastLogout,
+                    profilePicture: viewBtn.dataset.profilePicture
+                });
+                return;
+            }
+
+            // Verify License Delegation (Directly opens modal in verification mode)
+            const verifyBtn = e.target.closest('.js-verify-license');
+            if (verifyBtn) {
+                e.preventDefault();
+                openUserViewModal({
+                    id: verifyBtn.dataset.id,
+                    role: verifyBtn.dataset.role,
+                    name: verifyBtn.dataset.name,
+                    email: verifyBtn.dataset.email,
+                    contact: verifyBtn.dataset.contact,
+                    address: verifyBtn.dataset.address,
+                    branch: verifyBtn.dataset.branch,
+                    status: verifyBtn.dataset.status,
+                    license: verifyBtn.dataset.licenseNumber,
+                    licenseImage: verifyBtn.dataset.licenseImage,
+                    licenseStatus: verifyBtn.dataset.licenseStatus || 'pending',
+                    restrictions: verifyBtn.dataset.restrictions || '[]',
+                    specializations: verifyBtn.dataset.specializations || '[]',
+                    rejectionReason: verifyBtn.dataset.rejectionReason || '',
+                    lastLogin: verifyBtn.dataset.lastLogin,
+                    lastLogout: verifyBtn.dataset.lastLogout
+                });
+                toggleLicenseVerificationMode(true);
+                return;
+            }
+        });
+
         // PII Reveal Logic with 5s Timer
         function revealPII(button) {
             const span = button.previousElementSibling;
@@ -3024,105 +3417,92 @@
                 button.classList.remove('timer-active');
                 button.disabled = false;
             }, 5000);
+        }
 
-            console.log('PII Revealed (Temporary)');
+        // --- LIGHTBOX SYSTEM ---
+        function openLightbox(src) {
+            if (!src) return;
+            const lightbox = document.getElementById('globalLightbox');
+            const img = document.getElementById('lightboxImage');
+            if (lightbox && img) {
+                img.src = src;
+                lightbox.style.display = 'flex';
+                // Trigger animation
+                setTimeout(() => lightbox.classList.add('active'), 10);
+            }
+        }
+
+        function closeLightbox() {
+            const lightbox = document.getElementById('globalLightbox');
+            if (lightbox) {
+                lightbox.classList.remove('active');
+                setTimeout(() => lightbox.style.display = 'none', 300);
+            }
         }
     </script>
 
     <!-- LICENSE VERIFICATION MODAL -->
-    <div id="verifyLicenseModal" class="modal">
-        <div class="modal-content" style="width: min(850px, 95%);">
-            <div class="modal-header">
-                <h3><i class="bi bi-shield-check me-2"></i>Verify Instructor License</h3>
-                <button type="button" class="btn-close-modal" onclick="closeVerifyLicenseModal()">×</button>
+    <!-- USER VIEW MODAL (Unified) -->
+    <div id="userViewModal" class="modal">
+        <div class="modal-content profile-modal-container" style="width: min(850px, 95%); padding: 0;">
+            <div id="userViewContent">
+                <!-- Content will be injected via JS -->
+                <div class="modal-body p-5 text-center">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="mt-2">Loading user details...</p>
+                </div>
             </div>
-            <form id="verifyLicenseForm">
-                <div class="modal-body">
-                    <input type="hidden" id="verify_instructor_id">
-
-                    <div class="verify-modal-grid">
-                        <!-- Left Column: Details -->
-                        <div class="d-flex flex-column gap-4">
-                            <div class="verification-info-card">
-                                <label class="fw-bold small text-muted text-uppercase mb-2 d-block">Instructor
-                                    Details</label>
-                                <div class="p-4 rounded-xl"
-                                    style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;">
-                                    <div class="mb-3">
-                                        <span class="d-block small text-muted">Full Name</span>
-                                        <span id="verify_instructor_name" class="fw-bold"
-                                            style="font-size: 1.1rem; color: #1e293b;"></span>
-                                    </div>
-                                    <div class="mb-0">
-                                        <span class="d-block small text-muted">License Number</span>
-                                        <span id="verify_license_number" class="fw-bold font-mono"
-                                            style="font-family: monospace; color: var(--primary-color);"></span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="verification-action-card">
-                                <label class="fw-bold small text-muted text-uppercase mb-2 d-block">Verification
-                                    Decision</label>
-                                <div class="status-badge-selector">
-                                    <label class="status-option">
-                                        <input type="radio" name="status" value="verified" checked
-                                            onchange="toggleRejectionReason(false)">
-                                        <span class="status-btn"><i class="bi bi-check-circle me-2"></i>Approve</span>
-                                    </label>
-                                    <label class="status-option">
-                                        <input type="radio" name="status" value="rejected"
-                                            onchange="toggleRejectionReason(true)">
-                                        <span class="status-btn"><i class="bi bi-x-circle me-2"></i>Reject</span>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Right Column: Image -->
-                        <div>
-                            <label class="fw-bold small text-muted text-uppercase mb-2 d-block">License Document</label>
-                            <div class="verification-preview-container" style="height: 220px; cursor: pointer;"
-                                onclick="openLightbox(document.getElementById('licenseImagePreview').src)">
-                                <img id="licenseImagePreview" src="" alt="License">
-                                <div class="verification-preview-overlay">
-                                    <i class="bi bi-zoom-in me-1"></i> Click to Enlarge
-                                </div>
-                            </div>
-                            <p class="text-center small text-muted mt-2">Carefully verify the name and expiry date</p>
-                        </div>
-                    </div>
-
-                    <!-- Bottom Section: Restrictions or Rejection Reason -->
-                    <div id="restrictions_group" class="border-top pt-4 mt-4">
-                        <label class="fw-bold mb-1 d-block">LTO Restriction Codes</label>
-                        <p class="small text-muted mb-3">Check all codes indicated on the instructor's physical license.</p>
-                        <div class="restriction-grid">
-                            @foreach(['A', 'A1', 'B', 'B1', 'B2', 'C', 'D', 'BE', 'CE'] as $code)
-                                <label class="restriction-chip" title="Motorcycle / Tricycle">
-                                    <input type="checkbox" name="restrictions[]" value="{{ $code }}" id="rest_{{ $code }}">
-                                    <span class="chip-content">{{ $code }}</span>
-                                </label>
-                            @endforeach
-                        </div>
-                    </div>
-
-                    <div id="rejection_reason_group" class="border-top pt-4 mt-4" style="display: none;">
-                        <div class="form-group">
-                            <label class="fw-bold mb-2 d-block text-danger">Reason for Rejection</label>
-                            <textarea id="rejection_reason" name="rejection_reason" class="form-control" rows="3"
-                                placeholder="Please provide a specific reason (e.g., Image too blurry, License expired, Wrong name, etc.)"
-                                style="border-radius: 12px; border: 2px solid #fee2e2;"></textarea>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="closeVerifyLicenseModal()">Cancel</button>
-                    <button type="submit" class="btn btn-primary"><i class="bi bi-shield-check me-2"></i>Save
-                        Verification</button>
-                </div>
-            </form>
         </div>
     </div>
+
+    <!-- GLOBAL LIGHTBOX -->
+    <div id="globalLightbox" class="lightbox-overlay" onclick="closeLightbox()">
+        <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
+        <img id="lightboxImage" src="" onclick="event.stopPropagation()">
+    </div>
+
+    <style>
+        .lightbox-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            backdrop-filter: blur(5px);
+            z-index: 10000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .lightbox-overlay.active {
+            opacity: 1;
+        }
+        .lightbox-overlay img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 8px;
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .lightbox-overlay.active img {
+            transform: scale(1);
+        }
+        .lightbox-close {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 50px;
+            cursor: pointer;
+            line-height: 1;
+            z-index: 10001;
+        }
+    </style>
 
 @endsection
