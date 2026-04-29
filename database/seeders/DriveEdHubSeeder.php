@@ -220,7 +220,7 @@ class DriveEdHubSeeder extends Seeder
                     'license_rejection_reason' => $inst['status'] === 'rejected' ? 'Expired document' : null,
                     'restriction_codes' => ['A', 'B'],
                     'bio' => $inst['bio'],
-                    'status' => 'active',
+                    'status' => $inst['status'] === 'rejected' ? 'inactive' : 'active',
                     'availability' => $inst['avail'],
                 ]
             );
@@ -320,7 +320,7 @@ class DriveEdHubSeeder extends Seeder
                     'status' => 'active',
                     'experience_level' => $s['level'],
                     'enrollment_date' => now()->subDays(rand(7, 60)),
-                    'student_license_path' => 'instructor-licenses/placeholder.png',
+                    'student_license_path' => $s['license'] !== 'none' ? 'instructor-licenses/placeholder.png' : null,
                     'student_license_status' => $s['license'],
                     'student_license_verified_at' => $s['license'] === 'verified' ? now()->subDays(15) : null,
                     'has_passed_theoretical' => $s['tdc'],
@@ -335,45 +335,36 @@ class DriveEdHubSeeder extends Seeder
             $course = $courses[$i % count($courses)];
             $package = $course->packages->first();
 
-            // Create a pending enrollment request with a DL Code
             $dlCodes = $course->license_type === 'professional' 
                 ? ['A', 'A1', 'B', 'B1', 'B2', 'C', 'D', 'BE', 'CE'] 
                 : ['A', 'A1', 'B', 'B1', 'B2'];
-            
-            EnrollmentRequest::updateOrCreate(
-                ['learner_id' => $student->id, 'course_id' => $course->id],
-                [
-                    'package_id' => $package->id,
-                    'branch_id' => $student->branch_id,
-                    'status' => 'pending',
-                    'requested_dl_code' => $dlCodes[array_rand($dlCodes)],
-                    'experience_level' => $student->experience_level,
-                    'payment_status' => 'pending',
-                    'price' => $package->price,
-                    'created_at' => now()->subDays(rand(1, 5)),
-                ]
-            );
-            $package = \App\Models\CoursePackage::where('course_id', $course->id)->first();
-            
-            $enrollment = \App\Models\EnrollmentRequest::updateOrCreate(
+
+            // Only fully approve students who have verified licenses and passed TDC
+            $isEligible = $s['license'] === 'verified' && $s['tdc'];
+            $enrollmentStatus = $isEligible ? 'approved' : 'pending';
+            $paymentStatus = $isEligible ? 'paid' : 'pending';
+
+            $enrollment = EnrollmentRequest::updateOrCreate(
                 ['school_id' => $school->id, 'learner_id' => $student->id, 'course_id' => $course->id],
                 [
-                    'status' => 'approved',
-                    'payment_status' => 'paid',
+                    'package_id' => $package?->id,
+                    'status' => $enrollmentStatus,
+                    'payment_status' => $paymentStatus,
                     'experience_level' => $s['level'],
                     'requested_license_type' => 'non_professional',
+                    'requested_dl_code' => $dlCodes[array_rand($dlCodes)],
                     'branch_id' => $student->branch_id,
                     'price' => $package ? $package->price : 0,
-                    'payment_method' => 'cash',
+                    'payment_method' => $isEligible ? 'cash' : 'gcash',
                     'payment_reference' => 'DH-SEED-' . strtoupper(\Illuminate\Support\Str::random(8)),
-                    'approved_by' => 1,
-                    'approved_at' => now()->subDays(10),
-                    'enrolled_at' => now()->subDays(10),
+                    'approved_by' => $isEligible ? 1 : null,
+                    'approved_at' => $isEligible ? now()->subDays(10) : null,
+                    'enrolled_at' => $isEligible ? now()->subDays(10) : null,
                 ]
             );
 
             // Create progress
-            if ($s['progress'] > 0) {
+            if ($s['progress'] > 0 && $isEligible) {
                 \App\Models\Progress::updateOrCreate(
                     ['student_id' => $student->id, 'course_id' => $course->id],
                     [
@@ -417,7 +408,7 @@ class DriveEdHubSeeder extends Seeder
                     'student_license_verified_at' => $data['license'] === 'verified' ? now()->subDays(5) : null,
                     'student_license_rejection_reason' => $data['license'] === 'rejected' ? 'Blurred ID photo' : null,
                     'experience_level' => $data['exp'],
-                    'branch_id' => $branches[rand(0, count($branches)-1)]->id,
+                    'branch_id' => $branches[count($guests) % count($branches)]->id,
                 ]
             );
             
@@ -439,6 +430,7 @@ class DriveEdHubSeeder extends Seeder
                 \App\Models\EnrollmentRequest::updateOrCreate(
                     ['school_id' => $school->id, 'learner_id' => $g->id, 'course_id' => $course->id],
                     [
+                        'package_id' => $package?->id,
                         'status' => $data['status'],
                         'payment_status' => $data['pay'],
                         'experience_level' => $data['exp'],
