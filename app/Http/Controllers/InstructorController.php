@@ -307,7 +307,14 @@ class InstructorController extends Controller
                         $slotQuery->where('instructors.id', '=', $instructor->id, 'and');
                     });
             })
-            ->exists();
+            ->exists()
+            || SessionCompletion::where('school_id', '=', $school->id, 'and')
+                ->where('instructor_id', '=', $instructor->id, 'and')
+                ->whereHas('enrollment', function ($query) use ($id, $school) {
+                    $query->where('learner_id', '=', $id, 'and')
+                        ->where('school_id', '=', $school->id, 'and');
+                })
+                ->exists();
         
         abort_unless($isAssigned, 403, 'Unauthorized access: You are not assigned to this student.');
 
