@@ -14,7 +14,10 @@ return new class extends Migration {
         // 1. Harden Admins table: move from global unique email to school-scoped unique email
         Schema::table('admins', function (Blueprint $table) {
             // Check if the old unique index exists before dropping
-            $exists = collect(DB::select("SHOW INDEXES FROM admins"))->contains('Key_name', 'admins_email_unique');
+            $driver = DB::connection()->getDriverName();
+            $exists = $driver === 'mysql'
+                ? collect(DB::select("SHOW INDEXES FROM admins"))->contains('Key_name', 'admins_email_unique')
+                : $driver === 'sqlite';
             if ($exists) {
                 $table->dropUnique('admins_email_unique');
             }
@@ -26,7 +29,9 @@ return new class extends Migration {
         Schema::table('password_reset_tokens', function (Blueprint $table) {
             // In many DBs, we can't just 'dropPrimary' easily if it was created as a string primary.
             // We use a raw statement to drop the primary key to ensure compatibility across MySQL variants.
-            DB::statement('ALTER TABLE password_reset_tokens DROP PRIMARY KEY');
+            if (DB::connection()->getDriverName() === 'mysql') {
+                DB::statement('ALTER TABLE password_reset_tokens DROP PRIMARY KEY');
+            }
 
             // Add school_id and user_type to the primary key/unique constraint
             $table->unique(['email', 'school_id', 'user_type'], 'password_resets_scoped_unique');

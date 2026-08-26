@@ -102,6 +102,9 @@ return new class extends Migration
 
             $table->dropUnique('payments_gcash_global_unique');
             $table->dropUnique('payments_onsite_branch_unique');
+
+            $table->dropIndex('payments_guest_identity_token_index');
+            $table->dropIndex('payments_payer_user_id_index');
             
             $table->dropColumn([
                 'guest_identity_token', 'payer_user_id', 

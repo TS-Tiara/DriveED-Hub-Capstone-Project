@@ -24,6 +24,7 @@ return new class extends Migration
     {
         Schema::table('phase_progression_requests', function (Blueprint $table) {
             $table->dropForeign(['branch_id']);
+            $table->dropIndex('phase_progression_requests_branch_id_status_index');
             $table->dropColumn('branch_id');
         });
     }
