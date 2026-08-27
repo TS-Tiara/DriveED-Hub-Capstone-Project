@@ -6,6 +6,7 @@ use App\Models\CourseModule;
 use App\Models\Course;
 use App\Models\ModuleLesson;
 use App\Models\School;
+use App\Models\AssessmentAttempt;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -228,22 +229,96 @@ class CourseModuleController extends Controller
 
         // Verify student is enrolled
         $student = Auth::guard('student')->user();
-        $isEnrolled = $student->enrollments()
+        $enrollment = $student->enrollmentRequests()
+            ->where('school_id', $school->id)
             ->where('course_id', $course->id)
             ->where('status', 'approved')
-            ->exists();
+            ->latest('id')
+            ->first();
 
-        if (!$isEnrolled) {
+        if (!$enrollment) {
             abort(403, 'You must be enrolled in this course to take assessments.');
         }
 
         $questions = $module->questions;
+        $latestAttempt = AssessmentAttempt::where('student_id', $student->id)
+            ->where('enrollment_request_id', $enrollment->id)
+            ->where('module_id', $module->id)
+            ->latest('completed_at')
+            ->first();
 
         // Get navigation
         $navigation = $this->getLearningPathNavigation($course, $module);
 
-        return view($school->resolveView('student.modules.assessment'), compact('school', 'course', 'module', 'questions', 'navigation'))
+        return view($school->resolveView('student.modules.assessment'), compact('school', 'course', 'module', 'questions', 'navigation', 'latestAttempt'))
             ->with('isAjax', $request->ajax());
+    }
+
+    /**
+     * Grade and persist a student's module assessment attempt.
+     */
+    public function submitAssessment(Request $request, School $school, Course $course, CourseModule $module)
+    {
+        if ($this->resolveAuthRole() !== 'student' || $module->course_id !== $course->id) {
+            abort(403);
+        }
+
+        $student = Auth::guard('student')->user();
+        $enrollment = $student->enrollmentRequests()
+            ->where('school_id', $school->id)
+            ->where('course_id', $course->id)
+            ->where('status', 'approved')
+            ->latest('id')
+            ->first();
+
+        if (!$enrollment) {
+            abort(403, 'You must be enrolled in this course to submit assessments.');
+        }
+
+        $validated = $request->validate([
+            'answers' => ['required', 'array'],
+            'answers.*' => ['nullable', 'string', 'max:5000'],
+        ]);
+
+        $questions = $module->questions;
+        $score = 0;
+        $totalPoints = 0;
+
+        foreach ($questions as $question) {
+            $points = (int) ($question->pivot->points ?? $question->default_points ?? 1);
+            $totalPoints += $points;
+            $answer = trim((string) ($validated['answers'][$question->id] ?? ''));
+            $correctAnswer = trim((string) $question->correct_answer);
+
+            if ($answer !== '' && strcasecmp($answer, $correctAnswer) === 0) {
+                $score += $points;
+            }
+        }
+
+        $percentage = $totalPoints > 0 ? round(($score / $totalPoints) * 100, 2) : 0;
+        $passed = $totalPoints > 0 && $percentage >= 75;
+
+        $attempt = AssessmentAttempt::create([
+            'school_id' => $school->id,
+            'student_id' => $student->id,
+            'enrollment_request_id' => $enrollment->id,
+            'course_id' => $course->id,
+            'module_id' => $module->id,
+            'score' => $score,
+            'total_points' => $totalPoints,
+            'percentage' => $percentage,
+            'passed' => $passed,
+            'answers' => $validated['answers'],
+            'completed_at' => now(),
+        ]);
+
+        return redirect()
+            ->route('schools.student.courses.modules.assessment.take', [
+                'school' => $school->slug,
+                'course' => $course->id,
+                'module' => $module->id,
+            ])
+            ->with('assessment_attempt_id', $attempt->id);
     }
 
     /**

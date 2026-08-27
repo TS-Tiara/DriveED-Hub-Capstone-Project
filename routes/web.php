@@ -614,6 +614,7 @@ Route::prefix('{school:slug}')
 
                             // Student Assessment
                             Route::get('/{module}/assessment', [CourseModuleController::class, 'takeAssessment'])->name('assessment.take');
+                            Route::post('/{module}/assessment', [CourseModuleController::class, 'submitAssessment'])->name('assessment.submit');
                             }
                             );
                         }

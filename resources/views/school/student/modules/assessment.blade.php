@@ -32,7 +32,14 @@
     </div>
 
     <div class="lms-card" style="max-width: 900px; margin: 0 auto 2rem auto;">
-        <form action="#" method="POST" id="quizForm" class="lms-form">
+        @if($latestAttempt)
+            <div class="lms-inline-note" style="margin-bottom: 1rem;">
+                Latest result: {{ $latestAttempt->score }}/{{ $latestAttempt->total_points }} points ({{ $latestAttempt->percentage }}%).
+                {{ $latestAttempt->passed ? 'Assessment passed.' : 'Assessment not passed yet.' }}
+            </div>
+        @endif
+
+        <form action="{{ school_route('student.courses.modules.assessment.submit', ['course' => $course->id, 'module' => $module->id]) }}" method="POST" id="quizForm" class="lms-form">
             @csrf
             
             @forelse($module->questions as $index => $question)
@@ -147,7 +154,7 @@
 
 <script>
     document.getElementById('quizForm').addEventListener('submit', function(e) {
-        e.preventDefault();
+        return;
         
         const form = this;
         const questions = @json($module->questions);

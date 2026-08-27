@@ -34,7 +34,8 @@ class ModuleLessonController extends Controller
         // Student view - must be enrolled
         if (Auth::guard('student')->check()) {
             $student = Auth::guard('student')->user();
-            $isEnrolled = $student->enrollments()
+            $isEnrolled = $student->enrollmentRequests()
+                ->where('school_id', $school->id)
                 ->where('course_id', $course->id)
                 ->where('status', 'approved')
                 ->exists();
@@ -191,7 +192,8 @@ class ModuleLessonController extends Controller
         // Student view - must be enrolled
         if (Auth::guard('student')->check()) {
             $student = Auth::guard('student')->user();
-            $isEnrolled = $student->enrollments()
+            $isEnrolled = $student->enrollmentRequests()
+                ->where('school_id', $school->id)
                 ->where('course_id', $course->id)
                 ->where('status', 'approved')
                 ->exists();
