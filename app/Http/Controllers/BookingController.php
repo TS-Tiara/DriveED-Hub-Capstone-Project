@@ -428,6 +428,7 @@ class BookingController extends Controller
         $queueEnabled = $settings?->enable_booking_queue ?? true;
         $bookingCutoffHours = $settings?->booking_cutoff_hours ?? 0;
         $advanceBookingDays = $settings?->advance_booking_days ?? 0;
+        $activeSlotStatuses = ['pending', 'scheduled', 'confirmed', 'done', 'completed'];
 
         // Combine date/time and enforce cutoff + advance booking
         $scheduledAt = \Carbon\Carbon::parse($request->scheduled_at, $schoolTimezone);
@@ -530,7 +531,6 @@ class BookingController extends Controller
                     $slotSessionType = ($timeSlot->course?->course_type === 'practical') ? 'practical' : 'theoretical';
                 }
 
-                $activeSlotStatuses = ['pending', 'scheduled', 'confirmed', 'done', 'completed'];
                 $slotBookingsCount = \App\Models\Booking::where('time_slot_id', $timeSlot->id)
                     ->whereIn('status', $activeSlotStatuses)
                     ->count();
@@ -666,6 +666,27 @@ class BookingController extends Controller
                     return response()->json(['success' => false, 'message' => $message], 422);
                 }
                 return back()->withErrors(['time_slot_id' => $message]);
+            }
+        }
+
+        if (!empty($validated['time_slot_id']) && !empty($validated['instructor_id'])) {
+            $conflictingBooking = Booking::where('school_id', $school->id)
+                ->where('instructor_id', $validated['instructor_id'])
+                ->where('time_slot_id', '!=', $validated['time_slot_id'])
+                ->whereIn('status', $activeSlotStatuses)
+                ->whereHas('timeSlot', function ($query) use ($linkedTimeSlot) {
+                    $query->whereDate('date', $linkedTimeSlot->date)
+                        ->where('start_time', '<', $linkedTimeSlot->end_time)
+                        ->where('end_time', '>', $linkedTimeSlot->start_time);
+                })
+                ->exists();
+
+            if ($conflictingBooking) {
+                $message = 'The selected instructor already has an overlapping booking.';
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json(['success' => false, 'message' => $message], 422);
+                }
+                return back()->withErrors(['instructor_id' => $message]);
             }
         }
 

@@ -255,7 +255,30 @@ class StudentController extends Controller
         // Enrolled course info (primary active enrollment)
         $primaryEnrollment = $activeEnrollments->first();
         $enrolledCourseName = $primaryEnrollment ? ($primaryEnrollment->course->title ?? 'N/A') : 'No Active Course';
-        $enrolledCourseType = $primaryEnrollment && $primaryEnrollment->course ? ucfirst($primaryEnrollment->course->course_type ?? 'N/A') : 'N/A';
+        $courseTypes = $activeEnrollments
+            ->map(fn ($enrollment) => strtolower((string) ($enrollment->course->course_type ?? '')))
+            ->filter()
+            ->unique()
+            ->values();
+        $courseTypeKey = $courseTypes->count() > 1 ? 'combo' : ($courseTypes->first() ?? 'none');
+        $enrolledCourseType = match ($courseTypeKey) {
+            'theoretical' => 'Theoretical (TDC)',
+            'practical' => 'Practical (PDC)',
+            'combo' => 'Combo',
+            default => 'No Active Course',
+        };
+        $progressStatusLabel = match ($courseTypeKey) {
+            'theoretical' => 'TDC Status',
+            'practical' => 'PDC Status',
+            'combo' => 'Course Status',
+            default => 'Enrollment Status',
+        };
+        $currentStep = match ($courseTypeKey) {
+            'theoretical' => 2,
+            'practical' => 3,
+            'combo' => 2,
+            default => 1,
+        };
         
         // Recent graded sessions for feedback visibility
         $recentGrades = Booking::where('student_id', $student->id)
@@ -279,6 +302,9 @@ class StudentController extends Controller
             'activeEnrollments' => $activeEnrollments,
             'enrolledCourseName' => $enrolledCourseName,
             'enrolledCourseType' => $enrolledCourseType,
+            'courseTypeKey' => $courseTypeKey,
+            'progressStatusLabel' => $progressStatusLabel,
+            'currentStep' => $currentStep,
             'hasPassedTheoretical' => $hasPassedTheoretical,
             'canEnrollPractical' => $canEnrollPractical,
             'recentGrades' => $recentGrades,

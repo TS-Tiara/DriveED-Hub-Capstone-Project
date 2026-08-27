@@ -66,6 +66,61 @@
         padding: 16px;
     }
 
+    .roadmap-card {
+        margin-bottom: 20px;
+    }
+
+    .roadmap-steps {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+    }
+
+    .roadmap-step {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        color: #6b7280;
+        font-size: 0.8rem;
+    }
+
+    .roadmap-step-number {
+        display: inline-grid;
+        place-items: center;
+        width: 28px;
+        height: 28px;
+        flex-shrink: 0;
+        border: 2px solid #d1d5db;
+        border-radius: 50%;
+        font-weight: 700;
+    }
+
+    .roadmap-step.complete .roadmap-step-number,
+    .roadmap-step.current .roadmap-step-number {
+        border-color: {{ $primaryColor }};
+        background: {{ $primaryColor }};
+        color: #ffffff;
+    }
+
+    .roadmap-step.current {
+        color: #111827;
+        font-weight: 700;
+    }
+
+    .roadmap-current {
+        margin: 14px 0 0;
+        color: #6b7280;
+        font-size: 0.875rem;
+    }
+
+    @media (max-width: 640px) {
+        .roadmap-steps {
+            grid-template-columns: repeat(2, 1fr);
+            row-gap: 12px;
+        }
+    }
+
     .info-row {
         display: flex;
         justify-content: space-between;
@@ -727,6 +782,31 @@
 
     @include('school.student.partials.license-guide')
 
+    <div class="info-card roadmap-card">
+        <div class="card-header">Course Roadmap</div>
+        <div class="card-body">
+            <div class="roadmap-steps" aria-label="Current course step">
+                <div class="roadmap-step {{ $currentStep >= 1 ? 'complete' : '' }}">
+                    <span class="roadmap-step-number">1</span>
+                    <span>Enrollment</span>
+                </div>
+                <div class="roadmap-step {{ $currentStep >= 2 ? 'complete' : '' }}">
+                    <span class="roadmap-step-number">2</span>
+                    <span>TDC</span>
+                </div>
+                <div class="roadmap-step {{ $currentStep >= 3 ? 'current' : '' }}">
+                    <span class="roadmap-step-number">3</span>
+                    <span>PDC</span>
+                </div>
+                <div class="roadmap-step {{ $currentStep >= 4 ? 'complete' : '' }}">
+                    <span class="roadmap-step-number">4</span>
+                    <span>Completion</span>
+                </div>
+            </div>
+            <p class="roadmap-current">Current step: <strong>{{ $currentStep }}</strong> · {{ $enrolledCourseType }}</p>
+        </div>
+    </div>
+
     <!-- Desktop: 3 column layout -->
     <div class="dashboard-cards">
         @php
@@ -762,7 +842,7 @@
                             <span class="progress-stat-value">{{ $hoursCompleted }}/{{ $requiredHours ?? $course->hours_required ?? 0 }} hrs</span>
                         </div>
                         <div class="progress-stat">
-                            <span class="progress-stat-label">TDC Status</span>
+                            <span class="progress-stat-label">{{ $progressStatusLabel }}</span>
                             <span class="stat-badge {{ $hasPassedTheoretical ? 'passed' : 'in-progress' }}">
                                 {{ $hasPassedTheoretical ? 'Passed' : 'In Progress' }}
                             </span>
@@ -831,9 +911,9 @@
                     <span class="info-value">{{ $enrolledCourseType }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Theoretical Status</span>
+                    <span class="info-label">{{ $progressStatusLabel }}</span>
                     <span class="info-value {{ $hasPassedTheoretical ? 'theory-status-passed' : 'theory-status-progress' }}">
-                        {{ $hasPassedTheoretical ? 'Passed' : 'In Progress' }}
+                        {{ $courseTypeKey === 'none' ? 'Not enrolled' : ($courseTypeKey === 'practical' ? 'In Progress' : ($hasPassedTheoretical ? 'Passed' : 'In Progress')) }}
                     </span>
                 </div>
                 <div class="info-row">
@@ -937,9 +1017,9 @@
                     <span class="info-value">{{ $enrolledCourseType }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Theoretical</span>
+                    <span class="info-label">{{ $progressStatusLabel }}</span>
                     <span class="info-value {{ $hasPassedTheoretical ? 'theory-status-passed' : 'theory-status-progress' }}">
-                        {{ $hasPassedTheoretical ? 'Passed' : 'In Progress' }}
+                        {{ $courseTypeKey === 'none' ? 'Not enrolled' : ($courseTypeKey === 'practical' ? 'In Progress' : ($hasPassedTheoretical ? 'Passed' : 'In Progress')) }}
                     </span>
                 </div>
                 <div class="info-row">
