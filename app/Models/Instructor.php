@@ -77,6 +77,11 @@ class Instructor extends Authenticatable
             ->withPivot(['school_id', 'assignment_type']);
     }
 
+    public function workingHours()
+    {
+        return $this->hasMany(InstructorWorkingHour::class);
+    }
+
     public function sessionCompletions()
     {
         return $this->hasMany(SessionCompletion::class);

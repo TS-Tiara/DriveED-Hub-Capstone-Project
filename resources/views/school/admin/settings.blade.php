@@ -1297,6 +1297,30 @@
                             </small>
                         </div>
 
+                        <div class="form-group">
+                            <label class="form-label">Maximum TDC (Theoretical) Session Duration (Minutes)</label>
+                            <input type="number" class="number-input" name="max_tdc_duration_minutes" value="{{ old('max_tdc_duration_minutes', $settings->max_tdc_duration_minutes ?? 300) }}" min="60" max="1440">
+                            <small class="text-muted help-text-block">
+                                Maximum allowed duration for classroom/theoretical sessions. (Recommended: 300 mins / 5 hours)
+                            </small>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Maximum PDC (Practical) Session Duration (Minutes)</label>
+                            <input type="number" class="number-input" name="max_pdc_duration_minutes" value="{{ old('max_pdc_duration_minutes', $settings->max_pdc_duration_minutes ?? 180) }}" min="60" max="1440">
+                            <small class="text-muted help-text-block">
+                                Maximum allowed duration for driving/practical sessions. (Recommended: 180 mins / 3 hours)
+                            </small>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Minimum Gap Between Sessions (Minutes)</label>
+                            <input type="number" class="number-input" name="min_gap_minutes_between_sessions" value="{{ old('min_gap_minutes_between_sessions', $settings->min_gap_minutes_between_sessions ?? 15) }}" min="0" max="360">
+                            <small class="text-muted help-text-block">
+                                Minimum required break between instructor sessions to prevent burnout.
+                            </small>
+                        </div>
+
                         <div class="nav-divider"></div>
 
                         <!-- Grouped License Roadmap Section -->

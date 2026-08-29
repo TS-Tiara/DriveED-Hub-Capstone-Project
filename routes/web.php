@@ -205,6 +205,9 @@ Route::prefix('{school:slug}')
                     Route::patch('/instructors/{id}/toggle-status', [AdminController::class, 'toggleInstructorStatus'])->name('instructors.toggleStatus');
                     Route::post('/instructors/{id}/verify', [AdminController::class, 'verifyInstructor'])->name('instructors.verify');
                     Route::patch('/instructors/{id}/availability', [AdminController::class, 'toggleInstructorAvailability'])->name('instructors.toggleAvailability');
+                    Route::get('/instructors/{id}/working-hours', [AdminController::class, 'workingHours'])->name('instructors.workingHours');
+                    Route::post('/instructors/{id}/working-hours', [AdminController::class, 'storeWorkingHours'])->name('instructors.workingHours.store');
+                    Route::delete('/instructors/{id}/working-hours/{day}', [AdminController::class, 'destroyWorkingHours'])->name('instructors.workingHours.destroy');
 
                     // Schedule management (unified system: admin creates, can pre-assign, instructors self-select remaining spots)
                     Route::get('/schedules', [AdminController::class , 'schedules'])->name('schedules');

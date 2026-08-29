@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Instructor;
 use App\Models\School;
 use App\Models\TimeSlot;
+use App\Services\SchedulingConflictService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
@@ -164,6 +165,46 @@ class AdminTimeSlotController extends Controller
         $course = $school->courses()->findOrFail($request->course_id);
         $instructorIds = $request->instructor_ids ?? [];
 
+        // Validate session duration and instructor working hours
+        $conflictService = new SchedulingConflictService();
+        $settings = $school->schoolSetting;
+
+        $durationCheck = $conflictService->enforceSessionDurationLimits(
+            $course->course_type,
+            $request->start_time,
+            $request->end_time,
+            $settings
+        );
+
+        if (!$durationCheck['valid']) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', $durationCheck['message']);
+        }
+
+        foreach ($instructorIds as $instructorId) {
+            $hoursCheck = $conflictService->checkInstructorWorkingHours(
+                $instructorId, $request->date, $request->start_time, $request->end_time
+            );
+
+            if (!$hoursCheck['within_hours']) {
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'Instructor ' . Instructor::find($instructorId)->name . ': ' . $hoursCheck['message']);
+            }
+
+            $limitCheck = $conflictService->checkDailyTeachingLimit(
+                $instructorId, $request->date, $request->start_time, $request->end_time,
+                $settings->min_gap_minutes_between_sessions ?? 15
+            );
+
+            if (!$limitCheck['allowed']) {
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'Instructor ' . Instructor::find($instructorId)->name . ': ' . $limitCheck['message']);
+            }
+        }
+
         // PDC (Practical) Batch Logic: Each instructor gets their own 1-on-1 slot
         if ($course->course_type === 'practical' && count($instructorIds) > 1) {
             foreach ($instructorIds as $instructorId) {
@@ -247,6 +288,27 @@ class AdminTimeSlotController extends Controller
         $toRemove = array_diff($currentInstructors, $newInstructors);
 
         foreach ($toAdd as $instructorId) {
+            $conflictService = new SchedulingConflictService();
+            $settings = $school->schoolSetting;
+            $hoursCheck = $conflictService->checkInstructorWorkingHours(
+                $instructorId, $timeSlot->date, $timeSlot->start_time, $timeSlot->end_time
+            );
+
+            if (!$hoursCheck['within_hours']) {
+                return redirect()->back()
+                    ->with('error', 'Instructor ' . Instructor::find($instructorId)->name . ': ' . $hoursCheck['message']);
+            }
+
+            $limitCheck = $conflictService->checkDailyTeachingLimit(
+                $instructorId, $timeSlot->date, $timeSlot->start_time, $timeSlot->end_time,
+                $settings->min_gap_minutes_between_sessions ?? 15
+            );
+
+            if (!$limitCheck['allowed']) {
+                return redirect()->back()
+                    ->with('error', 'Instructor ' . Instructor::find($instructorId)->name . ': ' . $limitCheck['message']);
+            }
+
             $timeSlot->instructors()->attach($instructorId, [
                 'school_id' => $school->id,
                 'assignment_type' => 'admin_assigned',

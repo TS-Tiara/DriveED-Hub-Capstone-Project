@@ -12,6 +12,7 @@ use App\Models\Invitation;
 use App\Models\VehicleCategory;
 use App\Mail\SystemInvitationMail;
 use App\Models\Instructor;
+use App\Models\InstructorWorkingHour;
 use App\Models\InstructorRemovalRequest;
 use App\Models\Log;
 use App\Models\Payment;
@@ -854,6 +855,80 @@ class AdminController extends Controller
         }
     }
 
+    public function workingHours(School $school, $id)
+    {
+        $admin = Auth::guard('admin')->user();
+        abort_unless((bool)$admin, 403);
+
+        $instructor = Instructor::where('school_id', $school->id)->findOrFail($id);
+
+        $workingHours = $instructor->workingHours()->get()->keyBy('day_of_week');
+
+        return view($school->resolveView('admin.instructor-working-hours'), [
+            'school' => $school,
+            'instructor' => $instructor,
+            'workingHours' => $workingHours,
+        ]);
+    }
+
+    public function storeWorkingHours(Request $request, School $school, $id)
+    {
+        $admin = Auth::guard('admin')->user();
+        abort_unless((bool)$admin, 403);
+
+        $instructor = Instructor::where('school_id', $school->id)->findOrFail($id);
+
+        $request->validate([
+            'working_hours' => 'required|array',
+            'working_hours.*.day_of_week' => 'required|integer|min:0|max:6',
+        ]);
+
+        foreach ($request->input('working_hours', []) as $wh) {
+            $dayOfWeek = $wh['day_of_week'];
+            $enabled = isset($wh['enabled']) && $wh['enabled'];
+
+            if (!$enabled) {
+                InstructorWorkingHour::where('instructor_id', $instructor->id)
+                    ->where('day_of_week', $dayOfWeek)
+                    ->delete();
+                continue;
+            }
+
+            $request->validate([
+                "working_hours.{$dayOfWeek}.shift_start" => 'required|date_format:H:i',
+                "working_hours.{$dayOfWeek}.shift_end" => 'required|date_format:H:i|after:working_hours.{$dayOfWeek}.shift_start',
+                "working_hours.{$dayOfWeek}.break_start" => 'nullable|date_format:H:i|after:working_hours.{$dayOfWeek}.shift_start',
+                "working_hours.{$dayOfWeek}.break_end" => 'nullable|date_format:H:i|after:working_hours.{$dayOfWeek}.break_start',
+            ]);
+
+            InstructorWorkingHour::updateOrCreate(
+                ['instructor_id' => $instructor->id, 'day_of_week' => $dayOfWeek],
+                [
+                    'shift_start' => $wh['shift_start'],
+                    'shift_end' => $wh['shift_end'],
+                    'break_start' => $wh['break_start'] ?? null,
+                    'break_end' => $wh['break_end'] ?? null,
+                ]
+            );
+        }
+
+        return redirect()->back()->with('success', 'Working hours saved successfully!');
+    }
+
+    public function destroyWorkingHours(School $school, $id, $day)
+    {
+        $admin = Auth::guard('admin')->user();
+        abort_unless((bool)$admin, 403);
+
+        $instructor = Instructor::where('school_id', $school->id)->findOrFail($id);
+
+        InstructorWorkingHour::where('instructor_id', $instructor->id)
+            ->where('day_of_week', $day)
+            ->delete();
+
+        return response()->json(['success' => true]);
+    }
+
     public function verifyInstructor(Request $request, School $school, $id)
     {
         try {
@@ -1511,6 +1586,9 @@ class AdminController extends Controller
                 'enable_pii_masking' => $request->has('enable_pii_masking'),
                 'min_tdc_duration_minutes' => $request->min_tdc_duration_minutes ?? 60,
                 'min_pdc_duration_minutes' => $request->min_pdc_duration_minutes ?? 60,
+                'max_tdc_duration_minutes' => $request->max_tdc_duration_minutes ?? 300,
+                'max_pdc_duration_minutes' => $request->max_pdc_duration_minutes ?? 180,
+                'min_gap_minutes_between_sessions' => $request->min_gap_minutes_between_sessions ?? 15,
                 // Login page settings
                 'login_header_layout' => $request->login_header_layout ?? 'horizontal',
                 'login_logo_image' => $request->login_logo_image,

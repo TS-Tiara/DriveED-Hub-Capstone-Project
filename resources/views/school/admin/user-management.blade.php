@@ -2102,6 +2102,11 @@
                                                     <span>Edit</span>
                                                 </button>
 
+                                                <a href="{{ route('schools.admin.instructors.workingHours', ['school' => $school, 'id' => $user->id]) }}" class="btn-action btn-warning" title="Working Hours">
+                                                    <i class="bi bi-clock"></i>
+                                                    <span>Hours</span>
+                                                </a>
+
                                                 {{-- Verify button moved to License column --}}
                                             @endif
 
