@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\CourseModule;
+use App\Models\EnrollmentLessonProgress;
+use App\Models\EnrollmentRequest;
 use App\Models\Course;
 use App\Models\ModuleLesson;
 use App\Models\School;
@@ -85,14 +87,38 @@ class CourseModuleController extends Controller
     public function index(Request $request, School $school, Course $course)
     {
         $role = $this->resolveAuthRole();
-        
+
         $modules = $course->modules()
             ->with(['lessons' => function($query) {
                 $query->ordered();
             }])
             ->ordered()
             ->get();
-        
+
+        $moduleProgress = collect();
+
+        if ($role === 'student') {
+            $student = Auth::guard('student')->user();
+            $enrollment = $student->enrollmentRequests()
+                ->where('school_id', $school->id)
+                ->where('course_id', $course->id)
+                ->where('status', 'approved')
+                ->latest('id')
+                ->first();
+
+            if ($enrollment) {
+                $moduleProgress = EnrollmentLessonProgress::where('enrollment_request_id', $enrollment->id)
+                    ->get()
+                    ->groupBy('module_id')
+                    ->map(function ($items) {
+                        return [
+                            'total' => $items->count(),
+                            'completed' => $items->where('status', 'completed')->count(),
+                        ];
+                    });
+            }
+        }
+
         // Different views based on role
         $viewPath = match($role) {
             'student' => 'student.modules.index',
@@ -100,8 +126,8 @@ class CourseModuleController extends Controller
             'admin' => 'admin.modules.index',
             default => abort(403)
         };
-        
-        return view($school->resolveView($viewPath), compact('school', 'course', 'modules'))->with('isAjax', $request->ajax());
+
+        return view($school->resolveView($viewPath), compact('school', 'course', 'modules', 'moduleProgress'))->with('isAjax', $request->ajax());
     }
 
     /**

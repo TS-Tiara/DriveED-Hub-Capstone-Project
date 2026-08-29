@@ -11,6 +11,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use App\Models\EnrollmentLessonProgress;
+use App\Models\EnrollmentRequest;
 
 class ModuleLessonController extends Controller
 {
@@ -34,17 +36,23 @@ class ModuleLessonController extends Controller
         // Student view - must be enrolled
         if (Auth::guard('student')->check()) {
             $student = Auth::guard('student')->user();
-            $isEnrolled = $student->enrollmentRequests()
+            $enrollment = $student->enrollmentRequests()
                 ->where('school_id', $school->id)
                 ->where('course_id', $course->id)
                 ->where('status', 'approved')
-                ->exists();
+                ->latest('id')
+                ->first();
 
-            if (!$isEnrolled) {
+            if (!$enrollment) {
                 abort(403, 'You must be enrolled in this course to view lessons.');
             }
 
-            return view('school.student.lessons.index', compact('school', 'course', 'module', 'lessons'))->with('isAjax', $request->ajax());
+            $lessonProgress = EnrollmentLessonProgress::where('enrollment_request_id', $enrollment->id)
+                ->where('module_id', $module->id)
+                ->get()
+                ->keyBy('module_lesson_id');
+
+            return view('school.student.lessons.index', compact('school', 'course', 'module', 'lessons', 'lessonProgress'))->with('isAjax', $request->ajax());
         }
 
         // Instructor view
@@ -192,21 +200,26 @@ class ModuleLessonController extends Controller
         // Student view - must be enrolled
         if (Auth::guard('student')->check()) {
             $student = Auth::guard('student')->user();
-            $isEnrolled = $student->enrollmentRequests()
+            $enrollment = $student->enrollmentRequests()
                 ->where('school_id', $school->id)
                 ->where('course_id', $course->id)
                 ->where('status', 'approved')
-                ->exists();
+                ->latest('id')
+                ->first();
 
-            if (!$isEnrolled) {
+            if (!$enrollment) {
                 abort(403, 'You must be enrolled in this course to view lessons.');
             }
+
+            $lessonProgress = EnrollmentLessonProgress::where('enrollment_request_id', $enrollment->id)
+                ->where('module_lesson_id', $lesson->id)
+                ->first();
 
             // Get navigation
             $courseModuleController = app(\App\Http\Controllers\CourseModuleController::class);
             $navigation = $courseModuleController->getLearningPathNavigation($course, $module, $lesson);
 
-            return view('school.student.lessons.show', compact('school', 'course', 'module', 'lesson', 'navigation'))->with('isAjax', $request->ajax());
+            return view('school.student.lessons.show', compact('school', 'course', 'module', 'lesson', 'navigation', 'lessonProgress'))->with('isAjax', $request->ajax());
         }
 
         // Instructor view
@@ -445,5 +458,107 @@ class ModuleLessonController extends Controller
                 'message' => 'Failed to reorder lessons: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Toggle lesson completion status for the current student.
+     * Gating: if an assessment module exists before this lesson's module,
+     * the student must pass it before marking lessons complete.
+     */
+    public function toggleCompletion(Request $request, School $school, Course $course, CourseModule $module, ModuleLesson $lesson)
+    {
+        if ($course->school_id !== $school->id || $module->course_id !== $course->id || $lesson->module_id !== $module->id) {
+            abort(404);
+        }
+
+        $student = Auth::guard('student')->user();
+        if (!$student) {
+            abort(403);
+        }
+
+        $enrollment = EnrollmentRequest::where('learner_id', $student->id)
+            ->where('school_id', $school->id)
+            ->where('course_id', $course->id)
+            ->where('status', 'approved')
+            ->latest('id')
+            ->first();
+
+        if (!$enrollment) {
+            abort(403, 'You must be enrolled in this course to track progress.');
+        }
+
+        $progress = EnrollmentLessonProgress::firstOrCreate(
+            [
+                'enrollment_request_id' => $enrollment->id,
+                'module_lesson_id' => $lesson->id,
+            ],
+            [
+                'school_id' => $school->id,
+                'student_id' => $student->id,
+                'course_id' => $course->id,
+                'module_id' => $module->id,
+                'status' => 'not_started',
+            ]
+        );
+
+        if ($progress->isCompleted()) {
+            $progress->resetProgress();
+            $newStatus = 'not_started';
+        } else {
+            $gating = $this->checkAssessmentGating($course, $module, $enrollment);
+            if (!$gating['allowed']) {
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $gating['message'],
+                    ], 422);
+                }
+                return redirect()->back()->with('error', $gating['message']);
+            }
+
+            $progress->markCompleted();
+            $newStatus = 'completed';
+        }
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'status' => $newStatus,
+                'lesson_id' => $lesson->id,
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Lesson progress updated.');
+    }
+
+    /**
+     * Check whether the student has passed any required assessment
+     * that gates the current module.
+     */
+    private function checkAssessmentGating(Course $course, CourseModule $module, $enrollment): array
+    {
+        $priorAssessment = \App\Models\CourseModule::where('course_id', $course->id)
+            ->where('module_type', 'assessment')
+            ->where('sort_order', '<', $module->sort_order)
+            ->orderBy('sort_order', 'desc')
+            ->first();
+
+        if (!$priorAssessment) {
+            return ['allowed' => true, 'message' => ''];
+        }
+
+        $passed = \App\Models\AssessmentAttempt::where('enrollment_request_id', $enrollment->id)
+            ->where('module_id', $priorAssessment->id)
+            ->where('passed', true)
+            ->exists();
+
+        if ($passed) {
+            return ['allowed' => true, 'message' => ''];
+        }
+
+        return [
+            'allowed' => false,
+            'message' => "You must pass the '{$priorAssessment->title}' assessment before marking lessons complete.",
+        ];
     }
 }

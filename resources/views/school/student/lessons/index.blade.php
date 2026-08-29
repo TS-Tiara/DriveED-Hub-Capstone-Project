@@ -23,7 +23,13 @@
         </div>
 
         <ul class="lms-list">
+            @php
+                $completedCount = isset($lessonProgress) ? $lessonProgress->where('status', 'completed')->count() : 0;
+                $totalCount = $lessons->count();
+            @endphp
+            <div style="padding: 12px 20px; background: #f9fafb; border-bottom: 1px solid #e5e7eb; font-size: 0.85rem; color: #6b7280;">Progress: {{ $completedCount }} / {{ $totalCount }} {{ Str::plural('lesson', $totalCount) }} completed</div>
             @forelse($lessons->sortBy('sort_order') as $index => $lesson)
+@forelse($lessons
                 <li class="lms-item">
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <div style="width: 32px; height: 32px; border-radius: 50%; background: #eff6ff; color: #3b82f6; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; flex-shrink: 0;">

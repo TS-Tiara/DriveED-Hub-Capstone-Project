@@ -35,7 +35,12 @@
                                 @if($module->module_type === 'assessment')
                                     <span style="color: #3b82f6; font-weight: 600;">Assessment Module</span>
                                 @else
-                                    {{ $module->lessons->count() ?? 0 }} {{ Str::plural('lesson', $module->lessons->count()) }}
+                                    @php
+                                        \ = isset(\[\->id]) ? \[\->id] : null;
+                                        \ = \ ? \['completed'] : 0;
+                                        \ = \->lessons->count();
+                                    @endphp
+                                    {{ \ }}/{{ \ }} {{ Str::plural('lesson', \) }} done
                                     @if($module->questions && $module->questions->count() > 0)
                                         • <span style="color: #3b82f6;">+ Quiz</span>
                                     @endif

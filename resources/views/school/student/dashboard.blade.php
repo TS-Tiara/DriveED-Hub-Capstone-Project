@@ -785,7 +785,7 @@
     <div class="info-card roadmap-card">
         <div class="card-header">Course Roadmap</div>
         <div class="card-body">
-            <div class="roadmap-steps" aria-label="Current course step">
+            @if($courseTypeKey === 'practical')<p style='margin:0 0 8px;font-size:0.75rem;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;'>Prerequisites</p><div class='roadmap-steps' aria-label='Prerequisite steps'><div class='roadmap-step complete'><span class='roadmap-step-number'>1</span><span>Enrollment</span></div><div class='roadmap-step complete'><span class='roadmap-step-number'>2</span><span>TDC</span></div></div><p style='margin:12px 0 8px;font-size:0.75rem;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;'>Active Training</p><div class='roadmap-steps' aria-label='Active training steps'><div class='roadmap-step current'><span class='roadmap-step-number'>3</span><span>PDC</span></div><div class='roadmap-step'><span class='roadmap-step-number'>4</span><span>Completion</span></div></div><p class='roadmap-current'>Current step: <strong>3</strong> {{ $enrolledCourseType }}</p>@else<div class='roadmap-steps' aria-label='Current course step'>
                 <div class="roadmap-step {{ $currentStep >= 1 ? 'complete' : '' }}">
                     <span class="roadmap-step-number">1</span>
                     <span>Enrollment</span>
@@ -803,7 +803,7 @@
                     <span>Completion</span>
                 </div>
             </div>
-            <p class="roadmap-current">Current step: <strong>{{ $currentStep }}</strong> · {{ $enrolledCourseType }}</p>
+            <p class="roadmap-current">Current step: <strong>{{ $currentStep }}</strong> · {{ $enrolledCourseType }}</p>@endif
         </div>
     </div>
 
@@ -902,6 +902,18 @@
         <div class="info-card">
             <div class="card-header">Enrollment Status</div>
             <div class="card-body">
+                @if($enrollmentCards->count() > 1)
+                    <div class="info-row">
+                        <span class="info-label">Active Enrollments</span>
+                        <span class="info-value">{{ $enrollmentCards->count() }} courses</span>
+                    </div>
+                    @foreach($enrollmentCards as $card)
+                    <div class="info-row">
+                        <span class="info-label">{{ $card['course_type_label'] }}</span>
+                        <span class="info-value">{{ $card['course_name'] }} ({{ $card['progress_percentage'] }}%)</span>
+                    </div>
+                    @endforeach
+                @else
                 <div class="info-row">
                     <span class="info-label">Enrolled Course</span>
                     <span class="info-value">{{ $enrolledCourseName }}</span>
@@ -912,7 +924,7 @@
                 </div>
                 <div class="info-row">
                     <span class="info-label">{{ $progressStatusLabel }}</span>
-                    <span class="info-value {{ $hasPassedTheoretical ? 'theory-status-passed' : 'theory-status-progress' }}">
+                    <span class="info-value">{{ $hasPassedTheoretical ? 'theory-status-passed' : 'theory-status-progress' }}">
                         {{ $courseTypeKey === 'none' ? 'Not enrolled' : ($courseTypeKey === 'practical' ? 'In Progress' : ($hasPassedTheoretical ? 'Passed' : 'In Progress')) }}
                     </span>
                 </div>
@@ -920,6 +932,7 @@
                     <span class="info-label">Active Enrollments</span>
                     <span class="info-value">{{ $activeEnrollments->count() }}</span>
                 </div>
+                @endif
             </div>
         </div>
     </div>
@@ -1008,6 +1021,18 @@
         <div class="info-card">
             <div class="card-header">Enrollment Status</div>
             <div class="card-body">
+                @if($enrollmentCards->count() > 1)
+                    <div class="info-row">
+                        <span class="info-label">Active Enrollments</span>
+                        <span class="info-value">{{ $enrollmentCards->count() }} courses</span>
+                    </div>
+                    @foreach($enrollmentCards as $card)
+                    <div class="info-row">
+                        <span class="info-label">{{ $card['course_type_label'] }}</span>
+                        <span class="info-value">{{ $card['course_name'] }} ({{ $card['progress_percentage'] }}%)</span>
+                    </div>
+                    @endforeach
+                @else
                 <div class="info-row">
                     <span class="info-label">Enrolled Course</span>
                     <span class="info-value">{{ $enrolledCourseName }}</span>
@@ -1018,7 +1043,7 @@
                 </div>
                 <div class="info-row">
                     <span class="info-label">{{ $progressStatusLabel }}</span>
-                    <span class="info-value {{ $hasPassedTheoretical ? 'theory-status-passed' : 'theory-status-progress' }}">
+                    <span class="info-value">{{ $hasPassedTheoretical ? 'theory-status-passed' : 'theory-status-progress' }}">
                         {{ $courseTypeKey === 'none' ? 'Not enrolled' : ($courseTypeKey === 'practical' ? 'In Progress' : ($hasPassedTheoretical ? 'Passed' : 'In Progress')) }}
                     </span>
                 </div>
@@ -1026,6 +1051,7 @@
                     <span class="info-label">Active Enrollments</span>
                     <span class="info-value">{{ $activeEnrollments->count() }}</span>
                 </div>
+                @endif
             </div>
         </div>
     </div>

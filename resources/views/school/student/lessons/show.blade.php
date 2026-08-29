@@ -12,6 +12,28 @@
             <p class="lms-subtitle">Module: {{ $module->title ?? 'N/A' }}</p>
         </div>
         <div class="lms-actions">
+            @if(isset($lessonProgress) && $lessonProgress->isCompleted())
+                <form method="POST" action="{{ route('schools.student.courses.modules.lessons.toggle', ['school' => $school->slug, 'course' => $course->id, 'module' => $module->id, 'lesson' => $lesson->id]) }}" style="display:inline;">
+                    @csrf
+                    <button type="submit" class="lms-btn" style="background:#10b981;color:#ffffff;border-color:#10b981;">
+                        Completed
+                    </button>
+                </form>
+            @elseif(isset($lessonProgress) && $lessonProgress->isInProgress())
+                <form method="POST" action="{{ route('schools.student.courses.modules.lessons.toggle', ['school' => $school->slug, 'course' => $course->id, 'module' => $module->id, 'lesson' => $lesson->id]) }}" style="display:inline;">
+                    @csrf
+                    <button type="submit" class="lms-btn lms-btn-primary">
+                        Mark as Complete
+                    </button>
+                </form>
+            @else
+                <form method="POST" action="{{ route('schools.student.courses.modules.lessons.toggle', ['school' => $school->slug, 'course' => $course->id, 'module' => $module->id, 'lesson' => $lesson->id]) }}" style="display:inline;">
+                    @csrf
+                    <button type="submit" class="lms-btn lms-btn-primary">
+                        Mark as Complete
+                    </button>
+                </form>
+            @endif
             <a href="{{ school_route('student.my-course') }}" class="lms-btn lms-btn-muted">Back to My Course</a>
         </div>
     </div>

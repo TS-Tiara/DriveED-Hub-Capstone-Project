@@ -252,7 +252,36 @@ class StudentController extends Controller
         $hasPassedTheoretical = $studentModel ? $studentModel->hasPassedTheoretical() : false;
         $canEnrollPractical = $studentModel ? $studentModel->canEnrollPractical() : false;
         
-        // Enrolled course info (primary active enrollment)
+        // Build per-enrollment progress data (never silently use first record)
+        $enrollmentCards = $activeEnrollments->map(function ($enrollment) {
+            $course = $enrollment->course;
+            $completions = $enrollment->sessionCompletions ?? collect();
+            $hours = $completions->where('status', 'completed')->sum('hours_completed');
+            $required = $course->hours_required ?? 0;
+            $pct = $required > 0 ? min(100, round(($hours / $required) * 100)) : 0;
+            $typeKey = strtolower((string) ($course->course_type ?? ''));
+            return [
+                'id' => $enrollment->id,
+                'course_name' => $course->title ?? 'N/A',
+                'course_type_key' => $typeKey,
+                'course_type_label' => match ($typeKey) {
+                    'theoretical' => 'Theoretical (TDC)',
+                    'practical' => 'Practical (PDC)',
+                    'combo' => 'Combo',
+                    default => 'Course',
+                },
+                'hours_completed' => round($hours, 1),
+                'hours_required' => $required,
+                'progress_percentage' => $pct,
+                'theoretical_passed' => (bool) $enrollment->theoretical_passed,
+            ];
+        });
+
+        // Aggregate course-type key for roadmap/step display
+        $courseTypes = $enrollmentCards->pluck('course_type_key')->filter()->unique()->values();
+        $courseTypeKey = $courseTypes->count() > 1 ? 'combo' : ($courseTypes->first() ?? 'none');
+
+        // Single-enrollment convenience for simple displays
         $primaryEnrollment = $activeEnrollments->first();
         $enrolledCourseName = $primaryEnrollment ? ($primaryEnrollment->course->title ?? 'N/A') : 'No Active Course';
         $courseTypes = $activeEnrollments
@@ -300,6 +329,7 @@ class StudentController extends Controller
             'nextLessons' => $nextLessons,
             'progressPercentage' => $progressPercentage,
             'activeEnrollments' => $activeEnrollments,
+            'enrollmentCards' => $enrollmentCards,
             'enrolledCourseName' => $enrolledCourseName,
             'enrolledCourseType' => $enrolledCourseType,
             'courseTypeKey' => $courseTypeKey,

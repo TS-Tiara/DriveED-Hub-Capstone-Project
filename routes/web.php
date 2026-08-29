@@ -409,6 +409,7 @@ Route::prefix('{school:slug}')
                                             Route::get('/create', [ModuleLessonController::class , 'create'])->name('create');
                                             Route::post('/', [ModuleLessonController::class , 'store'])->name('store');
                                             Route::get('/{lesson}', [ModuleLessonController::class , 'show'])->name('show');
+                                    Route::post('/{lesson}/toggle', [ModuleLessonController::class, 'toggleCompletion'])->name('toggle');
                                             Route::get('/{lesson}/edit', [ModuleLessonController::class , 'edit'])->name('edit');
                                             Route::put('/{lesson}', [ModuleLessonController::class , 'update'])->name('update');
                                             Route::delete('/{lesson}', [ModuleLessonController::class , 'destroy'])->name('destroy');
