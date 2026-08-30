@@ -1,4 +1,4 @@
-*.log
+﻿*.log
 .DS_Store
 .env
 .env.backup
@@ -43,7 +43,8 @@ Thumbs.db
 /tests/Browser/screenshots/**/*.webp
 
 /tests
-/docs
+/docs/*
+!docs/PHASE_1_4_TESTING_GUIDE.md
 /routes.json
 /routes_list.txt
 /routes_utf8.json
@@ -64,3 +65,5 @@ Thumbs.db
 /public
 /tmp
 docs/CHANGELOG.md
+
+

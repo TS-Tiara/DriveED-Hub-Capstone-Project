@@ -190,7 +190,7 @@ class AdminTimeSlotController extends Controller
             if (!$hoursCheck['within_hours']) {
                 return redirect()->back()
                     ->withInput()
-                    ->with('error', 'Instructor ' . Instructor::find($instructorId)->name . ': ' . $hoursCheck['message']);
+                    ->with('error', 'Instructor ' . Instructor::find($instructorId)?->name ?? 'ID ' . $instructorId . ': ' . $hoursCheck['message']);
             }
 
             $limitCheck = $conflictService->checkDailyTeachingLimit(
@@ -201,7 +201,7 @@ class AdminTimeSlotController extends Controller
             if (!$limitCheck['allowed']) {
                 return redirect()->back()
                     ->withInput()
-                    ->with('error', 'Instructor ' . Instructor::find($instructorId)->name . ': ' . $limitCheck['message']);
+                    ->with('error', 'Instructor ' . Instructor::find($instructorId)?->name ?? 'ID ' . $instructorId . ': ' . $limitCheck['message']);
             }
         }
 
@@ -284,6 +284,7 @@ class AdminTimeSlotController extends Controller
                 ->with('error', "Cannot assign more than {$timeSlot->max_instructors} instructors to this slot.");
         }
 
+        try {
         $toAdd = array_diff($newInstructors, $currentInstructors);
         $toRemove = array_diff($currentInstructors, $newInstructors);
 
@@ -296,7 +297,7 @@ class AdminTimeSlotController extends Controller
 
             if (!$hoursCheck['within_hours']) {
                 return redirect()->back()
-                    ->with('error', 'Instructor ' . Instructor::find($instructorId)->name . ': ' . $hoursCheck['message']);
+                    ->with('error', 'Instructor ' . Instructor::find($instructorId)?->name ?? 'ID ' . $instructorId . ': ' . $hoursCheck['message']);
             }
 
             $limitCheck = $conflictService->checkDailyTeachingLimit(
@@ -306,7 +307,7 @@ class AdminTimeSlotController extends Controller
 
             if (!$limitCheck['allowed']) {
                 return redirect()->back()
-                    ->with('error', 'Instructor ' . Instructor::find($instructorId)->name . ': ' . $limitCheck['message']);
+                    ->with('error', 'Instructor ' . Instructor::find($instructorId)?->name ?? 'ID ' . $instructorId . ': ' . $limitCheck['message']);
             }
 
             $timeSlot->instructors()->attach($instructorId, [
@@ -328,7 +329,10 @@ class AdminTimeSlotController extends Controller
 
         return redirect()->route('schools.admin.timeslots.index', $school)
             ->with('success', 'Instructors assigned successfully!');
-    }
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Failed to assign instructors: ' . $e->getMessage());
+        }    }
 
     // Delete time slot
     public function destroy(School $school, $id)

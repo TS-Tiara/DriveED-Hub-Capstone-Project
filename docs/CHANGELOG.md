@@ -1,5 +1,61 @@
 # Changelog - Driving School Management System
 
+## [v2.0-Phase6] - Lesson Progress Tracking (lesson-progress branch)
+
+### New: Enrollment Lesson Progress Table
+- Created migration 2026_08_29_000001_create_enrollment_lesson_progress_table.php with columns: school_id, enrollment_request_id, module_lesson_id, student_id, course_id, module_id, status (enum: not_started/in_progress/completed), completed_at, completed_by, notes
+- Unique index on (enrollment_request_id, module_lesson_id) prevents duplicate progress records
+- Index on (student_id, module_id, status) for fast module progress queries
+- Cascading deletes on all foreign keys
+
+### New: EnrollmentLessonProgress Model
+- pp/Models/EnrollmentLessonProgress.php with HasSchoolScope trait
+- Relationships: enrollmentRequest, moduleLesson, student, course, module, completedBy
+- Helper methods: markCompleted(adminId, notes), markInProgress, resetProgress
+- Boolean checks: isCompleted, isInProgress, isNotStarted
+- Query scopes: forEnrollment, forModule, completed
+
+### New: Lesson Completion Toggle
+- Route: POST courses/{course}/modules/{module}/lessons/{lesson}/toggle -> ModuleLessonController@toggleCompletion (name: schools.student.courses.modules.lessons.toggle)
+- Controller verifies student enrollment before allowing progress changes
+- Uses firstOrCreate to initialize progress record on first toggle
+- Toggles between completed and not_started/in_progress
+- Returns JSON for AJAX requests, redirect back otherwise
+
+### Updated: Lesson Show View
+- Student show method now loads lessonProgress record and passes to view
+- Added 'Mark as Complete' button in the lesson header actions
+- Completed lessons show green 'Completed' button (click to undo)
+- In-progress and not-started lessons show primary 'Mark as Complete' button
+
+### For Backend Developers:
+- New migration must be run: php artisan migrate`n- Model: EnrollmentLessonProgress (table: enrollment_lesson_progress)
+- Route name: schools.student.courses.modules.lessons.toggle`n
+### For QA/Testers:
+- Run migration before testing
+- Test: Open a lesson as enrolled student -> click 'Mark as Complete' -> verify button changes to 'Completed'
+- Test: Click 'Completed' -> verify it toggles back to 'Mark as Complete'
+- Test: Access lesson as non-enrolled student -> verify 403
+- Test: Multiple toggles do not create duplicate records
+
+### For Project Manager:
+- Phase 3 now complete: lesson progress tracking, quiz gating, module progress display, PDC prerequisite history
+- All Phase 3 acceptance criteria implemented
+
+### New: Lesson Progress Display
+- Lesson index view shows progress bar with completed/total count
+- Completed lessons show green checkmark badge
+- Module index view shows per-module completion counts
+
+### New: Quiz/Exam Gating
+- Lesson completion blocked if prior assessment module not passed
+- Error message guides student to pass assessment first
+
+### New: PDC Prerequisite History
+- PDC-only students see Prerequisites (Steps 1-2) and Active Training (Steps 3-4) sections
+
+---
+
 ## [v2.0-Phase5] - Polish & Accessibility (Polish-Accessibility branch)
 
 ### ✨ Custom Confirmation Dialogs

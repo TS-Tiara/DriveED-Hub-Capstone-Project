@@ -878,41 +878,51 @@ class AdminController extends Controller
 
         $instructor = Instructor::where('school_id', $school->id)->findOrFail($id);
 
-        $request->validate([
-            'working_hours' => 'required|array',
-            'working_hours.*.day_of_week' => 'required|integer|min:0|max:6',
-        ]);
-
-        foreach ($request->input('working_hours', []) as $wh) {
-            $dayOfWeek = $wh['day_of_week'];
-            $enabled = isset($wh['enabled']) && $wh['enabled'];
-
-            if (!$enabled) {
-                InstructorWorkingHour::where('instructor_id', $instructor->id)
-                    ->where('day_of_week', $dayOfWeek)
-                    ->delete();
-                continue;
-            }
-
+        try {
             $request->validate([
-                "working_hours.{$dayOfWeek}.shift_start" => 'required|date_format:H:i',
-                "working_hours.{$dayOfWeek}.shift_end" => 'required|date_format:H:i|after:working_hours.{$dayOfWeek}.shift_start',
-                "working_hours.{$dayOfWeek}.break_start" => 'nullable|date_format:H:i|after:working_hours.{$dayOfWeek}.shift_start',
-                "working_hours.{$dayOfWeek}.break_end" => 'nullable|date_format:H:i|after:working_hours.{$dayOfWeek}.break_start',
+                'working_hours' => 'required|array',
+                'working_hours.*.day_of_week' => 'required|integer|min:0|max:6',
             ]);
 
-            InstructorWorkingHour::updateOrCreate(
-                ['instructor_id' => $instructor->id, 'day_of_week' => $dayOfWeek],
-                [
-                    'shift_start' => $wh['shift_start'],
-                    'shift_end' => $wh['shift_end'],
-                    'break_start' => $wh['break_start'] ?? null,
-                    'break_end' => $wh['break_end'] ?? null,
-                ]
-            );
-        }
+            foreach ($request->input('working_hours', []) as $wh) {
+                $dayOfWeek = $wh['day_of_week'];
+                $enabled = isset($wh['enabled']) && $wh['enabled'];
 
-        return redirect()->back()->with('success', 'Working hours saved successfully!');
+                if (!$enabled) {
+                    InstructorWorkingHour::where('instructor_id', $instructor->id)
+                        ->where('day_of_week', $dayOfWeek)
+                        ->delete();
+                    continue;
+                }
+
+                $request->validate([
+                    "working_hours.{$dayOfWeek}.shift_start" => 'required|date_format:H:i',
+                    "working_hours.{$dayOfWeek}.shift_end" => 'required|date_format:H:i|after:working_hours.{$dayOfWeek}.shift_start',
+                    "working_hours.{$dayOfWeek}.break_start" => 'nullable|date_format:H:i|after:working_hours.{$dayOfWeek}.shift_start',
+                    "working_hours.{$dayOfWeek}.break_end" => 'nullable|date_format:H:i|after:working_hours.{$dayOfWeek}.break_start',
+                ]);
+
+                InstructorWorkingHour::updateOrCreate(
+                    ['instructor_id' => $instructor->id, 'day_of_week' => $dayOfWeek],
+                    [
+                        'shift_start' => $wh['shift_start'],
+                        'shift_end' => $wh['shift_end'],
+                        'break_start' => $wh['break_start'] ?? null,
+                        'break_end' => $wh['break_end'] ?? null,
+                    ]
+                );
+            }
+
+            return redirect()->back()->with('success', 'Working hours saved successfully!');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return redirect()->back()
+                ->withInput()
+                ->withErrors($e->validator->errors());
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Failed to save working hours. Please try again.');
+        }
     }
 
     public function destroyWorkingHours(School $school, $id, $day)

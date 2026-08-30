@@ -85,19 +85,8 @@ class SchedulingConflictService
      * @param int $durationMinutes Duration of the session in minutes
      * @return array Array of available time slots
      */
-    public function getAvailableTimeSlots($instructorId, $date, $durationMinutes = 60)
+    public function getAvailableTimeSlots($instructorId, $date, $durationMinutes = 60, $minGapMinutes = 15)
     {
-        $bookedSessions = SessionCompletion::where('instructor_id', $instructorId)
-            ->where('session_date', $date)
-            ->whereNotNull('start_time')
-            ->whereNotNull('end_time')
-            ->where(function($q) {
-                $q->where('status', '!=', 'cancelled')
-                  ->orWhereNull('status');
-            })
-            ->orderBy('start_time')
-            ->get(['start_time', 'end_time']);
-
         $workingHours = InstructorWorkingHour::where('instructor_id', $instructorId)
             ->where('day_of_week', (int) Carbon::parse($date)->format('w'))
             ->get();
@@ -116,42 +105,81 @@ class SchedulingConflictService
             }
         }
 
-        $availableSlots = [];
-        $currentTime = $workStart->copy();
+        // Collect all blocked periods (booked sessions + breaks)
+        $blockedPeriods = [];
+
+        // Add break periods
+        if ($workingHours->isNotEmpty()) {
+            foreach ($workingHours as $wh) {
+                if ($wh->break_start && $wh->break_end) {
+                    $breakStart = Carbon::parse($date . ' ' . $wh->break_start);
+                    $breakEnd = Carbon::parse($date . ' ' . $wh->break_end);
+                    if ($breakEnd > $breakStart) {
+                        $blockedPeriods[] = ['start' => $breakStart, 'end' => $breakEnd, 'type' => 'break'];
+                    }
+                }
+            }
+        }
+
+        // Add booked session periods
+        $bookedSessions = SessionCompletion::where('instructor_id', $instructorId)
+            ->where('session_date', $date)
+            ->whereNotNull('start_time')
+            ->whereNotNull('end_time')
+            ->where(function($q) {
+                $q->where('status', '!=', 'cancelled')
+                  ->orWhereNull('status');
+            })
+            ->orderBy('start_time')
+            ->get(['start_time', 'end_time']);
 
         foreach ($bookedSessions as $session) {
             $sessionStart = Carbon::parse($date . ' ' . $session->start_time);
             $sessionEnd = Carbon::parse($date . ' ' . $session->end_time);
+            $blockedPeriods[] = ['start' => $sessionStart, 'end' => $sessionEnd, 'type' => 'session'];
+        }
 
-            if ($workingHours->isNotEmpty()) {
-                $inBreak = false;
-                foreach ($workingHours as $wh) {
-                    if ($wh->break_start && $wh->break_end) {
-                        $breakStart = Carbon::parse($date . ' ' . $wh->break_start);
-                        $breakEnd = Carbon::parse($date . ' ' . $wh->break_end);
-                        if ($currentTime < $breakEnd && $sessionStart > $breakStart) {
-                            if ($breakStart->diffInMinutes($currentTime) >= $durationMinutes) {
-                                $segEnd = $breakStart->copy();
-                            } else {
-                                $segEnd = $currentTime->copy();
-                            }
-                        }
-                    }
+        // Sort blocked periods by start time
+        usort($blockedPeriods, function($a, $b) {
+            return $a['start']->lt($b['start']) ? -1 : 1;
+        });
+
+        // Find available gaps between blocked periods
+        $availableSlots = [];
+        $currentTime = $workStart->copy();
+
+        foreach ($blockedPeriods as $period) {
+            // Skip periods that end before currentTime
+            if ($period['end']->lte($currentTime)) {
+                continue;
+            }
+
+            // Check if there's enough time before this blocked period
+            if ($currentTime->diffInMinutes($period['start']) >= ($durationMinutes + $minGapMinutes)) {
+                // Find the actual end of the available slot (limited by work end)
+                $slotEnd = $period['start']->copy();
+                if ($slotEnd->gt($workEnd)) {
+                    $slotEnd = $workEnd->copy();
+                }
+
+                // Only add if we have enough duration
+                if ($currentTime->diffInMinutes($slotEnd) >= $durationMinutes) {
+                    $availableSlots[] = [
+                        'start' => $currentTime->format('H:i'),
+                        'end' => $slotEnd->format('H:i'),
+                        'start_formatted' => $currentTime->format('g:i A'),
+                        'end_formatted' => $slotEnd->format('g:i A'),
+                    ];
                 }
             }
 
-            if ($currentTime->diffInMinutes($sessionStart) >= $durationMinutes) {
-                $availableSlots[] = [
-                    'start' => $currentTime->format('H:i'),
-                    'end' => $sessionStart->format('H:i'),
-                    'start_formatted' => $currentTime->format('g:i A'),
-                    'end_formatted' => $sessionStart->format('g:i A'),
-                ];
+            // Move currentTime to the end of this blocked period
+            if ($period['end']->gt($currentTime)) {
+                $currentTime = $period['end']->copy();
             }
-
-            $currentTime = $sessionEnd->copy();
         }
 
+        // Check remaining time at end of day
         if ($currentTime->diffInMinutes($workEnd) >= $durationMinutes) {
             $availableSlots[] = [
                 'start' => $currentTime->format('H:i'),
@@ -163,7 +191,6 @@ class SchedulingConflictService
 
         return $availableSlots;
     }
-
     /**
      * Find alternative time slots when there's a conflict
      *
