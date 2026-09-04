@@ -744,7 +744,7 @@
 
         <div class="onboarding-progress">
             <div class="onboarding-progress-bar">
-                <div class="onboarding-progress-fill progress-{{ $progressPercent }}"></div>
+                <div class="onboarding-progress-fill" style="width: {{ $progressPercent }}%;"></div>
             </div>
             <span class="onboarding-progress-text">
                 {{ $completedSteps }} of 3 complete 

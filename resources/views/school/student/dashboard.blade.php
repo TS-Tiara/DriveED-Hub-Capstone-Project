@@ -924,7 +924,7 @@
                 </div>
                 <div class="info-row">
                     <span class="info-label">{{ $progressStatusLabel }}</span>
-                    <span class="info-value">{{ $hasPassedTheoretical ? 'theory-status-passed' : 'theory-status-progress' }}">
+                    <span class="info-value {{ $hasPassedTheoretical ? 'theory-status-passed' : 'theory-status-progress' }}">
                         {{ $courseTypeKey === 'none' ? 'Not enrolled' : ($courseTypeKey === 'practical' ? 'In Progress' : ($hasPassedTheoretical ? 'Passed' : 'In Progress')) }}
                     </span>
                 </div>
@@ -1043,7 +1043,7 @@
                 </div>
                 <div class="info-row">
                     <span class="info-label">{{ $progressStatusLabel }}</span>
-                    <span class="info-value">{{ $hasPassedTheoretical ? 'theory-status-passed' : 'theory-status-progress' }}">
+                    <span class="info-value {{ $hasPassedTheoretical ? 'theory-status-passed' : 'theory-status-progress' }}">
                         {{ $courseTypeKey === 'none' ? 'Not enrolled' : ($courseTypeKey === 'practical' ? 'In Progress' : ($hasPassedTheoretical ? 'Passed' : 'In Progress')) }}
                     </span>
                 </div>
@@ -1148,7 +1148,7 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
+function initializeProgressBars() {
     document.querySelectorAll('.progress-fill-dynamic').forEach(function (bar) {
         const value = Number(bar.dataset.progress || 0);
         const clamped = Math.max(0, Math.min(100, value));
@@ -1159,6 +1159,12 @@ document.addEventListener('DOMContentLoaded', function () {
             bar.style.background = fill;
         }
     });
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeProgressBars);
+} else {
+    initializeProgressBars();
+}
 </script>
 @endsection

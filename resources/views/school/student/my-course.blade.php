@@ -88,6 +88,7 @@
     background: #e5e7eb;
     border-radius: 12px;
     overflow: hidden;
+    position: relative;
 }
 
 .progress-bar-fill {
@@ -100,6 +101,23 @@
     color: white;
     font-weight: 600;
     font-size: 0.9rem;
+}
+
+.progress-bar-label {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1f2937;
+    font-weight: 600;
+    font-size: 0.9rem;
+    pointer-events: none;
+}
+
+.progress-bar-label.on-fill {
+    color: white;
 }
 
 .course-stats {
@@ -517,11 +535,8 @@
                     <span>{{ $hoursCompleted }} / {{ $hoursRequired }} hours</span>
                 </div>
                 <div class="progress-bar-container">
-                    <div class="progress-bar-fill progress-fill" data-progress="{{ $progressPercentage }}">
-                        @if($progressPercentage > 10)
-                            {{ $progressPercentage }}%
-                        @endif
-                    </div>
+                    <div class="progress-bar-fill progress-fill" data-progress="{{ $progressPercentage }}" style="width: {{ max(0, min(100, (float) $progressPercentage)) }}%;" role="progressbar" aria-valuenow="{{ $progressPercentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                    <span class="progress-bar-label{{ $progressPercentage >= 50 ? ' on-fill' : '' }}">{{ $progressPercentage }}%</span>
                 </div>
             </div>
 
