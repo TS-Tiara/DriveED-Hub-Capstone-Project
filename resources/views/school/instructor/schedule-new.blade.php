@@ -15,6 +15,13 @@
     $primaryStyle = $useGradient 
         ? "linear-gradient(135deg, $primaryColor 0%, $secondaryColor 100%)" 
         : $primaryColor;
+    $calendarEvents = $mySlots->map(function ($slot) {
+        $bookingCount = $slot->bookings->where('status', '!=', 'cancelled')->count();
+        return ['date' => $slot->date->format('Y-m-d'), 'time' => \Carbon\Carbon::parse($slot->start_time)->format('g:i A') . ' - ' . \Carbon\Carbon::parse($slot->end_time)->format('g:i A'), 'title' => $slot->course->title ?? 'Training Session', 'meta' => $bookingCount . ' student' . ($bookingCount === 1 ? '' : 's') . ' - Assigned', 'status' => $bookingCount > 0 ? 'scheduled' : 'open'];
+    })->concat($availableSlots->map(function ($slot) use ($qualifiedCourseIds) {
+        $isQualified = empty($qualifiedCourseIds) || in_array($slot->course_id, $qualifiedCourseIds);
+        return ['date' => $slot->date->format('Y-m-d'), 'time' => \Carbon\Carbon::parse($slot->start_time)->format('g:i A') . ' - ' . \Carbon\Carbon::parse($slot->end_time)->format('g:i A'), 'title' => $slot->course->title ?? 'Training Session', 'meta' => ($isQualified ? 'Open - Qualified' : 'Open - Qualification required'), 'status' => 'open'];
+    })->values()->all())->values()->all();
 @endphp
 
 
@@ -109,6 +116,36 @@
     
     .main-toggle-btn:hover:not(.active) {
         color: #1f2937;
+    }
+
+    .instructor-view-toggle {
+        display: flex;
+        gap: 4px;
+        padding: 4px;
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+    }
+
+    .instructor-view-btn {
+        padding: 6px 16px;
+        border: none;
+        border-radius: 7px;
+        background: transparent;
+        color: #64748b;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .instructor-view-btn.active {
+        background: #fff;
+        color: var(--primary-color);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    }
+
+    .instructor-list-toggle.is-calendar-hidden {
+        display: none !important;
     }
 
     .mobile-only-tab-btn {
@@ -362,6 +399,7 @@
         gap: 16px;
         position: sticky;
         top: 20px;
+        padding-top: 29px;
     }
     
     .sidebar-section {
@@ -746,7 +784,7 @@
         .schedule-header h1 { font-size: 1.3rem; }
         .main-toggle-btn { padding: 10px 16px; font-size: 13px; }
         .slot-item { padding: 12px; }
-        .schedule-sidebar { display: none; }
+        .schedule-sidebar { display: none; padding-top: 0; }
 
         .page-header {
             flex-direction: column;
@@ -875,18 +913,31 @@
             <p class="page-subtitle">View and manage your assigned training sessions</p>
         </div>
         <div class="header-actions">
-            <div class="main-toggle">
-                <button type="button" class="main-toggle-btn active" data-view="my-slots" onclick="switchMainView('my-slots')">My Sessions</button>
-                <button type="button" class="main-toggle-btn" data-view="available" onclick="switchMainView('available')">Open Sessions</button>
-                <button type="button" class="main-toggle-btn mobile-only-tab-btn" data-view="mobile-lessons" onclick="switchMainView('mobile-lessons')">Today &amp; Upcoming</button>
+            <div class="instructor-view-toggle">
+                <button type="button" class="instructor-view-btn active" data-instructor-view="list" onclick="switchInstructorView('list')">
+                    <i class="bi bi-list-ul"></i> List
+                </button>
+                <button type="button" class="instructor-view-btn" data-instructor-view="calendar" onclick="switchInstructorView('calendar')">
+                    <i class="bi bi-calendar3"></i> Calendar
+                </button>
             </div>
         </div>
     </div>
     
 
     
+    <div id="calendar-view" class="main-view-section">
+        @include('school.partials.schedule-calendar', ['calendarId' => 'instructor-schedule-calendar', 'calendarEvents' => $calendarEvents, 'calendarPrimary' => $primaryColor, 'calendarSecondary' => $secondaryColor])
+    </div>
+
+    <div class="main-toggle instructor-list-toggle" style="margin-bottom: 20px;">
+        <button type="button" class="main-toggle-btn active" data-view="my-slots" onclick="switchMainView('my-slots')">My Sessions</button>
+        <button type="button" class="main-toggle-btn" data-view="available" onclick="switchMainView('available')">Open Sessions</button>
+        <button type="button" class="main-toggle-btn mobile-only-tab-btn" data-view="mobile-lessons" onclick="switchMainView('mobile-lessons')">Today &amp; Upcoming</button>
+    </div>
+
     <!-- My Slots View -->
-    <div id="my-slots-view" class="main-view-section active">
+    <div id="my-slots-view" class="main-view-section list-view active">
         <div class="schedule-grid">
             <div class="schedule-main">
                 <div class="filter-bar">
@@ -1090,7 +1141,7 @@
     </div>
     
     <!-- Available Slots View -->
-    <div id="available-view" class="main-view-section">
+    <div id="available-view" class="main-view-section list-view">
         <div class="schedule-grid">
             <div class="schedule-main">
                 <div class="filter-bar">
@@ -1110,13 +1161,13 @@
                 </div>
                 
                 @forelse($groupedAvailableSlots as $date => $dateSlots)
-                    @php 
+                    @php
                         $isPast = $date < $todayDate;
                         $hasVisibleSlots = $dateSlots->filter(function($slot) use ($qualifiedCourseIds) {
                             return empty($qualifiedCourseIds) || in_array($slot->course_id, $qualifiedCourseIds);
                         })->count() > 0;
                     @endphp
-                    <div class="schedule-item {{ $isPast || !$hasVisibleSlots ? 'is-hidden' : '' }}" data-is-past="{{ $isPast ? 'true' : 'false' }}" data-has-visible="{{ $hasVisibleSlots ? 'true' : 'false' }}">
+                    <div class="schedule-item {{ $isPast ? 'is-hidden' : '' }}" data-is-past="{{ $isPast ? 'true' : 'false' }}" data-has-visible="{{ $hasVisibleSlots ? 'true' : 'false' }}">
                         <div class="schedule-date-header" onclick="toggleDate(this)">
                             <span class="date-text">{{ \Carbon\Carbon::parse($date)->format('l, F d, Y') }}</span>
                             <span class="toggle-icon">&#x25BC;</span>
@@ -1252,7 +1303,7 @@
     </div>
 
     <!-- Mobile Lessons View -->
-    <div id="mobile-lessons-view" class="main-view-section">
+    <div id="mobile-lessons-view" class="main-view-section list-view">
         <div class="mobile-lessons-stack">
             <div class="sidebar-section">
                 <h3 class="sidebar-title">Today's Lessons</h3>
@@ -1460,8 +1511,42 @@
         });
     }
 
-    // Tab switching
-    function switchMainView(viewName) {
+    var instructorListView = 'my-slots';
+
+    window.switchInstructorView = function(viewName) {
+        var calendarView = document.getElementById('calendar-view');
+        var listViews = document.querySelectorAll('.list-view');
+        var viewButtons = document.querySelectorAll('.instructor-view-btn');
+        var listToggle = document.querySelector('.instructor-list-toggle');
+
+        viewButtons.forEach(function(button) {
+            button.classList.toggle('active', button.getAttribute('data-instructor-view') === viewName);
+        });
+
+        if (viewName === 'calendar') {
+            listViews.forEach(function(view) { view.classList.remove('active'); });
+            if (calendarView) calendarView.classList.add('active');
+            if (listToggle) listToggle.classList.add('is-calendar-hidden');
+        } else {
+            if (calendarView) calendarView.classList.remove('active');
+            listViews.forEach(function(view) { view.classList.remove('active'); });
+            var activeListView = document.getElementById(instructorListView + '-view');
+            if (activeListView) activeListView.classList.add('active');
+            if (listToggle) listToggle.classList.remove('is-calendar-hidden');
+        }
+
+        localStorage.setItem('instructorScheduleView', viewName);
+    };
+
+    // Tab switching within the List view
+    window.switchMainView = function(viewName) {
+        if (viewName === 'calendar') {
+            window.switchInstructorView('calendar');
+            return;
+        }
+
+        window.switchInstructorView('list');
+        instructorListView = viewName;
         document.querySelectorAll('.main-toggle-btn').forEach(function(btn) {
             var isTarget = btn.getAttribute('data-view') === viewName;
             btn.classList.toggle('active', isTarget);
@@ -1477,7 +1562,7 @@
         } else {
             document.getElementById('my-slots-view').classList.add('active');
         }
-    }
+    };
     
     // Toggle date collapse
     function toggleDate(header) {
@@ -1716,7 +1801,7 @@
     }
 
     // --- Localized Confirmation System ---
-    let confirmCallback = null;
+    var confirmCallback = null;
 
     function showConfirm(options) {
         const modal = document.getElementById('confirmModal');

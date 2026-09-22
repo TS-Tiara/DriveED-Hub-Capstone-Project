@@ -10,6 +10,24 @@
     $primaryColor = $settings?->primary_color ?? '#667eea';
     $secondaryColor = $settings?->secondary_color ?? '#764ba2';
     $borderRadius = $settings?->border_radius ?? 8;
+    $calendarEvents = $confirmedBookings->map(function ($booking) {
+        $startTime = $booking->timeSlot?->start_time ?? $booking->scheduled_at;
+        $endTime = $booking->timeSlot?->end_time;
+        $time = $startTime ? \Carbon\Carbon::parse($startTime)->format('g:i A') : 'Time TBD';
+        if ($endTime) $time .= ' - ' . \Carbon\Carbon::parse($endTime)->format('g:i A');
+        return ['date' => \Carbon\Carbon::parse($booking->booking_date)->format('Y-m-d'), 'time' => $time, 'title' => $booking->course->title ?? 'Driving Session', 'meta' => $booking->instructor->name ?? 'Instructor TBD', 'status' => $booking->status];
+    })->concat($availableTimeSlots->filter(function ($timeSlot) use ($enrolledCourseIds) {
+        return empty($enrolledCourseIds) || in_array($timeSlot->course_id, $enrolledCourseIds);
+    })->map(function ($timeSlot) {
+        $instructors = $timeSlot->instructors->pluck('name')->filter()->implode(', ');
+        return [
+            'date' => \Carbon\Carbon::parse($timeSlot->date)->format('Y-m-d'),
+            'time' => \Carbon\Carbon::parse($timeSlot->start_time)->format('g:i A') . ' - ' . \Carbon\Carbon::parse($timeSlot->end_time)->format('g:i A'),
+            'title' => 'Available: ' . ($timeSlot->course->title ?? 'Driving Lesson'),
+            'meta' => $instructors ? 'Instructor: ' . $instructors : 'Bookable schedule',
+            'status' => 'available',
+        ];
+    }))->values()->all();
 @endphp
 
 <style>
@@ -64,6 +82,46 @@
     
     .main-toggle-btn:hover:not(.active) {
         background: #f8f9fa;
+    }
+
+    .student-view-toggle {
+        display: flex;
+        gap: 4px;
+        padding: 4px;
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+    }
+
+    .student-view-btn {
+        padding: 6px 16px;
+        border: none;
+        border-radius: 7px;
+        background: transparent;
+        color: #64748b;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .student-view-btn.active {
+        background: #fff;
+        color: {{ $primaryColor }};
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    }
+
+    .student-list-toggle.is-calendar-hidden {
+        display: none !important;
+    }
+
+    .student-list-toggle {
+        width: max-content;
+        margin-left: 0;
+        margin-right: auto;
+    }
+
+    .student-list-toggle + .student-list-view {
+        margin-top: 6px;
     }
     
     .main-view-section {
@@ -242,7 +300,8 @@
         gap: 20px;
         position: sticky;
         top: 20px;
-        margin-top: 68px;
+        margin-top: 94px;
+        transform: translateY(-53px);
     }
     
     .sidebar-title {
@@ -536,6 +595,7 @@
         .requests-sidebar {
             width: 100%;
             max-width: none;
+            margin-top: 0;
         }
         
         .sidebar-section {
@@ -921,7 +981,7 @@
     .schedule-filters {
         display: flex;
         align-items: center;
-        gap: 16px;
+        gap: 20px;
         flex-wrap: wrap;
     }
     
@@ -1329,16 +1389,29 @@
 <div class="schedule-container">
     <div class="schedule-header">
         <h1>Schedule</h1>
-        <div class="main-toggle">
-            <button class="main-toggle-btn active" onclick="switchMainView('my-schedule')">My Schedule</button>
-            <button class="main-toggle-btn" onclick="switchMainView('available-schedules')">Available Schedules</button>
+        <div class="student-view-toggle">
+            <button type="button" class="student-view-btn active" data-student-view="list" onclick="switchStudentView('list')">
+                <i class="bi bi-list-ul"></i> List
+            </button>
+            <button type="button" class="student-view-btn" data-student-view="calendar" onclick="switchStudentView('calendar')">
+                <i class="bi bi-calendar3"></i> Calendar
+            </button>
         </div>
     </div>
     
 
     
+    <div id="calendar-view" class="main-view-section">
+        @include('school.partials.schedule-calendar', ['calendarId' => 'student-schedule-calendar', 'calendarEvents' => $calendarEvents, 'calendarPrimary' => $primaryColor, 'calendarSecondary' => $secondaryColor])
+    </div>
+
+    <div class="main-toggle student-list-toggle" style="margin-bottom: 20px;">
+        <button class="main-toggle-btn active" onclick="switchMainView('my-schedule')">My Schedule</button>
+        <button class="main-toggle-btn" onclick="switchMainView('available-schedules')">Available Schedules</button>
+    </div>
+
     <!-- My Schedule View -->
-    <div id="my-schedule-view" class="main-view-section active">
+    <div id="my-schedule-view" class="main-view-section student-list-view active">
     <div class="schedule-grid">
         <!-- Left: Schedule List -->
         <div class="schedule-main">
@@ -1562,7 +1635,7 @@
     <!-- End My Schedule View -->
     
     <!-- Available Schedules View -->
-    <div id="available-schedules-view" class="main-view-section">
+    <div id="available-schedules-view" class="main-view-section student-list-view">
     <div class="schedule-grid">
         <!-- Left: Available Time Slots -->
         <div class="schedule-main">
@@ -1891,7 +1964,41 @@
 </div>
 
 <script>
-    function switchMainView(viewName) {
+    let studentListView = 'my-schedule';
+
+    window.switchStudentView = function(viewName) {
+        const calendarView = document.getElementById('calendar-view');
+        const listViews = document.querySelectorAll('.student-list-view');
+        const listToggle = document.querySelector('.student-list-toggle');
+        const viewButtons = document.querySelectorAll('.student-view-btn');
+
+        viewButtons.forEach(btn => {
+            btn.classList.toggle('active', btn.getAttribute('data-student-view') === viewName);
+        });
+
+        if (viewName === 'calendar') {
+            listViews.forEach(view => view.classList.remove('active'));
+            if (calendarView) calendarView.classList.add('active');
+            if (listToggle) listToggle.classList.add('is-calendar-hidden');
+        } else {
+            if (calendarView) calendarView.classList.remove('active');
+            listViews.forEach(view => view.classList.remove('active'));
+            const activeListView = document.getElementById(studentListView + '-view');
+            if (activeListView) activeListView.classList.add('active');
+            if (listToggle) listToggle.classList.remove('is-calendar-hidden');
+        }
+
+        localStorage.setItem('studentScheduleView', viewName);
+    };
+
+    window.switchMainView = function(viewName) {
+        if (viewName === 'calendar') {
+            window.switchStudentView('calendar');
+            return;
+        }
+
+        studentListView = viewName;
+        window.switchStudentView('list');
         // Toggle buttons
         document.querySelectorAll('.main-toggle-btn').forEach(btn => btn.classList.remove('active'));
         
@@ -1901,11 +2008,14 @@
         if (viewName === 'my-schedule') {
             document.querySelectorAll('.main-toggle-btn')[0].classList.add('active');
             document.getElementById('my-schedule-view').classList.add('active');
-        } else {
+        } else if (viewName === 'available-schedules') {
             document.querySelectorAll('.main-toggle-btn')[1].classList.add('active');
             document.getElementById('available-schedules-view').classList.add('active');
+        } else {
+            document.querySelectorAll('.main-toggle-btn')[2].classList.add('active');
+            document.getElementById('calendar-view').classList.add('active');
         }
-    }
+    };
     
     function toggleDate(header) {
         const bookings = header.nextElementSibling;
