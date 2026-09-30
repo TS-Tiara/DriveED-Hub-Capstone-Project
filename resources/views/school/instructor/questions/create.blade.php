@@ -108,9 +108,19 @@
 
                 <!-- Enumeration Options -->
                 <div id="enumOptions" class="type-specific" style="display:none;">
-                    <label class="lms-label">Enumeration Hint</label>
+                    <label class="lms-label">Enumeration — how to encode answers</label>
                     <p style="font-size: 0.9rem; color: #666; background: #f8f9fa; padding: 1rem; border-radius: 6px; border: 1px dashed var(--border-color);">
-                        For Enumeration, list the correct items in the "Correct Answer" field below, separated by commas.
+                        List <strong>all correct items</strong> in the "Correct Answer" field below, <strong>separated by commas</strong>
+                        (e.g. <code>Red, Yellow, Green</code>). Students get one input box per item and earn partial credit per correct item (order doesn't matter).
+                    </p>
+                </div>
+
+                <!-- Identification Options -->
+                <div id="identOptions" class="type-specific" style="display:none;">
+                    <label class="lms-label">Identification — how to encode answers</label>
+                    <p style="font-size: 0.9rem; color: #666; background: #f8f9fa; padding: 1rem; border-radius: 6px; border: 1px dashed var(--border-color);">
+                        Enter the <strong>exact term</strong> in the "Correct Answer" field below. Grading ignores case and extra spaces.
+                        For accepted alternatives, separate them with <code>|</code> (e.g. <code>Stop | Halt</code>).
                     </p>
                 </div>
             </div>
@@ -178,7 +188,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const mcOptions = document.getElementById('mcOptions');
     const tfOptions = document.getElementById('tfOptions');
     const enumOptions = document.getElementById('enumOptions');
+    const identOptions = document.getElementById('identOptions');
     const answerInputContainer = document.getElementById('answerInputContainer');
+    const questionForm = document.getElementById('questionForm');
     const courseSelect = document.getElementById('courseSelect');
     const lessonSelect = document.getElementById('lessonSelect');
 
@@ -218,6 +230,7 @@ document.addEventListener('DOMContentLoaded', function() {
         mcOptions.style.display = 'none';
         tfOptions.style.display = 'none';
         enumOptions.style.display = 'none';
+        if (identOptions) identOptions.style.display = 'none';
         
         if (type === 'multiple_choice') {
             mcOptions.style.display = 'block';
@@ -243,11 +256,49 @@ document.addEventListener('DOMContentLoaded', function() {
                 <input type="text" name="correct_answer" class="lms-input" required placeholder="Enter correct items separated by comma (e.g. Red, Yellow, Green)">
             `;
         } else if (type === 'identification') {
+            if (identOptions) identOptions.style.display = 'block';
             answerInputContainer.innerHTML = `
-                <input type="text" name="correct_answer" class="lms-input" required placeholder="Enter the exact correct term or answer">
+                <input type="text" name="correct_answer" class="lms-input" required placeholder="Exact term (alternatives with |, e.g. Stop | Halt)">
+                <p style="font-size:0.8rem;color:#666;margin-top:6px;">Grading ignores case and extra spaces.</p>
             `;
         }
     });
+
+    // Client-side guard matching server rules (identification / enumeration)
+    if (questionForm) {
+        questionForm.addEventListener('submit', function(e) {
+            const type = typeSelect.value;
+            const answerEl = answerInputContainer.querySelector('[name="correct_answer"]');
+            const answer = (answerEl?.value || '').trim();
+            answerEl?.classList.remove('lms-input-error');
+            if (type === 'enumeration') {
+                const items = answer.split(',').map(s => s.trim()).filter(Boolean);
+                if (items.length < 2) {
+                    e.preventDefault();
+                    answerEl?.classList.add('lms-input-error');
+                    alert('Enumeration needs at least 2 answers separated by commas (e.g. Red, Yellow, Green).');
+                }
+            } else if (type === 'identification') {
+                if (!answer) {
+                    e.preventDefault();
+                    answerEl?.classList.add('lms-input-error');
+                    alert('Identification needs the exact term (use | for alternatives, e.g. Stop | Halt).');
+                }
+            } else if (type === 'multiple_choice') {
+                const filled = ['A','B','C','D'].filter(k => {
+                    const el = questionForm.querySelector(`[name="options[${k}]"]`);
+                    return el && el.value.trim() !== '';
+                });
+                if (filled.length < 2) {
+                    e.preventDefault();
+                    alert('Multiple choice needs at least 2 filled choices (A–D).');
+                } else if (answerEl && !filled.includes(answerEl.value)) {
+                    e.preventDefault();
+                    alert('Correct answer must be one of the filled choices (A–D).');
+                }
+            }
+        });
+    }
 });
 </script>
 @endsection

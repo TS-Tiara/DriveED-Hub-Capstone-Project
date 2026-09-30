@@ -20,9 +20,10 @@
     $pendingEnrollmentActionUrl = null;
     $pendingEnrollmentActionLabel = 'Request Submitted';
     $hasPassedTdc = $student?->hasPassedTheoretical() ?? false;
-    $mustPassTdcForPractical = $isPracticalCourse && !$hasPassedTdc;
     $hasSubmittedStudentLicense = $student?->hasSubmittedLicense() ?? false;
-    $mustUploadLicenseForPractical = $isPracticalCourse && $hasPassedTdc && !$hasSubmittedStudentLicense;
+    $studentLicenseStatus = $student?->student_license_status ?? 'none';
+    $mustPassTdcForPractical = $isPracticalCourse && !$hasPassedTdc && !$hasSubmittedStudentLicense;
+    $mustUploadLicenseForPractical = $isPracticalCourse && !$hasSubmittedStudentLicense;
 
     if ($student) {
         $existingRequest = \App\Models\EnrollmentRequest::where('learner_id', $student->id)
@@ -363,6 +364,18 @@
                 </div>
             </div>
 
+            <div class="detail-card" style="border-left:4px solid {{ $primaryColor }};">
+                <h2 class="section-heading"><i class="fas fa-shield-alt"></i> Restrictions & Eligibility</h2>
+                <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+                    <span style="padding:6px 12px;border-radius:14px;background:#fef3c7;color:#92400e;font-weight:600;font-size:0.85rem;">{{ $course->license_type === 'non_professional' ? 'Non-Pro' : 'Pro' }} License</span>
+                    <span style="padding:6px 12px;border-radius:14px;background:#fee2e2;color:#991b1b;font-weight:600;font-size:0.85rem;">DL Codes: {{ $course->license_type === 'professional' ? 'A, A1, B, B1, B2, C, D, BE, CE' : 'A, A1, B, B1, B2' }}</span>
+                    @if($course->required_restriction)
+                        <span style="padding:6px 12px;border-radius:14px;background:#dbeafe;color:#1e40af;font-weight:600;font-size:0.85rem;">Req. Restriction: {{ $course->required_restriction }}</span>
+                    @endif
+                </div>
+                <p style="font-size:0.9rem;color:#6b7280;">This badge information is shown here to help you choose the right package; it is hidden on the course grid.</p>
+            </div>
+
             <div class="detail-card">
                 <h2 class="section-heading"><i class="fas fa-book"></i> Curriculum / Modules</h2>
                 @if($course->modules && $course->modules->count() > 0)
@@ -500,31 +513,6 @@
                         <option value="new_driver">New Driver</option>
                         <option value="experienced">Experienced Driver</option>
                     </select>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">License Code</label>
-                    <select name="requested_dl_code" class="form-select" required>
-                        <option value="">Select DL Code...</option>
-                        @if($course->license_type === 'professional')
-                            <option value="A">A - Motorcycle</option>
-                            <option value="A1">A1 - Tricycle</option>
-                            <option value="B">B - Passenger Car</option>
-                            <option value="B1">B1 - Van/Jeepney</option>
-                            <option value="B2">B2 - Light Commercial Vehicle</option>
-                            <option value="C">C - Heavy Commercial Vehicle</option>
-                            <option value="D">D - Bus</option>
-                            <option value="BE">BE - Articulated Passenger Car</option>
-                            <option value="CE">CE - Articulated Heavy Commercial Vehicle</option>
-                        @else
-                            <option value="A">A - Motorcycle</option>
-                            <option value="A1">A1 - Tricycle</option>
-                            <option value="B">B - Passenger Car</option>
-                            <option value="B1">B1 - Van/Jeepney</option>
-                            <option value="B2">B2 - Light Commercial Vehicle</option>
-                        @endif
-                    </select>
-                    <small class="text-xs text-gray-500">Specific vehicle category for {{ ucfirst(str_replace('_', ' ', $course->license_type)) }} license.</small>
                 </div>
 
                 @if($mustUploadLicenseForPractical)

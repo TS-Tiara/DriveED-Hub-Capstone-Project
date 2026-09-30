@@ -115,7 +115,10 @@ class QuestionBankController extends Controller
         ]);
 
         $validated['school_id'] = $school->id;
-        
+
+        // Type-specific integrity checks for identification/enumeration.
+        $this->validateAnswerByType($validated);
+
         // Sanitize options based on type
         if (!in_array($validated['question_type'], ['multiple_choice', 'true_false'])) {
             $validated['options'] = null;
@@ -203,6 +206,8 @@ class QuestionBankController extends Controller
             'default_points' => 'required|integer|min:1',
         ]);
 
+        $this->validateAnswerByType($validated);
+
         if (!in_array($validated['question_type'], ['multiple_choice', 'true_false'])) {
             $validated['options'] = null;
         }
@@ -235,6 +240,56 @@ class QuestionBankController extends Controller
 
         return redirect()->route('schools.instructor.questions.index', $school->slug)
             ->with('success', 'Question removed from bank.');
+    }
+
+    /**
+     * Validate correct_answer / options per question type.
+     * - multiple_choice: needs >= 2 filled options; answer must be a filled key.
+     * - true_false: answer must be True/False.
+     * - identification: single answer (alternatives may use | or / separators).
+     * - enumeration: comma-separated list with >= 2 items.
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    private function validateAnswerByType(array $validated): void
+    {
+        $type = $validated['question_type'] ?? '';
+        $answer = trim((string) ($validated['correct_answer'] ?? ''));
+
+        if ($type === 'multiple_choice') {
+            $options = array_filter(array_map(fn($v) => trim((string) $v), (array) ($validated['options'] ?? [])));
+            if (count($options) < 2) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'options' => 'Multiple choice needs at least 2 filled choices (A–D).',
+                ]);
+            }
+            if (!isset($options[$answer])) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'correct_answer' => 'Correct answer must be one of the filled choices (A–D).',
+                ]);
+            }
+        } elseif ($type === 'true_false') {
+            if (!in_array($answer, ['True', 'False'], true)) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'correct_answer' => 'True/False answer must be either True or False.',
+                ]);
+            }
+        } elseif ($type === 'identification') {
+            $alternatives = preg_split('/[|\/;]/', $answer);
+            $alternatives = array_values(array_filter(array_map(fn($v) => trim((string) $v), (array) $alternatives)));
+            if (empty($alternatives)) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'correct_answer' => 'Identification needs the exact term. For alternatives, separate them with | (e.g. Stop | Halt).',
+                ]);
+            }
+        } elseif ($type === 'enumeration') {
+            $items = array_values(array_filter(array_map(fn($v) => trim((string) $v), explode(',', $answer))));
+            if (count($items) < 2) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'correct_answer' => 'Enumeration needs at least 2 answers separated by commas (e.g. Red, Yellow, Green).',
+                ]);
+            }
+        }
     }
 
     /**

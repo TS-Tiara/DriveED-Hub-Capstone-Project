@@ -328,7 +328,7 @@ nav[role="navigation"] span:not([aria-current]):not([aria-disabled]) {
                 @forelse($payments as $payment)
                 <tr>
                     <td>{{ $payment->paid_on ? $payment->paid_on->format('M d, Y') : 'N/A' }}</td>
-                    <td><strong>{{ $payment->booking?->course?->title ?? 'N/A' }}</strong></td>
+                    <td><strong>{{ $payment->booking?->course?->title ?? $payment->enrollmentRequest?->course?->title ?? 'N/A' }}</strong></td>
                     <td><strong class="amount-emphasis">&#8369;{{ number_format($payment->amount, 2) }}</strong></td>
                     <td>{{ ucfirst($payment->method ?? 'N/A') }}</td>
                     <td><span class="badge badge-{{ $payment->status }}">{{ ucfirst($payment->status) }}</span></td>
@@ -356,7 +356,7 @@ nav[role="navigation"] span:not([aria-current]):not([aria-disabled]) {
             </div>
             <div class="payment-card-row">
                 <span class="payment-card-label">Course</span>
-                <span class="payment-card-value">{{ $payment->booking?->course?->title ?? 'N/A' }}</span>
+                <span class="payment-card-value">{{ $payment->booking?->course?->title ?? $payment->enrollmentRequest?->course?->title ?? 'N/A' }}</span>
             </div>
             <div class="payment-card-row">
                 <span class="payment-card-label">Amount</span>
@@ -409,7 +409,6 @@ nav[role="navigation"] span:not([aria-current]):not([aria-disabled]) {
 
         <form method="POST" action="{{ route('schools.' . ((Auth::guard('student')->user()->role ?? 'student') === 'guest' ? 'guest' : 'student') . '.payments.store', ['school' => $school->slug]) }}" enctype="multipart/form-data">
             @csrf
-            <input type="hidden" name="method" value="gcash">
 
             <div style="margin-bottom: 16px;">
                 <label style="display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 6px;">Payment For <span style="color: red;">*</span></label>
@@ -481,9 +480,11 @@ nav[role="navigation"] span:not([aria-current]):not([aria-disabled]) {
                 <input type="number" name="amount" min="1" step="0.01" required style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 1rem;">
             </div>
 
+            <input type="hidden" name="method" value="gcash">
             <div style="margin-bottom: 16px;">
                 <label style="display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 6px;">GCash Reference No. <span style="color: red;">*</span></label>
-                <input type="text" name="reference" required style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 1rem;" placeholder="e.g. 1234567890123">
+                <input type="text" name="reference" required maxlength="13" minlength="13" pattern="[0-9]{13}" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,13)" style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 1rem;" placeholder="e.g. 1234567890123">
+                <p style="font-size: 0.75rem; color: #6b7280; margin-top: 4px;">Numbers only, exactly 13 digits. For on-site OR payments, use the dedicated payment page for your enrollment instead.</p>
             </div>
 
             <div style="margin-bottom: 24px;">

@@ -97,9 +97,17 @@
 
                 <!-- Enumeration Options -->
                 <div id="enumOptions" class="type-specific" style="{{ $question->question_type == 'enumeration' ? '' : 'display:none;' }}">
-                    <label class="lms-label">Enumeration Hint</label>
+                    <label class="lms-label">Enumeration — how to encode answers</label>
                     <p style="font-size: 0.9rem; color: #666; background: #f8f9fa; padding: 1rem; border-radius: 6px; border: 1px dashed var(--border-color);">
-                        For Enumeration, list the correct items in the "Correct Answer" field below, separated by commas.
+                        List <strong>all correct items</strong> separated by commas (e.g. <code>Red, Yellow, Green</code>). Partial credit per item; order doesn't matter.
+                    </p>
+                </div>
+
+                <!-- Identification Options -->
+                <div id="identOptions" class="type-specific" style="{{ $question->question_type == 'identification' ? '' : 'display:none;' }}">
+                    <label class="lms-label">Identification — how to encode answers</label>
+                    <p style="font-size: 0.9rem; color: #666; background: #f8f9fa; padding: 1rem; border-radius: 6px; border: 1px dashed var(--border-color);">
+                        Enter the <strong>exact term</strong>. Grading ignores case and extra spaces. Alternatives may use <code>|</code> (e.g. <code>Stop | Halt</code>).
                     </p>
                 </div>
             </div>
@@ -165,6 +173,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const mcOptions = document.getElementById('mcOptions');
     const tfOptions = document.getElementById('tfOptions');
     const enumOptions = document.getElementById('enumOptions');
+    const identOptions = document.getElementById('identOptions');
     const answerInputContainer = document.getElementById('answerInputContainer');
     const courseSelect = document.getElementById('courseSelect');
     const lessonSelect = document.getElementById('lessonSelect');
@@ -195,6 +204,7 @@ document.addEventListener('DOMContentLoaded', function() {
         mcOptions.style.display = 'none';
         tfOptions.style.display = 'none';
         enumOptions.style.display = 'none';
+        if (identOptions) identOptions.style.display = 'none';
         
         if (type === 'multiple_choice') {
             mcOptions.style.display = 'block';
@@ -220,8 +230,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 <input type="text" name="correct_answer" class="lms-input" required placeholder="Enter correct items separated by comma">
             `;
         } else if (type === 'identification') {
+            if (identOptions) identOptions.style.display = 'block';
             answerInputContainer.innerHTML = `
-                <input type="text" name="correct_answer" class="lms-input" required placeholder="Enter the exact correct term or answer">
+                <input type="text" name="correct_answer" class="lms-input" required placeholder="Exact term (alternatives with |, e.g. Stop | Halt)">
             `;
         }
     });
