@@ -1102,10 +1102,11 @@ class EnrollmentRequestController extends Controller
             if ($student->role === 'guest') {
                 $student->promoteToStudent();
             }
-            $student->update([
-                'is_course_locked' => true,
-                'dl_code' => $enrollmentRequest->requested_dl_code
-            ]);
+            $studentUpdate = ['is_course_locked' => true];
+            if (!empty($enrollmentRequest->requested_dl_code)) {
+                $studentUpdate['dl_code'] = $enrollmentRequest->requested_dl_code;
+            }
+            $student->update($studentUpdate);
 
             // Promote staged license if present
             if ($enrollmentRequest->credentials_file_path) {
@@ -1310,7 +1311,28 @@ class EnrollmentRequestController extends Controller
         if ($admin->isBranchSecretary() && !$admin->canAccessBranch($enrollmentRequest->branch_id))
             abort(403);
 
-        $enrollmentRequest->load(['learner', 'course', 'package']);
+        $enrollmentRequest->load(['learner', 'course', 'package', 'payments']);
+
+        // Fallback: if legacy enrollment receipt fields were cleared (e.g. after a
+        // partial rejection) but a Payment record exists, surface the latest
+        // non-rejected payment so the admin always sees the receipt.
+        $latestPayment = $enrollmentRequest->payments
+            ->whereNotNull('proof_of_payment_path')
+            ->where('proof_of_payment_path', '!=', '')
+            ->where('status', '!=', 'rejected')
+            ->sortByDesc('created_at')
+            ->first();
+        if ($latestPayment) {
+            if (empty($enrollmentRequest->payment_proof_path)) {
+                $enrollmentRequest->payment_proof_path = $latestPayment->proof_of_payment_path;
+            }
+            if (empty($enrollmentRequest->payment_reference)) {
+                $enrollmentRequest->payment_reference = $latestPayment->reference ?? $latestPayment->or_number;
+            }
+            if (empty($enrollmentRequest->payment_method)) {
+                $enrollmentRequest->payment_method = $latestPayment->method;
+            }
+        }
 
         $displayPrice = (float) ($enrollmentRequest->price ?? 0);
         if ($displayPrice <= 0) {
@@ -1558,6 +1580,18 @@ class EnrollmentRequestController extends Controller
             abort(403);
 
         $path = $enrollmentRequest->payment_proof_path;
+        if (empty($path)) {
+            // Fallback to latest non-rejected Payment record (ledger is source of truth).
+            $fallback = $enrollmentRequest->payments()
+                ->whereNotNull('proof_of_payment_path')
+                ->where('proof_of_payment_path', '!=', '')
+                ->where('status', '!=', 'rejected')
+                ->latest()
+                ->first();
+            if ($fallback) {
+                $path = $fallback->proof_of_payment_path;
+            }
+        }
         if (empty($path))
             abort(404, 'No payment proof path found for this enrollment.');
 

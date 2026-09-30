@@ -34,6 +34,7 @@ class Course extends Model
         'license_type',
         'hours_required',
         'lto_base_hours',
+        'combo_course_ids',
     ];
 
     protected function casts(): array
@@ -45,7 +46,14 @@ class Course extends Model
             'lto_base_hours' => 'integer',
             'features' => 'array',
             'is_featured' => 'boolean',
+            'combo_course_ids' => 'array',
         ];
+    }
+
+    public function comboCourses()
+    {
+        if (empty($this->combo_course_ids) || !is_array($this->combo_course_ids)) return collect();
+        return self::whereIn('id', $this->combo_course_ids)->where('school_id', $this->school_id)->get();
     }
 
     /**

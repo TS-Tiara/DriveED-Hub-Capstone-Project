@@ -22,7 +22,7 @@ class ExportController extends Controller
     /**
      * Export students list as PDF
      */
-    public function studentsPdf(School $school)
+    public function studentsPdf(Request $request, School $school)
     {
         $admin = Auth::guard('admin')->user();
         if (!$admin || $admin->school_id !== $school->id) {
@@ -31,18 +31,20 @@ class ExportController extends Controller
 
         set_time_limit(120);
 
-        $students = Student::where('school_id', $school->id)
+        $branchFilter = $this->resolveStudentBranchFilter($request, $school, $admin);
+        $studentQuery = Student::where('school_id', $school->id)
             ->where('role', 'student')
             ->with(['enrollments.course'])
-            ->orderBy('name')
-            ->limit(500)
-            ->cursor();
+            ->orderBy('name');
+        $this->applyStudentBranchFilter($studentQuery, $branchFilter);
+        $students = $studentQuery->limit(500)->cursor();
 
         try {
             $pdf = Pdf::loadView('exports.students-pdf', [
                 'school' => $school,
                 'students' => $students,
                 'generatedAt' => now(),
+                'branchFilterLabel' => $branchFilter['label'],
             ]);
 
             return $pdf->download('students-list-' . date('Y-m-d') . '.pdf');
@@ -183,7 +185,7 @@ class ExportController extends Controller
     /**
      * Export students list as Excel (styled HTML format)
      */
-    public function studentsExcel(School $school)
+    public function studentsExcel(Request $request, School $school)
     {
         try {
             $admin = Auth::guard('admin')->user();
@@ -193,12 +195,13 @@ class ExportController extends Controller
 
             set_time_limit(120);
 
-            $students = Student::where('school_id', $school->id)
+            $branchFilter = $this->resolveStudentBranchFilter($request, $school, $admin);
+            $studentQuery = Student::where('school_id', $school->id)
                 ->where('role', 'student')
                 ->with(['enrollments.course'])
-                ->orderBy('name')
-                ->limit(500)
-                ->cursor();
+                ->orderBy('name');
+            $this->applyStudentBranchFilter($studentQuery, $branchFilter);
+            $students = $studentQuery->limit(500)->cursor();
 
             $rows = [];
             foreach ($students as $student) {
@@ -216,7 +219,7 @@ class ExportController extends Controller
             }
 
             $html = $this->buildExcelHtml(
-                $school->name . ' - Student List',
+                $school->name . ' - Student List - ' . $branchFilter['label'],
             ['Name', 'Email', 'Phone', 'Status', 'Active Enrollments', 'Enrollment Date', 'Registration Date'],
                 $rows
             );
@@ -225,6 +228,40 @@ class ExportController extends Controller
         } catch (\Exception $e) {
             \App\Models\SystemLog::logError('Excel Export Error (studentsExcel): ' . $e->getMessage(), 'database', $e, ['school_id' => $school->id], $school->id, 'export_students_excel');
             return back()->with('error', 'Failed to generate Excel file.');
+        }
+    }
+
+    private function resolveStudentBranchFilter(Request $request, School $school, $admin): array
+    {
+        if ($admin->isBranchSecretary()) {
+            $branch = \App\Models\Branch::where('school_id', $school->id)->find($admin->branch_id);
+            return [
+                'value' => $admin->branch_id,
+                'label' => $branch?->name ?? 'Assigned Branch',
+            ];
+        }
+
+        $value = (string) $request->input('branch', 'all');
+        if ($value === 'unassigned') {
+            return ['value' => 'unassigned', 'label' => 'Unassigned'];
+        }
+
+        if ($value !== 'all' && ctype_digit($value)) {
+            $branch = \App\Models\Branch::where('school_id', $school->id)->find((int) $value);
+            if ($branch) {
+                return ['value' => (int) $branch->id, 'label' => $branch->name];
+            }
+        }
+
+        return ['value' => 'all', 'label' => 'All Branches'];
+    }
+
+    private function applyStudentBranchFilter($query, array $branchFilter): void
+    {
+        if ($branchFilter['value'] === 'unassigned') {
+            $query->whereNull('branch_id');
+        } elseif ($branchFilter['value'] !== 'all') {
+            $query->where('branch_id', $branchFilter['value']);
         }
     }
 

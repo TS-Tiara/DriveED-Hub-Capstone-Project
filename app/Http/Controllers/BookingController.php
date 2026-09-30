@@ -651,6 +651,51 @@ class BookingController extends Controller
             $requestedSessionType = ($effectiveCourse->course_type === 'practical') ? 'practical' : 'theoretical';
         }
 
+        // Double-booking prevention: instructor overlap + student same batch repeat
+        if (!empty($validated['instructor_id'])) {
+            $checkTime = $validated['time_slot_id'] ? ($school->timeSlots()->find($validated['time_slot_id']) ?? null) : null;
+            $checkDate = $checkTime ? $checkTime->date->format('Y-m-d') : \Carbon\Carbon::parse($validated['scheduled_at'])->format('Y-m-d');
+            $checkStart = $checkTime ? $checkTime->start_time : \Carbon\Carbon::parse($validated['scheduled_at'])->format('H:i');
+            $checkEnd = $checkTime ? $checkTime->end_time : \Carbon\Carbon::parse($validated['scheduled_at'])->addHour()->format('H:i');
+            $overlappingInstructorBooking = Booking::where('school_id',$school->id)
+                ->where('instructor_id',$validated['instructor_id'])
+                ->whereIn('status',['pending','scheduled','confirmed','done'])
+                ->where(function($q) use ($checkDate, $checkStart, $checkEnd){
+                    $q->whereDate('booking_date',$checkDate)
+                      ->orWhereHas('timeSlot', fn($sq)=>$sq->where('date',$checkDate));
+                })->with('timeSlot')->get()->filter(function($b) use ($checkStart,$checkEnd){
+                    try{
+                        $s = $b->timeSlot ? $b->timeSlot->start_time : (\Carbon\Carbon::parse($b->scheduled_at)->format('H:i'));
+                        $e = $b->timeSlot ? $b->timeSlot->end_time : (\Carbon\Carbon::parse($b->scheduled_at)->addHour()->format('H:i'));
+                        $s1=\Carbon\Carbon::createFromFormat('H:i',$s); $e1=\Carbon\Carbon::createFromFormat('H:i',$e);
+                        $s2=\Carbon\Carbon::createFromFormat('H:i',$checkStart); $e2=\Carbon\Carbon::createFromFormat('H:i',$checkEnd);
+                        return $s1->lt($e2) && $s2->lt($e1);
+                    }catch(\Exception $ex){ return false; }
+                })->count();
+            if ($overlappingInstructorBooking > 0) {
+                $message = 'Instructor already booked at this time. Please choose another slot.';
+                if ($request->ajax() || $request->wantsJson()) return response()->json(['success'=>false,'message'=>$message],422);
+                return back()->withErrors(['instructor_id'=>$message]);
+            }
+            // Prevent student retaking same batch lesson (check notes batch group)
+            if ($checkTime && $checkTime->batch_group && $checkTime->batch_day_number) {
+                $alreadyBookedBatchDay = Booking::where('school_id', $school->id)
+                    ->where('student_id', $student->id)
+                    ->where('enrollment_request_id', $linkedEnrollment->id)
+                    ->where('status', '!=', Booking::STATUS_CANCELLED)
+                    ->whereHas('timeSlot', function ($query) use ($checkTime) {
+                        $query->where('batch_group', $checkTime->batch_group)
+                            ->where('batch_day_number', $checkTime->batch_day_number);
+                    })
+                    ->exists();
+
+                if ($alreadyBookedBatchDay) {
+                    $message = "You have already selected Day {$checkTime->batch_day_number} of this batch.";
+                    if ($request->ajax() || $request->wantsJson()) return response()->json(['success'=>false,'message'=>$message],422);
+                    return back()->withErrors(['time_slot_id'=>$message]);
+                }
+            }
+        }
         if ($requestedSessionType === 'practical') {
             if (!$student->hasVerifiedLicense()) {
                 $message = "A verified student driver's license is required before booking practical sessions.";
@@ -1118,20 +1163,118 @@ class BookingController extends Controller
             return back()->withErrors(['booking' => 'Only queued schedules can be removed.']);
         }
 
-        $booking->update([
-            'status' => 'cancelled',
-            'cancelled_by' => 'student',
-            'cancellation_reason' => 'Cancelled by student',
-            'cancelled_at' => now(),
-        ]);
+        DB::transaction(function () use ($booking): void {
+            $booking->update([
+                'status' => 'cancelled',
+                'cancelled_by' => 'student',
+                'cancellation_reason' => 'Cancelled by student (queue)',
+                'cancelled_at' => now(),
+            ]);
+        });
+        // Notify instructor and free slot count (cancelled excluded from capacity)
+        try {
+            $instructorsToNotify = collect();
+            if ($booking->instructor_id) {
+                $inst = \App\Models\Instructor::find($booking->instructor_id);
+                if ($inst) $instructorsToNotify->push($inst);
+            }
+            if ($booking->timeSlot && $booking->timeSlot->instructors) {
+                foreach ($booking->timeSlot->instructors as $inst) {
+                    if (!$instructorsToNotify->contains('id', $inst->id)) {
+                        $instructorsToNotify->push($inst);
+                    }
+                }
+            }
+            $dateStr = $booking->timeSlot?->date?->format('M d, Y') ?? ($booking->booking_date ? \Carbon\Carbon::parse($booking->booking_date)->format('M d, Y') : ($booking->scheduled_at ? \Carbon\Carbon::parse($booking->scheduled_at)->format('M d, Y') : 'scheduled date'));
+            foreach ($instructorsToNotify as $instructor) {
+                \App\Models\Notification::send(
+                    $instructor,
+                    'booking_cancelled',
+                    'Booking Cancelled by Student',
+                    ($booking->student?->name ?? 'Student') . " cancelled booking on " . $dateStr,
+                    'booking',
+                    "/{$school->slug}/instructor/my-schedule"
+                );
+            }
+            if ($booking->time_slot_id) {
+                \Illuminate\Support\Facades\Cache::forget("slot_availability_{$booking->time_slot_id}");
+            }
+        } catch (\Exception $e) { \Illuminate\Support\Facades\Log::warning('Cancellation notify failed: '.$e->getMessage()); }
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Schedule removed from queue'
+                'message' => 'Schedule removed from queue. Instructor notified and slot freed.'
             ]);
         }
 
-        return back()->with('success', 'Schedule removed from queue.');
+        return back()->with('success', 'Schedule removed from queue. Instructor notified and slot freed.');
+    }
+
+    /**
+     * Cancel a confirmed or scheduled booking by the student.
+     */
+    public function cancelBooking(Request $request, School $school, Booking $booking)
+    {
+        abort_if($booking->school_id !== $school->id, 404);
+
+        $studentId = Auth::guard('student')->id();
+        abort_if(!$studentId || (int) $booking->student_id !== (int) $studentId, 403);
+
+        if (in_array($booking->status, ['completed', 'cancelled'], true)) {
+            return back()->withErrors(['booking' => 'This booking cannot be cancelled.']);
+        }
+
+        DB::transaction(function () use ($booking, $request): void {
+            $booking->update([
+                'status' => 'cancelled',
+                'cancelled_by' => 'student',
+                'cancellation_reason' => $request->input('reason', 'Cancelled by student'),
+                'cancelled_at' => now(),
+            ]);
+        });
+
+        // Sync cancellation to Instructor and update available slot count
+        try {
+            $instructorsToNotify = collect();
+            if ($booking->instructor_id) {
+                $inst = \App\Models\Instructor::find($booking->instructor_id);
+                if ($inst) $instructorsToNotify->push($inst);
+            }
+            if ($booking->timeSlot && $booking->timeSlot->instructors) {
+                foreach ($booking->timeSlot->instructors as $inst) {
+                    if (!$instructorsToNotify->contains('id', $inst->id)) {
+                        $instructorsToNotify->push($inst);
+                    }
+                }
+            }
+            $dateStr = $booking->timeSlot?->date?->format('M d, Y') ?? ($booking->booking_date ? \Carbon\Carbon::parse($booking->booking_date)->format('M d, Y') : ($booking->scheduled_at ? \Carbon\Carbon::parse($booking->scheduled_at)->format('M d, Y') : 'scheduled date'));
+            foreach ($instructorsToNotify as $instructor) {
+                \App\Models\Notification::send(
+                    $instructor,
+                    'booking_cancelled',
+                    'Confirmed Schedule Cancelled by Student',
+                    ($booking->student?->name ?? 'Student') . " cancelled their schedule on " . $dateStr,
+                    'booking',
+                    "/{$school->slug}/instructor/my-schedule"
+                );
+            }
+
+            // Invalidate availability cache so the slot immediately frees up
+            if ($booking->time_slot_id) {
+                \Illuminate\Support\Facades\Cache::forget("slot_availability_{$booking->time_slot_id}");
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('Booking cancellation sync failed: ' . $e->getMessage());
+        }
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Schedule plan cancelled. Instructor notified and slot updated.'
+            ]);
+        }
+
+        return back()->with('success', 'Schedule plan cancelled. Instructor notified and slot updated.');
     }
 }

@@ -64,6 +64,17 @@
                     </div>
                 </div>
             @endif
+
+            <div style="margin-top: 24px; padding-top: 18px; border-top: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                @if($lessonCompleted)
+                    <span class="lms-chip" style="background: #dcfce7; color: #166534;">Completed</span>
+                @else
+                    <form method="POST" action="{{ school_route('student.courses.modules.lessons.complete', ['course' => $course->id, 'module' => $module->id, 'lesson' => $lesson->id]) }}">
+                        @csrf
+                        <button type="submit" class="lms-btn lms-btn-primary">Mark Lesson Complete</button>
+                    </form>
+                @endif
+            </div>
         </div>
     </div>
 

@@ -22,6 +22,7 @@
     <div class="header">
         <h1>{{ $school->name }}</h1>
         <p>Students List Report</p>
+        <p>Branch: {{ $branchFilterLabel ?? 'All Branches' }}</p>
         <p>Generated: {{ $generatedAt->format('F d, Y h:i A') }}</p>
     </div>
 

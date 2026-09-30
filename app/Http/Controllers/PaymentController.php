@@ -153,12 +153,19 @@ class PaymentController extends Controller
                 Rule::exists('enrollment_requests', 'id')->where('school_id', $school->id)
             ],
             
-            // GCash fields
-            'reference' => 'required_if:method,gcash|nullable|string|max:120',
+            // GCash fields (13-digit numeric reference)
+            'reference' => 'required_if:method,gcash|nullable|string|regex:/^[0-9]{13}$/',
             'proof_of_payment' => 'required_if:method,gcash|nullable|image|max:5120',
-            
-            // On-site fields
-            'or_number' => 'required_if:method,on_site|nullable|string|max:120',
+
+            // On-site fields (1-15 digit OR number)
+            'or_number' => 'required_if:method,on_site|nullable|string|regex:/^[0-9]{1,15}$/',
+        ], [
+            'reference.required_if' => 'GCash reference number is required.',
+            'reference.regex' => 'GCash reference number must be exactly 13 digits (numbers only).',
+            'or_number.required_if' => 'OR number is required for on-site payments.',
+            'or_number.regex' => 'OR number must be 1 to 15 digits (numbers only).',
+            'proof_of_payment.required_if' => 'Please upload your receipt screenshot.',
+            'amount.min' => 'Amount must be at least ₱1.',
         ]);
 
         // Forensic XOR Linkage check
@@ -238,6 +245,33 @@ class PaymentController extends Controller
                 $data['received_by_admin_id'] = Auth::guard('admin')->id();
                 $data['received_at'] = now();
                 $payment = $submissionService->submitOnsite($data);
+            }
+
+            // Sync receipt to parent enrollment/booking so admin Enrollment page
+            // (which reads enrollment_requests.payment_* fields) always sees it.
+            // This fixes "receipt shows in Payments but not in Enrollment" inconsistency.
+            try {
+                if ($enrollment instanceof EnrollmentRequest) {
+                    $refValue = $validated['method'] === 'gcash'
+                        ? ($validated['reference'] ?? null)
+                        : ($validated['or_number'] ?? null);
+                    $enrollment->update([
+                        'payment_method' => $validated['method'],
+                        'payment_reference' => $refValue,
+                        'payment_proof_path' => $storedProofPath ?? $payment->proof_of_payment_path,
+                        'payment_status' => in_array((string) $enrollment->payment_status, ['rejected', 'revision_required'], true)
+                            ? 'pending'
+                            : ($enrollment->payment_status ?? 'pending'),
+                    ]);
+                } elseif ($booking) {
+                    $booking->update([
+                        'payment_status' => in_array((string) ($booking->payment_status ?? ''), ['rejected', 'revision_required'], true)
+                            ? 'pending'
+                            : ($booking->payment_status ?? 'pending'),
+                    ]);
+                }
+            } catch (\Exception $syncEx) {
+                Log::warning('Payment receipt sync to enrollment failed: ' . $syncEx->getMessage());
             }
         } catch (QueryException $e) {
             if ($storedProofPath) {

@@ -585,6 +585,8 @@
         max-width: 600px;
         width: 100%;
         margin: 0 auto;
+        max-height: calc(100vh - 40px);
+        display: flex;
     }
     
     .modal-content {
@@ -595,6 +597,15 @@
         overflow: hidden;
         display: flex;
         flex-direction: column;
+        width: 100%;
+        min-height: 0;
+    }
+
+    .modal-content > form {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        max-height: 100%;
     }
     
     .modal-header {
@@ -843,14 +854,7 @@
                     @if($course->vehicle_type)
                         <span class="badge-vehicle">{{ $course->vehicle_type }}</span>
                     @endif
-                    @if($course->license_type)
-                        <span class="badge-type" style="background: #fef3c7; color: #92400e;">
-                            {{ $course->license_type === 'non_professional' ? 'Non-Pro' : 'Pro' }}
-                        </span>
-                        <span class="badge-type" style="background: #fee2e2; color: #991b1b;" title="Target DL Codes">
-                            {{ $course->license_type === 'professional' ? 'A, A1, B, B1, B2, C, D, BE, CE' : 'A, A1, B, B1, B2' }}
-                        </span>
-                    @endif
+                    {{-- Restriction badges removed from main course view; shown in package details and enrollment modal --}}
                 </div>
                 
                 <h3 class="course-title">{{ $course->title }}</h3>
@@ -1078,37 +1082,6 @@
                         @else
                             <small class="text-muted">PDC needs a verified student license before practical driving sessions. You may submit an enrollment request first.</small>
                         @endif
-                    </div>
-
-                    <!-- License Code Selection -->
-                    <div class="mb-3">
-                        <label for="requested_dl_code{{ $course->id }}" class="form-label">
-                            <strong>License Code</strong> <span class="text-danger">*</span>
-                        </label>
-                        <select name="requested_dl_code" id="requested_dl_code{{ $course->id }}" class="form-select @error('requested_dl_code') is-invalid @enderror" required>
-                            <option value="">Select DL Code...</option>
-                            @if($course->license_type === 'professional')
-                                <option value="A" {{ old('requested_dl_code') == 'A' ? 'selected' : '' }}>A - Motorcycle</option>
-                                <option value="A1" {{ old('requested_dl_code') == 'A1' ? 'selected' : '' }}>A1 - Tricycle</option>
-                                <option value="B" {{ old('requested_dl_code') == 'B' ? 'selected' : '' }}>B - Passenger Car</option>
-                                <option value="B1" {{ old('requested_dl_code') == 'B1' ? 'selected' : '' }}>B1 - Van/Jeepney</option>
-                                <option value="B2" {{ old('requested_dl_code') == 'B2' ? 'selected' : '' }}>B2 - Light Commercial Vehicle</option>
-                                <option value="C" {{ old('requested_dl_code') == 'C' ? 'selected' : '' }}>C - Heavy Commercial Vehicle</option>
-                                <option value="D" {{ old('requested_dl_code') == 'D' ? 'selected' : '' }}>D - Bus</option>
-                                <option value="BE" {{ old('requested_dl_code') == 'BE' ? 'selected' : '' }}>BE - Articulated Passenger Car</option>
-                                <option value="CE" {{ old('requested_dl_code') == 'CE' ? 'selected' : '' }}>CE - Articulated Heavy Commercial Vehicle</option>
-                            @else
-                                <option value="A" {{ old('requested_dl_code') == 'A' ? 'selected' : '' }}>A - Motorcycle</option>
-                                <option value="A1" {{ old('requested_dl_code') == 'A1' ? 'selected' : '' }}>A1 - Tricycle</option>
-                                <option value="B" {{ old('requested_dl_code') == 'B' ? 'selected' : '' }}>B - Passenger Car</option>
-                                <option value="B1" {{ old('requested_dl_code') == 'B1' ? 'selected' : '' }}>B1 - Van/Jeepney</option>
-                                <option value="B2" {{ old('requested_dl_code') == 'B2' ? 'selected' : '' }}>B2 - Light Commercial Vehicle</option>
-                            @endif
-                        </select>
-                        <small class="text-muted">Select the specific vehicle category for this license type.</small>
-                        @error('requested_dl_code')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
                     </div>
 
                     <!-- Student License Status & Upload (shown for experienced drivers on practical courses) -->

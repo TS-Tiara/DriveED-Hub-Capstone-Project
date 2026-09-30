@@ -1839,10 +1839,10 @@
                         </button>
                         <div class="export-dropdown-menu">
                             <div class="dropdown-header">Students</div>
-                            <a href="{{ school_route('admin.exports.students.pdf') }}">
+                            <a href="{{ school_route('admin.exports.students.pdf', ['branch' => request('branch', 'all')]) }}">
                                 <span class="dot pdf"></span> Students (PDF)
                             </a>
-                            <a href="{{ school_route('admin.exports.students.excel') }}">
+                            <a href="{{ school_route('admin.exports.students.excel', ['branch' => request('branch', 'all')]) }}">
                                 <span class="dot excel"></span> Students (Excel)
                             </a>
                             <div class="dropdown-divider"></div>
