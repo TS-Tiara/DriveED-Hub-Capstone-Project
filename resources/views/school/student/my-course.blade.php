@@ -495,11 +495,6 @@
             <div class="course-header">
                 <h2 class="course-title">{{ $course->title }}</h2>
                 <div style="display: flex; gap: 10px; align-items: center;">
-                    @if($activeEnrollment && $activeEnrollment->requested_dl_code)
-                        <span class="course-type-badge" style="background: #fee2e2; color: #991b1b;">
-                            DL Code: {{ $activeEnrollment->requested_dl_code }}
-                        </span>
-                    @endif
                     <span class="course-type-badge course-type-{{ $course->course_type ?? 'theoretical' }}">
                         {{ $course->course_type === 'theoretical' ? 'Theoretical' : 'Practical' }}
                     </span>
@@ -546,12 +541,23 @@
             </div>
         </div>
 
-        {{-- Course Materials (Reference Only) --}}
+        {{-- Progress Overview + Course Materials with visual lesson sequence --}}
+        @php
+            $totalLessons = $modules->sum(fn($m)=>$m->lessons ? $m->lessons->count():0);
+            $lessonProgressPct = $totalLessons>0 ? min(100, round(($progressPercentage))) : $progressPercentage;
+            // Approximate completed lessons from overall progress
+            $completedLessonIds = $completedLessonIds ?? [];
+            $completedCount = count($completedLessonIds);
+            $allLessonsOrdered = $modules->sortBy('sort_order')->flatMap(fn($m)=> $m->lessons ? $m->lessons->sortBy('sort_order') : collect())->values();
+        @endphp
         @if($modules->count() > 0)
             <div class="course-card">
-                <h3 class="section-title">Course Materials</h3>
+                <h3 class="section-title">Course Materials <span style="font-weight:400;font-size:0.9rem;color:#6b7280;">— {{ $completedCount }}/{{ $totalLessons }} lessons completed ({{ $lessonProgressPct }}%)</span></h3>
+                <div style="background:#e5e7eb;border-radius:10px;height:10px;overflow:hidden;margin-bottom:12px;">
+                    <div style="height:100%;background:{{ $primaryColor }};width:{{ $lessonProgressPct }}%;transition:width .5s;"></div>
+                </div>
                 <p class="materials-note">
-                    These materials are provided as reference. Click a module to view its lessons.
+                    Lessons are ordered. Completed lessons turn green, next lesson is highlighted. Click a module to view its lessons.
                 </p>
                 
                 <div class="modules-section">
@@ -574,10 +580,11 @@
                             @if($module->lessons && $module->lessons->count() > 0)
                                 <ul class="lesson-list">
                                     @foreach($module->lessons->sortBy('sort_order') as $index => $lesson)
-                                        <li class="lesson-item">
+                                        @php $globalIndex = $allLessonsOrdered->search(fn($l)=>$l->id===$lesson->id); $isCompleted = in_array($lesson->id, $completedLessonIds, true); $isNext = !$isCompleted && $globalIndex === $completedCount && $completedCount < $totalLessons; @endphp
+                                        <li class="lesson-item" style="@if($isCompleted) border-left:4px solid #10b981;background:#f0fdf4; @elseif($isNext) border-left:4px solid {{ $primaryColor }};background:#eff6ff; @endif">
                                             <div class="lesson-top">
-                                                <span class="lesson-number">{{ $index + 1 }}</span>
-                                                <span class="lesson-title">{{ $lesson->title }}</span>
+                                                <span class="lesson-number" style="@if($isCompleted) background:#10b981;color:white; @elseif($isNext) background:{{ $primaryColor }};color:white; @endif">@if($isCompleted) ✓ @else {{ $index + 1 }} @endif</span>
+                                                <span class="lesson-title">{{ $lesson->title }} @if($isCompleted) <span style="font-size:0.75rem;color:#065f46;font-weight:600;">— Done</span> @elseif($isNext) <span style="font-size:0.75rem;color:{{ $primaryColor }};font-weight:600;">— Next</span> @endif</span>
                                             </div>
                                             
                                             <div class="lesson-actions">

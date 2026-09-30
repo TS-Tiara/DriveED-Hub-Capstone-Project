@@ -116,14 +116,32 @@
             $steps = $settings->license_instructions ?? [];
             if (!is_array($steps)) $steps = [];
             
-            // 1. Fetch all system statuses once
+            // 1. Fetch all system statuses once – include active enrollment context for practical-only flow
             $isTdcDone = $student->has_passed_theoretical ?? false;
             $hasVerifiedPermit = ($student->student_license_status ?? '') === 'verified';
-            $isPdcDone = $student->enrollmentRequests()
-                ->whereHas('course', fn($q) => $q->where('course_type', 'practical'))
+            $isPdcDone = $student ? $student->enrollmentRequests()
+                ->whereHas('course', fn($q) => $q->where('course_type', 'practical')->orWhere('type', 'Practical'))
                 ->where('status', 'completed')
-                ->exists();
+                ->exists() : false;
             $hasLicenseCode = !empty($student->dl_code);
+            $activeEnrollmentsList = isset($activeEnrollments) ? $activeEnrollments : null;
+            $primaryEnrollmentObj = isset($primaryEnrollment) ? $primaryEnrollment : null;
+
+            // Robust practical enrollment detection
+            $hasPracticalEnrollment = false;
+            if ($primaryEnrollmentObj && in_array(strtolower($primaryEnrollmentObj->course?->course_type ?? $primaryEnrollmentObj->course?->type ?? ''), ['practical', 'pdc'])) {
+                $hasPracticalEnrollment = true;
+            } elseif ($activeEnrollmentsList && $activeEnrollmentsList->first(fn($e) => in_array(strtolower($e->course?->course_type ?? $e->course?->type ?? ''), ['practical', 'pdc']))) {
+                $hasPracticalEnrollment = true;
+            } elseif ($student) {
+                $hasPracticalEnrollment = $student->enrollmentRequests()
+                    ->whereHas('course', fn($q) => $q->where('course_type', 'practical')->orWhere('type', 'Practical'))
+                    ->whereNotIn('status', ['rejected', 'cancelled'])
+                    ->exists();
+            }
+
+            // Advance practical learners directly to Step 3 (PDC) by treating Steps 1 & 2 as satisfied
+            $isPracticalOnly = $hasPracticalEnrollment || $hasVerifiedPermit || ($student && method_exists($student, 'hasStoredLicense') && $student->hasStoredLicense());
 
             // 2. Process steps with sequential dependency
             // A step can only be "Completed" if its milestone is met AND all previous milestones were met.
@@ -144,11 +162,16 @@
                     case 'none':    $milestoneMet = true; break; // Manual steps don't block
                 }
 
-                // Sequential Logic: A step is only 'Done' if its milestone is met AND previous were met
-                $isStepCompleted = $milestoneMet && $previousMilestonesMet;
+            // Sequential Logic: A step is only 'Done' if its milestone is met AND previous were met
+                // Practical-only enrollment skips TDC/Permit pre-steps if already submitted/enrolled in PDC
+                $effectiveMet = $milestoneMet;
+                if ($isPracticalOnly && ($milestone === 'tdc' || $milestone === 'permit')) {
+                    $effectiveMet = true;
+                }
+                $isStepCompleted = $effectiveMet && $previousMilestonesMet;
                 
-                // If this milestone isn't met, the sequence is "broken" for future steps
-                if (!$milestoneMet && $milestone !== 'none') {
+                // If this milestone isn't met, the sequence is "broken" for future steps (respect practical skip)
+                if (!$effectiveMet && $milestone !== 'none') {
                     $previousMilestonesMet = false;
                 }
 

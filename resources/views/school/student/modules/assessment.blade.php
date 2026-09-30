@@ -54,12 +54,13 @@
 
                             <div style="display: flex; flex-direction: column; gap: 0.75rem;">
                                 @if($question->question_type === 'multiple_choice')
-                                    @foreach($question->options as $optionIndex => $option)
+                                    @php $mcOptions = is_array($question->options) ? $question->options : []; @endphp
+                                    @foreach($mcOptions as $optionIndex => $option)
                                         <label class="lms-quiz-option">
-                                            <input type="radio" name="answers[{{ $question->id }}]" value="{{ $option }}" required>
+                                            <input type="radio" name="answers[{{ $question->id }}]" value="{{ $option }}" data-option-key="{{ $optionIndex }}" required>
                                             <div class="lms-quiz-option-ui">
                                                 <div class="radio-circle"></div>
-                                                <span class="option-text">{{ $option }}</span>
+                                                <span class="option-text"><strong>{{ $optionIndex }}.</strong> {{ $option }}</span>
                                             </div>
                                         </label>
                                     @endforeach
@@ -75,11 +76,42 @@
                                             </label>
                                         @endforeach
                                     </div>
+                                @elseif($question->question_type === 'identification')
+                                    <div style="margin-top: 0.5rem;">
+                                        <input
+                                            type="text"
+                                            name="answers[{{ $question->id }}]"
+                                            class="lms-input identification-input"
+                                            placeholder="Type the exact term..."
+                                            required
+                                            autocomplete="off">
+                                        <p style="font-size: 0.8rem; color: #64748b; margin-top: 6px;">One answer only. Spelling matters — case and extra spaces are ignored.</p>
+                                    </div>
+                                @elseif($question->question_type === 'enumeration')
+                                    @php
+                                        $enumItems = array_values(array_filter(array_map(fn($v) => trim((string) $v), explode(',', (string) $question->correct_answer))));
+                                        $enumCount = max(2, count($enumItems));
+                                    @endphp
+                                    <div style="margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.5rem;" data-enum-count="{{ $enumCount }}">
+                                        <p style="font-size: 0.8rem; color: #64748b; margin: 0;">List <strong>{{ $enumCount }} items</strong> (one per box, any order — partial credit applies).</p>
+                                        @for($e = 0; $e < $enumCount; $e++)
+                                            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                                <span style="font-size: 0.8rem; font-weight: 700; color: #94a3b8; min-width: 22px;">{{ $e + 1 }}.</span>
+                                                <input
+                                                    type="text"
+                                                    name="answers[{{ $question->id }}][]"
+                                                    class="lms-input enumeration-input"
+                                                    placeholder="Item {{ $e + 1 }}..."
+                                                    required
+                                                    autocomplete="off">
+                                            </div>
+                                        @endfor
+                                    </div>
                                 @else
                                     <div style="margin-top: 0.5rem;">
-                                        <textarea 
-                                            name="answers[{{ $question->id }}]" 
-                                            class="lms-input" 
+                                        <textarea
+                                            name="answers[{{ $question->id }}]"
+                                            class="lms-input"
                                             rows="3"
                                             placeholder="Type your answer here..."
                                             required
@@ -146,38 +178,93 @@
 </div>
 
 <script>
+    const normalizeAnswer = (v) => String(v ?? '').trim().replace(/\s+/g, ' ').toLowerCase();
+
+    // Identification: exact term; alternatives in stored answer may use | or / or ;
+    const gradeIdentification = (userAnswer, correctAnswer) => {
+        const user = normalizeAnswer(userAnswer);
+        if (!user) return false;
+        const alternatives = String(correctAnswer ?? '').split(/[|\/;]/).map(s => normalizeAnswer(s)).filter(Boolean);
+        return alternatives.includes(user);
+    };
+
+    // Enumeration: comma-separated expected items; order-insensitive, no duplicate credit.
+    const gradeEnumeration = (userValues, correctAnswer) => {
+        const expected = String(correctAnswer ?? '').split(',').map(s => normalizeAnswer(s)).filter(Boolean);
+        const given = (Array.isArray(userValues) ? userValues : [userValues]).map(s => normalizeAnswer(s)).filter(Boolean);
+        if (expected.length === 0) return { matched: 0, total: 0, missing: [] };
+        const pool = [...expected];
+        let matched = 0;
+        given.forEach(g => {
+            const idx = pool.indexOf(g);
+            if (idx !== -1) { pool.splice(idx, 1); matched++; }
+        });
+        return { matched, total: expected.length, missing: pool };
+    };
+
+    // Multiple choice stored answer is a letter key (A–D) while inputs carry option text.
+    const resolveMcCorrectText = (q) => {
+        const raw = String(q.correct_answer ?? '').trim();
+        const opts = q.options && typeof q.options === 'object' ? q.options : null;
+        if (opts && Object.prototype.hasOwnProperty.call(opts, raw)) return String(opts[raw]);
+        return raw;
+    };
+
     document.getElementById('quizForm').addEventListener('submit', function(e) {
         e.preventDefault();
+<<<<<<< Updated upstream
         
+=======
+
+>>>>>>> Stashed changes
         const form = this;
         const questions = @json($module->questions);
         let score = 0;
         let totalPoints = 0;
 
         questions.forEach(q => {
-            const userAnswer = form.querySelector(`[name="answers[${q.id}]"]:checked`)?.value || 
-                               form.querySelector(`[name="answers[${q.id}]"]`)?.value;
-            
-            const isCorrect = String(userAnswer).trim().toLowerCase() === String(q.correct_answer).trim().toLowerCase();
             const points = parseInt(q.pivot?.points || 1);
             totalPoints += points;
+            const container = form.querySelector(`[name="answers[${q.id}]"], [name="answers[${q.id}][]"]`)?.closest('.lms-quiz-question');
+            let earned = 0;
+            let isCorrect = false;
 
-            if (isCorrect) {
-                score += points;
+            if (q.question_type === 'multiple_choice' || q.question_type === 'true_false') {
+                const userAnswer = form.querySelector(`[name="answers[${q.id}]"]:checked`)?.value || '';
+                const expected = q.question_type === 'multiple_choice' ? resolveMcCorrectText(q) : String(q.correct_answer ?? '');
+                isCorrect = normalizeAnswer(userAnswer) === normalizeAnswer(expected) && userAnswer !== '';
+                if (isCorrect) earned = points;
+            } else if (q.question_type === 'identification') {
+                const userAnswer = form.querySelector(`[name="answers[${q.id}]"]`)?.value || '';
+                isCorrect = gradeIdentification(userAnswer, q.correct_answer);
+                if (isCorrect) earned = points;
+            } else if (q.question_type === 'enumeration') {
+                const userValues = [...form.querySelectorAll(`[name="answers[${q.id}][]"]`)].map(i => i.value);
+                const result = gradeEnumeration(userValues, q.correct_answer);
+                isCorrect = result.total > 0 && result.matched === result.total;
+                // Partial credit proportional to matched items (rounded to 2dp, never exceeds points)
+                earned = result.total > 0 ? Math.round((result.matched / result.total) * points * 100) / 100 : 0;
+                q._enumResult = result;
+            } else {
+                const userAnswer = form.querySelector(`[name="answers[${q.id}]"]:checked`)?.value ||
+                               form.querySelector(`[name="answers[${q.id}]"]`)?.value || '';
+                isCorrect = normalizeAnswer(userAnswer) === normalizeAnswer(q.correct_answer);
+                if (isCorrect) earned = points;
             }
+            score = Math.round((score + earned) * 100) / 100;
 
             // Highlight answers
-            const inputs = form.querySelectorAll(`[name="answers[${q.id}]"]`);
-            if (inputs.length > 0) {
-                const questionContainer = inputs[0].closest('.lms-quiz-question');
-                const options = questionContainer.querySelectorAll('.lms-quiz-option');
-                
+            const inputs = form.querySelectorAll(`[name="answers[${q.id}]"], [name="answers[${q.id}][]"]`);
+            if (inputs.length > 0 && container) {
+                const options = container.querySelectorAll('.lms-quiz-option');
+
                 if (q.question_type === 'multiple_choice' || q.question_type === 'true_false') {
+                    const expected = q.question_type === 'multiple_choice' ? resolveMcCorrectText(q) : String(q.correct_answer ?? '');
                     options.forEach(opt => {
                         const input = opt.querySelector('input');
                         const ui = opt.querySelector('.lms-quiz-option-ui');
-                        
-                        if (String(input.value).trim().toLowerCase() === String(q.correct_answer).trim().toLowerCase()) {
+
+                        if (normalizeAnswer(input.value) === normalizeAnswer(expected)) {
                             ui.style.borderColor = '#10b981';
                             ui.style.background = '#f0fdf4';
                             ui.style.boxShadow = '0 0 0 4px rgba(16, 185, 129, 0.1)';
@@ -189,23 +276,70 @@
                         }
                         input.disabled = true;
                     });
+                } else if (q.question_type === 'identification') {
+                    const input = container.querySelector('.identification-input');
+                    if (input) {
+                        input.disabled = true;
+                        if (isCorrect) {
+                            input.style.borderColor = '#10b981';
+                            input.style.background = '#f0fdf4';
+                        } else {
+                            input.style.borderColor = '#ef4444';
+                            input.style.background = '#fef2f2';
+                            const correctDiv = document.createElement('div');
+                            correctDiv.style.marginTop = '0.5rem';
+                            correctDiv.style.fontSize = '0.85rem';
+                            correctDiv.style.color = '#059669';
+                            correctDiv.style.fontWeight = '600';
+                            correctDiv.textContent = 'Correct Answer: ' + String(q.correct_answer ?? '').split(/[|\/;]/)[0].trim();
+                            input.parentNode.appendChild(correctDiv);
+                        }
+                    }
+                } else if (q.question_type === 'enumeration') {
+                    const result = q._enumResult || { matched: 0, total: 0, missing: [] };
+                    const expectedSet = String(q.correct_answer ?? '').split(',').map(s => normalizeAnswer(s)).filter(Boolean);
+                    const seen = [...expectedSet];
+                    container.querySelectorAll('.enumeration-input').forEach(inp => {
+                        const val = normalizeAnswer(inp.value);
+                        inp.disabled = true;
+                        const idx = seen.indexOf(val);
+                        if (val && idx !== -1) {
+                            seen.splice(idx, 1);
+                            inp.style.borderColor = '#10b981';
+                            inp.style.background = '#f0fdf4';
+                        } else {
+                            inp.style.borderColor = val ? '#ef4444' : '#e2e8f0';
+                            inp.style.background = val ? '#fef2f2' : '#f8fafc';
+                        }
+                    });
+                    const info = document.createElement('div');
+                    info.style.marginTop = '0.5rem';
+                    info.style.fontSize = '0.85rem';
+                    info.style.fontWeight = '600';
+                    info.style.color = isCorrect ? '#059669' : '#d97706';
+                    info.textContent = isCorrect
+                        ? `All ${result.total} items correct (+${earned} pts).`
+                        : `Matched ${result.matched}/${result.total} items (+${earned} pts). Expected: ${String(q.correct_answer ?? '')}`;
+                    container.querySelector('[data-enum-count]')?.appendChild(info);
                 } else {
                     // Text answer
-                    const textarea = questionContainer.querySelector('textarea');
-                    textarea.disabled = true;
-                    if (isCorrect) {
-                        textarea.style.borderColor = '#10b981';
-                        textarea.style.background = '#f0fdf4';
-                    } else {
-                        textarea.style.borderColor = '#ef4444';
-                        textarea.style.background = '#fef2f2';
-                        const correctDiv = document.createElement('div');
-                        correctDiv.style.marginTop = '0.5rem';
-                        correctDiv.style.fontSize = '0.85rem';
-                        correctDiv.style.color = '#059669';
-                        correctDiv.style.fontWeight = '600';
-                        correctDiv.innerHTML = 'Correct Answer: ' + q.correct_answer;
-                        textarea.parentNode.appendChild(correctDiv);
+                    const textarea = container.querySelector('textarea');
+                    if (textarea) {
+                        textarea.disabled = true;
+                        if (isCorrect) {
+                            textarea.style.borderColor = '#10b981';
+                            textarea.style.background = '#f0fdf4';
+                        } else {
+                            textarea.style.borderColor = '#ef4444';
+                            textarea.style.background = '#fef2f2';
+                            const correctDiv = document.createElement('div');
+                            correctDiv.style.marginTop = '0.5rem';
+                            correctDiv.style.fontSize = '0.85rem';
+                            correctDiv.style.color = '#059669';
+                            correctDiv.style.fontWeight = '600';
+                            correctDiv.innerHTML = 'Correct Answer: ' + q.correct_answer;
+                            textarea.parentNode.appendChild(correctDiv);
+                        }
                     }
                 }
             }

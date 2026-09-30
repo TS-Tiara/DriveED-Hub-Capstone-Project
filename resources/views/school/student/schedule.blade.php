@@ -1389,13 +1389,19 @@
                                             Time TBD
                                         @endif
                                     </div>
-                                    <div class="booking-status">
+                                    <div class="booking-status" style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
                                         @if($booking->status === 'completed')
                                             <span class="booking-status-pill booking-status-completed">
                                                 &#10003; Completed
                                             </span>
                                         @else
-                                            Status: {{ ucfirst($booking->status ?? 'Scheduled') }}
+                                            <span>Status: {{ ucfirst($booking->status ?? 'Scheduled') }}</span>
+                                            <form method="POST" action="{{ route('schools.student.bookings.cancel', [$school->slug, $booking->id]) }}" style="margin: 0;">
+                                                @csrf
+                                                <button type="button" style="background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; padding: 3px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#fecaca'" onmouseout="this.style.background='#fee2e2'" onclick="showConfirmDialog('Are you sure you want to cancel this scheduled lesson? Your instructor will be notified and your reserved spot will be released.', () => this.closest('form').submit())">
+                                                    Cancel Schedule
+                                                </button>
+                                            </form>
                                         @endif
                                     </div>
                                 </div>
@@ -1604,7 +1610,18 @@
                     ->keyBy('course_id')
                     ->map(fn($enrollment) => $enrollment->id);
             @endphp
-            
+
+            @if(!($hasApprovedEnrollment ?? true))
+                <div class="alert alert-info" style="background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;border-radius:10px;padding:14px 16px;margin-bottom:12px;">
+                    <strong>Enrollment not processed yet.</strong>
+                    @if(!empty($pendingEnrollmentExists))
+                        Your enrollment request is still pending admin review. Available schedules will appear here once your enrollment is approved and your payment is verified.
+                    @else
+                        You don't have an approved enrollment yet. Enroll in a course first — schedules will appear here once approved.
+                    @endif
+                </div>
+            @endif
+
             @forelse($groupedAvailableSchedules as $date => $dateSchedules)
                 @php
                     $isPast = \Carbon\Carbon::parse($date)->lt(now()->startOfDay());
@@ -2731,7 +2748,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 // Custom confirmation modal
-let confirmCallback = null;
+var confirmCallback = null;
 
 function showConfirmDialog(message, onConfirm, onCancel = null) {
     // Create modal if it doesn't exist

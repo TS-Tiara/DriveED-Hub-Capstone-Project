@@ -7,6 +7,7 @@ use App\Models\CourseModule;
 use App\Models\Course;
 use App\Models\School;
 use App\Models\Student;
+use App\Models\StudentLessonCompletion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -43,7 +44,16 @@ class ModuleLessonController extends Controller
                 abort(403, 'You must be enrolled in this course to view lessons.');
             }
 
+<<<<<<< Updated upstream
             return view('school.student.lessons.index', compact('school', 'course', 'module', 'lessons'))->with('isAjax', $request->ajax());
+=======
+            $completedLessonIds = $student->lessonCompletions()
+                ->whereIn('lesson_id', $lessons->pluck('id'))
+                ->pluck('lesson_id')
+                ->all();
+
+            return view('school.student.lessons.index', compact('school', 'course', 'module', 'lessons', 'completedLessonIds'))->with('isAjax', $request->ajax());
+>>>>>>> Stashed changes
         }
 
         // Instructor view
@@ -203,8 +213,13 @@ class ModuleLessonController extends Controller
             // Get navigation
             $courseModuleController = app(\App\Http\Controllers\CourseModuleController::class);
             $navigation = $courseModuleController->getLearningPathNavigation($course, $module, $lesson);
+            $lessonCompleted = $student->lessonCompletions()->where('lesson_id', $lesson->id)->exists();
 
+<<<<<<< Updated upstream
             return view('school.student.lessons.show', compact('school', 'course', 'module', 'lesson', 'navigation'))->with('isAjax', $request->ajax());
+=======
+            return view('school.student.lessons.show', compact('school', 'course', 'module', 'lesson', 'navigation', 'lessonCompleted'))->with('isAjax', $request->ajax());
+>>>>>>> Stashed changes
         }
 
         // Instructor view
@@ -218,6 +233,32 @@ class ModuleLessonController extends Controller
         }
 
         abort(403);
+    }
+
+    public function complete(Request $request, School $school, Course $course, CourseModule $module, ModuleLesson $lesson)
+    {
+        $student = Auth::guard('student')->user();
+
+        abort_unless($course->school_id === $school->id, 404);
+        abort_unless($module->course_id === $course->id && $lesson->module_id === $module->id, 404);
+
+        $enrolled = $student->enrollments()
+            ->where('course_id', $course->id)
+            ->where('status', 'approved')
+            ->exists();
+        abort_unless($enrolled, 403, 'You must be enrolled in this course.');
+
+        StudentLessonCompletion::firstOrCreate(
+            ['student_id' => $student->id, 'lesson_id' => $lesson->id],
+            ['school_id' => $school->id, 'completed_at' => now()]
+        );
+
+        return redirect()->route('schools.student.courses.modules.lessons.show', [
+            'school' => $school->slug,
+            'course' => $course->id,
+            'module' => $module->id,
+            'lesson' => $lesson->id,
+        ])->with('success', 'Lesson marked as completed.');
     }
 
     /**

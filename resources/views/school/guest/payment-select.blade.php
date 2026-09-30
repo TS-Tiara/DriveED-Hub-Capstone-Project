@@ -143,9 +143,11 @@
 
                             <div class="mb-4">
                                 <label class="form-label small fw-bold text-dark mb-2" id="referenceLabel">{{ $selectedMethod === 'on_site' ? 'Official Receipt (OR) Number' : 'Transaction Reference Number' }}</label>
-                                <input type="text" name="reference_number" id="referenceInput" class="form-control form-control-lg rounded-3 border-light-subtle py-2 fs-6 @error('reference_number') is-invalid @enderror" placeholder="{{ $selectedMethod === 'on_site' ? '1 to 15 digit OR number' : '13-digit number' }}" required value="{{ old('reference_number') }}" maxlength="{{ $selectedMethod === 'on_site' ? 15 : 13 }}" minlength="{{ $selectedMethod === 'on_site' ? 1 : 13 }}" pattern="{{ $selectedMethod === 'on_site' ? '[0-9]{1,15}' : '[0-9]{13}' }}" inputmode="numeric" @disabled(!$allowPaymentSubmission)>
+                                <input type="text" name="reference_number" id="referenceInput" class="form-control form-control-lg rounded-3 border-light-subtle py-2 fs-6 @error('reference_number') is-invalid @enderror" placeholder="{{ $selectedMethod === 'on_site' ? '1 to 15 digit OR number' : '13-digit number' }}" required value="{{ old('reference_number') }}" maxlength="{{ $selectedMethod === 'on_site' ? 15 : 13 }}" minlength="{{ $selectedMethod === 'on_site' ? 1 : 13 }}" pattern="{{ $selectedMethod === 'on_site' ? '[0-9]{1,15}' : '[0-9]{13}' }}" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0, this.maxLength); validateReference(this);" @disabled(!$allowPaymentSubmission)>
+                                <div class="form-text small text-muted" id="referenceHint">{{ $selectedMethod === 'on_site' ? 'Numbers only, 1–15 digits.' : 'Numbers only, exactly 13 digits (GCash reference).' }}</div>
+                                <div class="invalid-feedback small" id="referenceFeedback" style="display:none;"></div>
                                 @error('reference_number')
-                                    <div class="invalid-feedback small">{{ $message }}</div>
+                                    <div class="invalid-feedback small d-block">{{ $message }}</div>
                                 @enderror
                             </div>
 
@@ -288,6 +290,27 @@ const instructionNote = document.getElementById('instructionNote');
 const gcashInstructionBlock = document.getElementById('gcashInstructionBlock');
 const onsiteInstructionBlock = document.getElementById('onsiteInstructionBlock');
 
+function validateReference(input) {
+    const feedback = document.getElementById('referenceFeedback');
+    const isOnSite = paymentMethodInput.value === 'on_site';
+    const val = (input.value || '').trim();
+    let msg = '';
+    if (!val) { msg = ''; }
+    else if (!/^[0-9]+$/.test(val)) { msg = 'Numbers only — letters and symbols are not allowed.'; }
+    else if (isOnSite && val.length > 15) { msg = 'OR number must be at most 15 digits.'; }
+    else if (!isOnSite && val.length !== 13) { msg = `GCash reference must be exactly 13 digits (currently ${val.length}).`; }
+    if (msg) {
+        input.classList.add('is-invalid');
+        feedback.textContent = msg;
+        feedback.style.display = 'block';
+        input.setCustomValidity(msg);
+    } else {
+        input.classList.remove('is-invalid');
+        feedback.style.display = 'none';
+        input.setCustomValidity('');
+    }
+}
+
 function applyPaymentMethod(method) {
     const selectedMethod = method === 'on_site' ? 'on_site' : 'gcash';
 
@@ -301,6 +324,7 @@ function applyPaymentMethod(method) {
     gcashInstructionBlock.classList.toggle('d-none', isOnSite);
     onsiteInstructionBlock.classList.toggle('d-none', !isOnSite);
 
+    const hint = document.getElementById('referenceHint');
     if (isOnSite) {
         instructionHeading.textContent = 'Pay in Person';
         instructionNote.innerHTML = '<i class="fas fa-info-circle me-1"></i> Upload a clear receipt photo and enter the OR number from your official receipt.';
@@ -311,6 +335,7 @@ function applyPaymentMethod(method) {
         referenceInput.maxLength = 15;
         referenceInput.minLength = 1;
         referenceInput.pattern = '[0-9]{1,15}';
+        if (hint) hint.textContent = 'Numbers only, 1–15 digits.';
     } else {
         instructionHeading.textContent = 'Transfer to GCash';
         instructionNote.innerHTML = '<i class="fas fa-info-circle me-1"></i> Use exact amount for faster verification.';
@@ -321,7 +346,10 @@ function applyPaymentMethod(method) {
         referenceInput.maxLength = 13;
         referenceInput.minLength = 13;
         referenceInput.pattern = '[0-9]{13}';
+        if (hint) hint.textContent = 'Numbers only, exactly 13 digits (GCash reference).';
     }
+    referenceInput.value = (referenceInput.value || '').replace(/[^0-9]/g, '').slice(0, referenceInput.maxLength);
+    validateReference(referenceInput);
 }
 
 paymentMethodTabs.forEach((tab) => {

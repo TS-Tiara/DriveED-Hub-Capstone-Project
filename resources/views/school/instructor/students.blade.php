@@ -25,6 +25,7 @@
         'upcoming' => 'With Upcoming Session',
     ];
     $currentFilterLabel = $filterLabelMap[$activeCardFilter] ?? 'All Students';
+    $schoolRoute = $schoolRoute ?? (fn(string $name, array $params = []) => school_route($name, $params, $school));
 @endphp
 
 @include('school.admin.partials.admin-styles')

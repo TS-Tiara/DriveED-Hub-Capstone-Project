@@ -147,6 +147,9 @@ class AdminTimeSlotController extends Controller
                         if ($duration < $minDuration) {
                             $fail("The session must be at least {$minDuration} minutes long. (Detected: {$duration} mins)");
                         }
+                        if ($duration > 480) {
+                            $fail("The session cannot exceed 8 hours (Detected: ".round($duration/60,1)."h).");
+                        }
                     } catch (\Exception $e) {
                         // Handled by date_format rule
                     }

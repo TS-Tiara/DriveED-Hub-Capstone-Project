@@ -2064,11 +2064,134 @@
                         <small class="text-muted">Determines seating vs 1-on-1 logic.</small>
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label">Date</label>
-                        <input type="date" name="date" class="form-control {{ $errors->has('date') ? 'is-invalid' : '' }}" required min="{{ date('Y-m-d') }}" value="{{ old('date') }}">
+                    <div class="form-group" id="batchSchedulingWrapper" style="background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                        <label class="checkbox-wrapper" style="margin-bottom: 6px; cursor: pointer;">
+                            <input type="checkbox" id="toggleBatchScheduling" class="checkbox" onchange="toggleBatchMode(this.checked)">
+                            <span class="checkbox-label" style="font-weight: 600; color: #1e293b;">
+                                <i class="bi bi-calendar2-range"></i> TDC Batch Scheduling (Sequential multi-day lessons)
+                            </span>
+                        </label>
+                        <small class="text-muted" id="batchSchedulingHint" style="display: block;">
+                            Creates sequential schedule days (e.g. Day 1, Day 2) under one linked batch so students take the full sequence.
+                        </small>
+                    </div>
+
+                    <div id="singleDateGroup" class="form-group">
+                        <label class="form-label">Date <span class="text-danger">*</span></label>
+                        <input type="date" name="date" id="createScheduleDate" class="form-control {{ $errors->has('date') ? 'is-invalid' : '' }}" min="{{ date('Y-m-d', strtotime('+1 day')) }}" value="{{ old('date') }}">
+                        <small class="text-muted" style="display:block;margin-top:4px;">Schedules must be for a future date (tomorrow onwards) — today is not allowed.</small>
+                        <p class="field-error" id="createScheduleDateFeedback" style="display:none;"></p>
                         @error('date') <p class="field-error">{{ $message }}</p> @enderror
                     </div>
+
+                    <div id="batchDatesGroup" class="form-group" style="display: none; background: #eff6ff; padding: 14px; border-radius: 8px; border: 1px solid #bfdbfe;">
+                        <label class="form-label" style="font-weight: 600; color: #1e40af;">
+                            <i class="bi bi-calendar-week"></i> Batch Lesson Prefix
+                        </label>
+                        <input type="text" name="batch_lesson_prefix" class="form-control" placeholder="e.g. TDC Batch A - Day" style="margin-bottom: 12px;">
+
+                        <label class="form-label" style="font-weight: 600; color: #1e40af;">
+                            <i class="bi bi-calendar-plus"></i> Sequential Batch Dates
+                        </label>
+                        <div id="batchDatesContainer" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;">
+                            <div class="batch-date-row" style="display: flex; gap: 8px; align-items: center;">
+                                <span style="font-weight: 600; font-size: 0.85rem; color: #1e40af; min-width: 55px;">Day 1:</span>
+                                <input type="date" name="batch_dates[]" class="form-control batch-date-input" min="{{ date('Y-m-d', strtotime('+1 day')) }}" style="flex: 1;">
+                            </div>
+                            <div class="batch-date-row" style="display: flex; gap: 8px; align-items: center;">
+                                <span style="font-weight: 600; font-size: 0.85rem; color: #1e40af; min-width: 55px;">Day 2:</span>
+                                <input type="date" name="batch_dates[]" class="form-control batch-date-input" min="{{ date('Y-m-d', strtotime('+1 day')) }}" style="flex: 1;">
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-primary" onclick="addBatchDateField()" style="padding: 5px 12px; font-size: 0.8rem;">
+                            + Add Another Day
+                        </button>
+                    </div>
+
+                    <script>
+                        var CREATE_TOMORROW_MIN = "{{ date('Y-m-d', strtotime('+1 day')) }}";
+                        function isTheoreticalCourseSelected() {
+                            var sel = document.getElementById('createCourseSelect');
+                            if (!sel || !sel.value) return false;
+                            var opt = sel.options[sel.selectedIndex];
+                            var t = (opt.getAttribute('data-type') || '').toLowerCase();
+                            return t === 'theoretical';
+                        }
+                        function updateBatchAvailability() {
+                            var checkbox = document.getElementById('toggleBatchScheduling');
+                            var hint = document.getElementById('batchSchedulingHint');
+                            if (!checkbox) return;
+                            var allowed = isTheoreticalCourseSelected();
+                            if (!allowed) {
+                                checkbox.checked = false;
+                                toggleBatchMode(false);
+                                checkbox.disabled = true;
+                                if (hint) hint.textContent = 'TDC Batch Scheduling is only available for Theoretical (TDC) courses. Select a Theoretical course to enable it.';
+                            } else {
+                                checkbox.disabled = false;
+                                if (hint) hint.textContent = 'Creates sequential schedule days (e.g. Day 1, Day 2) under one linked batch so students take the full sequence.';
+                            }
+                        }
+                        function validateScheduleDate(input) {
+                            var fb = document.getElementById('createScheduleDateFeedback');
+                            if (!input || !input.value) { if (fb) fb.style.display = 'none'; return true; }
+                            var today = new Date(); today.setHours(0,0,0,0);
+                            var picked = new Date(input.value + 'T00:00:00');
+                            if (isNaN(picked.getTime()) || picked <= today) {
+                                if (fb) {
+                                    fb.textContent = 'Invalid date: schedules cannot be created for today or past dates. Please pick a future date (tomorrow onwards).';
+                                    fb.style.display = 'block';
+                                }
+                                input.setCustomValidity('Schedules cannot be created for today or past dates.');
+                                return false;
+                            }
+                            if (fb) fb.style.display = 'none';
+                            input.setCustomValidity('');
+                            return true;
+                        }
+                        document.addEventListener('DOMContentLoaded', function() {
+                            var sel = document.getElementById('createCourseSelect');
+                            if (sel) sel.addEventListener('change', updateBatchAvailability);
+                            var dateInput = document.getElementById('createScheduleDate');
+                            if (dateInput) {
+                                dateInput.setAttribute('min', CREATE_TOMORROW_MIN);
+                                dateInput.addEventListener('change', function() { validateScheduleDate(dateInput); });
+                            }
+                            updateBatchAvailability();
+                        });
+                        function toggleBatchMode(enabled) {
+                            const singleGroup = document.getElementById('singleDateGroup');
+                            const batchGroup = document.getElementById('batchDatesGroup');
+                            const dateInput = document.getElementById('createScheduleDate');
+                            const batchDateInputs = document.querySelectorAll('input[name="batch_dates[]"]');
+
+                            if (enabled) {
+                                singleGroup.style.display = 'none';
+                                batchGroup.style.display = 'block';
+                                if (dateInput) dateInput.required = false;
+                                batchDateInputs.forEach(i => i.required = true);
+                            } else {
+                                singleGroup.style.display = 'block';
+                                batchGroup.style.display = 'none';
+                                if (dateInput) dateInput.required = true;
+                                batchDateInputs.forEach(i => i.required = false);
+                            }
+                        }
+
+                        function addBatchDateField() {
+                            const container = document.getElementById('batchDatesContainer');
+                            const count = container.querySelectorAll('.batch-date-row').length + 1;
+                            const row = document.createElement('div');
+                            row.className = 'batch-date-row';
+                            row.style.cssText = 'display: flex; gap: 8px; align-items: center;';
+                            row.innerHTML = `
+                                <span style="font-weight: 600; font-size: 0.85rem; color: #1e40af; min-width: 55px;">Day ${count}:</span>
+                                <input type="date" name="batch_dates[]" class="form-control batch-date-input" min="${CREATE_TOMORROW_MIN}" style="flex: 1;" required>
+                                <button type="button" onclick="this.parentElement.remove()" style="background: none; border: none; color: #ef4444; font-size: 1.1rem; cursor: pointer;">&times;</button>
+                            `;
+                            container.appendChild(row);
+                        }
+                    </script>
 
                     @php
                         $timeOptions = [];
@@ -2218,6 +2341,12 @@
                                     if(submitBtn) submitBtn.disabled = true;
                                 } else if (duration < 60) {
                                     errorMsg.textContent = 'The session must be at least 1 hour long. (Current: ' + duration + ' mins)';
+                                    errorMsg.style.display = 'block';
+                                    document.getElementById('startTimeContainer').querySelector('.custom-select-trigger').style.borderColor = '#ef4444';
+                                    document.getElementById('endTimeContainer').querySelector('.custom-select-trigger').style.borderColor = '#ef4444';
+                                    if(submitBtn) submitBtn.disabled = true;
+                                } else if (duration > 480) {
+                                    errorMsg.textContent = 'A single session cannot exceed 8 hours per day (' + (duration / 60).toFixed(1) + ' hrs selected). Please split into multiple days using batch scheduling.';
                                     errorMsg.style.display = 'block';
                                     document.getElementById('startTimeContainer').querySelector('.custom-select-trigger').style.borderColor = '#ef4444';
                                     document.getElementById('endTimeContainer').querySelector('.custom-select-trigger').style.borderColor = '#ef4444';

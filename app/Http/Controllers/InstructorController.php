@@ -152,6 +152,7 @@ class InstructorController extends Controller
         $rosterStudentIds = [];
         if (!empty($assignedStudentIds)) {
             $rosterStudentIds = Student::where('school_id', '=', $school->id, 'and')
+                ->where('role', '=', 'student', 'and')
                 ->whereIn('id', $assignedStudentIds, 'and', false)
                 ->pluck('id')
                 ->map(fn($id) => (int) $id)
@@ -184,7 +185,7 @@ class InstructorController extends Controller
         }
 
         // AUD-003 Fix: Only get students assigned to this instructor to prevent PII leakage
-        $query = Student::where('school_id', '=', $school->id);
+        $query = Student::where('school_id', '=', $school->id)->where('role', '=', 'student');
 
         if (empty($rosterStudentIds)) {
             $query->whereRaw('1 = 0');
@@ -261,7 +262,7 @@ class InstructorController extends Controller
         // Add computed data for each student
         $students->getCollection()->each(function ($student) use ($rosterStudentIds) {
             // Mark if student is assigned to this instructor
-            $student->is_assigned = in_array($student->id, $rosterStudentIds, true);
+            $student->is_assigned = in_array((int) $student->id, $rosterStudentIds, true);
 
             // Get most recent booking with this instructor
             $recentBooking = $student->bookings->first();
@@ -308,6 +309,19 @@ class InstructorController extends Controller
                     });
             })
             ->exists();
+<<<<<<< Updated upstream
+=======
+
+        if (!$isAssigned) {
+            $isAssigned = SessionCompletion::where('school_id', $school->id)
+                ->where('instructor_id', $instructor->id)
+                ->whereHas('enrollment', function ($query) use ($id, $school) {
+                    $query->where('learner_id', $id)
+                        ->where('school_id', $school->id);
+                })
+                ->exists();
+        }
+>>>>>>> Stashed changes
         
         abort_unless($isAssigned, 403, 'Unauthorized access: You are not assigned to this student.');
 
@@ -570,7 +584,9 @@ class InstructorController extends Controller
 
         $studentIds = array_unique(array_merge($bookingStudentIds, $sessionStudentIds));
 
-        $students = Student::whereIn('id', $studentIds, 'and', false)
+        $students = Student::where('school_id', '=', $school->id, 'and')
+            ->where('role', '=', 'student', 'and')
+            ->whereIn('id', $studentIds, 'and', false)
             ->with(['bookings' => function($q) use ($instructor) {
                 $q->where('instructor_id', '=', $instructor->id, 'and');
             }])

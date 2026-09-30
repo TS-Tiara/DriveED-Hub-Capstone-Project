@@ -182,12 +182,16 @@ class Student extends Authenticatable
     }
 
     /**
-     * Get all enrollments for this student (approved enrollment requests)
+     * Get all enrollments for this student (all enrollment requests)
      */
     public function enrollments()
     {
-        return $this->hasMany(EnrollmentRequest::class , 'learner_id')
-            ->whereIn('status', ['approved', 'completed', 'cancelled']);
+        return $this->hasMany(EnrollmentRequest::class, 'learner_id');
+    }
+
+    public function lessonCompletions()
+    {
+        return $this->hasMany(StudentLessonCompletion::class);
     }
 
 
