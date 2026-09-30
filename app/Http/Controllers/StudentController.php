@@ -21,7 +21,10 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\EnrollmentRequestReceived;
 use App\Models\Notification;
 use App\Models\Admin;
+use App\Models\GCashSetting;
 use App\Support\DemoAccountProtection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Database\QueryException;
 
 class StudentController extends Controller
 {
@@ -56,14 +59,18 @@ class StudentController extends Controller
             return redirect()->back()->with('error', $canEnroll['message']);
         }
 
-        // School-scoped single-active guard (single active enrollment per school).
-        $hasActiveEnrollment = EnrollmentRequest::where('learner_id', $student->id)
+        // School-scoped single-active guard: block if ANY pending or approved
+        // enrollment exists (completed/rejected/cancelled allow re-enrollment).
+        $blockingEnrollment = EnrollmentRequest::where('learner_id', $student->id)
             ->where('school_id', $school->id)
-            ->where('status', 'approved')
-            ->exists();
+            ->whereIn('status', ['pending', 'approved'])
+            ->first();
 
-        if ($hasActiveEnrollment) {
-            return redirect()->back()->with('error', 'You already have an active course in this school. Complete or cancel it before enrolling in another course.');
+        if ($blockingEnrollment) {
+            $msg = $blockingEnrollment->status === 'pending'
+                ? 'You already have a pending enrollment request. Please wait for admin review or withdraw it before enrolling in another course.'
+                : 'You already have an active course in this school. Complete or cancel it before enrolling in another course.';
+            return redirect()->back()->with('error', $msg);
         }
 
         // Check if already enrolled for this course (excluding previous rejections/cancellations)
@@ -78,6 +85,8 @@ class StudentController extends Controller
             }
         }
 
+        // Prevent race-condition double submit with row-level lock and unique pending/approved guard
+        $lockKey = "enroll:{$school->id}:{$student->id}:{$course->id}";
         try {
             $data = [
                 'school_id' => $school->id,
@@ -91,6 +100,7 @@ class StudentController extends Controller
                 'remarks' => $request->notes,
                 'location' => $request->location ?? $student->location,
                 'branch_id' => $request->input('branch_id'),
+                'requested_dl_code' => $request->input('requested_dl_code') ?? $request->input('dl_code') ?? null,
             ];
 
             // Snapshot the price
@@ -112,7 +122,32 @@ class StudentController extends Controller
                 $data['credentials_file_path'] = $path;
             }
 
-            $enrollmentRequest = EnrollmentRequest::create($data);
+            $enrollmentRequest = \Illuminate\Support\Facades\DB::transaction(function () use ($data, $school, $student, $course) {
+                // Re-check inside transaction with lock to avoid race
+                $exists = EnrollmentRequest::where('learner_id', $student->id)
+                    ->where('course_id', $course->id)
+                    ->whereNotIn('status', ['rejected', 'cancelled'])
+                    ->lockForUpdate()
+                    ->exists();
+                if ($exists) {
+                    throw new \Illuminate\Validation\ValidationException(
+                        \Illuminate\Support\Facades\Validator::make([], []),
+                        response()->redirectToRoute('schools.student.courses.index', ['school' => $school->slug])->with('warning', 'You already have an active enrollment request for this course.')
+                    );
+                }
+                // Guard missing columns on older DB – fallback gracefully
+                try {
+                    return EnrollmentRequest::create($data);
+                } catch (\Illuminate\Database\QueryException $qe) {
+                    if (str_contains($qe->getMessage(), 'Unknown column') || str_contains($qe->getMessage(), 'doesn\'t have a default')) {
+                        // Retry without optional new columns
+                        $fallback = collect($data)->only(['school_id','learner_id','course_id','status','payment_status','requested_license_type','experience_level','remarks','location'])->toArray();
+                        $fallback['price'] = $data['price'] ?? $course->price;
+                        return EnrollmentRequest::create($fallback);
+                    }
+                    throw $qe;
+                }
+            });
 
             // PDC-only: if a license is being submitted (staged or existing), mark status as pending for admin review.
             if ($course->isPractical() && ($request->hasFile('student_license') || $student->hasStoredLicense()) && !$student->hasVerifiedLicense()) {
@@ -173,8 +208,186 @@ class StudentController extends Controller
         ]);
 
         return redirect()
-            ->route('schools.student.payments.index', ['school' => $school->slug, 'enrollment_id' => $enrollmentRequest->id])
-            ->with('success', 'Your enrollment request has been submitted. Please upload your payment receipt to continue approval.');
+            ->route('schools.student.payment.show', ['school' => $school->slug, 'enrollment_request_id' => $enrollmentRequest->id])
+            ->with('success', 'Step 1 of 2 Complete! Please submit your payment details below.');
+    }
+
+    /**
+     * Dedicated payment checkout page for student (re-)enrollment.
+     * Students land here after submitting an enrollment request — not My Payments.
+     */
+    public function showPayment(School $school, $enrollment_request_id)
+    {
+        $student = Auth::guard('student')->user();
+        if (!$student || $student->isGuest()) {
+            return redirect()->route('schools.login', $school);
+        }
+
+        $enrollmentRequest = EnrollmentRequest::where('id', $enrollment_request_id)
+            ->where('learner_id', $student->id)
+            ->where('school_id', $school->id)
+            ->firstOrFail();
+
+        $gcashSetting = GCashSetting::getActiveSetting($school->id, $enrollmentRequest->branch_id);
+        $paymentConcierge = $this->buildEnrollmentPaymentConcierge($enrollmentRequest);
+
+        return view('school.student.payment-select', compact('school', 'enrollmentRequest', 'gcashSetting', 'paymentConcierge'));
+    }
+
+    /**
+     * Handle student payment submission for an enrollment request.
+     * Writes BOTH the formal Payment record and the enrollment_requests receipt
+     * fields so admin Enrollment page and Payments ledger stay in sync.
+     */
+    public function submitPayment(Request $request, School $school, $enrollment_request_id, \App\Services\ReceiptStorageService $storageService)
+    {
+        $student = Auth::guard('student')->user();
+        if (!$student || $student->isGuest()) {
+            abort(403);
+        }
+
+        $enrollmentRequest = EnrollmentRequest::where('id', $enrollment_request_id)
+            ->where('learner_id', $student->id)
+            ->where('school_id', $school->id)
+            ->firstOrFail();
+
+        $paymentConcierge = $this->buildEnrollmentPaymentConcierge($enrollmentRequest);
+        if (!$paymentConcierge['allow_submission']) {
+            return redirect()
+                ->route('schools.student.payment.show', ['school' => $school->slug, 'enrollment_request_id' => $enrollmentRequest->id])
+                ->with('info', $paymentConcierge['message']);
+        }
+
+        $method = $request->input('payment_method', 'gcash');
+        $isOnSite = $method === 'on_site';
+
+        $request->validate([
+            'payment_method' => 'required|in:gcash,on_site',
+            'reference_number' => $isOnSite ? 'required|regex:/^[0-9]{1,15}$/' : 'required|regex:/^[0-9]{13}$/',
+            'screenshot' => 'required|image|mimes:jpeg,png,jpg,webp|max:5120',
+        ], [
+            'reference_number.required' => $isOnSite ? 'OR number is required.' : 'GCash reference number is required.',
+            'reference_number.regex' => $isOnSite
+                ? 'The OR number must be 1 to 15 digits (numbers only).'
+                : 'The GCash reference number must be exactly 13 digits (numbers only).',
+            'screenshot.required' => 'Please upload your receipt screenshot.',
+        ]);
+
+        $path = null;
+        $isRevisionMode = !empty($paymentConcierge['revision_mode']);
+
+        try {
+            DB::beginTransaction();
+
+            if ($isRevisionMode) {
+                $enrollmentRequest->payments()
+                    ->whereIn('status', ['pending', 'on_hold', 'rejected'])
+                    ->update([
+                        'status' => 'rejected',
+                        'reference' => null,
+                        'normalized_reference' => null,
+                        'or_number' => null,
+                        'normalized_or_number' => null,
+                        'updated_at' => now(),
+                    ]);
+            }
+
+            $path = $storageService->store($request->file('screenshot'), $school->id);
+
+            $paymentNote = $isOnSite
+                ? ($isRevisionMode ? 'On-site OR Re-Submitted' : 'On-site OR Submitted')
+                : ($isRevisionMode ? 'GCash Payment Re-Submitted' : 'GCash Payment Submitted');
+            $existingRemarks = $enrollmentRequest->remarks ? rtrim($enrollmentRequest->remarks) . "\n" : '';
+
+            $enrollmentRequest->update([
+                'payment_method' => $method,
+                'payment_reference' => $request->reference_number,
+                'payment_proof_path' => $path,
+                'payment_status' => 'pending',
+                'remarks' => $existingRemarks . '[' . $paymentNote . ': ' . now()->format('Y-m-d H:i') . ']',
+            ]);
+
+            $paymentData = [
+                'school_id' => $school->id,
+                'branch_id' => $enrollmentRequest->branch_id,
+                'payer_user_id' => $enrollmentRequest->learner_id,
+                'enrollment_request_id' => $enrollmentRequest->id,
+                'amount' => $enrollmentRequest->price,
+                'method' => $method,
+                'proof_of_payment_path' => $path,
+                'status' => 'pending',
+            ];
+            if ($isOnSite) {
+                $paymentData['or_number'] = $request->reference_number;
+            } else {
+                $paymentData['reference'] = $request->reference_number;
+            }
+            \App\Models\Payment::create($paymentData);
+
+            DB::commit();
+
+            $admins = Admin::where('school_id', $school->id)->where('is_active', true)->get();
+            foreach ($admins as $admin) {
+                Notification::send($admin, 'payment_submitted', 'New Payment Verification Request',
+                    "{$student->name} has submitted a payment for enrollment #{$enrollmentRequest->id}.",
+                    'payment', "/{$school->slug}/admin/enrollments");
+            }
+
+            return redirect()
+                ->route('schools.student.payments.index', $school->slug)
+                ->with('success', $isRevisionMode
+                    ? 'Updated payment details submitted. An admin will review your update shortly.'
+                    : 'Payment details submitted successfully! An admin will verify your payment shortly.');
+        } catch (QueryException $e) {
+            DB::rollBack();
+            if ($path) {
+                Storage::disk('local')->delete($path);
+            }
+            $msg = str_contains($e->getMessage(), 'normalized_reference')
+                ? 'That GCash reference number is already used in this school. Please double-check it.'
+                : 'Failed to submit payment details. Please check your reference number and try again.';
+            return redirect()
+                ->route('schools.student.payment.show', ['school' => $school->slug, 'enrollment_request_id' => $enrollmentRequest->id])
+                ->withInput()->with('error', $msg);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            if ($path) {
+                Storage::disk('local')->delete($path);
+            }
+            Log::error('Student payment submission failed: ' . $e->getMessage());
+            return redirect()
+                ->route('schools.student.payment.show', ['school' => $school->slug, 'enrollment_request_id' => $enrollmentRequest->id])
+                ->withInput()->with('error', 'Failed to submit payment details. Please try again.');
+        }
+    }
+
+    private function buildEnrollmentPaymentConcierge(EnrollmentRequest $enrollmentRequest): array
+    {
+        $enrollmentStatus = (string) $enrollmentRequest->status;
+        $paymentStatus = (string) ($enrollmentRequest->payment_status ?? 'pending');
+        $hasLegacySubmissionData = !empty($enrollmentRequest->payment_reference) || !empty($enrollmentRequest->payment_proof_path);
+        $activePaymentStatuses = $enrollmentRequest->payments()->whereIn('status', ['pending', 'approved'])->pluck('status');
+        $hasPendingPaymentRecord = $activePaymentStatuses->contains('pending');
+        $hasApprovedPaymentRecord = $activePaymentStatuses->contains('approved');
+        $hasActivePaymentRecord = $hasPendingPaymentRecord || $hasApprovedPaymentRecord;
+
+        if (in_array($enrollmentStatus, ['cancelled', 'rejected'], true)
+            && !in_array($paymentStatus, ['rejected', 'revision_required'], true)) {
+            return ['allow_submission' => false, 'revision_mode' => false, 'level' => 'error', 'message' => 'This enrollment request is no longer active, so payment submission is disabled.'];
+        }
+        if ($paymentStatus === 'paid' || $hasApprovedPaymentRecord) {
+            return ['allow_submission' => false, 'revision_mode' => false, 'level' => 'success', 'message' => 'Your payment has already been verified. No need to submit again.'];
+        }
+        if (in_array($paymentStatus, ['rejected', 'revision_required'], true)) {
+            if ($hasActivePaymentRecord) {
+                return ['allow_submission' => false, 'revision_mode' => false, 'level' => 'info', 'message' => 'Your updated payment is already submitted and waiting for admin review.'];
+            }
+            return ['allow_submission' => true, 'revision_mode' => true, 'level' => 'warning', 'message' => 'Your previous payment needs revision. Please submit an updated receipt now.'];
+        }
+        if (in_array($paymentStatus, ['pending', 'on_hold', 'partial'], true) && ($hasLegacySubmissionData || $hasActivePaymentRecord)) {
+            return ['allow_submission' => false, 'revision_mode' => false, 'level' => 'info', 'message' => 'Payment details are already submitted and currently under review.'];
+        }
+        return ['allow_submission' => true, 'revision_mode' => false, 'level' => 'info', 'message' => ''];
     }
 
     public function dashboard(Request $request, School $school)
@@ -252,10 +465,38 @@ class StudentController extends Controller
         $hasPassedTheoretical = $studentModel ? $studentModel->hasPassedTheoretical() : false;
         $canEnrollPractical = $studentModel ? $studentModel->canEnrollPractical() : false;
         
+<<<<<<< Updated upstream
         // Enrolled course info (primary active enrollment)
         $primaryEnrollment = $activeEnrollments->first();
         $enrolledCourseName = $primaryEnrollment ? ($primaryEnrollment->course->title ?? 'N/A') : 'No Active Course';
         $enrolledCourseType = $primaryEnrollment && $primaryEnrollment->course ? ucfirst($primaryEnrollment->course->course_type ?? 'N/A') : 'N/A';
+=======
+        // Enrolled course info (primary active enrollment) – dynamically prioritize practical/current course
+        $allStudentEnrollments = EnrollmentRequest::where('learner_id', $student->id)
+            ->where('school_id', $school->id)
+            ->whereNotIn('status', ['rejected', 'cancelled'])
+            ->with(['course', 'sessionCompletions'])
+            ->orderBy('id', 'desc')
+            ->get();
+
+        $primaryEnrollment = $activeEnrollments->first(fn($e) => in_array(strtolower($e->course?->course_type ?? $e->course?->type ?? ''), ['practical', 'pdc']))
+            ?? $activeEnrollments->first(fn($e) => in_array(strtolower($e->course?->course_type ?? $e->course?->type ?? ''), ['combo']))
+            ?? $activeEnrollments->first()
+            ?? $allStudentEnrollments->first(fn($e) => in_array(strtolower($e->course?->course_type ?? $e->course?->type ?? ''), ['practical', 'pdc']))
+            ?? $allStudentEnrollments->first();
+
+        $enrolledCourseName = $primaryEnrollment ? ($primaryEnrollment->course->title ?? 'N/A') : 'No Active Course';
+        $resolveType = function($course) {
+            if (!$course) return 'N/A';
+            $canonical = strtolower(trim((string)($course->course_type ?? '')));
+            $legacy = strtolower(trim((string)($course->type ?? '')));
+            $valid = ['theoretical','practical','combo'];
+            if (in_array($canonical, $valid, true)) return ucfirst($canonical);
+            if (in_array($legacy, $valid, true)) return ucfirst($legacy);
+            return ucfirst($canonical ?: 'N/A');
+        };
+        $enrolledCourseType = $primaryEnrollment && $primaryEnrollment->course ? $resolveType($primaryEnrollment->course) : 'N/A';
+>>>>>>> Stashed changes
         
         // Recent graded sessions for feedback visibility
         $recentGrades = Booking::where('student_id', $student->id)
@@ -277,6 +518,10 @@ class StudentController extends Controller
             'nextLessons' => $nextLessons,
             'progressPercentage' => $progressPercentage,
             'activeEnrollments' => $activeEnrollments,
+<<<<<<< Updated upstream
+=======
+            'primaryEnrollment' => $primaryEnrollment,
+>>>>>>> Stashed changes
             'enrolledCourseName' => $enrolledCourseName,
             'enrolledCourseType' => $enrolledCourseType,
             'hasPassedTheoretical' => $hasPassedTheoretical,
@@ -512,7 +757,18 @@ class StudentController extends Controller
     public function schedule(Request $request, School $school)
     {
         $student = Auth::guard('student')->user();
-        
+
+        // Students must have an APPROVED (processed) enrollment before seeing
+        // or booking schedules — pending/rejected enrollments see no slots.
+        $hasApprovedEnrollment = \App\Models\EnrollmentRequest::where('learner_id', $student->id)
+            ->where('school_id', $school->id)
+            ->where('status', 'approved')
+            ->exists();
+        $pendingEnrollmentExists = \App\Models\EnrollmentRequest::where('learner_id', $student->id)
+            ->where('school_id', $school->id)
+            ->where('status', 'pending')
+            ->exists();
+
         // Get enrolled course IDs (approved enrollment requests)
         $enrolledCourseIds = \App\Models\EnrollmentRequest::where('learner_id', $student->id)
             ->where('school_id', $school->id)
@@ -553,13 +809,16 @@ class StudentController extends Controller
             ->get();
         
         // Get available time slots (Only those with instructors assigned)
-        $availableTimeSlots = \App\Models\TimeSlot::visibleToStudents()
-            ->where('school_id', $school->id)
-            ->where('date', '>=', now()->toDateString())
-            ->with(['instructors', 'course', 'branch'])
-            ->orderBy('date')
-            ->orderBy('start_time')
-            ->get();
+        // Gate: hide schedules until enrollment is approved/processed.
+        $availableTimeSlots = $hasApprovedEnrollment
+            ? \App\Models\TimeSlot::visibleToStudents()
+                ->where('school_id', $school->id)
+                ->where('date', '>=', now()->toDateString())
+                ->with(['instructors', 'course', 'branch'])
+                ->orderBy('date')
+                ->orderBy('start_time')
+                ->get()
+            : collect();
         
         // Group available schedules by date
         $groupedAvailableSchedules = $availableTimeSlots->groupBy(function($timeSlot) {
@@ -583,6 +842,8 @@ class StudentController extends Controller
         return view($school->resolveView('student.schedule'), [
             'isAjax' => $request->ajax(),
             'school' => $school,
+            'hasApprovedEnrollment' => $hasApprovedEnrollment,
+            'pendingEnrollmentExists' => $pendingEnrollmentExists,
             'enrolledCourseIds' => $enrolledCourseIds,
             'allBookings' => $allBookings,
             'confirmedBookings' => $confirmedBookings,
@@ -661,6 +922,10 @@ class StudentController extends Controller
             $modules = $course ? ($course->modules ?? collect()) : collect();
             $sessionCompletions = $completions;
         }
+
+        $completedLessonIds = $activeEnrollment
+            ? $student->lessonCompletions()->whereIn('lesson_id', $modules->flatMap(fn ($module) => $module->lessons ?? collect())->pluck('id'))->pluck('lesson_id')->all()
+            : [];
         
         return view($school->resolveView('student.my-course'), [
             'isAjax' => $request->ajax(),
@@ -676,6 +941,7 @@ class StudentController extends Controller
             'hoursCompleted' => $hoursCompleted,
             'hoursRequired' => $hoursRequired,
             'progressPercentage' => $progressPercentage,
+            'completedLessonIds' => $completedLessonIds,
         ]);
     }
 

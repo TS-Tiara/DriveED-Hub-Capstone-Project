@@ -30,6 +30,8 @@ class TimeSlot extends Model
         'max_instructors',
         'max_students',
         'notes',
+        'batch_group',
+        'batch_day_number',
     ];
 
     protected $casts = [
@@ -38,6 +40,7 @@ class TimeSlot extends Model
         'end_time' => 'string',
         'max_students' => 'integer',
         'max_instructors' => 'integer',
+        'batch_day_number' => 'integer',
     ];
 
     public function school()

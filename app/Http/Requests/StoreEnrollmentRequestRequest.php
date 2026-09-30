@@ -45,6 +45,12 @@ class StoreEnrollmentRequestRequest extends FormRequest
                 'mimes:pdf,jpg,jpeg,png',
                 'max:5120' // 5MB in kilobytes
             ],
+            'student_license' => [
+                'nullable',
+                'file',
+                'mimes:pdf,jpg,jpeg,png',
+                'max:5120'
+            ],
             'notes' => ['nullable', 'string', 'max:1000'],
             'requested_dl_code' => ['nullable', 'string', 'in:A,A1,B,B1,B2,C,D,BE,CE'],
         ];
@@ -55,7 +61,7 @@ class StoreEnrollmentRequestRequest extends FormRequest
      *
      * @return array<string, string>
      */
-    public function messages(): array
+     public function messages(): array
     {
         return [
             'experience_level.required' => 'Please indicate your experience level.',
@@ -63,6 +69,8 @@ class StoreEnrollmentRequestRequest extends FormRequest
             'package_id.exists' => 'The selected package does not exist.',
             'credential_file.mimes' => 'Credentials must be a PDF, JPG, or PNG file.',
             'credential_file.max' => 'Credentials file must not exceed 5MB.',
+            'student_license.mimes' => 'License must be a PDF, JPG, or PNG file.',
+            'student_license.max' => 'License file must not exceed 5MB.',
             'notes.max' => 'Notes must not exceed 1000 characters.',
         ];
     }
@@ -91,12 +99,13 @@ class StoreEnrollmentRequestRequest extends FormRequest
                 $validator->errors()->add('course_id', $validation['message']);
             }
 
-            // If file is present, validate it
-            if ($this->hasFile('credential_file')) {
-                $fileValidation = EnrollmentValidator::validateCredentialFile($this->file('credential_file'));
-
+            // If file is present, validate it (support both field names)
+            $fileToValidate = $this->hasFile('credential_file') ? $this->file('credential_file') : ($this->hasFile('student_license') ? $this->file('student_license') : null);
+            if ($fileToValidate) {
+                $fileValidation = EnrollmentValidator::validateCredentialFile($fileToValidate);
+                $field = $this->hasFile('credential_file') ? 'credential_file' : 'student_license';
                 if (!$fileValidation['valid']) {
-                    $validator->errors()->add('credential_file', $fileValidation['message']);
+                    $validator->errors()->add($field, $fileValidation['message']);
                 }
             }
 

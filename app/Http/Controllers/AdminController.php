@@ -53,7 +53,7 @@ class AdminController extends Controller
 
             // Get counts and statistics
             // Get consolidated counts for Students and Instructors
-            $studentStats = $admin->scopeToBranch(Student::where('school_id', '=', $school->id))
+            $studentStats = $admin->scopeToBranch(Student::where('school_id', '=', $school->id)->where('role', 'student'))
                 ->selectRaw("
                     COUNT(*) as total,
                     SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active,
@@ -81,7 +81,7 @@ class AdminController extends Controller
             $availableInstructors = $instructorStats->available ?? 0;
 
             // Get recent activities (last 5) - Optimized with select to reduce data transfer
-            $recentStudents = $admin->scopeToBranch(Student::where('school_id', $school->id))
+            $recentStudents = $admin->scopeToBranch(Student::where('school_id', $school->id)->where('role', 'student'))
                 ->select('id', 'school_id', 'branch_id', 'name', 'email', 'status', 'created_at')
                 ->orderBy('created_at', 'desc')
                 ->limit(5)
@@ -100,7 +100,7 @@ class AdminController extends Controller
             $trendStart = Carbon::now()->startOfMonth()->subMonths(11);
 
             // Keep DATE() grouping in SQL for database compatibility, then bucket to month in PHP.
-            $dailyEnrollmentCounts = $admin->scopeToBranch(Student::where('school_id', $school->id))
+            $dailyEnrollmentCounts = $admin->scopeToBranch(Student::where('school_id', $school->id)->where('role', 'student'))
                 ->where('created_at', '>=', $trendStart)
                 ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
                 ->groupBy('date')
@@ -230,7 +230,7 @@ class AdminController extends Controller
                 return redirect()->route('schools.admin.login', $school);
             }
 
-            $studentQuery = $admin->scopeToBranch(Student::where('school_id', $school->id));
+            $studentQuery = $admin->scopeToBranch(Student::where('school_id', $school->id)->where('role', 'student'));
             $instructorQuery = $admin->scopeToBranch(Instructor::where('school_id', $school->id));
 
             // Calculate stats for view
@@ -1730,7 +1730,10 @@ class AdminController extends Controller
             }
 
             $validated = $request->validate([
-                'date' => 'required|date|after_or_equal:today',
+                'date' => 'required_without:batch_dates|nullable|date|after:today',
+                'batch_dates' => 'nullable|array|min:1',
+                'batch_dates.*' => 'required|date|after:today',
+                'batch_lesson_prefix' => 'nullable|string|max:100',
                 'start_time' => 'required',
                 'end_time' => [
                     'required',
@@ -1740,9 +1743,12 @@ class AdminController extends Controller
                             $start = \Carbon\Carbon::createFromFormat('H:i', $request->start_time);
                             $end = \Carbon\Carbon::createFromFormat('H:i', $value);
                             $duration = $start->diffInMinutes($end);
-                            
+                             
                             if ($duration < 60) {
                                 $fail("The session must be at least 1 hour long. (Detected: {$duration} mins)");
+                            }
+                            if ($duration > 480) {
+                                $fail("The session cannot exceed 8 hours per day. (Detected: ".round($duration/60,1)."h) Please split into multiple days.");
                             }
                         } catch (\Exception $e) {
                             // Validation format errors handled by other rules
@@ -1765,10 +1771,49 @@ class AdminController extends Controller
                 'max_instructors' => 'nullable|integer|min:1|max:10',
                 'max_students' => 'nullable|integer|min:1|max:100',
                 'notes' => 'nullable|string',
+            ], [
+                'date.required_without' => 'Please select a schedule date.',
+                'date.date' => 'Invalid schedule date.',
+                'date.after' => 'Schedules cannot be created for today or past dates. Please select a future date (tomorrow onwards).',
+                'batch_dates.*.date' => 'One of the batch dates is invalid.',
+                'batch_dates.*.after' => 'Batch dates must be future dates (tomorrow onwards) — today and past dates are not allowed.',
+                'start_time.required' => 'Please select a start time.',
+                'end_time.required' => 'Please select an end time.',
+                'end_time.after' => 'End time must be after the start time.',
+                'course_id.required' => 'Please select a course for this schedule.',
+                'batch_dates.min' => 'Please add at least one batch date.',
             ]);
+
+            // Daily hour limit validation per instructor (max 8h/day)
+            if (!empty($validated['instructor_ids']) && !empty($validated['date'])) {
+                foreach ($validated['instructor_ids'] as $iid) {
+                    $daySlots = TimeSlot::where('school_id', $school->id)
+                        ->where('date', $validated['date'])
+                        ->whereHas('instructors', fn($q)=>$q->where('instructors.id',$iid))
+                        ->get();
+                    $existingMinutes = $daySlots->sum(function($s){
+                        try {
+                            $a=\Carbon\Carbon::createFromFormat('H:i',$s->start_time);
+                            $b=\Carbon\Carbon::createFromFormat('H:i',$s->end_time);
+                            return $a->diffInMinutes($b);
+                        } catch(\Exception $e){ return 0; }
+                    });
+                    $newMinutes = \Carbon\Carbon::createFromFormat('H:i',$validated['start_time'])->diffInMinutes(\Carbon\Carbon::createFromFormat('H:i',$validated['end_time']));
+                    if (($existingMinutes + $newMinutes) > 480) {
+                        throw \Illuminate\Validation\ValidationException::withMessages(['date' => "Instructor would exceed 8h/day limit (existing ".round($existingMinutes/60,1)."h + new ".round($newMinutes/60,1)."h)."]);
+                    }
+                }
+            }
 
             // Layer 2: Fail-Closed Retrieval
             $course = $school->courses()->findOrFail($validated['course_id']);
+
+            // TDC Batch Scheduling is only valid for Theoretical courses.
+            if (!empty($validated['batch_dates']) && strtolower((string) ($course->course_type ?? '')) !== 'theoretical') {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'batch_dates' => 'TDC Batch Scheduling is only available for Theoretical (TDC) courses.',
+                ]);
+            }
 
             // Branch-level authorization
             $branchId = $validated['branch_id'] ?? $admin->branch_id;
@@ -1793,57 +1838,83 @@ class AdminController extends Controller
             }
 
             DB::beginTransaction();
-
-            $schedule = TimeSlot::create([
-                'school_id' => $school->id,
-                'branch_id' => $branchId,
-                'course_id' => $validated['course_id'],
-                'session_type' => $resolvedSessionType,
-                'date' => $validated['date'],
-                'start_time' => $validated['start_time'],
-                'end_time' => $validated['end_time'],
-                'max_instructors' => $maxInstructors,
-                'max_students' => $maxStudents,
-                'notes' => $validated['notes'] ?? null,
-                'status' => 'open',
-            ]);
-
+            // Double-booking prevention: check instructor time overlap for same date
+            $datesToCreate = !empty($validated['batch_dates']) ? $validated['batch_dates'] : [$validated['date']];
+            $batchGroup = !empty($validated['batch_dates']) ? uniqid('batch_') : null;
+            $createdSchedules = [];
             $instructors = null;
-            // If admin selected instructors to assign
+
             if (!empty($validated['instructor_ids'])) {
-                // Verify all instructors belong to this school
                 $instructors = Instructor::whereIn('id', $validated['instructor_ids'])
                     ->where('school_id', $school->id)
                     ->where('status', 'active')
                     ->get();
-
                 if ($instructors->count() !== count($validated['instructor_ids'])) {
                     DB::rollBack();
                     throw \Illuminate\Validation\ValidationException::withMessages(['instructor_ids' => 'Some selected instructors are invalid or inactive.']);
                 }
-
-                // Accreditation Check
                 foreach ($instructors as $instructor) {
                     if (!$instructor->canTeach($course)) {
                         DB::rollBack();
                         throw \Illuminate\Validation\ValidationException::withMessages(['instructor_ids' => "Instructor {$instructor->name} is not accredited to teach this course (License status: {$instructor->license_status})."]);
                     }
                 }
-
-                // Check if not exceeding max capacity (for TDC)
                 if ($resolvedSessionType === 'theoretical' && $instructors->count() > $maxInstructors) {
                     DB::rollBack();
                     throw \Illuminate\Validation\ValidationException::withMessages(['instructor_ids' => 'Cannot assign more instructors than the maximum capacity.']);
                 }
-
-                // Assign instructors with admin_assigned type
-                foreach ($instructors as $instructor) {
-                    $schedule->instructors()->attach($instructor->id, [
-                        'school_id' => $school->id,
-                        'assignment_type' => 'admin_assigned',
-                    ]);
+                // Instructor overlap check per date
+                foreach ($datesToCreate as $d) {
+                    foreach ($instructors as $inst) {
+                        $overlap = TimeSlot::where('school_id',$school->id)
+                            ->where('date',$d)
+                            ->whereHas('instructors', fn($q)=>$q->where('instructors.id',$inst->id))
+                            ->get()
+                            ->filter(function($slot) use ($validated){
+                                $s1 = \Carbon\Carbon::createFromFormat('H:i',$slot->start_time);
+                                $e1 = \Carbon\Carbon::createFromFormat('H:i',$slot->end_time);
+                                $s2 = \Carbon\Carbon::createFromFormat('H:i',$validated['start_time']);
+                                $e2 = \Carbon\Carbon::createFromFormat('H:i',$validated['end_time']);
+                                return $s1->lt($e2) && $s2->lt($e1);
+                            })->count();
+                        if ($overlap > 0) {
+                            DB::rollBack();
+                            throw \Illuminate\Validation\ValidationException::withMessages(['instructor_ids' => "Instructor {$inst->name} already booked on {$d} at overlapping time ({$validated['start_time']}-{$validated['end_time']})."]);
+                        }
+                    }
                 }
             }
+
+            foreach ($datesToCreate as $idx => $d) {
+                $lessonTag = $batchGroup ? " [{$batchGroup} Day ".($idx+1)."]" : "";
+                $prefix = $validated['batch_lesson_prefix'] ?? '';
+                $note = trim(($prefix ? $prefix.' ' : '').($validated['notes'] ?? '').$lessonTag);
+                $schedule = TimeSlot::create([
+                    'school_id' => $school->id,
+                    'branch_id' => $branchId,
+                    'course_id' => $validated['course_id'],
+                    'session_type' => $resolvedSessionType,
+                    'date' => $d,
+                    'start_time' => $validated['start_time'],
+                    'end_time' => $validated['end_time'],
+                    'max_instructors' => $maxInstructors,
+                    'max_students' => $maxStudents,
+                    'notes' => $note ?: null,
+                    'status' => 'open',
+                    'batch_group' => $batchGroup,
+                    'batch_day_number' => $batchGroup ? $idx + 1 : null,
+                ]);
+                if ($instructors) {
+                    foreach ($instructors as $instructor) {
+                        $schedule->instructors()->attach($instructor->id, [
+                            'school_id' => $school->id,
+                            'assignment_type' => 'admin_assigned',
+                        ]);
+                    }
+                }
+                $createdSchedules[] = $schedule;
+            }
+            $schedule = $createdSchedules[0] ?? null;
 
             DB::commit();
 
@@ -2181,17 +2252,18 @@ class AdminController extends Controller
 
         $courses = $query->paginate(10)->withQueryString();
         $vehicleCategories = VehicleCategory::where('school_id', $school->id)->orderBy('name')->get();
+        $allCourses = Course::where('school_id', $school->id)->orderBy('title')->get();
 
-        return view($school->resolveView('admin.courses'), array_merge(compact('school', 'courses', 'vehicleCategories'), ['isAjax' => $request->ajax()]));
+        return view($school->resolveView('admin.courses'), array_merge(compact('school', 'courses', 'vehicleCategories', 'allCourses'), ['isAjax' => $request->ajax()]));
     }
 
-    /**
-     * Store a new course
-     */
-    public function storeCourse(Request $request, School $school)
-    {
-        try {
-            $validated = $request->validate([
+     /**
+      * Store a new course – combo can be built dynamically by selecting existing courses
+      */
+     public function storeCourse(Request $request, School $school)
+     {
+         try {
+             $validated = $request->validate([
                 'title' => 'required|string|max:255',
                 'description' => 'nullable|string',
                 'banner_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:' . (($school->schoolSetting->max_file_size_mb ?? 5) * 1024) . '|dimensions:max_width=4000,max_height=4000',
@@ -2206,7 +2278,17 @@ class AdminController extends Controller
                 'is_featured' => 'nullable',
                 'features' => 'nullable|array',
                 'features.*' => 'nullable|string',
+                'combo_course_ids' => 'nullable|array',
+                'combo_course_ids.*' => 'integer|exists:courses,id',
             ]);
+            if (!empty($validated['combo_course_ids']) && $validated['course_type'] === 'combo') {
+                $validIds = \App\Models\Course::where('school_id',$school->id)->whereIn('id',$validated['combo_course_ids'])->pluck('id')->toArray();
+                if (count($validIds) !== count($validated['combo_course_ids'])) {
+                    throw \Illuminate\Validation\ValidationException::withMessages(['combo_course_ids'=>'One or more selected courses are invalid for this school.']);
+                }
+            } elseif (!empty($validated['combo_course_ids']) && $validated['course_type'] !== 'combo') {
+                $validated['combo_course_ids'] = null;
+            }
 
             $validated['school_id'] = $school->id;
             $validated['is_featured'] = $request->has('is_featured');
@@ -2284,7 +2366,17 @@ class AdminController extends Controller
                 'is_featured' => 'nullable',
                 'features' => 'nullable|array',
                 'features.*' => 'nullable|string',
+                'combo_course_ids' => 'nullable|array',
+                'combo_course_ids.*' => 'integer|exists:courses,id',
             ]);
+            if (!empty($validated['combo_course_ids']) && $validated['course_type'] === 'combo') {
+                $validIds = \App\Models\Course::where('school_id',$school->id)->whereIn('id',$validated['combo_course_ids'])->pluck('id')->toArray();
+                if (count($validIds) !== count($validated['combo_course_ids'])) {
+                    throw \Illuminate\Validation\ValidationException::withMessages(['combo_course_ids'=>'One or more selected courses are invalid for this school.']);
+                }
+            } elseif (!empty($validated['combo_course_ids']) && $validated['course_type'] !== 'combo') {
+                $validated['combo_course_ids'] = null;
+            }
 
             $validated['is_featured'] = $request->has('is_featured');
 

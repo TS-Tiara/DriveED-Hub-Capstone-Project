@@ -2026,7 +2026,7 @@
                     </div>
                     <div class="nav-category-items">
                         <a href="{{ $schoolRoute('instructor.theoretical.index') }}" class="nav-item"
-                            data-page="theoretical">Student Training List</a>
+                            data-page="theoretical">Theoretical Training</a>
                         <a href="{{ $schoolRoute('instructor.materials.index') }}" class="nav-item"
                             data-page="materials">Course Materials</a>
                         <a href="{{ $schoolRoute('instructor.questions.index') }}" class="nav-item"

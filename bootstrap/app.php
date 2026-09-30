@@ -46,18 +46,32 @@ return Application::configure(basePath: dirname(__DIR__))
         });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        // Handle CSRF token mismatch (419) - redirect back instead of error page
-        $exceptions->renderable(function (TokenMismatchException $e, Request $request) {
-            // For AJAX requests, return JSON error
+        // Handle CSRF token mismatch (419) - redirect back with input instead of error page
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\HttpException $e, Request $request) {
+            if ($e->getStatusCode() === 419) {
+                if ($request->expectsJson() || $request->ajax()) {
+                    return response()->json([
+                        'message' => 'Your session has expired. Please refresh the page.',
+                    ], 419);
+                }
+
+                return redirect()->back()
+                    ->withInput($request->except('_token', 'password', 'password_confirmation'))
+                    ->with('error', 'Your session expired. Please submit the form again.')
+                    ->withErrors(['session' => 'Your session expired. Please submit the form again.']);
+            }
+        });
+
+        $exceptions->render(function (TokenMismatchException $e, Request $request) {
             if ($request->expectsJson() || $request->ajax()) {
                 return response()->json([
                     'message' => 'Your session has expired. Please refresh the page.',
                 ], 419);
             }
 
-            // For regular form submissions, redirect back with error
             return redirect()->back()
                 ->withInput($request->except('_token', 'password', 'password_confirmation'))
-                ->withErrors(['session' => 'Your session has expired. Please try again.']);
+                ->with('error', 'Your session expired. Please submit the form again.')
+                ->withErrors(['session' => 'Your session expired. Please submit the form again.']);
         });
     })->create();

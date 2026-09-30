@@ -2048,7 +2048,8 @@
                             <div class="form-group">
                                 <label class="form-label">Course Category *</label>
                                 <select name="course_type" id="courseCourseType"
-                                    class="form-control @error('course_type') is-invalid @enderror" required>
+                                    class="form-control @error('course_type') is-invalid @enderror" required
+                                    onchange="toggleComboCoursesContainer()">
                                     <option value="">Select category</option>
                                     <option value="theoretical">Theoretical</option>
                                     <option value="practical">Practical</option>
@@ -2075,6 +2076,25 @@
                                 @error('license_type')
                                     <div class="field-error">{{ $message }}</div>
                                 @enderror
+                            </div>
+                        </div>
+
+                        <div id="comboCoursesContainer" style="display: none; margin-bottom: 1.25rem; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 1rem;">
+                            <label class="form-label" style="margin-bottom: 0.25rem; font-weight: 600; color: #1e293b; display: flex; align-items: center; gap: 6px;">
+                                <i class="bi bi-collection-fill text-primary"></i> Bundle Existing Courses into this Combo:
+                            </label>
+                            <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 0.75rem;">
+                                Select individual courses to combine their curriculum and schedule offerings:
+                            </p>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.5rem; max-height: 180px; overflow-y: auto; padding-right: 4px;">
+                                @foreach($allCourses ?? $courses as $availCourse)
+                                    @if($availCourse->course_type !== 'combo')
+                                        <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; padding: 6px 10px; background: white; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer; user-select: none;">
+                                            <input type="checkbox" name="combo_course_ids[]" value="{{ $availCourse->id }}" class="combo-course-checkbox">
+                                            <span><strong>{{ $availCourse->title }}</strong> <span style="color: #64748b; font-size: 0.75rem;">({{ ucfirst($availCourse->course_type) }})</span></span>
+                                        </label>
+                                    @endif
+                                @endforeach
                             </div>
                         </div>
 
@@ -2397,6 +2417,14 @@
                 }, true);
             }
 
+            function toggleComboCoursesContainer() {
+                const select = document.getElementById('courseCourseType');
+                const container = document.getElementById('comboCoursesContainer');
+                if (container && select) {
+                    container.style.display = (select.value === 'combo') ? 'block' : 'none';
+                }
+            }
+
             // Course Modal Functions
             function openCreateModal() {
                 clearCourseFormValidation();
@@ -2406,6 +2434,8 @@
                 document.getElementById('courseId').value = '';
                 document.getElementById('courseForm').reset();
                 document.getElementById('imagePreview').style.display = 'none';
+                document.querySelectorAll('.combo-course-checkbox').forEach(cb => cb.checked = false);
+                toggleComboCoursesContainer();
                 updateDlCodePreview();
                 document.getElementById('courseModal').style.display = 'flex';
             }
@@ -2432,6 +2462,13 @@
                 document.getElementById('courseStatus').value = course.status || 'active';
                 document.getElementById('courseFeatured').checked = course.is_featured || false;
                 document.getElementById('courseSortOrder').value = course.sort_order || '0';
+
+                // Sync combo checkboxes
+                const comboIds = Array.isArray(course.combo_course_ids) ? course.combo_course_ids.map(id => String(id)) : [];
+                document.querySelectorAll('.combo-course-checkbox').forEach(cb => {
+                    cb.checked = comboIds.includes(String(cb.value));
+                });
+                toggleComboCoursesContainer();
 
                 // Load features
                 const featuresContainer = document.getElementById('featuresContainer');

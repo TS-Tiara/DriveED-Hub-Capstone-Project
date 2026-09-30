@@ -106,7 +106,8 @@ Route::prefix('{school:slug}')
     ->group(function (): void {
         Route::controller(AuthController::class)->group(function (): void {
             Route::get('/', 'showLogin')->name('login');
-            Route::post('/login', 'login')->name('login.submit')->middleware('throttle:5,1');
+            Route::get('/login', 'showLogin');
+            Route::post('/login', 'login')->name('login.submit')->middleware(app()->environment('production') ? 'throttle:5,1' : 'throttle:60,1');
             Route::post('/logout', 'logout')->name('logout');
 
             // Force Password Reset (for first-time admins)
@@ -579,6 +580,7 @@ Route::prefix('{school:slug}')
                     Route::post('/bookings', [BookingController::class , 'store'])->name('bookings.store');
                     Route::post('/bookings/{booking}/confirm', [BookingController::class , 'confirmBooking'])->name('bookings.confirm');
                     Route::delete('/bookings/{booking}/queue', [BookingController::class , 'removeFromQueue'])->name('bookings.removeQueue');
+                    Route::post('/bookings/{booking}/cancel', [BookingController::class, 'cancelBooking'])->name('bookings.cancel');
 
                     // Student progress (single page view - no individual progress detail page)
                     Route::get('/progress', [ProgressController::class , 'index'])->name('progress.index');
@@ -587,6 +589,9 @@ Route::prefix('{school:slug}')
                     Route::get('/payments', [PaymentController::class , 'index'])->name('payments.index');
                     Route::get('/payments/{payment}', [PaymentController::class , 'show'])->name('payments.show');
                     Route::post('/payments', [PaymentController::class , 'store'])->name('payments.store');
+                    // Dedicated payment page for (re-)enrollment checkout (not the My Payments list)
+                    Route::get('/payment/{enrollment_request_id}', [StudentController::class, 'showPayment'])->name('payment.show');
+                    Route::post('/payment/{enrollment_request_id}/submit', [StudentController::class, 'submitPayment'])->name('payment.submit');
 
                     // Student schedule
                     Route::get('/schedule', [StudentController::class , 'schedule'])->name('schedule');
@@ -608,6 +613,8 @@ Route::prefix('{school:slug}')
 
                             Route::prefix('{module}/lessons')->name('lessons.')->group(function () {
                                     Route::get('/', [ModuleLessonController::class , 'index'])->name('index');
+                                    Route::post('/{lesson}/complete', [ModuleLessonController::class , 'complete'])->name('complete');
+                                    Route::post('/{lesson}/complete', [ModuleLessonController::class , 'complete'])->name('complete');
                                     Route::get('/{lesson}', [ModuleLessonController::class , 'show'])->name('show');
                                 }
                                 );

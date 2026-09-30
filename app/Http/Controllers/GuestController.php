@@ -237,16 +237,21 @@ class GuestController extends Controller
             return redirect()->back()->with('error', $canEnroll['message']);
         }
 
-        // Check if already enrolled for this course (excluding previous rejections/cancellations)
-        $existingRequest = EnrollmentRequest::where('learner_id', $guest->id)
-            ->where('course_id', $course->id)
-            ->whereNotIn('status', ['rejected', 'cancelled'])
+        // School-scoped single-active guard: guests may only hold ONE pending/approved
+        // enrollment at a time (completed/rejected/cancelled allow new enrollment).
+        $blockingRequest = EnrollmentRequest::where('learner_id', $guest->id)
+            ->where('school_id', $school->id)
+            ->whereIn('status', ['pending', 'approved'])
             ->first();
 
-        if ($existingRequest) {
-            if (in_array($existingRequest->status, ['pending', 'approved'])) {
+        if ($blockingRequest) {
+            if ((int) $blockingRequest->course_id === (int) $course->id) {
                 return redirect()->back()->with('warning', 'You already have an active enrollment request for this course.');
             }
+            $msg = $blockingRequest->status === 'pending'
+                ? 'You already have a pending enrollment request. Please wait for admin review or withdraw it before enrolling in another course.'
+                : 'You are already enrolled in another course. Complete or cancel it before enrolling in a new one.';
+            return redirect()->back()->with('warning', $msg);
         }
 
         try {
@@ -262,6 +267,7 @@ class GuestController extends Controller
                 'remarks' => $request->notes,
                 'location' => $request->location ?? $guest->location,
                 'branch_id' => $request->input('branch_id'),
+                'requested_dl_code' => $request->input('requested_dl_code') ?? $request->input('dl_code') ?? null,
             ];
 
             // Snapshot the price
@@ -283,7 +289,29 @@ class GuestController extends Controller
                 $data['credentials_file_path'] = $path;
             }
 
-            $enrollmentRequest = EnrollmentRequest::create($data);
+            $enrollmentRequest = \Illuminate\Support\Facades\DB::transaction(function () use ($data, $school, $guest, $course) {
+                $exists = EnrollmentRequest::where('learner_id', $guest->id)
+                    ->where('course_id', $course->id)
+                    ->whereNotIn('status', ['rejected', 'cancelled'])
+                    ->lockForUpdate()
+                    ->exists();
+                if ($exists) {
+                    throw new \Illuminate\Validation\ValidationException(
+                        \Illuminate\Support\Facades\Validator::make([], []),
+                        response()->redirectToRoute('schools.guest.dashboard', ['school' => $school->slug])->with('warning', 'You already have an active enrollment request for this course.')
+                    );
+                }
+                try {
+                    return EnrollmentRequest::create($data);
+                } catch (\Illuminate\Database\QueryException $qe) {
+                    if (str_contains($qe->getMessage(), 'Unknown column') || str_contains($qe->getMessage(), "doesn't have a default")) {
+                        $fallback = collect($data)->only(['school_id','learner_id','course_id','status','payment_status','requested_license_type','experience_level','remarks','location'])->toArray();
+                        $fallback['price'] = $data['price'] ?? $course->price;
+                        return EnrollmentRequest::create($fallback);
+                    }
+                    throw $qe;
+                }
+            });
 
             // PDC-only: if a license is being submitted (staged or existing), mark status as pending for admin review.
             if ($course->isPractical() && ($request->hasFile('student_license') || $guest->hasStoredLicense()) && !$guest->hasVerifiedLicense()) {
@@ -294,12 +322,14 @@ class GuestController extends Controller
                     'student_license_rejection_reason' => null,
                 ]);
             }
+        } catch (\Illuminate\Validation\ValidationException $ve) {
+            throw $ve;
         } catch (\Exception $e) {
             Log::error('Failed to create enrollment request', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return redirect()->back()->with('error', 'Failed to submit enrollment request. Please try again.');
+            return redirect()->back()->with('error', 'Failed to submit enrollment request. Please try again. ('.$e->getMessage().')');
         }
 
         try {
@@ -401,10 +431,15 @@ class GuestController extends Controller
 
         $request->validate([
             'payment_method' => 'required|in:gcash,on_site',
-            'reference_number' => $isOnSite ? 'required|regex:/^[0-9]{1,15}$/' : 'required|digits:13',
+            'reference_number' => $isOnSite ? 'required|regex:/^[0-9]{1,15}$/' : 'required|regex:/^[0-9]{13}$/',
             'screenshot' => 'required|image|mimes:jpeg,png,jpg,webp|max:5120',
         ], [
-            'reference_number.regex' => 'The OR number must be 1 to 15 digits.',
+            'reference_number.required' => $isOnSite ? 'OR number is required.' : 'GCash reference number is required.',
+            'reference_number.regex' => $isOnSite
+                ? 'The OR number must be 1 to 15 digits (numbers only).'
+                : 'The GCash reference number must be exactly 13 digits (numbers only).',
+            'screenshot.required' => 'Please upload your receipt screenshot.',
+            'screenshot.image' => 'Receipt must be an image (JPG, PNG, WEBP).',
         ]);
 
         $path = null;

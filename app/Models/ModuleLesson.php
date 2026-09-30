@@ -70,6 +70,11 @@ class ModuleLesson extends Model
         );
     }
 
+    public function completions()
+    {
+        return $this->hasMany(StudentLessonCompletion::class, 'lesson_id');
+    }
+
     /**
      * Scope to get lessons ordered by sort_order
      */

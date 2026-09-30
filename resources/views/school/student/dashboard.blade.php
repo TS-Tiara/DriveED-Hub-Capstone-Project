@@ -725,7 +725,11 @@
         </div>
     </div>
 
+<<<<<<< Updated upstream
     @include('school.student.partials.license-guide')
+=======
+    @include('school.student.partials.license-guide', ['student' => $student, 'primaryEnrollment' => $primaryEnrollment ?? null, 'activeEnrollments' => $activeEnrollments ?? collect()])
+>>>>>>> Stashed changes
 
     <!-- Desktop: 3 column layout -->
     <div class="dashboard-cards">
@@ -762,10 +766,28 @@
                             <span class="progress-stat-value">{{ $hoursCompleted }}/{{ $requiredHours ?? $course->hours_required ?? 0 }} hrs</span>
                         </div>
                         <div class="progress-stat">
+<<<<<<< Updated upstream
                             <span class="progress-stat-label">TDC Status</span>
                             <span class="stat-badge {{ $hasPassedTheoretical ? 'passed' : 'in-progress' }}">
                                 {{ $hasPassedTheoretical ? 'Passed' : 'In Progress' }}
+=======
+                            <span class="progress-stat-label">
+                                @if(strtolower($enrolledCourseType) === 'practical')
+                                    PDC Status
+                                @else
+                                    TDC Status
+                                @endif
+>>>>>>> Stashed changes
                             </span>
+                            @if(strtolower($enrolledCourseType) === 'practical')
+                                <span class="stat-badge {{ $progressPercentage >= 100 ? 'passed' : 'in-progress' }}">
+                                    {{ $progressPercentage >= 100 ? 'Completed' : 'In Progress' }}
+                                </span>
+                            @else
+                                <span class="stat-badge {{ $hasPassedTheoretical ? 'passed' : 'in-progress' }}">
+                                    {{ $hasPassedTheoretical ? 'Passed' : 'In Progress' }}
+                                </span>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -831,10 +853,28 @@
                     <span class="info-value">{{ $enrolledCourseType }}</span>
                 </div>
                 <div class="info-row">
+<<<<<<< Updated upstream
                     <span class="info-label">Theoretical Status</span>
                     <span class="info-value {{ $hasPassedTheoretical ? 'theory-status-passed' : 'theory-status-progress' }}">
                         {{ $hasPassedTheoretical ? 'Passed' : 'In Progress' }}
+=======
+                    <span class="info-label">
+                        @if(strtolower($enrolledCourseType) === 'practical')
+                            Practical Status
+                        @else
+                            Theoretical Status
+                        @endif
+>>>>>>> Stashed changes
                     </span>
+                    @if(strtolower($enrolledCourseType) === 'practical')
+                        <span class="info-value {{ $progressPercentage >= 100 ? 'theory-status-passed' : 'theory-status-progress' }}">
+                            {{ $progressPercentage >= 100 ? 'Completed' : 'In Progress' }}
+                        </span>
+                    @else
+                        <span class="info-value {{ $hasPassedTheoretical ? 'theory-status-passed' : 'theory-status-progress' }}">
+                            {{ $hasPassedTheoretical ? 'Passed' : 'In Progress' }}
+                        </span>
+                    @endif
                 </div>
                 <div class="info-row">
                     <span class="info-label">Active Enrollments</span>
@@ -937,10 +977,28 @@
                     <span class="info-value">{{ $enrolledCourseType }}</span>
                 </div>
                 <div class="info-row">
+<<<<<<< Updated upstream
                     <span class="info-label">Theoretical</span>
                     <span class="info-value {{ $hasPassedTheoretical ? 'theory-status-passed' : 'theory-status-progress' }}">
                         {{ $hasPassedTheoretical ? 'Passed' : 'In Progress' }}
+=======
+                    <span class="info-label">
+                        @if(strtolower($enrolledCourseType) === 'practical')
+                            Practical Status
+                        @else
+                            Theoretical Status
+                        @endif
+>>>>>>> Stashed changes
                     </span>
+                    @if(strtolower($enrolledCourseType) === 'practical')
+                        <span class="info-value {{ $progressPercentage >= 100 ? 'theory-status-passed' : 'theory-status-progress' }}">
+                            {{ $progressPercentage >= 100 ? 'Completed' : 'In Progress' }}
+                        </span>
+                    @else
+                        <span class="info-value {{ $hasPassedTheoretical ? 'theory-status-passed' : 'theory-status-progress' }}">
+                            {{ $hasPassedTheoretical ? 'Passed' : 'In Progress' }}
+                        </span>
+                    @endif
                 </div>
                 <div class="info-row">
                     <span class="info-label">Active Enrollments</span>

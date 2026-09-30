@@ -1716,7 +1716,7 @@
     }
 
     // --- Localized Confirmation System ---
-    let confirmCallback = null;
+    var confirmCallback = null;
 
     function showConfirm(options) {
         const modal = document.getElementById('confirmModal');
