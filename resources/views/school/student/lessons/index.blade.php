@@ -46,15 +46,11 @@
 
         <ul class="lms-list">
             @forelse($lessons->sortBy('sort_order') as $index => $lesson)
-<<<<<<< Updated upstream
-                <li class="lms-item">
-=======
                 @php
                     $isDone = in_array($lesson->id, $completedLessonIds, true);
                     $isCurrent = !$isDone && $index === $completedLessonsCount;
                 @endphp
                 <li class="lms-item" style="@if($isDone) border-left: 4px solid #10b981; background: #f0fdf4; @elseif($isCurrent) border-left: 4px solid {{ $primaryColor }}; background: #eff6ff; @endif">
->>>>>>> Stashed changes
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         <div style="width: 34px; height: 34px; border-radius: 50%; @if($isDone) background: #10b981; color: white; @elseif($isCurrent) background: {{ $primaryColor }}; color: white; @else background: #eff6ff; color: #3b82f6; @endif display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; flex-shrink: 0;">
                             @if($isDone)

@@ -309,8 +309,6 @@ class InstructorController extends Controller
                     });
             })
             ->exists();
-<<<<<<< Updated upstream
-=======
 
         if (!$isAssigned) {
             $isAssigned = SessionCompletion::where('school_id', $school->id)
@@ -321,7 +319,6 @@ class InstructorController extends Controller
                 })
                 ->exists();
         }
->>>>>>> Stashed changes
         
         abort_unless($isAssigned, 403, 'Unauthorized access: You are not assigned to this student.');
 
