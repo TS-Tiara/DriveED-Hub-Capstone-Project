@@ -1481,57 +1481,6 @@
         
         <!-- Right: Requests Sidebar -->
         <div class="requests-sidebar">
-            @if($queueEnabled && $queuedBookings->count() > 0)
-            <div class="sidebar-section queue-sidebar-highlight queue-sidebar-highlight-my">
-                <h3 class="sidebar-section-title-simple queue-sidebar-title">
-                    Queued Schedules ({{ $queuedBookings->count() }})
-                </h3>
-                <p class="queue-sidebar-help">
-                    Pending schedules are auto-confirmed after {{ $queueDays }} days
-                </p>
-                @foreach($queuedBookings as $booking)
-                    <div class="mini-booking-card mini-booking-card-queued">
-                        <div class="mini-booking-date mini-booking-date-queued">
-                            <span>{{ \Carbon\Carbon::parse($booking->booking_date)->format('M d, Y') }}</span>
-                        </div>
-                        <div class="mini-booking-info mini-booking-info-strong">
-                            {{ $booking->course->title ?? 'Course' }}
-                            @if($booking->course)
-                                <span class="queue-vehicle-chip">
-                                    {{ $booking->course->vehicle_type ?? 'Manual' }}
-                                </span>
-                            @endif
-                        </div>
-                        <div class="mini-booking-info">
-                            @if($booking->timeSlot)
-                                {{ \Carbon\Carbon::parse($booking->timeSlot->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($booking->timeSlot->end_time)->format('g:i A') }}
-                            @elseif($booking->scheduled_at)
-                                {{ \Carbon\Carbon::parse($booking->scheduled_at)->format('g:i A') }}
-                            @endif
-                        </div>
-                        <div class="mini-booking-info queue-meta">
-                            Added {{ \Carbon\Carbon::parse($booking->created_at)->diffForHumans() }}
-                        </div>
-                        <div class="queue-action-row">
-                            <form method="POST" action="{{ route('schools.student.bookings.confirm', [$school->slug, $booking->id]) }}" class="queue-action-form">
-                                @csrf
-                                <button type="button" style="width: 100%; background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer;" onclick="showConfirmDialog('Confirm this booking now?',()=>this.closest('form').submit())">
-                                    Confirm
-                                </button>
-                            </form>
-                            <form method="POST" action="{{ route('schools.student.bookings.removeQueue', [$school->slug, $booking->id]) }}" class="queue-action-form">
-                                @csrf
-                                @method('DELETE')
-                                <button type="button" style="width: 100%; background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer;" onclick="showConfirmDialog('Cancel this booking?',()=>this.closest('form').submit())">
-                                    Cancel
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-            @endif
-            
             <div class="sidebar-section">
                 <h3 class="sidebar-section-title-simple">Upcoming This Week</h3>
                 
@@ -1643,6 +1592,10 @@
                                 $linkedEnrollmentRequestId = $approvedEnrollmentByCourse->get($timeSlot->course_id);
                                                                 $availableStudentSpots = $timeSlot->getAvailableStudentSpots();
                                                                 $slotIsFull = $availableStudentSpots <= 0;
+                                                                $slotBookingStatus = $bookingStatusBySlot[$timeSlot->id] ?? null;
+                                                                $alreadyBooked = $slotBookingStatus !== null;
+                                                                $cannotBook = $slotIsFull || $alreadyBooked;
+                                                                $bookButtonLabel = $slotBookingStatus === 'pending' ? 'Request pending' : ($alreadyBooked ? 'Already scheduled' : ($slotIsFull ? 'Full' : null));
                             @endphp
                                <div class="available-schedule-card {{ !$isEnrolledInCourse ? 'is-hidden' : '' }}" 
                                  data-course-id="{{ $timeSlot->course_id ?? '' }}" 
@@ -1674,7 +1627,7 @@
                                     
                                     @if($selectionMode === 'student_chooses')
                                         <!-- Student selects instructor -->
-                                        <select class="instructor-select" id="instructor-{{ $timeSlot->id }}" onchange="updateBookButton({{ $timeSlot->id }})" {{ $slotIsFull ? 'disabled' : '' }}>
+                                        <select class="instructor-select" id="instructor-{{ $timeSlot->id }}" onchange="updateBookButton({{ $timeSlot->id }})" {{ $cannotBook ? 'disabled' : '' }}>
                                             <option value="">Select an instructor</option>
                                             @if($timeSlot->instructors->count() > 0)
                                                 @foreach($timeSlot->instructors as $instructor)
@@ -1691,7 +1644,7 @@
                                                 {{ $availableStudentSpots }} {{ $availableStudentSpots === 1 ? 'spot' : 'spots' }} available
                                             </div>
                                             <button class="book-now-btn book-now-btn-inline book-now-btn-disabled" id="book-btn-{{ $timeSlot->id }}" onclick="bookTimeSlot({{ $timeSlot->id }})" disabled>
-                                                {{ $slotIsFull ? 'Full' : 'Schedule Lesson' }}
+                                                {{ $bookButtonLabel ?? 'Schedule Lesson' }}
                                             </button>
                                         </div>
                                     @elseif($selectionMode === 'auto_assign')
@@ -1703,8 +1656,8 @@
                                             <div class="booking-status booking-status-inline">
                                                 {{ $availableStudentSpots }} {{ $availableStudentSpots === 1 ? 'spot' : 'spots' }} available
                                             </div>
-                                            <button class="book-now-btn book-now-btn-inline {{ $slotIsFull ? 'book-now-btn-disabled' : '' }}" onclick="bookTimeSlotAuto({{ $timeSlot->id }})" {{ $slotIsFull ? 'disabled' : '' }}>
-                                                {{ $slotIsFull ? 'Full' : 'Schedule Now' }}
+                                            <button class="book-now-btn book-now-btn-inline {{ $cannotBook ? 'book-now-btn-disabled' : '' }}" onclick="bookTimeSlotAuto({{ $timeSlot->id }})" {{ $cannotBook ? 'disabled' : '' }}>
+                                                {{ $bookButtonLabel ?? 'Schedule Now' }}
                                             </button>
                                         </div>
                                     @else
@@ -1716,8 +1669,8 @@
                                             <div class="booking-status booking-status-inline">
                                                 {{ $availableStudentSpots }} {{ $availableStudentSpots === 1 ? 'spot' : 'spots' }} available
                                             </div>
-                                            <button class="book-now-btn book-now-btn-inline {{ $slotIsFull ? 'book-now-btn-disabled' : '' }}" onclick="bookTimeSlotAdmin({{ $timeSlot->id }})" {{ $slotIsFull ? 'disabled' : '' }}>
-                                                {{ $slotIsFull ? 'Full' : 'Request Schedule' }}
+                                            <button class="book-now-btn book-now-btn-inline {{ $cannotBook ? 'book-now-btn-disabled' : '' }}" onclick="bookTimeSlotAdmin({{ $timeSlot->id }})" {{ $cannotBook ? 'disabled' : '' }}>
+                                                {{ $bookButtonLabel ?? 'Request Schedule' }}
                                             </button>
                                         </div>
                                     @endif
@@ -1733,58 +1686,6 @@
         
         <!-- Right: My Upcoming Lessons & Calendar -->
         <div class="requests-sidebar">
-            <!-- Schedule Queued Section -->
-            @if($queueEnabled && $queuedBookings->count() > 0)
-            <div class="sidebar-section queue-sidebar-highlight">
-                <h3 class="sidebar-section-title-simple queue-sidebar-title">
-                    Queued Schedules ({{ $queuedBookings->count() }})
-                </h3>
-                <p class="queue-sidebar-help">
-                    Pending schedules are auto-confirmed after {{ $queueDays }} days
-                </p>
-                @foreach($queuedBookings as $booking)
-                    <div class="mini-booking-card mini-booking-card-queued">
-                        <div class="mini-booking-date mini-booking-date-queued">
-                            <span>{{ \Carbon\Carbon::parse($booking->booking_date)->format('M d, Y') }}</span>
-                        </div>
-                        <div class="mini-booking-info mini-booking-info-strong">
-                            {{ $booking->course->title ?? 'Course' }}
-                            @if($booking->course)
-                                <span class="queue-vehicle-chip">
-                                    {{ $booking->course->vehicle_type ?? 'Manual' }}
-                                </span>
-                            @endif
-                        </div>
-                        <div class="mini-booking-info">
-                            @if($booking->timeSlot)
-                                {{ \Carbon\Carbon::parse($booking->timeSlot->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($booking->timeSlot->end_time)->format('g:i A') }}
-                            @elseif($booking->scheduled_at)
-                                {{ \Carbon\Carbon::parse($booking->scheduled_at)->format('g:i A') }}
-                            @endif
-                        </div>
-                        <div class="mini-booking-info queue-meta">
-                            Added {{ \Carbon\Carbon::parse($booking->created_at)->diffForHumans() }}
-                        </div>
-                        <div class="queue-action-row">
-                            <form method="POST" action="{{ route('schools.student.bookings.confirm', [$school->slug, $booking->id]) }}" class="queue-action-form">
-                                @csrf
-                                <button type="button" style="width: 100%; background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer;" onclick="showConfirmDialog('Confirm this booking now?',()=>this.closest('form').submit())">
-                                    Confirm
-                                </button>
-                            </form>
-                            <form method="POST" action="{{ route('schools.student.bookings.removeQueue', [$school->slug, $booking->id]) }}" class="queue-action-form">
-                                @csrf
-                                @method('DELETE')
-                                <button type="button" style="width: 100%; background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer;" onclick="showConfirmDialog('Cancel this booking?',()=>this.closest('form').submit())">
-                                    Cancel
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-            @endif
-            
             <div class="sidebar-section">
                 <h3 class="sidebar-section-title-simple">Upcoming This Week</h3>
                 
@@ -1829,52 +1730,6 @@
             <button type="button" class="queue-close-btn" aria-label="Close schedule queue" onclick="toggleQueuePopup()">&times;</button>
         </div>
         <div class="queue-popup-body">
-            @if($queueEnabled && $queuedBookings->count() > 0)
-            <div class="queue-popup-queued-section">
-                <h4 class="queue-popup-queued-title">Queued Schedules ({{ $queuedBookings->count() }})</h4>
-                <p class="queue-popup-queued-help">
-                    Auto-confirms after {{ $queueDays }} days
-                </p>
-                @foreach($queuedBookings as $booking)
-                    <div class="queue-popup-queued-card">
-                        <div class="queue-popup-queued-date">
-                            {{ \Carbon\Carbon::parse($booking->booking_date)->format('M d, Y') }}
-                        </div>
-                        <div class="queue-popup-queued-info">
-                            {{ $booking->course->title ?? 'Course' }}
-                            @if($booking->course)
-                                <span class="queue-vehicle-chip">
-                                    {{ $booking->course->vehicle_type ?? 'Manual' }}
-                                </span>
-                            @endif
-                        </div>
-                        <div class="queue-popup-queued-meta">
-                            @if($booking->timeSlot)
-                                {{ \Carbon\Carbon::parse($booking->timeSlot->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($booking->timeSlot->end_time)->format('g:i A') }}
-                            @elseif($booking->scheduled_at)
-                                {{ \Carbon\Carbon::parse($booking->scheduled_at)->format('g:i A') }}
-                            @endif
-                        </div>
-                        <div class="queue-action-row">
-                            <form method="POST" action="{{ route('schools.student.bookings.confirm', [$school->slug, $booking->id]) }}" class="queue-action-form">
-                                @csrf
-                                <button type="button" style="width: 100%; background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer;" onclick="showConfirmDialog('Confirm this booking now?',()=>this.closest('form').submit())">
-                                    Confirm
-                                </button>
-                            </form>
-                            <form method="POST" action="{{ route('schools.student.bookings.removeQueue', [$school->slug, $booking->id]) }}" class="queue-action-form">
-                                @csrf
-                                @method('DELETE')
-                                <button type="button" style="width: 100%; background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer;" onclick="showConfirmDialog('Cancel this booking?',()=>this.closest('form').submit())">
-                                    Cancel
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-            @endif
-            
             <h4 class="queue-popup-upcoming-title">Upcoming This Week</h4>
             
             @forelse($upcomingBookings->take(10) as $booking)
