@@ -465,12 +465,6 @@ class StudentController extends Controller
         $hasPassedTheoretical = $studentModel ? $studentModel->hasPassedTheoretical() : false;
         $canEnrollPractical = $studentModel ? $studentModel->canEnrollPractical() : false;
         
-<<<<<<< Updated upstream
-        // Enrolled course info (primary active enrollment)
-        $primaryEnrollment = $activeEnrollments->first();
-        $enrolledCourseName = $primaryEnrollment ? ($primaryEnrollment->course->title ?? 'N/A') : 'No Active Course';
-        $enrolledCourseType = $primaryEnrollment && $primaryEnrollment->course ? ucfirst($primaryEnrollment->course->course_type ?? 'N/A') : 'N/A';
-=======
         // Enrolled course info (primary active enrollment) – dynamically prioritize practical/current course
         $allStudentEnrollments = EnrollmentRequest::where('learner_id', $student->id)
             ->where('school_id', $school->id)
@@ -496,7 +490,6 @@ class StudentController extends Controller
             return ucfirst($canonical ?: 'N/A');
         };
         $enrolledCourseType = $primaryEnrollment && $primaryEnrollment->course ? $resolveType($primaryEnrollment->course) : 'N/A';
->>>>>>> Stashed changes
         
         // Recent graded sessions for feedback visibility
         $recentGrades = Booking::where('student_id', $student->id)
@@ -518,10 +511,7 @@ class StudentController extends Controller
             'nextLessons' => $nextLessons,
             'progressPercentage' => $progressPercentage,
             'activeEnrollments' => $activeEnrollments,
-<<<<<<< Updated upstream
-=======
             'primaryEnrollment' => $primaryEnrollment,
->>>>>>> Stashed changes
             'enrolledCourseName' => $enrolledCourseName,
             'enrolledCourseType' => $enrolledCourseType,
             'hasPassedTheoretical' => $hasPassedTheoretical,
@@ -783,10 +773,17 @@ class StudentController extends Controller
             ->orderBy('booking_date')
             ->get();
 
-        // Separate bookings by status
-        $confirmedBookings = $allBookings->whereIn('status', ['scheduled', 'confirmed', 'completed']);
+        // Separate bookings by status.
+        // Pending (queued) bookings are shown in the main schedule too, so students
+        // can cancel them directly — the dedicated "Queued Schedules" section was removed.
+        $confirmedBookings = $allBookings->whereIn('status', ['scheduled', 'confirmed', 'completed', 'pending']);
         $cancelledBookings = $allBookings->where('status', 'cancelled');
         $queuedBookings = $allBookings->where('status', 'pending');
+        $bookingStatusBySlot = $allBookings
+            ->whereIn('status', ['pending', 'scheduled', 'confirmed', 'done', 'completed'])
+            ->filter(fn ($booking) => $booking->time_slot_id !== null)
+            ->pluck('status', 'time_slot_id')
+            ->toArray();
         
         // Group bookings by date
         $groupedBookings = $confirmedBookings->groupBy(function($booking) {
@@ -834,7 +831,7 @@ class StudentController extends Controller
 
         // Pre-compute upcoming bookings for sidebar (avoids repeating logic in blade)
         $upcomingBookings = $confirmedBookings
-            ->whereIn('status', ['scheduled', 'confirmed'])
+            ->whereIn('status', ['scheduled', 'confirmed', 'pending'])
             ->where('booking_date', '>=', now()->toDateString())
             ->where('booking_date', '<=', now()->addDays(7)->toDateString())
             ->sortBy('booking_date');
@@ -849,6 +846,7 @@ class StudentController extends Controller
             'confirmedBookings' => $confirmedBookings,
             'cancelledBookings' => $cancelledBookings,
             'queuedBookings' => $queuedBookings,
+            'bookingStatusBySlot' => $bookingStatusBySlot,
             'groupedBookings' => $groupedBookings,
             'groupedCancelledBookings' => $groupedCancelledBookings,
             'groupedQueuedBookings' => $groupedQueuedBookings,
