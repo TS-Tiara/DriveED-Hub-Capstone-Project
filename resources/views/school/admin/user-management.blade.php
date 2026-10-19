@@ -2257,7 +2257,7 @@
                         <div class="alert alert-warning" style="margin-bottom: 20px; font-size: 0.9rem;">
                             <i class="bi bi-exclamation-triangle me-2"></i>
                             <strong>No active courses available.</strong> Please <a
-                                href="{{ school_route('admin.courses.index') }}" class="fw-bold">create a course</a> first to
+                                href="{{ school_route('admin.courses') }}" class="fw-bold">create a course</a> first to
                             add students.
                         </div>
                     @endif
@@ -2443,7 +2443,7 @@
                         <div class="alert alert-warning" style="margin-bottom: 20px; font-size: 0.9rem;">
                             <i class="bi bi-exclamation-triangle me-2"></i>
                             <strong>No active courses available.</strong> Please <a
-                                href="{{ school_route('admin.courses.index') }}" class="fw-bold">create a course</a> first to
+                                href="{{ school_route('admin.courses') }}" class="fw-bold">create a course</a> first to
                             assign specializations.
                         </div>
                     @endif
@@ -2457,7 +2457,7 @@
                     </button>
                     <button type="submit" class="btn btn-primary"
                         style="background: var(--btn-gradient); color: var(--btn-primary-text); border: none; height: 42px; padding: 0 20px; border-radius: 10px; font-weight: 600;"
-                        {{ (!isset($branches) || $branches->count() == 0 || !isset($courses) || $courses->count() == 0) ? 'disabled' : '' }}>
+                         {{ (!isset($branches) || $branches->count() == 0) ? 'disabled' : '' }}>
                         Add Instructor
                     </button>
                 </div>
