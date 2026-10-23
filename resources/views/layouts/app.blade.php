@@ -2030,8 +2030,6 @@
                             data-page="schedules">Manage Schedule</a>
                         <a href="{{ school_route('admin.verify-session-completion.index', [], $currentSchool) }}"
                             class="nav-item" data-page="verify-session-completion">Verify Session Completion</a>
-                        <a href="{{ school_route('admin.phase-progressions.index', [], $currentSchool) }}" class="nav-item"
-                            data-page="phase-progressions">Phase Progressions</a>
                     </div>
                 </div>
 
@@ -2097,6 +2095,7 @@
                         <span class="nav-category-arrow">&#9660;</span>
                     </div>
                     <div class="nav-category-items">
+                        <a href="{{ $schoolRoute('instructor.settings') }}" class="nav-item" data-page="settings">Settings</a>
                         <a href="{{ $schoolRoute('instructor.theoretical.index') }}" class="nav-item"
                             data-page="theoretical">Theoretical Training</a>
                         <a href="{{ $schoolRoute('instructor.materials.index') }}" class="nav-item"
@@ -2119,6 +2118,7 @@
                 @else
                     {{-- Student Navigation --}}
                     <a href="{{ $schoolRoute('student.dashboard') }}" class="nav-item" data-page="dashboard">Dashboard</a>
+                    <a href="{{ $schoolRoute('student.settings') }}" class="nav-item" data-page="settings">Settings</a>
 
                     <div class="nav-divider"></div>
 
@@ -2459,7 +2459,6 @@
             'admin/schedules': 'Manage Schedule',
             'admin/verify-session-completion': 'Verify Session Completion',
             'admin/sessions': 'Session Completions',
-            'admin/phase-progressions': 'Phase Progressions',
             'admin/payments': 'Payments',
             'admin/reports': 'Reports & Analytics',
             'admin/admin-management': 'Admin Management',

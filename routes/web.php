@@ -23,7 +23,8 @@ use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\ModuleLessonController;
 use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\PhaseProgressionController;
+use App\Http\Controllers\ClaimNoticeController;
+use App\Http\Controllers\SessionReportController;
 use App\Http\Controllers\AdminManagementController;
 use App\Http\Controllers\QuestionBankController;
 use App\Http\Controllers\AssessmentController;
@@ -230,6 +231,8 @@ Route::prefix('{school:slug}')
 
                     // School settings
                     Route::get('/settings', [AdminController::class , 'settings'])->name('settings');
+                    Route::post('/students/{student}/claim-notice', [ClaimNoticeController::class, 'store'])->name('students.claim-notice');
+                    Route::get('/session-report/{format}', [SessionReportController::class, 'download'])->whereIn('format', ['pdf', 'xlsx'])->name('session-report');
                     Route::post('/settings', [AdminController::class , 'updateSettings'])->name('settings.update');
 
                     // Invitation management
@@ -341,6 +344,10 @@ Route::prefix('{school:slug}')
                             Route::post('/student/{student}/verify-license', [EnrollmentRequestController::class , 'verifyLicense'])->name('verifyLicense');
                             Route::post('/student/{student}/reject-license', [EnrollmentRequestController::class , 'rejectLicense'])->name('rejectLicense');
 
+                            // Bundle/Combo phase transition (student uploads license -> admin confirms)
+                            Route::post('/{enrollmentRequest}/confirm-transition', [EnrollmentRequestController::class, 'confirmTransition'])->name('confirm-transition');
+                            Route::post('/{enrollmentRequest}/reject-transition', [EnrollmentRequestController::class, 'rejectTransition'])->name('reject-transition');
+
                             // API routes for the Quick-Verify Modal
                             Route::prefix('api')->name('api.')->group(function () {
                                 Route::get('/{enrollmentRequest}', [EnrollmentRequestController::class, 'apiShow'])->name('show');
@@ -380,13 +387,9 @@ Route::prefix('{school:slug}')
                         }
                         );
 
-                        // Phase progression management (Admin reviews student phase transitions)
-                        Route::prefix('phase-progressions')->name('phase-progressions.')->group(function () {
-                            Route::get('/', [PhaseProgressionController::class , 'index'])->name('index');
-                            Route::post('/{phaseProgression}/approve', [PhaseProgressionController::class , 'approve'])->name('approve');
-                            Route::post('/{phaseProgression}/reject', [PhaseProgressionController::class , 'reject'])->name('reject');
-                        }
-                        );
+                        // Phase transitions are confirmed from the Enrollment Request page
+                        // (Bundle/Combo students upload a license, an admin confirms the
+                        // practical phase transition there). No standalone page remains.
 
                         // Course modules and lessons management (LMS content)
                         Route::get('/materials', [CourseModuleController::class , 'materialsHub'])->name('materials.index');
@@ -436,10 +439,12 @@ Route::prefix('{school:slug}')
                     Route::get('/', [InstructorController::class , 'dashboard'])->name('dashboard');
 
                     Route::get('/my-schedule', [InstructorTimeSlotController::class , 'mySchedule'])->name('schedule');
+                    Route::get('/session-report/{format}', [SessionReportController::class, 'download'])->whereIn('format', ['pdf', 'xlsx'])->name('session-report');
                     Route::post('/timeslots/{id}/toggle', [InstructorTimeSlotController::class , 'toggle'])->name('timeslots.toggle');
                     Route::post('/timeslots/{id}/request-removal', [InstructorTimeSlotController::class , 'requestRemoval'])->name('timeslots.requestRemoval');
 
                     Route::get('/profile', [InstructorTimeSlotController::class , 'profile'])->name('profile');
+                    Route::get('/settings', [InstructorTimeSlotController::class, 'profile'])->name('settings');
                     Route::put('/profile', [InstructorTimeSlotController::class , 'updateProfile'])->name('profile.update');
                     Route::post('/profile/picture', [InstructorTimeSlotController::class , 'updateProfilePicture'])->name('profile.picture');
                     Route::post('/upload-license', [InstructorTimeSlotController::class , 'uploadLicense'])->name('uploadLicense');
@@ -567,6 +572,7 @@ Route::prefix('{school:slug}')
                     Route::get('/', [StudentController::class , 'dashboard'])->name('dashboard');
 
                     Route::get('/profile', [StudentController::class , 'profile'])->name('profile');
+                    Route::get('/settings', [StudentController::class, 'profile'])->name('settings');
                     Route::put('/profile', [StudentController::class , 'updateProfile'])->name('profile.update');
                     Route::post('/profile/picture', [StudentController::class , 'updateProfilePicture'])->name('profile.picture');
 
@@ -574,6 +580,8 @@ Route::prefix('{school:slug}')
                     Route::get('/courses', [CourseController::class , 'index'])->name('courses.index');
                     Route::get('/courses/{course}', [CourseController::class , 'show'])->name('courses.show');
                     Route::post('/upload-license', [StudentController::class, 'uploadLicense'])->name('uploadLicense');
+                    // Bundle/Combo: pop-up submission that opens a phase transition
+                    Route::post('/submit-transition-license', [StudentController::class, 'submitTransitionLicense'])->name('submitTransitionLicense');
                     Route::post('/enroll/{course}', [StudentController::class, 'enroll'])->name('enroll');
 
                     // Booking queue management (used in schedule page)
@@ -595,6 +603,7 @@ Route::prefix('{school:slug}')
 
                     // Student schedule
                     Route::get('/schedule', [StudentController::class , 'schedule'])->name('schedule');
+                    Route::get('/session-report/{format}', [SessionReportController::class, 'download'])->whereIn('format', ['pdf', 'xlsx'])->name('session-report');
 
                     // Student's current course (single enrollment view)
                     Route::get('/my-course', [StudentController::class , 'myCourse'])->name('my-course');
