@@ -21,11 +21,7 @@
     
     /* Welcome Banner */
     .welcome-banner {
-        @if($settings->use_gradient_header ?? true)
-            background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
-        @else
-            background: {{ $primaryColor }};
-        @endif
+        background: {{ $primaryColor }};
         color: white;
         border-radius: 16px;
         padding: 40px;
@@ -64,19 +60,19 @@
     }
     
     .status-message.enrolled {
-        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+        background: #d1fae5;
         color: #065f46;
         border-left: 4px solid #10b981;
     }
     
     .status-message.pending {
-        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        background: #fef3c7;
         color: #92400e;
         border-left: 4px solid #f59e0b;
     }
     
     .status-message.not-enrolled {
-        background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+        background: #e0e7ff;
         color: #3730a3;
         border-left: 4px solid #6366f1;
     }
@@ -130,11 +126,7 @@
     }
     
     .btn-primary {
-        @if(($settings->button_style ?? 'solid') === 'gradient')
-        background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
-        @else
         background: {{ $primaryColor }};
-        @endif
         color: white;
     }
     
@@ -175,7 +167,7 @@
         width: 48px;
         height: 48px;
         border-radius: 10px;
-        background: linear-gradient(135deg, {{ $primaryColor }}20 0%, {{ $primaryColor }}10 100%);
+        background: {{ $primaryColor }}15;
         color: {{ $primaryColor }};
         display: flex;
         align-items: center;
@@ -235,19 +227,19 @@
     }
 
     .license-status.license-pending {
-        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        background: #fef3c7;
         color: #92400e;
         border-left: 4px solid #f59e0b;
     }
 
     .license-status.license-verified {
-        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+        background: #d1fae5;
         color: #065f46;
         border-left: 4px solid #10b981;
     }
 
     .license-status.license-rejected {
-        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+        background: #fee2e2;
         color: #991b1b;
         border-left: 4px solid #ef4444;
     }
@@ -353,7 +345,7 @@
         gap: 12px;
         margin-bottom: 28px;
         padding: 12px 16px;
-        background: linear-gradient(135deg, {{ $primaryColor }}08 0%, {{ $primaryColor }}15 100%);
+        background: #f3f4f6;
         border-radius: 10px;
     }
 
@@ -367,7 +359,7 @@
 
     .onboarding-progress-fill {
         height: 100%;
-        background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
+        background: {{ $primaryColor }};
         border-radius: 4px;
         transition: width 0.6s ease;
     }
@@ -732,6 +724,27 @@
         }
     @endphp
 
+    @if($guest->student_license_status === 'rejected')
+    <div style="background: #fee2e2; border: 1px solid #fecaca; border-radius: 12px; padding: 16px 20px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 40px; height: 40px; border-radius: 8px; background: #fecaca; color: #dc2626; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0;">
+                <i class="fas fa-id-card"></i>
+            </div>
+            <div>
+                <strong style="color: #991b1b; display: block; font-size: 1rem;">Driver's License Rejected</strong>
+                <p style="color: #7f1d1d; margin: 0; font-size: 0.88rem;">{{ $guest->student_license_rejection_reason ?: 'Your previously submitted driver\'s license was not accepted. Please re-upload a clear copy to continue.' }}</p>
+            </div>
+        </div>
+        <button type="button" 
+                class="open-license-modal" 
+                style="background: #ef4444; color: #ffffff; border: 0; border-radius: 8px; padding: 10px 18px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-size: 0.9rem;"
+                data-license-url="{{ route('schools.guest.uploadLicense', $school) }}"
+                data-rejection-reason="{{ $guest->student_license_rejection_reason ?? '' }}">
+            <i class="fas fa-upload"></i> Re-upload License
+        </button>
+    </div>
+    @endif
+
     @if(!$step3Done)
     <div class="onboarding-section">
         <div class="onboarding-header">
@@ -795,15 +808,27 @@
                 <div class="step-action">
                     @if($step2Done && $pendingRequest)
                         @if($pendingEnrollmentStage === 'payment_needed')
-                            <a href="{{ route('schools.guest.payment.show', ['school' => $school->slug, 'enrollment_request_id' => $pendingRequest->id]) }}" 
-                               class="btn-step primary">
+                            <button type="button" 
+                                    class="btn-step primary open-payment-modal" 
+                                    style="border: 0; cursor: pointer;"
+                                    data-enrollment-id="{{ $pendingRequest->id }}"
+                                    data-course-title="{{ $pendingRequest->course->title }}"
+                                    data-amount="{{ number_format($pendingRequest->price, 2) }}"
+                                    data-submit-url="{{ route('schools.guest.payment.submit', ['school' => $school->slug, 'enrollment_request_id' => $pendingRequest->id]) }}"
+                                    data-mode="initial">
                                 Submit Payment Details
-                            </a>
+                            </button>
                         @elseif($pendingEnrollmentStage === 'payment_update_required')
-                            <a href="{{ route('schools.guest.payment.show', ['school' => $school->slug, 'enrollment_request_id' => $pendingRequest->id]) }}" 
-                               class="btn-step primary">
+                            <button type="button" 
+                                    class="btn-step primary open-payment-modal" 
+                                    style="border: 0; cursor: pointer; background: #f97316;"
+                                    data-enrollment-id="{{ $pendingRequest->id }}"
+                                    data-course-title="{{ $pendingRequest->course->title }}"
+                                    data-amount="{{ number_format($pendingRequest->price, 2) }}"
+                                    data-submit-url="{{ route('schools.guest.payment.submit', ['school' => $school->slug, 'enrollment_request_id' => $pendingRequest->id]) }}"
+                                    data-mode="reupload">
                                 Update Payment Details
-                            </a>
+                            </button>
                         @elseif($pendingEnrollmentStage === 'awaiting_approval')
                             <span class="step-badge done">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-12"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
@@ -1109,7 +1134,7 @@
     }
 
     .tc-header {
-        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        background: #2563eb;
         padding: 25px;
         text-align: center;
         color: white;
@@ -1203,7 +1228,7 @@
     }
 
     .tc-copy-btn {
-        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        background: #2563eb;
         color: white;
         border: none;
         padding: 8px 16px;
@@ -1215,11 +1240,11 @@
     }
 
     .tc-copy-btn-copied {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        background: #10b981;
     }
 
     .tc-info-box {
-        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        background: #eff6ff;
         padding: 15px;
         border-radius: 10px;
         margin-bottom: 20px;
@@ -1254,7 +1279,7 @@
     .tc-close-btn {
         width: 100%;
         padding: 14px;
-        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        background: #2563eb;
         color: white;
         border: none;
         border-radius: 10px;
@@ -1313,5 +1338,8 @@
     });
 </script>
 @endif
+
+@include('school.partials.enrollment-payment-modal')
+@include('school.partials.enrollment-license-modal')
 
 @endsection
