@@ -208,8 +208,13 @@ class StudentController extends Controller
         ]);
 
         return redirect()
-            ->route('schools.student.payment.show', ['school' => $school->slug, 'enrollment_request_id' => $enrollmentRequest->id])
-            ->with('success', 'Step 1 of 2 Complete! Please submit your payment details below.');
+            ->route('schools.student.courses.show', [
+                'school' => $school->slug,
+                'course' => $course->id,
+                'open_payment_modal' => $enrollmentRequest->id
+            ])
+            ->with('open_payment_modal', $enrollmentRequest->id)
+            ->with('success', 'Enrollment request created! Please upload your payment receipt below.');
     }
 
     /**
@@ -254,7 +259,7 @@ class StudentController extends Controller
         $paymentConcierge = $this->buildEnrollmentPaymentConcierge($enrollmentRequest);
         if (!$paymentConcierge['allow_submission']) {
             return redirect()
-                ->route('schools.student.payment.show', ['school' => $school->slug, 'enrollment_request_id' => $enrollmentRequest->id])
+                ->back()
                 ->with('info', $paymentConcierge['message']);
         }
 
@@ -331,6 +336,18 @@ class StudentController extends Controller
                 Notification::send($admin, 'payment_submitted', 'New Payment Verification Request',
                     "{$student->name} has submitted a payment for enrollment #{$enrollmentRequest->id}.",
                     'payment', "/{$school->slug}/admin/enrollments");
+            }
+
+            if ($request->filled('redirect_to')) {
+                return redirect($request->input('redirect_to'))->with('success', $isRevisionMode
+                    ? 'Updated payment details submitted. An admin will review your update shortly.'
+                    : 'Payment details submitted successfully! An admin will verify your payment shortly.');
+            }
+
+            if ($request->header('referer')) {
+                return redirect()->back()->with('success', $isRevisionMode
+                    ? 'Updated payment details submitted. An admin will review your update shortly.'
+                    : 'Payment details submitted successfully! An admin will verify your payment shortly.');
             }
 
             return redirect()
@@ -532,6 +549,19 @@ class StudentController extends Controller
             'bundleTransitions' => $this->buildBundleTransitions($allStudentEnrollments),
             'claimNotice' => Notification::forSchool($school->id)->forNotifiable($student)
                 ->where('type', 'certificate_claim_ready')->latest('id')->first(),
+            'licenseAlert' => $studentModel->hasLicenseExpiration() ? [
+                'badge' => $studentModel->getLicenseStatusBadge(),
+                'license_number' => $studentModel->license_number,
+                'expiration_date' => $studentModel->license_expiration_date?->format('M d, Y'),
+                'is_expired' => $studentModel->isLicenseExpired(),
+                'is_expiring_soon' => $studentModel->isLicenseExpiringSoon(60),
+                'days_remaining' => $studentModel->getLicenseDaysRemaining(),
+            ] : null,
+            'actionableEnrollments' => EnrollmentRequest::where('learner_id', $student->id)
+                ->where('school_id', $school->id)
+                ->where('status', 'pending')
+                ->with('course')
+                ->get(),
         ]);
     }
 
@@ -614,6 +644,8 @@ class StudentController extends Controller
             'email' => 'required|email',
             'address' => $supportsDateOfBirth ? 'nullable|string|max:255' : 'required|string|max:255',
             'date_of_birth' => $supportsDateOfBirth ? 'nullable|date|before:today' : 'nullable',
+            'license_number' => 'nullable|string|max:50',
+            'license_expiration_date' => 'nullable|date',
             'current_password' => 'nullable|required_with:new_password|string',
             'new_password' => ['nullable', 'confirmed', 'different:current_password', new StrongPassword()],
         ];
@@ -638,7 +670,13 @@ class StudentController extends Controller
         $passwordChanged = $request->filled('new_password');
 
 
-        $data = $request->only(['name', 'email', 'contact', 'address', 'date_of_birth']);
+        $data = $request->only(['name', 'email', 'contact', 'address', 'date_of_birth', 'license_number', 'license_expiration_date']);
+        if (array_key_exists('license_number', $data)) {
+            $data['license_number'] = !empty($data['license_number']) ? trim($data['license_number']) : null;
+        }
+        if (array_key_exists('license_expiration_date', $data)) {
+            $data['license_expiration_date'] = !empty($data['license_expiration_date']) ? $data['license_expiration_date'] : null;
+        }
         
         // Normalize contact number if enforced
         if (($school->schoolSetting->enforce_ph_contact ?? true) && !empty($data['contact'])) {
@@ -670,6 +708,14 @@ class StudentController extends Controller
 
         // Use direct update for reliability
         \App\Models\Student::where('id', $student->id)->update($data);
+
+        // Check if reminder notification should be triggered immediately
+        if (!empty($data['license_expiration_date'])) {
+            $refreshedStudent = \App\Models\Student::find($student->id);
+            if ($refreshedStudent) {
+                app(\App\Services\LicenseExpirationReminderService::class)->checkUser($refreshedStudent);
+            }
+        }
 
         return redirect()
             ->route($request->boolean('return_to_settings') ? 'schools.student.settings' : 'schools.student.profile', $school)

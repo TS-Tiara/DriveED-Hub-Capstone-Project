@@ -809,7 +809,36 @@
 
                 <div class="info-row">
                     <span class="info-label">License Status:</span>
-                    <span class="info-value">{{ $student->student_license_status ? ucfirst(str_replace('_', ' ', $student->student_license_status)) : 'None' }}</span>
+                    <span class="info-value">
+                        {{ $student->student_license_status ? ucfirst(str_replace('_', ' ', $student->student_license_status)) : 'None' }}
+                        @if($student->student_license_status === 'rejected')
+                            <button type="button" class="btn btn-sm btn-danger open-license-modal" style="background:#dc2626;color:#fff;border:0;border-radius:6px;padding:3px 8px;font-size:0.75rem;font-weight:600;margin-left:8px;cursor:pointer;" data-license-url="{{ route('schools.student.uploadLicense', $school) }}" data-rejection-reason="{{ $student->student_license_rejection_reason ?? '' }}">
+                                Re-upload
+                            </button>
+                        @endif
+                    </span>
+                </div>
+
+                <div class="info-row">
+                    <span class="info-label">License Number:</span>
+                    <span class="info-value">{{ $student->license_number ?? 'Not Recorded' }}</span>
+                </div>
+
+                <div class="info-row">
+                    <span class="info-label">License Expiration:</span>
+                    <span class="info-value">
+                        @if($student->hasLicenseExpiration())
+                            {{ $student->license_expiration_date->format('M d, Y') }}
+                            @php $badge = $student->getLicenseStatusBadge(); @endphp
+                            @if($badge)
+                                <span style="display:inline-block; margin-left: 8px; padding: 2px 8px; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; background: {{ $badge['bg'] }}; color: {{ $badge['text_color'] }};">
+                                    {{ $badge['label'] }}
+                                </span>
+                            @endif
+                        @else
+                            <span style="color: #6b7280;">Not Set</span>
+                        @endif
+                    </span>
                 </div>
 
                 <div class="info-row">
@@ -857,6 +886,18 @@
                 <div class="form-group">
                     <label for="address">Address:</label>
                     <input type="text" id="address" name="address" value="{{ old('address', $student->address) }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="license_number">Driver's License / Permit Number:</label>
+                    <input type="text" id="license_number" name="license_number" value="{{ old('license_number', $student->license_number) }}" placeholder="e.g. N01-23-456789">
+                    <p class="field-help">If you hold an LTO Student Permit or Driver's License, enter the number here.</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="license_expiration_date">Driver's License Expiration Date:</label>
+                    <input type="date" id="license_expiration_date" name="license_expiration_date" value="{{ old('license_expiration_date', $student->license_expiration_date?->format('Y-m-d')) }}">
+                    <p class="field-help">We'll alert you before it expires. Reminder: Official renewals must be processed directly with LTO via LTMS.</p>
                 </div>
                 
                 @if($supportsDateOfBirth ?? false)
@@ -1109,4 +1150,7 @@
 
 
 </script>
+
+@include('school.partials.enrollment-license-modal')
+
 @endsection

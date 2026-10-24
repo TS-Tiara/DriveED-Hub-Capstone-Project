@@ -126,7 +126,7 @@
     
     .course-banner {
         height: 160px;
-        background: linear-gradient(135deg, {{ $primaryColor }} 0%, {{ $secondaryColor }} 100%);
+        background: {{ $primaryColor }};
         display: flex;
         align-items: center;
         justify-content: center;
@@ -148,7 +148,7 @@
         position: absolute;
         top: 10px;
         left: 10px;
-        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        background: #f59e0b;
         color: white;
         padding: 5px 12px;
         border-radius: 20px;
@@ -169,15 +169,15 @@
     }
 
     .enrollment-status-badge.status-pending {
-        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        background: #f59e0b;
     }
 
     .enrollment-status-badge.status-approved {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        background: #10b981;
     }
 
     .enrollment-status-badge.status-completed {
-        background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+        background: #6b7280;
     }
     
     .course-body {
@@ -674,7 +674,20 @@
                     @if($pendingStatusNote)
                         <div class="pending-status-note {{ $pendingStatusNoteClass }}">{{ $pendingStatusNote }}</div>
                     @endif
-                    <button class="btn-enroll btn-enroll-pending" disabled>{{ $pendingButtonText }}</button>
+                    @if((!$hasPaymentProof || in_array($paymentStatus, ['rejected', 'revision_required'], true)) && !empty($enrollDetail['id']))
+                        <button type="button" 
+                                class="btn-enroll open-payment-modal" 
+                                style="cursor: pointer; opacity: 1; background: {{ in_array($paymentStatus, ['rejected', 'revision_required'], true) ? '#ea580c' : $primaryColor }}; color: #ffffff;"
+                                data-enrollment-id="{{ $enrollDetail['id'] }}"
+                                data-course-title="{{ $course->title }}"
+                                data-amount="{{ number_format($enrollDetail['price'] ?? $course->price, 2) }}"
+                                data-submit-url="{{ route('schools.student.payment.submit', ['school' => $school->slug, 'enrollment_request_id' => $enrollDetail['id']]) }}"
+                                data-mode="{{ in_array($paymentStatus, ['rejected', 'revision_required'], true) ? 'reupload' : 'initial' }}">
+                            {{ $pendingButtonText }}
+                        </button>
+                    @else
+                        <button class="btn-enroll btn-enroll-pending" disabled>{{ $pendingButtonText }}</button>
+                    @endif
                 @elseif($enrollStatus === 'completed')
                     <button class="btn-enroll" onclick="bookCourse({{ $course->id }})">View Course</button>
                 @elseif($course->isFull())
@@ -718,4 +731,8 @@ function bookCourse(courseId) {
     window.location.href = '/' + schoolSlug + '/student/courses/' + courseId;
 }
 </script>
+
+@include('school.partials.enrollment-payment-modal')
+@include('school.partials.enrollment-license-modal')
+
 @endsection
