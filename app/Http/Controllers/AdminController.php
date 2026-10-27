@@ -44,53 +44,73 @@ class AdminController extends Controller
     // ==========================
     public function dashboard(Request $request, School $school)
     {
+        $admin = Auth::guard('admin')->user();
+        if (!$admin) {
+            return redirect()->route('schools.login', $school);
+        }
+
         try {
-            $admin = Auth::guard('admin')->user();
-            if (!$admin) {
-                return redirect()->route('schools.admin.login', $school);
+            // Get counts and statistics
+            // Safe consolidated counts for Students and Instructors
+            try {
+                $studentStats = $admin->scopeToBranch(Student::where('school_id', '=', $school->id)->where('role', 'student'))
+                    ->selectRaw("
+                        COUNT(*) as total,
+                        SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active,
+                        SUM(CASE WHEN MONTH(created_at) = ? THEN 1 ELSE 0 END) as this_month,
+                        SUM(CASE WHEN MONTH(created_at) = ? THEN 1 ELSE 0 END) as last_month
+                    ", [Carbon::now()->month, Carbon::now()->subMonth()->month])
+                    ->first();
+            } catch (\Throwable $e) {
+                LogFacade::warning("Dashboard studentStats query failed: " . $e->getMessage());
+                $studentStats = null;
             }
 
-            // Get counts and statistics
-            // Get consolidated counts for Students and Instructors
-            $studentStats = $admin->scopeToBranch(Student::where('school_id', '=', $school->id)->where('role', 'student'))
-                ->selectRaw("
-                    COUNT(*) as total,
-                    SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active,
-                    SUM(CASE WHEN MONTH(created_at) = ? THEN 1 ELSE 0 END) as this_month,
-                    SUM(CASE WHEN MONTH(created_at) = ? THEN 1 ELSE 0 END) as last_month
-                ", [Carbon::now()->month, Carbon::now()->subMonth()->month])
-                ->first();
+            try {
+                $instructorStats = $admin->scopeToBranch(Instructor::where('school_id', $school->id))
+                    ->selectRaw("
+                        COUNT(*) as total,
+                        SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active,
+                        SUM(CASE WHEN status = 'active' AND availability = 'available' THEN 1 ELSE 0 END) as available,
+                        SUM(CASE WHEN MONTH(created_at) = ? THEN 1 ELSE 0 END) as this_month,
+                        SUM(CASE WHEN MONTH(created_at) = ? THEN 1 ELSE 0 END) as last_month
+                    ", [Carbon::now()->month, Carbon::now()->subMonth()->month])
+                    ->first();
+            } catch (\Throwable $e) {
+                LogFacade::warning("Dashboard instructorStats query failed: " . $e->getMessage());
+                $instructorStats = null;
+            }
 
-            $instructorStats = $admin->scopeToBranch(Instructor::where('school_id', $school->id))
-                ->selectRaw("
-                    COUNT(*) as total,
-                    SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active,
-                    SUM(CASE WHEN status = 'active' AND availability = 'available' THEN 1 ELSE 0 END) as available,
-                    SUM(CASE WHEN MONTH(created_at) = ? THEN 1 ELSE 0 END) as this_month,
-                    SUM(CASE WHEN MONTH(created_at) = ? THEN 1 ELSE 0 END) as last_month
-                ", [Carbon::now()->month, Carbon::now()->subMonth()->month])
-                ->first();
+            $totalStudents = (int) ($studentStats->total ?? 0);
+            $activeStudents = (int) ($studentStats->active ?? 0);
+            $inactiveStudents = max(0, $totalStudents - $activeStudents);
 
-            $totalStudents = $studentStats->total ?? 0;
-            $activeStudents = $studentStats->active ?? 0;
-            $inactiveStudents = $totalStudents - $activeStudents;
-
-            $totalInstructors = $instructorStats->total ?? 0;
-            $activeInstructors = $instructorStats->active ?? 0;
-            $availableInstructors = $instructorStats->available ?? 0;
+            $totalInstructors = (int) ($instructorStats->total ?? 0);
+            $activeInstructors = (int) ($instructorStats->active ?? 0);
+            $availableInstructors = (int) ($instructorStats->available ?? 0);
 
             // Get recent activities (last 5) - Optimized with select to reduce data transfer
-            $recentStudents = $admin->scopeToBranch(Student::where('school_id', $school->id)->where('role', 'student'))
-                ->select('id', 'school_id', 'branch_id', 'name', 'email', 'status', 'created_at')
-                ->orderBy('created_at', 'desc')
-                ->limit(5)
-                ->get();
+            try {
+                $recentStudents = $admin->scopeToBranch(Student::where('school_id', $school->id)->where('role', 'student'))
+                    ->select('id', 'school_id', 'branch_id', 'name', 'email', 'status', 'created_at')
+                    ->orderBy('created_at', 'desc')
+                    ->limit(5)
+                    ->get();
+            } catch (\Throwable $e) {
+                LogFacade::warning("Dashboard recentStudents query failed: " . $e->getMessage());
+                $recentStudents = collect();
+            }
 
-            $recentInstructors = $admin->scopeToBranch(Instructor::where('school_id', $school->id))
-                ->select('id', 'school_id', 'branch_id', 'name', 'email', 'status', 'availability', 'created_at')
-                ->orderBy('created_at', 'desc')
-                ->limit(5)
-                ->get();
+            try {
+                $recentInstructors = $admin->scopeToBranch(Instructor::where('school_id', $school->id))
+                    ->select('id', 'school_id', 'branch_id', 'name', 'email', 'status', 'availability', 'created_at')
+                    ->orderBy('created_at', 'desc')
+                    ->limit(5)
+                    ->get();
+            } catch (\Throwable $e) {
+                LogFacade::warning("Dashboard recentInstructors query failed: " . $e->getMessage());
+                $recentInstructors = collect();
+            }
 
             // Get today's date for filtering
             $today = Carbon::today();
@@ -98,21 +118,26 @@ class AdminController extends Controller
             // Calculate enrollment trend (last 12 months, grouped monthly)
             $trendStart = Carbon::now()->startOfMonth()->subMonths(11);
 
-            // Keep DATE() grouping in SQL for database compatibility, then bucket to month in PHP.
-            $dailyEnrollmentCounts = $admin->scopeToBranch(Student::where('school_id', $school->id)->where('role', 'student'))
-                ->where('created_at', '>=', $trendStart)
-                ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
-                ->groupBy('date')
-                ->orderBy('date', 'asc')
-                ->get();
+            try {
+                // Keep DATE() grouping in SQL for database compatibility, then bucket to month in PHP.
+                $dailyEnrollmentCounts = $admin->scopeToBranch(Student::where('school_id', $school->id)->where('role', 'student'))
+                    ->where('created_at', '>=', $trendStart)
+                    ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
+                    ->groupBy('date')
+                    ->orderBy('date', 'asc')
+                    ->get();
 
-            $monthlyEnrollmentCounts = $dailyEnrollmentCounts
-                ->groupBy(function ($row) {
-                    return Carbon::parse($row->date)->format('Y-m');
-                })
-                ->map(function ($rows) {
-                    return (int) $rows->sum('count');
-                });
+                $monthlyEnrollmentCounts = $dailyEnrollmentCounts
+                    ->groupBy(function ($row) {
+                        return Carbon::parse($row->date)->format('Y-m');
+                    })
+                    ->map(function ($rows) {
+                        return (int) $rows->sum('count');
+                    });
+            } catch (\Throwable $e) {
+                LogFacade::warning("Dashboard dailyEnrollmentCounts query failed: " . $e->getMessage());
+                $monthlyEnrollmentCounts = collect();
+            }
 
             $enrollmentData = [];
             for ($i = 11; $i >= 0; $i--) {
@@ -130,22 +155,27 @@ class AdminController extends Controller
             $currentMonth = Carbon::now()->month;
             $lastMonth = Carbon::now()->subMonth()->month;
 
-            $studentsThisMonth = $studentStats->this_month ?? 0;
-            $studentsLastMonth = $studentStats->last_month ?? 0;
+            $studentsThisMonth = (int) ($studentStats->this_month ?? 0);
+            $studentsLastMonth = (int) ($studentStats->last_month ?? 0);
 
             $studentGrowth = $studentsLastMonth > 0
                 ? round((($studentsThisMonth - $studentsLastMonth) / $studentsLastMonth) * 100, 1)
                 : ($studentsThisMonth > 0 ? 100 : 0);
 
-            $instructorsThisMonth = $instructorStats->this_month ?? 0;
-            $instructorsLastMonth = $instructorStats->last_month ?? 0;
+            $instructorsThisMonth = (int) ($instructorStats->this_month ?? 0);
+            $instructorsLastMonth = (int) ($instructorStats->last_month ?? 0);
 
             $instructorGrowth = $instructorsLastMonth > 0
                 ? round((($instructorsThisMonth - $instructorsLastMonth) / $instructorsLastMonth) * 100, 1)
                 : ($instructorsThisMonth > 0 ? 100 : 0);
 
             // Pending action counts for dashboard
-            $pendingEnrollments = $admin->scopeToBranch(EnrollmentRequest::where('school_id', $school->id))->where('status', 'pending')->count();
+            try {
+                $pendingEnrollments = (int) $admin->scopeToBranch(EnrollmentRequest::where('school_id', $school->id))->where('status', 'pending')->count();
+            } catch (\Throwable $e) {
+                LogFacade::warning("Dashboard pendingEnrollments query failed: " . $e->getMessage());
+                $pendingEnrollments = 0;
+            }
 
             // Calculate monthly revenue (approved payments received this month) - F-004 Remediation
             try {
@@ -162,18 +192,39 @@ class AdminController extends Controller
                     ->sum('refunded_amount');
 
                 $monthlyRevenue = max(0, $monthlyRevenue - $monthlyRefunds);
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 LogFacade::warning("Dashboard revenue calculation failed, falling back to 0: " . $e->getMessage());
                 $monthlyRevenue = 0;
             }
 
             // Calculate active enrollments (approved requests)
-            $activeEnrollments = $admin->scopeToBranch(EnrollmentRequest::where('school_id', $school->id))
-                ->where('status', 'approved')
-                ->count();
+            try {
+                $activeEnrollments = (int) $admin->scopeToBranch(EnrollmentRequest::where('school_id', $school->id))
+                    ->where('status', 'approved')
+                    ->count();
+            } catch (\Throwable $e) {
+                LogFacade::warning("Dashboard activeEnrollments query failed: " . $e->getMessage());
+                $activeEnrollments = 0;
+            }
 
             // License expiration stats for proactive reminder monitoring (Value-add feature)
-            $licenseStats = app(\App\Services\LicenseExpirationReminderService::class)->getExpiringUsersCount($school->id, 60);
+            try {
+                $licenseStats = app(\App\Services\LicenseExpirationReminderService::class)->getExpiringUsersCount($school->id, 60);
+            } catch (\Throwable $e) {
+                LogFacade::warning("Dashboard licenseStats query failed: " . $e->getMessage());
+                $licenseStats = [
+                    'students_expiring' => 0,
+                    'students_expired' => 0,
+                    'instructors_expiring' => 0,
+                    'instructors_expired' => 0,
+                    'total_expiring' => 0,
+                    'total_expired' => 0,
+                    'total_alerts' => 0,
+                ];
+            }
+
+            $alertThreshold = (int) ($school->schoolSetting?->alert_threshold_pending ?? 50);
+            $isAlertCritical = $pendingEnrollments > $alertThreshold;
 
             return view($school->resolveView('admin.dashboard'), [
                 'isAjax' => $request->ajax(),
@@ -196,18 +247,27 @@ class AdminController extends Controller
                 'monthlyRevenue' => $monthlyRevenue,
                 'activeEnrollments' => $activeEnrollments,
                 'licenseStats' => $licenseStats,
-                'alertThreshold' => $alertThreshold = ($school->schoolSetting?->alert_threshold_pending ?? 50),
-                'isAlertCritical' => $pendingEnrollments > $alertThreshold,
+                'alertThreshold' => $alertThreshold,
+                'isAlertCritical' => $isAlertCritical,
             ]);
-        } catch (\Exception $e) {
-            SystemLog::logError(
-                'Fatal dashboard failure triggered loop protection',
-                'database',
-                $e,
-                ['school_id' => $school->id],
-                $school->id,
-                'view_dashboard'
-            );
+        } catch (\Throwable $e) {
+            LogFacade::error('Fatal dashboard failure: ' . $e->getMessage(), [
+                'exception' => $e,
+                'school_id' => $school->id,
+            ]);
+
+            try {
+                SystemLog::logError(
+                    'Fatal dashboard failure triggered loop protection',
+                    'database',
+                    $e,
+                    ['school_id' => $school->id],
+                    $school->id,
+                    'view_dashboard'
+                );
+            } catch (\Throwable $logEx) {
+                LogFacade::warning('Failed to log dashboard error to SystemLog: ' . $logEx->getMessage());
+            }
 
             // Force logout and session termination to break the redirect loop
             Auth::guard('admin')->logout();
@@ -228,7 +288,7 @@ class AdminController extends Controller
         try {
             $admin = Auth::guard('admin')->user();
             if (!$admin) {
-                return redirect()->route('schools.admin.login', $school);
+                return redirect()->route('schools.login', $school);
             }
 
             $studentQuery = $admin->scopeToBranch(Student::where('school_id', $school->id)->where('role', 'student'));
@@ -463,7 +523,7 @@ class AdminController extends Controller
         try {
             $admin = Auth::guard('admin')->user();
             if (!$admin) {
-                return redirect()->route('schools.admin.login', $school);
+                return redirect()->route('schools.login', $school);
             }
 
             $validated = $request->validate([
@@ -617,7 +677,7 @@ class AdminController extends Controller
 
             $admin = Auth::guard('admin')->user();
             if (!$admin) {
-                return redirect()->route('schools.admin.login', $school);
+                return redirect()->route('schools.login', $school);
             }
             if ($admin->isBranchSecretary() && (int) $student->branch_id !== (int) $admin->branch_id) {
                 return redirect()->route('schools.admin.userManagement', $school)
@@ -638,6 +698,8 @@ class AdminController extends Controller
                 'license_number' => 'nullable|string|max:50',
                 'license_expiration_date' => 'nullable|date',
                 'password' => ['nullable', 'string', new StrongPassword()],
+                'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+                'remove_profile_picture' => 'nullable|boolean',
                 'branch_id' => [
                     'nullable',
                     Rule::exists('branches', 'id')->where('school_id', $school->id),
@@ -685,6 +747,19 @@ class AdminController extends Controller
                 $data['password'] = Hash::make($request->password);
             }
 
+            // Handle Profile Picture
+            if ($request->hasFile('profile_picture')) {
+                if ($student->profile_picture && Storage::disk('public')->exists($student->profile_picture)) {
+                    Storage::disk('public')->delete($student->profile_picture);
+                }
+                $data['profile_picture'] = $request->file('profile_picture')->store('profile_pictures', 'public');
+            } elseif ($request->boolean('remove_profile_picture')) {
+                if ($student->profile_picture && Storage::disk('public')->exists($student->profile_picture)) {
+                    Storage::disk('public')->delete($student->profile_picture);
+                }
+                $data['profile_picture'] = null;
+            }
+
             $student->update($data);
 
             DB::commit();
@@ -723,7 +798,7 @@ class AdminController extends Controller
         try {
             $admin = Auth::guard('admin')->user();
             if (!$admin) {
-                return redirect()->route('schools.admin.login', $school);
+                return redirect()->route('schools.login', $school);
             }
             $student = \App\Models\Student::where('school_id', $school->id)->findOrFail($id);
 
@@ -755,7 +830,7 @@ class AdminController extends Controller
 
             $admin = Auth::guard('admin')->user();
             if (!$admin) {
-                return redirect()->route('schools.admin.login', $school);
+                return redirect()->route('schools.login', $school);
             }
             if ($admin->isBranchSecretary() && (int) $instructor->branch_id !== (int) $admin->branch_id) {
                 return redirect()->route('schools.admin.userManagement', $school)
@@ -778,6 +853,8 @@ class AdminController extends Controller
                 'address' => 'required|string|max:255',
                 'availability' => 'required|in:available,unavailable',
                 'password' => ['nullable', 'string', new StrongPassword()],
+                'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+                'remove_profile_picture' => 'nullable|boolean',
                 'branch_id' => [
                     'nullable',
                     Rule::exists('branches', 'id')->where('school_id', $school->id),
@@ -828,6 +905,19 @@ class AdminController extends Controller
                 $data['password'] = Hash::make($request->password);
             }
 
+            // Handle Profile Picture
+            if ($request->hasFile('profile_picture')) {
+                if ($student->profile_picture && Storage::disk('public')->exists($student->profile_picture)) {
+                    Storage::disk('public')->delete($student->profile_picture);
+                }
+                $data['profile_picture'] = $request->file('profile_picture')->store('profile_pictures', 'public');
+            } elseif ($request->boolean('remove_profile_picture')) {
+                if ($student->profile_picture && Storage::disk('public')->exists($student->profile_picture)) {
+                    Storage::disk('public')->delete($student->profile_picture);
+                }
+                $data['profile_picture'] = null;
+            }
+
             // Handle License Image
             if ($request->hasFile('license_image')) {
                 // Delete old one if exists
@@ -860,7 +950,7 @@ class AdminController extends Controller
         try {
             $admin = Auth::guard('admin')->user();
             if (!$admin) {
-                return redirect()->route('schools.admin.login', $school);
+                return redirect()->route('schools.login', $school);
             }
             $instructor = \App\Models\Instructor::where('school_id', $school->id)->findOrFail($id);
 
@@ -885,7 +975,7 @@ class AdminController extends Controller
         try {
             $admin = Auth::guard('admin')->user();
             if (!$admin) {
-                return redirect()->route('schools.admin.login', $school);
+                return redirect()->route('schools.login', $school);
             }
             $instructor = \App\Models\Instructor::where('school_id', $school->id)->findOrFail($id);
 
@@ -976,7 +1066,7 @@ class AdminController extends Controller
         try {
             $admin = Auth::guard('admin')->user();
             if (!$admin) {
-                return redirect()->route('schools.admin.login', $school);
+                return redirect()->route('schools.login', $school);
             }
             $instructor = \App\Models\Instructor::where('school_id', $school->id)->findOrFail($id);
 
@@ -1028,7 +1118,7 @@ class AdminController extends Controller
     {
         $admin = Auth::guard('admin')->user();
         if (!$admin) {
-            return redirect()->route('schools.admin.login', $school);
+            return redirect()->route('schools.login', $school);
         }
 
         return view($school->resolveView('admin.profile'), [
@@ -1043,7 +1133,7 @@ class AdminController extends Controller
         try {
             $admin = Auth::guard('admin')->user();
             if (!$admin) {
-                return redirect()->route('schools.admin.login', $school);
+                return redirect()->route('schools.login', $school);
             }
 
             $rules = [
@@ -1160,7 +1250,7 @@ class AdminController extends Controller
     {
         $admin = Auth::guard('admin')->user();
         if (!$admin) {
-            return redirect()->route('schools.admin.login', $school);
+            return redirect()->route('schools.login', $school);
         }
 
         abort_unless($admin->school_id === $school->id, 403);
@@ -1200,7 +1290,7 @@ class AdminController extends Controller
     {
         $admin = Auth::guard('admin')->user();
         if (!$admin) {
-            return redirect()->route('schools.admin.login', $school);
+            return redirect()->route('schools.login', $school);
         }
 
         abort_unless($admin->school_id === $school->id, 403);
@@ -1306,7 +1396,7 @@ class AdminController extends Controller
     {
         $admin = Auth::guard('admin')->user();
         if (!$admin) {
-            return redirect()->route('schools.admin.login', $school);
+            return redirect()->route('schools.login', $school);
         }
 
         abort_unless($admin->school_id === $school->id, 403);
@@ -1377,7 +1467,7 @@ class AdminController extends Controller
     {
         $admin = Auth::guard('admin')->user();
         if (!$admin) {
-            return redirect()->route('schools.admin.login', $school);
+            return redirect()->route('schools.login', $school);
         }
 
         abort_unless($admin->school_id === $school->id, 403);
@@ -1405,7 +1495,7 @@ class AdminController extends Controller
         try {
             $admin = Auth::guard('admin')->user();
             if (!$admin) {
-                return redirect()->route('schools.admin.login', $school);
+                return redirect()->route('schools.login', $school);
             }
 
             abort_unless($admin->school_id === $school->id, 403);
@@ -1480,7 +1570,10 @@ class AdminController extends Controller
                 'login_welcome_size' => 'nullable|integer|min:12|max:32',
                 'login_header_bg_type' => 'nullable|in:gradient,solid,image',
                 'login_header_bg_color' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
-                'login_header_bg_image' => 'nullable|string|max:255',
+                'login_header_bg_image' => 'nullable|file|mimes:jpeg,png,jpg,webp|max:' . (($school->schoolSetting->max_file_size_mb ?? 5) * 1024),
+                'remove_login_header_bg' => 'nullable|boolean',
+                'remove_background_image' => 'nullable|boolean',
+                'remove_login_page_bg_image' => 'nullable|boolean',
                 'login_header_height' => 'nullable|integer|min:50|max:200',
                 'login_header_text_color' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
                 'login_header_shadow' => 'nullable|boolean',
@@ -1539,6 +1632,9 @@ class AdminController extends Controller
                 }
 
                 $backgroundImagePath = $request->file('background_image')->store('backgrounds/' . $school->slug, 'public');
+            } elseif ($request->boolean('remove_background_image') && $backgroundImagePath) {
+                Storage::disk('public')->delete($backgroundImagePath);
+                $backgroundImagePath = null;
             }
 
             // Handle login page background image upload
@@ -1550,6 +1646,22 @@ class AdminController extends Controller
                 }
 
                 $loginBgImagePath = $request->file('login_page_bg_image')->store('backgrounds/' . $school->slug . '/login', 'public');
+            } elseif ($request->boolean('remove_login_page_bg_image') && $loginBgImagePath) {
+                Storage::disk('public')->delete($loginBgImagePath);
+                $loginBgImagePath = null;
+            }
+
+            // Handle login header background / banner image upload
+            $loginHeaderBgPath = $schoolSetting->login_header_bg_image;
+            if ($request->hasFile('login_header_bg_image')) {
+                if ($loginHeaderBgPath) {
+                    Storage::disk('public')->delete($loginHeaderBgPath);
+                }
+
+                $loginHeaderBgPath = $request->file('login_header_bg_image')->store('backgrounds/' . $school->slug . '/header', 'public');
+            } elseif ($request->boolean('remove_login_header_bg') && $loginHeaderBgPath) {
+                Storage::disk('public')->delete($loginHeaderBgPath);
+                $loginHeaderBgPath = null;
             }
 
             // Handle login header logo upload. Admins upload the file here
@@ -1638,7 +1750,7 @@ class AdminController extends Controller
                 'login_welcome_size' => $request->login_welcome_size ?? 16,
                 'login_header_bg_type' => $request->login_header_bg_type ?? 'gradient',
                 'login_header_bg_color' => $request->login_header_bg_color ?? '#2563eb',
-                'login_header_bg_image' => $request->login_header_bg_image,
+                'login_header_bg_image' => $loginHeaderBgPath,
                 'login_header_height' => $request->login_header_height ?? 60,
                 'login_header_text_color' => $request->login_header_text_color ?? '#ffffff',
                 'login_header_shadow' => $request->has('login_header_shadow'),
