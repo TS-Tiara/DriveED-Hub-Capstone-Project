@@ -9,6 +9,88 @@ DriveED Hub is a multi-tenant web application built for driving schools to manag
 
 The following changes address feedback from capstone advisory consultations and defense preparations:
 
+---
+
+### Dedicated QR Code Scan Modal Popup & Image Zoom Lightbox — October 27, 2026
+- **Dedicated QR Code Scan Modal Popup (`#driveedQrScanModal`)**: Resolved payment QR scanning difficulties where cameras could not scan small in-page images. Clicking any payment QR code opens a dedicated high-contrast white card dialog optimized specifically for phone cameras and GCash auto-exposure.
+- **Interactive Zoom Toolbar**: Direct `[ - ] [ 100% ] [ + ] [ ↺ ]` zoom controls directly under the QR code allowing up to 200% magnification so users can scan from across a desk or with lower-resolution camera lenses.
+- **Account Details & 1-Click Copy**: Cleanly displays the School's official GCash Account Name and Account Number with a 1-click **"Copy"** button that gives instant **"Copied!"** visual feedback.
+- **Direct "Download QR Code" Action**: Mobile users can download the high-resolution QR image directly to their gallery to use GCash's *"Upload QR from Photos"* feature.
+- **High Stacking Priority (`z-index: 1000005`)**: Cleanly stacks on top of `#enrollmentPaymentModal` (`z-index: 99999`) and all Bootstrap modals without losing typed form input or closing the parent modal.
+- **Universal Lightbox (`#driveedImageLightbox`)**: Added full-size preview, zoom (+/-), mouse wheel zoom, pan/drag, 90° rotation, and download for official receipts, student permits, and license photos across student checkout, dashboard, and admin views.
+
+![Actual Student Payment Checkout](docs/screenshots/12_actual_payment_checkout_page.png)
+*Student checkout interface (/student/payment/38) with interactive QR container, zoom indicator, and Step 2 proof upload.*
+
+![Dedicated QR Scan Modal Popup Opened](docs/screenshots/12_qr_scan_modal_popup_opened.png)
+*Dedicated QR Scan Modal Popup with high-contrast card, camera-ready indicator, GCash details, and download capability.*
+
+![QR Modal Copied Number and Zoom](docs/screenshots/13_qr_scan_modal_copied_number.png)
+*1-click copy action with instant green confirmation and direct zoom-in controls.*
+
+![QR Scan Modal Stacked on Enrollment Modal](docs/screenshots/17_qr_scan_modal_stacked_on_enrollment_modal.png)
+*Dedicated QR Scan Modal Popup seamlessly stacked on top of the Enrollment Payment Modal without form disruption.*
+
+---
+
+### Table Responsiveness & Sticky Action Columns for Narrow Screens — October 27, 2026
+- Fixed an issue where narrow screens or split windows cut off the `Actions` column on the right edge of data tables.
+- Implemented `overflow-x: auto` container protection and minimum width boundaries (`min-width: 1020px`) on Admin Management, Branches, and User Management tables.
+- Pinned `.col-actions` stickily to the right edge (`position: sticky; right: 0; z-index: 2;`) with a clean elevation drop shadow so Edit, Deactivate, and Delete buttons remain visible and clickable regardless of horizontal scroll position.
+- Added responsive horizontal scroll indicator notices and customized touch-friendly scrollbars across all table views.
+
+![Admin Table Narrow Screen Sticky Actions](docs/screenshots/07_admin_table_narrow_screen_sticky_actions.png)
+*Admin Management table on narrow screens with sticky right Actions column permanently accessible.*
+
+![Admin Edit Modal Interacted](docs/screenshots/08_admin_edit_modal_interacted.png)
+*Clicking the pinned Edit action immediately opens the modal without obstruction.*
+
+---
+
+### Admin User Management Search & Filters — October 27, 2026
+- Removed an orphaned JavaScript fragment that caused `SyntaxError: Unexpected token '}'` and prevented the entire User Management script from running, leaving search and every filter unresponsive.
+- Rebuilt the filter bar as a native `GET` form with explicit `Search` and `Clear` actions, preserving `role`, `status`, and `filtered` state in hidden fields and keeping a no-JS fallback.
+- Server-side search now matches **name, email, and contact** on Enter or Search, while typing filters the current page instantly and points to the full search when there are no page-level matches.
+- License, branch, and quick-stat-card filters (Total, Active, Inactive, Students, Instructors, Licenses Expiring) now compose correctly across AJAX navigation.
+- Added a `Clear filters` action to the zero-results state so users are never stranded on an empty result.
+
+![Admin User Management search and filters](docs/screenshots/22_admin_user_management_search_and_filters.png)
+*User Management with working search, license and branch filters, Clear action, and quick-stat-card filtering.*
+
+![License filter results](docs/screenshots/23_admin_user_management_license_filter_results.png)
+*License filter returning only credentials expiring within 60 days, with the expiring card highlighted and reminder actions intact.*
+
+![Zero results with Clear filters](docs/screenshots/24_admin_user_management_empty_state_clear_filters.png)
+*Searching for a non-existent user shows a helpful empty state with a one-click Clear filters recovery.*
+
+---
+
+### Schedule Logs Export (October 27, 2026)
+- Added schedule-log export with status filters: Cancelled, Completed, Incoming, and No-show.
+- Status filters apply to booked lessons and session completions; admins may also restrict by student or instructor.
+- Instructors see only their students in the Student selector; students see only their own sessions.
+- Date range filters control the included record window.
+- PDF and Excel downloads available; file names include status label, student/instructor, and date range.
+- Admin may select a specific instructor or student, or view all records across the school (or branch for branch secretaries).
+- Added the export card to the admin schedules page with a native GET form and no-JS fallback.
+
+ ![Admin schedules export card with status filters](docs/screenshots/25_admin_schedules_schedule_logs_export.png)
+*Admin schedules page with the new Schedule Logs export card — status checkboxes, date pickers, Student/Instructor selectors, and PDF/Excel download buttons.*
+
+ ![Schedule logs export with all statuses selected](docs/screenshots/26_schedule_logs_all_statuses.png)
+*All four status groups selected — Cancelled, Completed, Incoming, and No-show.*
+
+ ![Schedule logs export with Cancelled and Incoming selected](docs/screenshots/27_schedule_logs_cancelled_incoming.png)
+*Only Cancelled and Incoming statuses selected, filtering out Completed and No-show lessons.*
+
+ ![Schedule logs export with Instructor-selected students](docs/screenshots/28_schedule_logs_instructor_selected.png)
+*Instructor selected from the dropdown; the export is automatically scoped to that instructor's sessions and their enrolled students.*
+
+ ![Clear filters in export card](docs/screenshots/29_schedule_logs_clear_filters.png)
+*Clicking Clear filters on the export card resets all dropdowns and checkboxes to their defaults.*
+
+---
+
 ### Payment Receipt Viewing (404 Fix) — October 24, 2026
 - Fixed an issue where clicking "View Receipt" under Admin Payments & Transactions produced an HTTP 404 error.
 - Corrected the route parameter resolution in `ReceiptStorageService` so school slugs resolve from active models and authenticated contexts rather than falling back to an unmapped default route.
@@ -91,7 +173,7 @@ Unlike traditional driving schools that lose touch with learners after course gr
 ![Payment Receipt Pop-up Modal](docs/screenshots/10_reupload_receipt_popup_modal.png)
 *In-place payment receipt submission pop-up modal with GCash QR preview, account copy tool, and live validation.*
 
-![License Re-upload Pop-up Modal](docs/screenshots/11_reupload_license_popup_modal.png)
+![License Re-upload Pop-up Modal](docscreenshots/11_reupload_license_popup_modal.png)
 *In-place driver's license re-upload pop-up modal with LTO regulatory notice and direct file dropzone.*
 
 ---
@@ -121,7 +203,7 @@ Unlike traditional driving schools that lose touch with learners after course gr
 - **Unblocked Re-Enrollments:** Resolved an issue where students who completed a driving course were blocked from enrolling in new courses or re-enrolling in completed courses.
 - **Migration `2026_10_26_000001_drop_unique_student_course_enrollment_index`:** Dropped the unconditional unique index on `enrollment_requests` (`student_id`, `course_id`), permitting multiple historical completions over time.
 - **Auto-Unlock Upon Completion:** Updated `Course::complete()` and enrollment workflows to ensure database transactions commit, student records unlock (`is_course_locked = false`, `canEnrollInNewCourse() = true`), and role promotion logic remains consistent.
-- **Visual Completion & Re-Enrollment Badge:** Added a green `"✓ Course Previously Completed"` badge and an enabled `"Enroll Again"` button on course catalog and detail views.
+- **Visual Completion & Re-Enrollment Badge:** Added a green `"✓" Course Previously Completed"` badge and an enabled `"Enroll Again"` button on course catalog and detail views.
 
 ![Completed Course Re-enrollment](docs/screenshots/18_course_completed_reenroll.png)
 *Course details view displaying completed status badge and active "Enroll Again" action.*
@@ -160,7 +242,7 @@ Unlike traditional driving schools that lose touch with learners after course gr
 
 ---
 
-## Getting Started (Docker)
+### Getting Started (Docker)
 
 Run the system locally using Docker Compose:
 
@@ -184,7 +266,7 @@ docker compose exec app php artisan db:seed --class=DriveEdHubSeeder
 
 ---
 
-## Testing & Verification
+### Testing & Verification
 
 Automated regression test scripts are located in `tests/`:
 
