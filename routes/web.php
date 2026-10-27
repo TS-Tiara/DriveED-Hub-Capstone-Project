@@ -108,6 +108,7 @@ Route::prefix('{school:slug}')
         Route::controller(AuthController::class)->group(function (): void {
             Route::get('/', 'showLogin')->name('login');
             Route::get('/login', 'showLogin');
+            Route::get('/admin/login', 'showLogin')->name('admin.login');
             Route::post('/login', 'login')->name('login.submit')->middleware(app()->environment('production') ? 'throttle:5,1' : 'throttle:60,1');
             Route::post('/logout', 'logout')->name('logout');
 
@@ -158,6 +159,7 @@ Route::prefix('{school:slug}')
                     // Guest payment routes
                     Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
                     Route::post('/payments', [PaymentController::class, 'store'])->name('payments.store');
+                    Route::post('/profile/picture', [GuestController::class, 'updateProfilePicture'])->name('profile.picture');
                 }
                 );
 
