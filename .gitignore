@@ -28,6 +28,13 @@
 /vendor
 Homestead.json
 Homestead.yaml
+
+# Web Testing Files
+/test_screenshots/
+/manual_test_runner.py
+/test_guide.py
+/debug_*.py
+/test_hf_api*.py
 Thumbs.db
 
 # Test-result screenshots
@@ -62,3 +69,4 @@ Thumbs.db
 /.agents
 
 
+/WEBTESTING
