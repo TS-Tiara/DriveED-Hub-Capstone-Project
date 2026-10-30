@@ -28,13 +28,6 @@
 /vendor
 Homestead.json
 Homestead.yaml
-
-# Web Testing Files
-/test_screenshots/
-/manual_test_runner.py
-/test_guide.py
-/debug_*.py
-/test_hf_api*.py
 Thumbs.db
 
 # Test-result screenshots
@@ -49,7 +42,12 @@ Thumbs.db
 /tests/Browser/screenshots/**/*.jpeg
 /tests/Browser/screenshots/**/*.webp
 
-/tests
+/tests/*
+!/tests/verify-bug-report.php
+!/tests/verify-session-report-export.php
+!/tests/verify-session-features.php
+!/tests/capture-bug-report.mjs
+!/tests/bug-report-browser-fixture.php
 /routes.json
 /routes_list.txt
 /routes_utf8.json
