@@ -16,6 +16,77 @@ A school portal for managing students, instructors, courses, schedules, payments
 - Admins, instructors, and students can have their own header colors.
 - Review windows close properly, including when using the Escape key.
 
+## School Admin and Home Page Fixes
+
+<details>
+<summary>Course and package hours save correctly</summary>
+
+Required course hours can be edited and saved. Package TDC and PDC hours remain saved when reopened, including fractional hours.
+
+![Course and package hours save correctly](docs/screenshots/hours-login-fix/course-hours.png)
+
+![Course and package hours save correctly](docs/screenshots/hours-login-fix/package-created.png)
+
+</details>
+
+<details>
+<summary>Login fits different screen sizes</summary>
+
+The login form uses the available screen width with readable text and larger controls on phones.
+
+![Login fits different screen sizes](docs/screenshots/hours-login-fix/login-390.png)
+
+</details>
+
+<details>
+<summary>New schools can open User Management</summary>
+
+Schools without courses can open User Management. The empty-course message links to the correct course page.
+
+![New schools can open User Management](docs/screenshots/new-school-user-management/user-management-loaded.png)
+
+![New schools can open User Management](docs/screenshots/new-school-user-management/no-courses-student-modal.png)
+
+</details>
+
+<details>
+<summary>Payments keeps the admin layout</summary>
+
+The Payments page keeps the admin navigation and shows one empty-state message on each screen size.
+
+![Payments keeps the admin layout](docs/screenshots/new-school-audit/payments.index.png)
+
+</details>
+
+<details>
+<summary>Inactive users appear in the matching list</summary>
+
+Archived and deactivated users appear under Inactive Users. The card and list show matching totals: two students and three instructors when all five belong to the same school.
+
+![Inactive users appear in the matching list](docs/screenshots/inactive-roster-fix/inactive-card-five-users.png)
+
+</details>
+
+<details>
+<summary>Each school sees its own inactive users</summary>
+
+Archived and deactivated users stay in their own school. Four archived users in one school and a deactivated instructor in another appear in their respective lists.
+
+![Each school sees its own inactive users](docs/screenshots/inactive-roster-fix/qa-inactive-roster-school-scoped.png)
+
+![Each school sees its own inactive users](docs/screenshots/inactive-roster-fix/qa-inactive-roster-other-school-scoped.png)
+
+</details>
+
+<details>
+<summary>Home page uses DriveED Hub branding</summary>
+
+The home page title and copyright now use DriveED Hub.
+
+![Home page uses DriveED Hub branding](docs/screenshots/home-branding/driveed-hub-home.png)
+
+</details>
+
 ## TDC to PDC Enrollment
 
 **Before:** students who already passed TDC were still blocked from applying for PDC.
@@ -524,9 +595,3 @@ School staff can download training records from Verify Session Completion and na
 
 </details>
 
-<details>
-<summary>12. School walkthrough guides are available</summary>
-
-The [presentation guide](docs/CAPSTONE_DEFENSE_MASTER_GUIDE.md) and [school process walkthroughs](docs/SYSTEM_PROCESS_FLOWS_PRESENTATION.md) explain enrollment, payments, training, and common problems step by step.
-
-</details>
