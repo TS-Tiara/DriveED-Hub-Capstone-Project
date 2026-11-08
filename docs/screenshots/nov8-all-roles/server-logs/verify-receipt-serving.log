@@ -1,0 +1,17 @@
+=== VERIFYING RECEIPT STORAGE & STREAMING FIXES ===
+[PASS] Found test school: 'drived-hub'
+[PASS] getUrl without school parameter does not generate '/default/': http://localhost:8006/drived-hub/guest/receipt?path=receipts%2F1%2Ftest.png
+[PASS] getUrl resolved to valid school slug 'drived-hub'
+[PASS] getUrl with School model generates proper URL: http://localhost:8006/drived-hub/guest/receipt?path=receipts%2F1%2Ftest.png
+[PASS] getUrl normalizes backslashes: http://localhost:8006/drived-hub/guest/receipt?path=receipts%2F1%2Ftest.png
+[PASS] Found payment with proof_of_payment_path (ID: 1)
+[PASS] Payment proof_url attribute is populated: http://localhost:8006/drived-hub/guest/receipt?path=receipts%2F1%2F4OqGwuEdzLgqVuZa7etg1exe8nzp46EM_1788479522.png
+[PASS] Payment proof_url does not contain '/default/'
+[PASS] Admin can stream receipt successfully (HTTP 200)
+[PASS] Receipt in 'guest-data/' streams successfully (HTTP 200)
+[PASS] Receipt with backslash in path streams successfully (HTTP 200)
+[PASS] Receipt with leading slash streams successfully (HTTP 200)
+[PASS] Directory traversal attempt blocked with 403 (HTTP 403)
+[PASS] Unauthenticated user blocked (HTTP 302)
+
+Summary: 14 passed, 0 failed.

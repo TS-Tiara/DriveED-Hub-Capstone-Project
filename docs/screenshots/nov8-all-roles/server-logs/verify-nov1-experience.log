@@ -1,0 +1,4 @@
+PASS: new_driver_with_license validates and persists as new_driver
+PASS: new_driver validates and persists as new_driver
+PASS: experienced validates and persists as experienced
+PASS: Unknown experience is rejected

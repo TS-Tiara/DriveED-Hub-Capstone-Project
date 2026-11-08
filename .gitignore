@@ -96,5 +96,23 @@ Thumbs.db
 !/tests/verify-nov1-findings.mjs
 !/tests/verify-nov1-experience.php
 !/tests/nov1-package-snapshot.php
+!/tests/verify-nov7-findings.php
+!/tests/verify-nov7-findings.mjs
+!/tests/nov7-browser-fixture.php
+!/tests/capture-nov7-comparison.mjs
+!/tests/audit-all-roles-fixture.php
+!/tests/audit-all-roles.mjs
+!/tests/audit-server-regressions.mjs
+!/tests/audit-role-workflows.mjs
+!/tests/audit-security-boundaries.mjs
 
 !/docs/screenshots/full-regression/*.log
+!/docs/screenshots/nov8-all-roles/server-logs/*.log
+
+!/tests/verify-seven-fixes.php
+!/tests/capture-seven-fixes.mjs
+!/docs/screenshots/nov8-seven-fixes/server-logs/*.log
+
+!/tests/build-seven-fixes-gallery.mjs
+
+!/tests/verify-session-edit-fix.php

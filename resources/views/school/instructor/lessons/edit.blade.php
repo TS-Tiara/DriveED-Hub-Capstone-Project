@@ -3,6 +3,7 @@
 @section('title', 'Edit Lesson')
 
 @section('content')
+@php($lessonRole = $lessonRole ?? 'instructor')
 @include('school.partials.lms-shared-styles')
 
 <div class="lms-page" style="max-width: 900px;" data-breadcrumb-course="{{ $course->title ?? '' }}" data-breadcrumb-module="{{ $module->title ?? '' }}" data-breadcrumb-lesson="{{ $lesson->title ?? '' }}">
@@ -12,7 +13,7 @@
             <p class="lms-subtitle">Module: {{ $module->title ?? 'N/A' }}</p>
         </div>
         <div class="lms-actions">
-            <a href="{{ school_route('instructor.courses.modules.lessons.show', ['course' => $course->id, 'module' => $module->id, 'lesson' => $lesson->id]) }}" class="lms-btn lms-btn-muted">Cancel</a>
+            <a href="{{ school_route($lessonRole.'.courses.modules.lessons.show', ['course' => $course->id, 'module' => $module->id, 'lesson' => $lesson->id]) }}" class="lms-btn lms-btn-muted">Cancel</a>
         </div>
     </div>
 
@@ -27,7 +28,7 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ school_route('instructor.courses.modules.lessons.update', ['course' => $course->id, 'module' => $module->id, 'lesson' => $lesson->id]) }}" enctype="multipart/form-data" class="lms-form">
+        <form method="POST" action="{{ school_route($lessonRole.'.courses.modules.lessons.update', ['course' => $course->id, 'module' => $module->id, 'lesson' => $lesson->id]) }}" enctype="multipart/form-data" class="lms-form">
             @csrf
             @method('PUT')
 
@@ -73,7 +74,7 @@
 
             <div class="lms-actions" style="margin-top: 4px;">
                 <button type="submit" class="lms-btn lms-btn-primary">Update Lesson</button>
-                <a href="{{ school_route('instructor.courses.modules.lessons.show', ['course' => $course->id, 'module' => $module->id, 'lesson' => $lesson->id]) }}" class="lms-btn lms-btn-muted">Back</a>
+                <a href="{{ school_route($lessonRole.'.courses.modules.lessons.show', ['course' => $course->id, 'module' => $module->id, 'lesson' => $lesson->id]) }}" class="lms-btn lms-btn-muted">Back</a>
             </div>
         </form>
         </div>

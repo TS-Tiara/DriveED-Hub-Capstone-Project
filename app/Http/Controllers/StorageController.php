@@ -28,6 +28,7 @@ class StorageController extends Controller
 
         // 2. School Boundary
         abort_if((int)$student->school_id !== (int)$school->id, 404);
+        abort_if($admin?->isBranchSecretary() && !$admin->canAccessBranch($student->branch_id), 403);
 
         if (!$student->student_license_path || !Storage::disk('local')->exists($student->student_license_path)) {
             abort(404, 'License file not found.');
@@ -50,6 +51,7 @@ class StorageController extends Controller
 
         // 2. School Boundary
         abort_if((int)$enrollment->school_id !== (int)$school->id, 404);
+        abort_if($admin?->isBranchSecretary() && !$admin->canAccessBranch($enrollment->branch_id), 403);
 
         if (!$enrollment->credentials_file_path || !Storage::disk('local')->exists($enrollment->credentials_file_path)) {
             abort(404, 'Credential file not found.');
@@ -134,6 +136,7 @@ class StorageController extends Controller
             }
         }
         abort_unless($isAllowed, 403, 'Invalid receipt directory.');
+        abort_unless(app(\App\Services\ReceiptAccessService::class)->canView($path, $school, $admin, $student), 403, 'You do not have access to this receipt.');
 
         // Try both local and public disks for deployment robustness
         $disks = ['local', 'public'];

@@ -1,0 +1,54 @@
+{
+  "phase": "after",
+  "viewport": [
+    1440,
+    1000
+  ],
+  "records": [
+    {
+      "key": "receipt-ownership",
+      "status": 403,
+      "url": "http://localhost:8006/drived-hub/guest/receipt?path=receipts%2Fqa-audit-guest.png"
+    },
+    {
+      "key": "branch-receipt",
+      "status": 403,
+      "url": "http://localhost:8006/drived-hub/admin/enrollments/2/view-payment-proof"
+    },
+    {
+      "key": "secretary-permissions",
+      "status": 403,
+      "url": "http://localhost:8006/drived-hub/admin/settings"
+    },
+    {
+      "key": "enrollment-detail",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/enrollments?search=ENR-2026-00002&review=2"
+    },
+    {
+      "key": "admin-lessons",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/courses/2/modules/7/lessons/create"
+    },
+    {
+      "key": "duplicate-course",
+      "status": 422,
+      "url": "http://localhost:8006/drived-hub/admin/courses",
+      "fieldErrors": {
+        "title": [
+          "The title has already been taken."
+        ]
+      }
+    },
+    {
+      "key": "progress-edit",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/instructor/progress/2/edit"
+    },
+    {
+      "key": "system-password-reset",
+      "status": 200,
+      "url": "http://localhost:8006/system-admin/forgot-password"
+    }
+  ]
+}

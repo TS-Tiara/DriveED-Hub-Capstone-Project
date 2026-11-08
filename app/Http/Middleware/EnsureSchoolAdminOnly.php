@@ -22,15 +22,7 @@ class EnsureSchoolAdminOnly
             abort(403, 'Unauthorized.');
         }
 
-        if ($admin->isBranchSecretary()) {
-            if ($request->expectsJson() || $request->ajax()) {
-                return response()->json([
-                    'message' => 'This action is restricted to school administrators.',
-                ], 403);
-            }
-
-            return redirect()->back()->with('error', 'You do not have permission to access this area.');
-        }
+        abort_unless($admin->isSchoolAdmin(), 403, 'This action is restricted to school administrators.');
 
         return $next($request);
     }

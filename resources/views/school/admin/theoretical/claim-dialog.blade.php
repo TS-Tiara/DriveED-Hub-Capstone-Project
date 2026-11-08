@@ -1,7 +1,7 @@
-<dialog id="claimNoticeDialog" style="width:calc(100% - 32px); max-width:520px; border:1px solid #d1d5db; border-radius:12px; padding:24px; color:#1f2937;">
+<dialog id="claimNoticeDialog" aria-labelledby="claimNoticeTitle" style="position:fixed; inset:0; margin:auto; width:calc(100% - 32px); max-width:520px; max-height:calc(100dvh - 32px); overflow:auto; border:1px solid #d1d5db; border-radius:12px; padding:24px; color:#1f2937;">
     <form method="POST" data-no-ajax="1" id="claimNoticeForm">
         @csrf
-        <h2 style="font-size:1.2rem; margin:0 0 8px;">Notify student to pick up documents</h2>
+        <h2 id="claimNoticeTitle" style="font-size:1.2rem; margin:0 0 8px;">Notify student to pick up documents</h2>
         <p id="claimNoticeStudent" style="margin-bottom:16px; font-weight:600; color:#173c54;"></p>
         <label for="claimNoticeKind">What is ready for pickup?</label>
         <select id="claimNoticeKind" name="kind" class="form-control" style="margin:8px 0 16px;" required>

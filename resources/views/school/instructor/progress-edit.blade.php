@@ -87,7 +87,7 @@
     </div>
 
     <div class="form-card">
-        <form action="{{ $schoolRoute('instructor.progress.update', $progress->id) }}" method="POST">
+        <form action="{{ $schoolRoute('instructor.progress.update', ['progress' => $progress->id]) }}" method="POST">
             @csrf
             @method('PUT')
             

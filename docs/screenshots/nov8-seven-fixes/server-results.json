@@ -1,0 +1,128 @@
+[
+  {
+    "file": "verify-bug-report.php",
+    "pass": true,
+    "code": 0,
+    "seconds": 1,
+    "markers": []
+  },
+  {
+    "file": "verify-recheck-edge-cases.php",
+    "pass": true,
+    "code": 0,
+    "seconds": 1,
+    "markers": []
+  },
+  {
+    "file": "verify-oct31-findings.php",
+    "pass": true,
+    "code": 0,
+    "seconds": 1,
+    "markers": []
+  },
+  {
+    "file": "verify-nov1-experience.php",
+    "pass": true,
+    "code": 0,
+    "seconds": 0,
+    "markers": []
+  },
+  {
+    "file": "verify-nov7-findings.php",
+    "pass": true,
+    "code": 0,
+    "seconds": 1,
+    "markers": []
+  },
+  {
+    "file": "verify-license-expiration-reminders.php",
+    "pass": true,
+    "code": 0,
+    "seconds": 1,
+    "markers": []
+  },
+  {
+    "file": "verify-session-features.php",
+    "pass": true,
+    "code": 0,
+    "seconds": 2,
+    "markers": []
+  },
+  {
+    "file": "verify-session-report-export.php",
+    "pass": true,
+    "code": 0,
+    "seconds": 3,
+    "markers": []
+  },
+  {
+    "file": "verify-tdc-completion.php",
+    "pass": true,
+    "code": 0,
+    "seconds": 0,
+    "markers": []
+  },
+  {
+    "file": "verify-bundle-transitions.php",
+    "pass": true,
+    "code": 0,
+    "seconds": 0,
+    "markers": []
+  },
+  {
+    "file": "verify-receipt-serving.php",
+    "pass": true,
+    "code": 0,
+    "seconds": 1,
+    "markers": []
+  },
+  {
+    "file": "verify-image-lightbox-zoom.php",
+    "pass": true,
+    "code": 0,
+    "seconds": 0,
+    "markers": []
+  },
+  {
+    "file": "verify-table-responsiveness.php",
+    "pass": true,
+    "code": 0,
+    "seconds": 0,
+    "markers": []
+  },
+  {
+    "file": "verify-session-edit-fix.php",
+    "pass": true,
+    "code": 0,
+    "seconds": 1,
+    "markers": []
+  },
+  {
+    "file": "verify-enrollment-reupload-modals.php",
+    "pass": true,
+    "code": 0,
+    "seconds": 1,
+    "markers": []
+  },
+  {
+    "file": "verify-enrollment-and-media.php",
+    "pass": true,
+    "code": 0,
+    "seconds": 3,
+    "markers": []
+  },
+  {
+    "file": "verify-all-capstone-items.php",
+    "pass": true,
+    "code": 0,
+    "seconds": 1,
+    "markers": []
+  },
+  {
+    "file": "verify-seven-fixes.php",
+    "pass": true,
+    "code": 0,
+    "seconds": 4,
+    "markers": []
+  }
+]

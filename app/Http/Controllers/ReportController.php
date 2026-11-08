@@ -21,6 +21,8 @@ class ReportController extends Controller
      */
     public function index(Request $request, School $school, FinancialService $financialService)
     {
+        $admin = auth()->guard('admin')->user();
+        abort_unless($admin && (int) $admin->school_id === (int) $school->id && $admin->canViewFinancials(), 403);
         try {
             $admin = auth()->guard('admin')->user();
             if (!$admin || $admin->school_id !== $school->id) {

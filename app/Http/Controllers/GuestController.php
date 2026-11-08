@@ -692,7 +692,7 @@ class GuestController extends Controller
         }
 
         $requests = $guest->enrollmentRequests()
-            ->with('course', 'branchRelation')
+            ->with('course', 'branchRelation', 'payments.enrollmentRequest')
             ->orderBy('created_at', 'desc')
             ->get();
 

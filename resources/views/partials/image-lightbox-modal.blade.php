@@ -1,5 +1,5 @@
 <!-- DriveED Hub - Reusable Image Preview & Zoom Lightbox Modal (For receipts, IDs, and general images) -->
-<div id="driveedImageLightbox" class="driveed-lightbox" aria-hidden="true" role="dialog" aria-modal="true" style="display: none;">
+<div id="driveedImageLightbox" class="driveed-lightbox" aria-hidden="true" aria-labelledby="driveedLightboxTitle" role="dialog" aria-modal="true" style="display: none;">
     <!-- Backdrop -->
     <div class="driveed-lightbox-backdrop" onclick="closeImageLightbox()"></div>
 
@@ -65,6 +65,7 @@
             <div class="driveed-lightbox-stage" id="driveedLightboxStage">
                 <img id="driveedLightboxImage" src="" alt="Preview Image" draggable="false">
             </div>
+            <p id="driveedLightboxError" role="status" hidden style="position:absolute; padding:24px; color:#fff; text-align:center;">Image unavailable. Please ask for a new upload.</p>
 
             <!-- Floating Scan / Zoom Tip Bar -->
             <div class="driveed-lightbox-footer-tip" id="driveedLightboxFooterTip">
@@ -205,6 +206,11 @@
 .driveed-lightbox.is-open {
     opacity: 1;
     visibility: visible;
+}
+.driveed-lightbox [hidden] { display: none !important; }
+.driveed-lb-btn:focus-visible, .qr-zoom-btn:focus-visible, .driveed-qr-close:focus-visible, .driveed-qr-action-btn:focus-visible {
+    outline: 2px solid #60a5fa;
+    outline-offset: 3px;
 }
 
 .driveed-lightbox-backdrop {
@@ -1025,9 +1031,21 @@
         }
     }
 
-    function isQrImage(src, title, alt) {
-        const text = `${src || ''} ${title || ''} ${alt || ''}`.toLowerCase();
-        return text.includes('qr') || text.includes('gcash') || text.includes('scan') || text.includes('barcode');
+    let returnFocus = null;
+    let previousOverflow = '';
+
+    function prepareViewer(modal) {
+        // Keep fixed overlays outside transformed page content and other dialogs.
+        if (modal.parentElement !== document.body) document.body.appendChild(modal);
+        returnFocus = document.activeElement;
+        previousOverflow = document.body.style.overflow;
+        modal.setAttribute('aria-hidden', 'false');
+    }
+
+    function restoreViewer(modal) {
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = previousOverflow;
+        if (returnFocus?.isConnected) returnFocus.focus();
     }
 
     /**
@@ -1049,6 +1067,7 @@
         }
         if (!src) return;
 
+        prepareViewer(qel.modal);
         qrState.src = src;
         qrState.scale = 1;
         qrState.isOpen = true;
@@ -1099,6 +1118,7 @@
         qel.modal.offsetHeight; // force reflow
         qel.modal.classList.add('is-open');
         document.body.style.overflow = 'hidden';
+        qel.modal.querySelector('button').focus();
     };
 
     /**
@@ -1110,7 +1130,7 @@
 
         qel.modal.classList.remove('is-open');
         qrState.isOpen = false;
-        document.body.style.overflow = '';
+        restoreViewer(qel.modal);
 
         setTimeout(() => {
             if (!qrState.isOpen) {
@@ -1199,10 +1219,7 @@
      * @param {object} options Optional settings
      */
     window.openImageLightbox = function(src, title, options = {}) {
-        if (!src) return;
-
-        const isQr = options.isQr !== undefined ? options.isQr : isQrImage(src, title, options.alt);
-        if (isQr) {
+        if (options.isQr === true) {
             window.openQrScanModal(src, Object.assign({}, options, { title: title }));
             return;
         }
@@ -1210,6 +1227,7 @@
         const el = getElements();
         if (!el.modal) return;
 
+        prepareViewer(el.modal);
         state.src = src;
         state.title = title || 'Image Preview';
         state.scale = options.initialScale || 1;
@@ -1224,6 +1242,7 @@
         el.title.textContent = state.title;
         el.subtitle.textContent = 'Use controls or mouse to zoom & inspect';
         el.downloadBtn.href = src;
+        el.downloadBtn.hidden = !src;
         el.downloadBtn.setAttribute('download', (title || 'image').replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.png');
         el.modal.classList.remove('is-qr-mode');
         el.qrBadge.style.display = 'none';
@@ -1233,22 +1252,33 @@
         // Show Loader & Load image
         el.loader.style.opacity = '1';
         el.loader.style.display = 'flex';
+        const error = document.getElementById('driveedLightboxError');
+        error.hidden = true;
+        el.image.hidden = false;
         el.image.onload = function() {
             el.loader.style.opacity = '0';
             setTimeout(() => { el.loader.style.display = 'none'; }, 200);
             updateTransform();
         };
         el.image.onerror = function() {
-            el.loader.style.opacity = '0';
-            setTimeout(() => { el.loader.style.display = 'none'; }, 200);
+            el.loader.style.display = 'none';
+            el.image.hidden = true;
+            error.hidden = false;
+            el.downloadBtn.hidden = true;
         };
-        el.image.src = src;
+        el.image.alt = state.title;
+        if (src) el.image.src = src;
+        else {
+            el.image.removeAttribute('src');
+            el.image.onerror();
+        }
 
         // Open modal
         el.modal.style.display = 'flex';
         el.modal.offsetHeight; // force reflow
         el.modal.classList.add('is-open');
         document.body.style.overflow = 'hidden';
+        el.modal.querySelector('button').focus();
         updateTransform();
     };
 
@@ -1261,7 +1291,7 @@
 
         el.modal.classList.remove('is-open');
         state.isOpen = false;
-        document.body.style.overflow = '';
+        restoreViewer(el.modal);
 
         setTimeout(() => {
             if (!state.isOpen) {
@@ -1270,6 +1300,26 @@
             }
         }, 250);
     };
+
+    document.addEventListener('keydown', function(event) {
+        const modal = state.isOpen ? getElements().modal : (qrState.isOpen ? getQrElements().modal : null);
+        if (!modal) return;
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            if (state.isOpen) closeImageLightbox();
+            else closeQrScanModal();
+        } else if (event.key === 'Tab') {
+            event.stopImmediatePropagation();
+            const buttons = [...modal.querySelectorAll('button, a[href]')].filter(node => !node.hidden && !node.disabled && node.getClientRects().length);
+            const first = buttons[0], last = buttons[buttons.length - 1];
+            if (event.shiftKey && (document.activeElement === first || !modal.contains(document.activeElement))) {
+                event.preventDefault(); last?.focus();
+            } else if (!event.shiftKey && (document.activeElement === last || !modal.contains(document.activeElement))) {
+                event.preventDefault(); first?.focus();
+            }
+        }
+    }, true);
 
     // Zoom Functions for Lightbox
     window.lightboxZoomIn = function(delta) {
@@ -1465,6 +1515,8 @@
 
         // Global Event Delegation for QR & Uploaded Images
         document.addEventListener('click', function(e) {
+            // Inline controls already chose their viewer and supplied account details.
+            if (e.defaultPrevented || e.target.closest('[onclick]')) return;
             // Check for explicit QR trigger
             const qrTrigger = e.target.closest('.qr-container, .epm-qr-box, .qr-code-wrapper, [data-qr-modal]');
             if (qrTrigger) {

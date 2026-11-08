@@ -17,7 +17,7 @@ class PasswordResetRequested extends Mailable
     use SerializesModels;
 
     public function __construct(
-        public School $school,
+        public ?School $school,
         public string $recipientName,
         public string $resetUrl,
     ) {
@@ -25,9 +25,13 @@ class PasswordResetRequested extends Mailable
 
     public function envelope(): Envelope
     {
+        $senderName = $this->school?->name ?? 'DriveED Hub';
+        $senderAddress = $this->school
+            ? "{$this->school->slug}@driveedhub.com"
+            : (config('mail.from.address') ?: 'no-reply@driveedhub.com');
         return new Envelope(
-            from: new Address("{$this->school->slug}@driveedhub.com", $this->school->name),
-            subject: "{$this->school->name} - Password Reset Request",
+            from: new Address($senderAddress, $senderName),
+            subject: "{$senderName} - Password Reset Request",
         );
     }
 

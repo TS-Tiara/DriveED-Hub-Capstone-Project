@@ -1,0 +1,41 @@
+PASS: Student can view an owned receipt
+PASS: Student cannot view a guest receipt
+PASS: Guest cannot view a student receipt
+PASS: Guest can view an owned receipt
+PASS: School admin can view school receipts
+PASS: Unattached receipt paths are denied
+PASS: Receipt access enforces the requested school
+PASS: Secretary cannot view another branch receipt
+PASS: Foreign-branch proof is available to the school admin
+PASS: Secretary can view own-branch receipts
+PASS: Owned legacy enrollment-only proofs remain accessible
+PASS: Legacy proofs enforce learner ownership
+PASS: Legacy Windows and storage-prefixed paths remain authorized for their owner
+PASS: Secretary cannot open school settings
+PASS: Secretary cannot update school settings
+PASS: Secretary cannot create courses
+PASS: Secretary cannot update courses
+PASS: Secretary cannot create course packages
+PASS: Secretary cannot view school financial reports
+PASS: Enrollment proof endpoint enforces the secretary branch
+PASS: Duplicate course title returns a field-level 422 response
+PASS: Updating a course without changing its own title succeeds
+PASS: The same course title is permitted in different schools
+PASS: Enrollment detail URLs open the supported verification interface
+PASS: School admin can save a lesson
+PASS: Admin lesson form posts through admin routes
+PASS: School admin can update a lesson
+PASS: Secretary cannot manage school course lessons
+PASS: Instructor lesson form retains instructor routes
+PASS: System-admin reset request creates a global reset email
+PASS: Global reset email renders without a school
+PASS: Global token is hashed and stored without a school foreign key
+PASS: Invalid global reset token cannot change the password
+PASS: Expired global reset token cannot change the password
+PASS: A valid global reset token changes the system-admin password
+PASS: Global reset redirects to the system-admin login
+PASS: Successful reset consumes the global token
+PASS: A consumed reset token cannot be replayed
+PASS: School reset tokens cannot be used in another school
+PASS: School-specific password recovery still completes
+40 seven-fix regression checks passed; database changes rolled back; mail was faked.

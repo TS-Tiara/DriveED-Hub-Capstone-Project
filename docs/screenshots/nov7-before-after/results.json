@@ -1,0 +1,94 @@
+{
+  "baseline": "Git HEAD 6a85c5c, isolated local container on port 8005",
+  "viewports": {
+    "desktop": [
+      1440,
+      1000
+    ],
+    "mobile": [
+      390,
+      844
+    ],
+    "actions": [
+      1100,
+      850
+    ]
+  },
+  "records": [
+    {
+      "version": "before",
+      "summary": [
+        "₱0.00",
+        "0",
+        "0"
+      ]
+    },
+    {
+      "version": "before",
+      "profileHasDocumentsAndActivity": false
+    },
+    {
+      "version": "before",
+      "gcashReceiptUsesQrViewer": true
+    },
+    {
+      "version": "before",
+      "pickupDialog": {
+        "x": 0,
+        "y": 0,
+        "width": 520,
+        "height": 450
+      }
+    },
+    {
+      "version": "before",
+      "enrollmentActionsWrap": "nowrap"
+    },
+    {
+      "version": "before",
+      "studentReceiptButtons": 0
+    },
+    {
+      "version": "before",
+      "guestShowsSubmittedPaymentDetails": false
+    },
+    {
+      "version": "after",
+      "summary": [
+        "₱5,200.00",
+        "14",
+        "15"
+      ]
+    },
+    {
+      "version": "after",
+      "profileHasDocumentsAndActivity": true
+    },
+    {
+      "version": "after",
+      "gcashReceiptUsesQrViewer": false
+    },
+    {
+      "version": "after",
+      "pickupDialog": {
+        "x": 452.5,
+        "y": 275,
+        "width": 520,
+        "height": 450
+      }
+    },
+    {
+      "version": "after",
+      "enrollmentActionsWrap": "wrap"
+    },
+    {
+      "version": "after",
+      "studentReceiptButtons": 20
+    },
+    {
+      "version": "after",
+      "guestShowsSubmittedPaymentDetails": true
+    }
+  ],
+  "errors": []
+}

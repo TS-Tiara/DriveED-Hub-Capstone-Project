@@ -15,6 +15,19 @@ use Illuminate\Support\Facades\Storage;
 
 class ModuleLessonController extends Controller
 {
+    private function authorizeLessonEditor(School $school): string
+    {
+        $admin = Auth::guard('admin')->user();
+        if ($admin && $admin->isSchoolAdmin() && (int) $admin->school_id === (int) $school->id) {
+            return 'admin';
+        }
+        $instructor = Auth::guard('instructor')->user();
+        if ($instructor && (int) $instructor->school_id === (int) $school->id) {
+            return 'instructor';
+        }
+        abort(403, 'Only school administrators and instructors can manage lessons.');
+    }
+
     /**
      * Display a listing of lessons for a specific module
      */
@@ -70,10 +83,7 @@ class ModuleLessonController extends Controller
      */
     public function create(Request $request, School $school, Course $course, CourseModule $module)
     {
-        $isInstructor = Auth::guard('instructor')->check();
-        if (!$isInstructor) {
-            abort(403, 'Only instructors can create lessons.');
-        }
+        $lessonRole = $this->authorizeLessonEditor($school);
 
         // Verify course belongs to school
         if ($course->school_id !== $school->id) {
@@ -87,7 +97,7 @@ class ModuleLessonController extends Controller
 
         $view = 'school.instructor.lessons.create';
 
-        return view($view, compact('school', 'course', 'module'))->with('isAjax', $request->ajax());
+        return view($view, compact('school', 'course', 'module', 'lessonRole'))->with('isAjax', $request->ajax());
     }
 
     /**
@@ -95,10 +105,7 @@ class ModuleLessonController extends Controller
      */
     public function store(Request $request, School $school, Course $course, CourseModule $module)
     {
-        $isInstructor = Auth::guard('instructor')->check();
-        if (!$isInstructor) {
-            abort(403, 'Only instructors can create lessons.');
-        }
+        $lessonRole = $this->authorizeLessonEditor($school);
 
         // Verify course belongs to school
         if ($course->school_id !== $school->id) {
@@ -160,7 +167,7 @@ class ModuleLessonController extends Controller
             }
 
             return redirect()
-                ->route('schools.instructor.courses.modules.show', ['school' => $school->slug, 'course' => $course->id, 'module' => $module->id])
+                ->route('schools.'.$lessonRole.'.courses.modules.show', ['school' => $school->slug, 'course' => $course->id, 'module' => $module->id])
                 ->with('success', 'Lesson created successfully.');
 
         } catch (\Exception $e) {
@@ -276,10 +283,7 @@ class ModuleLessonController extends Controller
      */
     public function edit(Request $request, School $school, Course $course, CourseModule $module, ModuleLesson $lesson)
     {
-        $isInstructor = Auth::guard('instructor')->check();
-        if (!$isInstructor) {
-            abort(403, 'Only instructors can edit lessons.');
-        }
+        $lessonRole = $this->authorizeLessonEditor($school);
 
         // Verify course belongs to school
         if ($course->school_id !== $school->id) {
@@ -293,7 +297,7 @@ class ModuleLessonController extends Controller
 
         $view = 'school.instructor.lessons.edit';
 
-        return view($view, compact('school', 'course', 'module', 'lesson'))->with('isAjax', $request->ajax());
+        return view($view, compact('school', 'course', 'module', 'lesson', 'lessonRole'))->with('isAjax', $request->ajax());
     }
 
     /**
@@ -301,10 +305,7 @@ class ModuleLessonController extends Controller
      */
     public function update(Request $request, School $school, Course $course, CourseModule $module, ModuleLesson $lesson)
     {
-        $isInstructor = Auth::guard('instructor')->check();
-        if (!$isInstructor) {
-            abort(403, 'Only instructors can update lessons.');
-        }
+        $lessonRole = $this->authorizeLessonEditor($school);
 
         // Verify course belongs to school
         if ($course->school_id !== $school->id) {
@@ -380,7 +381,7 @@ class ModuleLessonController extends Controller
                 ]);
             }
 
-            $redirectRoute = 'schools.instructor.courses.modules.lessons.show';
+            $redirectRoute = 'schools.'.$lessonRole.'.courses.modules.lessons.show';
 
             return redirect()
                 ->route($redirectRoute, ['school' => $school->slug, 'course' => $course->id, 'module' => $module->id, 'lesson' => $lesson->id])
@@ -407,10 +408,7 @@ class ModuleLessonController extends Controller
      */
     public function destroy(School $school, Course $course, CourseModule $module, ModuleLesson $lesson)
     {
-        $isInstructor = Auth::guard('instructor')->check();
-        if (!$isInstructor) {
-            abort(403, 'Only instructors can delete lessons.');
-        }
+        $lessonRole = $this->authorizeLessonEditor($school);
 
         // Verify course belongs to school
         if ($course->school_id !== $school->id) {
@@ -435,7 +433,7 @@ class ModuleLessonController extends Controller
 
             DB::commit();
 
-            $redirectRoute = 'schools.instructor.courses.modules.show';
+            $redirectRoute = 'schools.'.$lessonRole.'.courses.modules.show';
 
             return redirect()
                 ->route($redirectRoute, ['school' => $school->slug, 'course' => $course->id, 'module' => $module->id])
@@ -452,10 +450,7 @@ class ModuleLessonController extends Controller
      */
     public function reorder(Request $request, School $school, Course $course, CourseModule $module)
     {
-        $isInstructor = Auth::guard('instructor')->check();
-        if (!$isInstructor) {
-            abort(403, 'Only instructors can reorder lessons.');
-        }
+        $lessonRole = $this->authorizeLessonEditor($school);
 
         // Verify course belongs to school
         if ($course->school_id !== $school->id) {

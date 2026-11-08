@@ -691,6 +691,7 @@
             --primary-color: #2563eb; /* Default system admin blue */
         }
     </style>
+    @include('partials.pagination-styles')
 </head>
 <body>
     <a href="#mainContent" class="skip-link">Skip to main content</a>

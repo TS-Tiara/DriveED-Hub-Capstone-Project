@@ -1,0 +1,225 @@
+[
+  {
+    "name": "Secretary cannot open school-wide settings",
+    "pass": false,
+    "expected": 403,
+    "actual": 200
+  },
+  {
+    "name": "Secretary cannot save school-wide settings",
+    "pass": false,
+    "expected": false,
+    "actual": true,
+    "response": {
+      "status": 200,
+      "text": "<style>\n    /* ============================================\n       SHARED ADMIN STYLES\n       Consistent styling across all admin pages\n       ============================================ */\n\n    /* Container */\n    .admin-container {\n        padding: 20px;\n        margin: 20px auto;\n        max-wid"
+    }
+  },
+  {
+    "name": "Secretary cannot view school financial reports",
+    "pass": false,
+    "expected": 403,
+    "actual": 200,
+    "response": "<style>\n    /* ============================================\n       SHARED ADMIN STYLES\n       Consistent styling across all admin pages\n       ============================================ */\n\n    /* Container */\n    .admin-container {\n        padding: 20px;\n        margin: 20px auto;\n        max-wid"
+  },
+  {
+    "name": "Secretary cannot create courses",
+    "pass": false,
+    "expected": 403,
+    "actual": 201,
+    "response": {
+      "success": true,
+      "message": "Course created successfully!",
+      "course": {
+        "title": "QA SECRETARY COURSE 1794093504000",
+        "type": "theoretical",
+        "course_type": "theoretical",
+        "license_type": "non_professional",
+        "hours_required": "8.00",
+        "price": "50.00",
+        "status": "active",
+        "school_id": 1,
+        "is_featured": false,
+        "updated_at": "2026-11-07T23:18:24.000000Z",
+        "created_at": "2026-11-07T23:18:24.000000Z",
+        "id": 22,
+        "banner_image_url": null
+      }
+    }
+  },
+  {
+    "name": "Duplicate course title returns a validation response",
+    "pass": false,
+    "expected": 422,
+    "actual": 500,
+    "response": {
+      "success": false,
+      "message": "Unable to create course at this time."
+    }
+  },
+  {
+    "name": "Create multiple_choice question",
+    "pass": true,
+    "expected": true,
+    "actual": true,
+    "status": 200
+  },
+  {
+    "name": "Update multiple_choice question",
+    "pass": true,
+    "expected": true,
+    "actual": true,
+    "status": 200
+  },
+  {
+    "name": "Delete multiple_choice question",
+    "pass": true,
+    "expected": true,
+    "actual": true,
+    "status": 200
+  },
+  {
+    "name": "Create true_false question",
+    "pass": true,
+    "expected": true,
+    "actual": true,
+    "status": 200
+  },
+  {
+    "name": "Update true_false question",
+    "pass": true,
+    "expected": true,
+    "actual": true,
+    "status": 200
+  },
+  {
+    "name": "Delete true_false question",
+    "pass": true,
+    "expected": true,
+    "actual": true,
+    "status": 200
+  },
+  {
+    "name": "Create identification question",
+    "pass": true,
+    "expected": true,
+    "actual": true,
+    "status": 200
+  },
+  {
+    "name": "Update identification question",
+    "pass": true,
+    "expected": true,
+    "actual": true,
+    "status": 200
+  },
+  {
+    "name": "Delete identification question",
+    "pass": true,
+    "expected": true,
+    "actual": true,
+    "status": 200
+  },
+  {
+    "name": "Create enumeration question",
+    "pass": true,
+    "expected": true,
+    "actual": true,
+    "status": 200
+  },
+  {
+    "name": "Update enumeration question",
+    "pass": true,
+    "expected": true,
+    "actual": true,
+    "status": 200
+  },
+  {
+    "name": "Delete enumeration question",
+    "pass": true,
+    "expected": true,
+    "actual": true,
+    "status": 200
+  },
+  {
+    "name": "Instructor creates lesson",
+    "pass": true,
+    "expected": true,
+    "actual": true,
+    "status": 200
+  },
+  {
+    "name": "Instructor updates lesson",
+    "pass": true,
+    "expected": true,
+    "actual": true,
+    "status": 200
+  },
+  {
+    "name": "Approved student opens lesson list",
+    "pass": true,
+    "expected": 200,
+    "actual": 200
+  },
+  {
+    "name": "Approved student opens lesson detail",
+    "pass": true,
+    "expected": 200,
+    "actual": 200
+  },
+  {
+    "name": "Approved student opens assessment",
+    "pass": true,
+    "expected": 200,
+    "actual": 200
+  },
+  {
+    "name": "Approved student completes a lesson",
+    "pass": true,
+    "expected": true,
+    "actual": true,
+    "response": {
+      "success": true,
+      "completed": true,
+      "lesson_id": 11
+    }
+  },
+  {
+    "name": "Student cannot read admin user documents",
+    "pass": true,
+    "expected": 401,
+    "actual": 401
+  },
+  {
+    "name": "Guest registration succeeds with consent and valid details",
+    "pass": true,
+    "expected": true,
+    "actual": true,
+    "status": 200,
+    "url": "http://localhost:8006/drived-hub/verify-email",
+    "response": "<!DOCTYPE html>\n<html>\n<head>\n    <meta charset=\"UTF-8\">\n    <style>\n    /* Customizable Login Header Styles */\n    .login-header {\n        position: fixed;\n        top: 0;\n        left: 0;\n        right: 0;\n        width: 100%;\n        height: 60px;\n        background: #2563eb;\n                colo"
+  },
+  {
+    "name": "Password reset rejects malformed email",
+    "pass": true,
+    "expected": 422,
+    "actual": 422
+  },
+  {
+    "name": "System-admin password-reset request avoids server errors",
+    "pass": false,
+    "expected": true,
+    "actual": false,
+    "response": {
+      "status": 500,
+      "body": "{\n    \"message\": \"Server Error\"\n}"
+    }
+  },
+  {
+    "name": "Workflow browser JavaScript errors",
+    "pass": true,
+    "expected": 0,
+    "actual": 0,
+    "errors": []
+  }
+]

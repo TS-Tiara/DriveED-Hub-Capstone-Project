@@ -180,33 +180,11 @@ class EnrollmentRequestController extends Controller
             abort(403, 'You do not have access to this enrollment request.');
         }
 
-        $enrollmentRequest->load(['learner', 'course', 'approvedBy', 'sessionCompletions.instructor', 'payments', 'bookings']);
-
-        // Calculate session hours summary
-        $sessionSummary = [
-            'total_sessions' => $enrollmentRequest->sessionCompletions->count(),
-            'total_hours' => $enrollmentRequest->sessionCompletions->where('status', 'completed')->sum('hours_completed'),
-            'theoretical_sessions' => $enrollmentRequest->sessionCompletions->where('session_type', 'theoretical')->count(),
-            'practical_sessions' => $enrollmentRequest->sessionCompletions->where('session_type', 'practical')->count(),
-            'hours_required' => $enrollmentRequest->course->hours_required ?? 0,
-        ];
-
-        $sessionSummary['progress_percentage'] = $sessionSummary['hours_required'] > 0
-            ? min(100, round(($sessionSummary['total_hours'] / $sessionSummary['hours_required']) * 100, 1))
-            : 0;
-
-        // Get phase progressions for this enrollment
-        $phaseProgressions = PhaseProgression::where('enrollment_id', $enrollmentRequest->id)
-            ->with('reviewedBy')
-            ->latest('requested_at')
-            ->get();
-
-        return view('school.admin.enrollment-requests.show', array_merge(compact(
-            'school',
-            'enrollmentRequest',
-            'sessionSummary',
-            'phaseProgressions'
-        ), ['isAjax' => $request->ajax()]));
+        return redirect()->route('schools.admin.enrollments.index', [
+            'school' => $school,
+            'search' => $enrollmentRequest->uid,
+            'review' => $enrollmentRequest->id,
+        ]);
     }
 
     /**
@@ -1451,6 +1429,7 @@ class EnrollmentRequestController extends Controller
         if ($student->school_id !== $school->id) {
             abort(403, 'Student does not belong to this school.');
         }
+        abort_if($admin->isBranchSecretary() && !$admin->canAccessBranch($student->branch_id), 403);
 
         // 1. Direct Disk Check (Public then Local)
         if (!empty($student->student_license_path)) {
@@ -1821,6 +1800,8 @@ class EnrollmentRequestController extends Controller
         $admin = Auth::guard('admin')->user();
         if (!$admin || $admin->school_id !== (int) $school->id)
             abort(403);
+        abort_if((int) $enrollmentRequest->school_id !== (int) $school->id, 404);
+        abort_if($admin->isBranchSecretary() && !$admin->canAccessBranch($enrollmentRequest->branch_id), 403);
 
         $path = $enrollmentRequest->payment_proof_path;
         if (empty($path)) {
@@ -1888,6 +1869,8 @@ class EnrollmentRequestController extends Controller
         $admin = Auth::guard('admin')->user();
         if (!$admin || $admin->school_id !== (int) $school->id)
             abort(403);
+        abort_if((int) $enrollmentRequest->school_id !== (int) $school->id, 404);
+        abort_if($admin->isBranchSecretary() && !$admin->canAccessBranch($enrollmentRequest->branch_id), 403);
 
         $path = $enrollmentRequest->credentials_file_path;
         if (empty($path))

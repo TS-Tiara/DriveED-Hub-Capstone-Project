@@ -2,7 +2,96 @@
 
 A school portal for managing students, instructors, courses, schedules, payments, and training records.
 
-[November 5](#fixes-november-5-2026) · [November 4](#latest-fixes-november-4-2026) · [November 1](#fixes-november-1-2026) · [October 31](#latest-fixes-october-31-2026) · [October 30](#fixes-october-30-2026) · [October 29](#fixes-october-29-2026) · [October 27](#fixes-october-27-2026) · [Earlier fixes](#earlier-fixes-october-20-to-26-2026)
+[November 8](#fixes-november-8-2026) · [November 5](#fixes-november-5-2026) · [November 4](#latest-fixes-november-4-2026) · [November 1](#fixes-november-1-2026) · [October 31](#latest-fixes-october-31-2026) · [October 30](#fixes-october-30-2026) · [October 29](#fixes-october-29-2026) · [October 27](#fixes-october-27-2026) · [Earlier fixes](#earlier-fixes-october-20-to-26-2026)
+
+## Fixes November 8 2026
+
+Fixed all seven remaining bugs found in the follow-up all-role audit:
+
+1. Receipts enforce learner ownership, school boundaries and secretary branch access, including older payment records.
+2. School-wide settings, course management and financial reports require a school administrator; unauthorized write requests are denied.
+3. Enrollment detail links open the existing verification dashboard instead of returning a missing-view error.
+4. Instructor progress editing loads correctly, and saved updates persist.
+5. School administrators can create, edit and delete lessons through administrator routes; instructor lesson actions continue to work.
+6. Duplicate course titles return a field validation error instead of a server error, with uniqueness scoped to each school.
+7. System administrator password recovery supports global reset tokens, email rendering, password updates and the correct login redirect.
+
+Verification passed **18 backend suites, 40 focused assertions, 38 browser workflow checks and 207 checks across six roles**, with no server or JavaScript errors in the route scan. An additional 26 access-boundary probes passed, and 68 mobile pages had no document-level horizontal overflow. Tests used an isolated database copy; original application records were preserved.
+
+[View all eight before-and-after comparisons](docs/screenshots/nov8-seven-fixes/index.html) · [Test report and logs](docs/screenshots/nov8-seven-fixes/README.md) · [Download screenshots](docs/screenshots/nov8-seven-fixes.zip).
+
+Fixed the issues reported in the November 7 findings document and checked them in the local app on desktop and mobile.
+
+The comparisons show **Before on the left** and **After on the right**. Before was captured from Git revision `6a85c5c` in a separate local container. Both versions used the same temporary QA accounts and sample uploads. The amounts shown include test payments.
+
+[View all 15 comparisons](docs/screenshots/nov7-before-after/index.html) · [Download the screenshots](docs/screenshots/nov7-before-after.zip) · [Test results and capture details](docs/screenshots/nov7-before-after/README.md)
+
+### Payment totals and receipt access
+
+Payment totals and approved/pending counts stay correct when navigating beyond page 1. Pagination retains the selected filters, and browser history preserves the page's query parameters. The comparison shows the same records on page 2, with the corrected totals.
+
+![Before and after showing payment totals on page 2](docs/screenshots/nov7-before-after/payment-summary-comparison.png)
+
+Student and guest payment history includes a **View receipt** button for submitted uploads. Receipt controls are available in both desktop rows and mobile cards.
+
+![Before and after showing receipt access in mobile payment history](docs/screenshots/nov7-before-after/payments-mobile-comparison.png)
+
+### Guest enrollment payment details
+
+Guests can review submitted payment amounts, methods, reference or OR numbers, statuses, dates and receipts directly on My Enrollment Requests. Older submissions stored on the enrollment record are included.
+
+![Before and after showing submitted payment details on guest enrollment requests](docs/screenshots/nov7-before-after/guest-mobile-comparison.png)
+
+### User documents and activity
+
+User Management profiles include a **Documents and Activity** section with submitted student permits or driver's licenses, enrollment credentials, enrollment history, payment transactions, receipt previews and bookings. Instructor profiles include their teaching bookings.
+
+Activity lists paginate inside the profile, and the profile body scrolls while keeping its footer visible. Document access respects school and branch restrictions.
+
+![Before and after showing documents and activity in a student profile](docs/screenshots/nov7-before-after/profile-desktop-comparison.png)
+
+### Shared image viewer
+
+Instructor licenses, student documents, admin payment snapshots and receipts use the shared viewer with zoom, pan, rotate and download controls. Closing an image returns keyboard focus to the control that opened it and keeps the underlying profile or verification window open.
+
+![Before and after showing the shared license image viewer](docs/screenshots/nov7-before-after/license-viewer-comparison.png)
+
+GCash receipt names no longer cause the payment QR viewer to open. Student and guest payment QR controls retain their dedicated scan viewer and account information.
+
+![Before and after showing a GCash receipt in the standard image viewer](docs/screenshots/nov7-before-after/receipt-viewer-comparison.png)
+
+Missing or invalid images show an unavailable-image message.
+
+![Before and after showing the missing-image state](docs/screenshots/nov7-before-after/missing-image-comparison.png)
+
+### Pickup notice dialog
+
+The pickup notice dialog opens in the center of the viewport. It fits narrow screens and scrolls when vertical space is limited.
+
+![Before and after showing the centered pickup notice dialog](docs/screenshots/nov7-before-after/pickup-desktop-comparison.png)
+
+### Enrollment actions and pagination
+
+Enrollment action buttons wrap within their table cell. Mobile enrollment cards keep their responsive action layout.
+
+![Before and after showing wrapping enrollment action buttons](docs/screenshots/nov7-before-after/enrollment-actions-comparison.png)
+
+Enrollment, User Management, payment and session lists use the shared pagination styling, with consistent numbered controls, result summaries, active and disabled states, and larger mobile touch targets.
+
+![Before and after showing standardized enrollment pagination](docs/screenshots/nov7-before-after/enrollment-pagination-comparison.png)
+
+![Before and after showing standardized payment pagination](docs/screenshots/nov7-before-after/payment-pagination-comparison.png)
+
+### Verification
+
+- **9 transactional server checks passed**, covering page-independent totals, preserved filters, submitted documents, and school/branch access restrictions. Database changes were rolled back.
+- **12 browser check groups passed** at desktop (1440 × 1000) and mobile (390 × 844) sizes. Checks included receipt clicks, nested viewers, profile pagination, dialog placement, action wrapping and preserved QR account details.
+- **15 matched before-and-after screenshot pairs** were captured. The browser regression reported no JavaScript or application server errors.
+- PHP syntax checks, Blade template compilation and `git diff --check` passed.
+
+The temporary QA accounts, payments, enrollments and uploads were removed after testing. The baseline container was also removed.
+
+One existing local demo license file is empty and requires a fresh upload to display its original contents. Existing uploads were not replaced.
 
 ## Fixes November 5 2026
 
