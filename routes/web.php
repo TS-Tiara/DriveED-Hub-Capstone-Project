@@ -200,6 +200,7 @@ Route::prefix('{school:slug}')
                     Route::get('/', [AdminController::class , 'dashboard'])->name('dashboard');
 
                     Route::get('/user-management', [AdminController::class , 'userManagement'])->name('userManagement');
+                    Route::get('/user-management/{role}/{id}/activity', [AdminController::class, 'userActivity'])->whereIn('role', ['student', 'instructor'])->whereNumber('id')->name('users.activity');
 
 
                     Route::post('/store-account', [AdminController::class , 'storeAccount'])->name('storeAccount');
@@ -225,20 +226,20 @@ Route::prefix('{school:slug}')
                     Route::post('/removal-requests/{id}/reject', [AdminController::class , 'rejectRemovalRequest'])->name('removalRequests.reject');
 
                     // Course management with packages
-                    Route::get('/courses', [AdminController::class , 'courses'])->name('courses');
-                    Route::post('/courses', [AdminController::class , 'storeCourse'])->name('courses.store');
-                    Route::put('/courses/{id}', [AdminController::class , 'updateCourse'])->name('courses.update');
-                    Route::delete('/courses/{id}', [AdminController::class , 'deleteCourse'])->name('courses.delete');
+                    Route::get('/courses', [AdminController::class , 'courses'])->middleware('school.admin.only')->name('courses');
+                    Route::post('/courses', [AdminController::class , 'storeCourse'])->middleware('school.admin.only')->name('courses.store');
+                    Route::put('/courses/{id}', [AdminController::class , 'updateCourse'])->middleware('school.admin.only')->name('courses.update');
+                    Route::delete('/courses/{id}', [AdminController::class , 'deleteCourse'])->middleware('school.admin.only')->name('courses.delete');
 
-                    Route::post('/courses/{courseId}/packages', [AdminController::class , 'storePackage'])->name('courses.packages.store');
-                    Route::put('/courses/{courseId}/packages/{packageId}', [AdminController::class , 'updatePackage'])->name('courses.packages.update');
-                    Route::delete('/courses/{courseId}/packages/{packageId}', [AdminController::class , 'deletePackage'])->name('courses.packages.delete');
+                    Route::post('/courses/{courseId}/packages', [AdminController::class , 'storePackage'])->middleware('school.admin.only')->name('courses.packages.store');
+                    Route::put('/courses/{courseId}/packages/{packageId}', [AdminController::class , 'updatePackage'])->middleware('school.admin.only')->name('courses.packages.update');
+                    Route::delete('/courses/{courseId}/packages/{packageId}', [AdminController::class , 'deletePackage'])->middleware('school.admin.only')->name('courses.packages.delete');
 
                     // School settings
-                    Route::get('/settings', [AdminController::class , 'settings'])->name('settings');
+                    Route::get('/settings', [AdminController::class , 'settings'])->middleware('school.admin.only')->name('settings');
                     Route::post('/students/{student}/claim-notice', [ClaimNoticeController::class, 'store'])->name('students.claim-notice');
                     Route::get('/session-report/{format}', [SessionReportController::class, 'download'])->whereIn('format', ['pdf', 'xlsx'])->name('session-report');
-                    Route::post('/settings', [AdminController::class , 'updateSettings'])->name('settings.update');
+                    Route::post('/settings', [AdminController::class , 'updateSettings'])->middleware('school.admin.only')->name('settings.update');
 
                     // Invitation management
                     Route::name('invitations.')->group(function () {
@@ -273,7 +274,7 @@ Route::prefix('{school:slug}')
 
                     // Reports & Analytics - Grouped for clarity and robust naming
                     Route::prefix('reports')->group(function () {
-                            Route::get('/', [ReportController::class , 'index'])->name('reports.index');
+                            Route::get('/', [ReportController::class , 'index'])->middleware('school.admin.only')->name('reports.index');
                             Route::get('/students', [AdminController::class , 'studentReports'])->name('reports.students');
                             Route::get('/instructors', [AdminController::class , 'instructorReports'])->name('reports.instructors');
                             Route::get('/logs', [AdminController::class , 'logs'])->name('reports.logs');
@@ -289,8 +290,8 @@ Route::prefix('{school:slug}')
                             Route::prefix('exports')->name('exports.')->group(function () {
                             Route::get('/students/pdf', [ExportController::class , 'studentsPdf'])->name('students.pdf');
                             Route::get('/students/excel', [ExportController::class , 'studentsExcel'])->name('students.excel');
-                            Route::get('/admins/pdf', [ExportController::class , 'adminsPdf'])->name('admins.pdf');
-                            Route::get('/admins/excel', [ExportController::class , 'adminsExcel'])->name('admins.excel');
+                            Route::get('/admins/pdf', [ExportController::class , 'adminsPdf'])->middleware('school.admin.only')->name('admins.pdf');
+                            Route::get('/admins/excel', [ExportController::class , 'adminsExcel'])->middleware('school.admin.only')->name('admins.excel');
                             Route::get('/enrollments/pdf', [ExportController::class , 'enrollmentsPdf'])->name('enrollments.pdf');
                             Route::get('/enrollments/excel', [ExportController::class, 'enrollmentsExcel'])->name('enrollments.excel');
                             Route::get('/student/{student}/progress/pdf', [ExportController::class , 'studentProgressPdf'])->name('student.progress.pdf');
@@ -405,9 +406,9 @@ Route::prefix('{school:slug}')
                         // practical phase transition there). No standalone page remains.
 
                         // Course modules and lessons management (LMS content)
-                        Route::get('/materials', [CourseModuleController::class , 'materialsHub'])->name('materials.index');
+                        Route::get('/materials', [CourseModuleController::class , 'materialsHub'])->middleware('school.admin.only')->name('materials.index');
 
-                        Route::prefix('courses/{course}')->name('courses.')->group(function () {
+                        Route::prefix('courses/{course}')->name('courses.')->middleware('school.admin.only')->group(function () {
                             // Modules
                             Route::prefix('modules')->name('modules.')->group(function () {
                                     Route::get('/', [CourseModuleController::class , 'index'])->name('index');

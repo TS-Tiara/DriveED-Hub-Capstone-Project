@@ -61,7 +61,8 @@ class PaymentController extends Controller
             $query->where('method', '=', request('method'));
         }
 
-        $payments = $query->latest('paid_on')->paginate(10);
+        // Paginate a clone so aggregate queries never inherit a page offset.
+        $payments = (clone $query)->latest('paid_on')->paginate(10)->withQueryString();
 
         // Append secure URLs for receipts and payment proofs
         $payments->getCollection()->transform(function ($payment) use ($storageService, $school) {

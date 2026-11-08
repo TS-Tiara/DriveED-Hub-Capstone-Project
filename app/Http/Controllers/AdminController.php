@@ -39,6 +39,12 @@ use App\Support\DemoAccountProtection;
 
 class AdminController extends Controller
 {
+    private function authorizeSchoolAdmin(School $school): void
+    {
+        $admin = Auth::guard('admin')->user();
+        abort_unless($admin && $admin->isSchoolAdmin() && (int) $admin->school_id === (int) $school->id, 403);
+    }
+
     // ==========================
     // DASHBOARD
     // ==========================
@@ -283,6 +289,29 @@ class AdminController extends Controller
     // ==========================
     // USER MANAGEMENT
     // ==========================
+    public function userActivity(Request $request, School $school, string $role, int $id)
+    {
+        $admin = Auth::guard('admin')->user();
+        abort_unless($admin && (int) $admin->school_id === (int) $school->id, 403);
+        abort_unless(in_array($role, ['student', 'instructor'], true), 404);
+
+        $model = $role === 'student' ? Student::class : Instructor::class;
+        $user = $admin->scopeToBranch($model::where('school_id', $school->id))->findOrFail($id);
+        $enrollments = collect();
+        $payments = collect();
+        if ($role === 'student') {
+            $enrollments = $admin->scopeToBranch(EnrollmentRequest::where('school_id', $school->id)->where('learner_id', $id))
+                ->with(['course', 'branchRelation'])->latest()->paginate(10, ['*'], 'enrollment_page')->withQueryString();
+            $payments = $admin->scopeToBranch(Payment::where('school_id', $school->id)->where('payer_user_id', $id))
+                ->with(['enrollmentRequest.course', 'booking.course'])->latest()->paginate(10, ['*'], 'payment_page')->withQueryString();
+        }
+        $bookings = $admin->scopeToBranch(\App\Models\Booking::where('school_id', $school->id)
+            ->where($role === 'student' ? 'student_id' : 'instructor_id', $id))
+            ->with('course')->latest('scheduled_at')->paginate(10, ['*'], 'booking_page')->withQueryString();
+
+        return view('school.admin.partials.user-activity', compact('school', 'user', 'role', 'enrollments', 'payments', 'bookings'));
+    }
+
     public function userManagement(Request $request, School $school)
     {
         try {
@@ -1492,6 +1521,7 @@ class AdminController extends Controller
     // ==========================
     public function settings(Request $request, School $school)
     {
+        $this->authorizeSchoolAdmin($school);
         $admin = Auth::guard('admin')->user();
         if (!$admin) {
             return redirect()->route('schools.login', $school);
@@ -1519,6 +1549,7 @@ class AdminController extends Controller
 
     public function updateSettings(Request $request, School $school)
     {
+        $this->authorizeSchoolAdmin($school);
         try {
             $admin = Auth::guard('admin')->user();
             if (!$admin) {
@@ -2443,6 +2474,7 @@ class AdminController extends Controller
      */
     public function courses(Request $request, School $school)
     {
+        $this->authorizeSchoolAdmin($school);
         $query = \App\Models\Course::with('packages')
             ->where('school_id', $school->id);
 
@@ -2525,9 +2557,10 @@ class AdminController extends Controller
       */
      public function storeCourse(Request $request, School $school)
      {
+        $this->authorizeSchoolAdmin($school);
          try {
              $validated = $request->validate([
-                'title' => 'required|string|max:255',
+                'title' => ['required', 'string', 'max:255', Rule::unique('courses', 'title')->where('school_id', $school->id)],
                 'description' => 'nullable|string',
                 'banner_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:' . (($school->schoolSetting->max_file_size_mb ?? 5) * 1024) . '|dimensions:max_width=4000,max_height=4000',
                 'type' => 'required|string',
@@ -2611,11 +2644,12 @@ class AdminController extends Controller
      */
     public function updateCourse(Request $request, School $school, $id)
     {
+        $this->authorizeSchoolAdmin($school);
         try {
             $course = \App\Models\Course::where('school_id', $school->id)->findOrFail($id);
 
             $validated = $request->validate([
-                'title' => 'required|string|max:255',
+                'title' => ['required', 'string', 'max:255', Rule::unique('courses', 'title')->where('school_id', $school->id)->ignore($course->id)],
                 'description' => 'nullable|string',
                 'banner_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:' . (($school->schoolSetting->max_file_size_mb ?? 5) * 1024) . '|dimensions:max_width=4000,max_height=4000',
                 'type' => 'required|string',
@@ -2704,6 +2738,7 @@ class AdminController extends Controller
      */
     public function deleteCourse(School $school, $id)
     {
+        $this->authorizeSchoolAdmin($school);
         try {
             $admin = Auth::guard('admin')->user();
 
@@ -2736,6 +2771,7 @@ class AdminController extends Controller
      */
     public function storePackage(Request $request, School $school, $courseId)
     {
+        $this->authorizeSchoolAdmin($school);
         try {
             $course = \App\Models\Course::where('school_id', $school->id)->findOrFail($courseId);
 
@@ -2788,6 +2824,7 @@ class AdminController extends Controller
      */
     public function updatePackage(Request $request, School $school, $courseId, $packageId)
     {
+        $this->authorizeSchoolAdmin($school);
         try {
             $course = \App\Models\Course::where('school_id', $school->id)->findOrFail($courseId);
             $package = \App\Models\CoursePackage::where('course_id', $course->id)->findOrFail($packageId);
@@ -2841,6 +2878,7 @@ class AdminController extends Controller
      */
     public function deletePackage(School $school, $courseId, $packageId)
     {
+        $this->authorizeSchoolAdmin($school);
         try {
             $course = \App\Models\Course::where('school_id', $school->id)->findOrFail($courseId);
             $package = \App\Models\CoursePackage::where('course_id', $course->id)->findOrFail($packageId);

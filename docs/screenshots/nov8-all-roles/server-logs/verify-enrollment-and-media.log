@@ -1,0 +1,48 @@
+=== STARTING VERIFICATION: ENROLLMENT FLOW & DYNAMIC MEDIA ===
+
+Using School: SMART Driving School (slug: drived-hub, ID: 1)
+
+--- Section 1: Enrollment Flow Verification ---
+ [PASS] New user is initialized as guest
+ [PASS] Guest can enroll in new course
+ [PASS] Enrollment request created for Course A
+ [PASS] Enrollment request status is 'pending'
+ [PASS] Course A enrollment request approved
+ [PASS] Learner role promoted to 'student'
+ [PASS] Learner is locked during active course
+ [PASS] Learner cannot enroll in parallel while course is active
+ [PASS] Course A enrollment status is persisted as 'completed' in DB (DB::commit verified)
+ [PASS] Learner unlocked upon course completion
+ [PASS] Learner can now enroll in a new course after completing previous course
+ [PASS] Learner has passed theoretical requirement recorded
+ [PASS] Student successfully submitted enrollment for Course B
+ [PASS] Course B enrollment is pending
+ [PASS] Admin successfully approved returning student for Course B (no 'already a student' block)
+ [PASS] Active enrollment updated to Course B
+ [PASS] Course B marked completed
+ [PASS] Student successfully re-enrolled into Course A (completed courses don't block re-enrollment)
+
+--- Section 2: Dynamic Media Handling Verification ---
+ [PASS] Admin profile picture uploaded and persisted to disk
+ [PASS] Admin profile picture path changed upon replacement
+ [PASS] New admin profile picture exists on disk
+ [PASS] Old admin profile picture was automatically deleted from disk
+ [PASS] Student profile picture uploaded and persisted
+ [PASS] Guest profile picture uploaded and persisted
+ [PASS] Instructor profile picture uploaded and persisted
+ [PASS] Admin successfully uploaded student profile picture via User Management
+ [PASS] Student profile picture cleared from database via remove_profile_picture checkbox
+ [PASS] Removed student picture deleted from disk
+ [PASS] Course banner image uploaded and persisted
+ [PASS] Course banner cleared from database via remove_banner_image checkbox
+ [PASS] Old course banner file deleted from disk
+ [PASS] School logo uploaded and saved in school_settings
+ [PASS] Page header banner uploaded and saved in school_settings
+ [PASS] Page header banner removed from school_settings via checkbox
+ [PASS] Removed header banner file deleted from disk
+ [PASS] School logo removed from school_settings via checkbox
+ [PASS] Removed school logo file deleted from disk
+
+========================================
+VERIFICATION RESULTS: 37 PASSED, 0 FAILED
+========================================

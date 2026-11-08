@@ -326,8 +326,15 @@
     
     .action-buttons {
         display: flex;
+        align-items: center;
+        flex-wrap: wrap;
         gap: 8px;
+        min-width: 190px;
+        max-width: 320px;
     }
+    .action-buttons form { margin: 0; max-width: 100%; }
+    .action-buttons .btn { white-space: normal; text-align: center; max-width: 100%; }
+
     
     .btn {
         padding: 8px 16px;
@@ -1586,32 +1593,7 @@
         </div>
         @endforeach
 
-        @if($allRequests->hasPages())
-            <div class="admin-pagination-wrapper">
-                <div style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
-                    <div style="color: #6b7280; font-size: 0.9rem;">
-                        Showing {{ $allRequests->firstItem() ?? 0 }} to {{ $allRequests->lastItem() ?? 0 }} of {{ $allRequests->total() }} results
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        @if($allRequests->onFirstPage())
-                            <span style="padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 8px; color: #9ca3af; background: #f9fafb;">Previous</span>
-                        @else
-                            <a href="{{ $allRequests->previousPageUrl() }}" style="padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 8px; color: #374151; text-decoration: none; background: white;">Previous</a>
-                        @endif
-
-                        <span style="padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 8px; color: #374151; background: #f9fafb;">
-                            Page {{ $allRequests->currentPage() }} of {{ $allRequests->lastPage() }}
-                        </span>
-
-                        @if($allRequests->hasMorePages())
-                            <a href="{{ $allRequests->nextPageUrl() }}" style="padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 8px; color: #374151; text-decoration: none; background: white;">Next</a>
-                        @else
-                            <span style="padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 8px; color: #9ca3af; background: #f9fafb;">Next</span>
-                        @endif
-                    </div>
-                </div>
-            </div>
-        @endif
+        {{ $allRequests->links() }}
         
     @else
         <div class="no-requests">
@@ -1972,8 +1954,8 @@ document.addEventListener('click', function(e) {
 /**
  * Unified Verification Modal Logic
  */
-let currentEnrollmentId = null;
-let verificationTrigger = null;
+var currentEnrollmentId = null;
+var verificationTrigger = null;
 
 function openVerificationModal(enrollmentId) {
     verificationTrigger = document.activeElement;
@@ -2631,6 +2613,11 @@ function finalApproveFromModal() {
 </div>
 
 <script>
+var requestedEnrollmentReview = @json(request()->integer('review'));
+if (requestedEnrollmentReview > 0) {
+    requestAnimationFrame(() => openVerificationModal(requestedEnrollmentReview));
+}
+
 // Close unified modal when clicking outside
 document.getElementById('unifiedVerificationModal')?.addEventListener('click', function(e) {
     if (e.target === this) closeVerificationModal();

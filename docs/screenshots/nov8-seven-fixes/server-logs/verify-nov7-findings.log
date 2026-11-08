@@ -1,0 +1,10 @@
+PASS: Payment totals and counts remain identical on page 2
+PASS: Summary counts include records outside the visible page
+PASS: Payment pagination preserves filters
+PASS: Student activity contains documents, enrollment history and transactions
+PASS: Student license uses an authorized streaming route
+PASS: Student submitted license can open in the shared viewer
+PASS: User activity rejects admins from another school
+PASS: User activity rejects students outside the secretary branch
+PASS: License file access enforces the secretary branch
+9 checks passed; database changes rolled back.

@@ -1367,9 +1367,13 @@
         .profile-modal-body {
             padding: 30px;
             background: white;
-            max-height: 70vh;
+            min-height: 0;
+            flex: 1;
             overflow-y: auto;
         }
+        #userViewModal .profile-modal-container { max-height: 92dvh; }
+        #userViewContent, #integratedVerifyForm { display: flex; flex-direction: column; min-height: 0; max-height: 92dvh; }
+        .profile-modal-header, .profile-modal-footer { flex-shrink: 0; }
 
         .profile-section {
             margin-bottom: 30px;
@@ -1800,6 +1804,13 @@
         }
 
         /* License Badges */
+        .user-activity-entry { border-bottom: 1px solid #e5e7eb; padding: 12px 0; overflow-wrap: anywhere; }
+        .user-activity-entry p { margin: 6px 0; }
+        .user-document-preview { display: inline-block; vertical-align: top; margin: 8px 12px 8px 0; max-width: 100%; }
+        .user-document-button { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; color: #1f2937; cursor: zoom-in; max-width: 100%; }
+        .user-document-button img { width: 140px; height: 100px; object-fit: contain; }
+        .user-document-button span { overflow-wrap: anywhere; }
+        .user-document-button:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 3px; }
         .license-badge {
             display: inline-block;
             padding: 4px 8px;
@@ -2407,19 +2418,8 @@
                 @endif
             </div>
 
-            @if(($filtersApplied ?? true) && $users->count() > 0)
-                <div class="mt-4 pagination-groups">
-                    <div>
-                        <h4 style="font-size: 0.9rem; margin-bottom: 5px; color: #6b7280;">
-                            Showing {{ $users->firstItem() ?? 0 }}-{{ $users->lastItem() ?? 0 }} of {{ $users->total() }} users
-                        </h4>
-                        @if($users->hasPages())
-                            <div class="admin-pagination-wrapper">
-                                {!! $users->links('vendor.pagination.drivingapp') !!}
-                            </div>
-                        @endif
-                    </div>
-                </div>
+            @if($filtersApplied ?? true)
+                {{ $users->links() }}
             @endif
         </div>
     </div>
@@ -3462,6 +3462,7 @@
             if (modal) {
                 modal.style.display = 'flex';
                 renderUserViewState();
+                loadUserActivity();
             }
         }
 
@@ -3600,6 +3601,7 @@
                             </div>
                         </div>
                     ` : ''}
+                    <div id="userActivity" aria-live="polite"><p>Loading documents and activity...</p></div>
                 </div>
                 
                 <div class="profile-modal-footer">
@@ -3616,6 +3618,7 @@
         function toggleLicenseVerificationMode(show) {
             if (!show) {
                 renderUserViewState();
+                loadUserActivity();
                 return;
             }
 
@@ -3866,27 +3869,41 @@
             }, 5000);
         }
 
-        // --- LIGHTBOX SYSTEM ---
-        function openLightbox(src) {
-            if (!src) return;
-            const lightbox = document.getElementById('globalLightbox');
-            const img = document.getElementById('lightboxImage');
-            if (lightbox && img) {
-                img.src = src;
-                lightbox.style.display = 'flex';
-                // Trigger animation
-                setTimeout(() => lightbox.classList.add('active'), 10);
+        async function loadUserActivity(url) {
+            const target = document.getElementById('userActivity');
+            const data = currentEditingData;
+            if (!target || !data) return;
+            const base = @json(school_route('admin.userManagement'));
+            target.setAttribute('aria-busy', 'true');
+            try {
+                const response = await fetch(url || `${base}/${data.role}/${data.id}/activity`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' }
+                });
+                if (!response.ok) throw new Error('Activity unavailable');
+                const html = await response.text();
+                if (currentEditingData !== data || !target.isConnected) return;
+                target.innerHTML = html;
+            } catch (error) {
+                if (currentEditingData === data && target.isConnected) {
+                    target.innerHTML = '<p role="alert">Could not load documents and activity. <button type="button" class="btn btn-secondary" onclick="loadUserActivity()">Try again</button></p>';
+                }
+            } finally {
+                target.removeAttribute('aria-busy');
             }
         }
 
-        function closeLightbox() {
-            const lightbox = document.getElementById('globalLightbox');
-            if (lightbox) {
-                lightbox.classList.remove('active');
-                setTimeout(() => lightbox.style.display = 'none', 300);
-            }
+        document.addEventListener('click', function(event) {
+            const link = event.target.closest('#userActivity .ds-pagination-nav a');
+            if (!link || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            loadUserActivity(link.href);
+        }, true);
+
+        function openLightbox(src) {
+            openImageLightbox(src, 'License Document');
         }
-        
+
         // Ensure validation errors are visible even if modal is closed
         document.addEventListener('DOMContentLoaded', function() {
             const hasErrors = @json($errors->any());
@@ -3922,54 +3939,6 @@
         </div>
     </div>
 
-    <!-- GLOBAL LIGHTBOX -->
-    <div id="globalLightbox" class="lightbox-overlay" onclick="closeLightbox()">
-        <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
-        <img id="lightboxImage" src="" onclick="event.stopPropagation()">
-    </div>
 
-    <style>
-        .lightbox-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.9);
-            backdrop-filter: blur(5px);
-            z-index: 10000;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        .lightbox-overlay.active {
-            opacity: 1;
-        }
-        .lightbox-overlay img {
-            max-width: 90%;
-            max-height: 90%;
-            border-radius: 8px;
-            box-shadow: 0 0 50px rgba(0,0,0,0.5);
-            transform: scale(0.9);
-            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        .lightbox-overlay.active img {
-            transform: scale(1);
-        }
-        .lightbox-close {
-            position: absolute;
-            top: 30px;
-            right: 30px;
-            background: none;
-            border: none;
-            color: white;
-            font-size: 50px;
-            cursor: pointer;
-            line-height: 1;
-            z-index: 10001;
-        }
-    </style>
 
 @endsection

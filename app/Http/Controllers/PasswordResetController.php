@@ -47,7 +47,7 @@ class PasswordResetController extends Controller
         ]);
 
         $email = strtolower(trim($request->email));
-        $schoolId = $school ? $school->id : 0; // 0 or null represents system-wide
+        $schoolId = $school?->id; // 0 or null represents system-wide
 
         $resetThrottleMessage = $this->getResetThrottleMessage($request, $school, $email);
         if ($resetThrottleMessage !== null) {
@@ -67,7 +67,7 @@ class PasswordResetController extends Controller
         if ($resolved['collision']) {
             Log::warning('Password reset role collision resolved deterministically.', [
                 'email' => $email,
-                'school_id' => $school->id,
+                'school_id' => $schoolId,
                 'matched_types' => $resolved['matched_types'],
                 'resolved_type' => $resolved['user_type'],
             ]);
@@ -86,7 +86,7 @@ class PasswordResetController extends Controller
         DB::table('password_reset_tokens')
             ->where('email', $email)
             ->where('user_type', $userType)
-            ->where('school_id', $school->id)
+            ->where('school_id', $schoolId)
             ->delete();
 
         // Generate token
@@ -97,7 +97,7 @@ class PasswordResetController extends Controller
             'email' => $email,
             'token' => Hash::make($token),
             'user_type' => $userType,
-            'school_id' => $school->id,
+            'school_id' => $schoolId,
             'created_at' => Carbon::now(),
         ]);
 
@@ -128,7 +128,7 @@ class PasswordResetController extends Controller
         catch (\Exception $e) {
             Log::error('Failed to send password reset email: ' . $e->getMessage(), [
                 'email' => $email,
-                'school_id' => $school->id,
+                'school_id' => $schoolId,
                 'user_type' => $userType
             ]);
 
@@ -168,7 +168,7 @@ class PasswordResetController extends Controller
      */
     public function reset(Request $request, ?School $school = null)
     {
-        $schoolId = $school ? $school->id : 0;
+        $schoolId = $school?->id;
 
         $request->validate([
             'email' => 'required|email',
@@ -210,7 +210,7 @@ class PasswordResetController extends Controller
         }
 
         // Find and update user
-        $user = $this->findUser($email, $userType, $school->id);
+        $user = $this->findUser($email, $userType, $schoolId);
 
         if (!$user) {
             $this->registerResetUpdateAttempt($request, $school, $email);
@@ -245,15 +245,20 @@ class PasswordResetController extends Controller
         $this->clearResetUpdateAttemptLimits($request, $school, $email);
 
         return redirect()
-            ->route('schools.login', $school)
+            ->route($school ? 'schools.login' : 'system-admin.login', $school ? ['school' => $school] : [])
             ->with('success', 'Password has been reset successfully! You can now login with your new password.');
     }
 
     /**
      * Find user by email and type
      */
-    private function findUser($email, $type, $schoolId)
+    private function findUser($email, $type, ?int $schoolId)
     {
+        if ($schoolId === null) {
+            return $type === 'admin'
+                ? Admin::where('email', $email)->whereNull('school_id')->where('role', 'system_admin')->first()
+                : null;
+        }
         switch ($type) {
             case 'student':
                 return Student::where('email', $email)->where('school_id', $schoolId)->first();
@@ -336,7 +341,7 @@ class PasswordResetController extends Controller
         return 'password-reset:email:' . $id . ':' . sha1($email);
     }
 
-    private function getResetThrottleMessage(Request $request, School $school, string $email): ?string
+    private function getResetThrottleMessage(Request $request, ?School $school, string $email): ?string
     {
         $ipEmailKey = $this->resetLimiterKeyIpAndEmail($request, $school, $email);
         if (RateLimiter::tooManyAttempts($ipEmailKey, 3)) {
@@ -353,7 +358,7 @@ class PasswordResetController extends Controller
         return null;
     }
 
-    private function registerResetAttempt(Request $request, School $school, string $email): void
+    private function registerResetAttempt(Request $request, ?School $school, string $email): void
     {
         RateLimiter::hit($this->resetLimiterKeyIpAndEmail($request, $school, $email), 60);
         RateLimiter::hit($this->resetLimiterKeyEmail($school, $email), 3600);
@@ -365,7 +370,7 @@ class PasswordResetController extends Controller
         return 'password-update:ip-email:' . $id . ':' . sha1($email) . ':' . sha1((string) $request->ip());
     }
 
-    private function getResetUpdateThrottleMessage(Request $request, School $school, string $email): ?string
+    private function getResetUpdateThrottleMessage(Request $request, ?School $school, string $email): ?string
     {
         $key = $this->resetUpdateLimiterKeyIpAndEmail($request, $school, $email);
         if (RateLimiter::tooManyAttempts($key, 5)) {
@@ -376,12 +381,12 @@ class PasswordResetController extends Controller
         return null;
     }
 
-    private function registerResetUpdateAttempt(Request $request, School $school, string $email): void
+    private function registerResetUpdateAttempt(Request $request, ?School $school, string $email): void
     {
         RateLimiter::hit($this->resetUpdateLimiterKeyIpAndEmail($request, $school, $email), 300);
     }
 
-    private function clearResetUpdateAttemptLimits(Request $request, School $school, string $email): void
+    private function clearResetUpdateAttemptLimits(Request $request, ?School $school, string $email): void
     {
         RateLimiter::clear($this->resetUpdateLimiterKeyIpAndEmail($request, $school, $email));
     }

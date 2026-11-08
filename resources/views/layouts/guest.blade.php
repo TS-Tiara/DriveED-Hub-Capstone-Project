@@ -61,6 +61,7 @@
     </style>
     
     @stack('styles')
+    @include('partials.pagination-styles')
 </head>
 <body>
     <header class="guest-header">

@@ -1,0 +1,21 @@
+{
+  "checks": [
+    "Admin payment snapshot images use the standard viewer without a second QR popup",
+    "Payment summary totals remain correct on page 2 with records beyond the first page",
+    "Activity pagination stays inside the user profile and preserves the roster",
+    "Student profile includes documents, enrollment history and receipts; shared viewer returns focus to the profile",
+    "GCash receipts and absent images stay in the standard viewer with a useful error state",
+    "Instructor license uses the shared viewer and profile loads teaching activity",
+    "Pickup notice dialog is centered on desktop and fits on mobile",
+    "Enrollment and user pagination share the same control sizes and typography",
+    "Enrollment actions wrap without overflow and nested receipt inspection keeps verification open",
+    "Student payment receipts are accessible on desktop and mobile",
+    "Guests can review submitted payment details and receipts; dedicated payment QR viewer is preserved",
+    "No browser JavaScript errors or application server errors"
+  ],
+  "paginationStyle": {
+    "height": "36px",
+    "size": "14px"
+  },
+  "errors": []
+}

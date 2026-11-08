@@ -677,6 +677,8 @@
                     </div>
                     @endif
 
+                    @include('school.partials.enrollment-payment-details', ['enrollment' => $request])
+
                     <!-- Enrollment Timeline -->
                     <div class="enrollment-timeline">
                         <div class="timeline-connector">

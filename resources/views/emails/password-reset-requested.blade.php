@@ -31,7 +31,7 @@
         </div>
 
         <div class="footer">
-            <p style="margin: 4px 0;">&copy; {{ date('Y') }} {{ $school->name }}</p>
+            <p style="margin: 4px 0;">&copy; {{ date('Y') }} {{ $school?->name ?? 'DriveED Hub' }}</p>
             <p style="margin: 4px 0;">Automated message, please do not reply.</p>
         </div>
     </div>

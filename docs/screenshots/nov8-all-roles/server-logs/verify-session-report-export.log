@@ -1,0 +1,31 @@
+--- 1. Testing Schedule Page View (Verify export form removed) ---
+ [PASS] Schedule page does NOT contain Training & Session Records
+
+--- 2. Testing Verify Session Completion Page View (Verify export form present) ---
+ [PASS] Verify Session Completion page contains Schedule Logs section
+ [PASS] Export form contains student_id filter dropdown
+ [PASS] Export form contains instructor_id filter dropdown
+ [PASS] Export menu offers all records
+ [PASS] Export menu offers filtered records
+ [PASS] One Export Report menu replaces duplicate export controls
+ [PASS] Export menu retains PDF and Excel formats
+
+--- 3. Testing PDF and Excel Export Functionality via SessionReportController ---
+ [PASS] PDF export status is 200
+ [PASS] PDF binary has valid %PDF header
+ [PASS] PDF file is not empty (908646 bytes)
+ [PASS] Excel export status is 200
+ [PASS] Excel output has valid ZIP/PK header
+ [PASS] Excel file is not empty (8309 bytes)
+ [PASS] PDF export filtered by Student returns status 200
+ [PASS] Filtered student PDF has valid %PDF header
+ [PASS] PDF export filtered by Instructor returns status 200
+ [PASS] Filtered instructor PDF has valid %PDF header
+ [PASS] Excel export filtered by Student and Instructor returns 200
+ [PASS] Excel has valid PK header
+ [PASS] PDF export with empty strings (browser default) returns status 200
+ [PASS] Empty filter PDF has valid %PDF header
+
+=========================================
+Total Passed: 22, Total Failed: 0
+=========================================

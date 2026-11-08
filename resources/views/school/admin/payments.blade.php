@@ -450,12 +450,12 @@
                             @endphp
                             @if($qrImgSrc)
                                 <!-- QR Code Image - click to view full size -->
-                                <div class="qr-code-wrapper qr-zoom-interactive cursor-pointer select-none" onclick="openImageLightbox('{{ $qrImgSrc }}', 'Payment QR Code / OR', { isQr: true })" title="Click to enlarge & zoom QR code">
+                                <div class="qr-code-wrapper qr-zoom-interactive cursor-pointer select-none" onclick="openImageLightbox('{{ $qrImgSrc }}', 'Payment QR Code / OR', { isQr: false })" title="Click to enlarge & zoom QR code">
                                     <img src="{{ $qrImgSrc }}" alt="OR QR Code" class="qr-code-image max-w-full h-auto rounded-md transition-transform duration-300" style="max-height: 48px; object-fit: contain;">
                                 </div>
                             @elseif($payment->or_number)
                                 <!-- OR Number - click to view full size -->
-                                <span class="or-number cursor-pointer select-none" onclick="openImageLightbox('/storage/or-illustration.png', 'Official Receipt (OR #{{ $payment->or_number }})', { isQr: false })" title="Click to inspect OR details">
+                                <span class="or-number">
                                     {{ $payment->or_number }}
                                 </span>
                             @else
@@ -557,7 +557,7 @@ function filterPayments(status, btn) {
 // QR Code Modal compatibility functions (delegates to universal lightbox with zoom/pan)
 function openQrModal(imageUrl, title) {
     if (typeof openImageLightbox === 'function') {
-        openImageLightbox(imageUrl, title || 'Payment QR Code / OR', { isQr: true });
+        openImageLightbox(imageUrl, title || 'Payment QR Code / OR', { isQr: false });
     }
 }
 

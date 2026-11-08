@@ -1,0 +1,134 @@
+[
+  {
+    "role": "school-admin",
+    "name": "Visible Create Lesson link is usable",
+    "status": 403,
+    "expected": 200,
+    "pass": false
+  },
+  {
+    "role": "school-admin",
+    "name": "Cross-school portal is denied",
+    "path": "http://localhost:8006/qa-audit-boundary/admin",
+    "expected": [
+      0,
+      302,
+      401,
+      403
+    ],
+    "status": 0,
+    "type": null,
+    "bytes": 0,
+    "pass": true
+  },
+  {
+    "role": "branch-secretary",
+    "name": "Foreign-branch enrollment API",
+    "path": "http://localhost:8006/drived-hub/admin/enrollments/api/2",
+    "expected": 403,
+    "status": 403,
+    "type": "application/json",
+    "bytes": 21,
+    "pass": true
+  },
+  {
+    "role": "branch-secretary",
+    "name": "Foreign-branch user activity",
+    "path": "http://localhost:8006/drived-hub/admin/user-management/student/2/activity",
+    "expected": 404,
+    "status": 404,
+    "type": "application/json",
+    "bytes": 72,
+    "pass": true
+  },
+  {
+    "role": "branch-secretary",
+    "name": "Foreign-branch payment record",
+    "path": "http://localhost:8006/drived-hub/admin/payments/4",
+    "expected": 403,
+    "status": 403,
+    "type": "application/json",
+    "bytes": 73,
+    "pass": true
+  },
+  {
+    "role": "branch-secretary",
+    "name": "Foreign-branch payment image",
+    "path": "http://localhost:8006/drived-hub/admin/enrollments/2/view-payment-proof",
+    "expected": 403,
+    "status": 200,
+    "type": "image/jpeg",
+    "bytes": 165483,
+    "pass": false
+  },
+  {
+    "role": "branch-secretary",
+    "name": "Cross-school portal is denied",
+    "path": "http://localhost:8006/qa-audit-boundary/admin",
+    "expected": [
+      0,
+      302,
+      401,
+      403
+    ],
+    "status": 0,
+    "type": null,
+    "bytes": 0,
+    "pass": true
+  },
+  {
+    "role": "instructor",
+    "name": "Cross-school portal is denied",
+    "path": "http://localhost:8006/qa-audit-boundary/instructor",
+    "expected": [
+      0,
+      302,
+      401,
+      403
+    ],
+    "status": 0,
+    "type": null,
+    "bytes": 0,
+    "pass": true
+  },
+  {
+    "role": "student",
+    "name": "Cross-school portal is denied",
+    "path": "http://localhost:8006/qa-audit-boundary/student",
+    "expected": [
+      0,
+      302,
+      401,
+      403
+    ],
+    "status": 0,
+    "type": null,
+    "bytes": 0,
+    "pass": true
+  },
+  {
+    "role": "guest",
+    "name": "Cross-school portal is denied",
+    "path": "http://localhost:8006/qa-audit-boundary/guest/dashboard",
+    "expected": [
+      0,
+      302,
+      401,
+      403
+    ],
+    "status": 0,
+    "type": null,
+    "bytes": 0,
+    "pass": true
+  },
+  {
+    "role": "unauthenticated",
+    "name": "Receipt requires login",
+    "path": "http://localhost:8006/drived-hub/guest/receipt?path=receipts%2Fqa-audit-student.png",
+    "expected": 401,
+    "status": 401,
+    "type": "application/json",
+    "bytes": 30,
+    "pass": true
+  }
+]

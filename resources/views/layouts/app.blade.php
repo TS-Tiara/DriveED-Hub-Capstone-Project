@@ -1931,6 +1931,7 @@
 
         @stack('styles')
     </style>
+    @include('partials.pagination-styles')
 </head>
 
 <body>
@@ -2120,8 +2121,10 @@
                         <span class="nav-category-arrow">&#9660;</span>
                     </div>
                     <div class="nav-category-items">
+                        @if(Auth::guard('admin')->user()?->canManageCourses())
                         <a href="{{ school_route('admin.courses', [], $currentSchool) }}" class="nav-item"
                             data-page="courses">Courses</a>
+                        @endif
                         {{-- <a href="{{ school_route('admin.materials.index', [], $currentSchool) }}" class="nav-item"
                             data-page="materials">Course Materials</a> --}}
                         <a href="{{ school_route('admin.enrollments.index', [], $currentSchool) }}" class="nav-item"
@@ -3751,7 +3754,7 @@
         // Initialize AJAX navigation
         document.addEventListener('DOMContentLoaded', function () {
             // Set initial state
-            const currentUrl = window.location.pathname;
+            const currentUrl = window.location.pathname + window.location.search + window.location.hash;
             history.replaceState({ url: currentUrl }, '', currentUrl);
             updateActiveNavItem(currentUrl);
         });

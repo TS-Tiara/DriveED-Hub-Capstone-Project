@@ -318,6 +318,7 @@ nav[role="navigation"] span:not([aria-current]):not([aria-disabled]) {
                     <th>Amount</th>
                     <th>Method</th>
                     <th>Status</th>
+                    <th>Receipt</th>
                 </tr>
             </thead>
             <tbody>
@@ -336,10 +337,11 @@ nav[role="navigation"] span:not([aria-current]):not([aria-disabled]) {
                     <td><strong class="amount-emphasis">&#8369;{{ number_format($payment->amount, 2) }}</strong></td>
                     <td>{{ ucfirst($payment->method ?? 'N/A') }}</td>
                     <td><span class="badge badge-{{ $payment->status }}">{{ ucfirst($payment->status) }}</span></td>
+                    <td>@include('school.partials.payment-receipt-button')</td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="5">
+                    <td colspan="6">
                         <div class="empty-state">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                             <p class="empty-state-title">No payment records found</p>
@@ -381,6 +383,10 @@ nav[role="navigation"] span:not([aria-current]):not([aria-disabled]) {
             <div class="payment-card-row">
                 <span class="payment-card-label">Status</span>
                 <span class="badge badge-{{ $payment->status }}">{{ ucfirst($payment->status) }}</span>
+            </div>
+            <div class="payment-card-row">
+                <span class="payment-card-label">Receipt</span>
+                @include('school.partials.payment-receipt-button')
             </div>
         </div>
         @empty
