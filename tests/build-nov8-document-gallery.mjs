@@ -1,0 +1,23 @@
+import fs from 'node:fs/promises';
+const out='docs/screenshots/nov8-document-findings';
+const items=[
+ ['course-summary',1,'Course hours and package prices','Available-course summaries now use package hours and price ranges.'],
+ ['course-packages',2,'Package information','Course cards use the same package source as the enrollment options.'],
+ ['progress-enrollment',4,'Zero learning progress','The fill is zero-width at 0%, including after AJAX navigation.'],
+ ['enrollment-count',5,'Enrollment status','The redundant active-enrollment count is hidden.','progress-enrollment'],
+ ['payment-status',3,'Payment status consistency','Approved payment labels use the school status colors, size and weight.'],
+ ['status-settings',8,'Status label settings','Admins can save background color, text color and bold text for pending, approved and cancelled labels.'],
+ ['instructor-batch',10,'Instructor sequential schedules','A dialog offers one day, all days or selected dates; the selection saves atomically.'],
+ ['student-batch',11,'Student sequential schedules','Students can reserve chosen days from one sequential batch in one request.'],
+ ['schedule-creation',12,'Same-day batch creation','Multiple non-overlapping start and end dropdown pairs save together; sequential scheduling is mutually exclusive.'],
+ ['pdc-capacity',13,'PDC instructor capacity','Maximum instructor capacity remains editable when no instructors are pre-assigned.'],
+ ['schedule-instructors',14,'Additional instructors','The more indicator expands the remaining instructor names. Calendar overflow is also clickable.'],
+ ['background',15,'School background settings','Main content no longer covers the saved background. Both solid color and uploaded image were verified.'],
+ ['user-removal',16,'User removal confirmation','Typed confirmation archives the account, preserves historical records and ends existing account access.'],
+ ['session-verification',18,'Session verification status','Session lists and detail pages display the linked booking verification state.'],
+ ['session-grade',20,'Session logging','Attended sessions require a grade. Duplicate and failed submissions leave no incomplete records.'],
+];
+for(const [key,n]of items)await fs.copyFile(`tmp/nov8-document/image${n}.png`,`${out}/${key}-reported-before.png`);
+const cards=items.map(([key,n,title,detail,after=key],i)=>`<section id="${key}"><h2>${i+1}. ${title}</h2><p>${detail}</p><div class="pair"><figure><figcaption>Before · supplied findings document</figcaption><a href="${key}-reported-before.png"><img loading="lazy" src="${key}-reported-before.png" alt="Reported issue: ${title}"></a></figure><figure><figcaption>After · verified local application</figcaption><a href="${after}-after.png"><img loading="lazy" src="${after}-after.png" alt="Fixed ${title}"></a></figure></div></section>`).join('\n');
+await fs.writeFile(out+'/index.html',`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>November 8 findings: before and after</title><style>body{font:16px/1.5 system-ui,sans-serif;margin:0;color:#172338;background:#f3f5f8}main{max-width:1440px;margin:auto;padding:32px}h1{font-size:34px;line-height:1.2}h2{font-size:23px}a{color:#1454ad}section{background:white;padding:24px;margin:28px 0;border:1px solid #d5dde7;border-radius:10px}.pair{display:grid;grid-template-columns:1fr 1fr;gap:20px}figure{margin:0;min-width:0}figcaption{font-weight:600;margin-bottom:12px}img{display:block;max-width:100%;max-height:780px;object-fit:contain;object-position:top;margin:auto;border:1px solid #e0e4ea}nav{display:flex;gap:20px;flex-wrap:wrap}.note{max-width:1000px;color:#475569}@media(max-width:760px){main{padding:16px}.pair{grid-template-columns:1fr}section{padding:16px}}</style></head><body><main><h1>November 8 findings: before and after</h1><p>Fixed and verified locally on November 9, 2026. Fifteen comparisons cover the findings in the supplied document.</p><p class="note">Before images are the original screenshots embedded in your report. After images show the fixed application with labeled QA accounts in an isolated database. Branding, records and framing differ. Original full-page browser baselines were also captured before editing and are listed in <a href="before-results.json">the baseline capture log</a>.</p><nav><a href="README.md">Test report</a><a href="focused-browser-results.json">Browser assertions</a><a href="focused-server.log">Backend assertions</a><a href="background-image-after.png">Uploaded background image</a></nav>${cards}</main></body></html>`);
+console.log(`Built ${items.length} before-and-after comparisons.`);

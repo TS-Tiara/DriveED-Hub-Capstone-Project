@@ -354,6 +354,37 @@ class BookingController extends Controller
     /**
      * Store a newly created booking.
      */
+    public function storeBatch(Request $request, School $school)
+    {
+        $ids = $request->validate(['slot_ids' => 'required|array|min:1|max:30', 'slot_ids.*' => 'required|integer|distinct'])['slot_ids'];
+        $student = Auth::guard('student')->user();
+        abort_unless($student && $student->school_id === $school->id, 403);
+        return DB::transaction(function () use ($request, $school, $ids, $student) {
+            $student->newQuery()->whereKey($student->id)->lockForUpdate()->firstOrFail();
+            $slots = \App\Models\TimeSlot::where('school_id', $school->id)->whereIn('id', $ids)->orderBy('id')->lockForUpdate()->get();
+            abort_unless($slots->count() === count($ids), 404);
+            if (!$slots->first()->batch_group || $slots->pluck('batch_group')->unique()->count() !== 1) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['slot_ids' => 'Select schedules from one sequential batch.']);
+            }
+            foreach ($slots as $slot) {
+                $input = array_merge($request->except('slot_ids'), [
+                    'student_id' => $student->id, 'time_slot_id' => $slot->id,
+                    'course_id' => $slot->course_id,
+                    'scheduled_at' => $slot->date->format('Y-m-d').' '.$slot->start_time,
+                ]);
+                if (!$slot->instructors->contains('id', (int) ($input['instructor_id'] ?? 0))) $input['instructor_id'] = null;
+                $single = Request::create($request->url(), 'POST', $input);
+                $single->headers->set('Accept', 'application/json');
+                $response = $this->store($single, $school);
+                $data = $response->getData(true);
+                if ($response->getStatusCode() !== 201) {
+                    throw \Illuminate\Validation\ValidationException::withMessages($data['errors'] ?? ['slot_ids' => $data['message'] ?? 'Unable to reserve every selected schedule.']);
+                }
+            }
+            return response()->json(['success' => true, 'message' => count($ids).' schedule requests created.'], 201);
+        });
+    }
+
     public function store(Request $request, School $school)
     {
         $validated = $request->validate([

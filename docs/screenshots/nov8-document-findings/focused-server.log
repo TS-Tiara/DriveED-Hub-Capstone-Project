@@ -1,0 +1,37 @@
+PASS: Zero base hours use package training hours
+PASS: Course price displays the package range
+PASS: Different package hours display a range
+PASS: Non-sequential same-day ranges create successfully
+PASS: Both time ranges persist
+PASS: Same-day ranges and sequential dates cannot be combined
+PASS: Overlapping time ranges are rejected
+PASS: A short second range rejects the whole batch
+PASS: Failed multi-range creation leaves no partial schedule
+PASS: Unassigned PDC retains configurable instructor capacity and one learner per instructor
+PASS: Multiple instructors can join an initially unassigned PDC schedule
+PASS: PDC joins preserve the chosen capacity
+PASS: Instructor selects every sequential batch day
+PASS: An unavailable day rejects instructor batch selection
+PASS: Instructor batch failure rolls back earlier assignments
+PASS: Student reserves selected days in one submission
+PASS: Student cannot reserve the same batch days twice
+PASS: Repeated batch creates no duplicate bookings
+PASS: An unavailable second day rejects student batch booking
+PASS: Student batch failure rolls back the earlier reservation
+PASS: Student cannot mix unrelated sequential batches
+PASS: Attended sessions require a grade
+PASS: Zero is accepted as a real grade
+PASS: A graded manual session saves successfully
+PASS: Session persists grade and links its booking
+PASS: New logs display awaiting admin verification
+PASS: Admin completion displays verified status
+PASS: Submitting the same session twice is rejected
+PASS: Duplicate submission leaves no extra session
+PASS: Legacy sessions without start_time also reject duplicate date and time
+PASS: Existing graded schedule feedback remains editable
+PASS: An attended session cannot clear an existing grade
+PASS: Account removal requires the exact typed name
+PASS: Wrong confirmation leaves account active
+PASS: Confirmed user removal archives the account
+PASS: Archiving preserves bookings and enrollment history
+RESULT: 36 assertions passed.

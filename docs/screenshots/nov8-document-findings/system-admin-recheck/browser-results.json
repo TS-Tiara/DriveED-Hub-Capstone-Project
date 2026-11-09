@@ -1,0 +1,354 @@
+{
+  "environment": "http://localhost:8006",
+  "database": "drivingapp_regression_20261108",
+  "results": [
+    {
+      "role": "system-admin",
+      "route": "login",
+      "status": 200,
+      "url": "http://localhost:8006/system-admin"
+    },
+    {
+      "role": "system-admin",
+      "route": "system-admin.dashboard",
+      "path": "system-admin",
+      "status": 200,
+      "url": "http://localhost:8006/system-admin",
+      "title": "Dashboard - System Admin",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/system-admin",
+        "type": "text/html; charset=utf-8",
+        "bytes": 104766,
+        "magic": "<!DOC",
+        "milliseconds": 122,
+        "excerpt": "<!DOCTYPE html>\r\n<html lang=\"en\">\r\n<head>\r\n    <meta charset=\"UTF-8\">\r\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\r\n    <meta name=\"csrf-token\" conte"
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 390,
+        "overflow": false,
+        "offenders": [
+          {
+            "tag": "TABLE",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "THEAD",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TR",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TH",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TH",
+            "id": "",
+            "class": ""
+          }
+        ]
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "system-admin",
+      "route": "system-admin.admins",
+      "path": "system-admin/admins",
+      "status": 200,
+      "url": "http://localhost:8006/system-admin/admins",
+      "title": "School Admins - System Admin",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/system-admin/admins",
+        "type": "text/html; charset=utf-8",
+        "bytes": 113715,
+        "magic": "<!DOC",
+        "milliseconds": 130,
+        "excerpt": "<!DOCTYPE html>\r\n<html lang=\"en\">\r\n<head>\r\n    <meta charset=\"UTF-8\">\r\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\r\n    <meta name=\"csrf-token\" conte"
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 390,
+        "overflow": false,
+        "offenders": [
+          {
+            "tag": "TABLE",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "THEAD",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TR",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TH",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TH",
+            "id": "",
+            "class": ""
+          }
+        ]
+      },
+      "dialog": {
+        "id": "createAdminModal",
+        "visible": true
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "system-admin",
+      "route": "system-admin.",
+      "path": "system-admin/dashboard",
+      "status": 200,
+      "url": "http://localhost:8006/system-admin/dashboard",
+      "title": "Dashboard - System Admin",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/system-admin/dashboard",
+        "type": "text/html; charset=utf-8",
+        "bytes": 104761,
+        "magic": "<!DOC",
+        "milliseconds": 105,
+        "excerpt": "<!DOCTYPE html>\r\n<html lang=\"en\">\r\n<head>\r\n    <meta charset=\"UTF-8\">\r\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\r\n    <meta name=\"csrf-token\" conte"
+      },
+      "screenshot": "docs/screenshots/nov8-document-findings/system-admin-recheck/screenshots/system-admin-system-admin..png",
+      "mobile": {
+        "width": 390,
+        "documentWidth": 390,
+        "overflow": false,
+        "offenders": [
+          {
+            "tag": "TABLE",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "THEAD",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TR",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TH",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TH",
+            "id": "",
+            "class": ""
+          }
+        ]
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "system-admin",
+      "route": "system-admin.logs",
+      "path": "system-admin/logs",
+      "status": 200,
+      "url": "http://localhost:8006/system-admin/logs",
+      "title": "System Logs - System Admin",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/system-admin/logs",
+        "type": "text/html; charset=utf-8",
+        "bytes": 211244,
+        "magic": "<!DOC",
+        "milliseconds": 124,
+        "excerpt": "<!DOCTYPE html>\r\n<html lang=\"en\">\r\n<head>\r\n    <meta charset=\"UTF-8\">\r\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\r\n    <meta name=\"csrf-token\" conte"
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 390,
+        "overflow": false,
+        "offenders": [
+          {
+            "tag": "TABLE",
+            "id": "",
+            "class": "logs-table"
+          },
+          {
+            "tag": "THEAD",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TR",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TH",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TH",
+            "id": "",
+            "class": ""
+          }
+        ]
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "system-admin",
+      "route": "system-admin.logs.show",
+      "path": "system-admin/logs/1",
+      "status": 200,
+      "url": "http://localhost:8006/system-admin/logs/1",
+      "title": "Log #1 - System Administrator",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/system-admin/logs/1",
+        "type": "text/html; charset=utf-8",
+        "bytes": 27854,
+        "magic": "<!DOC",
+        "milliseconds": 69,
+        "excerpt": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Log #1 - System Administrat"
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "system-admin",
+      "route": "system-admin.schools",
+      "path": "system-admin/schools",
+      "status": 200,
+      "url": "http://localhost:8006/system-admin/schools",
+      "title": "Schools - System Admin",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/system-admin/schools",
+        "type": "text/html; charset=utf-8",
+        "bytes": 115668,
+        "magic": "<!DOC",
+        "milliseconds": 125,
+        "excerpt": "<!DOCTYPE html>\r\n<html lang=\"en\">\r\n<head>\r\n    <meta charset=\"UTF-8\">\r\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\r\n    <meta name=\"csrf-token\" conte"
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 390,
+        "overflow": false,
+        "offenders": [
+          {
+            "tag": "TABLE",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "THEAD",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TR",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TH",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TH",
+            "id": "",
+            "class": ""
+          }
+        ]
+      },
+      "dialog": {
+        "id": "createSchoolModal",
+        "visible": true
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "system-admin",
+      "route": "system-admin.users",
+      "path": "system-admin/users",
+      "status": 200,
+      "url": "http://localhost:8006/system-admin/users",
+      "title": "Users - System Admin",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/system-admin/users",
+        "type": "text/html; charset=utf-8",
+        "bytes": 197962,
+        "magic": "<!DOC",
+        "milliseconds": 198,
+        "excerpt": "<!DOCTYPE html>\r\n<html lang=\"en\">\r\n<head>\r\n    <meta charset=\"UTF-8\">\r\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\r\n    <meta name=\"csrf-token\" conte"
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 390,
+        "overflow": false,
+        "offenders": [
+          {
+            "tag": "BUTTON",
+            "id": "archived-tab-btn",
+            "class": "tab"
+          },
+          {
+            "tag": "TABLE",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "THEAD",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TR",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TH",
+            "id": "",
+            "class": ""
+          }
+        ]
+      },
+      "errors": [],
+      "expectedDenied": false
+    }
+  ],
+  "boundaries": [],
+  "skipped": [],
+  "roleErrors": [
+    {
+      "role": "system-admin",
+      "errors": []
+    }
+  ]
+}

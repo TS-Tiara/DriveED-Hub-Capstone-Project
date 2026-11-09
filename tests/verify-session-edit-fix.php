@@ -86,6 +86,7 @@ $updateRequest = \App\Http\Requests\StoreSessionCompletionRequest::create(
         'session_date' => $newDate,
         'session_time' => $newTime,
         'hours_completed' => $newHours,
+        'session_grade' => $session->session_grade ?? 80,
         'notes' => $newNotes,
     ]
 );

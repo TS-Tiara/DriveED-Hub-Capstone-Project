@@ -17,6 +17,29 @@ use App\Support\DemoAccountProtection;
 
 class InstructorTimeSlotController extends Controller
 {
+    public function selectBatch(Request $request, School $school)
+    {
+        $ids = $request->validate(['slot_ids' => 'required|array|min:1|max:30', 'slot_ids.*' => 'required|integer|distinct'])['slot_ids'];
+        $instructor = Auth::guard('instructor')->user();
+        abort_unless($instructor && $instructor->school_id === $school->id, 403);
+        return DB::transaction(function () use ($school, $ids, $instructor) {
+            $instructor->newQuery()->whereKey($instructor->id)->lockForUpdate()->firstOrFail();
+            $slots = TimeSlot::where('school_id', $school->id)->whereIn('id', $ids)->orderBy('id')->lockForUpdate()->get();
+            abort_unless($slots->count() === count($ids), 404);
+            if (!$slots->first()->batch_group || $slots->pluck('batch_group')->unique()->count() !== 1) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['slot_ids' => 'Select schedules from one sequential batch.']);
+            }
+            foreach ($slots as $slot) {
+                if ($slot->hasInstructor($instructor->id)) continue;
+                $response = $this->toggle($school, $slot->id);
+                $data = $response->getData(true);
+                if (!$data['success']) {
+                    throw \Illuminate\Validation\ValidationException::withMessages(['slot_ids' => $data['message']]);
+                }
+            }
+            return response()->json(['success' => true, 'message' => count($ids).' schedules selected.']);
+        });
+    }
     // Display available time slots and instructor's selected slots
     public function index(Request $request, School $school)
     {
@@ -705,6 +728,13 @@ class InstructorTimeSlotController extends Controller
             || $booking->session_status === 'completed';
 
         $isUpdatingGrade = array_key_exists('session_grade', $validated);
+        $resultingStatus = $validated['session_status'] ?? $booking->session_status ?? $booking->status;
+        $resultingGrade = $isUpdatingGrade ? $validated['session_grade'] : $booking->session_grade;
+        if (in_array($resultingStatus, ['done', 'completed'], true)
+            && ($validated['attendance_status'] ?? $booking->attendance_status) !== 'absent'
+            && $resultingGrade === null) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['session_grade' => 'Enter a grade before submitting an attended session.']);
+        }
         $isUpdatingFeedback = array_key_exists('instructor_feedback', $validated);
 
         if (($isUpdatingGrade || $isUpdatingFeedback) && !$willBeCompleted) {

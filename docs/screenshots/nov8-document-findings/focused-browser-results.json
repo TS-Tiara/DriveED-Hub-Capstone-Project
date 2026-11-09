@@ -1,0 +1,287 @@
+{
+  "checks": [
+    {
+      "name": "Page loads /student/my-course",
+      "pass": true,
+      "detail": 200
+    },
+    {
+      "name": "Package summary uses actual hours and prices",
+      "pass": true,
+      "detail": "Theoretical Driving Course (TDC)\n\nTHEORETICAL  •  8 hours  •  ₱2,000.00\n\nView Details\nPractical Driving Course (PDC)\n\nPRACTICAL  •  10 hours  •  ₱5,000.00–₱5,500.00\n\nView Details\nTDC + PDC Combo Course\n\nCOMBO  •  25 hours  •  ₱6,800.00\n\nView Details\nTmp Combo Test\n\nCOMBO  •  25 hours  •  ₱322,131.00\n\nView Details\nTest Theoretical 101\n\nTHEORETICAL  •  15 hours  •  ₱1,000.00\n\nView Details\nTest Practical 201\n\nPRACTICAL  •  8 hours  •  ₱2,000.00\n\nView Details\nTest Theoretical 201\n\nTHEORETICAL  •  8 hours  •  ₱1,500.00\n\nView Details\nQA Package Driving Course\n\nTHEORETICAL  •  15 hours  •  ₱2,301.00–₱2,600.00\n\nView Details\nQA SECRETARY COURSE 1794185102191\n\nTHEORETICAL  •  8 hours  •  ₱50.00\n\nView Details"
+    },
+    {
+      "name": "Page loads /student",
+      "pass": true,
+      "detail": 200
+    },
+    {
+      "name": "Zero progress renders with no colored fill",
+      "pass": true
+    },
+    {
+      "name": "Redundant enrollment count is hidden",
+      "pass": true
+    },
+    {
+      "name": "Learning progress uses enrollment training hours instead of zero base hours",
+      "pass": true
+    },
+    {
+      "name": "Page loads /student/courses",
+      "pass": true,
+      "detail": 200
+    },
+    {
+      "name": "Page loads /admin/settings",
+      "pass": true,
+      "detail": 200
+    },
+    {
+      "name": "School badge settings save",
+      "pass": true,
+      "detail": {
+        "status": 200,
+        "text": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ============================================ */\r\n\r\n    /* Container */\r\n    .admin-container {\r\n        padding: 20px;\r\n        margin: 20px auto;\r\n        max-width: 1600px;\r\n    }\r\n\r\n    /* Page Header */\r\n    .page-header {\r\n        display: flex;\r\n        justify-content: space-between;\r\n        align-items: center;\r\n        margin-bottom: 30px;\r\n"
+      }
+    },
+    {
+      "name": "Page loads /admin/settings",
+      "pass": true,
+      "detail": 200
+    },
+    {
+      "name": "Text color and bold persist after reload",
+      "pass": true
+    },
+    {
+      "name": "Page loads /student/payments",
+      "pass": true,
+      "detail": 200
+    },
+    {
+      "name": "Payment status uses school badge colors and weight",
+      "pass": true,
+      "detail": [
+        "rgb(209, 250, 229)",
+        "rgb(6, 95, 70)",
+        "700"
+      ]
+    },
+    {
+      "name": "Page loads /admin",
+      "pass": true,
+      "detail": 200
+    },
+    {
+      "name": "Content no longer masks school background",
+      "pass": true
+    },
+    {
+      "name": "Configured solid background is visible",
+      "pass": true
+    },
+    {
+      "name": "Page loads /admin/settings",
+      "pass": true,
+      "detail": 200
+    },
+    {
+      "name": "School background image uploads successfully",
+      "pass": true,
+      "detail": {
+        "status": 200,
+        "text": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ============================================ */\r\n\r\n    /* Container */\r\n    .admin-container {\r\n        padding: 20px;\r\n        margin: 20px auto;\r\n     "
+      }
+    },
+    {
+      "name": "Page loads /admin",
+      "pass": true,
+      "detail": 200
+    },
+    {
+      "name": "Uploaded image applies to the page background",
+      "pass": true,
+      "detail": {
+        "image": "url(\"http://localhost:8006/storage/backgrounds/drived-hub/ceO3wTMZRjhNKC68hHocWYL9h0skX99E8XEWJFY8.png\")",
+        "opacity": "1"
+      }
+    },
+    {
+      "name": "Uploaded background URL loads as an actual image",
+      "pass": true,
+      "detail": {
+        "loaded": true,
+        "width": 2
+      }
+    },
+    {
+      "name": "Page loads /admin/settings",
+      "pass": true,
+      "detail": 200
+    },
+    {
+      "name": "Page loads /admin/schedules",
+      "pass": true,
+      "detail": 200
+    },
+    {
+      "name": "Batch creation starts with two dropdown pairs",
+      "pass": true
+    },
+    {
+      "name": "Same-day dropdown batch submits successfully",
+      "pass": true,
+      "detail": 201
+    },
+    {
+      "name": "Page loads /admin/schedules",
+      "pass": true,
+      "detail": 200
+    },
+    {
+      "name": "PDC instructor capacity remains editable with no assignment",
+      "pass": true
+    },
+    {
+      "name": "Sequential scheduling turns off same-day ranges",
+      "pass": true
+    },
+    {
+      "name": "Inactive same-day ranges are excluded from sequential submissions",
+      "pass": true
+    },
+    {
+      "name": "Page loads /admin/schedules",
+      "pass": true,
+      "detail": 200
+    },
+    {
+      "name": "Additional assigned instructors have an interactive disclosure",
+      "pass": true
+    },
+    {
+      "name": "More instructors expands names",
+      "pass": true
+    },
+    {
+      "name": "Page loads /instructor/my-schedule",
+      "pass": true,
+      "detail": 200
+    },
+    {
+      "name": "Instructor can choose all three batch dates",
+      "pass": true
+    },
+    {
+      "name": "Instructor selects whole batch in one request",
+      "pass": true,
+      "detail": 200
+    },
+    {
+      "name": "Page loads /student/schedule",
+      "pass": true,
+      "detail": 200
+    },
+    {
+      "name": "Student reserves whole batch from the picker",
+      "pass": true,
+      "detail": 201
+    },
+    {
+      "name": "Page loads /instructor/sessions/create",
+      "pass": true,
+      "detail": 200
+    },
+    {
+      "name": "Manual session form requires grade",
+      "pass": true
+    },
+    {
+      "name": "Absent session can be recorded without grade",
+      "pass": true
+    },
+    {
+      "name": "Page loads /instructor/sessions",
+      "pass": true,
+      "detail": 200
+    },
+    {
+      "name": "Session list shows admin verification state",
+      "pass": true
+    },
+    {
+      "name": "Page loads http://localhost:8006/system-admin/users?search=nov8-findings",
+      "pass": true,
+      "detail": 200
+    },
+    {
+      "name": "Typed confirmation prevents empty account removal",
+      "pass": true
+    },
+    {
+      "name": "Page loads /student",
+      "pass": true,
+      "detail": 200
+    },
+    {
+      "name": "Mobile has no horizontal page overflow /student",
+      "pass": true
+    },
+    {
+      "name": "Page loads /student/payments",
+      "pass": true,
+      "detail": 200
+    },
+    {
+      "name": "Mobile has no horizontal page overflow /student/payments",
+      "pass": true
+    },
+    {
+      "name": "Page loads /admin/settings",
+      "pass": true,
+      "detail": 200
+    },
+    {
+      "name": "Mobile has no horizontal page overflow /admin/settings",
+      "pass": true
+    },
+    {
+      "name": "Page loads /admin/schedules",
+      "pass": true,
+      "detail": 200
+    },
+    {
+      "name": "Mobile has no horizontal page overflow /admin/schedules",
+      "pass": true
+    },
+    {
+      "name": "Page loads /instructor/sessions",
+      "pass": true,
+      "detail": 200
+    },
+    {
+      "name": "Mobile has no horizontal page overflow /instructor/sessions",
+      "pass": true
+    },
+    {
+      "name": "No browser JavaScript exceptions",
+      "pass": true,
+      "detail": []
+    },
+    {
+      "name": "Exact typed confirmation permits account removal",
+      "pass": true
+    },
+    {
+      "name": "Confirmed removal reports archival and preserved history",
+      "pass": true
+    },
+    {
+      "name": "Archived account loses its existing authenticated session",
+      "pass": true,
+      "detail": "http://localhost:8006/drived-hub"
+    }
+  ],
+  "errors": []
+}

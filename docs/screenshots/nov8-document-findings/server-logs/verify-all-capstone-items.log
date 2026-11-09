@@ -1,0 +1,33 @@
+=== CAPSTONE 5-ITEM VERIFICATION TEST ===
+
+--- 1. UID FORMATS ---
+Enrollment ID 2 -> UID: ENR-2026-00002
+PASS: Enrollment UID is human-readable unique identifier.
+Payment ID 1 -> UID: PAY-2026-00001, Receipt UID: RCP-2026-00001
+PASS: Payment UID is human-readable unique identifier.
+
+--- 2. UNIQUE ROLE COLORS ---
+PASS: Found unique badge style for [system-admin]
+PASS: Found unique badge style for [school-admin]
+PASS: Found unique badge style for [branch-secretary]
+PASS: Found unique badge style for [instructor]
+PASS: Found unique badge style for [student]
+PASS: Found unique badge style for [guest]
+
+--- 3. SESSION LOG ARCHIVE ---
+PASS: session_completions has archived_at column.
+PASS: Session can be archived successfully.
+PASS: Session can be restored/unarchived successfully.
+
+--- 4. USER ARCHIVING & AUTO-ARCHIVE ---
+PASS: students and instructors have archived_at column.
+PASS: Student can be archived.
+PASS: Student can be restored to active.
+PASS: Artisan command users:archive-inactive executed with code 0.
+Command output: Successfully archived 0 inactive student(s) and 0 inactive instructor(s) (Threshold: 3650 days).
+
+--- 5. CALENDAR VIEWS ---
+PASS: Instructor schedule contains #calendar-view and .calendar-grid.
+PASS: Student schedule contains #calendar-view and .calendar-grid.
+
+=== OVERALL STATUS: ALL TESTS PASSED ===

@@ -379,7 +379,7 @@
                     <th>Type</th>
                     <th>Hours</th>
                     <th>Status</th>
-                    <th>Actions</th>
+                    <th>Admin verification</th><th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -396,7 +396,7 @@
                             </span>
                         </td>
                         <td>{{ number_format((float) ($session->hours_completed ?? 0), 1) }}</td>
-                        <td>{{ ucfirst($session->status ?? 'completed') }}</td>
+                        <td>{{ ucfirst($session->status ?? 'completed') }}</td><td>{{ $session->verification_status }}</td>
                         <td>
                             <div style="display: flex; gap: 6px; align-items: center;">
                                 <a href="{{ route('schools.admin.sessions.show', ['school' => $school->slug, 'sessionCompletion' => $session->id]) }}" class="btn-action-icon" style="background: #eff6ff; color: #2563eb;" title="View">
@@ -428,7 +428,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="9" class="empty">No session completions found.</td>
+                        <td colspan="10" class="empty">No session completions found.</td>
                     </tr>
                 @endforelse
             </tbody>

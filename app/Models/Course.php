@@ -18,6 +18,30 @@ class Course extends Model
 
     protected $appends = ['banner_image_url'];
 
+    public function getDisplayHoursAttribute(): string
+    {
+        $hours = $this->packages->pluck('training_hours')->filter(fn ($value) => (float) $value > 0);
+        if ($hours->isEmpty()) {
+            $value = (float) ($this->hours_required ?: $this->duration_hours);
+            return $value > 0 ? $this->formatSummaryNumber($value) : 'To be confirmed';
+        }
+        return $this->formatSummaryNumber($hours->min()).($hours->min() != $hours->max() ? '–'.$this->formatSummaryNumber($hours->max()) : '');
+    }
+
+    public function getDisplayPriceAttribute(): string
+    {
+        $prices = $this->packages->pluck('price');
+        if ($prices->isEmpty()) {
+            return '₱'.number_format((float) $this->price, 2);
+        }
+        return '₱'.number_format((float) $prices->min(), 2).($prices->min() != $prices->max() ? '–₱'.number_format((float) $prices->max(), 2) : '');
+    }
+
+    private function formatSummaryNumber($value): string
+    {
+        return rtrim(rtrim(number_format((float) $value, 2, '.', ''), '0'), '.');
+    }
+
     public function getBannerImageUrlAttribute(): ?string
     {
         $path = $this->banner_image;

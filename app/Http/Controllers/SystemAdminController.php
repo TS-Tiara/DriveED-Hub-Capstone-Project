@@ -903,47 +903,17 @@ class SystemAdminController extends Controller
     /**
      * Delete a user (student or instructor)
      */
-    public function deleteUser($type, $id)
+    public function deleteUser(Request $request, $type, $id)
     {
-        try {
-            if ($type === 'student') {
-                $user = Student::findOrFail($id);
-            }
-            elseif ($type === 'instructor') {
-                $user = Instructor::findOrFail($id);
-            }
-            else {
-                return back()->with('error', 'Invalid user type.');
-            }
-
-            $userName = $user->name;
-            $userEmail = $user->email;
-            $schoolId = $user->school_id;
-
-            SystemLog::logWarning(
-                "{$type} permanently deleted: {$userName} ({$userEmail})",
-                'database',
-            ['user_id' => $id, 'type' => $type, 'email' => $userEmail, 'deleted_by' => Auth::guard('admin')->user()?->name ?? 'System'],
-                $schoolId,
-                'delete_user'
-            );
-
-            $user->delete();
-
-            return back()->with('success', ucfirst($type) . " '{$userName}' has been permanently deleted.");
-        }
-        catch (\Exception $e) {
-            SystemLog::logError(
-                'Failed to delete user',
-                'database',
-                $e,
-            ['type' => $type, 'id' => $id],
-                null,
-                'delete_user'
-            );
-
-            return back()->with('error', 'Failed to delete user.');
-        }
+        abort_unless(in_array($type, ['student', 'instructor'], true), 404);
+        $user = $type === 'student' ? Student::findOrFail($id) : Instructor::findOrFail($id);
+        $request->validate(['confirmation' => ['required', \Illuminate\Validation\Rule::in(['delete '.$user->name])]]);
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($user, $type) {
+            $user->update(['archived_at' => now(), 'status' => 'archived']);
+            SystemLog::logInfo(ucfirst($type).' removed from active use: '.$user->name, 'database',
+                ['user_id' => $user->id, 'type' => $type, 'archived' => true], $user->school_id, 'archive_user');
+            return back()->with('success', ucfirst($type)." archived. Historical records have been preserved.");
+        });
     }
 
     /**

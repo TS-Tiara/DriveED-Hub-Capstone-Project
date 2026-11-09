@@ -75,7 +75,7 @@ try {
         'instructor_id' => $instructor->id, 'scheduled_at' => now()->startOfDay()->addHours(8),
         'booking_date' => now()->toDateString(), 'status' => 'scheduled', 'session_status' => 'scheduled',
     ]);
-    $logRequest = Request::create('/lesson/update', 'POST', ['session_status' => 'done', 'attendance_status' => 'attended']);
+    $logRequest = Request::create('/lesson/update', 'POST', ['session_status' => 'done', 'attendance_status' => 'attended', 'session_grade' => 80]);
     $logRequest->setLaravelSession(app('session')->driver());
     $response = app(InstructorTimeSlotController::class)->updateLessonDetails($school, $booking, $logRequest);
     $check($response->getStatusCode() === 422 && isset($response->getData(true)['errors']['hours_completed']), 'Schedule logging returns a clear validation error at the hour limit');

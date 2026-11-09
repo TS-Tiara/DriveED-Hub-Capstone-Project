@@ -413,7 +413,7 @@ class StudentController extends Controller
         // Get active enrollments with course and session data
         $activeEnrollments = EnrollmentRequest::where('learner_id', $student->id)
             ->where('school_id', $school->id)
-            ->with(['course', 'sessionCompletions'])
+            ->with(['course', 'package', 'sessionCompletions'])
             ->where('status', 'approved')
             ->get();
         
@@ -428,7 +428,11 @@ class StudentController extends Controller
         
         // Total required hours from enrolled courses
         $requiredHours = $activeEnrollments->sum(function($enrollment) {
-            return $enrollment->course->hours_required ?? 0;
+            return match ($enrollment->course?->course_type) {
+                'practical' => $enrollment->pdc_hours_limit,
+                'combo' => $enrollment->tdc_hours_limit + $enrollment->pdc_hours_limit,
+                default => $enrollment->tdc_hours_limit,
+            };
         });
         
         // Get all bookings for this student
@@ -1178,7 +1182,7 @@ class StudentController extends Controller
             ->get();
         
         // Get available courses for enrollment
-        $availableCourses = Course::where('school_id', $school->id)
+        $availableCourses = Course::with('packages')->where('school_id', $school->id)
             ->where('status', 'active')
             ->get();
         

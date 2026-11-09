@@ -72,6 +72,14 @@ class EnsureSchoolContext
                     continue;
                 }
 
+                if (in_array($guard, ['student', 'instructor'], true) && $user->status !== 'active') {
+                    Auth::guard($guard)->logout();
+                    $request->session()->invalidate();
+                    $request->session()->regenerateToken();
+                    return redirect()->route('schools.login', $school)
+                        ->withErrors(['email' => 'This account is no longer active. Please contact your school.']);
+                }
+
                 if ((int)$user->school_id !== (int)$school->id) {
                     Auth::guard($guard)->logout();
                     $request->session()->invalidate();

@@ -34,7 +34,7 @@ class StoreSessionCompletionRequest extends FormRequest
             'end_time' => ['nullable', 'date_format:H:i', 'after:start_time'],
             'status' => ['nullable', 'in:scheduled,completed,cancelled'],
             'notes' => ['nullable', 'string', 'max:1000'],
-            'session_grade' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'session_grade' => [\Illuminate\Validation\Rule::requiredIf(fn () => !in_array($this->input('status', 'completed'), ['scheduled', 'cancelled'], true) && $this->input('attendance_status') !== 'absent'), 'nullable', 'numeric', 'min:0', 'max:100'],
             'attendance_status' => ['nullable', 'in:attended,late,absent'],
         ];
     }

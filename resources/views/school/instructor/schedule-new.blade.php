@@ -1733,14 +1733,14 @@
 
 
     // Show pending toast from previous page action
-    (function() {
+    document.addEventListener('DOMContentLoaded', function() {
         var msg = sessionStorage.getItem('scheduleToast');
         if (msg) {
             var data = JSON.parse(msg);
             sessionStorage.removeItem('scheduleToast');
             showToast(data.message, data.type);
         }
-    })();
+    }, {once: true});
 
     function markLessonStatus(bookingId, sessionStatus, button) {
         if (sessionStatus !== 'no-show') {
@@ -1952,12 +1952,15 @@
     }
     
     // Select slot
-    function selectSlot(slotId, btn) {
+    async function selectSlot(slotId, btn) {
+        const ids = await window.pickBatchSchedules(slotId);
+        if (!ids) return;
         btn.textContent = 'Selecting...';
         btn.disabled = true;
         
-        fetch('{{ url($school->slug) }}/instructor/timeslots/' + slotId + '/toggle', {
+        fetch(ids.length > 1 ? '{{ url($school->slug) }}/instructor/timeslots/batch/select' : '{{ url($school->slug) }}/instructor/timeslots/' + ids[0] + '/toggle', {
             method: 'POST',
+            body: ids.length > 1 ? JSON.stringify({slot_ids: ids}) : undefined,
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                 'X-Requested-With': 'XMLHttpRequest',
@@ -2131,4 +2134,5 @@
 @include('partials.calendar-day-dialog')
 @include('partials.schedule-layout')
 @include('partials.schedule-session-log')
+@include('partials.batch-schedule-picker', ['batchSlots' => $availableSlots])
 @endsection

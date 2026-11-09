@@ -865,7 +865,7 @@
                 @endif
 
                 @php
-                    $flyerHours = $course->hours_required ?? $course->duration_hours;
+                    $flyerHours = $course->display_hours;
                     $flyerPrice = $course->packages?->count() ? $course->packages->min('price') : $course->price;
                 @endphp
                 <div class="flyer-facts">
@@ -967,13 +967,13 @@
                         @if($course->hours_required || $course->duration_hours)
                         <div class="info-row">
                             <span class="info-label">Duration</span>
-                            <span class="info-value">{{ $course->hours_required ?? $course->duration_hours }} hours</span>
+                            <span class="info-value">{{ $course->display_hours }} hours</span>
                         </div>
                         @endif
                         @if($course->price > 0)
                         <div class="info-row">
                             <span class="info-label">Price</span>
-                            <span class="info-value">P{{ number_format($course->price, 2) }}</span>
+                            <span class="info-value">{{ $course->display_price }}</span>
                         </div>
                         @endif
                     </div>

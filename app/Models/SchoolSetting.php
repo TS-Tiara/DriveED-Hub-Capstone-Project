@@ -54,6 +54,9 @@ class SchoolSetting extends Model
         'card_header_bg',
         'page_header_border',
         'badge_pending_bg',
+        'badge_pending_bold',
+        'badge_approved_bold',
+        'badge_cancelled_bold',
         'badge_pending_text',
         'badge_approved_bg',
         'badge_approved_text',
@@ -107,6 +110,9 @@ class SchoolSetting extends Model
     ];
 
     protected $casts = [
+        'badge_pending_bold' => 'boolean',
+        'badge_approved_bold' => 'boolean',
+        'badge_cancelled_bold' => 'boolean',
         'use_gradient_header' => 'boolean',
         'enable_booking_queue' => 'boolean',
         'enable_branches' => 'boolean',

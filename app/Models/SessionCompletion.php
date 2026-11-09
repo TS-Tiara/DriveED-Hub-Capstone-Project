@@ -39,6 +39,21 @@ class SessionCompletion extends Model
         'archived_at' => 'datetime',
     ];
 
+    public function booking(): BelongsTo
+    {
+        return $this->belongsTo(Booking::class);
+    }
+
+    public function getVerificationStatusAttribute(): string
+    {
+        return match ($this->booking?->status) {
+            'completed' => 'Verified',
+            'cancelled' => 'Voided',
+            'no-show', 'no_show' => 'No-show',
+            default => 'Awaiting verification',
+        };
+    }
+
     /**
      * Get the school
      */

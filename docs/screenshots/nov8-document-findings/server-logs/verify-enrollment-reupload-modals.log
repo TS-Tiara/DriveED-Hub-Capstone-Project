@@ -1,0 +1,12 @@
+=== VERIFYING ENROLLMENT RE-UPLOAD POP-UP MODALS ===
+[PASS] Both enrollment pop-up modal partials exist.
+[PASS] Guest enrollment requests renders pop-up triggers in-place (no navigation to other pages).
+[PASS] Student course show renders payment and license pop-up modals in-place.
+[PASS] Student courses catalog renders clickable modal trigger for pending payment update.
+[PASS] Student dashboard renders actionable payment & license re-upload modal triggers.
+[PASS] Guest uploadLicense processes in-place and redirects back with success.
+[PASS] Student uploadLicense processes in-place and redirects back with success.
+[PASS] Guest submitPayment stays on enrollment requests page (in-place modal).
+[PASS] Student submitPayment stays on course page (in-place modal).
+
+ALL 9 ENROLLMENT RE-UPLOAD POP-UP MODAL CHECKS PASSED!
