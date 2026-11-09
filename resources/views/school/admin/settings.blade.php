@@ -13,6 +13,11 @@
 @include('school.admin.partials.admin-styles')
 
 <style>
+    #section-badges .badge-text-controls {display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:8px 0 12px;}
+    #section-badges .badge-text-controls label {display:inline-flex;align-items:center;gap:6px;margin:0;}
+    #section-badges .badge-text-controls input[type="color"] {width:44px;height:36px;padding:3px;border:1px solid #cbd5e1;border-radius:6px;}
+    #section-badges .badge-text-controls label:last-child {margin-left:8px;}
+
     .customization-container {
         padding: 20px;
         margin: 20px auto;
@@ -1973,6 +1978,11 @@
                 <div class="section-inputs">
                 <div class="form-group">
                     <label class="form-label">Pending Badge</label>
+                    <div class="badge-text-controls"><label for="badge_pending_text">Text color</label>
+                    <input type="color" id="badge_pending_text" name="badge_pending_text" value="{{ old('badge_pending_text', $settings->badge_pending_text ?? '#1f2937') }}" onchange="updatePreview()">
+                    <input type="hidden" name="badge_pending_bold" value="0">
+                    <label><input type="checkbox" id="badge_pending_bold" name="badge_pending_bold" value="1" @checked(old('badge_pending_bold', $settings->badge_pending_bold ?? true)) onchange="updatePreview()"> Bold text</label>
+                    </div><label for="badge_pending_bg" class="form-label">Background color</label>
                     <div class="color-input-group">
                         <input type="color" class="color-picker" id="badge_pending_bg" name="badge_pending_bg" value="{{ old('badge_pending_bg', $settings->badge_pending_bg ?? '#fbbf24') }}" onchange="updatePreview()">
                         <input type="text" class="color-text" value="{{ old('badge_pending_bg', $settings->badge_pending_bg ?? '#fbbf24') }}" readonly>
@@ -1981,6 +1991,11 @@
 
                 <div class="form-group">
                     <label class="form-label">Approved Badge</label>
+                    <div class="badge-text-controls"><label for="badge_approved_text">Text color</label>
+                    <input type="color" id="badge_approved_text" name="badge_approved_text" value="{{ old('badge_approved_text', $settings->badge_approved_text ?? '#1f2937') }}" onchange="updatePreview()">
+                    <input type="hidden" name="badge_approved_bold" value="0">
+                    <label><input type="checkbox" id="badge_approved_bold" name="badge_approved_bold" value="1" @checked(old('badge_approved_bold', $settings->badge_approved_bold ?? true)) onchange="updatePreview()"> Bold text</label>
+                    </div><label for="badge_approved_bg" class="form-label">Background color</label>
                     <div class="color-input-group">
                         <input type="color" class="color-picker" id="badge_approved_bg" name="badge_approved_bg" value="{{ old('badge_approved_bg', $settings->badge_approved_bg ?? '#10b981') }}" onchange="updatePreview()">
                         <input type="text" class="color-text" value="{{ old('badge_approved_bg', $settings->badge_approved_bg ?? '#10b981') }}" readonly>
@@ -1989,6 +2004,11 @@
 
                 <div class="form-group">
                     <label class="form-label">Cancelled Badge</label>
+                    <div class="badge-text-controls"><label for="badge_cancelled_text">Text color</label>
+                    <input type="color" id="badge_cancelled_text" name="badge_cancelled_text" value="{{ old('badge_cancelled_text', $settings->badge_cancelled_text ?? '#1f2937') }}" onchange="updatePreview()">
+                    <input type="hidden" name="badge_cancelled_bold" value="0">
+                    <label><input type="checkbox" id="badge_cancelled_bold" name="badge_cancelled_bold" value="1" @checked(old('badge_cancelled_bold', $settings->badge_cancelled_bold ?? true)) onchange="updatePreview()"> Bold text</label>
+                    </div><label for="badge_cancelled_bg" class="form-label">Background color</label>
                     <div class="color-input-group">
                         <input type="color" class="color-picker" id="badge_cancelled_bg" name="badge_cancelled_bg" value="{{ old('badge_cancelled_bg', $settings->badge_cancelled_bg ?? '#ef4444') }}" onchange="updatePreview()">
                         <input type="text" class="color-text" value="{{ old('badge_cancelled_bg', $settings->badge_cancelled_bg ?? '#ef4444') }}" readonly>
@@ -2961,6 +2981,13 @@ function updatePreview() {
         document.getElementById('badge-cancelled-preview').style.backgroundColor = badgeCancelled;
     }
 
+    ['pending','approved','cancelled'].forEach(status => {
+        const preview = document.getElementById('badge-' + status + '-preview');
+        if (preview) {
+            preview.style.color = document.getElementById('badge_' + status + '_text').value;
+            preview.style.fontWeight = document.getElementById('badge_' + status + '_bold').checked ? '700' : '400';
+        }
+    });
     // Role Badges
     const roleStudentBg = document.getElementById('role_student_bg').value;
     const roleStudentText = document.getElementById('role_student_text').value;

@@ -2826,7 +2826,12 @@
 </style>
 
 <script>
-function openBookingModal(timeSlotId, courseId, courseName, instructorId, instructorName, date, startTime, endTime, enrollmentRequestId) {
+async function openBookingModal(timeSlotId, courseId, courseName, instructorId, instructorName, date, startTime, endTime, enrollmentRequestId) {
+    const ids = await window.pickBatchSchedules(timeSlotId);
+    if (!ids) return;
+    window.bookingBatchIds = ids;
+    const first = window.batchScheduleChoices.find(s=>s.id===ids[0]);
+    if(first){if(first.id!==Number(timeSlotId)){instructorId='';instructorName='To be assigned';}timeSlotId=first.id;date=first.date;startTime=first.start;endTime=first.end;}
     if (!enrollmentRequestId) {
         showToast('Missing enrollment linkage for this schedule.', 'error');
         return;
@@ -2864,13 +2869,15 @@ document.getElementById('bookingForm').addEventListener('submit', function(e) {
     e.preventDefault();
     
     const formData = new FormData(this);
+    const batchIds=window.bookingBatchIds||[];
+    if(batchIds.length>1) batchIds.forEach(id=>formData.append('slot_ids[]',id));
     const submitBtn = this.querySelector('button[type="submit"]');
     
     // Disable submit button
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Processing...';
     
-    fetch(this.action, {
+    fetch(batchIds.length>1 ? this.action+'/batch' : this.action, {
         method: 'POST',
         body: formData,
         headers: {
@@ -2998,5 +3005,5 @@ function closeConfirmModal(confirmed = false) {
 
 @include('partials.calendar-day-dialog')
 @include('partials.schedule-layout')
+@include('partials.batch-schedule-picker', ['batchSlots' => $groupedAvailableSchedules->flatten(1)])
 @endsection
-

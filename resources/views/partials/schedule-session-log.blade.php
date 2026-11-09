@@ -11,8 +11,8 @@
         <p id="scheduleSessionLogStudent"></p>
         <label for="scheduleLogAttendance">Attendance</label>
         <select id="scheduleLogAttendance" name="attendance_status" class="form-control" required><option value="attended">Attended</option><option value="late">Late</option><option value="absent">Absent</option></select>
-        <label for="scheduleLogGrade">Grade (0 to 100)</label>
-        <input id="scheduleLogGrade" class="form-control" type="number" name="session_grade" min="0" max="100" step="0.01">
+        <label for="scheduleLogGrade">Grade (0 to 100) *</label>
+        <input id="scheduleLogGrade" class="form-control" type="number" name="session_grade" required min="0" max="100" step="0.01">
         <label for="scheduleLogNotes">Session notes</label>
         <textarea id="scheduleLogNotes" class="form-control" name="instructor_feedback" maxlength="1000" rows="4"></textarea>
         <p id="scheduleSessionLogError" role="alert" style="color:#b91c1c;"></p>
@@ -62,3 +62,4 @@ document.getElementById('scheduleSessionLogForm').addEventListener('submit', asy
     }
 });
 </script>
+@include('partials.session-grade-requirement')

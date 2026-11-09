@@ -1,0 +1,278 @@
+[
+  {
+    "name": "Secretary cannot open school-wide settings",
+    "pass": true,
+    "expected": 403,
+    "actual": 403
+  },
+  {
+    "name": "Secretary cannot save school-wide settings",
+    "pass": true,
+    "expected": false,
+    "actual": false,
+    "response": {
+      "status": 403,
+      "url": "http://localhost:8006/drived-hub/admin/settings",
+      "json": {
+        "message": "This action is restricted to school administrators."
+      },
+      "text": "{\n    \"message\": \"This action is restricted to school administrators.\"\n}"
+    }
+  },
+  {
+    "name": "Secretary cannot view school financial reports",
+    "pass": true,
+    "expected": 403,
+    "actual": 403,
+    "response": "{\n    \"message\": \"This action is restricted to school administrators.\"\n}"
+  },
+  {
+    "name": "Secretary cannot create courses",
+    "pass": true,
+    "expected": 403,
+    "actual": 403,
+    "response": {
+      "message": "This action is restricted to school administrators."
+    }
+  },
+  {
+    "name": "Duplicate course title returns a validation response",
+    "pass": true,
+    "expected": 422,
+    "actual": 422,
+    "response": {
+      "success": false,
+      "message": "Please fix the highlighted validation errors.",
+      "errors": {
+        "title": [
+          "The title has already been taken."
+        ]
+      }
+    }
+  },
+  {
+    "name": "Administrator opens lesson create form",
+    "pass": true,
+    "expected": 200,
+    "actual": 200
+  },
+  {
+    "name": "Administrator lesson form posts to admin route",
+    "pass": true,
+    "expected": true,
+    "actual": true
+  },
+  {
+    "name": "Administrator creates lesson",
+    "pass": true,
+    "expected": true,
+    "actual": true
+  },
+  {
+    "name": "Administrator opens lesson edit form",
+    "pass": true,
+    "expected": 200,
+    "actual": 200
+  },
+  {
+    "name": "Administrator updates lesson",
+    "pass": true,
+    "expected": true,
+    "actual": true
+  },
+  {
+    "name": "Administrator deletes lesson via admin module",
+    "pass": true,
+    "expected": true,
+    "actual": true
+  },
+  {
+    "name": "Enrollment detail opens verification through AJAX 1",
+    "pass": true,
+    "expected": true,
+    "actual": true
+  },
+  {
+    "name": "Enrollment detail opens verification through AJAX 2",
+    "pass": true,
+    "expected": true,
+    "actual": true
+  },
+  {
+    "name": "Instructor saves progress",
+    "pass": true,
+    "expected": true,
+    "actual": true
+  },
+  {
+    "name": "Instructor progress change persists",
+    "pass": true,
+    "expected": "QA verified progress update",
+    "actual": "QA verified progress update"
+  },
+  {
+    "name": "Create multiple_choice question",
+    "pass": true,
+    "expected": true,
+    "actual": true,
+    "status": 200
+  },
+  {
+    "name": "Update multiple_choice question",
+    "pass": true,
+    "expected": true,
+    "actual": true,
+    "status": 200
+  },
+  {
+    "name": "Delete multiple_choice question",
+    "pass": true,
+    "expected": true,
+    "actual": true,
+    "status": 200
+  },
+  {
+    "name": "Create true_false question",
+    "pass": true,
+    "expected": true,
+    "actual": true,
+    "status": 200
+  },
+  {
+    "name": "Update true_false question",
+    "pass": true,
+    "expected": true,
+    "actual": true,
+    "status": 200
+  },
+  {
+    "name": "Delete true_false question",
+    "pass": true,
+    "expected": true,
+    "actual": true,
+    "status": 200
+  },
+  {
+    "name": "Create identification question",
+    "pass": true,
+    "expected": true,
+    "actual": true,
+    "status": 200
+  },
+  {
+    "name": "Update identification question",
+    "pass": true,
+    "expected": true,
+    "actual": true,
+    "status": 200
+  },
+  {
+    "name": "Delete identification question",
+    "pass": true,
+    "expected": true,
+    "actual": true,
+    "status": 200
+  },
+  {
+    "name": "Create enumeration question",
+    "pass": true,
+    "expected": true,
+    "actual": true,
+    "status": 200
+  },
+  {
+    "name": "Update enumeration question",
+    "pass": true,
+    "expected": true,
+    "actual": true,
+    "status": 200
+  },
+  {
+    "name": "Delete enumeration question",
+    "pass": true,
+    "expected": true,
+    "actual": true,
+    "status": 200
+  },
+  {
+    "name": "Instructor creates lesson",
+    "pass": true,
+    "expected": true,
+    "actual": true,
+    "status": 200
+  },
+  {
+    "name": "Instructor updates lesson",
+    "pass": true,
+    "expected": true,
+    "actual": true,
+    "status": 200
+  },
+  {
+    "name": "Approved student opens lesson list",
+    "pass": true,
+    "expected": 200,
+    "actual": 200
+  },
+  {
+    "name": "Approved student opens lesson detail",
+    "pass": true,
+    "expected": 200,
+    "actual": 200
+  },
+  {
+    "name": "Approved student opens assessment",
+    "pass": true,
+    "expected": 200,
+    "actual": 200
+  },
+  {
+    "name": "Approved student completes a lesson",
+    "pass": true,
+    "expected": true,
+    "actual": true,
+    "response": {
+      "success": true,
+      "completed": true,
+      "lesson_id": 11
+    }
+  },
+  {
+    "name": "Student cannot read admin user documents",
+    "pass": true,
+    "expected": 401,
+    "actual": 401
+  },
+  {
+    "name": "Guest registration succeeds with consent and valid details",
+    "pass": true,
+    "expected": true,
+    "actual": true,
+    "status": 200,
+    "url": "http://localhost:8006/drived-hub/verify-email",
+    "response": "<!DOCTYPE html>\n<html>\n<head>\n    <meta charset=\"UTF-8\">\n    <style>\n    /* Customizable Login Header Styles */\n    .login-header {\n        position: fixed;\n        top: 0;\n        left: 0;\n        right: 0;\n        width: 100%;\n        height: 60px;\n        background: #2563eb;\n                colo"
+  },
+  {
+    "name": "Password reset rejects malformed email",
+    "pass": true,
+    "expected": 422,
+    "actual": 422
+  },
+  {
+    "name": "System-admin password-reset request avoids server errors",
+    "pass": true,
+    "expected": true,
+    "actual": true,
+    "response": {
+      "status": 200,
+      "body": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Forgot Password - System Admin</title>\n    <style>\n        * { margin: 0; padding: 0; box-sizing: border-box; }\n        body {\n            font-fam"
+    }
+  },
+  {
+    "name": "Workflow browser JavaScript errors",
+    "pass": true,
+    "expected": 0,
+    "actual": 0,
+    "errors": []
+  }
+]

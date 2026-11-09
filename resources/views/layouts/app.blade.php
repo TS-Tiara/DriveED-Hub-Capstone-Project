@@ -253,6 +253,8 @@
             overflow-x: hidden;
             width: 100%;
             position: relative;
+            isolation: isolate;
+            min-height: 100dvh;
         }
 
         @if($backgroundType === 'image' && $backgroundImage)
@@ -263,9 +265,7 @@
                 left: 0;
                 width: 100%;
                 height: 100%;
-                background:
-                    {{ $bodyBg }}
-                ;
+                background-image: url(@json(asset('storage/' . $backgroundImage)));
                 background-size:
                     {{ $bodyBgSize }}
                 ;
@@ -929,7 +929,7 @@
             max-width: 100%;
             margin-left: 0;
             margin-right: 0;
-            background: #f5f5f5;
+            background: transparent;
         }
 
         /* Global Button Styles */
@@ -1932,6 +1932,7 @@
         @stack('styles')
     </style>
     @include('partials.pagination-styles')
+    @include('partials.status-styles')
 </head>
 
 <body>

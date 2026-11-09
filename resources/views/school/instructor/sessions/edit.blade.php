@@ -368,8 +368,8 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="session_grade" class="form-label">Grade (0 to 100)</label>
-                    <input class="form-input" type="number" id="session_grade" name="session_grade" min="0" max="100" step="0.01" value="{{ old('session_grade', $sessionCompletion->session_grade) }}">
+                    <label for="session_grade" class="form-label">Grade (0 to 100) *</label>
+                    <input class="form-input" type="number" id="session_grade" name="session_grade" required min="0" max="100" step="0.01" value="{{ old('session_grade', $sessionCompletion->session_grade) }}">
                 </div>
                 <div class="form-group">
                     <label for="attendance_status" class="form-label">Attendance</label>
@@ -407,4 +407,5 @@
     </div>
 </div>
 
+@include('partials.session-grade-requirement')
 @endsection

@@ -596,7 +596,7 @@
                                 </form>
                                 <button type="button" class="btn-sm btn-danger" 
                                         data-action="delete-user" data-type="student" data-id="{{ $student->id }}" data-name="{{ $student->name }}"
-                                        title="Delete Student">
+                                        title="Remove student from active use">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </div>
@@ -683,7 +683,7 @@
                                 </form>
                                 <button type="button" class="btn-sm btn-danger" 
                                         data-action="delete-user" data-type="instructor" data-id="{{ $instructor->id }}" data-name="{{ $instructor->name }}"
-                                        title="Delete Instructor">
+                                        title="Remove instructor from active use">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </div>
@@ -763,11 +763,6 @@
                                         <i class="fas fa-undo"></i> Restore
                                     </button>
                                 </form>
-                                <button type="button" class="btn-sm btn-danger" 
-                                        data-action="delete-user" data-type="student" data-id="{{ $student->id }}" data-name="{{ $student->name }}"
-                                        title="Permanently Delete">
-                                    <i class="fas fa-trash"></i>
-                                </button>
                             </div>
                         </td>
                     </tr>
@@ -842,11 +837,6 @@
                                         <i class="fas fa-undo"></i> Restore
                                     </button>
                                 </form>
-                                <button type="button" class="btn-sm btn-danger" 
-                                        data-action="delete-user" data-type="instructor" data-id="{{ $instructor->id }}" data-name="{{ $instructor->name }}"
-                                        title="Permanently Delete">
-                                    <i class="fas fa-trash"></i>
-                                </button>
                             </div>
                         </td>
                     </tr>
@@ -871,22 +861,22 @@
 <div class="modal-overlay" id="deleteUserModal" role="dialog" aria-modal="true" aria-labelledby="deleteUserModalTitle" aria-hidden="true">
     <div class="modal-content modal-danger">
         <div class="modal-header">
-            <h3 id="deleteUserModalTitle"><i class="fas fa-exclamation-triangle modal-title-icon"></i>Delete User</h3>
+            <h3 id="deleteUserModalTitle"><i class="fas fa-exclamation-triangle modal-title-icon"></i>Archive User</h3>
             <button type="button" class="modal-close" onclick="closeModal('deleteUserModal')" aria-label="Close delete user modal">&times;</button>
         </div>
         <form id="deleteUserForm" method="POST">
             @csrf
             @method('DELETE')
             <div class="modal-body">
-                <p>Are you sure you want to delete <strong id="deleteUserName"></strong>?</p>
+                <p>Remove <strong id="deleteUserName"></strong> from active use?</p><label for="deleteConfirmation">Type <strong id="deleteConfirmationPhrase"></strong> to confirm</label><input id="deleteConfirmation" name="confirmation" class="form-control" required autocomplete="off" style="width:100%;padding:10px;margin-top:8px;">
                 <div class="warning-text">
                     <i class="fas fa-exclamation-triangle"></i>
-                    This action cannot be undone. All associated data will be permanently removed.
+                    The account will be archived. Enrollments, payments, bookings and training records will be preserved.
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn-secondary" onclick="closeModal('deleteUserModal')">Cancel</button>
-                <button type="submit" class="btn-delete"><i class="fas fa-trash"></i> Delete User</button>
+                <button type="submit" class="btn-delete"><i class="fas fa-archive"></i> Archive User</button>
             </div>
         </form>
     </div>
@@ -956,6 +946,12 @@ document.addEventListener('click', function(e) {
     const btn = e.target.closest('[data-action="delete-user"]');
     if (!btn) return;
     document.getElementById('deleteUserName').textContent = btn.dataset.name;
+    const phrase = 'delete ' + btn.dataset.name;
+    document.getElementById('deleteConfirmationPhrase').textContent = phrase;
+    const confirmation = document.getElementById('deleteConfirmation');
+    confirmation.value = '';
+    confirmation.oninput = () => confirmation.setCustomValidity(confirmation.value === phrase ? '' : 'Type the confirmation exactly as shown.');
+    confirmation.oninput();
     document.getElementById('deleteUserForm').action = '{{ url("system-admin/users") }}/' + btn.dataset.type + '/' + btn.dataset.id;
     openModal('deleteUserModal');
 });

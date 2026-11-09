@@ -1,0 +1,67 @@
+[
+  {
+    "key": "course-summary",
+    "status": 200,
+    "url": "http://localhost:8006/drived-hub/student"
+  },
+  {
+    "key": "progress-enrollment",
+    "status": 200,
+    "url": "http://localhost:8006/drived-hub/student"
+  },
+  {
+    "key": "course-packages",
+    "status": 200,
+    "url": "http://localhost:8006/drived-hub/student/courses"
+  },
+  {
+    "key": "payment-status",
+    "status": 200,
+    "url": "http://localhost:8006/drived-hub/student/payments"
+  },
+  {
+    "key": "student-batch",
+    "status": 200,
+    "url": "http://localhost:8006/drived-hub/student/schedule"
+  },
+  {
+    "key": "schedule-creation",
+    "status": 200,
+    "url": "http://localhost:8006/drived-hub/admin/schedules"
+  },
+  {
+    "key": "status-settings",
+    "status": 200,
+    "url": "http://localhost:8006/drived-hub/admin/settings"
+  },
+  {
+    "key": "background",
+    "status": 200,
+    "url": "http://localhost:8006/drived-hub/admin"
+  },
+  {
+    "key": "schedule-instructors",
+    "status": 200,
+    "url": "http://localhost:8006/drived-hub/admin/schedules"
+  },
+  {
+    "key": "instructor-batch",
+    "status": 200,
+    "url": "http://localhost:8006/drived-hub/instructor/my-schedule"
+  },
+  {
+    "key": "session-verification",
+    "status": 200,
+    "url": "http://localhost:8006/drived-hub/instructor/sessions"
+  },
+  {
+    "key": "session-grade",
+    "status": 200,
+    "url": "http://localhost:8006/drived-hub/instructor/sessions/create"
+  },
+  {
+    "key": "user-removal",
+    "status": 200,
+    "url": "http://localhost:8006/system-admin/users"
+  }
+]

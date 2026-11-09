@@ -1,0 +1,4429 @@
+{
+  "environment": "http://localhost:8006",
+  "database": "drivingapp_regression_20261108",
+  "results": [
+    {
+      "role": "system-admin",
+      "route": "login",
+      "error": "Login did not reach dashboard: http://localhost:8006/system-admin/login"
+    },
+    {
+      "role": "school-admin",
+      "route": "login",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin"
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.dashboard",
+      "path": "drived-hub/admin",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin",
+      "title": "Admin Dashboard - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin",
+        "type": "text/html; charset=utf-8",
+        "bytes": 67626,
+        "magic": "<styl",
+        "milliseconds": 94,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "screenshot": "docs/screenshots/nov8-document-findings/screenshots/school-admin-schools.admin.dashboard.png",
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.admin-management.index",
+      "path": "drived-hub/admin/admin-management",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/admin-management",
+      "title": "Admin & Secretary Management - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/admin-management",
+        "type": "text/html; charset=utf-8",
+        "bytes": 101277,
+        "magic": "<styl",
+        "milliseconds": 103,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": [
+          {
+            "tag": "TABLE",
+            "id": "",
+            "class": "admin-table"
+          },
+          {
+            "tag": "THEAD",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TR",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TH",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TH",
+            "id": "",
+            "class": ""
+          }
+        ]
+      },
+      "dialog": {
+        "id": "createModal",
+        "visible": true
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.branches.index",
+      "path": "drived-hub/admin/branches",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/branches",
+      "title": "Branch Management - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/branches",
+        "type": "text/html; charset=utf-8",
+        "bytes": 75739,
+        "magic": "<!-- ",
+        "milliseconds": 102,
+        "excerpt": "<!-- Fix: Load Bootstrap Icons for this view since stat cards rely on them -->\n<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons"
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": [
+          {
+            "tag": "TABLE",
+            "id": "",
+            "class": "branch-table"
+          },
+          {
+            "tag": "THEAD",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TR",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TH",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TH",
+            "id": "",
+            "class": ""
+          }
+        ]
+      },
+      "dialog": {
+        "id": "branchModal",
+        "visible": true
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.courses",
+      "path": "drived-hub/admin/courses",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/courses",
+      "title": "Courses Management - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/courses",
+        "type": "text/html; charset=utf-8",
+        "bytes": 291927,
+        "magic": "<styl",
+        "milliseconds": 237,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "dialog": {
+        "id": "courseModal",
+        "visible": true
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.courses.modules.index",
+      "path": "drived-hub/admin/courses/2/modules",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/courses/2/modules",
+      "title": "Manage Modules - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/courses/2/modules",
+        "type": "text/html; charset=utf-8",
+        "bytes": 21566,
+        "magic": "<styl",
+        "milliseconds": 126,
+        "excerpt": "<style>\n    .lms-page {\n        max-width: 1200px;\n        margin: 0 auto;\n        padding: 24px;\n    }\n\n    .lms-header {\n        display: flex;\n        justify-content: space-bet"
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.courses.modules.create",
+      "path": "drived-hub/admin/courses/2/modules/create",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/courses/2/modules/create",
+      "title": "Create Module - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/courses/2/modules/create",
+        "type": "text/html; charset=utf-8",
+        "bytes": 17946,
+        "magic": "<styl",
+        "milliseconds": 82,
+        "excerpt": "<style>\n    .lms-page {\n        max-width: 1200px;\n        margin: 0 auto;\n        padding: 24px;\n    }\n\n    .lms-header {\n        display: flex;\n        justify-content: space-bet"
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.courses.modules.show",
+      "path": "drived-hub/admin/courses/2/modules/7",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/courses/2/modules/7",
+      "title": "QA Regression Lesson Module - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/courses/2/modules/7",
+        "type": "text/html; charset=utf-8",
+        "bytes": 18304,
+        "magic": "<styl",
+        "milliseconds": 130,
+        "excerpt": "<style>\n    .lms-page {\n        max-width: 1200px;\n        margin: 0 auto;\n        padding: 24px;\n    }\n\n    .lms-header {\n        display: flex;\n        justify-content: space-bet"
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.courses.modules.edit",
+      "path": "drived-hub/admin/courses/2/modules/7/edit",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/courses/2/modules/7/edit",
+      "title": "Edit Module - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/courses/2/modules/7/edit",
+        "type": "text/html; charset=utf-8",
+        "bytes": 18014,
+        "magic": "<styl",
+        "milliseconds": 82,
+        "excerpt": "<style>\n    .lms-page {\n        max-width: 1200px;\n        margin: 0 auto;\n        padding: 24px;\n    }\n\n    .lms-header {\n        display: flex;\n        justify-content: space-bet"
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.courses.modules.lessons.index",
+      "path": "drived-hub/admin/courses/2/modules/7/lessons",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/courses/2/modules/7/lessons",
+      "title": "Module Lessons - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/courses/2/modules/7/lessons",
+        "type": "text/html; charset=utf-8",
+        "bytes": 18027,
+        "magic": "<styl",
+        "milliseconds": 124,
+        "excerpt": "<style>\n    .lms-page {\n        max-width: 1200px;\n        margin: 0 auto;\n        padding: 24px;\n    }\n\n    .lms-header {\n        display: flex;\n        justify-content: space-bet"
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.courses.modules.lessons.create",
+      "path": "drived-hub/admin/courses/2/modules/7/lessons/create",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/courses/2/modules/7/lessons/create",
+      "title": "Create Lesson - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/courses/2/modules/7/lessons/create",
+        "type": "text/html; charset=utf-8",
+        "bytes": 21812,
+        "magic": "<styl",
+        "milliseconds": 81,
+        "excerpt": "<style>\n    .lms-page {\n        max-width: 1200px;\n        margin: 0 auto;\n        padding: 24px;\n    }\n\n    .lms-header {\n        display: flex;\n        justify-content: space-bet"
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.courses.modules.lessons.show",
+      "path": "drived-hub/admin/courses/2/modules/7/lessons/10",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/courses/2/modules/7/lessons/10",
+      "title": "QA Regression Lesson - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/courses/2/modules/7/lessons/10",
+        "type": "text/html; charset=utf-8",
+        "bytes": 17117,
+        "magic": "<styl",
+        "milliseconds": 110,
+        "excerpt": "<style>\n    .lms-page {\n        max-width: 1200px;\n        margin: 0 auto;\n        padding: 24px;\n    }\n\n    .lms-header {\n        display: flex;\n        justify-content: space-bet"
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.courses.modules.lessons.edit",
+      "path": "drived-hub/admin/courses/2/modules/7/lessons/10/edit",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/courses/2/modules/7/lessons/10/edit",
+      "title": "Edit Lesson - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/courses/2/modules/7/lessons/10/edit",
+        "type": "text/html; charset=utf-8",
+        "bytes": 22015,
+        "magic": "<styl",
+        "milliseconds": 74,
+        "excerpt": "<style>\n    .lms-page {\n        max-width: 1200px;\n        margin: 0 auto;\n        padding: 24px;\n    }\n\n    .lms-header {\n        display: flex;\n        justify-content: space-bet"
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.enrollments.index",
+      "path": "drived-hub/admin/enrollments",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/enrollments",
+      "title": "Manage Enrollments - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/enrollments",
+        "type": "text/html; charset=utf-8",
+        "bytes": 281488,
+        "magic": "<styl",
+        "milliseconds": 177,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "dialog": {
+        "id": "unifiedVerificationModal",
+        "visible": true
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.enrollments.api.show",
+      "path": "drived-hub/admin/enrollments/api/2",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/enrollments/api/2",
+      "title": "",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/enrollments/api/2",
+        "type": "application/json",
+        "bytes": 969,
+        "magic": "{\"id\"",
+        "milliseconds": 65,
+        "excerpt": "{\"id\":2,\"uid\":\"ENR-2026-00002\",\"student_name\":\"Maria Victoria Garcia\",\"course_title\":\"Practical Driving Course (PDC)\",\"total_price\":\"5,500.00\",\"status\":\"pending\",\"payment_status\":\""
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.enrollments.viewLicense",
+      "path": "drived-hub/admin/enrollments/student/2/view-license",
+      "download": {
+        "status": 404,
+        "url": "http://localhost:8006/drived-hub/admin/enrollments/student/2/view-license",
+        "type": "text/html; charset=utf-8",
+        "bytes": 6659,
+        "magic": "<!DOC",
+        "milliseconds": 142,
+        "excerpt": "<!DOCTYPE html>\n<html lang=\"en\">\n    <head>\n        <meta charset=\"utf-8\">\n        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n\n        <title>Not Found</t"
+      },
+      "status": 404,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.enrollments.show",
+      "path": "drived-hub/admin/enrollments/2",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/enrollments?search=ENR-2026-00002&review=2",
+      "title": "Manage Enrollments - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/enrollments?search=ENR-2026-00002&review=2",
+        "type": "text/html; charset=utf-8",
+        "bytes": 130713,
+        "magic": "<styl",
+        "milliseconds": 285,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.enrollments.view-credential",
+      "path": "drived-hub/admin/enrollments/2/view-credential",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/enrollments/2/view-credential",
+        "type": "image/jpeg",
+        "bytes": 238760,
+        "magic": "ÿØÿà\u0000",
+        "milliseconds": 170,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.enrollments.view-payment-proof",
+      "path": "drived-hub/admin/enrollments/2/view-payment-proof",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/enrollments/2/view-payment-proof",
+      "title": "view-payment-proof (680×380)",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/enrollments/2/view-payment-proof",
+        "type": "image/png",
+        "bytes": 3614,
+        "magic": "PNG\r",
+        "milliseconds": 83,
+        "excerpt": ""
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.exports.admins.excel",
+      "path": "drived-hub/admin/exports/admins/excel",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/exports/admins/excel",
+        "type": "application/vnd.ms-excel",
+        "bytes": 2045,
+        "magic": "\n<!DO",
+        "milliseconds": 149,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.exports.admins.pdf",
+      "path": "drived-hub/admin/exports/admins/pdf",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/exports/admins/pdf",
+        "type": "application/pdf",
+        "bytes": 8641,
+        "magic": "%PDF-",
+        "milliseconds": 279,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.exports.courses.excel",
+      "path": "drived-hub/admin/exports/courses/excel",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/exports/courses/excel",
+        "type": "application/vnd.ms-excel",
+        "bytes": 2455,
+        "magic": "\n<!DO",
+        "milliseconds": 125,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.exports.courses.pdf",
+      "path": "drived-hub/admin/exports/courses/pdf",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/exports/courses/pdf",
+        "type": "application/pdf",
+        "bytes": 41821,
+        "magic": "%PDF-",
+        "milliseconds": 229,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.exports.enrollments.excel",
+      "path": "drived-hub/admin/exports/enrollments/excel",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/exports/enrollments/excel",
+        "type": "application/vnd.ms-excel",
+        "bytes": 6718,
+        "magic": "\n<!DO",
+        "milliseconds": 153,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.exports.enrollments.pdf",
+      "path": "drived-hub/admin/exports/enrollments/pdf",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/exports/enrollments/pdf",
+        "type": "application/pdf",
+        "bytes": 24271,
+        "magic": "%PDF-",
+        "milliseconds": 397,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.exports.instructors.excel",
+      "path": "drived-hub/admin/exports/instructors/excel",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/exports/instructors/excel",
+        "type": "application/vnd.ms-excel",
+        "bytes": 2411,
+        "magic": "\n<!DO",
+        "milliseconds": 150,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.exports.instructors.pdf",
+      "path": "drived-hub/admin/exports/instructors/pdf",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/exports/instructors/pdf",
+        "type": "application/pdf",
+        "bytes": 8513,
+        "magic": "%PDF-",
+        "milliseconds": 145,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.exports.payments.excel",
+      "path": "drived-hub/admin/exports/payments/excel",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/exports/payments/excel",
+        "type": "application/vnd.ms-excel",
+        "bytes": 1698,
+        "magic": "\n<!DO",
+        "milliseconds": 161,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.exports.payments.pdf",
+      "path": "drived-hub/admin/exports/payments/pdf",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/exports/payments/pdf",
+        "type": "application/pdf",
+        "bytes": 5164,
+        "magic": "%PDF-",
+        "milliseconds": 162,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.exports.schedules.pdf",
+      "path": "drived-hub/admin/exports/schedules/pdf",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/exports/schedules/pdf",
+        "type": "application/pdf",
+        "bytes": 17469,
+        "magic": "%PDF-",
+        "milliseconds": 522,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.exports.student.progress.pdf",
+      "path": "drived-hub/admin/exports/student/2/progress/pdf",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/enrollments/2/view-payment-proof",
+        "type": "image/png",
+        "bytes": 3614,
+        "magic": "PNG\r",
+        "milliseconds": 432,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.exports.students.excel",
+      "path": "drived-hub/admin/exports/students/excel",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/exports/students/excel",
+        "type": "application/vnd.ms-excel",
+        "bytes": 4336,
+        "magic": "\n<!DO",
+        "milliseconds": 174,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.exports.students.pdf",
+      "path": "drived-hub/admin/exports/students/pdf",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/exports/students/pdf",
+        "type": "application/pdf",
+        "bytes": 16582,
+        "magic": "%PDF-",
+        "milliseconds": 265,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.exports.verify-session-completion.excel",
+      "path": "drived-hub/admin/exports/verify-session-completion/excel",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/exports/verify-session-completion/excel",
+        "type": "application/vnd.ms-excel",
+        "bytes": 12382,
+        "magic": "\n<!DO",
+        "milliseconds": 216,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.materials.index",
+      "path": "drived-hub/admin/materials",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/materials",
+      "title": "Course Materials - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/materials",
+        "type": "text/html; charset=utf-8",
+        "bytes": 25358,
+        "magic": "<styl",
+        "milliseconds": 97,
+        "excerpt": "<style>\n    .lms-page {\n        max-width: 1200px;\n        margin: 0 auto;\n        padding: 24px;\n    }\n\n    .lms-header {\n        display: flex;\n        justify-content: space-bet"
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.payments.index",
+      "path": "drived-hub/admin/payments",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/payments",
+      "title": "Payments & Transactions - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/payments",
+        "type": "text/html; charset=utf-8",
+        "bytes": 78141,
+        "magic": "<styl",
+        "milliseconds": 136,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.payments.statistics",
+      "path": "drived-hub/admin/payments/statistics",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/payments/statistics",
+      "title": "",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/payments/statistics",
+        "type": "application/json",
+        "bytes": 344,
+        "magic": "{\"suc",
+        "milliseconds": 71,
+        "excerpt": "{\"success\":true,\"statistics\":{\"total_revenue\":6301,\"pending_payments\":3,\"total_payments\":7,\"by_method\":[{\"method\":\"gcash\",\"total\":\"4000.00\",\"count\":2,\"proof_url\":null,\"uid\":\"PAY-20"
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.payments.show",
+      "path": "drived-hub/admin/payments/4",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/payments/4",
+      "title": "",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/payments/4",
+        "type": "application/json",
+        "bytes": 1588,
+        "magic": "{\"suc",
+        "milliseconds": 53,
+        "excerpt": "{\"success\":true,\"payment\":{\"id\":4,\"school_id\":1,\"branch_id\":2,\"guest_identity_token\":null,\"payer_user_id\":4,\"booking_id\":null,\"enrollment_request_id\":32,\"amount\":\"4000.00\",\"paid_on"
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.profile",
+      "path": "drived-hub/admin/profile",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/profile",
+      "title": "Profile - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/profile",
+        "type": "text/html; charset=utf-8",
+        "bytes": 58783,
+        "magic": "<styl",
+        "milliseconds": 152,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.removalRequests",
+      "path": "drived-hub/admin/removal-requests",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/removal-requests",
+      "title": "Instructor Removal Requests - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/removal-requests",
+        "type": "text/html; charset=utf-8",
+        "bytes": 59902,
+        "magic": "<styl",
+        "milliseconds": 184,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.reports.index",
+      "path": "drived-hub/admin/reports",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/reports",
+      "title": "Reports & Analytics - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/reports",
+        "type": "text/html; charset=utf-8",
+        "bytes": 136073,
+        "magic": "<styl",
+        "milliseconds": 94,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.reports.instructors",
+      "path": "drived-hub/admin/reports/instructors",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/reports/instructors",
+      "title": "Reports & Analytics - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/reports/instructors",
+        "type": "text/html; charset=utf-8",
+        "bytes": 136073,
+        "magic": "<styl",
+        "milliseconds": 107,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.reports.logs",
+      "path": "drived-hub/admin/reports/logs",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/reports/logs",
+      "title": "Reports & Analytics - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/reports/logs",
+        "type": "text/html; charset=utf-8",
+        "bytes": 136073,
+        "magic": "<styl",
+        "milliseconds": 139,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.reports.students",
+      "path": "drived-hub/admin/reports/students",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/reports/students",
+      "title": "Reports & Analytics - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/reports/students",
+        "type": "text/html; charset=utf-8",
+        "bytes": 136073,
+        "magic": "<styl",
+        "milliseconds": 106,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.schedules",
+      "path": "drived-hub/admin/schedules",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/schedules",
+      "title": "Manage Schedule - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/schedules",
+        "type": "text/html; charset=utf-8",
+        "bytes": 301241,
+        "magic": "<styl",
+        "milliseconds": 133,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "dialog": {
+        "id": "createModal",
+        "visible": true
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.session-report",
+      "path": "drived-hub/admin/session-report/pdf",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/session-report/pdf",
+        "type": "application/pdf",
+        "bytes": 910255,
+        "magic": "%PDF-",
+        "milliseconds": 1070,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.sessions.index",
+      "path": "drived-hub/admin/sessions",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/sessions",
+      "title": "Session Completions - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/sessions",
+        "type": "text/html; charset=utf-8",
+        "bytes": 85321,
+        "magic": "<styl",
+        "milliseconds": 172,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": [
+          {
+            "tag": "TABLE",
+            "id": "adminSessionsTable",
+            "class": ""
+          },
+          {
+            "tag": "THEAD",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TR",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TH",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TH",
+            "id": "",
+            "class": ""
+          }
+        ]
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.sessions.enrollmentStats",
+      "path": "drived-hub/admin/sessions/enrollment/2/stats",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/sessions/enrollment/2/stats",
+      "title": "",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/sessions/enrollment/2/stats",
+        "type": "application/json",
+        "bytes": 2719,
+        "magic": "{\"tot",
+        "milliseconds": 58,
+        "excerpt": "{\"total_sessions\":2,\"total_hours\":\"4.00\",\"recent_sessions\":[{\"id\":13,\"school_id\":1,\"enrollment_id\":2,\"instructor_id\":2,\"session_type\":\"practical\",\"hours_completed\":\"2.00\",\"session_"
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.sessions.show",
+      "path": "drived-hub/admin/sessions/2",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/sessions/2",
+      "title": "Session Completion Details - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/sessions/2",
+        "type": "text/html; charset=utf-8",
+        "bytes": 43896,
+        "magic": "<styl",
+        "milliseconds": 105,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.settings",
+      "path": "drived-hub/admin/settings",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/settings",
+      "title": "School Customization - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/settings",
+        "type": "text/html; charset=utf-8",
+        "bytes": 252040,
+        "magic": "<styl",
+        "milliseconds": 102,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.theoretical.index",
+      "path": "drived-hub/admin/theoretical",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/theoretical",
+      "title": "Student Training List - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/theoretical",
+        "type": "text/html; charset=utf-8",
+        "bytes": 103580,
+        "magic": "<styl",
+        "milliseconds": 214,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": [
+          {
+            "tag": "TABLE",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "THEAD",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TR",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TH",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TH",
+            "id": "",
+            "class": ""
+          }
+        ]
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.theoretical.exportList",
+      "path": "drived-hub/admin/theoretical/export/pdf",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/theoretical/export/pdf",
+        "type": "application/pdf",
+        "bytes": 882226,
+        "magic": "%PDF-",
+        "milliseconds": 351,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.theoretical.stats",
+      "path": "drived-hub/admin/theoretical/stats/overview",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/theoretical/stats/overview",
+      "title": "",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/theoretical/stats/overview",
+        "type": "application/json",
+        "bytes": 11110,
+        "magic": "{\"tot",
+        "milliseconds": 59,
+        "excerpt": "{\"total_passed\":{\"current_page\":1,\"data\":[{\"id\":5,\"school_id\":1,\"branch_id\":1,\"name\":\"Carlos Manuel Mendoza\",\"email\":\"student5@driveedhub.test\",\"email_verified_at\":\"2026-11-09T00:2"
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 390,
+        "overflow": false,
+        "offenders": []
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.theoretical.show",
+      "path": "drived-hub/admin/theoretical/2",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/theoretical/2",
+      "title": "Student Training Hub - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/theoretical/2",
+        "type": "text/html; charset=utf-8",
+        "bytes": 62882,
+        "magic": "<styl",
+        "milliseconds": 113,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.theoretical.export",
+      "path": "drived-hub/admin/theoretical/2/export/pdf",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/theoretical/2/export/pdf",
+        "type": "application/pdf",
+        "bytes": 879063,
+        "magic": "%PDF-",
+        "milliseconds": 250,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.userManagement",
+      "path": "drived-hub/admin/user-management",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/user-management",
+      "title": "User Management - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/user-management",
+        "type": "text/html; charset=utf-8",
+        "bytes": 191391,
+        "magic": "<styl",
+        "milliseconds": 115,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": [
+          {
+            "tag": "TABLE",
+            "id": "",
+            "class": "table"
+          },
+          {
+            "tag": "THEAD",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TR",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TH",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TH",
+            "id": "",
+            "class": ""
+          }
+        ]
+      },
+      "dialog": {
+        "id": "createStudentModal",
+        "visible": true
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.users.activity",
+      "path": "drived-hub/admin/user-management/student/1/activity",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/user-management/student/1/activity",
+      "title": "",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/user-management/student/1/activity",
+        "type": "text/html; charset=utf-8",
+        "bytes": 5319,
+        "magic": "<sect",
+        "milliseconds": 122,
+        "excerpt": "<section class=\"profile-section\" aria-label=\"Documents and activity\">\n    <h4 class=\"profile-section-title\">Documents and Activity</h4>\n            <h5>Submitted License</h5>\n     "
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.vehicles.index",
+      "path": "drived-hub/admin/vehicles",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/vehicles",
+      "title": "Vehicle Management - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/vehicles",
+        "type": "text/html; charset=utf-8",
+        "bytes": 116599,
+        "magic": "<!-- ",
+        "milliseconds": 196,
+        "excerpt": "<!-- Load Bootstrap Icons for this view -->\n<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css\">\n\n\n<style>\r\n    /* ======"
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": [
+          {
+            "tag": "TABLE",
+            "id": "",
+            "class": "vehicle-table"
+          },
+          {
+            "tag": "THEAD",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TR",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TH",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TH",
+            "id": "",
+            "class": ""
+          }
+        ]
+      },
+      "dialog": {
+        "id": "createVehicleModal",
+        "visible": true
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.verify-session-completion.index",
+      "path": "drived-hub/admin/verify-session-completion",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/verify-session-completion",
+      "title": "Verify Session Completion - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/verify-session-completion",
+        "type": "text/html; charset=utf-8",
+        "bytes": 158530,
+        "magic": "<styl",
+        "milliseconds": 177,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.admin.verify-session-completion.show",
+      "path": "drived-hub/admin/verify-session-completion/3",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/verify-session-completion/3",
+      "title": "",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/verify-session-completion/3",
+        "type": "application/json",
+        "bytes": 3519,
+        "magic": "{\"suc",
+        "milliseconds": 90,
+        "excerpt": "{\"success\":true,\"booking\":{\"id\":3,\"school_id\":1,\"branch_id\":2,\"student_id\":2,\"instructor_id\":2,\"course_id\":2,\"enrollment_request_id\":2,\"package_id\":null,\"time_slot_id\":2,\"scheduled"
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "school-admin",
+      "route": "schools.notifications.index",
+      "path": "drived-hub/notifications",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/notifications",
+      "title": "",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/notifications",
+        "type": "application/json",
+        "bytes": 6449,
+        "magic": "{\"not",
+        "milliseconds": 85,
+        "excerpt": "{\"notifications\":[{\"id\":678,\"type\":\"new_enrollment_request\",\"title\":\"New Course Enrollment\",\"message\":\"Active Student Enrollment Test User has requested enrollment in Test Theoreti"
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "login",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin"
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.dashboard",
+      "path": "drived-hub/admin",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin",
+      "title": "Admin Dashboard - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin",
+        "type": "text/html; charset=utf-8",
+        "bytes": 66519,
+        "magic": "<styl",
+        "milliseconds": 151,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "screenshot": "docs/screenshots/nov8-document-findings/screenshots/branch-secretary-schools.admin.dashboard.png",
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.admin-management.index",
+      "path": "drived-hub/admin/admin-management",
+      "status": 403,
+      "url": "http://localhost:8006/drived-hub/admin/admin-management",
+      "title": "Forbidden",
+      "errors": [],
+      "expectedDenied": true
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.branches.index",
+      "path": "drived-hub/admin/branches",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/branches",
+      "title": "Branch Management - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/branches",
+        "type": "text/html; charset=utf-8",
+        "bytes": 75739,
+        "magic": "<!-- ",
+        "milliseconds": 166,
+        "excerpt": "<!-- Fix: Load Bootstrap Icons for this view since stat cards rely on them -->\n<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons"
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": [
+          {
+            "tag": "TABLE",
+            "id": "",
+            "class": "branch-table"
+          },
+          {
+            "tag": "THEAD",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TR",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TH",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TH",
+            "id": "",
+            "class": ""
+          }
+        ]
+      },
+      "dialog": {
+        "id": "branchModal",
+        "visible": true
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.courses",
+      "path": "drived-hub/admin/courses",
+      "status": 403,
+      "url": "http://localhost:8006/drived-hub/admin/courses",
+      "title": "Forbidden",
+      "errors": [],
+      "expectedDenied": true
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.courses.modules.index",
+      "path": "drived-hub/admin/courses/2/modules",
+      "status": 403,
+      "url": "http://localhost:8006/drived-hub/admin/courses/2/modules",
+      "title": "Forbidden",
+      "errors": [],
+      "expectedDenied": true
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.courses.modules.create",
+      "path": "drived-hub/admin/courses/2/modules/create",
+      "status": 403,
+      "url": "http://localhost:8006/drived-hub/admin/courses/2/modules/create",
+      "title": "Forbidden",
+      "errors": [],
+      "expectedDenied": true
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.courses.modules.show",
+      "path": "drived-hub/admin/courses/2/modules/7",
+      "status": 403,
+      "url": "http://localhost:8006/drived-hub/admin/courses/2/modules/7",
+      "title": "Forbidden",
+      "errors": [],
+      "expectedDenied": true
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.courses.modules.edit",
+      "path": "drived-hub/admin/courses/2/modules/7/edit",
+      "status": 403,
+      "url": "http://localhost:8006/drived-hub/admin/courses/2/modules/7/edit",
+      "title": "Forbidden",
+      "errors": [],
+      "expectedDenied": true
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.courses.modules.lessons.index",
+      "path": "drived-hub/admin/courses/2/modules/7/lessons",
+      "status": 403,
+      "url": "http://localhost:8006/drived-hub/admin/courses/2/modules/7/lessons",
+      "title": "Forbidden",
+      "errors": [],
+      "expectedDenied": true
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.courses.modules.lessons.create",
+      "path": "drived-hub/admin/courses/2/modules/7/lessons/create",
+      "status": 403,
+      "url": "http://localhost:8006/drived-hub/admin/courses/2/modules/7/lessons/create",
+      "title": "Forbidden",
+      "errors": [],
+      "expectedDenied": true
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.courses.modules.lessons.show",
+      "path": "drived-hub/admin/courses/2/modules/7/lessons/10",
+      "status": 403,
+      "url": "http://localhost:8006/drived-hub/admin/courses/2/modules/7/lessons/10",
+      "title": "Forbidden",
+      "errors": [],
+      "expectedDenied": true
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.courses.modules.lessons.edit",
+      "path": "drived-hub/admin/courses/2/modules/7/lessons/10/edit",
+      "status": 403,
+      "url": "http://localhost:8006/drived-hub/admin/courses/2/modules/7/lessons/10/edit",
+      "title": "Forbidden",
+      "errors": [],
+      "expectedDenied": true
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.enrollments.index",
+      "path": "drived-hub/admin/enrollments",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/enrollments",
+      "title": "Manage Enrollments - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/enrollments",
+        "type": "text/html; charset=utf-8",
+        "bytes": 271884,
+        "magic": "<styl",
+        "milliseconds": 110,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "dialog": {
+        "id": "unifiedVerificationModal",
+        "visible": true
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.enrollments.api.show",
+      "path": "drived-hub/admin/enrollments/api/3",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/enrollments/api/3",
+      "title": "",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/enrollments/api/3",
+        "type": "application/json",
+        "bytes": 881,
+        "magic": "{\"id\"",
+        "milliseconds": 66,
+        "excerpt": "{\"id\":3,\"uid\":\"ENR-2026-00003\",\"student_name\":\"Pedro Jose Santos\",\"course_title\":\"TDC + PDC Combo Course\",\"total_price\":\"6,800.00\",\"status\":\"pending\",\"payment_status\":\"pending\",\"li"
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.enrollments.viewLicense",
+      "path": "drived-hub/admin/enrollments/student/3/view-license",
+      "download": {
+        "status": 404,
+        "url": "http://localhost:8006/drived-hub/admin/enrollments/student/3/view-license",
+        "type": "text/html; charset=utf-8",
+        "bytes": 6659,
+        "magic": "<!DOC",
+        "milliseconds": 89,
+        "excerpt": "<!DOCTYPE html>\n<html lang=\"en\">\n    <head>\n        <meta charset=\"utf-8\">\n        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n\n        <title>Not Found</t"
+      },
+      "status": 404,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.enrollments.show",
+      "path": "drived-hub/admin/enrollments/3",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/enrollments?search=ENR-2026-00003&review=3",
+      "title": "Manage Enrollments - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/enrollments?search=ENR-2026-00003&review=3",
+        "type": "text/html; charset=utf-8",
+        "bytes": 130666,
+        "magic": "<styl",
+        "milliseconds": 199,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.enrollments.view-credential",
+      "path": "drived-hub/admin/enrollments/3/view-credential",
+      "download": {
+        "status": 404,
+        "url": "http://localhost:8006/drived-hub/admin/enrollments/3/view-credential",
+        "type": "text/html; charset=utf-8",
+        "bytes": 6659,
+        "magic": "<!DOC",
+        "milliseconds": 108,
+        "excerpt": "<!DOCTYPE html>\n<html lang=\"en\">\n    <head>\n        <meta charset=\"utf-8\">\n        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n\n        <title>Not Found</t"
+      },
+      "status": 404,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.enrollments.view-payment-proof",
+      "path": "drived-hub/admin/enrollments/3/view-payment-proof",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/enrollments/3/view-payment-proof",
+      "title": "view-payment-proof (1024×1024)",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/enrollments/3/view-payment-proof",
+        "type": "image/jpeg",
+        "bytes": 165483,
+        "magic": "ÿØÿà\u0000",
+        "milliseconds": 99,
+        "excerpt": ""
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.exports.admins.excel",
+      "path": "drived-hub/admin/exports/admins/excel",
+      "download": {
+        "status": 403,
+        "url": "http://localhost:8006/drived-hub/admin/exports/admins/excel",
+        "type": "text/html; charset=utf-8",
+        "bytes": 6701,
+        "magic": "<!DOC",
+        "milliseconds": 105,
+        "excerpt": "<!DOCTYPE html>\n<html lang=\"en\">\n    <head>\n        <meta charset=\"utf-8\">\n        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n\n        <title>Forbidden</t"
+      },
+      "status": 403,
+      "errors": [],
+      "expectedDenied": true
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.exports.admins.pdf",
+      "path": "drived-hub/admin/exports/admins/pdf",
+      "download": {
+        "status": 403,
+        "url": "http://localhost:8006/drived-hub/admin/exports/admins/pdf",
+        "type": "text/html; charset=utf-8",
+        "bytes": 6701,
+        "magic": "<!DOC",
+        "milliseconds": 85,
+        "excerpt": "<!DOCTYPE html>\n<html lang=\"en\">\n    <head>\n        <meta charset=\"utf-8\">\n        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n\n        <title>Forbidden</t"
+      },
+      "status": 403,
+      "errors": [],
+      "expectedDenied": true
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.exports.courses.excel",
+      "path": "drived-hub/admin/exports/courses/excel",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/exports/courses/excel",
+        "type": "application/vnd.ms-excel",
+        "bytes": 2455,
+        "magic": "\n<!DO",
+        "milliseconds": 77,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.exports.courses.pdf",
+      "path": "drived-hub/admin/exports/courses/pdf",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/exports/courses/pdf",
+        "type": "application/pdf",
+        "bytes": 41821,
+        "magic": "%PDF-",
+        "milliseconds": 199,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.exports.enrollments.excel",
+      "path": "drived-hub/admin/exports/enrollments/excel",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/exports/enrollments/excel",
+        "type": "application/vnd.ms-excel",
+        "bytes": 6718,
+        "magic": "\n<!DO",
+        "milliseconds": 159,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.exports.enrollments.pdf",
+      "path": "drived-hub/admin/exports/enrollments/pdf",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/exports/enrollments/pdf",
+        "type": "application/pdf",
+        "bytes": 24271,
+        "magic": "%PDF-",
+        "milliseconds": 245,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.exports.instructors.excel",
+      "path": "drived-hub/admin/exports/instructors/excel",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/exports/instructors/excel",
+        "type": "application/vnd.ms-excel",
+        "bytes": 2411,
+        "magic": "\n<!DO",
+        "milliseconds": 78,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.exports.instructors.pdf",
+      "path": "drived-hub/admin/exports/instructors/pdf",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/exports/instructors/pdf",
+        "type": "application/pdf",
+        "bytes": 8514,
+        "magic": "%PDF-",
+        "milliseconds": 131,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.exports.payments.excel",
+      "path": "drived-hub/admin/exports/payments/excel",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/exports/payments/excel",
+        "type": "application/vnd.ms-excel",
+        "bytes": 1538,
+        "magic": "\n<!DO",
+        "milliseconds": 80,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.exports.payments.pdf",
+      "path": "drived-hub/admin/exports/payments/pdf",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/exports/payments/pdf",
+        "type": "application/pdf",
+        "bytes": 4946,
+        "magic": "%PDF-",
+        "milliseconds": 135,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.exports.schedules.pdf",
+      "path": "drived-hub/admin/exports/schedules/pdf",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/exports/schedules/pdf",
+        "type": "application/pdf",
+        "bytes": 17470,
+        "magic": "%PDF-",
+        "milliseconds": 507,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.exports.student.progress.pdf",
+      "path": "drived-hub/admin/exports/student/3/progress/pdf",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/enrollments/3/view-payment-proof",
+        "type": "image/jpeg",
+        "bytes": 165483,
+        "magic": "ÿØÿà\u0000",
+        "milliseconds": 220,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.exports.students.excel",
+      "path": "drived-hub/admin/exports/students/excel",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/exports/students/excel",
+        "type": "application/vnd.ms-excel",
+        "bytes": 2827,
+        "magic": "\n<!DO",
+        "milliseconds": 72,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.exports.students.pdf",
+      "path": "drived-hub/admin/exports/students/pdf",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/exports/students/pdf",
+        "type": "application/pdf",
+        "bytes": 9428,
+        "magic": "%PDF-",
+        "milliseconds": 150,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.exports.verify-session-completion.excel",
+      "path": "drived-hub/admin/exports/verify-session-completion/excel",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/exports/verify-session-completion/excel",
+        "type": "application/vnd.ms-excel",
+        "bytes": 8506,
+        "magic": "\n<!DO",
+        "milliseconds": 151,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.materials.index",
+      "path": "drived-hub/admin/materials",
+      "status": 403,
+      "url": "http://localhost:8006/drived-hub/admin/materials",
+      "title": "Forbidden",
+      "errors": [],
+      "expectedDenied": true
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.payments.index",
+      "path": "drived-hub/admin/payments",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/payments",
+      "title": "Payments & Transactions - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/payments",
+        "type": "text/html; charset=utf-8",
+        "bytes": 63204,
+        "magic": "<styl",
+        "milliseconds": 97,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.payments.statistics",
+      "path": "drived-hub/admin/payments/statistics",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/payments/statistics",
+      "title": "",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/payments/statistics",
+        "type": "application/json",
+        "bytes": 224,
+        "magic": "{\"suc",
+        "milliseconds": 65,
+        "excerpt": "{\"success\":true,\"statistics\":{\"total_revenue\":2000,\"pending_payments\":2,\"total_payments\":3,\"by_method\":[{\"method\":\"gcash\",\"total\":\"2000.00\",\"count\":1,\"proof_url\":null,\"uid\":\"PAY-20"
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.payments.show",
+      "path": "drived-hub/admin/payments/1",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/payments/1",
+      "title": "",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/payments/1",
+        "type": "application/json",
+        "bytes": 1557,
+        "magic": "{\"suc",
+        "milliseconds": 65,
+        "excerpt": "{\"success\":true,\"payment\":{\"id\":1,\"school_id\":1,\"branch_id\":1,\"guest_identity_token\":null,\"payer_user_id\":28,\"booking_id\":null,\"enrollment_request_id\":27,\"amount\":\"2000.00\",\"paid_o"
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.profile",
+      "path": "drived-hub/admin/profile",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/profile",
+      "title": "Profile - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/profile",
+        "type": "text/html; charset=utf-8",
+        "bytes": 58745,
+        "magic": "<styl",
+        "milliseconds": 93,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.removalRequests",
+      "path": "drived-hub/admin/removal-requests",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/removal-requests",
+      "title": "Instructor Removal Requests - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/removal-requests",
+        "type": "text/html; charset=utf-8",
+        "bytes": 59902,
+        "magic": "<styl",
+        "milliseconds": 93,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.reports.index",
+      "path": "drived-hub/admin/reports",
+      "status": 403,
+      "url": "http://localhost:8006/drived-hub/admin/reports",
+      "title": "Forbidden",
+      "errors": [],
+      "expectedDenied": true
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.reports.instructors",
+      "path": "drived-hub/admin/reports/instructors",
+      "status": 403,
+      "url": "http://localhost:8006/drived-hub/admin/reports/instructors",
+      "title": "Forbidden",
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.reports.logs",
+      "path": "drived-hub/admin/reports/logs",
+      "status": 403,
+      "url": "http://localhost:8006/drived-hub/admin/reports/logs",
+      "title": "Forbidden",
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.reports.students",
+      "path": "drived-hub/admin/reports/students",
+      "status": 403,
+      "url": "http://localhost:8006/drived-hub/admin/reports/students",
+      "title": "Forbidden",
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.schedules",
+      "path": "drived-hub/admin/schedules",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/schedules",
+      "title": "Manage Schedule - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/schedules",
+        "type": "text/html; charset=utf-8",
+        "bytes": 211163,
+        "magic": "<styl",
+        "milliseconds": 153,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "dialog": {
+        "id": "createModal",
+        "visible": true
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.session-report",
+      "path": "drived-hub/admin/session-report/pdf",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/session-report/pdf",
+        "type": "application/pdf",
+        "bytes": 898402,
+        "magic": "%PDF-",
+        "milliseconds": 694,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.sessions.index",
+      "path": "drived-hub/admin/sessions",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/sessions",
+      "title": "Session Completions - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/sessions",
+        "type": "text/html; charset=utf-8",
+        "bytes": 81174,
+        "magic": "<styl",
+        "milliseconds": 103,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": [
+          {
+            "tag": "TABLE",
+            "id": "adminSessionsTable",
+            "class": ""
+          },
+          {
+            "tag": "THEAD",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TR",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TH",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TH",
+            "id": "",
+            "class": ""
+          }
+        ]
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.sessions.enrollmentStats",
+      "path": "drived-hub/admin/sessions/enrollment/3/stats",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/sessions/enrollment/3/stats",
+      "title": "",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/sessions/enrollment/3/stats",
+        "type": "application/json",
+        "bytes": 2565,
+        "magic": "{\"tot",
+        "milliseconds": 81,
+        "excerpt": "{\"total_sessions\":2,\"total_hours\":\"4.00\",\"recent_sessions\":[{\"id\":14,\"school_id\":1,\"enrollment_id\":3,\"instructor_id\":3,\"session_type\":\"practical\",\"hours_completed\":\"2.00\",\"session_"
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.sessions.show",
+      "path": "drived-hub/admin/sessions/3",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/sessions/3",
+      "title": "Session Completion Details - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/sessions/3",
+        "type": "text/html; charset=utf-8",
+        "bytes": 43886,
+        "magic": "<styl",
+        "milliseconds": 79,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.settings",
+      "path": "drived-hub/admin/settings",
+      "status": 403,
+      "url": "http://localhost:8006/drived-hub/admin/settings",
+      "title": "Forbidden",
+      "errors": [],
+      "expectedDenied": true
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.theoretical.index",
+      "path": "drived-hub/admin/theoretical",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/theoretical",
+      "title": "Student Training List - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/theoretical",
+        "type": "text/html; charset=utf-8",
+        "bytes": 103580,
+        "magic": "<styl",
+        "milliseconds": 132,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": [
+          {
+            "tag": "TABLE",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "THEAD",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TR",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TH",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TH",
+            "id": "",
+            "class": ""
+          }
+        ]
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.theoretical.exportList",
+      "path": "drived-hub/admin/theoretical/export/pdf",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/theoretical/export/pdf",
+        "type": "application/pdf",
+        "bytes": 880241,
+        "magic": "%PDF-",
+        "milliseconds": 250,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.theoretical.stats",
+      "path": "drived-hub/admin/theoretical/stats/overview",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/theoretical/stats/overview",
+      "title": "",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/theoretical/stats/overview",
+        "type": "application/json",
+        "bytes": 11110,
+        "magic": "{\"tot",
+        "milliseconds": 68,
+        "excerpt": "{\"total_passed\":{\"current_page\":1,\"data\":[{\"id\":5,\"school_id\":1,\"branch_id\":1,\"name\":\"Carlos Manuel Mendoza\",\"email\":\"student5@driveedhub.test\",\"email_verified_at\":\"2026-11-09T00:2"
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 390,
+        "overflow": false,
+        "offenders": []
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.theoretical.show",
+      "path": "drived-hub/admin/theoretical/3",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/theoretical/3",
+      "title": "Student Training Hub - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/theoretical/3",
+        "type": "text/html; charset=utf-8",
+        "bytes": 65327,
+        "magic": "<styl",
+        "milliseconds": 85,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.theoretical.export",
+      "path": "drived-hub/admin/theoretical/3/export/pdf",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/theoretical/3/export/pdf",
+        "type": "application/pdf",
+        "bytes": 879080,
+        "magic": "%PDF-",
+        "milliseconds": 211,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.userManagement",
+      "path": "drived-hub/admin/user-management",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/user-management",
+      "title": "User Management - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/user-management",
+        "type": "text/html; charset=utf-8",
+        "bytes": 191387,
+        "magic": "<styl",
+        "milliseconds": 122,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": [
+          {
+            "tag": "TABLE",
+            "id": "",
+            "class": "table"
+          },
+          {
+            "tag": "THEAD",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TR",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TH",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TH",
+            "id": "",
+            "class": ""
+          }
+        ]
+      },
+      "dialog": {
+        "id": "createStudentModal",
+        "visible": true
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.users.activity",
+      "path": "drived-hub/admin/user-management/student/3/activity",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/user-management/student/3/activity",
+      "title": "",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/user-management/student/3/activity",
+        "type": "text/html; charset=utf-8",
+        "bytes": 2380,
+        "magic": "<sect",
+        "milliseconds": 82,
+        "excerpt": "<section class=\"profile-section\" aria-label=\"Documents and activity\">\n    <h4 class=\"profile-section-title\">Documents and Activity</h4>\n            <h5>Submitted License</h5>\n     "
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.vehicles.index",
+      "path": "drived-hub/admin/vehicles",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/vehicles",
+      "title": "Vehicle Management - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/vehicles",
+        "type": "text/html; charset=utf-8",
+        "bytes": 116599,
+        "magic": "<!-- ",
+        "milliseconds": 104,
+        "excerpt": "<!-- Load Bootstrap Icons for this view -->\n<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css\">\n\n\n<style>\r\n    /* ======"
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": [
+          {
+            "tag": "TABLE",
+            "id": "",
+            "class": "vehicle-table"
+          },
+          {
+            "tag": "THEAD",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TR",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TH",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TH",
+            "id": "",
+            "class": ""
+          }
+        ]
+      },
+      "dialog": {
+        "id": "createVehicleModal",
+        "visible": true
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.verify-session-completion.index",
+      "path": "drived-hub/admin/verify-session-completion",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/verify-session-completion",
+      "title": "Verify Session Completion - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/verify-session-completion",
+        "type": "text/html; charset=utf-8",
+        "bytes": 155817,
+        "magic": "<styl",
+        "milliseconds": 124,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.admin.verify-session-completion.show",
+      "path": "drived-hub/admin/verify-session-completion/4",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/admin/verify-session-completion/4",
+      "title": "",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/admin/verify-session-completion/4",
+        "type": "application/json",
+        "bytes": 3385,
+        "magic": "{\"suc",
+        "milliseconds": 61,
+        "excerpt": "{\"success\":true,\"booking\":{\"id\":4,\"school_id\":1,\"branch_id\":1,\"student_id\":3,\"instructor_id\":3,\"course_id\":3,\"enrollment_request_id\":3,\"package_id\":null,\"time_slot_id\":3,\"scheduled"
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "branch-secretary",
+      "route": "schools.notifications.index",
+      "path": "drived-hub/notifications",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/notifications",
+      "title": "",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/notifications",
+        "type": "application/json",
+        "bytes": 6449,
+        "magic": "{\"not",
+        "milliseconds": 54,
+        "excerpt": "{\"notifications\":[{\"id\":680,\"type\":\"new_enrollment_request\",\"title\":\"New Course Enrollment\",\"message\":\"Active Student Enrollment Test User has requested enrollment in Test Theoreti"
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "login",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/instructor"
+    },
+    {
+      "role": "instructor",
+      "route": "schools.instructor.dashboard",
+      "path": "drived-hub/instructor",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/instructor",
+      "title": "Instructor Dashboard - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/instructor",
+        "type": "text/html; charset=utf-8",
+        "bytes": 57599,
+        "magic": "<styl",
+        "milliseconds": 103,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "schools.instructor.courses.modules.index",
+      "path": "drived-hub/instructor/courses/2/modules",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/instructor/courses/2/modules",
+      "title": "Course Modules - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/instructor/courses/2/modules",
+        "type": "text/html; charset=utf-8",
+        "bytes": 30351,
+        "magic": "<styl",
+        "milliseconds": 94,
+        "excerpt": "<style>\n    .lms-page {\n        max-width: 1200px;\n        margin: 0 auto;\n        padding: 24px;\n    }\n\n    .lms-header {\n        display: flex;\n        justify-content: space-bet"
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "schools.instructor.courses.modules.create",
+      "path": "drived-hub/instructor/courses/2/modules/create",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/instructor/courses/2/modules/create",
+      "title": "Create Module - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/instructor/courses/2/modules/create",
+        "type": "text/html; charset=utf-8",
+        "bytes": 17961,
+        "magic": "<styl",
+        "milliseconds": 80,
+        "excerpt": "<style>\n    .lms-page {\n        max-width: 1200px;\n        margin: 0 auto;\n        padding: 24px;\n    }\n\n    .lms-header {\n        display: flex;\n        justify-content: space-bet"
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "schools.instructor.courses.modules.show",
+      "path": "drived-hub/instructor/courses/2/modules/7",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/instructor/courses/2/modules/7",
+      "title": "QA Regression Lesson Module - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/instructor/courses/2/modules/7",
+        "type": "text/html; charset=utf-8",
+        "bytes": 22903,
+        "magic": "<styl",
+        "milliseconds": 73,
+        "excerpt": "<style>\n    .lms-page {\n        max-width: 1200px;\n        margin: 0 auto;\n        padding: 24px;\n    }\n\n    .lms-header {\n        display: flex;\n        justify-content: space-bet"
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "schools.instructor.courses.modules.assessments.manage",
+      "path": "drived-hub/instructor/courses/2/modules/8/assessments/manage",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/instructor/courses/2/modules/8/assessments/manage",
+      "title": "Manage Assessment - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/instructor/courses/2/modules/8/assessments/manage",
+        "type": "text/html; charset=utf-8",
+        "bytes": 39601,
+        "magic": "<styl",
+        "milliseconds": 98,
+        "excerpt": "<style>\n    .lms-page {\n        max-width: 1200px;\n        margin: 0 auto;\n        padding: 24px;\n    }\n\n    .lms-header {\n        display: flex;\n        justify-content: space-bet"
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "schools.instructor.courses.modules.edit",
+      "path": "drived-hub/instructor/courses/2/modules/7/edit",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/instructor/courses/2/modules/7/edit",
+      "title": "Edit Module - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/instructor/courses/2/modules/7/edit",
+        "type": "text/html; charset=utf-8",
+        "bytes": 18029,
+        "magic": "<styl",
+        "milliseconds": 74,
+        "excerpt": "<style>\n    .lms-page {\n        max-width: 1200px;\n        margin: 0 auto;\n        padding: 24px;\n    }\n\n    .lms-header {\n        display: flex;\n        justify-content: space-bet"
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "schools.instructor.courses.modules.lessons.index",
+      "path": "drived-hub/instructor/courses/2/modules/7/lessons",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/instructor/courses/2/modules/7/lessons",
+      "title": "Module Lessons - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/instructor/courses/2/modules/7/lessons",
+        "type": "text/html; charset=utf-8",
+        "bytes": 22526,
+        "magic": "<styl",
+        "milliseconds": 83,
+        "excerpt": "<style>\n    .lms-page {\n        max-width: 1200px;\n        margin: 0 auto;\n        padding: 24px;\n    }\n\n    .lms-header {\n        display: flex;\n        justify-content: space-bet"
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "schools.instructor.courses.modules.lessons.create",
+      "path": "drived-hub/instructor/courses/2/modules/7/lessons/create",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/instructor/courses/2/modules/7/lessons/create",
+      "title": "Create Lesson - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/instructor/courses/2/modules/7/lessons/create",
+        "type": "text/html; charset=utf-8",
+        "bytes": 21827,
+        "magic": "<styl",
+        "milliseconds": 71,
+        "excerpt": "<style>\n    .lms-page {\n        max-width: 1200px;\n        margin: 0 auto;\n        padding: 24px;\n    }\n\n    .lms-header {\n        display: flex;\n        justify-content: space-bet"
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "schools.instructor.courses.modules.lessons.show",
+      "path": "drived-hub/instructor/courses/2/modules/7/lessons/10",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/instructor/courses/2/modules/7/lessons/10",
+      "title": "QA Regression Lesson - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/instructor/courses/2/modules/7/lessons/10",
+        "type": "text/html; charset=utf-8",
+        "bytes": 17907,
+        "magic": "<styl",
+        "milliseconds": 74,
+        "excerpt": "<style>\n    .lms-page {\n        max-width: 1200px;\n        margin: 0 auto;\n        padding: 24px;\n    }\n\n    .lms-header {\n        display: flex;\n        justify-content: space-bet"
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "schools.instructor.courses.modules.lessons.edit",
+      "path": "drived-hub/instructor/courses/2/modules/7/lessons/10/edit",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/instructor/courses/2/modules/7/lessons/10/edit",
+      "title": "Edit Lesson - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/instructor/courses/2/modules/7/lessons/10/edit",
+        "type": "text/html; charset=utf-8",
+        "bytes": 22030,
+        "magic": "<styl",
+        "milliseconds": 92,
+        "excerpt": "<style>\n    .lms-page {\n        max-width: 1200px;\n        margin: 0 auto;\n        padding: 24px;\n    }\n\n    .lms-header {\n        display: flex;\n        justify-content: space-bet"
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "schools.instructor.exports.grades.excel",
+      "path": "drived-hub/instructor/exports/grades/excel",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/instructor/exports/grades/excel",
+        "type": "application/vnd.ms-excel",
+        "bytes": 3899,
+        "magic": "\n<!DO",
+        "milliseconds": 85,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "schools.instructor.exports.grades.pdf",
+      "path": "drived-hub/instructor/exports/grades/pdf",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/instructor/exports/grades/pdf",
+        "type": "application/pdf",
+        "bytes": 7434,
+        "magic": "%PDF-",
+        "milliseconds": 182,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "schools.instructor.exports.reports.pdf",
+      "path": "drived-hub/instructor/exports/reports/pdf",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/instructor/exports/reports/pdf",
+        "type": "application/pdf",
+        "bytes": 5069,
+        "magic": "%PDF-",
+        "milliseconds": 131,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "schools.instructor.exports.sessions.excel",
+      "path": "drived-hub/instructor/exports/sessions/excel",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/instructor/exports/sessions/excel",
+        "type": "application/vnd.ms-excel",
+        "bytes": 2894,
+        "magic": "\n<!DO",
+        "milliseconds": 76,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "schools.instructor.exports.sessions.pdf",
+      "path": "drived-hub/instructor/exports/sessions/pdf",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/instructor/exports/sessions/pdf",
+        "type": "application/pdf",
+        "bytes": 12000,
+        "magic": "%PDF-",
+        "milliseconds": 135,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "schools.instructor.exports.students.excel",
+      "path": "drived-hub/instructor/exports/students/excel",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/instructor/exports/students/excel",
+        "type": "application/vnd.ms-excel",
+        "bytes": 3296,
+        "magic": "\n<!DO",
+        "milliseconds": 82,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "schools.instructor.exports.students.pdf",
+      "path": "drived-hub/instructor/exports/students/pdf",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/instructor/exports/students/pdf",
+        "type": "application/pdf",
+        "bytes": 14367,
+        "magic": "%PDF-",
+        "milliseconds": 165,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "schools.instructor.grades",
+      "path": "drived-hub/instructor/grades",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/instructor/grades",
+      "title": "Grade Management - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/instructor/grades",
+        "type": "text/html; charset=utf-8",
+        "bytes": 123338,
+        "magic": "<styl",
+        "milliseconds": 100,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": [
+          {
+            "tag": "TABLE",
+            "id": "gradesTable",
+            "class": "grades-table"
+          },
+          {
+            "tag": "THEAD",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TR",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TH",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TH",
+            "id": "",
+            "class": ""
+          }
+        ]
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "schools.instructor.lessons.details",
+      "path": "drived-hub/instructor/lessons/41",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/instructor/lessons/41",
+      "title": "",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/instructor/lessons/41",
+        "type": "application/json",
+        "bytes": 3173,
+        "magic": "{\"suc",
+        "milliseconds": 90,
+        "excerpt": "{\"success\":true,\"booking\":{\"id\":41,\"school_id\":1,\"branch_id\":1,\"student_id\":1,\"instructor_id\":1,\"course_id\":2,\"enrollment_request_id\":31,\"package_id\":null,\"time_slot_id\":28,\"schedu"
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "schools.instructor.materials.index",
+      "path": "drived-hub/instructor/materials",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/instructor/materials",
+      "title": "Course Materials - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/instructor/materials",
+        "type": "text/html; charset=utf-8",
+        "bytes": 25386,
+        "magic": "<styl",
+        "milliseconds": 76,
+        "excerpt": "<style>\n    .lms-page {\n        max-width: 1200px;\n        margin: 0 auto;\n        padding: 24px;\n    }\n\n    .lms-header {\n        display: flex;\n        justify-content: space-bet"
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "schools.instructor.schedule",
+      "path": "drived-hub/instructor/my-schedule",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/instructor/my-schedule",
+      "title": "My Schedule - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/instructor/my-schedule",
+        "type": "text/html; charset=utf-8",
+        "bytes": 211743,
+        "magic": "<styl",
+        "milliseconds": 144,
+        "excerpt": "<style>\n    :root {\n        --primary-color: #2563eb;\n        --secondary-color: #fbbf24;\n        --primary-gradient: #2563eb;\n        --button-radius: 8px;\n        --card-radius: "
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": [
+          {
+            "tag": "BUTTON",
+            "id": "",
+            "class": "main-toggle-btn mobile-only-tab-btn"
+          }
+        ]
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "schools.instructor.profile",
+      "path": "drived-hub/instructor/profile",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/instructor/profile",
+      "title": "Instructor Profile - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/instructor/profile",
+        "type": "text/html; charset=utf-8",
+        "bytes": 76020,
+        "magic": "<styl",
+        "milliseconds": 80,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "schools.instructor.progress.index",
+      "path": "drived-hub/instructor/progress",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/instructor/progress",
+      "title": "Student Progress - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/instructor/progress",
+        "type": "text/html; charset=utf-8",
+        "bytes": 47377,
+        "magic": "<styl",
+        "milliseconds": 88,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "schools.instructor.progress.create",
+      "path": "drived-hub/instructor/progress/create",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/instructor/progress/create",
+      "title": "Add Progress - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/instructor/progress/create",
+        "type": "text/html; charset=utf-8",
+        "bytes": 49090,
+        "magic": "<styl",
+        "milliseconds": 78,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "schools.instructor.progress.show",
+      "path": "drived-hub/instructor/progress/2",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/instructor/progress/2",
+      "title": "Progress Details - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/instructor/progress/2",
+        "type": "text/html; charset=utf-8",
+        "bytes": 45522,
+        "magic": "<styl",
+        "milliseconds": 80,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "schools.instructor.progress.edit",
+      "path": "drived-hub/instructor/progress/2/edit",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/instructor/progress/2/edit",
+      "title": "Edit Progress - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/instructor/progress/2/edit",
+        "type": "text/html; charset=utf-8",
+        "bytes": 43087,
+        "magic": "<styl",
+        "milliseconds": 83,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "schools.instructor.questions.index",
+      "path": "drived-hub/instructor/questions",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/instructor/questions",
+      "title": "Question Bank - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/instructor/questions",
+        "type": "text/html; charset=utf-8",
+        "bytes": 50976,
+        "magic": "<styl",
+        "milliseconds": 83,
+        "excerpt": "<style>\n    .lms-page {\n        max-width: 1200px;\n        margin: 0 auto;\n        padding: 24px;\n    }\n\n    .lms-header {\n        display: flex;\n        justify-content: space-bet"
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "schools.instructor.questions.ajax.lessons",
+      "path": "drived-hub/instructor/questions/ajax/lessons/2",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/instructor/questions/ajax/lessons/2",
+      "title": "",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/instructor/questions/ajax/lessons/2",
+        "type": "application/json",
+        "bytes": 229,
+        "magic": "[{\"id",
+        "milliseconds": 51,
+        "excerpt": "[{\"id\":5,\"title\":\"Dashboard & Pedals\"},{\"id\":6,\"title\":\"Safety Setup\"},{\"id\":9,\"title\":\"32143124\"},{\"id\":10,\"title\":\"QA Regression Lesson\"},{\"id\":15,\"title\":\"QA Audit updated lesso"
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "schools.instructor.questions.create",
+      "path": "drived-hub/instructor/questions/create",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/instructor/questions/create",
+      "title": "Add Question - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/instructor/questions/create",
+        "type": "text/html; charset=utf-8",
+        "bytes": 30239,
+        "magic": "<styl",
+        "milliseconds": 89,
+        "excerpt": "<style>\n    .lms-page {\n        max-width: 1200px;\n        margin: 0 auto;\n        padding: 24px;\n    }\n\n    .lms-header {\n        display: flex;\n        justify-content: space-bet"
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "schools.instructor.questions.edit",
+      "path": "drived-hub/instructor/questions/1/edit",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/instructor/questions/1/edit",
+      "title": "Edit Question - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/instructor/questions/1/edit",
+        "type": "text/html; charset=utf-8",
+        "bytes": 28018,
+        "magic": "<styl",
+        "milliseconds": 76,
+        "excerpt": "<style>\n    .lms-page {\n        max-width: 1200px;\n        margin: 0 auto;\n        padding: 24px;\n    }\n\n    .lms-header {\n        display: flex;\n        justify-content: space-bet"
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "schools.instructor.reports",
+      "path": "drived-hub/instructor/reports",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/instructor/reports",
+      "title": "Performance Reports - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/instructor/reports",
+        "type": "text/html; charset=utf-8",
+        "bytes": 57909,
+        "magic": "<styl",
+        "milliseconds": 110,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": [
+          {
+            "tag": "DIV",
+            "id": "",
+            "class": "chart-card"
+          },
+          {
+            "tag": "H3",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "DIV",
+            "id": "",
+            "class": "chart-container"
+          },
+          {
+            "tag": "CANVAS",
+            "id": "monthlyChart",
+            "class": ""
+          },
+          {
+            "tag": "DIV",
+            "id": "",
+            "class": "chart-card"
+          }
+        ]
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "schools.instructor.session-report",
+      "path": "drived-hub/instructor/session-report/pdf",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/instructor/session-report/pdf",
+        "type": "application/pdf",
+        "bytes": 894009,
+        "magic": "%PDF-",
+        "milliseconds": 572,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "schools.instructor.sessions.index",
+      "path": "drived-hub/instructor/sessions",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/instructor/sessions",
+      "title": "Session Completions - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/instructor/sessions",
+        "type": "text/html; charset=utf-8",
+        "bytes": 114257,
+        "magic": "<styl",
+        "milliseconds": 107,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "schools.instructor.sessions.create",
+      "path": "drived-hub/instructor/sessions/create",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/instructor/sessions/create",
+      "title": "Log New Session - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/instructor/sessions/create",
+        "type": "text/html; charset=utf-8",
+        "bytes": 66200,
+        "magic": "<styl",
+        "milliseconds": 106,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "schools.instructor.sessions.enrollmentStats",
+      "path": "drived-hub/instructor/sessions/enrollment/2/stats",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/instructor/sessions/enrollment/2/stats",
+      "title": "",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/instructor/sessions/enrollment/2/stats",
+        "type": "application/json",
+        "bytes": 2719,
+        "magic": "{\"tot",
+        "milliseconds": 70,
+        "excerpt": "{\"total_sessions\":2,\"total_hours\":\"4.00\",\"recent_sessions\":[{\"id\":13,\"school_id\":1,\"enrollment_id\":2,\"instructor_id\":2,\"session_type\":\"practical\",\"hours_completed\":\"2.00\",\"session_"
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "schools.instructor.sessions.show",
+      "path": "drived-hub/instructor/sessions/16",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/instructor/sessions/16",
+      "title": "Session Details - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/instructor/sessions/16",
+        "type": "text/html; charset=utf-8",
+        "bytes": 45749,
+        "magic": "<styl",
+        "milliseconds": 83,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "schools.instructor.sessions.edit",
+      "path": "drived-hub/instructor/sessions/16/edit",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/instructor/sessions/16/edit",
+      "title": "- SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/instructor/sessions/16/edit",
+        "type": "text/html; charset=utf-8",
+        "bytes": 51279,
+        "magic": "<styl",
+        "milliseconds": 98,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "schools.instructor.settings",
+      "path": "drived-hub/instructor/settings",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/instructor/settings",
+      "title": "Settings - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/instructor/settings",
+        "type": "text/html; charset=utf-8",
+        "bytes": 76021,
+        "magic": "<styl",
+        "milliseconds": 93,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "schools.instructor.students.index",
+      "path": "drived-hub/instructor/students",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/instructor/students",
+      "title": "My Students - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/instructor/students",
+        "type": "text/html; charset=utf-8",
+        "bytes": 73321,
+        "magic": "<styl",
+        "milliseconds": 112,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "schools.instructor.students.show",
+      "path": "drived-hub/instructor/students/1",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/instructor/students/1",
+      "title": "Student Details - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/instructor/students/1",
+        "type": "text/html; charset=utf-8",
+        "bytes": 56575,
+        "magic": "<styl",
+        "milliseconds": 91,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "schools.instructor.theoretical.index",
+      "path": "drived-hub/instructor/theoretical",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/instructor/theoretical",
+      "title": "Theoretical Training - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/instructor/theoretical",
+        "type": "text/html; charset=utf-8",
+        "bytes": 95912,
+        "magic": "<styl",
+        "milliseconds": 141,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": [
+          {
+            "tag": "TABLE",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "THEAD",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TR",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TH",
+            "id": "",
+            "class": ""
+          },
+          {
+            "tag": "TH",
+            "id": "",
+            "class": ""
+          }
+        ]
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "schools.instructor.theoretical.exportList",
+      "path": "drived-hub/instructor/theoretical/export/pdf",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/instructor/theoretical/export/pdf",
+        "type": "application/pdf",
+        "bytes": 880423,
+        "magic": "%PDF-",
+        "milliseconds": 431,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "schools.instructor.theoretical.show",
+      "path": "drived-hub/instructor/theoretical/2",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/instructor/theoretical/2",
+      "title": "Review Theoretical Completion - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/instructor/theoretical/2",
+        "type": "text/html; charset=utf-8",
+        "bytes": 56765,
+        "magic": "<styl",
+        "milliseconds": 130,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "schools.instructor.theoretical.export",
+      "path": "drived-hub/instructor/theoretical/2/export/pdf",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/instructor/theoretical/2/export/pdf",
+        "type": "application/pdf",
+        "bytes": 879063,
+        "magic": "%PDF-",
+        "milliseconds": 212,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "instructor",
+      "route": "schools.notifications.index",
+      "path": "drived-hub/notifications",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/notifications",
+      "title": "",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/notifications",
+        "type": "application/json",
+        "bytes": 1319,
+        "magic": "{\"not",
+        "milliseconds": 61,
+        "excerpt": "{\"notifications\":[{\"id\":278,\"type\":\"license_expiration_reminder\",\"title\":\"\\ud83e\\udeaa Driver's License Expiring Soon\",\"message\":\"Your driver's license (INST-01-554433) will expire"
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "student",
+      "route": "login",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/student"
+    },
+    {
+      "role": "student",
+      "route": "schools.student.dashboard",
+      "path": "drived-hub/student",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/student",
+      "title": "Student Dashboard - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/student",
+        "type": "text/html; charset=utf-8",
+        "bytes": 79172,
+        "magic": "<styl",
+        "milliseconds": 163,
+        "excerpt": "<style>\n    .student-dashboard {\n        padding: 20px;\n        margin: 0 auto;\n        max-width: 1400px;\n    }\n\n    .page-header {\n        margin-bottom: 20px;\n        padding-bo"
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "student",
+      "route": "schools.student.courses.index",
+      "path": "drived-hub/student/courses",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/student/courses",
+      "title": "Browse Courses - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/student/courses",
+        "type": "text/html; charset=utf-8",
+        "bytes": 85981,
+        "magic": "<styl",
+        "milliseconds": 116,
+        "excerpt": "<style>\n    .courses-container {\n        padding: 20px;\n        max-width: 1400px;\n        margin: 0 auto;\n    }\n    \n    .courses-header {\n        margin-bottom: 20px;\n        bor"
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "student",
+      "route": "schools.student.courses.show",
+      "path": "drived-hub/student/courses/2",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/student/courses/2",
+      "title": "Practical Driving Course (PDC) - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/student/courses/2",
+        "type": "text/html; charset=utf-8",
+        "bytes": 60292,
+        "magic": "<styl",
+        "milliseconds": 125,
+        "excerpt": "<style>\r\n    .course-detail-container {\r\n        padding: 20px;\r\n        max-width: 1200px;\r\n        margin: 0 auto;\r\n    }\r\n\r\n    .course-header-banner {\r\n        height: 300px;\r\n"
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "student",
+      "route": "schools.student.courses.modules.index",
+      "path": "drived-hub/student/courses/2/modules",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/student/courses/2/modules",
+      "title": "Course Modules - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/student/courses/2/modules",
+        "type": "text/html; charset=utf-8",
+        "bytes": 24684,
+        "magic": "<styl",
+        "milliseconds": 88,
+        "excerpt": "<style>\n    .lms-page {\n        max-width: 1200px;\n        margin: 0 auto;\n        padding: 24px;\n    }\n\n    .lms-header {\n        display: flex;\n        justify-content: space-bet"
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "student",
+      "route": "schools.student.courses.modules.show",
+      "path": "drived-hub/student/courses/2/modules/7",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/student/courses/2/modules/7",
+      "title": "QA Regression Lesson Module - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/student/courses/2/modules/7",
+        "type": "text/html; charset=utf-8",
+        "bytes": 18158,
+        "magic": "<styl",
+        "milliseconds": 76,
+        "excerpt": "<style>\n    .lms-page {\n        max-width: 1200px;\n        margin: 0 auto;\n        padding: 24px;\n    }\n\n    .lms-header {\n        display: flex;\n        justify-content: space-bet"
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "student",
+      "route": "schools.student.courses.modules.assessment.take",
+      "path": "drived-hub/student/courses/2/modules/8/assessment",
+      "status": 403,
+      "url": "http://localhost:8006/drived-hub/student/courses/2/modules/8/assessment",
+      "title": "Forbidden",
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "student",
+      "route": "schools.student.courses.modules.lessons.index",
+      "path": "drived-hub/student/courses/2/modules/7/lessons",
+      "status": 403,
+      "url": "http://localhost:8006/drived-hub/student/courses/2/modules/7/lessons",
+      "title": "Forbidden",
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "student",
+      "route": "schools.student.courses.modules.lessons.show",
+      "path": "drived-hub/student/courses/2/modules/7/lessons/10",
+      "status": 403,
+      "url": "http://localhost:8006/drived-hub/student/courses/2/modules/7/lessons/10",
+      "title": "Forbidden",
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "student",
+      "route": "schools.student.my-course",
+      "path": "drived-hub/student/my-course",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/student/my-course",
+      "title": "Enrolled Course - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/student/my-course",
+        "type": "text/html; charset=utf-8",
+        "bytes": 20181,
+        "magic": "<styl",
+        "milliseconds": 96,
+        "excerpt": "<style>\n.my-course-container {\n    padding: 20px;\n    max-width: 1400px;\n    margin: 0 auto;\n}\n\n.page-header {\n    margin-bottom: 30px;\n    padding-bottom: 15px;\n    border-bottom:"
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "student",
+      "route": "schools.student.my-progress",
+      "path": "drived-hub/student/my-progress",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/student/my-progress",
+      "title": "My Progress - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/student/my-progress",
+        "type": "text/html; charset=utf-8",
+        "bytes": 5897,
+        "magic": "<styl",
+        "milliseconds": 75,
+        "excerpt": "<style>\n    .my-progress-container {\n        padding: 20px;\n        max-width: 1200px;\n        margin: 0 auto;\n    }\n\n    .my-progress-header {\n        display: flex;\n        flex-"
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "student",
+      "route": "schools.student.payment.show",
+      "path": "drived-hub/student/payment/31",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/student/payment/31",
+      "title": "Complete Your Enrollment - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/student/payment/31",
+        "type": "text/html; charset=utf-8",
+        "bytes": 221308,
+        "magic": "<!DOC",
+        "milliseconds": 111,
+        "excerpt": "<!DOCTYPE html>\r\n<html lang=\"en\">\r\n\r\n<head>\r\n    <meta charset=\"UTF-8\">\r\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\r\n    <link rel=\"stylesheet\" href"
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "student",
+      "route": "schools.student.payments.index",
+      "path": "drived-hub/student/payments",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/student/payments",
+      "title": "My Payments - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/student/payments",
+        "type": "text/html; charset=utf-8",
+        "bytes": 18124,
+        "magic": "<styl",
+        "milliseconds": 85,
+        "excerpt": "<style>\r\n.payments-container {\r\n    padding: 20px;\r\n    max-width: 1400px;\r\n    margin: 0 auto;\r\n}\r\n\r\n.page-header {\r\n    margin-bottom: 30px;\r\n    padding-bottom: 15px;\r\n    borde"
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "dialog": {
+        "id": "paymentModal",
+        "visible": true
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "student",
+      "route": "schools.student.payments.show",
+      "path": "drived-hub/student/payments/13",
+      "status": 404,
+      "url": "http://localhost:8006/drived-hub/student/payments/13",
+      "title": "Not Found",
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "student",
+      "route": "schools.student.profile",
+      "path": "drived-hub/student/profile",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/student/profile",
+      "title": "Student Profile - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/student/profile",
+        "type": "text/html; charset=utf-8",
+        "bytes": 43182,
+        "magic": "<styl",
+        "milliseconds": 85,
+        "excerpt": "<style>\n    .profile-container {\n        padding: 20px;\n        max-width: 1400px;\n        margin: 0 auto;\n    }\n\n    .page-header {\n        margin-bottom: 30px;\n        padding-bo"
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "student",
+      "route": "schools.student.progress.index",
+      "path": "drived-hub/student/progress",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/student/progress",
+      "title": "My Progress - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/student/progress",
+        "type": "text/html; charset=utf-8",
+        "bytes": 5869,
+        "magic": "<styl",
+        "milliseconds": 73,
+        "excerpt": "<style>\n.progress-container {\n    padding: 20px;\n    max-width: 1400px;\n    margin: 0 auto;\n}\n\n.page-header {\n    margin-bottom: 30px;\n    padding-bottom: 15px;\n    border-bottom: "
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "student",
+      "route": "schools.student.schedule",
+      "path": "drived-hub/student/schedule",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/student/schedule",
+      "title": "My Schedule - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/student/schedule",
+        "type": "text/html; charset=utf-8",
+        "bytes": 123774,
+        "magic": "<styl",
+        "milliseconds": 195,
+        "excerpt": "<style>\n    .schedule-container {\n        padding: 20px;\n        max-width: 1400px;\n        margin: 0 auto;\n    }\n    \n    .schedule-header {\n        margin-bottom: 20px;\n        b"
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "student",
+      "route": "schools.student.session-report",
+      "path": "drived-hub/student/session-report/pdf",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/student/session-report/pdf",
+        "type": "application/pdf",
+        "bytes": 881821,
+        "magic": "%PDF-",
+        "milliseconds": 274,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "student",
+      "route": "schools.student.settings",
+      "path": "drived-hub/student/settings",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/student/settings",
+      "title": "Settings - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/student/settings",
+        "type": "text/html; charset=utf-8",
+        "bytes": 43183,
+        "magic": "<styl",
+        "milliseconds": 102,
+        "excerpt": "<style>\n    .profile-container {\n        padding: 20px;\n        max-width: 1400px;\n        margin: 0 auto;\n    }\n\n    .page-header {\n        margin-bottom: 30px;\n        padding-bo"
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "student",
+      "route": "schools.notifications.index",
+      "path": "drived-hub/notifications",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/notifications",
+      "title": "",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/notifications",
+        "type": "application/json",
+        "bytes": 1582,
+        "magic": "{\"not",
+        "milliseconds": 52,
+        "excerpt": "{\"notifications\":[{\"id\":277,\"type\":\"license_expiration_reminder\",\"title\":\"\\ud83e\\udeaa Driver's License Expiring Soon\",\"message\":\"Your driver's license (N01-22-987654) will expire "
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "guest",
+      "route": "login",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/guest/dashboard"
+    },
+    {
+      "role": "guest",
+      "route": "schools.guest.courses",
+      "path": "drived-hub/guest/courses",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/guest/courses",
+      "title": "Browse Courses - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/guest/courses",
+        "type": "text/html; charset=utf-8",
+        "bytes": 158833,
+        "magic": "<styl",
+        "milliseconds": 101,
+        "excerpt": "<style>\r\n    .courses-container {\r\n        padding: 20px;\r\n        max-width: 1400px;\r\n        margin: 0 auto;\r\n    }\r\n    \r\n    .courses-header {\r\n        margin-bottom: 20px;\r\n  "
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "dialog": {
+        "id": "enrollModal3",
+        "visible": true
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "guest",
+      "route": "schools.guest.storage.credential",
+      "path": "drived-hub/guest/credential/11",
+      "status": 404,
+      "url": "http://localhost:8006/drived-hub/guest/credential/11",
+      "title": "Not Found",
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "guest",
+      "route": "schools.guest.dashboard",
+      "path": "drived-hub/guest/dashboard",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/guest/dashboard",
+      "title": "Welcome - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/guest/dashboard",
+        "type": "text/html; charset=utf-8",
+        "bytes": 107955,
+        "magic": "<styl",
+        "milliseconds": 111,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "screenshot": "docs/screenshots/nov8-document-findings/screenshots/guest-schools.guest.dashboard.png",
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "guest",
+      "route": "schools.guest.enrollmentRequests",
+      "path": "drived-hub/guest/enrollment-requests",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/guest/enrollment-requests",
+      "title": "My Enrollment Requests - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/guest/enrollment-requests",
+        "type": "text/html; charset=utf-8",
+        "bytes": 113977,
+        "magic": "<styl",
+        "milliseconds": 132,
+        "excerpt": "<style>\r\n    /* ============================================\r\n       SHARED ADMIN STYLES\r\n       Consistent styling across all admin pages\r\n       ================================="
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "guest",
+      "route": "schools.guest.storage.gcash-qr",
+      "path": "drived-hub/guest/gcash-qr/1",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/guest/gcash-qr/1",
+        "type": "image/jpeg",
+        "bytes": 113785,
+        "magic": "ÿØÿà\u0000",
+        "milliseconds": 78,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "guest",
+      "route": "schools.guest.storage.license",
+      "path": "drived-hub/guest/license/11",
+      "download": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/guest/license/11",
+        "type": "application/x-empty",
+        "bytes": 0,
+        "magic": "",
+        "milliseconds": 82,
+        "excerpt": ""
+      },
+      "status": 200,
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "guest",
+      "route": "schools.guest.payment.show",
+      "path": "drived-hub/guest/payment/11",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/guest/payment/11",
+      "title": "Complete Your Enrollment",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/guest/payment/11",
+        "type": "text/html; charset=utf-8",
+        "bytes": 78463,
+        "magic": "<!DOC",
+        "milliseconds": 122,
+        "excerpt": "<!DOCTYPE html>\r\n<html lang=\"en\">\r\n<head>\r\n    <meta charset=\"UTF-8\">\r\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\r\n    <meta name=\"csrf-token\" conte"
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "guest",
+      "route": "schools.guest.payments.index",
+      "path": "drived-hub/guest/payments",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/guest/payments",
+      "title": "My Payments - SMART Driving School",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/guest/payments",
+        "type": "text/html; charset=utf-8",
+        "bytes": 17455,
+        "magic": "<styl",
+        "milliseconds": 82,
+        "excerpt": "<style>\r\n.payments-container {\r\n    padding: 20px;\r\n    max-width: 1400px;\r\n    margin: 0 auto;\r\n}\r\n\r\n.page-header {\r\n    margin-bottom: 30px;\r\n    padding-bottom: 15px;\r\n    borde"
+      },
+      "mobile": {
+        "width": 390,
+        "documentWidth": 375,
+        "overflow": false,
+        "offenders": []
+      },
+      "dialog": {
+        "id": "paymentModal",
+        "visible": true
+      },
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "guest",
+      "route": "schools.guest.storage.receipt",
+      "path": "drived-hub/guest/receipt",
+      "status": 404,
+      "url": "http://localhost:8006/drived-hub/guest/receipt",
+      "title": "Not Found",
+      "errors": [],
+      "expectedDenied": false
+    },
+    {
+      "role": "guest",
+      "route": "schools.notifications.index",
+      "path": "drived-hub/notifications",
+      "status": 200,
+      "url": "http://localhost:8006/drived-hub/notifications",
+      "title": "",
+      "ajax": {
+        "status": 200,
+        "url": "http://localhost:8006/drived-hub/notifications",
+        "type": "application/json",
+        "bytes": 2147,
+        "magic": "{\"not",
+        "milliseconds": 58,
+        "excerpt": "{\"notifications\":[{\"id\":151,\"type\":\"certificate_claim_ready\",\"title\":\"Your certificate is ready for pickup\",\"message\":\"Hello! Your certificate of completion is ready. Please claim "
+      },
+      "errors": [],
+      "expectedDenied": false
+    }
+  ],
+  "boundaries": [
+    {
+      "role": "school-admin",
+      "name": "system-admin boundary",
+      "path": "/system-admin/users",
+      "mustDeny": true,
+      "status": 403,
+      "type": "basic",
+      "contentType": "application/json",
+      "bytes": 68,
+      "pass": true
+    },
+    {
+      "role": "school-admin",
+      "name": "path traversal",
+      "path": "/drived-hub/guest/receipt?path=..%2F..%2F.env",
+      "mustDeny": true,
+      "status": 403,
+      "type": "basic",
+      "contentType": "application/json",
+      "bytes": 52,
+      "pass": true
+    },
+    {
+      "role": "branch-secretary",
+      "name": "system-admin boundary",
+      "path": "/system-admin/users",
+      "mustDeny": true,
+      "status": 403,
+      "type": "basic",
+      "contentType": "application/json",
+      "bytes": 68,
+      "pass": true
+    },
+    {
+      "role": "branch-secretary",
+      "name": "admin-management boundary",
+      "path": "/drived-hub/admin/admin-management",
+      "mustDeny": true,
+      "status": 403,
+      "type": "basic",
+      "contentType": "application/json",
+      "bytes": 72,
+      "pass": true
+    },
+    {
+      "role": "branch-secretary",
+      "name": "path traversal",
+      "path": "/drived-hub/guest/receipt?path=..%2F..%2F.env",
+      "mustDeny": true,
+      "status": 403,
+      "type": "basic",
+      "contentType": "application/json",
+      "bytes": 52,
+      "pass": true
+    },
+    {
+      "role": "instructor",
+      "name": "system-admin boundary",
+      "path": "/system-admin/users",
+      "mustDeny": true,
+      "status": 0,
+      "type": "opaqueredirect",
+      "contentType": null,
+      "bytes": 0,
+      "pass": true
+    },
+    {
+      "role": "instructor",
+      "name": "school-admin boundary",
+      "path": "/drived-hub/admin/payments",
+      "mustDeny": true,
+      "status": 401,
+      "type": "basic",
+      "contentType": "application/json",
+      "bytes": 30,
+      "pass": true
+    },
+    {
+      "role": "instructor",
+      "name": "path traversal",
+      "path": "/drived-hub/guest/receipt?path=..%2F..%2F.env",
+      "mustDeny": true,
+      "status": 401,
+      "type": "basic",
+      "contentType": "application/json",
+      "bytes": 30,
+      "pass": true
+    },
+    {
+      "role": "student",
+      "name": "system-admin boundary",
+      "path": "/system-admin/users",
+      "mustDeny": true,
+      "status": 0,
+      "type": "opaqueredirect",
+      "contentType": null,
+      "bytes": 0,
+      "pass": true
+    },
+    {
+      "role": "student",
+      "name": "school-admin boundary",
+      "path": "/drived-hub/admin/payments",
+      "mustDeny": true,
+      "status": 401,
+      "type": "basic",
+      "contentType": "application/json",
+      "bytes": 30,
+      "pass": true
+    },
+    {
+      "role": "student",
+      "name": "another learner receipt",
+      "path": "/drived-hub/guest/receipt?path=receipts%2Fqa-audit-guest.png",
+      "mustDeny": true,
+      "status": 403,
+      "type": "basic",
+      "contentType": "application/json",
+      "bytes": 60,
+      "pass": true
+    },
+    {
+      "role": "student",
+      "name": "path traversal",
+      "path": "/drived-hub/guest/receipt?path=..%2F..%2F.env",
+      "mustDeny": true,
+      "status": 403,
+      "type": "basic",
+      "contentType": "application/json",
+      "bytes": 52,
+      "pass": true
+    },
+    {
+      "role": "guest",
+      "name": "system-admin boundary",
+      "path": "/system-admin/users",
+      "mustDeny": true,
+      "status": 0,
+      "type": "opaqueredirect",
+      "contentType": null,
+      "bytes": 0,
+      "pass": true
+    },
+    {
+      "role": "guest",
+      "name": "school-admin boundary",
+      "path": "/drived-hub/admin/payments",
+      "mustDeny": true,
+      "status": 401,
+      "type": "basic",
+      "contentType": "application/json",
+      "bytes": 30,
+      "pass": true
+    },
+    {
+      "role": "guest",
+      "name": "another learner receipt",
+      "path": "/drived-hub/guest/receipt?path=receipts%2Fqa-audit-student.png",
+      "mustDeny": true,
+      "status": 403,
+      "type": "basic",
+      "contentType": "application/json",
+      "bytes": 60,
+      "pass": true
+    },
+    {
+      "role": "guest",
+      "name": "path traversal",
+      "path": "/drived-hub/guest/receipt?path=..%2F..%2F.env",
+      "mustDeny": true,
+      "status": 403,
+      "type": "basic",
+      "contentType": "application/json",
+      "bytes": 52,
+      "pass": true
+    }
+  ],
+  "skipped": [],
+  "roleErrors": [
+    {
+      "role": "school-admin",
+      "errors": []
+    },
+    {
+      "role": "branch-secretary",
+      "errors": []
+    },
+    {
+      "role": "instructor",
+      "errors": []
+    },
+    {
+      "role": "student",
+      "errors": []
+    },
+    {
+      "role": "guest",
+      "errors": []
+    }
+  ]
+}

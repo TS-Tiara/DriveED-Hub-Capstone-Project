@@ -1598,6 +1598,9 @@ class AdminController extends Controller
                 'card_header_bg' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
                 'page_header_border' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
                 'badge_pending_bg' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
+                'badge_pending_bold' => 'nullable|boolean',
+                'badge_approved_bold' => 'nullable|boolean',
+                'badge_cancelled_bold' => 'nullable|boolean',
                 'badge_pending_text' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
                 'badge_approved_bg' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
                 'badge_approved_text' => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
@@ -1776,6 +1779,9 @@ class AdminController extends Controller
                 'card_header_bg' => $request->card_header_bg ?? '#f9fafb',
                 'page_header_border' => $request->page_header_border ?? '#667eea',
                 'badge_pending_bg' => $request->badge_pending_bg ?? '#fbbf24',
+                'badge_pending_bold' => $request->boolean('badge_pending_bold'),
+                'badge_approved_bold' => $request->boolean('badge_approved_bold'),
+                'badge_cancelled_bold' => $request->boolean('badge_cancelled_bold'),
                 'badge_pending_text' => $request->badge_pending_text ?? '#78350f',
                 'badge_approved_bg' => $request->badge_approved_bg ?? '#10b981',
                 'badge_approved_text' => $request->badge_approved_text ?? '#065f46',
@@ -2015,6 +2021,37 @@ class AdminController extends Controller
      */
     public function createSchedule(Request $request, School $school)
     {
+        if ($request->has('time_ranges')) {
+            $ranges = $request->validate([
+                'date' => 'required|date|after:today',
+                'time_ranges' => 'required|array|min:2|max:16',
+                'time_ranges.*.start_time' => 'required|date_format:H:i',
+                'time_ranges.*.end_time' => 'required|date_format:H:i',
+                'batch_dates' => 'prohibited',
+            ])['time_ranges'];
+            foreach ($ranges as $i => $range) {
+                foreach (array_slice($ranges, 0, $i) as $previous) {
+                    if ($range['start_time'] < $previous['end_time'] && $previous['start_time'] < $range['end_time']) {
+                        throw \Illuminate\Validation\ValidationException::withMessages(['time_ranges' => 'Time ranges must not overlap.']);
+                    }
+                }
+            }
+            return DB::transaction(function () use ($request, $school, $ranges) {
+                $created = [];
+                foreach ($ranges as $range) {
+                    $input = array_merge($request->except(['time_ranges', 'start_time', 'end_time']), $range);
+                    $single = Request::create($request->url(), 'POST', $input);
+                    $single->headers->set('Accept', 'application/json');
+                    $response = $this->createSchedule($single, $school);
+                    $data = $response->getData(true);
+                    if ($response->getStatusCode() !== 201) {
+                        throw \Illuminate\Validation\ValidationException::withMessages($data['errors'] ?? ['time_ranges' => $data['message'] ?? 'Unable to create all schedules.']);
+                    }
+                    $created[] = $data['schedule'];
+                }
+                return response()->json(['success' => true, 'message' => count($created).' schedules created.', 'schedules' => $created], 201);
+            });
+        }
         try {
             $admin = Auth::guard('admin')->user();
 
@@ -2026,7 +2063,7 @@ class AdminController extends Controller
             $validated = $request->validate([
                 'date' => 'required_without:batch_dates|nullable|date|after:today',
                 'batch_dates' => 'nullable|array|min:1',
-                'batch_dates.*' => 'required|date|after:today',
+                'batch_dates.*' => 'required|date|after:today|distinct',
                 'batch_lesson_prefix' => 'nullable|string|max:100',
                 'start_time' => 'required',
                 'end_time' => [
@@ -2123,12 +2160,8 @@ class AdminController extends Controller
             // Practical sessions are always 1-on-1 regardless of parent course type.
             if ($resolvedSessionType === 'practical') {
                 $maxStudents = 1;
-                // If it's practical, each instructor represents 1 student spot.
-                // We default max_instructors to the number of instructors being assigned, 
-                // or 1 if none are assigned yet.
-                if (!empty($validated['instructor_ids'])) {
-                    $maxInstructors = count($validated['instructor_ids']);
-                }
+                // Capacity also reserves places for instructors who join later.
+                $maxInstructors = max($maxInstructors, count($validated['instructor_ids'] ?? []));
             }
 
             DB::beginTransaction();
@@ -2160,6 +2193,14 @@ class AdminController extends Controller
                 // Instructor overlap check per date
                 foreach ($datesToCreate as $d) {
                     foreach ($instructors as $inst) {
+                        $existingMinutes = TimeSlot::where('school_id', $school->id)->whereDate('date', $d)
+                            ->whereHas('instructors', fn ($q) => $q->where('instructors.id', $inst->id))->get()
+                            ->sum(fn ($slot) => \Carbon\Carbon::parse($slot->start_time)->diffInMinutes(\Carbon\Carbon::parse($slot->end_time)));
+                        $newMinutes = \Carbon\Carbon::parse($validated['start_time'])->diffInMinutes(\Carbon\Carbon::parse($validated['end_time']));
+                        if ($existingMinutes + $newMinutes > 480) {
+                            DB::rollBack();
+                            throw \Illuminate\Validation\ValidationException::withMessages(['instructor_ids' => "Instructor {$inst->name} would exceed 8 hours on {$d}."]);
+                        }
                         $overlap = TimeSlot::where('school_id',$school->id)
                             ->where('date',$d)
                             ->whereHas('instructors', fn($q)=>$q->where('instructors.id',$inst->id))

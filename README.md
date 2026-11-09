@@ -2,7 +2,174 @@
 
 A school portal for managing students, instructors, courses, schedules, payments, and training records.
 
-[November 8](#fixes-november-8-2026) · [November 5](#fixes-november-5-2026) · [November 4](#latest-fixes-november-4-2026) · [November 1](#fixes-november-1-2026) · [October 31](#latest-fixes-october-31-2026) · [October 30](#fixes-october-30-2026) · [October 29](#fixes-october-29-2026) · [October 27](#fixes-october-27-2026) · [Earlier fixes](#earlier-fixes-october-20-to-26-2026)
+[November 9](#fixes-november-9-2026) · [November 8](#fixes-november-8-2026) · [November 5](#fixes-november-5-2026) · [November 4](#latest-fixes-november-4-2026) · [November 1](#fixes-november-1-2026) · [October 31](#latest-fixes-october-31-2026) · [October 30](#fixes-october-30-2026) · [October 29](#fixes-october-29-2026) · [October 27](#fixes-october-27-2026) · [Earlier fixes](#earlier-fixes-october-20-to-26-2026)
+
+## Fixes November 9 2026
+
+Addressed the findings in the November 8 report, with changes to learner pages, scheduling, school settings, account removal and instructor session logging.
+
+Screenshots are shown directly below each change group. Before images come from the supplied report; after images show the fixed local app with QA records. Branding, data and framing differ. Click any image to view it at full size.
+
+### Course information and learner dashboards
+
+- Available-course summaries display package training hours and price ranges instead of zero-valued course defaults.
+- Dashboard training totals use enrollment hour allocations, including the selected package.
+- Progress bars render with no colored fill at 0%, including after AJAX navigation.
+- Removed the redundant active-enrollment count from desktop and mobile learner dashboard cards.
+
+
+**Course training hours and package prices**
+
+| Before: reported issue | After: fixed local app |
+| --- | --- |
+| ![Before: Course training hours and package prices](docs/screenshots/nov8-document-findings/course-summary-reported-before.png) | ![After: Course training hours and package prices](docs/screenshots/nov8-document-findings/course-summary-after.png) |
+
+
+**Package information**
+
+| Before: reported issue | After: fixed local app |
+| --- | --- |
+| ![Before: Package information](docs/screenshots/nov8-document-findings/course-packages-reported-before.png) | ![After: Package information](docs/screenshots/nov8-document-findings/course-packages-after.png) |
+
+
+**Zero-percent learning progress**
+
+| Before: reported issue | After: fixed local app |
+| --- | --- |
+| ![Before: Zero-percent learning progress](docs/screenshots/nov8-document-findings/progress-enrollment-reported-before.png) | ![After: Zero-percent learning progress](docs/screenshots/nov8-document-findings/progress-enrollment-after.png) |
+
+
+**Enrollment status without the redundant count**
+
+| Before: reported issue | After: fixed local app |
+| --- | --- |
+| ![Before: Enrollment status without the redundant count](docs/screenshots/nov8-document-findings/enrollment-count-reported-before.png) | ![After: Enrollment status without the redundant count](docs/screenshots/nov8-document-findings/progress-enrollment-after.png) |
+
+### Scheduling
+
+- Students and instructors can choose one day, all days or selected dates from a sequential schedule batch. Failed batch requests roll back earlier reservations or assignments.
+- Administrators can create multiple schedules on one date using additional start/end time dropdown pairs. Non-sequential hours are supported; overlapping or invalid ranges are rejected.
+- Same-day time ranges and sequential multi-day scheduling cannot be enabled together.
+- PDC instructor capacity is configurable even when no instructor is pre-assigned. Multiple instructors can join up to that capacity, while retaining one learner per instructor.
+- The additional-instructor indicator expands the remaining names. Calendar overflow opens the day's schedule details.
+- Fixed the instructor schedule success notification running before its toast helper was available.
+
+
+**Instructor batch schedule selection**
+
+| Before: reported issue | After: fixed local app |
+| --- | --- |
+| ![Before: Instructor batch schedule selection](docs/screenshots/nov8-document-findings/instructor-batch-reported-before.png) | ![After: Instructor batch schedule selection](docs/screenshots/nov8-document-findings/instructor-batch-after.png) |
+
+
+**Student batch schedule selection**
+
+| Before: reported issue | After: fixed local app |
+| --- | --- |
+| ![Before: Student batch schedule selection](docs/screenshots/nov8-document-findings/student-batch-reported-before.png) | ![After: Student batch schedule selection](docs/screenshots/nov8-document-findings/student-batch-after.png) |
+
+
+**Multiple time ranges on one date**
+
+| Before: reported issue | After: fixed local app |
+| --- | --- |
+| ![Before: Multiple time ranges on one date](docs/screenshots/nov8-document-findings/schedule-creation-reported-before.png) | ![After: Multiple time ranges on one date](docs/screenshots/nov8-document-findings/schedule-creation-after.png) |
+
+
+**Configurable PDC instructor capacity**
+
+| Before: reported issue | After: fixed local app |
+| --- | --- |
+| ![Before: Configurable PDC instructor capacity](docs/screenshots/nov8-document-findings/pdc-capacity-reported-before.png) | ![After: Configurable PDC instructor capacity](docs/screenshots/nov8-document-findings/pdc-capacity-after.png) |
+
+
+**Expandable additional instructor names**
+
+| Before: reported issue | After: fixed local app |
+| --- | --- |
+| ![Before: Expandable additional instructor names](docs/screenshots/nov8-document-findings/schedule-instructors-reported-before.png) | ![After: Expandable additional instructor names](docs/screenshots/nov8-document-findings/schedule-instructors-after.png) |
+
+### School appearance settings
+
+- Added text-color and bold-text controls alongside background colors for pending, approved and cancelled status labels. Labels share these settings and consistent dimensions across school pages.
+- Fixed solid-color and uploaded-image backgrounds being covered by the main content area.
+- Corrected escaped image URLs in CSS and background-layer stacking so uploaded backgrounds load and appear correctly.
+- Added and applied a migration for the three status-label bold settings in the running local application.
+
+
+**Consistent payment status labels**
+
+| Before: reported issue | After: fixed local app |
+| --- | --- |
+| ![Before: Consistent payment status labels](docs/screenshots/nov8-document-findings/payment-status-reported-before.png) | ![After: Consistent payment status labels](docs/screenshots/nov8-document-findings/payment-status-after.png) |
+
+
+**Status background, text color and bold settings**
+
+| Before: reported issue | After: fixed local app |
+| --- | --- |
+| ![Before: Status background, text color and bold settings](docs/screenshots/nov8-document-findings/status-settings-reported-before.png) | ![After: Status background, text color and bold settings](docs/screenshots/nov8-document-findings/status-settings-after.png) |
+
+
+**School background settings**
+
+| Before: reported issue | After: fixed local app |
+| --- | --- |
+| ![Before: School background settings](docs/screenshots/nov8-document-findings/background-reported-before.png) | ![After: School background settings](docs/screenshots/nov8-document-findings/background-after.png) |
+
+**Uploaded image background after the fix**
+
+![Uploaded school background rendered correctly](docs/screenshots/nov8-document-findings/background-image-after.png)
+
+### Account removal and historical records
+
+- System administrators must type `delete {name}` before removing an account from active use.
+- Removal archives the account and preserves enrollments, payments, bookings and training history.
+- Archived accounts lose existing portal access. Archived rows no longer offer permanent deletion.
+
+
+**Typed account removal confirmation and archival**
+
+| Before: reported issue | After: fixed local app |
+| --- | --- |
+| ![Before: Typed account removal confirmation and archival](docs/screenshots/nov8-document-findings/user-removal-reported-before.png) | ![After: Typed account removal confirmation and archival](docs/screenshots/nov8-document-findings/user-removal-after.png) |
+
+### Instructor session logging: duplicate sessions and missing grades
+
+Fixed the reported duplicate submissions, missing grades and misleading success messages:
+
+- Logging the same session for the same learner, instructor, date and start time is rejected, including older records without a separate start-time field.
+- Attended sessions require a grade from 0 to 100. Zero is a valid grade; absences can be recorded without a grade. An existing attended session's grade cannot be cleared.
+- Successful submissions persist the session, attendance and grade and link the session to its booking. Session lists show whether admin verification is pending or complete.
+- Failed saves roll back without leaving partial session or booking records. Validation errors are displayed instead of a generic success message.
+
+Verified locally through the [focused backend regression assertions](docs/screenshots/nov8-document-findings/focused-server.log) and [browser checks](docs/screenshots/nov8-document-findings/focused-browser-results.json). The backend checks confirm saved grades and booking links, duplicate rejection without extra records, and verification status changes. Browser checks confirm required grades, the absence exception and the displayed verification status.
+
+[Session logging screenshots](docs/screenshots/nov8-document-findings/index.html#session-grade) · [Verification status screenshots](docs/screenshots/nov8-document-findings/index.html#session-verification)
+
+
+**Required session grades**
+
+| Before: reported issue | After: fixed local app |
+| --- | --- |
+| ![Before: Required session grades](docs/screenshots/nov8-document-findings/session-grade-reported-before.png) | ![After: Required session grades](docs/screenshots/nov8-document-findings/session-grade-after.png) |
+
+
+**Visible admin verification status**
+
+| Before: reported issue | After: fixed local app |
+| --- | --- |
+| ![Before: Visible admin verification status](docs/screenshots/nov8-document-findings/session-verification-reported-before.png) | ![After: Visible admin verification status](docs/screenshots/nov8-document-findings/session-verification-after.png) |
+
+### Verification and screenshots
+
+Passed **18 backend suites, 36 focused backend assertions, 58 focused browser checks, 38 existing browser workflows and 207 route/login checks across six roles**. The route scan checked 126 AJAX responses and 53 document/export responses. All 27 access-boundary probes passed, and 68 mobile pages had no document-level horizontal overflow. Blade compilation and whitespace checks passed.
+
+Mutation tests ran against an isolated database copy with mail faked or logged. The temporary test application, copied database and dump were removed afterward. The original local application remains on port 8004; its existing user, enrollment and payment records were preserved.
+
+The gallery contains **15 before-and-after comparisons**. Before images come from the supplied report; after images were captured in the fixed local application using QA records. Branding, data and framing differ.
+
+[Before-and-after screenshots](docs/screenshots/nov8-document-findings/index.html) · [Detailed test report](docs/screenshots/nov8-document-findings/README.md) · [Download evidence](docs/screenshots/nov8-document-findings.zip)
 
 ## Fixes November 8 2026
 

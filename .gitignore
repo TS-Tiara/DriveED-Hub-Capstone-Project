@@ -116,3 +116,10 @@ Thumbs.db
 !/tests/build-seven-fixes-gallery.mjs
 
 !/tests/verify-session-edit-fix.php
+!/tests/verify-nov8-document-findings.php
+!/tests/capture-nov8-findings.mjs
+!/tests/nov8-document-fixture.php
+!/tests/verify-nov8-document-ui.mjs
+!/tests/build-nov8-document-gallery.mjs
+!/docs/screenshots/nov8-document-findings/server-logs/*.log
+!/docs/screenshots/nov8-document-findings/*.log

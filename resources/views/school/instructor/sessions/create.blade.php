@@ -374,7 +374,7 @@
                 <h2>Session Details</h2>
             </div>
             <div class="card-body">
-                <form action="{{ route('schools.instructor.sessions.store', $school) }}" method="POST" id="sessionForm">
+                <form action="{{ route('schools.instructor.sessions.store', $school) }}" method="POST" id="sessionForm" class="native-form" data-no-ajax="1">
                     @csrf
 
                     <!-- Enrollment Selection -->
@@ -456,8 +456,8 @@
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" for="session_grade">Grade (0 to 100)</label>
-                        <input class="form-input" type="number" id="session_grade" name="session_grade" min="0" max="100" step="0.01" value="{{ old('session_grade') }}">
+                        <label class="form-label" for="session_grade">Grade (0 to 100) *</label>
+                        <input class="form-input" type="number" id="session_grade" name="session_grade" required min="0" max="100" step="0.01" value="{{ old('session_grade') }}">
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="attendance_status">Attendance</label>
@@ -653,4 +653,5 @@
     }
 })();
 </script>
+@include('partials.session-grade-requirement')
 @endsection

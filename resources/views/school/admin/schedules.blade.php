@@ -1741,9 +1741,9 @@
                                     </div>
                                 @endforeach
                                 @if($daySlots->count() > 3)
-                                    <div class="slot-bar more-indicator">
+                                    <button type="button" class="slot-bar more-indicator" onclick="event.stopPropagation(); showDayModal('{{ $dateStr }}', '{{ $currentDate->format('F j, Y, l') }}')">
                                         +{{ $daySlots->count() - 3 }} more
-                                    </div>
+                                    </button>
                                 @endif
                             </div>
                         @endif
@@ -1884,9 +1884,7 @@
                                                                 {{ $isSelf ? '[S] ' : '[A] ' }}{{ $firstInstructor->name }}
                                                             </span>
                                                             @if($instructorCount > 1)
-                                                                <span style="font-size: 0.75rem; color: #64748b; font-weight: 600; align-self: center; margin-left: 4px;">
-                                                                    +{{ $instructorCount - 1 }} more
-                                                                </span>
+                                                                <details class="additional-instructors"><summary style="cursor:pointer;">+{{ $instructorCount - 1 }} more</summary>@foreach($timeslot->instructors->skip(1) as $additionalInstructor)<div>{{ ($additionalInstructor->pivot->assignment_type ?? '') === 'self_selected' ? '[S]' : '[A]' }} {{ $additionalInstructor->name }}</div>@endforeach</details>
                                                             @endif
                                                         @else
                                                             <span style="color: #cbd5e1; font-style: italic; font-size: 0.85rem;">Unassigned</span>
@@ -2061,10 +2059,12 @@
                             </span>
                         </label>
                         <small class="text-muted" id="batchSchedulingHint" style="display: block;">
-                            Creates sequential schedule days (e.g. Day 1, Day 2) under one linked batch so students take the full sequence.
+                            Links sequential lesson days in one batch. Learners and instructors can choose all or selected dates.
                         </small>
                     </div>
 
+                    <div class="form-group"><label style="display:block;margin-bottom:6px;"><input type="checkbox" id="toggleTimeRanges" onchange="toggleTimeRanges(this.checked)"> Create multiple time ranges on one date</label><small class="text-muted" style="display:block;">Add separate start and end times. This cannot be combined with sequential multi-day scheduling.</small></div>
+                    <div id="timeRangesGroup" hidden><div id="timeRangesRows"></div><button type="button" class="btn btn-secondary" onclick="addTimeRange()">Add time range</button></div>
                     <div id="singleDateGroup" class="form-group">
                         <label class="form-label">Date <span class="text-danger">*</span></label>
                         <input type="date" name="date" id="createScheduleDate" class="form-control {{ $errors->has('date') ? 'is-invalid' : '' }}" min="{{ date('Y-m-d', strtotime('+1 day')) }}" value="{{ old('date') }}">
@@ -2153,6 +2153,7 @@
                             initCreateScheduleDates();
                         }
                         function toggleBatchMode(enabled) {
+                            if (enabled && document.getElementById('toggleTimeRanges')?.checked) {document.getElementById('toggleTimeRanges').checked = false; toggleTimeRanges(false);}
                             const singleGroup = document.getElementById('singleDateGroup');
                             const batchGroup = document.getElementById('batchDatesGroup');
                             const dateInput = document.getElementById('createScheduleDate');
@@ -2311,6 +2312,7 @@
                         }
 
                         function validateTimeRange() {
+                            if (document.getElementById('toggleTimeRanges')?.checked) return true;
                             const start = document.getElementById('start_time_hidden').value;
                             const end = document.getElementById('end_time_hidden').value;
                             const errorMsg = document.getElementById('timeRangeError');
@@ -2491,6 +2493,21 @@
     </div>
 
     <script>
+        function toggleTimeRanges(enabled) {
+            if(enabled){ document.getElementById('toggleBatchScheduling').checked=false;toggleBatchMode(false); }
+            document.getElementById('timeRangesGroup').hidden=!enabled;
+            document.querySelectorAll('#timeRangesRows select').forEach(i=>i.disabled=!enabled);
+            if(enabled && !document.querySelector('#timeRangesRows select')){ addTimeRange();addTimeRange(); }
+            document.getElementById('start_time_hidden').disabled=enabled;
+            document.getElementById('end_time_hidden').disabled=enabled;
+        }
+        function addTimeRange() {
+            const container=document.getElementById('timeRangesRows'), index=Number(container.dataset.next||0);
+            container.dataset.next=index+1;
+            const row=document.createElement('div');row.style.cssText='display:flex;gap:8px;flex-wrap:wrap;margin:10px 0';
+            ['start_time','end_time'].forEach((field)=>{const label=document.createElement('label');label.textContent=field==='start_time'?'Start time':'End time'; const input=document.createElement('select');input.name='time_ranges['+index+']['+field+']';input.required=true;input.className='form-control';input.add(new Option('Choose time',''));for(let hour=0;hour<24;hour++)for(const minute of ['00','30']){const time=String(hour).padStart(2,'0')+':'+minute;input.add(new Option(time,time));}label.append(input);row.append(label);});
+            const remove=document.createElement('button');remove.type='button';remove.textContent='Remove';remove.className='btn btn-secondary';remove.onclick=()=>row.remove();row.append(remove);container.append(row);
+        }
         var currentSlotId = null;
         var currentSlotData = null;
 
@@ -2596,17 +2613,11 @@
                     const maxStudentsInput = document.getElementById('createMaxStudents');
                     if (maxStudentsInput) maxStudentsInput.disabled = true;
 
-                    if (selectedInstructors > 1) {
-                        // Batch Multi-Assign Mode active
-                        batchModeAlert.style.display = 'block';
-                        maxInstructorsGroup.style.display = 'none';
-                        maxInstructorsInput.disabled = true;
-                    } else {
-                        batchModeAlert.style.display = 'none';
-                        maxInstructorsGroup.style.display = 'block';
-                        maxInstructorsInput.value = 1;
-                        maxInstructorsInput.disabled = true;
-                    }
+                    batchModeAlert.style.display = selectedInstructors > 1 ? 'block' : 'none';
+                    maxInstructorsGroup.style.display = 'block';
+                    maxInstructorsInput.disabled = false;
+                    maxInstructorsInput.min = Math.max(1, selectedInstructors);
+                    if (Number(maxInstructorsInput.value) < selectedInstructors) maxInstructorsInput.value = selectedInstructors;
                 }
             }
 

@@ -791,10 +791,8 @@
                                         {{ ucfirst($availableCourse->course_type ?? 'Theoretical') }}
                                     </span>
                                     &nbsp;•&nbsp;
-                                    {{ $availableCourse->duration_hours ?? $availableCourse->hours_required ?? '?' }} hours
-                                    @if($availableCourse->price)
-                                        &nbsp;•&nbsp; ₱{{ number_format($availableCourse->price, 2) }}
-                                    @endif
+                                    {{ $availableCourse->display_hours }} hours
+                                    &nbsp;•&nbsp; {{ $availableCourse->display_price }}
                                 </p>
                             </div>
                             <a href="{{ school_route('student.courses.show', ['course' => $availableCourse->id]) }}" class="enroll-btn">

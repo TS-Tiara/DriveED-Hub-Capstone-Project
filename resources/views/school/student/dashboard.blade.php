@@ -844,7 +844,7 @@
                 </div>
                 <div class="progress-bar-wrapper">
                     <div class="progress-bar-container">
-                        <div class="progress-bar-fill progress-fill-dynamic" data-progress="{{ $progressPercentage }}" data-fill="{{ $ringColor }}"></div>
+                        <div class="progress-bar-fill progress-fill-dynamic" role="progressbar" aria-label="Learning progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ $progressPercentage }}" style="width: {{ max(0, min(100, $progressPercentage)) }}%; background: {{ $progressPercentage > 0 ? $ringColor : 'transparent' }};"></div>
                     </div>
                 </div>
             </div>
@@ -920,10 +920,6 @@
                             {{ $hasPassedTheoretical ? 'Passed' : 'In Progress' }}
                         </span>
                     @endif
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Active Enrollments</span>
-                    <span class="info-value">{{ $activeEnrollments->count() }}</span>
                 </div>
             </div>
         </div>
@@ -1004,7 +1000,7 @@
                 </div>
                 <div class="progress-bar-wrapper">
                     <div class="progress-bar-container">
-                        <div class="progress-bar-fill progress-fill-dynamic" data-progress="{{ $progressPercentage }}" data-fill="{{ $ringColor }}"></div>
+                        <div class="progress-bar-fill progress-fill-dynamic" role="progressbar" aria-label="Learning progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ $progressPercentage }}" style="width: {{ max(0, min(100, $progressPercentage)) }}%; background: {{ $progressPercentage > 0 ? $ringColor : 'transparent' }};"></div>
                     </div>
                 </div>
             </div>
@@ -1038,10 +1034,6 @@
                             {{ $hasPassedTheoretical ? 'Passed' : 'In Progress' }}
                         </span>
                     @endif
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Active Enrollments</span>
-                    <span class="info-value">{{ $activeEnrollments->count() }}</span>
                 </div>
             </div>
         </div>
@@ -1138,20 +1130,7 @@
     </div>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('.progress-fill-dynamic').forEach(function (bar) {
-        const value = Number(bar.dataset.progress || 0);
-        const clamped = Math.max(0, Math.min(100, value));
-        bar.style.width = clamped + '%';
 
-        const fill = bar.dataset.fill;
-        if (fill) {
-            bar.style.background = fill;
-        }
-    });
-});
-</script>
 
 @include('school.partials.enrollment-payment-modal')
 @include('school.partials.enrollment-license-modal')

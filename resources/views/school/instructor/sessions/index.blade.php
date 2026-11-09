@@ -429,7 +429,7 @@
     <div class="page-header">
         <div class="page-header-left">
             <h1 class="page-title">Session Completions</h1>
-            <p class="page-subtitle">View and manage verified session completions</p>
+            <p class="page-subtitle">View session logs and their admin verification status</p>
         </div>
         <div class="header-actions">
             <div class="export-dropdown">
@@ -562,7 +562,7 @@
                         <th>Course</th>
                         <th>Type</th>
                         <th>Hours</th>
-                        <th>Actions</th>
+                        <th>Admin verification</th><th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -591,7 +591,7 @@
                         <td>
                             <span class="hours-badge">{{ number_format($session->hours_completed, 1) }}h</span>
                         </td>
-                        <td>
+                        <td><span class="session-verification">{{ $session->verification_status }}</span></td><td>
                             <div class="action-btns">
                                 <a href="{{ school_route('instructor.sessions.show', ['sessionCompletion' => $session->id]) }}" 
                                    class="btn-action btn-view" title="View Details">
@@ -654,7 +654,7 @@
             {{-- Mobile card view --}}
             @foreach($sessions as $session)
             <div class="session-mobile-card" data-type="{{ $session->session_type }}">
-                <div class="session-mobile-card-header">
+                <p class="session-verification">Admin: {{ $session->verification_status }}</p><div class="session-mobile-card-header">
                     <strong>{{ $session->enrollment->student->name ?? 'N/A' }}</strong>
                     <span class="type-badge type-{{ $session->session_type }}">{{ ucfirst($session->session_type) }}</span>
                 </div>

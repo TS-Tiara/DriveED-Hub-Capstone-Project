@@ -27,7 +27,7 @@ class SessionCompletionController extends Controller
             $instructor = Auth::guard('instructor')->user();
             $isArchivedView = $request->boolean('archived') || $request->get('tab') === 'archived';
 
-            $rawQuery = SessionCompletion::with(['enrollment.student', 'enrollment.course'])
+            $rawQuery = SessionCompletion::with(['enrollment.student', 'enrollment.course', 'booking'])
                 ->where('instructor_id', $instructor->id)
                 ->whereHas('enrollment.course', function ($query) use ($school) {
                     $query->where('school_id', $school->id);
@@ -74,7 +74,7 @@ class SessionCompletionController extends Controller
             $admin = Auth::guard('admin')->user();
             $isArchivedView = $request->boolean('archived') || $request->get('tab') === 'archived';
             
-            $baseSessionsQuery = SessionCompletion::with(['enrollment.student', 'enrollment.course', 'instructor'])
+            $baseSessionsQuery = SessionCompletion::with(['enrollment.student', 'enrollment.course', 'instructor', 'booking'])
                 ->whereHas('enrollment.course', function ($query) use ($school) {
                     $query->where('school_id', $school->id);
                 });
@@ -212,6 +212,9 @@ class SessionCompletionController extends Controller
             );
 
             if (!$check['available']) {
+                if ($request->wantsJson()) {
+                    throw \Illuminate\Validation\ValidationException::withMessages(['session_time' => 'Scheduling Conflict: '.$check['message']]);
+                }
                 return back()
                     ->withInput()
                     ->with('error', 'Scheduling Conflict: ' . $check['message'])
@@ -222,6 +225,15 @@ class SessionCompletionController extends Controller
         DB::beginTransaction();
         try {
             $enrollment = EnrollmentRequest::whereKey($enrollment->id)->lockForUpdate()->firstOrFail();
+            if (SessionCompletion::where('school_id', $school->id)
+                ->where('enrollment_id', $enrollment->id)
+                ->where('instructor_id', $instructor->id)
+                ->whereDate('session_date', $request->session_date)
+                ->where(fn ($q) => $q->where('start_time', $startTime)
+                    ->orWhere(fn ($legacy) => $legacy->whereNull('start_time')->where('session_time', $startTime)))
+                ->exists()) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['session_time' => 'This session is already logged. Edit the existing session instead.']);
+            }
             \App\Support\TrainingHours::ensureCanLog($enrollment, $request->session_type, (float) $request->hours_completed);
             $sessionCompletion = SessionCompletion::create([
                 'school_id' => $school->id,
@@ -230,7 +242,7 @@ class SessionCompletionController extends Controller
                 'session_type' => $request->session_type,
                 'hours_completed' => $request->hours_completed,
                 'session_date' => $request->session_date,
-                'session_time' => $request->session_time,
+                'session_time' => $startTime,
                 'start_time' => $startTime,
                 'end_time' => $endTime,
                 'status' => $request->status ?? 'completed',
@@ -270,13 +282,23 @@ class SessionCompletionController extends Controller
 
             DB::commit();
 
+            if ($request->wantsJson()) {
+                return response()->json(['success' => true, 'session' => $sessionCompletion->fresh()], 201);
+            }
             return redirect()
                 ->route('schools.instructor.sessions.index', ['school' => $school->slug])
                 ->with('success', 'Session logged successfully.');
 
         }
+        catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            throw $e;
+        }
         catch (\Exception $e) {
             DB::rollBack();
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Failed to save the session. Please try again.'], 500);
+            }
             return back()
                 ->withInput()
                 ->with('error', 'Failed to log session: ' . $e->getMessage());
@@ -340,7 +362,7 @@ class SessionCompletionController extends Controller
         $instructor = Auth::guard('instructor')->user();
 
         // Fetch session manually
-        $sessionCompletion = SessionCompletion::with(['enrollment.student', 'enrollment.course'])
+        $sessionCompletion = SessionCompletion::with(['enrollment.student', 'enrollment.course', 'booking'])
             ->findOrFail($sessionCompletion);
 
         // Verify belongs to school

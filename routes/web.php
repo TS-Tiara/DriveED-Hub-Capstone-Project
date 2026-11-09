@@ -455,6 +455,7 @@ Route::prefix('{school:slug}')
                     Route::get('/my-schedule', [InstructorTimeSlotController::class , 'mySchedule'])->name('schedule');
                     Route::get('/session-report/{format}', [SessionReportController::class, 'download'])->whereIn('format', ['pdf', 'xlsx'])->name('session-report');
                     Route::post('/timeslots/{id}/toggle', [InstructorTimeSlotController::class , 'toggle'])->name('timeslots.toggle');
+                    Route::post('/timeslots/batch/select', [InstructorTimeSlotController::class, 'selectBatch'])->name('timeslots.batch');
                     Route::post('/timeslots/{id}/request-removal', [InstructorTimeSlotController::class , 'requestRemoval'])->name('timeslots.requestRemoval');
 
                     Route::get('/profile', [InstructorTimeSlotController::class , 'profile'])->name('profile');
@@ -604,6 +605,7 @@ Route::prefix('{school:slug}')
 
                     // Booking queue management (used in schedule page)
                     Route::post('/bookings', [BookingController::class , 'store'])->name('bookings.store');
+                    Route::post('/bookings/batch', [BookingController::class, 'storeBatch'])->name('bookings.batch');
                     Route::post('/bookings/{booking}/confirm', [BookingController::class , 'confirmBooking'])->name('bookings.confirm');
                     Route::delete('/bookings/{booking}/queue', [BookingController::class , 'removeFromQueue'])->name('bookings.removeQueue');
                     Route::post('/bookings/{booking}/cancel', [BookingController::class, 'cancelBooking'])->name('bookings.cancel');

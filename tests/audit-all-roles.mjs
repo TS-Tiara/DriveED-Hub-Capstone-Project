@@ -48,7 +48,7 @@ async function audit(role) {
    const url=base+'/'+uri;current=route.name||route.uri;
    const entry={role,route:current,path:uri};const errorStart=errors.length;
    try {
-    const download=/exports?\/|\/session-report\/|\/view-license$|\/view-credential$|\/gcash-qr\/|\/vehicle-image\//.test(uri)||/\.export|\.excel|\.pdf$/.test(route.name||'');
+    const download=/exports?\/|\/session-report\/|\/view-license$|\/view-credential$|\/license\/\d+$|\/gcash-qr\/|\/vehicle-image\//.test(uri)||/\.export|\.excel|\.pdf$/.test(route.name||'');
     if(download){entry.download=await fetchResult(page,url);entry.status=entry.download.status;}
     else {
      const response=await page.goto(url,{waitUntil:'domcontentloaded'});await pause(150);
@@ -102,7 +102,7 @@ async function audit(role) {
  finally{await context.close();}
 }
 try {
- for(const role of ['system-admin','school-admin','branch-secretary','instructor','student','guest'])await audit(role);
+ for(const role of (process.env.AUDIT_ROLES?.split(',') || ['system-admin','school-admin','branch-secretary','instructor','student','guest']))await audit(role);
 }finally {
  await fs.writeFile(output+'/browser-results.json',JSON.stringify({environment:base,database:manifest.database,results,boundaries,skipped,roleErrors},null,2));
  await browser.close();
