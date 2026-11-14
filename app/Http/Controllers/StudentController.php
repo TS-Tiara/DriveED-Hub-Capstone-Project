@@ -602,7 +602,7 @@ class StudentController extends Controller
         $student = Auth::guard('student')->user();
         $student->load('branchRelation');
 
-        // Get TDC progress for LTO compliance (15h/3d rule)
+        // Get TDC progress for LTO compliance (15h/2d rule)
         $tdcEnrollment = EnrollmentRequest::where('learner_id', $student->id)
             ->where('school_id', $school->id)
             ->whereHas('course', function($q) {
@@ -620,7 +620,7 @@ class StudentController extends Controller
                 'hours' => $completions->sum('hours_completed'),
                 'unique_dates_count' => $uniqueDates->count(),
                 'unique_dates' => $uniqueDates,
-                'is_compliant' => $completions->sum('hours_completed') >= 15 && $uniqueDates->count() >= 3
+                'is_compliant' => $completions->sum('hours_completed') >= 15 && $uniqueDates->count() >= 2
             ];
         }
 

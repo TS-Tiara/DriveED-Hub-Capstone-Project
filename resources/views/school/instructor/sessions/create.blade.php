@@ -374,7 +374,7 @@
                 <h2>Session Details</h2>
             </div>
             <div class="card-body">
-                <form action="{{ route('schools.instructor.sessions.store', $school) }}" method="POST" id="sessionForm" class="native-form" data-no-ajax="1">
+                <form action="{{ route('schools.instructor.sessions.store', $school) }}" method="POST" enctype="multipart/form-data" id="sessionForm" class="native-form" data-no-ajax="1">
                     @csrf
 
                     <!-- Enrollment Selection -->
@@ -439,10 +439,16 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label">Session Time <span class="required">*</span></label>
-                            <input type="time" name="session_time" id="session_time" 
+                            <input type="time" name="session_time" id="session_time" min="06:00" max="18:00"
                                    class="form-input" 
-                                   value="{{ old('session_time', date('H:i')) }}" required>
+                                   value="{{ old('session_time', '09:00') }}" required>
+                            <div class="form-hint">Session logging is available from 6:00 AM to 6:00 PM.</div>
                         </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="attachment">Assessment file (optional)</label>
+                        <input class="form-input" type="file" id="attachment" name="attachment" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+                        <div class="form-hint">Attach an assessment or graded paper (PDF, Word, or image; up to 10 MB).</div>
                     </div>
 
                     <!-- Hours Completed -->
@@ -561,6 +567,18 @@
     const enrollmentInfo = document.getElementById('enrollmentInfo');
     const sessionTypeSelect = document.getElementById('session_type');
     const sessionTypeHint = document.getElementById('sessionTypeHint');
+    const sessionForm = document.getElementById('sessionForm');
+    sessionForm?.addEventListener('submit', function(event) {
+        const start = document.getElementById('session_time').value;
+        const hours = Number(document.getElementById('hours_completed').value);
+        const [hour, minute] = (start || '').split(':').map(Number);
+        const finish = (hour * 60) + minute + (hours * 60);
+        if (!start || hour < 6 || hour > 18 || finish > 18 * 60) {
+            event.preventDefault();
+            showToast?.('Sessions must start at or after 6:00 AM and finish by 6:00 PM.', 'error');
+            document.getElementById('session_time').focus();
+        }
+    });
 
     function formatCourseType(courseType) {
         return courseType ? courseType.charAt(0).toUpperCase() + courseType.slice(1) : '';

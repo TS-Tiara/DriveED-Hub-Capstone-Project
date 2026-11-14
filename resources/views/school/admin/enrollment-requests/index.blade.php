@@ -1306,6 +1306,9 @@
     </div>
 
     <div class="filters-row">
+        <a href="{{ school_route('admin.enrollments.index', ['archived' => ($isArchivedView ?? false) ? null : 1]) }}" class="btn btn-outline-secondary" style="align-self:flex-start;text-decoration:none;">
+            <i class="bi bi-archive"></i> {{ ($isArchivedView ?? false) ? 'Active enrollments' : 'Archived enrollments' }}
+        </a>
         <form method="GET" action="{{ school_route('admin.enrollments.index') }}" data-no-ajax="1" style="display:flex;gap:8px;flex-wrap:wrap;">
             @foreach(['status', 'branch', 'sort'] as $filter)
                 @if(request()->filled($filter))<input type="hidden" name="{{ $filter }}" value="{{ request($filter) }}">@endif
@@ -1440,6 +1443,18 @@
                         </td>
                         <td>
                             <div class="action-buttons">
+                                @if($isArchivedView ?? false)
+                                    <form method="POST" action="{{ route('schools.admin.enrollments.restore', ['school' => $school, 'enrollmentRequest' => $request->id]) }}" onsubmit="return confirm('Restore this enrollment record?')">
+                                        @csrf
+                                        <button type="submit" class="btn btn-view">Restore</button>
+                                    </form>
+                                @else
+                                    <form method="POST" action="{{ route('schools.admin.enrollments.archive', ['school' => $school, 'enrollmentRequest' => $request->id]) }}" onsubmit="return confirm('Archive this enrollment record? It will remain linked to the learner history.')">
+                                        @csrf
+                                        <button type="submit" class="btn btn-view">Archive</button>
+                                    </form>
+                                @endif
+                                @unless($isArchivedView ?? false)
                                 @if($request->status === 'pending' && $request->cancellation_requested)
                                     <form id="withdrawForm{{ $request->id }}" method="POST" action="{{ route('schools.admin.enrollments.cancel', ['school' => $school, 'enrollmentRequest' => $request->id]) }}" style="display:inline;">
                                         @csrf
@@ -1484,6 +1499,7 @@
                                     </button>
                                     <span class="badge bg-success" style="font-size: 0.8rem; padding: 6px 10px;">Active Student</span>
                                 @endif
+                                @endunless
                             </div>
                         </td>
                     </tr>

@@ -6,7 +6,7 @@ use App\Models\School;
 use Illuminate\Http\Request;
 
 if (! function_exists('current_school')) {
-    function current_school(Request $request = null): ?School
+    function current_school(?Request $request = null): ?School
     {
         $request ??= request();
 

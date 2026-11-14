@@ -28,6 +28,10 @@ class SessionCompletion extends Model
         'end_time',
         'status',
         'archived_at',
+        'attachment_path',
+        'attachment_name',
+        'archived_with_user',
+        'archived_with_schedule',
         'notes',
         'logged_by',
     ];
@@ -37,6 +41,8 @@ class SessionCompletion extends Model
         'session_date' => 'date',
         'session_time' => 'string',
         'archived_at' => 'datetime',
+        'archived_with_user' => 'boolean',
+        'archived_with_schedule' => 'boolean',
     ];
 
     public function booking(): BelongsTo

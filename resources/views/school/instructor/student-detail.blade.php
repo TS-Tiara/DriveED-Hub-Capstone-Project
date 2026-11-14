@@ -299,7 +299,12 @@
                     <div class="session-card {{ $session['is_mine'] ? 'my-session' : '' }}">
                         <div class="session-header">
                             <div>
-                                <div class="session-date">{{ \Carbon\Carbon::parse($session['date'])->format('l, M d, Y - g:i A') }}</div>
+                                <div class="session-date">
+                                    {{ \Carbon\Carbon::parse($session['date'])->format('l, F d, Y') }}
+                                    @if(!empty($session['start_time']))
+                                        · {{ \Carbon\Carbon::parse($session['start_time'])->format('g:i A') }}@if(!empty($session['end_time'])) – {{ \Carbon\Carbon::parse($session['end_time'])->format('g:i A') }}@endif
+                                    @endif
+                                </div>
                                 <div class="session-course">{{ $session['course'] }}</div>
                                 <div class="session-instructor">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="icon-13"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
@@ -315,6 +320,12 @@
                                 </span>
                             </div>
                         </div>
+                        @if(!is_null($session['grade'] ?? null))
+                            <div class="session-notes"><strong>Grade:</strong> {{ number_format((float) $session['grade'], 2) }}</div>
+                        @endif
+                        @if(!empty($session['attachment_path']))
+                            <div class="session-notes"><strong>Assessment:</strong> <a href="{{ asset('storage/'.$session['attachment_path']) }}" target="_blank" rel="noopener">{{ $session['attachment_name'] ?: 'View attachment' }}</a></div>
+                        @endif
                         @if($session['notes'])
                             <div class="session-notes">
                                 <strong>Notes:</strong><br>

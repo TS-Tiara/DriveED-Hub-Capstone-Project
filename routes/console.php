@@ -18,6 +18,9 @@ Schedule::command('reminders:sessions --hours=24')->dailyAt('07:00');
 // Check driver's license expirations daily at 8 AM
 Schedule::command('license:check-expirations')->dailyAt('08:00');
 
+// Keep archived student records recoverable for the configured retention period.
+Schedule::command('records:purge-archived')->dailyAt('03:00');
+
 Artisan::command('mail:test {to}', function (string $to) {
     try {
         Mail::raw('DriveED SMTP test email. If you received this, mail setup works.', function ($message) use ($to) {

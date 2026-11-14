@@ -198,6 +198,12 @@
                 <div class="label">Recorded By</div>
                 <div class="value">{{ $sessionCompletion->instructor->name ?? 'N/A' }}</div>
             </div>
+            @if($sessionCompletion->attachment_path)
+                <div class="field">
+                    <div class="label">Assessment Attachment</div>
+                    <div class="value"><a href="{{ asset('storage/'.$sessionCompletion->attachment_path) }}" target="_blank" rel="noopener">{{ $sessionCompletion->attachment_name ?: 'View file' }}</a></div>
+                </div>
+            @endif
         </div>
 
         <div class="notes">

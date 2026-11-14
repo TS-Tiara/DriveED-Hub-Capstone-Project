@@ -1592,9 +1592,14 @@
             <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 15px;">
                 {{-- Primary Actions (Above Tabs) --}}
                 <div style="display: flex; gap: 12px;">
+                    @unless($isArchivedView ?? false)
                     <button type="button" id="createScheduleBtn" class="btn btn-success" onclick="openCreateModal(); return false;" style="display: flex; align-items: center; gap: 8px; padding: 10px 20px; font-weight: 600; border-radius: 8px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);">
                         <i class="bi bi-calendar-plus"></i> Create Schedule
                     </button>
+                    @endunless
+                    <a href="{{ route('schools.admin.schedules', [$school, 'archived' => ($isArchivedView ?? false) ? null : 1]) }}" class="btn btn-outline-secondary" style="display:flex;align-items:center;gap:8px;padding:10px 16px;font-weight:600;text-decoration:none;">
+                        <i class="bi bi-archive"></i> {{ ($isArchivedView ?? false) ? 'Active schedules' : 'Archived schedules' }}
+                    </a>
                     <a href="{{ school_route('admin.exports.schedules.pdf') }}" title="Export the schedule grid (time slots) to PDF" class="btn btn-info" style="display: flex; align-items: center; gap: 8px; padding: 10px 20px; font-weight: 600; border-radius: 8px; background: {{ $primaryColor }}; color: white; text-decoration: none; box-shadow: 0 4px 12px {{ $primaryColor }}40;">
                         <i class="bi bi-file-earmark-pdf-fill" style="color: #ff4d4d;"></i> Grid PDF
                     </a>
@@ -1909,9 +1914,16 @@
                                                         <button type="button" onclick="showSlotDetails({{ $timeslot->id }})" class="btn btn-sm btn-outline-primary" style="display: flex; align-items: center; gap: 6px; padding: 6px 12px; font-weight: 600; font-size: 0.8rem; border-radius: 6px;">
                                                             <i class="bi bi-eye"></i> View
                                                         </button>
-                                                        <button type="button" onclick="confirmDeleteSchedule({{ $timeslot->id }})" class="btn btn-sm btn-outline-danger" style="display: flex; align-items: center; gap: 6px; padding: 6px 12px; font-weight: 600; font-size: 0.8rem; border-radius: 6px;">
-                                                            <i class="bi bi-trash"></i> Delete
-                                                        </button>
+                                                        @if($isArchivedView ?? false)
+                                                            <form method="POST" action="{{ route('schools.admin.schedules.restore', [$school, $timeslot->id]) }}" onsubmit="return confirm('Restore this schedule and make it active again?')">
+                                                                @csrf
+                                                                <button type="submit" class="btn btn-sm btn-outline-primary"><i class="bi bi-arrow-counterclockwise"></i> Restore</button>
+                                                            </form>
+                                                        @else
+                                                            <button type="button" onclick="confirmDeleteSchedule({{ $timeslot->id }})" class="btn btn-sm btn-outline-danger" style="display: flex; align-items: center; gap: 6px; padding: 6px 12px; font-weight: 600; font-size: 0.8rem; border-radius: 6px;">
+                                                                <i class="bi bi-archive"></i> Archive / Delete
+                                                            </button>
+                                                        @endif
                                                     </div>
                                                     <form id="deleteScheduleForm{{ $timeslot->id }}" method="POST" action="{{ route('schools.admin.schedules.delete', [$school, $timeslot->id]) }}" style="display: none;">
                                                         @csrf
@@ -2068,6 +2080,8 @@
                     <div id="singleDateGroup" class="form-group">
                         <label class="form-label">Date <span class="text-danger">*</span></label>
                         <input type="date" name="date" id="createScheduleDate" class="form-control {{ $errors->has('date') ? 'is-invalid' : '' }}" min="{{ date('Y-m-d', strtotime('+1 day')) }}" value="{{ old('date') }}">
+                        <div id="additionalScheduleDates" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;"></div>
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="addScheduleDateField()" style="margin-top:8px;">+ Add another date</button>
                         <small class="text-muted" style="display:block;margin-top:4px;">Schedules must be for a future date (tomorrow onwards) — today is not allowed.</small>
                         <p class="field-error" id="createScheduleDateFeedback" style="display:none;"></p>
                         @error('date') <p class="field-error">{{ $message }}</p> @enderror
@@ -2099,6 +2113,19 @@
 
                     <script>
                         var CREATE_TOMORROW_MIN = "{{ date('Y-m-d', strtotime('+1 day')) }}";
+                        function addScheduleDateField() {
+                            const container = document.getElementById('additionalScheduleDates');
+                            const row = document.createElement('div');
+                            row.style.cssText = 'display:flex;gap:8px;align-items:center';
+                            const input = document.createElement('input');
+                            input.type = 'date'; input.name = 'schedule_dates[]'; input.min = CREATE_TOMORROW_MIN;
+                            input.required = true; input.className = 'form-control';
+                            const remove = document.createElement('button');
+                            remove.type = 'button'; remove.className = 'btn btn-sm btn-outline-secondary';
+                            remove.textContent = 'Remove'; remove.setAttribute('aria-label', 'Remove schedule date');
+                            remove.addEventListener('click', () => row.remove());
+                            row.append(input, remove); container.append(row);
+                        }
                         function isTheoreticalCourseSelected() {
                             var sel = document.getElementById('createCourseSelect');
                             if (!sel || !sel.value) return false;
@@ -3355,9 +3382,9 @@
         window.confirmDeleteSchedule = function(scheduleId) {
             showConfirm({
                 type: 'danger',
-                title: 'Delete Schedule',
-                message: 'Are you sure you want to delete this schedule? This action cannot be undone.',
-                confirmText: 'Yes, Delete',
+                title: 'Archive or Delete Schedule',
+                message: 'Confirm this action. Schedules with bookings will be archived with their history; empty schedules will be permanently deleted.',
+                confirmText: 'Continue',
                 onConfirm: async () => {
                     const form = document.getElementById('deleteScheduleForm' + scheduleId);
                     try {
