@@ -2,7 +2,70 @@
 
 A school portal for managing students, instructors, courses, schedules, payments, and training records.
 
-[November 9](#fixes-november-9-2026) · [November 8](#fixes-november-8-2026) · [November 5](#fixes-november-5-2026) · [November 4](#latest-fixes-november-4-2026) · [November 1](#fixes-november-1-2026) · [October 31](#latest-fixes-october-31-2026) · [October 30](#fixes-october-30-2026) · [October 29](#fixes-october-29-2026) · [October 27](#fixes-october-27-2026) · [Earlier fixes](#earlier-fixes-october-20-to-26-2026)
+[November 10](#fixes-november-10-2026) · [November 9](#fixes-november-9-2026) · [November 8](#fixes-november-8-2026) · [November 5](#fixes-november-5-2026) · [November 4](#latest-fixes-november-4-2026) · [November 1](#fixes-november-1-2026) · [October 31](#latest-fixes-october-31-2026) · [October 30](#fixes-october-30-2026) · [October 29](#fixes-october-29-2026) · [October 27](#fixes-october-27-2026) · [Earlier fixes](#earlier-fixes-october-20-to-26-2026)
+
+## Fixes November 10 2026
+
+Addressed the November 10 findings on record archiving, scheduling, session logging, grading and student training history. Before screenshots are extracted from the supplied findings document; after screenshots show the updated local app.
+
+- Archived student and guest accounts retain read access but cannot submit write requests.
+- Enrollment archive and restore actions verify that the record belongs to the selected school.
+- Malformed session times return validation errors instead of server errors.
+- Quick grade updates preserve the grade requirement for attended sessions.
+- Archived schedules keep their prior status, linked history and restore behavior; multiple dates and time ranges can be created together.
+- Archived records are permanently purged after the configured retention period (90 days by default).
+
+### Record archiving
+
+Students can archive enrollments and payments individually. Archiving a schedule preserves linked booking history, and archived records can be restored.
+
+**Enrollment records**
+
+| Before: reported issue | After: fixed local app |
+| --- | --- |
+| ![Before: Enrollment records](docs/screenshots/nov10-findings/before/image3.png) | ![After: Enrollment archive controls](docs/screenshots/nov10-findings/enrollments-archive-controls.png) |
+
+**Payment records**
+
+| Before: reported issue | After: fixed local app |
+| --- | --- |
+| ![Before: Payment records](docs/screenshots/nov10-findings/before/image1.png) | ![After: Payment archive controls](docs/screenshots/nov10-findings/payments-archive-controls.png) |
+
+**Schedule records**
+
+| Before: reported issue | After: fixed local app |
+| --- | --- |
+| ![Before: Schedule deletion](docs/screenshots/nov10-findings/before/image2.png) | ![After: Schedule archive and restore](docs/screenshots/nov10-findings/schedule-archive-list.png) |
+
+### Scheduling and session history
+
+Administrators can create schedules on multiple dates. Instructors can log sessions between 6 a.m. and 6 p.m. and attach assessment files. My Students history includes session dates, times, grades, attachments, instructors and notes when available.
+
+**Multiple schedule dates**
+
+| Before: Multiple schedule ranges were difficult to edit | After: Add dates and time ranges |
+| --- | --- |
+| ![Before: Schedule date and time ranges](docs/screenshots/nov10-findings/before/image8.png) | ![After: Multiple schedule dates and time ranges](docs/screenshots/nov10-findings/schedule-multi-date-fields.png) |
+
+**Session logging time and assessment**
+
+| Before: Session time outside the allowed window | After: Time limits and optional assessment upload |
+| --- | --- |
+| ![Before: Session logged outside the allowed time window](docs/screenshots/nov10-findings/before/image9.png) | ![After: Session time limits and assessment upload](docs/screenshots/nov10-findings/session-log-time-and-assessment.png) |
+
+**Quick grade and comment update**
+
+| Before: Updating the latest session grade | After: Quick grade and comment controls |
+| --- | --- |
+| ![Before: Latest session grade view](docs/screenshots/nov10-findings/before/image10.png) | ![After: Quick grade and comment controls](docs/screenshots/nov10-findings/grade-quick-update.png) |
+
+**Student session history**
+
+| Before: Session history details were missing | After: Session dates, times and instructor notes |
+| --- | --- |
+| ![Before: Student session history](docs/screenshots/nov10-findings/before/image11.png) | ![After: Student session history details](docs/screenshots/nov10-findings/student-session-history.png) |
+
+The [focused regression script](tests/verify-nov10-findings.php) passes **30 assertions**, with database changes rolled back. Related checks passed for payment and enrollment security (**9**), TDC completion (**38**) and session/report workflows (**30**). PHP syntax checks and Blade view compilation passed. Screenshots and the extracted before images are in [docs/screenshots/nov10-findings](docs/screenshots/nov10-findings).
 
 ## Fixes November 9 2026
 

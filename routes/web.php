@@ -219,6 +219,7 @@ Route::prefix('{school:slug}')
                     Route::post('/schedules/create', [AdminController::class , 'createSchedule'])->name('schedules.create');
                     Route::put('/schedules/{id}', [AdminController::class , 'updateSchedule'])->name('schedules.update');
                     Route::delete('/schedules/{id}', [AdminController::class , 'deleteSchedule'])->name('schedules.delete');
+                    Route::post('/schedules/{id}/restore', [AdminController::class, 'restoreSchedule'])->name('schedules.restore');
 
                     // Instructor removal requests
                     Route::get('/removal-requests', [AdminController::class , 'removalRequests'])->name('removalRequests');
@@ -316,6 +317,8 @@ Route::prefix('{school:slug}')
                         // Payments management (no separate create/edit views - handled via modals)
                         // Statistics route MUST be before the resource to avoid conflict with payments/{payment}
                         Route::get('/payments/statistics', [PaymentController::class , 'statistics'])->name('payments.statistics');
+                        Route::post('/payments/{payment}/archive', [PaymentController::class, 'archive'])->name('payments.archive');
+                        Route::post('/payments/{payment}/restore', [PaymentController::class, 'restore'])->name('payments.restore');
                         Route::resource('payments', PaymentController::class)->except(['create', 'edit', 'update']);
 
                         // Admin/Secretary management (school_admin only)
@@ -339,6 +342,8 @@ Route::prefix('{school:slug}')
                         Route::middleware(['ajax'])->group(function () {
                     Route::prefix('enrollments')->name('enrollments.')->group(function () {
                             Route::get('/', [EnrollmentRequestController::class , 'index'])->name('index');
+                            Route::post('/{enrollmentRequest}/archive', [EnrollmentRequestController::class, 'archive'])->name('archive');
+                            Route::post('/{enrollmentRequest}/restore', [EnrollmentRequestController::class, 'restore'])->name('restore');
                             Route::get('/{enrollmentRequest}', [EnrollmentRequestController::class , 'show'])->name('show');
                             Route::post('/bulk-approve', [EnrollmentRequestController::class , 'bulkApprove'])->name('bulkApprove');
                             Route::post('/bulk-reject', [EnrollmentRequestController::class , 'bulkReject'])->name('bulkReject');
@@ -496,6 +501,7 @@ Route::prefix('{school:slug}')
                             Route::get('/', [SessionCompletionController::class , 'index'])->name('index');
                             Route::get('/create', [SessionCompletionController::class , 'create'])->name('create');
                             Route::post('/', [SessionCompletionController::class , 'store'])->name('store');
+                            Route::patch('/{sessionCompletion}/quick-update', [SessionCompletionController::class, 'quickUpdate'])->name('quickUpdate');
                             Route::get('/{sessionCompletion}', [SessionCompletionController::class , 'show'])->name('show');
                             Route::get('/{sessionCompletion}/edit', [SessionCompletionController::class , 'edit'])->name('edit');
                             Route::match(['put', 'patch', 'post'], '/{sessionCompletion}', [SessionCompletionController::class , 'update'])->name('update');

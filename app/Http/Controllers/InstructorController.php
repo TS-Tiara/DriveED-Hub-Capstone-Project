@@ -328,22 +328,58 @@ class InstructorController extends Controller
             ->with(['bookings' => function ($query) use ($school) {
             $query->where('school_id', '=', $school->id, 'and')
                 ->orderBy('scheduled_at', 'desc');
-        }, 'bookings.course', 'bookings.instructor', 'bookings.sessionCompletion'])
+            }, 'bookings.course', 'bookings.instructor', 'bookings.timeSlot', 'bookings.sessionCompletion'])
             ->where('school_id', '=', $school->id, 'and')
             ->findOrFail($id);
 
         // Get all sessions (from all instructors) so current instructor can see previous notes
         $sessions = $student->bookings->map(function ($booking) use ($instructor) {
+            $completion = $booking->sessionCompletion;
+            $sessionDate = $booking->timeSlot?->date ?? $booking->scheduled_at ?? $booking->booking_date;
+            $startTime = $completion?->start_time ?? $booking->timeSlot?->start_time ?? $sessionDate?->format('H:i');
+            $endTime = $completion?->end_time ?? $booking->timeSlot?->end_time;
             return [
                 'id' => $booking->id,
-                'date' => $booking->scheduled_at,
+                'date' => $sessionDate,
+                'start_time' => $startTime,
+                'end_time' => $endTime,
                 'instructor_name' => $booking->instructor->name ?? 'Unknown',
                 'is_mine' => ($booking->instructor_id == $instructor->id),
                 'course' => $booking->course->title ?? 'N/A',
                 'status' => $booking->status,
                 'notes' => $booking->sessionCompletion?->notes ?? $booking->instructor_feedback ?? $booking->notes,
+                'grade' => $completion?->session_grade ?? $booking->session_grade,
+                'attachment_path' => $completion?->attachment_path,
+                'attachment_name' => $completion?->attachment_name,
+                'session_completion_id' => $completion?->id,
             ];
         });
+
+        $loggedSessions = SessionCompletion::with(['enrollment.course', 'instructor', 'booking'])
+            ->where('school_id', $school->id)
+            ->whereHas('enrollment', fn ($query) => $query->where('learner_id', $student->id))
+            ->whereNull('archived_at')
+            ->orderByDesc('session_date')
+            ->get();
+        $linkedCompletionIds = $sessions->pluck('session_completion_id')->filter()->all();
+        foreach ($loggedSessions->whereNotIn('id', $linkedCompletionIds) as $completion) {
+            $sessions->push([
+                'id' => 'log-'.$completion->id,
+                'date' => $completion->session_date,
+                'start_time' => $completion->start_time ?? $completion->session_time,
+                'end_time' => $completion->end_time,
+                'instructor_name' => $completion->instructor?->name ?? 'Unknown',
+                'is_mine' => $completion->instructor_id == $instructor->id,
+                'course' => $completion->enrollment?->course?->title ?? 'N/A',
+                'status' => $completion->status,
+                'notes' => $completion->notes,
+                'grade' => $completion->session_grade,
+                'attachment_path' => $completion->attachment_path,
+                'attachment_name' => $completion->attachment_name,
+                'session_completion_id' => $completion->id,
+            ]);
+        }
+        $sessions = $sessions->sortByDesc(fn ($session) => $session['date'] ?? null)->values();
 
         // Calculate counts for the view
         $myCompletedCount = Booking::where('student_id', '=', $student->id, 'and')
@@ -583,11 +619,26 @@ class InstructorController extends Controller
 
         $students = Student::where('school_id', '=', $school->id, 'and')
             ->where('role', '=', 'student', 'and')
+            ->whereNull('archived_at')
             ->whereIn('id', $studentIds, 'and', false)
             ->with(['bookings' => function($q) use ($instructor) {
                 $q->where('instructor_id', '=', $instructor->id, 'and');
             }])
             ->paginate(15, ['id', 'name', 'contact', 'status', 'school_id']);
+
+        $latestSessionsByLearner = SessionCompletion::with(['enrollment:id,learner_id', 'booking'])
+            ->where('school_id', $school->id)
+            ->where('instructor_id', $instructor->id)
+            ->where('status', 'completed')
+            ->whereNull('archived_at')
+            ->whereHas('enrollment', fn ($query) => $query->whereIn('learner_id', $students->getCollection()->pluck('id')))
+            ->orderByDesc('session_date')
+            ->orderByDesc('start_time')
+            ->get()
+            ->groupBy(fn ($session) => $session->enrollment?->learner_id);
+        foreach ($students as $student) {
+            $student->setRelation('latestInstructorSession', $latestSessionsByLearner->get($student->id)?->first());
+        }
 
         $gradedSessions = Booking::where('school_id', '=', $school->id, 'and')
             ->where('instructor_id', '=', $instructor->id, 'and')

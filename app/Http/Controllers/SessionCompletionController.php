@@ -201,6 +201,12 @@ class SessionCompletionController extends Controller
             $endTime = Carbon::parse($startTime)->addHours($request->hours_completed)->format('H:i');
         }
 
+        if (!\App\Support\SessionTimeWindow::includes($startTime, $endTime)) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'session_time' => 'Session logging must start at or after 6:00 AM and finish by 6:00 PM.',
+            ]);
+        }
+
         // Check for scheduling conflicts if we have start and end times
         if ($startTime && $endTime) {
             $conflictService = new SchedulingConflictService();
@@ -247,6 +253,10 @@ class SessionCompletionController extends Controller
                 'end_time' => $endTime,
                 'status' => $request->status ?? 'completed',
                 'notes' => $request->notes,
+                'attachment_path' => $request->hasFile('attachment')
+                    ? $request->file('attachment')->store('session-attachments', 'public')
+                    : null,
+                'attachment_name' => $request->file('attachment')?->getClientOriginalName(),
                 'logged_by' => $instructor->id,
             ]);
 
@@ -411,6 +421,12 @@ class SessionCompletionController extends Controller
             $endTime = Carbon::parse($startTime)->addHours($request->hours_completed)->format('H:i');
         }
 
+        if (!\App\Support\SessionTimeWindow::includes($startTime, $endTime)) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'session_time' => 'Session logging must start at or after 6:00 AM and finish by 6:00 PM.',
+            ]);
+        }
+
         // Check for scheduling conflicts if we have start and end times
         if ($startTime && $endTime) {
             $conflictService = new SchedulingConflictService();
@@ -444,6 +460,10 @@ class SessionCompletionController extends Controller
                 'end_time' => $endTime,
                 'status' => $request->attendance_status === 'absent' ? 'cancelled' : ($request->status ?? $sessionCompletion->status ?? 'completed'),
                 'notes' => $request->notes,
+                'attachment_path' => $request->hasFile('attachment')
+                    ? $request->file('attachment')->store('session-attachments', 'public')
+                    : $sessionCompletion->attachment_path,
+                'attachment_name' => $request->file('attachment')?->getClientOriginalName() ?? $sessionCompletion->attachment_name,
                 'session_grade' => $request->input('session_grade', $sessionCompletion->session_grade),
                 'attendance_status' => $request->input('attendance_status', $sessionCompletion->attendance_status),
             ]);
@@ -453,6 +473,32 @@ class SessionCompletionController extends Controller
         return redirect()
             ->route('schools.instructor.sessions.show', ['school' => $school->slug, 'sessionCompletion' => $sessionCompletion->id])
             ->with('success', 'Session updated successfully.');
+    }
+
+    public function quickUpdate(Request $request, School $school, $sessionCompletion)
+    {
+        $instructor = Auth::guard('instructor')->user();
+        abort_unless($instructor && $instructor->school_id === $school->id, 403);
+        $session = SessionCompletion::with('booking')->where('school_id', $school->id)->findOrFail($sessionCompletion);
+        abort_unless($session->instructor_id === $instructor->id, 403);
+        abort_unless($session->status === 'completed' && !$session->archived_at, 422, 'Only active completed sessions can be updated.');
+        $validated = $request->validate([
+            'session_grade' => ['sometimes', 'numeric', 'min:0', 'max:100'],
+            'notes' => ['sometimes', 'nullable', 'string', 'max:1000'],
+        ]);
+        abort_if(!$validated, 422, 'No session changes were provided.');
+
+        DB::transaction(function () use ($session, $validated) {
+            $session->update($validated);
+            if ($session->booking) {
+                $bookingChanges = [];
+                if (array_key_exists('session_grade', $validated)) $bookingChanges['session_grade'] = $validated['session_grade'];
+                if (array_key_exists('notes', $validated)) $bookingChanges['instructor_feedback'] = $validated['notes'];
+                if ($bookingChanges) $session->booking->update($bookingChanges);
+            }
+        });
+
+        return response()->json(['success' => true, 'message' => 'Latest session updated.']);
     }
 
     /**

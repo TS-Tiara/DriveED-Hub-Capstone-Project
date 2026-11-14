@@ -33,6 +33,11 @@ class EnrollmentRequestController extends Controller
         $baseQuery = EnrollmentRequest::where('school_id', $school->id)
             ->with(['learner', 'course', 'package', 'approvedBy', 'branchRelation', 'latestPhaseProgression']);
 
+        $isArchivedView = $request->boolean('archived');
+        $baseQuery->where(fn ($query) => $isArchivedView
+            ? $query->whereNotNull('archived_at')
+            : $query->whereNull('archived_at'));
+
         $admin->scopeToBranch($baseQuery);
 
         // Calculate stats BEFORE filtering
@@ -158,6 +163,7 @@ class EnrollmentRequestController extends Controller
             'admin',
             'branches',
             'currentSort',
+            'isArchivedView',
         ), ['isAjax' => $request->ajax()]));
     }
 
@@ -378,11 +384,12 @@ class EnrollmentRequestController extends Controller
                     'rejected_at' => now(),
                 ]);
 
-                // Also update learner license status to rejected in a full rejection
+                // A full rejection ends this enrollment only. Keep prior course history
+                // and let the learner submit a fresh request with new documents.
                 if ($enrollmentRequest->learner) {
                     $enrollmentRequest->learner->update([
-                        'student_license_status' => 'rejected',
-                        'student_license_rejection_reason' => $validated['remarks']
+                        'student_license_status' => 'none',
+                        'student_license_rejection_reason' => null
                     ]);
                 }
                 $messagePrefix = "Enrollment request rejected.";
@@ -441,6 +448,26 @@ class EnrollmentRequestController extends Controller
                 ->back()
                 ->with('error', 'An unexpected error occurred while rejecting the enrollment.');
         }
+    }
+
+    public function archive(Request $request, School $school, EnrollmentRequest $enrollmentRequest)
+    {
+        $admin = Auth::guard('admin')->user();
+        abort_unless($admin && $admin->school_id === (int) $school->id, 403);
+        abort_unless((int) $enrollmentRequest->school_id === (int) $school->id, 404);
+        abort_unless(!$admin->isBranchSecretary() || $admin->canAccessBranch($enrollmentRequest->branch_id), 403);
+        $enrollmentRequest->update(['archived_at' => now(), 'archived_with_user' => false]);
+        return back()->with('success', 'Enrollment record archived and kept in the learner history.');
+    }
+
+    public function restore(Request $request, School $school, EnrollmentRequest $enrollmentRequest)
+    {
+        $admin = Auth::guard('admin')->user();
+        abort_unless($admin && $admin->school_id === (int) $school->id, 403);
+        abort_unless((int) $enrollmentRequest->school_id === (int) $school->id, 404);
+        abort_unless(!$admin->isBranchSecretary() || $admin->canAccessBranch($enrollmentRequest->branch_id), 403);
+        $enrollmentRequest->update(['archived_at' => null, 'archived_with_user' => false]);
+        return back()->with('success', 'Enrollment record restored.');
     }
 
     /**

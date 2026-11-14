@@ -47,12 +47,18 @@ class Booking extends Model
         'student_feedback',
         'skills_practiced',
         'session_status',
+        'archived_at',
+        'archived_with_user',
+        'archived_with_schedule',
     ];
 
     protected $casts = [
         'booking_date' => 'datetime',
         'scheduled_at' => 'datetime',
         'attendance_marked_at' => 'datetime',
+        'archived_at' => 'datetime',
+        'archived_with_user' => 'boolean',
+        'archived_with_schedule' => 'boolean',
         'cancelled_at' => 'datetime',
         'skills_practiced' => 'array',
     ];

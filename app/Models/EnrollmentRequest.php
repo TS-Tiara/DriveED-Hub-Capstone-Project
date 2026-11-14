@@ -55,6 +55,8 @@ class EnrollmentRequest extends Model
         'payment_method',
         'payment_reference',
         'payment_proof_path',
+        'archived_at',
+        'archived_with_user',
     ];
 
     protected $appends = [
@@ -79,6 +81,8 @@ class EnrollmentRequest extends Model
             'theoretical_passed_at' => 'datetime',
             'payment_confirmed_at' => 'datetime',
             'price' => 'decimal:2',
+            'archived_at' => 'datetime',
+            'archived_with_user' => 'boolean',
         ];
     }
 

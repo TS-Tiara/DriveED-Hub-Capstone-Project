@@ -292,6 +292,7 @@
         <div class="card-body">
             <form action="{{ route('schools.instructor.sessions.update', ['school' => $school->slug, 'sessionCompletion' => $sessionCompletion->id]) }}" 
                   method="POST"
+                  enctype="multipart/form-data"
                   class="native-form"
                   data-no-ajax="1">
                 @csrf
@@ -337,7 +338,7 @@
 
                     <div class="form-group">
                         <label for="session_time" class="form-label">Session Time <span class="required">*</span></label>
-                        <input type="time" 
+                        <input type="time" min="06:00" max="18:00"
                                class="form-input {{ $errors->has('session_time') ? 'has-error' : '' }}" 
                                id="session_time" 
                                name="session_time" 
@@ -380,6 +381,14 @@
                     </select>
                 </div>
                 <!-- Notes -->
+                <div class="form-group">
+                    <label for="attachment" class="form-label">Assessment file (optional)</label>
+                    @if($sessionCompletion->attachment_path)
+                        <p><a href="{{ asset('storage/'.$sessionCompletion->attachment_path) }}" target="_blank" rel="noopener">{{ $sessionCompletion->attachment_name ?: 'View current attachment' }}</a></p>
+                    @endif
+                    <input type="file" id="attachment" name="attachment" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" class="form-input">
+                    <small class="text-muted">PDF, Word, or image file; up to 10 MB.</small>
+                </div>
                 <div class="form-group">
                     <label for="notes" class="form-label">Notes (Optional)</label>
                     <textarea class="form-textarea {{ $errors->has('notes') ? 'has-error' : '' }}" 

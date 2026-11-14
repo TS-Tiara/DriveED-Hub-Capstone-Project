@@ -556,9 +556,9 @@
                                             </span>
                                         </div>
                                         <div style="display: flex; justify-content: space-between;">
-                                            <span>Unique Sessions (min 3 days):</span>
-                                            <span style="font-weight: 600; color: {{ $tdcLtoProgress['unique_dates_count'] >= 3 ? '#059669' : '#dc2626' }};">
-                                                {{ $tdcLtoProgress['unique_dates_count'] }} / 3
+                                            <span>Unique Sessions (min 2 days):</span>
+                                            <span style="font-weight: 600; color: {{ $tdcLtoProgress['unique_dates_count'] >= 2 ? '#059669' : '#dc2626' }};">
+                                                {{ $tdcLtoProgress['unique_dates_count'] }} / 2
                                             </span>
                                         </div>
                                         @if($tdcLtoProgress['unique_dates_count'] > 0)

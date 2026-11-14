@@ -49,6 +49,12 @@ class PaymentController extends Controller
             }
         }
 
+        if (Auth::guard('admin')->check()) {
+            $query->when($request->boolean('archived'), fn ($q) => $q->whereNotNull('archived_at'), fn ($q) => $q->whereNull('archived_at'));
+        } else {
+            $query->whereNull('archived_at');
+        }
+
         if (request('enrollment_id')) {
             $query->where('enrollment_request_id', '=', request('enrollment_id'));
         }
@@ -132,6 +138,25 @@ class PaymentController extends Controller
             compact('school', 'payments', 'stats', 'pendingEnrollments', 'pendingBookings', 'gcashPaymentImageUrl'),
             ['isAjax' => $request->ajax()]
         ));
+    }
+
+    public function archive(School $school, Payment $payment)
+    {
+        $admin = Auth::guard('admin')->user();
+        abort_unless($admin instanceof Admin && $payment->school_id === $school->id, 403);
+        abort_unless(!$admin->isBranchSecretary() || $admin->canAccessBranch($payment->branch_id), 403);
+        abort_unless(!$payment->archived_at, 409, 'Payment is already archived.');
+        $payment->update(['archived_at' => now(), 'archived_with_user' => false]);
+        return back()->with('success', 'Payment record archived and kept in the learner history.');
+    }
+
+    public function restore(School $school, Payment $payment)
+    {
+        $admin = Auth::guard('admin')->user();
+        abort_unless($admin instanceof Admin && $payment->school_id === $school->id, 403);
+        abort_unless(!$admin->isBranchSecretary() || $admin->canAccessBranch($payment->branch_id), 403);
+        $payment->update(['archived_at' => null, 'archived_with_user' => false]);
+        return back()->with('success', 'Payment record restored.');
     }
 
     /**

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Admin;
 use App\Models\Branch;
+use App\Models\Booking;
 use App\Models\Course;
 use App\Models\EnrollmentRequest;
 use App\Models\GCashSetting;
@@ -730,6 +731,7 @@ class AdminController extends Controller
             $student = Student::where('school_id', $school->id)
                 ->where('id', $id)
                 ->firstOrFail();
+            abort_if($student->archived_at, 409, 'Archived student accounts are read-only. Restore the account before editing.');
 
             $admin = Auth::guard('admin')->user();
             if (!$admin) {
@@ -857,6 +859,7 @@ class AdminController extends Controller
                 return redirect()->route('schools.login', $school);
             }
             $student = \App\Models\Student::where('school_id', $school->id)->findOrFail($id);
+            abort_if($student->archived_at, 409, 'Archived student accounts are read-only. Restore the account before changing status.');
 
             if ($admin->isBranchSecretary() && $student->branch_id !== $admin->branch_id) {
                 abort(403, 'You do not have permission to manage students in this branch.');
@@ -1967,10 +1970,11 @@ class AdminController extends Controller
 
         $courseId = $request->input('course_id');
         $sessionType = $request->input('session_type');
+        $isArchivedView = $request->boolean('archived');
 
         $timeslots = $admin->scopeToBranch(TimeSlot::with(['instructors', 'course', 'bookings.student', 'bookings.instructor'])
             ->where('school_id', $school->id)
-            ->whereBetween('date', [$startDate, $endDate])
+            ->when($isArchivedView, fn ($query) => $query->whereNotNull('archived_at'), fn ($query) => $query->whereNull('archived_at')->whereBetween('date', [$startDate, $endDate]))
             ->when($courseId, function ($query) use ($courseId) {
                 return $query->where('course_id', $courseId);
             })
@@ -2011,6 +2015,7 @@ class AdminController extends Controller
             'courses' => $courses,
             'startDate' => $startDate,
             'endDate' => $endDate,
+            'isArchivedView' => $isArchivedView,
         ]);
     }
 
@@ -2021,14 +2026,34 @@ class AdminController extends Controller
      */
     public function createSchedule(Request $request, School $school)
     {
-        if ($request->has('time_ranges')) {
-            $ranges = $request->validate([
-                'date' => 'required|date|after:today',
-                'time_ranges' => 'required|array|min:2|max:16',
-                'time_ranges.*.start_time' => 'required|date_format:H:i',
-                'time_ranges.*.end_time' => 'required|date_format:H:i',
+        if ($request->has('time_ranges') || $request->has('schedule_dates')) {
+            $validatedBatch = $request->validate([
+                'date' => 'required_without:schedule_dates|nullable|date|after:today',
+                'schedule_dates' => 'nullable|array|min:1|max:30',
+                'schedule_dates.*' => 'required|date|after:today|distinct',
+                'time_ranges' => 'required_with:time_ranges|array|min:2|max:16',
+                'time_ranges.*.start_time' => 'required_with:time_ranges|date_format:H:i',
+                'time_ranges.*.end_time' => 'required_with:time_ranges|date_format:H:i',
                 'batch_dates' => 'prohibited',
-            ])['time_ranges'];
+            ]);
+            $ranges = $validatedBatch['time_ranges'] ?? null;
+            $dates = array_values(array_unique(array_filter(array_merge(
+                [$validatedBatch['date'] ?? null],
+                $validatedBatch['schedule_dates'] ?? []
+            ))));
+            if (!$dates) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['date' => 'Select at least one schedule date.']);
+            }
+            if (!$ranges) {
+                $ranges = [[
+                    'start_time' => $request->input('start_time'),
+                    'end_time' => $request->input('end_time'),
+                ]];
+            }
+            $request->validate([
+                'start_time' => 'required_without:time_ranges|date_format:H:i',
+                'end_time' => 'required_without:time_ranges|date_format:H:i',
+            ]);
             foreach ($ranges as $i => $range) {
                 foreach (array_slice($ranges, 0, $i) as $previous) {
                     if ($range['start_time'] < $previous['end_time'] && $previous['start_time'] < $range['end_time']) {
@@ -2036,18 +2061,20 @@ class AdminController extends Controller
                     }
                 }
             }
-            return DB::transaction(function () use ($request, $school, $ranges) {
+            return DB::transaction(function () use ($request, $school, $ranges, $dates) {
                 $created = [];
-                foreach ($ranges as $range) {
-                    $input = array_merge($request->except(['time_ranges', 'start_time', 'end_time']), $range);
-                    $single = Request::create($request->url(), 'POST', $input);
-                    $single->headers->set('Accept', 'application/json');
-                    $response = $this->createSchedule($single, $school);
-                    $data = $response->getData(true);
-                    if ($response->getStatusCode() !== 201) {
-                        throw \Illuminate\Validation\ValidationException::withMessages($data['errors'] ?? ['time_ranges' => $data['message'] ?? 'Unable to create all schedules.']);
+                foreach ($dates as $date) {
+                    foreach ($ranges as $range) {
+                        $input = array_merge($request->except(['time_ranges', 'schedule_dates', 'start_time', 'end_time', 'date']), ['date' => $date], $range);
+                        $single = Request::create($request->url(), 'POST', $input);
+                        $single->headers->set('Accept', 'application/json');
+                        $response = $this->createSchedule($single, $school);
+                        $data = $response->getData(true);
+                        if ($response->getStatusCode() !== 201) {
+                            throw \Illuminate\Validation\ValidationException::withMessages($data['errors'] ?? ['time_ranges' => $data['message'] ?? 'Unable to create all schedules.']);
+                        }
+                        $created[] = $data['schedule'];
                     }
-                    $created[] = $data['schedule'];
                 }
                 return response()->json(['success' => true, 'message' => count($created).' schedules created.', 'schedules' => $created], 201);
             });
@@ -2474,20 +2501,30 @@ class AdminController extends Controller
 
             DB::beginTransaction();
 
-            // Detach instructors and delete
-            $timeslot->instructors()->detach();
-            $timeslot->delete();
+              $hasRecords = $timeslot->bookings()->exists();
+              if ($hasRecords) {
+                  $bookingIds = $timeslot->bookings()->pluck('id');
+                  $archivedAt = now();
+                  // Keep the existing enum status; archived_at removes it from active lists.
+                  $timeslot->update(['archived_at' => $archivedAt, 'archive_previous_status' => $timeslot->status]);
+                  Booking::whereIn('id', $bookingIds)->whereNull('archived_at')->update(['archived_at' => $archivedAt, 'archived_with_schedule' => true]);
+                  \App\Models\Payment::whereIn('booking_id', $bookingIds)->whereNull('archived_at')->update(['archived_at' => $archivedAt, 'archived_with_schedule' => true]);
+                  \App\Models\SessionCompletion::whereIn('booking_id', $bookingIds)->whereNull('archived_at')->update(['archived_at' => $archivedAt, 'archived_with_schedule' => true]);
+              } else {
+                  $timeslot->instructors()->detach();
+                  $timeslot->delete();
+              }
 
             DB::commit();
 
             if (request()->ajax() || request()->wantsJson()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Schedule deleted successfully.'
+                    'message' => $hasRecords ? 'Schedule archived with its booking history.' : 'Schedule permanently deleted because it has no booking history.'
                 ]);
             }
 
-            return redirect()->back()->with('success', 'Schedule deleted successfully.');
+              return redirect()->back()->with('success', $hasRecords ? 'Schedule archived with its booking history.' : 'Schedule permanently deleted because it has no booking history.');
         } catch (\Exception $e) {
             DB::rollBack();
             LogFacade::error('Failed to delete schedule: ' . $e->getMessage(), [
@@ -2504,6 +2541,33 @@ class AdminController extends Controller
 
             return back()->with('error', 'Unable to delete schedule at this time.');
         }
+    }
+
+    public function restoreSchedule(School $school, $id)
+    {
+        $admin = Auth::guard('admin')->user();
+        if (!$admin instanceof Admin || !$admin->canManageSchedules()) {
+            abort(403, 'Unauthorized action.');
+        }
+        $timeslot = TimeSlot::where('school_id', $school->id)->whereNotNull('archived_at')->findOrFail($id);
+        if (!$admin->canAccessBranch($timeslot->branch_id)) {
+            abort(403, 'You do not have permission to restore schedules for this branch.');
+        }
+        DB::transaction(function () use ($timeslot) {
+            $bookingIds = $timeslot->bookings()->pluck('id');
+            Booking::whereIn('id', $bookingIds)->where('archived_with_schedule', true)->where('archived_with_user', false)
+                ->update(['archived_at' => null, 'archived_with_schedule' => false]);
+            \App\Models\Payment::whereIn('booking_id', $bookingIds)->where('archived_with_schedule', true)->where('archived_with_user', false)
+                ->update(['archived_at' => null, 'archived_with_schedule' => false]);
+            \App\Models\SessionCompletion::whereIn('booking_id', $bookingIds)->where('archived_with_schedule', true)->where('archived_with_user', false)
+                ->update(['archived_at' => null, 'archived_with_schedule' => false]);
+            $timeslot->update([
+                'archived_at' => null,
+                'status' => $timeslot->archive_previous_status ?: 'open',
+                'archive_previous_status' => null,
+            ]);
+        });
+        return redirect()->back()->with('success', 'Schedule restored from the archive.');
     }
 
     // ==========================

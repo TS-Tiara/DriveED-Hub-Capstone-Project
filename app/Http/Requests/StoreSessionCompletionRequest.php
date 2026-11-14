@@ -36,6 +36,7 @@ class StoreSessionCompletionRequest extends FormRequest
             'notes' => ['nullable', 'string', 'max:1000'],
             'session_grade' => [\Illuminate\Validation\Rule::requiredIf(fn () => !in_array($this->input('status', 'completed'), ['scheduled', 'cancelled'], true) && $this->input('attendance_status') !== 'absent'), 'nullable', 'numeric', 'min:0', 'max:100'],
             'attendance_status' => ['nullable', 'in:attended,late,absent'],
+            'attachment' => ['nullable', 'file', 'mimes:pdf,doc,docx,jpg,jpeg,png', 'max:10240'],
         ];
     }
 
@@ -75,6 +76,19 @@ class StoreSessionCompletionRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
+            $start = $this->input('start_time') ?: $this->input('session_time');
+            $end = $this->input('end_time');
+            if (is_string($start) && !$end && is_numeric($this->input('hours_completed'))) {
+                try {
+                    $end = \Carbon\Carbon::parse($start)->addMinutes((int) round((float) $this->input('hours_completed') * 60))->format('H:i');
+                } catch (\Throwable) {
+                    // Let the date_format rule report malformed times without throwing.
+                }
+            }
+            if (is_string($start) && is_string($end) && !\App\Support\SessionTimeWindow::includes($start, $end)) {
+                $validator->errors()->add('session_time', 'Session logging must start at or after 6:00 AM and finish by 6:00 PM.');
+            }
+
             $isUpdate = $this->isMethod('PUT') || $this->isMethod('PATCH') || $this->route('sessionCompletion');
             if ($isUpdate) {
                 return;

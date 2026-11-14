@@ -441,6 +441,10 @@
                             $completedSessions = $student->bookings->whereIn('status', ['done', 'completed'])->count();
                             $avgGrade = $student->bookings->whereNotNull('session_grade')->avg('session_grade');
                             $lastCompletedSession = $student->bookings->whereIn('status', ['done', 'completed'])->sortByDesc('scheduled_at')->first();
+                            $latestInstructorSession = $student->latestInstructorSession;
+                            $lastSessionDate = $latestInstructorSession?->session_date ?? ($lastCompletedSession?->scheduled_at ?? $lastCompletedSession?->booking_date);
+                            $lastSessionGrade = $latestInstructorSession?->session_grade ?? $lastCompletedSession?->session_grade;
+                            $lastBookingId = $latestInstructorSession?->booking_id ?? $lastCompletedSession?->id;
                             $enrollmentTimestamp = $student->enrollment_date ? strtotime($student->enrollment_date) : 0;
                             $gradeCategory = $avgGrade >= 90 ? 'excellent' : ($avgGrade >= 75 ? 'good' : ($avgGrade >= 60 ? 'average' : ($avgGrade ? 'poor' : 'none')));
                         @endphp
@@ -474,15 +478,15 @@
                                 @endif
                             </td>
                             <td>
-                                @if($lastCompletedSession && ($lastCompletedSession->scheduled_at || $lastCompletedSession->booking_date))
-                                    {{ ($lastCompletedSession->scheduled_at ?? $lastCompletedSession->booking_date)?->format('M d, Y') ?? 'N/A' }}
+                                @if($lastSessionDate)
+                                    {{ \Carbon\Carbon::parse($lastSessionDate)->format('M d, Y') }}
                                 @else
                                     <span style="color: #9ca3af;">No completed sessions</span>
                                 @endif
                             </td>
                             <td>
-                                @if($lastCompletedSession && $lastCompletedSession->session_grade !== null)
-                                    <strong>{{ $lastCompletedSession->session_grade }}</strong>
+                                @if($lastSessionGrade !== null)
+                                    <strong>{{ $lastSessionGrade }}</strong>
                                 @else
                                     <span class="text-muted">-</span>
                                 @endif
@@ -494,7 +498,8 @@
                                        max="100" 
                                        step="0.1"
                                        data-student-id="{{ $student->id }}"
-                                       data-last-booking-id="{{ $lastCompletedSession ? $lastCompletedSession->id : '' }}"
+                                       data-last-booking-id="{{ $lastBookingId ?? '' }}"
+                                       data-last-session-id="{{ $latestInstructorSession?->id ?? '' }}"
                                        placeholder="0-100"
                                        onchange="markChanged(this)">
                             </td>
@@ -502,8 +507,9 @@
                                 <input type="text"
                                        class="grade-input comment-input"
                                        data-comment-student-id="{{ $student->id }}"
-                                       data-last-booking-id="{{ $lastCompletedSession ? $lastCompletedSession->id : '' }}"
-                                       value="{{ $lastCompletedSession->instructor_feedback ?? '' }}"
+                                       data-last-booking-id="{{ $lastBookingId ?? '' }}"
+                                       data-last-session-id="{{ $latestInstructorSession?->id ?? '' }}"
+                                       value="{{ $latestInstructorSession?->notes ?? $lastCompletedSession?->instructor_feedback ?? '' }}"
                                        placeholder="Leave comment"
                                        onchange="markCommentChanged(this)">
                             </td>
@@ -596,18 +602,33 @@
         loadContent('/{{ $school->slug }}/instructor/students/' + studentId);
     }
 
+    function updateLatestSession(input, field, value) {
+        const sessionId = input.dataset.lastSessionId;
+        const bookingId = input.dataset.lastBookingId;
+        if (sessionId) {
+            return fetch(`/{{ $school->slug }}/instructor/sessions/${sessionId}/quick-update`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+                body: JSON.stringify(field === 'grade' ? { session_grade: value } : { notes: value })
+            }).then(response => response.json());
+        }
+        if (!bookingId) return Promise.reject(new Error('This student has no completed sessions to update.'));
+        const url = field === 'grade'
+            ? `/{{ $school->slug }}/instructor/lessons/${bookingId}/update`
+            : `/{{ $school->slug }}/instructor/bookings/${bookingId}/feedback`;
+        const body = field === 'grade' ? { session_grade: value } : { instructor_feedback: value };
+        return fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+            body: JSON.stringify(body)
+        }).then(response => response.json());
+    }
+
     function saveGrade(studentId) {
         const input = document.querySelector(`.grade-input[data-student-id="${studentId}"]`);
         const grade = parseFloat(input.value);
-        const bookingId = input.dataset.lastBookingId;
         if (Number.isNaN(grade) || grade < 0 || grade > 100) { showToast('Please enter a valid grade between 0 and 100', 'error'); return; }
-        if (!bookingId) { showToast('This student has no completed sessions to grade', 'warning'); return; }
-        fetch(`/{{ $school->slug }}/instructor/lessons/${bookingId}/update`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
-            body: JSON.stringify({ session_grade: grade })
-        })
-        .then(response => response.json())
+        updateLatestSession(input, 'grade', grade)
         .then(data => {
             if (data.success) { input.classList.remove('changed'); showToast('Grade saved successfully!', 'success'); setTimeout(() => location.reload(), 1000); }
             else { showToast('Failed to save grade', 'error'); }
@@ -617,16 +638,7 @@
 
     function saveComment(studentId) {
         const input = document.querySelector(`.comment-input[data-comment-student-id="${studentId}"]`);
-        const bookingId = input.dataset.lastBookingId;
-
-        if (!bookingId) { showToast('This student has no completed sessions for comments', 'warning'); return; }
-
-        fetch(`/{{ $school->slug }}/instructor/bookings/${bookingId}/feedback`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
-            body: JSON.stringify({ instructor_feedback: input.value })
-        })
-        .then(response => response.json())
+        updateLatestSession(input, 'comment', input.value)
         .then(data => {
             if (data.success) {
                 input.classList.remove('changed');
@@ -650,19 +662,12 @@
 
         changedGradeInputs.forEach(input => {
             const grade = parseFloat(input.value);
-            const bookingId = input.dataset.lastBookingId;
-
-            if (Number.isNaN(grade) || grade < 0 || grade > 100 || !bookingId) {
+            if (Number.isNaN(grade) || grade < 0 || grade > 100 || (!input.dataset.lastBookingId && !input.dataset.lastSessionId)) {
                 return;
             }
 
             requests.push(
-                fetch(`/{{ $school->slug }}/instructor/lessons/${bookingId}/update`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
-                    body: JSON.stringify({ session_grade: grade })
-                })
-                .then(response => response.json())
+                updateLatestSession(input, 'grade', grade)
                 .then(data => {
                     if (data.success) {
                         input.classList.remove('changed');
@@ -675,19 +680,12 @@
         });
 
         changedCommentInputs.forEach(input => {
-            const bookingId = input.dataset.lastBookingId;
-
-            if (!bookingId) {
+            if (!input.dataset.lastBookingId && !input.dataset.lastSessionId) {
                 return;
             }
 
             requests.push(
-                fetch(`/{{ $school->slug }}/instructor/bookings/${bookingId}/feedback`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
-                    body: JSON.stringify({ instructor_feedback: input.value })
-                })
-                .then(response => response.json())
+                updateLatestSession(input, 'comment', input.value)
                 .then(data => {
                     if (data.success) {
                         input.classList.remove('changed');

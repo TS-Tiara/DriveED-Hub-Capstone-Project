@@ -65,6 +65,9 @@ class Payment extends Model
         'snap_expected_amount',
         'snap_qr_path',
         'snap_at',
+        'archived_at',
+        'archived_with_user',
+        'archived_with_schedule',
     ];
 
     protected $appends = [
@@ -100,6 +103,9 @@ class Payment extends Model
         'refunded_amount' => 'decimal:2',
         'snap_at' => 'datetime',
         'snap_expected_amount' => 'decimal:2',
+        'archived_at' => 'datetime',
+        'archived_with_user' => 'boolean',
+        'archived_with_schedule' => 'boolean',
     ];
 
     /**

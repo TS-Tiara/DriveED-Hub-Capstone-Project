@@ -797,10 +797,12 @@ class SystemAdminController extends Controller
     {
         try {
             $user = $type === 'student' ? Student::findOrFail($id) : Instructor::findOrFail($id);
-            $user->update([
-                'archived_at' => now(),
-                'status' => 'archived',
-            ]);
+            DB::transaction(function () use ($user, $type) {
+                $user->update(['archived_at' => now(), 'status' => 'archived']);
+                if ($type === 'student') {
+                    $this->archiveStudentRecords($user);
+                }
+            });
 
             SystemLog::logInfo(
                 ucfirst($type) . " archived: {$user->name}",
@@ -824,10 +826,22 @@ class SystemAdminController extends Controller
     {
         try {
             $user = $type === 'student' ? Student::findOrFail($id) : Instructor::findOrFail($id);
-            $user->update([
-                'archived_at' => null,
-                'status' => 'active',
-            ]);
+            DB::transaction(function () use ($user, $type) {
+                $user->update(['archived_at' => null, 'status' => 'active']);
+                if ($type === 'student') {
+                    $enrollmentIds = \App\Models\EnrollmentRequest::where('learner_id', $user->id)->pluck('id');
+                    $bookingIds = Booking::where('student_id', $user->id)->pluck('id');
+                    \App\Models\EnrollmentRequest::whereIn('id', $enrollmentIds)->where('archived_with_user', true)
+                        ->update(['archived_at' => null, 'archived_with_user' => false]);
+                    \App\Models\SessionCompletion::where(fn ($query) => $query->whereIn('enrollment_id', $enrollmentIds)->orWhereIn('booking_id', $bookingIds))
+                        ->where('archived_with_user', true)
+                        ->where('archived_with_schedule', false)->update(['archived_at' => null, 'archived_with_user' => false]);
+                    Booking::whereIn('id', $bookingIds)->where('archived_with_user', true)->where('archived_with_schedule', false)
+                        ->update(['archived_at' => null, 'archived_with_user' => false]);
+                    Payment::where(fn ($query) => $query->where('payer_user_id', $user->id)->orWhereIn('enrollment_request_id', $enrollmentIds)->orWhereIn('booking_id', $bookingIds))
+                        ->where('archived_with_user', true)->where('archived_with_schedule', false)->update(['archived_at' => null, 'archived_with_user' => false]);
+                }
+            });
 
             SystemLog::logInfo(
                 ucfirst($type) . " unarchived/restored: {$user->name}",
@@ -910,10 +924,28 @@ class SystemAdminController extends Controller
         $request->validate(['confirmation' => ['required', \Illuminate\Validation\Rule::in(['delete '.$user->name])]]);
         return \Illuminate\Support\Facades\DB::transaction(function () use ($user, $type) {
             $user->update(['archived_at' => now(), 'status' => 'archived']);
+            if ($type === 'student') {
+                $this->archiveStudentRecords($user);
+            }
             SystemLog::logInfo(ucfirst($type).' removed from active use: '.$user->name, 'database',
                 ['user_id' => $user->id, 'type' => $type, 'archived' => true], $user->school_id, 'archive_user');
             return back()->with('success', ucfirst($type)." archived. Historical records have been preserved.");
         });
+    }
+
+    private function archiveStudentRecords(Student $student): void
+    {
+        $enrollmentIds = \App\Models\EnrollmentRequest::where('learner_id', $student->id)->pluck('id');
+        $bookingIds = Booking::where('student_id', $student->id)->pluck('id');
+        \App\Models\EnrollmentRequest::whereIn('id', $enrollmentIds)->whereNull('archived_at')
+            ->update(['archived_at' => now(), 'archived_with_user' => true]);
+        Payment::where(function ($query) use ($student, $enrollmentIds, $bookingIds) {
+            $query->where('payer_user_id', $student->id)->orWhereIn('enrollment_request_id', $enrollmentIds)->orWhereIn('booking_id', $bookingIds);
+        })->whereNull('archived_at')->update(['archived_at' => now(), 'archived_with_user' => true]);
+        \App\Models\SessionCompletion::where(fn ($query) => $query->whereIn('enrollment_id', $enrollmentIds)->orWhereIn('booking_id', $bookingIds))->whereNull('archived_at')
+            ->update(['archived_at' => now(), 'archived_with_user' => true]);
+        Booking::whereIn('id', $bookingIds)->whereNull('archived_at')
+            ->update(['archived_at' => now(), 'archived_with_user' => true]);
     }
 
     /**

@@ -32,6 +32,8 @@ class TimeSlot extends Model
         'notes',
         'batch_group',
         'batch_day_number',
+        'archived_at',
+        'archive_previous_status',
     ];
 
     protected $casts = [
@@ -41,6 +43,7 @@ class TimeSlot extends Model
         'max_students' => 'integer',
         'max_instructors' => 'integer',
         'batch_day_number' => 'integer',
+        'archived_at' => 'datetime',
     ];
 
     public function school()

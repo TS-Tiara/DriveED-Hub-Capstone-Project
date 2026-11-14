@@ -334,6 +334,9 @@
             <p class="page-subtitle">Track and manage all payments for {{ $schoolName }}</p>
         </div>
         <div class="export-buttons">
+            <a href="{{ school_route('admin.payments.index', ['archived' => request('archived') ? null : 1]) }}" class="btn-export btn-export-excel">
+                <i class="bi bi-archive"></i> {{ request('archived') ? 'Active records' : 'Archived records' }}
+            </a>
             <a href="{{ school_route('admin.exports.payments.pdf') }}" class="btn-export btn-export-pdf">
                 Export PDF
             </a>
@@ -413,6 +416,7 @@
                         <th>Method</th>
                         <th>Reference</th>
                         <th>Status</th>
+                        @if(Auth::guard('admin')->check())<th>Record</th>@endif
                     </tr>
                 </thead>
                 <tbody>
@@ -478,10 +482,25 @@
                                 {{ ucfirst($payment->status) }}
                             </span>
                         </td>
+                        @if(Auth::guard('admin')->check())
+                            <td>
+                                @if($payment->archived_at)
+                                    <form method="POST" action="{{ school_route('admin.payments.restore', ['payment' => $payment->id]) }}" onsubmit="return confirm('Restore this payment record?')">
+                                        @csrf
+                                        <button type="submit" class="btn btn-sm btn-outline-primary">Restore</button>
+                                    </form>
+                                @else
+                                    <form method="POST" action="{{ school_route('admin.payments.archive', ['payment' => $payment->id]) }}" onsubmit="return confirm('Archive this payment record? It will remain connected to the learner history.')">
+                                        @csrf
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary">Archive</button>
+                                    </form>
+                                @endif
+                            </td>
+                        @endif
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7">
+                        <td colspan="{{ Auth::guard('admin')->check() ? 8 : 7 }}">
                             <div class="empty-state">
                                 <div class="empty-state-title">No payments found</div>
                                 <div class="empty-state-text">Payment records will appear here once transactions are made.</div>

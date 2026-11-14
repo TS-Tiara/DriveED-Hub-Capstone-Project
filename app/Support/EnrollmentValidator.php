@@ -154,17 +154,17 @@ class EnrollmentValidator
             ];
         }
 
-        // Check for 3 unique session dates (LTO requirement)
+        // Check for 2 unique session dates (LTO requirement)
         $uniqueDatesCount = $enrollment->sessionCompletions()
             ->where('status', 'completed')
             ->where('session_type', 'theoretical')
             ->distinct('session_date')
             ->count('session_date');
 
-        if ($uniqueDatesCount < 3) {
+        if ($uniqueDatesCount < 2) {
             return [
                 'allowed' => false,
-                'message' => "LTO Requirement: Student must attend sessions on at least 3 unique dates. Currently attended: {$uniqueDatesCount} dates."
+                'message' => "LTO Requirement: Student must attend sessions on at least 2 unique dates. Currently attended: {$uniqueDatesCount} dates."
             ];
         }
 
@@ -263,7 +263,7 @@ class EnrollmentValidator
             'hours' => $hours,
             'unique_dates_count' => $count,
             'unique_dates' => $uniqueDates,
-            'is_compliant' => $hours >= 15 && $count >= 3
+            'is_compliant' => $hours >= 15 && $count >= 2
         ];
     }
 }
