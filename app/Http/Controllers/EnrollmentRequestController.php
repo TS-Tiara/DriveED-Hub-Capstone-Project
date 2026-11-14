@@ -351,10 +351,19 @@ class EnrollmentRequestController extends Controller
             if ($rejectLicense || $rejectPayment) {
                 // Partial Rejection Flow
                 if ($rejectLicense) {
+                    $licensePath = $enrollmentRequest->credentials_file_path;
+                    $enrollmentRequest->update(['credentials_file_path' => null]);
                     $enrollmentRequest->learner->update([
+                        'student_license_path' => null,
+                        'student_license_data' => null,
+                        'student_license_mime_type' => null,
+                        'student_license_filename' => null,
                         'student_license_status' => 'rejected',
                         'student_license_rejection_reason' => $validated['remarks']
                     ]);
+                    if ($licensePath) {
+                        Storage::disk('local')->delete($licensePath);
+                    }
                 }
                 if ($rejectPayment) {
                     $enrollmentRequest->update([
