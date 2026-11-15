@@ -1350,7 +1350,7 @@
     </div>
 
     <div class="filters-row">
-        <form method="GET" action="{{ school_route('admin.enrollments.index') }}" data-no-ajax="1" style="display:flex;gap:8px;flex-wrap:wrap;">
+        <form method="GET" action="{{ school_route('admin.enrollments.index') }}" data-no-ajax="1" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
             @foreach(['status', 'branch', 'sort'] as $filter)
                 @if(request()->filled($filter))<input type="hidden" name="{{ $filter }}" value="{{ request($filter) }}">@endif
             @endforeach
