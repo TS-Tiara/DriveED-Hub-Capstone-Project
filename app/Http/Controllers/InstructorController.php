@@ -224,7 +224,14 @@ class InstructorController extends Controller
 
         $query->orderBy('name', 'asc');
 
-        $students = $query->with(['progresses.course', 'bookings' => function ($query) use ($instructorId) {
+        $students = $query->with([
+            'progresses.course',
+            'enrollmentRequests' => function ($query) {
+                $query->where('status', 'approved')
+                    ->with(['course', 'package', 'sessionCompletions'])
+                    ->orderByDesc('id');
+            },
+            'bookings' => function ($query) use ($instructorId) {
             $query->where(function ($bookingQuery) use ($instructorId) {
                 $bookingQuery->where('instructor_id', '=', $instructorId, 'and')
                     ->orWhereHas('timeSlot.instructors', function ($slotQuery) use ($instructorId) {
@@ -238,7 +245,8 @@ class InstructorController extends Controller
                     Booking::STATUS_NO_SHOW,
                 ], 'and', false)
                 ->orderBy('scheduled_at', 'desc');
-        }])
+            },
+        ])
             ->paginate(12)
             ->withQueryString();
 
@@ -269,8 +277,41 @@ class InstructorController extends Controller
             $student->recent_note = $recentBooking && $recentBooking->notes ? $recentBooking->notes : 'No notes yet';
             $student->recent_note_date = $recentBooking ? $recentBooking->scheduled_at : null;
 
-            // Calculate overall progress
-            $student->overall_progress = $student->progresses->avg('completion_percent') ?? 0;
+            // Progress belongs to the student's current approved enrollment, not
+            // an average of historical TDC and current PDC records.
+            $currentEnrollment = $student->enrollmentRequests
+                ->sortByDesc(function ($enrollment) {
+                    return [
+                        in_array($enrollment->course?->course_type, ['practical', 'combo'], true) ? 1 : 0,
+                        $enrollment->id,
+                    ];
+                })
+                ->first();
+
+            $student->current_course_name = $currentEnrollment?->course?->title;
+            $student->current_hours_completed = 0.0;
+            $student->current_hours_required = 0.0;
+
+            if ($currentEnrollment) {
+                $completedSessions = $currentEnrollment->sessionCompletions
+                    ->where('status', 'completed');
+                $courseType = $currentEnrollment->course?->course_type;
+
+                $student->current_hours_completed = (float) $completedSessions
+                    ->when($courseType === 'theoretical', fn ($sessions) => $sessions->where('session_type', 'theoretical'))
+                    ->when($courseType === 'practical', fn ($sessions) => $sessions->where('session_type', 'practical'))
+                    ->sum('hours_completed');
+                $student->current_hours_required = match ($courseType) {
+                    'theoretical' => (float) $currentEnrollment->tdc_hours_limit,
+                    'practical' => (float) $currentEnrollment->pdc_hours_limit,
+                    'combo' => (float) ($currentEnrollment->tdc_hours_limit + $currentEnrollment->pdc_hours_limit),
+                    default => 0.0,
+                };
+            }
+
+            $student->overall_progress = $student->current_hours_required > 0
+                ? min(100, round(($student->current_hours_completed / $student->current_hours_required) * 100, 1))
+                : 0.0;
             $student->avg_progress = $student->overall_progress; // Alias for consistency
             $student->total_sessions = $student->bookings->whereIn('status', [
                 Booking::STATUS_DONE,
