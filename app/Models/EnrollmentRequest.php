@@ -471,6 +471,10 @@ class EnrollmentRequest extends Model
             return 0.0;
         }
 
+        if ($this->course->course_type === 'practical') {
+            return 0.0;
+        }
+
         // 1. Check if the specific Package has an explicit TDC limit
         if ($this->package && $this->package->tdc_hours > 0) {
             return (float) $this->package->tdc_hours;
