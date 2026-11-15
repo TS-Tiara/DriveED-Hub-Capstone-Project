@@ -29,6 +29,17 @@
         padding-bottom: 15px;
         border-bottom: 3px solid {{ $primaryColor }};
     }
+
+    .page-header-left {
+        flex: 1;
+    }
+
+    .page-header-right {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
     
     .page-title {
         font-size: 1.75rem;
@@ -1208,12 +1219,12 @@
 
 <div class="enrollment-requests-container">
     <!-- Page Header -->
-    <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
-        <div>
+    <div class="page-header">
+        <div class="page-header-left">
             <h1 class="page-title">Manage Enrollments</h1>
             <p class="page-subtitle">View and manage all enrollment requests and active student enrollments</p>
         </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">
+        <div class="page-header-right">
         <a href="{{ school_route('admin.enrollments.index', ['archived' => ($isArchivedView ?? false) ? null : 1]) }}" class="btn btn-outline-secondary" style="text-decoration:none;">
             <i class="bi bi-archive"></i> {{ ($isArchivedView ?? false) ? 'Active enrollments' : 'Archived enrollments' }}
         </a>
