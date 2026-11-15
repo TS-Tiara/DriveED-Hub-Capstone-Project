@@ -588,10 +588,12 @@
 
     .filters-row .form-control {
         height: 42px;
+        box-sizing: border-box;
     }
 
     .filters-row .btn {
         height: 42px;
+        box-sizing: border-box;
         display: inline-flex;
         align-items: center;
         justify-content: center;
