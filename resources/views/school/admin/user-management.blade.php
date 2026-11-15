@@ -1298,6 +1298,12 @@
             background: #10b981;
         }
 
+        .user-export-menu { width:300px; max-height:70vh; overflow-y:auto; }
+        .user-export-field { display:block; padding:8px 14px; color:#334155; font-size:0.82rem; font-weight:600; }
+        .user-export-field .form-control { display:block; width:100%; margin-top:4px; padding:7px 9px; border:1px solid #dbe2ea; border-radius:6px; font-weight:400; }
+        .user-export-submit { padding:10px 14px 14px; }
+        .user-export-submit button { width:100%; border:0; border-radius:7px; padding:9px 12px; background:{{ $primaryColor }}; color:#fff; font-weight:700; cursor:pointer; }
+
         /* Mobile Responsive Styles */
         /* --- ENHANCED USER PROFILE MODAL STYLES --- */
         .profile-modal-container {
@@ -2053,22 +2059,29 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                             </svg>
                         </button>
-                        <div class="export-dropdown-menu">
-                            <div class="dropdown-header">Students</div>
-                            <a href="{{ school_route('admin.exports.students.pdf', ['branch' => request('branch', 'all')]) }}">
-                                <span class="dot pdf"></span> Students (PDF)
-                            </a>
-                            <a href="{{ school_route('admin.exports.students.excel', ['branch' => request('branch', 'all')]) }}">
-                                <span class="dot excel"></span> Students (Excel)
-                            </a>
-                            <div class="dropdown-divider"></div>
-                            <div class="dropdown-header">Instructors</div>
-                            <a href="{{ school_route('admin.exports.instructors.pdf') }}">
-                                <span class="dot pdf"></span> Instructors (PDF)
-                            </a>
-                            <a href="{{ school_route('admin.exports.instructors.excel') }}">
-                                <span class="dot excel"></span> Instructors (Excel)
-                            </a>
+                        <div class="export-dropdown-menu user-export-menu">
+                            <div class="dropdown-header">Export filters</div>
+                            <form method="GET" onsubmit="return setUserExportAction(this)">
+                                <label class="user-export-field">Records
+                                    <select name="record_type" class="form-control"><option value="students">Students</option><option value="instructors">Instructors</option></select>
+                                </label>
+                                <label class="user-export-field">Status
+                                    <select name="status" class="form-control"><option value="all">All statuses</option><option value="active">Active</option><option value="inactive">Inactive</option></select>
+                                </label>
+                                @unless($admin->isBranchSecretary())
+                                <label class="user-export-field">Branch
+                                    <select name="branch" class="form-control">
+                                        <option value="all">All branches</option>
+                                        <option value="unassigned">Unassigned</option>
+                                        @foreach($branches as $branch)<option value="{{ $branch->id }}">{{ $branch->name }}</option>@endforeach
+                                    </select>
+                                </label>
+                                @endunless
+                                <label class="user-export-field">File format
+                                    <select name="format" class="form-control"><option value="pdf">PDF</option><option value="excel">Excel</option></select>
+                                </label>
+                                <div class="user-export-submit"><button type="submit">Export</button></div>
+                            </form>
                         </div>
                     </div>
                     <button class="btn-create" onclick="openCreateStudentModal()">
@@ -3251,6 +3264,15 @@
         // Export Dropdown
         function toggleExportDropdown() {
             document.getElementById('exportDropdown').classList.toggle('open');
+        }
+
+        function setUserExportAction(form) {
+            const routes = {
+                students: { pdf: @json(school_route('admin.exports.students.pdf')), excel: @json(school_route('admin.exports.students.excel')) },
+                instructors: { pdf: @json(school_route('admin.exports.instructors.pdf')), excel: @json(school_route('admin.exports.instructors.excel')) },
+            };
+            form.action = routes[form.elements.record_type.value][form.elements.format.value];
+            return true;
         }
 
         // Close dropdown when clicking outside

@@ -1582,8 +1582,6 @@
     </style>
 
     <div class="timeslots-container">
-        @include('partials.session-report-export')
-
         <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 3px solid var(--primary-color);">
             <div>
                 <h1 class="page-title">Manage Schedule</h1>
@@ -1592,6 +1590,7 @@
             <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 15px;">
                 {{-- Primary Actions (Above Tabs) --}}
                 <div style="display: flex; gap: 12px;">
+                    @include('partials.session-report-export')
                     @unless($isArchivedView ?? false)
                     <button type="button" id="createScheduleBtn" class="btn btn-success" onclick="openCreateModal(); return false;" style="display: flex; align-items: center; gap: 8px; padding: 10px 20px; font-weight: 600; border-radius: 8px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);">
                         <i class="bi bi-calendar-plus"></i> Create Schedule
@@ -1599,9 +1598,6 @@
                     @endunless
                     <a href="{{ route('schools.admin.schedules', [$school, 'archived' => ($isArchivedView ?? false) ? null : 1]) }}" class="btn btn-outline-secondary" style="display:flex;align-items:center;gap:8px;padding:10px 16px;font-weight:600;text-decoration:none;">
                         <i class="bi bi-archive"></i> {{ ($isArchivedView ?? false) ? 'Active schedules' : 'Archived schedules' }}
-                    </a>
-                    <a href="{{ school_route('admin.exports.schedules.pdf') }}" title="Export the schedule grid (time slots) to PDF" class="btn btn-info" style="display: flex; align-items: center; gap: 8px; padding: 10px 20px; font-weight: 600; border-radius: 8px; background: {{ $primaryColor }}; color: white; text-decoration: none; box-shadow: 0 4px 12px {{ $primaryColor }}40;">
-                        <i class="bi bi-file-earmark-pdf-fill" style="color: #ff4d4d;"></i> Grid PDF
                     </a>
                 </div>
 
@@ -2075,8 +2071,6 @@
                         </small>
                     </div>
 
-                    <div class="form-group"><label style="display:block;margin-bottom:6px;"><input type="checkbox" id="toggleTimeRanges" onchange="toggleTimeRanges(this.checked)"> Create multiple time ranges on one date</label><small class="text-muted" style="display:block;">Add separate start and end times. This cannot be combined with sequential multi-day scheduling.</small></div>
-                    <div id="timeRangesGroup" hidden><div id="timeRangesRows"></div><button type="button" class="btn btn-secondary" onclick="addTimeRange()">Add time range</button></div>
                     <div id="singleDateGroup" class="form-group">
                         <label class="form-label">Date <span class="text-danger">*</span></label>
                         <input type="date" name="date" id="createScheduleDate" class="form-control {{ $errors->has('date') ? 'is-invalid' : '' }}" min="{{ date('Y-m-d', strtotime('+1 day')) }}" value="{{ old('date') }}">
@@ -2180,7 +2174,7 @@
                             initCreateScheduleDates();
                         }
                         function toggleBatchMode(enabled) {
-                            if (enabled && document.getElementById('toggleTimeRanges')?.checked) {document.getElementById('toggleTimeRanges').checked = false; toggleTimeRanges(false);}
+                            if (enabled && document.getElementById('toggleTimeRanges')?.checked) {document.getElementById('toggleTimeRanges').checked = false; window.toggleTimeRanges(false);}
                             const singleGroup = document.getElementById('singleDateGroup');
                             const batchGroup = document.getElementById('batchDatesGroup');
                             const dateInput = document.getElementById('createScheduleDate');
@@ -2260,6 +2254,9 @@
                             </div>
                         </div>
                     </div>
+
+                    <div class="form-group"><label style="display:block;margin-bottom:6px;"><input type="checkbox" id="toggleTimeRanges" onchange="window.toggleTimeRanges(this.checked)"> Create multiple time ranges on one date</label><small class="text-muted" style="display:block;">Add separate start and end times. This cannot be combined with sequential multi-day scheduling.</small></div>
+                    <div id="timeRangesGroup" hidden><div id="timeRangesRows"></div><button type="button" class="btn btn-secondary" onclick="addTimeRange()">Add time range</button></div>
 
                     <style>
                         .custom-select-container {
@@ -2520,21 +2517,35 @@
     </div>
 
     <script>
-        function toggleTimeRanges(enabled) {
-            if(enabled){ document.getElementById('toggleBatchScheduling').checked=false;toggleBatchMode(false); }
-            document.getElementById('timeRangesGroup').hidden=!enabled;
-            document.querySelectorAll('#timeRangesRows select').forEach(i=>i.disabled=!enabled);
-            if(enabled && !document.querySelector('#timeRangesRows select')){ addTimeRange();addTimeRange(); }
-            document.getElementById('start_time_hidden').disabled=enabled;
-            document.getElementById('end_time_hidden').disabled=enabled;
+        window.toggleTimeRanges = function(enabled) {
+            const batchToggle = document.getElementById('toggleBatchScheduling');
+            if (enabled && batchToggle) {
+                batchToggle.checked = false;
+                window.toggleBatchMode?.(false);
+            }
+            const group = document.getElementById('timeRangesGroup');
+            const rows = document.getElementById('timeRangesRows');
+            if (!group || !rows) return;
+            group.hidden = !enabled;
+            rows.querySelectorAll('select').forEach(input => input.disabled = !enabled);
+            if (enabled && !rows.querySelector('select')) {
+                window.addTimeRange();
+                window.addTimeRange();
+            }
+            const start = document.getElementById('start_time_hidden');
+            const end = document.getElementById('end_time_hidden');
+            if (start) start.disabled = enabled;
+            if (end) end.disabled = enabled;
         }
         function addTimeRange() {
             const container=document.getElementById('timeRangesRows'), index=Number(container.dataset.next||0);
             container.dataset.next=index+1;
             const row=document.createElement('div');row.style.cssText='display:flex;gap:8px;flex-wrap:wrap;margin:10px 0';
-            ['start_time','end_time'].forEach((field)=>{const label=document.createElement('label');label.textContent=field==='start_time'?'Start time':'End time'; const input=document.createElement('select');input.name='time_ranges['+index+']['+field+']';input.required=true;input.className='form-control';input.add(new Option('Choose time',''));for(let hour=0;hour<24;hour++)for(const minute of ['00','30']){const time=String(hour).padStart(2,'0')+':'+minute;input.add(new Option(time,time));}label.append(input);row.append(label);});
+            ['start_time','end_time'].forEach((field)=>{const label=document.createElement('label');label.textContent=field==='start_time'?'Start time':'End time'; const input=document.createElement('select');input.name='time_ranges['+index+']['+field+']';input.required=true;input.className='form-control';input.add(new Option('Choose time',''));for(let hour=6;hour<=18;hour++)for(const minute of ['00','30']){const time=String(hour).padStart(2,'0')+':'+minute;input.add(new Option(time,time));}label.append(input);row.append(label);});
             const remove=document.createElement('button');remove.type='button';remove.textContent='Remove';remove.className='btn btn-secondary';remove.onclick=()=>row.remove();row.append(remove);container.append(row);
         }
+        window.addTimeRange = addTimeRange;
+        window.toggleBatchMode = toggleBatchMode;
         var currentSlotId = null;
         var currentSlotData = null;
 
@@ -2897,6 +2908,8 @@
                         window.location.reload();
                     } else if (response.status === 422) {
                         const validationMessages = Object.values(data.errors || {}).flat();
+                        const duplicateWarning = validationMessages.find(message => message.toLowerCase().includes('already exists'));
+                        if (duplicateWarning) window.alert(duplicateWarning);
                         if (window.Toast) Toast.error(validationMessages[0] || data.message || 'Please check the schedule details and try again.');
                         // Validation errors
                         errorContainer.style.display = 'block';
@@ -3383,7 +3396,7 @@
             showConfirm({
                 type: 'danger',
                 title: 'Archive or Delete Schedule',
-                message: 'Confirm this action. Schedules with bookings will be archived with their history; empty schedules will be permanently deleted.',
+                message: 'Archive this schedule? It will appear in Archived schedules and can be restored later. Linked booking history stays attached.',
                 confirmText: 'Continue',
                 onConfirm: async () => {
                     const form = document.getElementById('deleteScheduleForm' + scheduleId);

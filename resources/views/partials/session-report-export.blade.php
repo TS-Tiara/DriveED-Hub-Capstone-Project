@@ -49,11 +49,34 @@
 
 <style>
     .schedule-log-export {
+        position: relative;
+        margin-bottom: 0;
+    }
+
+    .schedule-log-export > summary.btn-export-trigger {
+        list-style: none;
+    }
+
+    .schedule-log-export > summary.btn-export-trigger::-webkit-details-marker {
+        display: none;
+    }
+
+    .schedule-log-export[open] > summary .chevron {
+        transform: rotate(180deg);
+    }
+
+    .schedule-log-export__body {
+        position: absolute;
+        top: calc(100% + 10px);
+        right: 0;
+        z-index: 2000;
+        width: min(760px, calc(100vw - 40px));
+        max-height: calc(100vh - 140px);
+        overflow: auto;
+        padding: 20px;
         background: #ffffff;
         border: 1px solid #e5e7eb;
         border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 25px;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     }
 
@@ -278,7 +301,14 @@
 
     @media (max-width: 720px) {
         .schedule-log-export {
-            padding: 16px;
+            margin-bottom: 0;
+        }
+
+        .schedule-log-export__body {
+            right: 0;
+            width: min(1000px, calc(100vw - 28px));
+            max-height: calc(100vh - 100px);
+            padding: 14px;
         }
 
         .schedule-log-export__fields {
@@ -297,7 +327,16 @@
 </style>
 
 <details class="schedule-log-export">
-    <summary style="cursor:pointer;font-weight:600;padding:4px 0;">Schedule Logs and Exports</summary>
+    <summary class="btn-export-trigger">
+        <i class="bi bi-download" aria-hidden="true"></i> Export
+        <i class="bi bi-chevron-down chevron" aria-hidden="true"></i>
+    </summary>
+    <div class="schedule-log-export__body">
+    @if($reportRole === 'admin')
+        <div class="schedule-log-export__actions" style="justify-content:flex-end;margin:0 0 12px;">
+            <a href="{{ school_route('admin.exports.schedules.pdf') }}" class="schedule-log-export__button schedule-log-export__button--pdf" style="text-decoration:none;">Schedule grid PDF</a>
+        </div>
+    @endif
     <div class="schedule-log-export__header">
         <div class="schedule-log-export__title-wrap">
             <div class="schedule-log-export__icon">
@@ -394,19 +433,15 @@
             <p class="schedule-log-export__scope">
                 <i class="bi bi-shield-lock"></i> {{ $scopeNote }}
             </p>
-            <div class="schedule-log-export__actions">
-                <details>
-                    <summary class="schedule-log-export__button schedule-log-export__button--pdf">Export Report</summary>
-                    <label for="scheduleExportFormat">File format</label>
-                    <select id="scheduleExportFormat" class="schedule-log-export__control">
-                        <option value="pdf">PDF</option><option value="xlsx">Excel</option>
-                    </select>
-                    <button type="submit" name="export_scope" value="all" class="schedule-log-export__button schedule-log-export__button--pdf">Export All Records</button>
-                    <button type="submit" name="export_scope" value="filtered" class="schedule-log-export__button schedule-log-export__button--pdf">Export Filtered Records</button>
-                </details>
+        <div class="schedule-log-export__actions">
+                    <button type="submit" name="export_scope" value="filtered" data-export-format="pdf" class="schedule-log-export__button schedule-log-export__button--pdf">Filtered PDF</button>
+                    <button type="submit" name="export_scope" value="filtered" data-export-format="xlsx" class="schedule-log-export__button schedule-log-export__button--excel">Filtered Excel</button>
+                    <button type="submit" name="export_scope" value="all" data-export-format="pdf" class="schedule-log-export__button schedule-log-export__button--pdf">All records PDF</button>
+                    <button type="submit" name="export_scope" value="all" data-export-format="xlsx" class="schedule-log-export__button schedule-log-export__button--excel">All records Excel</button>
             </div>
         </div>
     </form>
+    </div>
 </details>
 
 <script>
@@ -429,7 +464,7 @@
             }
             event.preventDefault();
             event.stopImmediatePropagation();
-            const format = document.getElementById('scheduleExportFormat').value;
+            const format = event.submitter?.dataset.exportFormat || 'pdf';
             const target = new URL(form.action.replace(/\/pdf$/, '/' + format));
             if (event.submitter?.value !== 'all') {
                 for (const [key, value] of new FormData(form)) target.searchParams.append(key, value);

@@ -14,6 +14,11 @@
 @include('school.admin.partials.admin-styles')
 
 <style>
+    .payment-export-field { display:block; padding:8px 14px; color:#334155; font-size:0.82rem; font-weight:600; }
+    .payment-export-field .form-control { display:block; width:100%; margin-top:4px; padding:7px 9px; border:1px solid #dbe2ea; border-radius:6px; font-weight:400; }
+    .payment-export-formats { display:flex; gap:8px; padding:10px 14px 14px; }
+    .payment-export-formats button { flex:1; border:0; border-radius:7px; padding:9px 12px; background:{{ $primaryColor }}; color:#fff; font-weight:700; cursor:pointer; }
+    .payment-export-formats button:hover { filter:brightness(0.94); }
     .method-badge {
         padding: 4px 10px;
         border-radius: 6px;
@@ -337,12 +342,31 @@
             <a href="{{ school_route('admin.payments.index', ['archived' => request('archived') ? null : 1]) }}" class="btn-export btn-export-excel">
                 <i class="bi bi-archive"></i> {{ request('archived') ? 'Active records' : 'Archived records' }}
             </a>
-            <a href="{{ school_route('admin.exports.payments.pdf') }}" class="btn-export btn-export-pdf">
-                Export PDF
-            </a>
-            <a href="{{ school_route('admin.exports.payments.excel') }}" class="btn-export btn-export-excel">
-                Export Excel
-            </a>
+            <div class="export-dropdown" id="paymentExportDropdown">
+                <button type="button" class="btn-export-trigger" onclick="this.parentElement.classList.toggle('open')" aria-expanded="false" aria-controls="paymentExportMenu">
+                    <i class="bi bi-download" aria-hidden="true"></i> Export <i class="bi bi-chevron-down chevron" aria-hidden="true"></i>
+                </button>
+                <div class="export-dropdown-menu" id="paymentExportMenu">
+                    <div class="dropdown-header">Payment filters</div>
+                    <form method="GET" action="{{ school_route('admin.exports.payments.pdf') }}">
+                        <label class="payment-export-field">Status
+                            <select name="status" class="form-control">
+                                <option value="all">All statuses</option>
+                                <option value="approved">Approved</option>
+                                <option value="pending">Pending</option>
+                                <option value="rejected">Rejected</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                        </label>
+                        <label class="payment-export-field">From date<input type="date" name="from" class="form-control"></label>
+                        <label class="payment-export-field">To date<input type="date" name="to" class="form-control"></label>
+                        <div class="payment-export-formats">
+                            <button type="submit" formaction="{{ school_route('admin.exports.payments.pdf') }}">PDF</button>
+                            <button type="submit" formaction="{{ school_route('admin.exports.payments.excel') }}">Excel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -485,12 +509,12 @@
                         @if(Auth::guard('admin')->check())
                             <td>
                                 @if($payment->archived_at)
-                                    <form method="POST" action="{{ school_route('admin.payments.restore', ['payment' => $payment->id]) }}" onsubmit="return confirm('Restore this payment record?')">
+                                    <form method="POST" action="{{ school_route('admin.payments.restore', ['payment' => $payment->id]) }}" onsubmit="return confirmPaymentArchive(event, 'Restore this payment record?')">
                                         @csrf
                                         <button type="submit" class="btn btn-sm btn-outline-primary">Restore</button>
                                     </form>
                                 @else
-                                    <form method="POST" action="{{ school_route('admin.payments.archive', ['payment' => $payment->id]) }}" onsubmit="return confirm('Archive this payment record? It will remain connected to the learner history.')">
+                                    <form method="POST" action="{{ school_route('admin.payments.archive', ['payment' => $payment->id]) }}" onsubmit="return confirmPaymentArchive(event, 'Archive this payment record? It will remain connected to the learner history.')">
                                         @csrf
                                         <button type="submit" class="btn btn-sm btn-outline-secondary">Archive</button>
                                     </form>
@@ -584,6 +608,20 @@ function closeQrModal() {
     if (typeof closeImageLightbox === 'function') {
         closeImageLightbox();
     }
+}
+
+function confirmPaymentArchive(event, message) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const restore = message.startsWith('Restore');
+    showConfirm({
+        title: restore ? 'Restore payment' : 'Archive payment',
+        message,
+        type: restore ? 'success' : 'danger',
+        confirmText: restore ? 'Restore' : 'Archive',
+        onConfirm: () => form.submit(),
+    });
+    return false;
 }
 </script>
 @endsection

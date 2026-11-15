@@ -693,10 +693,15 @@
             <p class="page-subtitle">Manage school locations and verify branch-specific operational metrics for {{ $schoolName }}</p>
         </div>
         <div class="header-actions">
+            <a class="btn-action btn-toggle" href="{{ route('schools.admin.branches.index', ['school' => $school->slug, 'archived' => ($isArchivedView ?? false) ? null : 1]) }}" style="text-decoration:none;">
+                <i class="bi bi-archive"></i> {{ ($isArchivedView ?? false) ? 'Active branches' : 'Archived branches' }}
+            </a>
+            @unless($isArchivedView ?? false)
             <button class="btn-create" onclick="openBranchModal()">
                 <svg class="icon-18" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
                 Add Branch
             </button>
+            @endunless
         </div>
     </div>
 
@@ -815,6 +820,9 @@
                         </td>
                         <td class="col-actions">
                             <div class="action-buttons">
+                                @if($isArchivedView ?? false)
+                                <form method="POST" action="{{ route('schools.admin.branches.restore', ['school' => $school->slug, 'id' => $branch->id]) }}">@csrf<button class="btn-action btn-toggle" type="submit">Restore</button></form>
+                                @else
                                 <button class="btn-action btn-edit" onclick="editBranch({{ json_encode($branch) }})">
                                     <i class="bi bi-pencil-fill"></i> Edit
                                 </button>
@@ -823,8 +831,9 @@
                                     {{ $branch->is_active ? 'Deactivate' : 'Activate' }}
                                 </button>
                                 <button class="btn-action btn-delete" onclick="deleteBranch({{ $branch->id }}, '{{ addslashes($branch->name) }}')">
-                                    <i class="bi bi-trash-fill"></i> Delete
+                                    <i class="bi bi-archive"></i> Archive
                                 </button>
+                                @endif
                             </div>
                         </td>
                     </tr>
@@ -1042,9 +1051,9 @@
     function deleteBranch(branchId, branchName) {
         showConfirm({
             type: 'danger',
-            title: 'Delete Branch',
-            message: `Are you sure you want to delete "${branchName}"? This action cannot be undone.`,
-            confirmText: 'Yes, Delete Branch',
+            title: 'Archive Branch',
+            message: `Archive "${branchName}"? You can restore it later from Archived branches.`,
+            confirmText: 'Archive Branch',
             onConfirm: () => {
                 const form = document.createElement('form');
                 form.method = 'POST';

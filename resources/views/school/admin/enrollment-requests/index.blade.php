@@ -668,6 +668,12 @@
         border-top: 1px solid #e5e7eb;
     }
 
+    .enrollment-export-field { display:block; padding:8px 14px; color:#334155; font-size:0.82rem; font-weight:600; }
+    .enrollment-export-field .form-control { display:block; width:100%; margin-top:4px; padding:7px 9px; border:1px solid #dbe2ea; border-radius:6px; font-weight:400; }
+    .enrollment-export-formats { display:flex; gap:8px; padding:10px 14px 14px; }
+    .enrollment-export-formats button { flex:1; border:0; border-radius:7px; padding:9px 12px; background:{{ $primaryColor }}; color:#fff; font-weight:700; cursor:pointer; }
+    .enrollment-export-formats button:hover { filter:brightness(0.94); }
+
 
     .empty-state-icon {
         width: 48px;
@@ -1207,31 +1213,39 @@
             <h1 class="page-title">Manage Enrollments</h1>
             <p class="page-subtitle">View and manage all enrollment requests and active student enrollments</p>
         </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">
+        <a href="{{ school_route('admin.enrollments.index', ['archived' => ($isArchivedView ?? false) ? null : 1]) }}" class="btn btn-outline-secondary" style="text-decoration:none;">
+            <i class="bi bi-archive"></i> {{ ($isArchivedView ?? false) ? 'Active enrollments' : 'Archived enrollments' }}
+        </a>
         <div class="export-dropdown" id="enrollmentExport">
-            <button type="button" class="btn-export-trigger" onclick="this.parentElement.classList.toggle('open')">
+            <button type="button" class="btn-export-trigger" onclick="this.parentElement.classList.toggle('open')" aria-expanded="false" aria-controls="enrollmentExportMenu">
                 <i class="bi bi-download"></i>
-                Export Report
+                Export
                 <i class="bi bi-chevron-down chevron"></i>
             </button>
-            <div class="export-dropdown-menu">
-                <div class="dropdown-header">Export Options</div>
-                <a href="{{ route('schools.admin.exports.enrollments.pdf', ['school' => $school->slug]) }}">
-                    <i class="bi bi-file-earmark-pdf-fill" style="color: #ff4d4d;"></i> All Enrollments (PDF)
-                </a>
-                <a href="{{ route('schools.admin.exports.enrollments.pdf', ['school' => $school->slug, 'status' => 'pending']) }}" class="dropdown-divider-top">
-                    <i class="bi bi-clock-history" style="color: #f59e0b;"></i> Pending Only (PDF)
-                </a>
-                <a href="{{ route('schools.admin.exports.enrollments.pdf', ['school' => $school->slug, 'status' => 'approved']) }}">
-                    <i class="bi bi-check-circle-fill" style="color: #10b981;"></i> Active Only (PDF)
-                </a>
-                <a href="{{ route('schools.admin.exports.enrollments.pdf', ['school' => $school->slug, 'status' => 'completed']) }}">
-                    <i class="bi bi-flag-fill" style="color: #3b82f6;"></i> Completed Only (PDF)
-                </a>
-                <div class="dropdown-header">Spreadsheet</div>
-                <a href="{{ route('schools.admin.exports.enrollments.excel', ['school' => $school->slug]) }}">
-                    <i class="bi bi-file-earmark-excel-fill" style="color: #10b981;"></i> Full Export (Excel)
-                </a>
+            <div class="export-dropdown-menu" id="enrollmentExportMenu">
+                <div class="dropdown-header">Enrollment filters</div>
+                <form method="GET" action="{{ route('schools.admin.exports.enrollments.pdf', ['school' => $school->slug]) }}">
+                    <label class="enrollment-export-field">Status
+                        <select name="status" class="form-control">
+                            <option value="all">All statuses</option>
+                            <option value="pending">Pending</option>
+                            <option value="approved">Active</option>
+                            <option value="completed">Completed</option>
+                            <option value="rejected">Rejected</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </label>
+                    <label class="enrollment-export-field">Search student or course<input type="search" name="search" class="form-control" maxlength="120" placeholder="Name, email, or course"></label>
+                    <label class="enrollment-export-field">From date<input type="date" name="from" class="form-control"></label>
+                    <label class="enrollment-export-field">To date<input type="date" name="to" class="form-control"></label>
+                    <div class="enrollment-export-formats">
+                        <button type="submit" formaction="{{ route('schools.admin.exports.enrollments.pdf', ['school' => $school->slug]) }}">PDF</button>
+                        <button type="submit" formaction="{{ route('schools.admin.exports.enrollments.excel', ['school' => $school->slug]) }}">Excel</button>
+                    </div>
+                </form>
             </div>
+        </div>
         </div>
     </div>
 
@@ -1444,15 +1458,17 @@
                         <td>
                             <div class="action-buttons">
                                 @if($isArchivedView ?? false)
-                                    <form method="POST" action="{{ route('schools.admin.enrollments.restore', ['school' => $school, 'enrollmentRequest' => $request->id]) }}" onsubmit="return confirm('Restore this enrollment record?')">
+                                    <form method="POST" action="{{ route('schools.admin.enrollments.restore', ['school' => $school, 'enrollmentRequest' => $request->id]) }}" onsubmit="return confirmEnrollmentArchive(event, 'Restore this enrollment record?')">
                                         @csrf
                                         <button type="submit" class="btn btn-view">Restore</button>
                                     </form>
-                                @else
-                                    <form method="POST" action="{{ route('schools.admin.enrollments.archive', ['school' => $school, 'enrollmentRequest' => $request->id]) }}" onsubmit="return confirm('Archive this enrollment record? It will remain linked to the learner history.')">
+                                @elseif(in_array($request->status, ['completed', 'cancelled', 'rejected'], true))
+                                    <form method="POST" action="{{ route('schools.admin.enrollments.archive', ['school' => $school, 'enrollmentRequest' => $request->id]) }}" onsubmit="return confirmEnrollmentArchive(event, 'Archive this enrollment record? It will remain linked to the learner history.')">
                                         @csrf
                                         <button type="submit" class="btn btn-view">Archive</button>
                                     </form>
+                                @elseif(!($isArchivedView ?? false))
+                                    <span class="text-muted" title="Active enrollments cannot be archived.">Active record</span>
                                 @endif
                                 @unless($isArchivedView ?? false)
                                 @if($request->status === 'pending' && $request->cancellation_requested)
@@ -1623,6 +1639,21 @@
     @endif
 </div>
 
+<script>
+function confirmEnrollmentArchive(event, message) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    showConfirm({
+        title: message.startsWith('Restore') ? 'Restore enrollment' : 'Archive enrollment',
+        message,
+        type: message.startsWith('Restore') ? 'success' : 'danger',
+        confirmText: message.startsWith('Restore') ? 'Restore' : 'Archive',
+        onConfirm: () => form.submit(),
+    });
+    return false;
+}
+</script>
+
 <!-- Reject Modal -->
 <div id="rejectModal" class="action-modal modal">
     <div class="action-modal-card">
@@ -1657,14 +1688,24 @@
                 <button type="button" onclick="closeRejectModal()" class="action-modal-btn action-modal-btn-secondary">
                     Cancel
                 </button>
-                <button type="submit" id="rejectSubmitBtn" class="action-modal-btn action-modal-btn-danger">
-                    Reject Request
+                <button type="submit" id="rejectSubmitBtn" class="action-modal-btn action-modal-btn-secondary">
+                    Reject selected items
+                </button>
+                <button type="button" class="action-modal-btn action-modal-btn-danger" onclick="fullyRejectEnrollment()">
+                    Fully reject enrollment
                 </button>
             </div>
         </form>
     </div>
 </div>
 
+<script>
+function fullyRejectEnrollment() {
+    document.querySelector('input[name="reject_license"]').checked = false;
+    document.querySelector('input[name="reject_payment"]').checked = false;
+    document.getElementById('rejectForm')?.requestSubmit();
+}
+</script>
 
 <!-- License Reject Modal -->
 <div id="licenseRejectModal" class="action-modal modal">

@@ -465,6 +465,7 @@ class EnrollmentRequestController extends Controller
         abort_unless($admin && $admin->school_id === (int) $school->id, 403);
         abort_unless((int) $enrollmentRequest->school_id === (int) $school->id, 404);
         abort_unless(!$admin->isBranchSecretary() || $admin->canAccessBranch($enrollmentRequest->branch_id), 403);
+        abort_unless(in_array($enrollmentRequest->status, ['completed', 'cancelled', 'rejected'], true), 409, 'Only completed, cancelled, or rejected enrollments can be archived.');
         $enrollmentRequest->update(['archived_at' => now(), 'archived_with_user' => false]);
         return back()->with('success', 'Enrollment record archived and kept in the learner history.');
     }

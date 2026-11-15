@@ -1241,7 +1241,7 @@ class StudentController extends Controller
         // Get all enrollment requests for this student at this school
         $enrollmentHistory = EnrollmentRequest::where('learner_id', $student->id)
             ->where('school_id', $school->id)
-            ->with(['course', 'sessionCompletions.instructor', 'approvedBy'])
+            ->with(['course', 'sessionCompletions' => fn ($query) => $query->whereNull('archived_at')->with('instructor'), 'approvedBy'])
             ->orderBy('created_at', 'desc')
             ->get();
 

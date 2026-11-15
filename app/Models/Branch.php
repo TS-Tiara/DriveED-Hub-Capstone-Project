@@ -22,11 +22,15 @@ class Branch extends Model
         'email',
         'is_active',
         'sort_order',
+        'archived_at',
+        'archived_previous_is_active',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
         'sort_order' => 'integer',
+        'archived_at' => 'datetime',
+        'archived_previous_is_active' => 'boolean',
     ];
 
     /**

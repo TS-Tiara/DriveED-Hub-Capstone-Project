@@ -258,6 +258,7 @@ Route::prefix('{school:slug}')
                     Route::put('/branches/{id}', [BranchController::class , 'update'])->name('branches.update');
                     Route::patch('/branches/{id}/toggle', [BranchController::class , 'toggleActive'])->name('branches.toggle');
                     Route::delete('/branches/{id}', [BranchController::class , 'destroy'])->name('branches.destroy');
+                    Route::post('/branches/{id}/restore', [BranchController::class, 'restore'])->name('branches.restore');
 
                     // Vehicle management
                     Route::prefix('vehicles')->name('vehicles.')->group(function () {
@@ -265,6 +266,7 @@ Route::prefix('{school:slug}')
                         Route::post('/', [\App\Http\Controllers\VehicleController::class, 'store'])->name('store');
                         Route::put('/{vehicle}', [\App\Http\Controllers\VehicleController::class, 'update'])->name('update');
                         Route::delete('/{vehicle}', [\App\Http\Controllers\VehicleController::class, 'destroy'])->name('destroy');
+                        Route::post('/{vehicle}/restore', [\App\Http\Controllers\VehicleController::class, 'restore'])->name('restore');
                         Route::patch('/{vehicle}/toggle-status', [\App\Http\Controllers\VehicleController::class, 'toggleStatus'])->name('toggleStatus');
                         
                         Route::post('/categories', [\App\Http\Controllers\VehicleController::class, 'storeCategory'])->name('categories.store');
@@ -387,6 +389,7 @@ Route::prefix('{school:slug}')
                             Route::get('/', [TheoreticalCompletionController::class , 'index'])->name('index');
                             Route::get('/stats/overview', [TheoreticalCompletionController::class , 'stats'])->name('stats');
                             Route::get('/export/pdf', [TheoreticalCompletionController::class, 'exportList'])->name('exportList');
+                            Route::get('/export/excel', [TheoreticalCompletionController::class, 'exportListExcel'])->name('exportExcel');
                             Route::get('/{enrollment}/export/pdf', [TheoreticalCompletionController::class, 'export'])->name('export');
                             Route::get('/{enrollment}', [TheoreticalCompletionController::class , 'show'])->name('show');
                             Route::post('/mark-passed', [TheoreticalCompletionController::class , 'markAsPassed'])->name('markAsPassed');
@@ -544,6 +547,7 @@ Route::prefix('{school:slug}')
                     Route::prefix('theoretical')->name('theoretical.')->group(function () {
                             Route::get('/', [TheoreticalCompletionController::class , 'index'])->name('index');
                             Route::get('/export/pdf', [TheoreticalCompletionController::class, 'exportList'])->name('exportList');
+                            Route::get('/export/excel', [TheoreticalCompletionController::class, 'exportListExcel'])->name('exportExcel');
                             Route::get('/{enrollment}/export/pdf', [TheoreticalCompletionController::class, 'export'])->name('export');
                             Route::get('/{enrollment}', [TheoreticalCompletionController::class , 'show'])->name('show');
                             Route::post('/mark-passed', [TheoreticalCompletionController::class , 'markAsPassed'])->name('markAsPassed');

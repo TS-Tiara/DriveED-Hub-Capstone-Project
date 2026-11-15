@@ -2031,7 +2031,7 @@ class AdminController extends Controller
                 'date' => 'required_without:schedule_dates|nullable|date|after:today',
                 'schedule_dates' => 'nullable|array|min:1|max:30',
                 'schedule_dates.*' => 'required|date|after:today|distinct',
-                'time_ranges' => 'required_with:time_ranges|array|min:2|max:16',
+                'time_ranges' => 'sometimes|array|min:2|max:16',
                 'time_ranges.*.start_time' => 'required_with:time_ranges|date_format:H:i',
                 'time_ranges.*.end_time' => 'required_with:time_ranges|date_format:H:i',
                 'batch_dates' => 'prohibited',
@@ -2055,6 +2055,9 @@ class AdminController extends Controller
                 'end_time' => 'required_without:time_ranges|date_format:H:i',
             ]);
             foreach ($ranges as $i => $range) {
+                if ($range['start_time'] < '06:00' || $range['end_time'] > '18:00' || $range['end_time'] <= $range['start_time']) {
+                    throw \Illuminate\Validation\ValidationException::withMessages(['time_ranges' => 'Each time range must start at or after 6:00 AM and finish by 6:00 PM.']);
+                }
                 foreach (array_slice($ranges, 0, $i) as $previous) {
                     if ($range['start_time'] < $previous['end_time'] && $previous['start_time'] < $range['end_time']) {
                         throw \Illuminate\Validation\ValidationException::withMessages(['time_ranges' => 'Time ranges must not overlap.']);
@@ -2064,7 +2067,7 @@ class AdminController extends Controller
             return DB::transaction(function () use ($request, $school, $ranges, $dates) {
                 $created = [];
                 foreach ($dates as $date) {
-                    foreach ($ranges as $range) {
+                foreach ($ranges as $range) {
                         $input = array_merge($request->except(['time_ranges', 'schedule_dates', 'start_time', 'end_time', 'date']), ['date' => $date], $range);
                         $single = Request::create($request->url(), 'POST', $input);
                         $single->headers->set('Accept', 'application/json');
@@ -2248,6 +2251,19 @@ class AdminController extends Controller
             }
 
             foreach ($datesToCreate as $idx => $d) {
+                $duplicate = TimeSlot::where('school_id', $school->id)
+                    ->where('course_id', $validated['course_id'])
+                    ->where('branch_id', $branchId)
+                    ->whereDate('date', $d)
+                    ->where('start_time', $validated['start_time'])
+                    ->where('end_time', $validated['end_time'])
+                    ->whereNull('archived_at')->exists();
+                if ($duplicate) {
+                    DB::rollBack();
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'date' => "A schedule for this course, date, time range, and branch already exists ({$d}, {$validated['start_time']}-{$validated['end_time']}).",
+                    ]);
+                }
                 $lessonTag = $batchGroup ? " [{$batchGroup} Day ".($idx+1)."]" : "";
                 $prefix = $validated['batch_lesson_prefix'] ?? '';
                 $note = trim(($prefix ? $prefix.' ' : '').($validated['notes'] ?? '').$lessonTag);
@@ -2502,7 +2518,7 @@ class AdminController extends Controller
             DB::beginTransaction();
 
               $hasRecords = $timeslot->bookings()->exists();
-              if ($hasRecords) {
+              {
                   $bookingIds = $timeslot->bookings()->pluck('id');
                   $archivedAt = now();
                   // Keep the existing enum status; archived_at removes it from active lists.
@@ -2510,9 +2526,6 @@ class AdminController extends Controller
                   Booking::whereIn('id', $bookingIds)->whereNull('archived_at')->update(['archived_at' => $archivedAt, 'archived_with_schedule' => true]);
                   \App\Models\Payment::whereIn('booking_id', $bookingIds)->whereNull('archived_at')->update(['archived_at' => $archivedAt, 'archived_with_schedule' => true]);
                   \App\Models\SessionCompletion::whereIn('booking_id', $bookingIds)->whereNull('archived_at')->update(['archived_at' => $archivedAt, 'archived_with_schedule' => true]);
-              } else {
-                  $timeslot->instructors()->detach();
-                  $timeslot->delete();
               }
 
             DB::commit();
@@ -2520,11 +2533,11 @@ class AdminController extends Controller
             if (request()->ajax() || request()->wantsJson()) {
                 return response()->json([
                     'success' => true,
-                    'message' => $hasRecords ? 'Schedule archived with its booking history.' : 'Schedule permanently deleted because it has no booking history.'
+                    'message' => 'Schedule archived'.($hasRecords ? ' with its booking history.' : '.')
                 ]);
             }
 
-              return redirect()->back()->with('success', $hasRecords ? 'Schedule archived with its booking history.' : 'Schedule permanently deleted because it has no booking history.');
+              return redirect()->back()->with('success', 'Schedule archived'.($hasRecords ? ' with its booking history.' : '.'));
         } catch (\Exception $e) {
             DB::rollBack();
             LogFacade::error('Failed to delete schedule: ' . $e->getMessage(), [

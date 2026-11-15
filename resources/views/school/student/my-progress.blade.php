@@ -249,6 +249,38 @@
                 <div class="progress-fill" style="width: {{ $progressPercent }}%"></div>
             </div>
         </div>
+
+        <div class="progress-card">
+            <div class="progress-card-head">
+                <h2 class="progress-card-title">Completed Session History</h2>
+            </div>
+            <ul class="entry-list">
+                @forelse($progressData['recent_sessions'] as $session)
+                    <li class="entry-row">
+                        <div class="entry-title">
+                            {{ ucfirst($session->session_type) }} session
+                            <span class="state-chip state-neutral">{{ $session->verification_status }}</span>
+                        </div>
+                        <div class="entry-meta">
+                            {{ $session->session_date?->format('M d, Y') }}
+                            @if($session->start_time)
+                                · {{ \Carbon\Carbon::parse($session->start_time)->format('g:i A') }}
+                            @elseif($session->session_time)
+                                · {{ \Carbon\Carbon::parse($session->session_time)->format('g:i A') }}
+                            @endif
+                            · {{ number_format((float) $session->hours_completed, 1) }} hours
+                            @if($session->instructor) · {{ $session->instructor->name }} @endif
+                            @if($session->session_grade !== null) · Grade {{ number_format((float) $session->session_grade, 2) }} @endif
+                        </div>
+                        @if($session->notes)
+                            <div class="entry-meta">Instructor note: {{ $session->notes }}</div>
+                        @endif
+                    </li>
+                @empty
+                    <li class="entry-row"><p class="empty-state">No completed sessions have been logged yet.</p></li>
+                @endforelse
+            </ul>
+        </div>
     @else
         <div class="progress-card">
             <p class="empty-state">No active enrollment progress available yet.</p>

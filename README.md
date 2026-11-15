@@ -2,7 +2,56 @@
 
 A school portal for managing students, instructors, courses, schedules, payments, and training records.
 
-[November 10](#fixes-november-10-2026) · [November 9](#fixes-november-9-2026) · [November 8](#fixes-november-8-2026) · [November 5](#fixes-november-5-2026) · [November 4](#latest-fixes-november-4-2026) · [November 1](#fixes-november-1-2026) · [October 31](#latest-fixes-october-31-2026) · [October 30](#fixes-october-30-2026) · [October 29](#fixes-october-29-2026) · [October 27](#fixes-october-27-2026) · [Earlier fixes](#earlier-fixes-october-20-to-26-2026)
+[November 15](#fixes-november-15-2026) · [November 14](#fixes-november-14-2026) · [November 10](#fixes-november-10-2026) · [November 9](#fixes-november-9-2026) · [November 8](#fixes-november-8-2026) · [November 5](#fixes-november-5-2026) · [November 4](#latest-fixes-november-4-2026) · [November 1](#fixes-november-1-2026) · [October 31](#latest-fixes-october-31-2026) · [October 30](#fixes-october-30-2026) · [October 29](#fixes-october-29-2026) · [October 27](#fixes-october-27-2026) · [Earlier fixes](#earlier-fixes-october-20-to-26-2026)
+
+## Fixes November 15 2026
+
+Addressed the export findings in `Exports.docx`. Export actions now share one button style. Basic pages expose PDF and Excel directly, while detailed pages open their filters from the Export button. Student, enrollment, instructor, payment, theoretical-training, and session-log exports now pass supported filters through to the export handlers.
+
+### Export consistency
+
+| Page | Before | After |
+| --- | --- | --- |
+| User management | ![Before: user management export](docs/screenshots/exports-findings/before/image1.png) | ![After: user management export filters](docs/screenshots/exports-findings/after/user-management.png) |
+| Enrollment requests | ![Before: enrollment export](docs/screenshots/exports-findings/before/image2.png) | ![After: enrollment export filters](docs/screenshots/exports-findings/after/enrollments.png) |
+| Student training list | ![Before: training export](docs/screenshots/exports-findings/before/image3.png) | ![After: training export filters](docs/screenshots/exports-findings/after/student-training.png) |
+| Schedules | ![Before: schedule export](docs/screenshots/exports-findings/before/image4.png) | ![After: schedule export filters](docs/screenshots/exports-findings/after/schedules.png) |
+| Verify session completion | ![Before: session verification export](docs/screenshots/exports-findings/before/image5.png) | ![After: session verification export filters](docs/screenshots/exports-findings/after/session-verification.png) |
+| Payments | ![Before: payment export](docs/screenshots/exports-findings/before/image6.png) | ![After: payment export filters](docs/screenshots/exports-findings/after/payments.png) |
+| Courses | ![Before: course export](docs/screenshots/exports-findings/before/image7.png) | ![After: course PDF and Excel choices](docs/screenshots/exports-findings/after/courses.png) |
+| Reports & Analytics | ![Before: reports export](docs/screenshots/exports-findings/before/image8.png) | ![After: shared reports export menu](docs/screenshots/exports-findings/after/reports.png) |
+| Admin management | ![Before: admin management export](docs/screenshots/exports-findings/before/image9.png) | ![After: normalized admin export menu](docs/screenshots/exports-findings/after/admin-management.png) |
+
+The screenshots above pair all nine pages from the report with the updated local UI.
+
+## Fixes November 14 2026
+
+Addressed the findings in the November 14 report. Schedules can be archived and restored; multi-range scheduling is constrained to 6 a.m.–6 p.m. and duplicate schedules are rejected. Enrollment and payment archive flows use styled confirmation modals, full rejection is distinct from selective rejection, and vehicle and branch records can be archived and restored. My Progress now shows instructor-logged sessions with verification details.
+
+### Schedule management
+
+| Before: reported issue | After: updated local app |
+| --- | --- |
+| ![Before: schedule archive prompt](docs/screenshots/nov14-findings/before/image1.png) | ![After: schedule archive confirmation](docs/screenshots/nov14-findings/after/schedule-archive-confirmation.png) |
+| ![Before: time range controls](docs/screenshots/nov14-findings/before/image7.png) | ![After: time ranges limited to 6 AM–6 PM](docs/screenshots/nov14-findings/after/schedule-multiple-ranges.png) |
+
+### Enrollment and payment management
+
+| Before: reported issue | After: updated local app |
+| --- | --- |
+| ![Before: selective rejection left enrollment pending](docs/screenshots/nov14-findings/before/image5.png) | ![After: separate full rejection action](docs/screenshots/nov14-findings/after/full-rejection-modal.png) |
+| ![Before: enrollment archive prompt](docs/screenshots/nov14-findings/before/image9.png) | ![After: enrollment archive confirmation modal](docs/screenshots/nov14-findings/after/enrollment-archive-modal.png) |
+| ![Before: payment archive prompt](docs/screenshots/nov14-findings/before/image11.png) | ![After: payment archive confirmation modal](docs/screenshots/nov14-findings/after/payment-archive-modal.png) |
+
+### Fleet and student progress
+
+| Before: reported issue | After: updated local app |
+| --- | --- |
+| ![Before: vehicle delete action](docs/screenshots/nov14-findings/before/image13.png) | ![After: vehicle archive controls](docs/screenshots/nov14-findings/after/vehicle-archive-controls.png) |
+| ![Before: branch delete action](docs/screenshots/nov14-findings/before/image14.png) | ![After: branch archive controls](docs/screenshots/nov14-findings/after/branch-archive-controls.png) |
+| ![Before: My Progress without logged sessions](docs/screenshots/nov14-findings/before/image15.png) | ![After: My Progress with verified session history](docs/screenshots/nov14-findings/after/student-progress-session-history.png) |
+
+The [complete before-and-after screenshot index](docs/screenshots/nov14-findings/README.md) includes all 18 original report images and the updated UI captures.
 
 ## Fixes November 10 2026
 
