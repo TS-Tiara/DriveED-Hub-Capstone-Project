@@ -339,8 +339,8 @@
             <p class="page-subtitle">Track and manage all payments for {{ $schoolName }}</p>
         </div>
         <div class="export-buttons">
-            <a href="{{ school_route('admin.payments.index', ['archived' => request('archived') ? null : 1]) }}" class="btn-export btn-export-excel">
-                <i class="bi bi-archive"></i> {{ request('archived') ? 'Active records' : 'Archived records' }}
+            <a href="{{ school_route('admin.payments.index', ['archived' => ($isArchivedView ?? false) ? null : 1]) }}" class="btn btn-outline-secondary" style="text-decoration:none;">
+                <i class="bi bi-archive"></i> {{ ($isArchivedView ?? false) ? 'Active payments' : 'Archived payments' }}
             </a>
             <div class="export-dropdown" id="paymentExportDropdown">
                 <button type="button" class="btn-export-trigger" onclick="this.parentElement.classList.toggle('open')" aria-expanded="false" aria-controls="paymentExportMenu">
