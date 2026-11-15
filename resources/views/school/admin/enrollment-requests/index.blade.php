@@ -576,6 +576,25 @@
         flex-wrap: wrap;
         gap: 12px;
         margin-bottom: 16px;
+        align-items: center;
+    }
+
+    .filters-row form[style*="display:flex"] {
+        display: flex !important;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .filters-row .form-control {
+        height: 42px;
+    }
+
+    .filters-row .btn {
+        height: 42px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .filters-row .branch-filter-wrap {
