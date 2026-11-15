@@ -14,13 +14,15 @@ class VehicleController extends Controller
     public function index(Request $request, School $school)
     {
         $vehicles = Vehicle::where('school_id', $school->id)
+            ->when($request->boolean('archived'), fn ($query) => $query->whereNotNull('archived_at'), fn ($query) => $query->whereNull('archived_at'))
             ->with(['category', 'branch'])
             ->get();
+        $isArchivedView = $request->boolean('archived');
             
         $categories = VehicleCategory::where('school_id', $school->id)->get();
         $branches = Branch::where('school_id', $school->id)->get();
 
-        return view('school.admin.vehicles.index', compact('vehicles', 'categories', 'branches', 'school'));
+        return view('school.admin.vehicles.index', compact('vehicles', 'categories', 'branches', 'school', 'isArchivedView'));
     }
 
     public function store(Request $request, School $school)
@@ -160,8 +162,15 @@ class VehicleController extends Controller
             abort(403);
         }
 
-        $vehicle->delete();
-        return redirect()->back()->with('success', 'Vehicle deleted successfully.');
+        $vehicle->update(['archived_at' => now()]);
+        return redirect()->back()->with('success', 'Vehicle archived successfully.');
+    }
+
+    public function restore(School $school, $id)
+    {
+        $vehicle = Vehicle::where('school_id', $school->id)->whereNotNull('archived_at')->findOrFail($id);
+        $vehicle->update(['archived_at' => null]);
+        return redirect()->back()->with('success', 'Vehicle restored successfully.');
     }
 
     public function destroyCategory(School $school, VehicleCategory $category)

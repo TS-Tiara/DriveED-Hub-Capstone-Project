@@ -37,6 +37,7 @@ class ExportController extends Controller
             ->with(['enrollments.course'])
             ->orderBy('name');
         $this->applyStudentBranchFilter($studentQuery, $branchFilter);
+        $this->applyUserStatusFilter($studentQuery, $request);
         $students = $studentQuery->limit(500)->cursor();
 
         try {
@@ -68,11 +69,7 @@ class ExportController extends Controller
 
         $query = EnrollmentRequest::where('school_id', $school->id)
             ->with(['learner', 'course']);
-
-        // Filter by status if provided
-        if ($request->has('status') && $request->status !== 'all') {
-            $query->where('status', $request->status);
-        }
+        $this->applyEnrollmentExportFilters($query, $request, $admin);
 
         $enrollments = $query->orderBy('created_at', 'desc')->limit(500)->cursor();
 
@@ -106,10 +103,7 @@ class ExportController extends Controller
 
             $query = EnrollmentRequest::where('school_id', $school->id)
                 ->with(['learner', 'course']);
-
-            if ($request->has('status') && $request->status !== 'all') {
-                $query->where('status', $request->status);
-            }
+            $this->applyEnrollmentExportFilters($query, $request, $admin);
 
             $enrollments = $query->orderBy('created_at', 'desc')->limit(1000)->cursor();
 
@@ -201,6 +195,7 @@ class ExportController extends Controller
                 ->with(['enrollments.course'])
                 ->orderBy('name');
             $this->applyStudentBranchFilter($studentQuery, $branchFilter);
+            $this->applyUserStatusFilter($studentQuery, $request);
             $students = $studentQuery->limit(500)->cursor();
 
             $rows = [];
@@ -265,10 +260,46 @@ class ExportController extends Controller
         }
     }
 
+    private function applyUserStatusFilter($query, Request $request): void
+    {
+        $status = (string) $request->input('status', 'all');
+        if (in_array($status, ['active', 'inactive'], true)) {
+            $query->where('status', $status);
+        }
+    }
+
+    private function applyEnrollmentExportFilters($query, Request $request, $admin): void
+    {
+        if ($admin->isBranchSecretary() && $admin->branch_id) {
+            $query->where('branch_id', $admin->branch_id);
+        }
+
+        $status = (string) $request->input('status', 'all');
+        if (in_array($status, ['pending', 'approved', 'completed', 'rejected', 'cancelled'], true)) {
+            $query->where('status', $status);
+        }
+
+        if ($request->filled('from')) {
+            $query->whereDate('created_at', '>=', $request->input('from'));
+        }
+        if ($request->filled('to')) {
+            $query->whereDate('created_at', '<=', $request->input('to'));
+        }
+
+        $search = trim((string) $request->input('search', ''));
+        if ($search !== '') {
+            $query->where(function ($builder) use ($search) {
+                $builder->whereHas('learner', fn ($learner) => $learner->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%"))
+                    ->orWhereHas('course', fn ($course) => $course->where('title', 'like', "%{$search}%"));
+            });
+        }
+    }
+
     /**
      * Export instructors list as PDF
      */
-    public function instructorsPdf(School $school)
+    public function instructorsPdf(Request $request, School $school)
     {
         $admin = Auth::guard('admin')->user();
         if (!$admin || $admin->school_id !== $school->id) {
@@ -277,8 +308,9 @@ class ExportController extends Controller
 
         set_time_limit(120);
 
-        $instructors = Instructor::where('school_id', $school->id)
-            ->orderBy('name')
+        $instructorQuery = Instructor::where('school_id', $school->id);
+        $this->applyInstructorExportFilters($instructorQuery, $request, $admin);
+        $instructors = $instructorQuery->orderBy('name')
             ->limit(500)
             ->cursor();
 
@@ -299,7 +331,7 @@ class ExportController extends Controller
     /**
      * Export instructors list as Excel (styled HTML format)
      */
-    public function instructorsExcel(School $school)
+    public function instructorsExcel(Request $request, School $school)
     {
         try {
             $admin = Auth::guard('admin')->user();
@@ -309,14 +341,16 @@ class ExportController extends Controller
 
             set_time_limit(120);
 
-            $instructors = Instructor::where('school_id', '=', $school->id)
+            $instructorQuery = Instructor::where('school_id', '=', $school->id)
                 ->withCount([
                 'bookings',
                 'bookings as completed_lessons_count' => function ($query) {
                 $query->where('status', '=', 'completed');
             }
             ])
-                ->orderBy('name')
+                ;
+            $this->applyInstructorExportFilters($instructorQuery, $request, $admin);
+            $instructors = $instructorQuery->orderBy('name')
                 ->limit(500)
                 ->cursor();
 
@@ -346,6 +380,18 @@ class ExportController extends Controller
             \App\Models\SystemLog::logError('Excel Export Error (instructorsExcel): ' . $e->getMessage(), 'database', $e, ['school_id' => $school->id], $school->id, 'export_instructors_excel');
             return back()->with('error', 'Failed to generate Excel file.');
         }
+    }
+
+    private function applyInstructorExportFilters($query, Request $request, $admin): void
+    {
+        if ($admin->isBranchSecretary()) {
+            $query->where('branch_id', $admin->branch_id);
+        } elseif ($request->input('branch') === 'unassigned') {
+            $query->whereNull('branch_id');
+        } elseif ($request->filled('branch') && ctype_digit((string) $request->input('branch'))) {
+            $query->where('branch_id', (int) $request->input('branch'));
+        }
+        $this->applyUserStatusFilter($query, $request);
     }
 
     /**
@@ -399,11 +445,9 @@ class ExportController extends Controller
             }, null)
             ->with(['booking.course', 'enrollmentRequest.course', 'payer']);
 
-        if ($request->has('status') && $request->status !== 'all') {
-            $query->where('status', $request->status);
-        }
+        $this->applyPaymentExportFilters($query, $request);
 
-        $payments = $query->whereNotNull('received_at')
+        $payments = $query
             ->orderBy('received_at', 'desc')
             ->orderBy('created_at', 'desc')
             ->limit(500)
@@ -427,7 +471,7 @@ class ExportController extends Controller
     /**
      * Export payments as Excel (styled HTML format)
      */
-    public function paymentsExcel(School $school)
+    public function paymentsExcel(School $school, Request $request)
     {
         try {
             $admin = Auth::guard('admin')->user();
@@ -437,12 +481,13 @@ class ExportController extends Controller
 
             set_time_limit(120);
 
-            $payments = Payment::where('school_id', $school->id)
+            $query = Payment::where('school_id', $school->id)
                 ->when($admin->isBranchSecretary(), function ($q) use ($admin) {
                     return $q->where('branch_id', $admin->branch_id);
                 }, null)
-                ->with(['booking.course', 'enrollmentRequest.course', 'payer'])
-                ->whereNotNull('received_at')
+                ->with(['booking.course', 'enrollmentRequest.course', 'payer']);
+            $this->applyPaymentExportFilters($query, $request);
+            $payments = $query
                 ->orderBy('received_at', 'desc')
                 ->orderBy('created_at', 'desc')
                 ->limit(1000)
@@ -451,7 +496,7 @@ class ExportController extends Controller
             $rows = [];
             foreach ($payments as $payment) {
                 $rows[] = [
-                    $payment->received_at ? $payment->received_at->format('M d, Y') : 'N/A',
+                    $payment->paid_on?->format('M d, Y') ?? $payment->received_at?->format('M d, Y') ?? 'N/A',
                     $payment->payer->name ?? 'N/A',
                     $payment->booking->course->title ?? $payment->enrollmentRequest->course->title ?? 'N/A',
                     'PHP ' . number_format($payment->amount, 2),
@@ -471,6 +516,20 @@ class ExportController extends Controller
         } catch (\Exception $e) {
             \App\Models\SystemLog::logError('Excel Export Error (paymentsExcel): ' . $e->getMessage(), 'database', $e, ['school_id' => $school->id], $school->id, 'export_payments_excel');
             return back()->with('error', 'Failed to generate Excel file.');
+        }
+    }
+
+    private function applyPaymentExportFilters($query, Request $request): void
+    {
+        $status = (string) $request->input('status', 'all');
+        if (in_array($status, ['pending', 'approved', 'rejected', 'cancelled', 'completed'], true)) {
+            $query->where('status', $status);
+        }
+        if ($request->filled('from')) {
+            $query->whereDate('paid_on', '>=', $request->input('from'));
+        }
+        if ($request->filled('to')) {
+            $query->whereDate('paid_on', '<=', $request->input('to'));
         }
     }
 

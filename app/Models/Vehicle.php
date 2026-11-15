@@ -20,7 +20,10 @@ class Vehicle extends Model
         'status',
         'notes',
         'image_path',
+        'archived_at',
     ];
+
+    protected $casts = ['archived_at' => 'datetime'];
 
     public function school()
     {

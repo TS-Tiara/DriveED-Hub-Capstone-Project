@@ -1545,11 +1545,15 @@
                 <p class="page-subtitle">Manage courses, packages, and pricing for {{ $schoolName }}</p>
             </div>
             <div class="header-actions">
-                <div class="export-buttons">
-                    <a href="{{ $schoolRoute('admin.exports.courses.pdf', ['sort' => request('sort', 'newest')]) }}"
-                        class="btn-export btn-export-pdf">
-                        Export PDF
-                    </a>
+                <div class="export-dropdown" id="courseExportDropdown">
+                    <button type="button" class="btn-export-trigger" onclick="this.parentElement.classList.toggle('open')" aria-expanded="false" aria-controls="courseExportMenu">
+                        <i class="bi bi-download" aria-hidden="true"></i> Export <i class="bi bi-chevron-down chevron" aria-hidden="true"></i>
+                    </button>
+                    <div class="export-dropdown-menu" id="courseExportMenu">
+                        <div class="dropdown-header">Choose file format</div>
+                        <a data-no-ajax="1" href="{{ $schoolRoute('admin.exports.courses.pdf', ['sort' => request('sort', 'newest')]) }}"><i class="bi bi-file-earmark-pdf-fill" style="color:#ef4444"></i> PDF</a>
+                        <a data-no-ajax="1" href="{{ $schoolRoute('admin.exports.courses.excel', ['sort' => request('sort', 'newest')]) }}"><i class="bi bi-file-earmark-excel-fill" style="color:#10b981"></i> Excel</a>
+                    </div>
                 </div>
                 <div class="sort-control">
                     <span class="sort-label"><i class="bi bi-sort-down"></i> Sort by:</span>

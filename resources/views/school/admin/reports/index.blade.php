@@ -599,6 +599,8 @@
             text-align: center;
         }
 
+        .reports-container .export-dropdown-menu { width:300px; max-height:70vh; overflow-y:auto; }
+
         @media (max-width: 768px) {
             .reports-container {
                 padding: 14px;
@@ -619,17 +621,18 @@
             }
 
             .export-dropdown,
-            .export-btn {
+            .reports-container .btn-export-trigger {
                 width: 100%;
             }
 
-            .export-btn {
+            .reports-container .btn-export-trigger {
                 justify-content: center;
             }
 
-            .export-menu {
+            .reports-container .export-dropdown-menu {
                 left: 0;
                 right: 0;
+                width: 100%;
                 min-width: 0;
             }
 
@@ -761,8 +764,8 @@
         <!-- Page Header -->
         <div class="page-header">
             <h1>Reports & Analytics</h1>
-            <div class="export-dropdown">
-                <button class="export-btn" onclick="toggleExportMenu(event)">
+            <div class="export-dropdown" id="reportsExportDropdown">
+                <button type="button" class="btn-export-trigger" onclick="toggleExportMenu(event)" aria-expanded="false" aria-controls="exportMenu">
                     <svg class="icon-inline-middle" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
                         fill="currentColor" viewBox="0 0 16 16">
                         <path
@@ -770,25 +773,24 @@
                         <path
                             d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z" />
                     </svg>
-                    Export Data
+                    Export <i class="bi bi-chevron-down chevron" aria-hidden="true"></i>
                 </button>
-                <div class="export-menu" id="exportMenu">
-                    <div class="export-menu-title">Download as Excel</div>
-                    <a href="{{ route('schools.admin.exports.students.excel', $school) }}">
-                        Students
-                    </a>
-                    <a href="{{ route('schools.admin.exports.instructors.excel', $school) }}">
-                        Instructors
-                    </a>
-                    <a href="{{ route('schools.admin.exports.verify-session-completion.excel', $school) }}">
-                        Schedules
-                    </a>
-                    <a href="{{ route('schools.admin.exports.payments.excel', $school) }}">
-                        Payments
-                    </a>
-                    <a href="{{ route('schools.admin.exports.courses.excel', $school) }}">
-                        Courses
-                    </a>
+                <div class="export-dropdown-menu" id="exportMenu">
+                    <div class="dropdown-header">Students</div>
+                    <a href="{{ school_route('admin.exports.students.pdf') }}"><i class="bi bi-file-earmark-pdf-fill" style="color:#ef4444"></i> PDF</a>
+                    <a href="{{ school_route('admin.exports.students.excel') }}"><i class="bi bi-file-earmark-excel-fill" style="color:#10b981"></i> Excel</a>
+                    <div class="dropdown-header">Instructors</div>
+                    <a href="{{ school_route('admin.exports.instructors.pdf') }}"><i class="bi bi-file-earmark-pdf-fill" style="color:#ef4444"></i> PDF</a>
+                    <a href="{{ school_route('admin.exports.instructors.excel') }}"><i class="bi bi-file-earmark-excel-fill" style="color:#10b981"></i> Excel</a>
+                    <div class="dropdown-header">Session logs</div>
+                    <a href="{{ route('schools.admin.session-report', ['school' => $school->slug, 'format' => 'pdf', 'export_scope' => 'all']) }}"><i class="bi bi-file-earmark-pdf-fill" style="color:#ef4444"></i> PDF</a>
+                    <a href="{{ route('schools.admin.session-report', ['school' => $school->slug, 'format' => 'xlsx', 'export_scope' => 'all']) }}"><i class="bi bi-file-earmark-excel-fill" style="color:#10b981"></i> Excel</a>
+                    <div class="dropdown-header">Payments</div>
+                    <a href="{{ school_route('admin.exports.payments.pdf') }}"><i class="bi bi-file-earmark-pdf-fill" style="color:#ef4444"></i> PDF</a>
+                    <a href="{{ school_route('admin.exports.payments.excel') }}"><i class="bi bi-file-earmark-excel-fill" style="color:#10b981"></i> Excel</a>
+                    <div class="dropdown-header">Courses</div>
+                    <a href="{{ school_route('admin.exports.courses.pdf') }}"><i class="bi bi-file-earmark-pdf-fill" style="color:#ef4444"></i> PDF</a>
+                    <a href="{{ school_route('admin.exports.courses.excel') }}"><i class="bi bi-file-earmark-excel-fill" style="color:#10b981"></i> Excel</a>
                 </div>
             </div>
         </div>
@@ -1499,8 +1501,7 @@
 
         function toggleExportMenu(event) {
             event.stopPropagation();
-            const menu = document.getElementById('exportMenu');
-            menu.classList.toggle('show');
+            document.getElementById('reportsExportDropdown').classList.toggle('open');
         }
 
         function applyDynamicWidths() {
@@ -1526,10 +1527,9 @@
 
         // Close menu when clicking outside
         document.addEventListener('click', function (event) {
-            const menu = document.getElementById('exportMenu');
-            const dropdown = document.querySelector('.export-dropdown');
+            const dropdown = document.getElementById('reportsExportDropdown');
             if (!dropdown.contains(event.target)) {
-                menu.classList.remove('show');
+                dropdown.classList.remove('open');
             }
         });
 

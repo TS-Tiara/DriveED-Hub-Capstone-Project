@@ -32,10 +32,15 @@ class TheoreticalCompletionController extends Controller
             ->download('student-training-'.$enrollment->id.'.pdf');
     }
 
-    public function exportList(School $school)
+    private function buildListExportQuery(School $school, Request $request)
     {
         $query = $school->enrollmentRequests()->with(['learner', 'course', 'package'])
-            ->whereHas('course', fn ($course) => $course->whereIn('course_type', ['theoretical', 'combo']));
+            ->whereHas('course', function ($course) use ($school, $request) {
+                $course->where('school_id', $school->id)
+                    ->whereIn('course_type', in_array($request->input('course_type'), ['theoretical', 'combo'], true)
+                        ? [$request->input('course_type')]
+                        : ['theoretical', 'combo']);
+            });
         $admin = Auth::guard('admin')->user();
         $instructor = Auth::guard('instructor')->user();
         if ($admin) {
@@ -47,9 +52,54 @@ class TheoreticalCompletionController extends Controller
         } else {
             abort(403);
         }
+
+        $status = (string) $request->input('status', 'all');
+        if (in_array($status, ['approved', 'completed'], true)) {
+            $query->where('status', $status);
+        }
+        if ($request->filled('from')) {
+            $query->whereDate('created_at', '>=', $request->input('from'));
+        }
+        if ($request->filled('to')) {
+            $query->whereDate('created_at', '<=', $request->input('to'));
+        }
+
+        return $query;
+    }
+
+    public function exportList(Request $request, School $school)
+    {
+        $query = $this->buildListExportQuery($school, $request);
         $enrollments = $query->orderBy('id')->get();
         return \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.student-training-list-pdf', compact('school', 'enrollments'))
             ->setPaper('a4', 'landscape')->download('student-training-list.pdf');
+    }
+
+    public function exportListExcel(Request $request, School $school)
+    {
+        $enrollments = $this->buildListExportQuery($school, $request)
+            ->with('sessionCompletions')
+            ->orderBy('id')
+            ->get();
+
+        $escape = fn ($value) => htmlspecialchars((string) ($value ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $html = '<table><thead><tr><th>Student</th><th>Course</th><th>Course type</th><th>Status</th><th>Completed hours</th><th>Required hours</th><th>Enrollment date</th></tr></thead><tbody>';
+        foreach ($enrollments as $enrollment) {
+            $hours = $enrollment->sessionCompletions->where('status', 'completed')->where('session_type', 'theoretical')->sum('hours_completed');
+            $html .= '<tr><td>'.$escape($enrollment->learner?->name).'</td>'
+                .'<td>'.$escape($enrollment->course?->title).'</td>'
+                .'<td>'.$escape($enrollment->course?->course_type).'</td>'
+                .'<td>'.$escape(ucfirst($enrollment->status)).'</td>'
+                .'<td>'.number_format((float) $hours, 1).'</td>'
+                .'<td>'.number_format((float) ($enrollment->tdc_hours_limit ?? 0), 1).'</td>'
+                .'<td>'.$escape($enrollment->created_at?->format('M d, Y')).'</td></tr>';
+        }
+        $html .= '</tbody></table>';
+
+        return response($html, 200, [
+            'Content-Type' => 'application/vnd.ms-excel; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="student-training-list.xls"',
+        ]);
     }
 
     private function getSchoolAndGuard(): array

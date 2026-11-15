@@ -15,10 +15,12 @@ class BranchController extends Controller
     public function index(Request $request, School $school)
     {
         $query = Branch::where('school_id', $school->id)
+            ->when($request->boolean('archived'), fn ($query) => $query->whereNotNull('archived_at'), fn ($query) => $query->whereNull('archived_at'))
             ->withCount(['students', 'instructors'])
             ->orderBy('sort_order')
             ->orderBy('name');
 
+        $isArchivedView = $request->boolean('archived');
         $totalBranchesCount = (clone $query)->count();
         $activeBranchesCount = (clone $query)->where('is_active', true)->count();
         $inactiveBranchesCount = (clone $query)->where('is_active', false)->count();
@@ -34,7 +36,7 @@ class BranchController extends Controller
 
         $settings = $school->schoolSetting;
 
-        return view('school.admin.branches', array_merge(compact('school', 'branches', 'settings', 'totalBranchesCount', 'activeBranchesCount', 'inactiveBranchesCount'), ['isAjax' => $request->ajax()]));
+        return view('school.admin.branches', array_merge(compact('school', 'branches', 'settings', 'totalBranchesCount', 'activeBranchesCount', 'inactiveBranchesCount', 'isArchivedView'), ['isAjax' => $request->ajax()]));
     }
 
     /**
@@ -196,42 +198,21 @@ class BranchController extends Controller
     {
         $branch = Branch::where('school_id', $school->id)->findOrFail($id);
 
-        // Prevent deletion if students or instructors are assigned
-        $studentCount = $branch->students()->count();
-        $instructorCount = $branch->instructors()->count();
-
-        if ($studentCount > 0 || $instructorCount > 0) {
-            $msg = 'Cannot delete branch: ';
-            $parts = [];
-            if ($studentCount > 0) {
-                $parts[] = "{$studentCount} student(s)";
-            }
-            if ($instructorCount > 0) {
-                $parts[] = "{$instructorCount} instructor(s)";
-            }
-            $msg .= implode(' and ', $parts) . ' still assigned.';
-
-            if ($request->ajax() || $request->wantsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $msg,
-                ], 422);
-            }
-
-            return redirect()->back()->with('error', $msg);
-        }
-
         try {
-            $branch->delete();
+            $branch->update([
+                'archived_at' => now(),
+                'archived_previous_is_active' => $branch->is_active,
+                'is_active' => false,
+            ]);
 
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Branch deleted successfully!',
+                    'message' => 'Branch archived successfully.',
                 ]);
             }
 
-            return redirect()->back()->with('success', 'Branch deleted successfully!');
+            return redirect()->back()->with('success', 'Branch archived successfully.');
         }
         catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Failed to delete branch', [
@@ -243,5 +224,16 @@ class BranchController extends Controller
             }
             return back()->with('error', 'An error occurred while deleting the branch.');
         }
+    }
+
+    public function restore(School $school, $id)
+    {
+        $branch = Branch::where('school_id', $school->id)->whereNotNull('archived_at')->findOrFail($id);
+        $branch->update([
+            'archived_at' => null,
+            'is_active' => $branch->archived_previous_is_active ?? true,
+            'archived_previous_is_active' => null,
+        ]);
+        return back()->with('success', 'Branch restored successfully.');
     }
 }

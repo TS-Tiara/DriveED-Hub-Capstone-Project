@@ -1592,7 +1592,8 @@ document.addEventListener('DOMContentLoaded', function() {
     border: 1px solid #eef2f6;
     min-width: 260px;
     z-index: 2000;
-    overflow: hidden;
+    max-height: min(70vh, 640px);
+    overflow-y: auto;
     transform-origin: top right;
     animation: dropdownPopIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -1650,3 +1651,26 @@ document.addEventListener('DOMContentLoaded', function() {
     border-top: 5px solid #f8fafc;
 }
 </style>
+
+<script>
+    (function () {
+        if (window.__sharedExportDropdownBehavior) return;
+        window.__sharedExportDropdownBehavior = true;
+
+        document.addEventListener('click', function (event) {
+            document.querySelectorAll('.export-dropdown.open').forEach(function (dropdown) {
+                if (!dropdown.contains(event.target)) {
+                    dropdown.classList.remove('open');
+                    dropdown.querySelector('.btn-export-trigger')?.setAttribute('aria-expanded', 'false');
+                }
+            });
+
+            const trigger = event.target.closest('.export-dropdown .btn-export-trigger');
+            if (trigger) {
+                requestAnimationFrame(function () {
+                    trigger.setAttribute('aria-expanded', String(trigger.closest('.export-dropdown').classList.contains('open')));
+                });
+            }
+        });
+    })();
+</script>

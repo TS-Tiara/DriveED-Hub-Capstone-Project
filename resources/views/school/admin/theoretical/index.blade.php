@@ -15,6 +15,11 @@
 @include('school.admin.partials.admin-styles')
 
 <style>
+    .training-export-field { display:block; padding:8px 14px; color:#334155; font-size:0.82rem; font-weight:600; }
+    .training-export-field .form-control { display:block; width:100%; margin-top:4px; padding:7px 9px; border:1px solid #dbe2ea; border-radius:6px; font-weight:400; }
+    .training-export-formats { display:flex; gap:8px; padding:10px 14px 14px; }
+    .btn-export-format { flex:1; border:0; border-radius:7px; padding:9px 12px; background:{{ $primaryColor }}; color:#fff; font-weight:700; cursor:pointer; }
+    .btn-export-format:hover { filter:brightness(0.94); }
     .theoretical-container {
         padding: 20px;
         margin: 20px auto;
@@ -287,7 +292,36 @@
             <h1 class="page-title">Student Training List</h1>
             <p class="page-subtitle">Track student progress, mark completions, and view passed students</p>
         </div>
-        <a class="btn btn-primary" data-no-ajax="1" href="{{ school_route('admin.theoretical.exportList') }}">Export PDF</a>
+        @php
+            $theoreticalExportPdf = Auth::guard('instructor')->check()
+                ? route('schools.instructor.theoretical.exportList', ['school' => $school->slug])
+                : school_route('admin.theoretical.exportList');
+            $theoreticalExportExcel = Auth::guard('instructor')->check()
+                ? route('schools.instructor.theoretical.exportExcel', ['school' => $school->slug])
+                : school_route('admin.theoretical.exportExcel');
+        @endphp
+        <div class="export-dropdown" id="theoreticalExportDropdown">
+            <button type="button" class="btn-export-trigger" onclick="this.parentElement.classList.toggle('open')" aria-expanded="false" aria-controls="theoreticalExportMenu">
+                <i class="bi bi-download" aria-hidden="true"></i> Export <i class="bi bi-chevron-down chevron" aria-hidden="true"></i>
+            </button>
+            <div class="export-dropdown-menu" id="theoreticalExportMenu">
+                <div class="dropdown-header">Training list filters</div>
+                <form method="GET" action="{{ $theoreticalExportPdf }}">
+                    <label class="training-export-field">Course type
+                        <select name="course_type" class="form-control"><option value="all">All types</option><option value="theoretical">Theoretical</option><option value="combo">Combo</option></select>
+                    </label>
+                    <label class="training-export-field">Enrollment status
+                        <select name="status" class="form-control"><option value="all">All statuses</option><option value="approved">In training</option><option value="completed">Completed</option></select>
+                    </label>
+                    <label class="training-export-field">From date<input type="date" name="from" class="form-control"></label>
+                    <label class="training-export-field">To date<input type="date" name="to" class="form-control"></label>
+                    <div class="training-export-formats">
+                        <button type="submit" formaction="{{ $theoreticalExportPdf }}" class="btn-export-format">PDF</button>
+                        <button type="submit" formaction="{{ $theoreticalExportExcel }}" class="btn-export-format">Excel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
 

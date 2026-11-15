@@ -150,9 +150,12 @@
             <p class="page-subtitle">Track your school's fleet, maintenance status, and vehicle assignments for {{ $school->name }}</p>
         </div>
         <div class="header-actions">
+            <a class="btn-secondary" href="{{ route('schools.admin.vehicles.index', ['school' => $school->slug, 'archived' => ($isArchivedView ?? false) ? null : 1]) }}"><i class="bi bi-archive"></i> {{ ($isArchivedView ?? false) ? 'Active vehicles' : 'Archived vehicles' }}</a>
+            @unless($isArchivedView ?? false)
             <button class="btn-primary" onclick="openVehicleModal('createVehicleModal')">
                 <i class="bi bi-plus-lg"></i> Add New Vehicle
             </button>
+            @endunless
         </div>
     </div>
 
@@ -258,17 +261,22 @@
                                     <i class="bi bi-eye"></i> View Details
                                 </button>
 
+                                @unless($isArchivedView ?? false)
                                 <button type="button" class="{{ $vehicle->status === 'active' ? 'btn-deactivate' : 'btn-activate' }}" onclick="toggleVehicleStatus({{ $vehicle->id }}, '{{ $vehicle->status }}')" title="{{ $vehicle->status === 'active' ? 'Deactivate' : 'Activate' }}">
                                     <i class="bi bi-{{ $vehicle->status === 'active' ? 'pause-circle' : 'play-circle' }}"></i>
                                     {{ $vehicle->status === 'active' ? 'Deactivate' : 'Activate' }}
                                 </button>
-
+                                @endunless
+                                @if($isArchivedView ?? false)
+                                <form action="{{ route('schools.admin.vehicles.restore', ['school' => $school->slug, 'vehicle' => $vehicle->id]) }}" method="POST">@csrf<button type="submit" class="btn-activate">Restore</button></form>
+                                @else
                                 <form id="delete-form-{{ $vehicle->id }}" action="{{ route('schools.admin.vehicles.destroy', ['school' => $school->slug, 'vehicle' => $vehicle]) }}" method="POST">
                                     @csrf @method('DELETE')
-                                    <button type="button" class="btn-danger" style="height: 34px; padding: 0 12px; font-size: 0.85rem;" title="Delete" onclick="confirmDeleteVehicle({{ $vehicle->id }}, '{{ $vehicle->license_plate }}')">
-                                        <i class="bi bi-trash-fill"></i> Delete
+                                    <button type="button" class="btn-danger" style="height: 34px; padding: 0 12px; font-size: 0.85rem;" title="Archive" onclick="confirmDeleteVehicle({{ $vehicle->id }}, '{{ $vehicle->license_plate }}')">
+                                        <i class="bi bi-archive"></i> Archive
                                     </button>
                                 </form>
+                                @endif
                             </div>
                         </td>
                     </tr>
@@ -645,9 +653,9 @@
     function confirmDeleteVehicle(id, plate) {
         showConfirm({
             type: 'danger',
-            title: 'Delete Vehicle',
-            message: `Are you sure you want to permanently delete vehicle "${plate}"? This action cannot be undone.`,
-            confirmText: 'Yes, Delete',
+            title: 'Archive Vehicle',
+            message: `Archive vehicle "${plate}"? You can restore it later from Archived vehicles.`,
+            confirmText: 'Archive Vehicle',
             onConfirm: () => {
                 document.getElementById('delete-form-' + id).submit();
             }

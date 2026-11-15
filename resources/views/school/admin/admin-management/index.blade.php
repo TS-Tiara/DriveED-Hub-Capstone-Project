@@ -448,7 +448,8 @@
         border-radius: 12px;
         box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
         border: 1px solid {{ $primaryColor }}15;
-        width: 220px;
+        min-width: 260px;
+        width: auto;
         z-index: 50;
         display: none;
         padding: 8px;
@@ -808,24 +809,25 @@
     .btn-export-trigger {
         display: flex;
         align-items: center;
-        gap: 8px;
+        justify-content: center;
+        gap: 10px;
         padding: 10px 18px;
-        background: #ef4444;
+        background: {{ $primaryColor }};
         color: white;
         border: none;
-        border-radius: 10px;
+        border-radius: 8px;
         font-size: 0.95rem;
         font-weight: 600;
         transition: all 0.2s;
         cursor: pointer;
-        height: 42px;
-        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+        box-shadow: 0 4px 14px {{ $primaryColor }}40;
     }
 
     .btn-export-trigger:hover {
-        background: #dc2626;
-        transform: translateY(-1px);
-        box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+        background: {{ $primaryColor }};
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px {{ $primaryColor }}60;
+        opacity: 0.95;
     }
 
     .btn-export-trigger svg {
@@ -1163,7 +1165,7 @@
                 <span class="pending-count-badge {{ $pendingInviteCount > 0 ? 'has-items' : '' }}">{{ $pendingInviteCount }}</span>
             </button>
             <div class="export-dropdown" id="adminExportDropdown">
-                <button class="btn-export-trigger" onclick="toggleAdminExportDropdown()">
+                <button type="button" class="btn-export-trigger" onclick="toggleAdminExportDropdown()" aria-expanded="false" aria-controls="adminExportMenu">
                     <svg class="icon-18" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                     Export
                     <svg class="chevron icon-14" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
@@ -1685,13 +1687,13 @@
     }
 
     function toggleAdminExportDropdown() {
-        document.getElementById('adminExportMenu').classList.toggle('show');
+        document.getElementById('adminExportDropdown').classList.toggle('open');
     }
 
     // Close export dropdown when clicking outside
     window.addEventListener('click', function(e) {
         if (!e.target.closest('#adminExportDropdown')) {
-            document.getElementById('adminExportMenu').classList.remove('show');
+            document.getElementById('adminExportDropdown').classList.remove('open');
         }
     });
 
