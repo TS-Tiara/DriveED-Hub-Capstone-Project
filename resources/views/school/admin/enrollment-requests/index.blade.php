@@ -583,7 +583,15 @@
         display: flex !important;
         align-items: center;
         gap: 8px;
-        flex-wrap: wrap;
+        flex: 1 1 320px;
+        min-width: 0;
+        flex-wrap: nowrap;
+    }
+
+    .filters-row form[style*="display:flex"] .form-control {
+        flex: 1 1 240px;
+        min-width: 0;
+        width: auto;
     }
 
     .filters-row .form-control {
@@ -620,6 +628,18 @@
     .filters-row .branch-filter-select {
         max-width: 340px;
         width: 100%;
+    }
+
+    .filters-row .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
     }
 
     .action-bar-wrapper {
@@ -1008,6 +1028,18 @@
         .filters-row {
             flex-direction: column;
             align-items: stretch;
+        }
+
+        .filters-row form[style*="display:flex"] {
+            width: 100%;
+            flex: none;
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .filters-row form[style*="display:flex"] .form-control,
+        .filters-row form[style*="display:flex"] .btn {
+            width: 100%;
         }
 
         .filters-row .branch-filter-select {
