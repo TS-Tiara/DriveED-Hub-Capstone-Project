@@ -171,6 +171,36 @@ class TheoreticalCompletionController extends Controller
         $readyEnrollments = $activeEnrollments->getCollection()->where('progress', '>=', 100)->values();
         $notReadyEnrollments = $activeEnrollments->getCollection()->where('progress', '<', 100)->values();
 
+        // ── PDC-only students tab ──
+        $pdcOnlyEnrollments = EnrollmentRequest::with(['learner', 'course', 'package', 'sessionCompletions'])
+            ->where('school_id', $school->id)
+            ->where('status', 'approved')
+            ->whereHas('course', function ($query) {
+                $query->where('course_type', 'practical');
+            })
+            ->whereDoesntHave('student.enrollmentRequests', function ($query) {
+                $query->where('status', 'approved')
+                    ->whereHas('course', function ($course) {
+                        $course->where('course_type', 'theoretical');
+                    });
+            })
+            ->latest('id')
+            ->paginate(10, ['*'], 'pdc_page');
+
+        $totalPdcOnly = $pdcOnlyEnrollments->total();
+        $pdcOnlyEnrollments->getCollection()->transform(function ($enrollment) {
+            $enrollment->pdc_hours_completed = (float) $enrollment->sessionCompletions
+                ->where('status', 'completed')
+                ->where('session_type', 'practical')
+                ->sum('hours_completed');
+            $enrollment->pdc_hours_required = (float) $enrollment->pdc_hours_limit;
+            $enrollment->pdc_progress = $enrollment->pdc_hours_required > 0
+                ? min(100, round(($enrollment->pdc_hours_completed / $enrollment->pdc_hours_required) * 100, 1))
+                : 0.0;
+
+            return $enrollment;
+        });
+
         // ── Passed Students tab ──
         $passedStudents = Student::with(['enrollmentRequests' => function ($query) {
                 $query->where('status', 'approved')
@@ -219,6 +249,7 @@ class TheoreticalCompletionController extends Controller
         return view($ctx['viewPrefix'] . '.index', array_merge(compact(
             'school', 'activeEnrollments', 'totalInTraining', 'readyToPass',
             'readyEnrollments', 'notReadyEnrollments',
+            'pdcOnlyEnrollments', 'totalPdcOnly',
             'passedStudents', 'totalPassed', 'passedEnrollmentIds'
         ), ['isAjax' => $request->ajax()]));
     }
