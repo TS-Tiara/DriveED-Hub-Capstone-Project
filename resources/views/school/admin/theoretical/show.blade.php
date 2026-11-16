@@ -470,6 +470,19 @@
                     </span>
                 </div>
                 <div class="info-row">
+                    <span class="info-label">PDC Status:</span>
+                    <span class="info-value">
+                        @if($pdcLimit > 0)
+                            <span class="badge-custom {{ $pdcProgress >= 100 ? 'badge-success' : 'badge-secondary' }}">
+                                {{ $pdcProgress >= 100 ? 'COMPLETED' : 'IN PROGRESS' }}
+                            </span>
+                            <small>({{ number_format($pdcUsed, 1) }} / {{ number_format($pdcLimit, 1) }} hrs)</small>
+                        @else
+                            <span class="badge-custom badge-secondary">NOT ENROLLED</span>
+                        @endif
+                    </span>
+                </div>
+                <div class="info-row">
                     <span class="info-label">Enrolled:</span>
                     <span class="info-value">{{ $enrollment->enrolled_at?->format('M d, Y') ?? $enrollment->created_at->format('M d, Y') }}</span>
                 </div>

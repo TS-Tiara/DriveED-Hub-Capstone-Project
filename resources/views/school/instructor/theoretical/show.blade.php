@@ -14,6 +14,9 @@
     $totalHours = $enrollment->sessionCompletions->where('status', 'completed')->where('session_type', 'theoretical')->sum('hours_completed');
     $requiredHours = $enrollment->tdc_hours_limit;
     $progress = $requiredHours > 0 ? min(100, round(($totalHours / $requiredHours) * 100)) : 0;
+    $pdcLimit = $enrollment->pdc_hours_limit;
+    $pdcUsed = $enrollment->used_pdc_hours;
+    $pdcProgress = $pdcLimit > 0 ? min(100, round(($pdcUsed / $pdcLimit) * 100)) : 0;
     $progressClass = $progress >= 100 ? 'high' : ($progress >= 50 ? 'mid' : 'low');
 @endphp
 
@@ -433,6 +436,19 @@
                 <div class="info-row">
                     <span class="info-label">Enrolled:</span>
                     <span class="info-value">{{ $enrollment->enrolled_at?->format('M d, Y') ?? 'N/A' }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">PDC Status:</span>
+                    <span class="info-value">
+                        @if($pdcLimit > 0)
+                            <span class="badge-custom {{ $pdcProgress >= 100 ? 'badge-success' : 'badge-secondary' }}">
+                                {{ $pdcProgress >= 100 ? 'COMPLETED' : 'IN PROGRESS' }}
+                            </span>
+                            <small>({{ number_format($pdcUsed, 1) }} / {{ number_format($pdcLimit, 1) }} hrs)</small>
+                        @else
+                            <span class="badge-custom badge-secondary">NOT ENROLLED</span>
+                        @endif
+                    </span>
                 </div>
             </div>
 
