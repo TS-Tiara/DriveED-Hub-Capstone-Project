@@ -444,7 +444,9 @@
                             <span class="badge-custom {{ $pdcProgress >= 100 ? 'badge-success' : 'badge-secondary' }}">
                                 {{ $pdcProgress >= 100 ? 'COMPLETED' : 'IN PROGRESS' }}
                             </span>
-                            <small>({{ number_format($pdcUsed, 1) }} / {{ number_format($pdcLimit, 1) }} hrs)</small>
+                            @if($pdcProgress < 100)
+                                <small>({{ number_format($pdcUsed, 1) }} / {{ number_format($pdcLimit, 1) }} hrs)</small>
+                            @endif
                         @else
                             <span class="badge-custom badge-secondary">NOT ENROLLED</span>
                         @endif
