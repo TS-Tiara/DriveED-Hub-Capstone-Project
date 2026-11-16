@@ -414,6 +414,9 @@
                         <div class="student-name">{{ $student->name }}</div>
                         <div class="student-detail"><strong>Email:</strong> {{ $student->email }}</div>
                         <div class="student-detail"><strong>Contact:</strong> {{ $student->contact ?? 'N/A' }}</div>
+                        @if($student->tdc_completed)
+                            <div class="student-detail"><strong>TDC:</strong> Graduated ({{ number_format($student->tdc_hours_completed, 1) }} / {{ number_format($student->tdc_hours_required, 1) }} hrs)</div>
+                        @endif
                         @if($student->current_course_name)
                             <div class="student-detail"><strong>Current Course:</strong> {{ $student->current_course_name }}</div>
                             <div class="student-detail"><strong>Training Hours:</strong> {{ number_format($student->current_hours_completed, 1) }} / {{ number_format($student->current_hours_required, 1) }} hrs</div>

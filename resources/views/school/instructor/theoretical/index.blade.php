@@ -1,6 +1,6 @@
 @extends($isAjax ?? false ? 'layouts.ajax' : 'layouts.app')
 
-@section('title', 'Theoretical Training')
+@section('title', 'Student Training List')
 
 @section('content')
 @php
@@ -284,8 +284,8 @@
     <!-- Page Header -->
     <div class="page-header">
         <div>
-            <h1 class="page-title">Theoretical Training</h1>
-            <p class="page-subtitle">Track student progress, mark completions, and view passed students</p>
+            <h1 class="page-title">Student Training List</h1>
+            <p class="page-subtitle">Track TDC graduation and current PDC training progress</p>
         </div>
         <a class="btn btn-primary" data-no-ajax="1" href="{{ school_route('instructor.theoretical.exportList') }}">Export PDF</a>
     </div>
@@ -584,6 +584,7 @@
                         <tr>
                             <th>Student</th>
                             <th>Total Hours</th>
+                            <th>PDC Training</th>
                             <th>Date Passed</th>
                             <th>Status</th>
                             <th>Actions</th>
@@ -606,6 +607,16 @@
                                         <svg class="icon-13" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                         {{ $student->total_theoretical_hours ?? 0 }} hrs
                                     </span>
+                                </td>
+                                <td>
+                                    @if($student->pdc_enrollment)
+                                        <div class="hours-display">
+                                            <span class="hours-value">{{ number_format($student->pdc_hours_completed, 1) }} / {{ number_format($student->pdc_hours_required, 1) }} hrs</span>
+                                            <span class="hours-required">{{ number_format($student->pdc_progress, 1) }}% · {{ $student->pdc_enrollment->course->title }}</span>
+                                        </div>
+                                    @else
+                                        <span class="hours-required">Not enrolled</span>
+                                    @endif
                                 </td>
                                 <td><span class="date-text">{{ optional($student->theoretical_passed_at)->format('M d, Y') ?? 'N/A' }}</span></td>
                                 <td>
