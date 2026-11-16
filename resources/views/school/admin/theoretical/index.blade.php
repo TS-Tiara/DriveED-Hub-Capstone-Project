@@ -374,14 +374,14 @@
             <div class="stat-content">
                 <div class="stat-header">
                     <div>
-                        <div class="stat-label">PDC Only</div>
+                        <div class="stat-label">PDC</div>
                         <div class="stat-value">{{ $totalPdcOnly }}</div>
                     </div>
                     <div class="stat-icon">
                         <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m6-6H6"/></svg>
                     </div>
                 </div>
-                <div class="stat-detail">Students enrolled in PDC without TDC</div>
+                <div class="stat-detail">Students enrolled in PDC</div>
             </div>
         </div>
     </div>
@@ -618,11 +618,11 @@
     </div>
 
     {{-- ════════════════════════════════════════════════════
-         TAB 3 — PDC-only students
+         TAB 3 — PDC students
          ════════════════════════════════════════════════════ --}}
     <div class="tab-panel" id="tab-pdc">
         <div class="section-header">
-            <h3>PDC-only Students</h3>
+            <h3>PDC Students</h3>
         </div>
         <div class="table-wrapper">
             @if($pdcOnlyEnrollments->count() > 0)
@@ -655,7 +655,7 @@
                                         <span class="hours-required">{{ number_format($enrollment->pdc_progress, 1) }}% complete</span>
                                     </div>
                                 </td>
-                                <td><span class="badge-custom badge-info">PDC ONLY</span></td>
+                                <td><span class="badge-custom badge-info">PDC</span></td>
                                 <td>
                                     <a href="{{ route('schools.admin.theoretical.show', ['school' => $school->slug, 'enrollment' => $enrollment->id]) }}" class="btn-action btn-view">Review</a>
                                 </td>
@@ -665,7 +665,7 @@
                 </table>
             @else
                 <div class="empty-state">
-                    <div class="empty-state-text">No approved PDC-only students</div>
+                    <div class="empty-state-text">No approved PDC students</div>
                 </div>
             @endif
         </div>

@@ -301,6 +301,14 @@ class InstructorController extends Controller
                 && ($tdcEnrollment->status === 'completed' || $tdcEnrollment->theoretical_passed);
             $student->tdc_hours_completed = 0.0;
             $student->tdc_hours_required = 0.0;
+            $pdcEnrollment = $student->enrollmentRequests
+                ->filter(fn ($enrollment) => in_array($enrollment->course?->course_type, ['practical', 'combo'], true))
+                ->sortByDesc('id')
+                ->first();
+            $student->pdc_enrolled = (bool) $pdcEnrollment;
+            $student->pdc_hours_completed = 0.0;
+            $student->pdc_hours_required = 0.0;
+            $student->pdc_completed = false;
 
             if ($tdcEnrollment) {
                 $student->tdc_hours_completed = (float) $tdcEnrollment->sessionCompletions
@@ -308,6 +316,16 @@ class InstructorController extends Controller
                     ->where('session_type', 'theoretical')
                     ->sum('hours_completed');
                 $student->tdc_hours_required = (float) $tdcEnrollment->tdc_hours_limit;
+            }
+
+            if ($pdcEnrollment) {
+                $student->pdc_hours_completed = (float) $pdcEnrollment->sessionCompletions
+                    ->where('status', 'completed')
+                    ->where('session_type', 'practical')
+                    ->sum('hours_completed');
+                $student->pdc_hours_required = (float) $pdcEnrollment->pdc_hours_limit;
+                $student->pdc_completed = $student->pdc_hours_required > 0
+                    && $student->pdc_hours_completed >= $student->pdc_hours_required;
             }
 
             if ($currentEnrollment) {

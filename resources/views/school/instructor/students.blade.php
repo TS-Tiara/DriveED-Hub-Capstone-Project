@@ -417,6 +417,9 @@
                         @if($student->tdc_completed)
                             <div class="student-detail"><strong>TDC:</strong> Graduated ({{ number_format($student->tdc_hours_completed, 1) }} / {{ number_format($student->tdc_hours_required, 1) }} hrs)</div>
                         @endif
+                        @if($student->pdc_enrolled)
+                            <div class="student-detail"><strong>PDC:</strong> {{ $student->pdc_completed ? 'Completed' : 'In Progress' }} ({{ number_format($student->pdc_hours_completed, 1) }} / {{ number_format($student->pdc_hours_required, 1) }} hrs)</div>
+                        @endif
                         @if($student->current_course_name)
                             <div class="student-detail"><strong>Current Course:</strong> {{ $student->current_course_name }}</div>
                             <div class="student-detail"><strong>Training Hours:</strong> {{ number_format($student->current_hours_completed, 1) }} / {{ number_format($student->current_hours_required, 1) }} hrs</div>
