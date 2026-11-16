@@ -2195,8 +2195,6 @@
             @elseif(Auth::guard('instructor')->check())
                 <a href="{{ $schoolRoute('instructor.dashboard') }}" class="nav-item" data-page="dashboard">Dashboard</a>
                 <a href="{{ $schoolRoute('instructor.schedule') }}" class="nav-item" data-page="my-schedule">My Schedule</a>
-                <a href="{{ $schoolRoute('instructor.students.index') }}" class="nav-item" data-page="students">My
-                    Students</a>
                 <a href="{{ $schoolRoute('instructor.sessions.index') }}" class="nav-item" data-page="sessions">
                     Session Completions
                 </a>
@@ -2204,7 +2202,7 @@
 
                 <div class="nav-divider"></div>
 
-                {{-- Theoretical Training --}}
+                {{-- Student Training --}}
                 <div class="nav-category" data-category="instructor-training-resources">
                     <div class="nav-category-header" onclick="toggleCategory(this)" role="button" aria-expanded="false"
                         tabindex="0"
@@ -2215,7 +2213,7 @@
                     <div class="nav-category-items">
                         <a href="{{ $schoolRoute('instructor.settings') }}" class="nav-item" data-page="settings">Settings</a>
                         <a href="{{ $schoolRoute('instructor.theoretical.index') }}" class="nav-item"
-                            data-page="theoretical">Theoretical Training</a>
+                            data-page="theoretical">Student Training List</a>
                         <a href="{{ $schoolRoute('instructor.materials.index') }}" class="nav-item"
                             data-page="materials">Course Materials</a>
                         <a href="{{ $schoolRoute('instructor.questions.index') }}" class="nav-item"

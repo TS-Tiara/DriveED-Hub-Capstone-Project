@@ -172,7 +172,12 @@ class TheoreticalCompletionController extends Controller
         $notReadyEnrollments = $activeEnrollments->getCollection()->where('progress', '<', 100)->values();
 
         // ── Passed Students tab ──
-        $passedStudents = Student::where('school_id', $school->id)
+        $passedStudents = Student::with(['enrollmentRequests' => function ($query) {
+                $query->where('status', 'approved')
+                    ->with(['course', 'package', 'sessionCompletions'])
+                    ->orderByDesc('id');
+            }])
+            ->where('school_id', $school->id)
             ->where('has_passed_theoretical', true)
             ->latest('updated_at')
             ->paginate(10, ['*'], 'passed_page');
@@ -180,6 +185,31 @@ class TheoreticalCompletionController extends Controller
         $totalPassed = Student::where('school_id', $school->id)
             ->where('has_passed_theoretical', true)
             ->count();
+
+        $passedStudents->getCollection()->transform(function ($student) {
+            $pdcEnrollment = $student->enrollmentRequests
+                ->filter(fn ($enrollment) => in_array($enrollment->course?->course_type, ['practical', 'combo'], true))
+                ->sortByDesc('id')
+                ->first();
+
+            $student->pdc_enrollment = $pdcEnrollment;
+            $student->pdc_hours_completed = 0.0;
+            $student->pdc_hours_required = 0.0;
+            $student->pdc_progress = 0.0;
+
+            if ($pdcEnrollment) {
+                $student->pdc_hours_completed = (float) $pdcEnrollment->sessionCompletions
+                    ->where('status', 'completed')
+                    ->where('session_type', 'practical')
+                    ->sum('hours_completed');
+                $student->pdc_hours_required = (float) $pdcEnrollment->pdc_hours_limit;
+                $student->pdc_progress = $student->pdc_hours_required > 0
+                    ? min(100, round(($student->pdc_hours_completed / $student->pdc_hours_required) * 100, 1))
+                    : 0.0;
+            }
+
+            return $student;
+        });
 
         $passedEnrollmentIds = EnrollmentRequest::where('school_id', $school->id)
             ->whereIn('learner_id', $passedStudents->pluck('id'))

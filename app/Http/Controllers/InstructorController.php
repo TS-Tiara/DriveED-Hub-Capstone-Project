@@ -227,7 +227,7 @@ class InstructorController extends Controller
         $students = $query->with([
             'progresses.course',
             'enrollmentRequests' => function ($query) {
-                $query->where('status', 'approved')
+                $query->whereIn('status', ['approved', 'completed'])
                     ->with(['course', 'package', 'sessionCompletions'])
                     ->orderByDesc('id');
             },
@@ -280,9 +280,11 @@ class InstructorController extends Controller
             // Progress belongs to the student's current approved enrollment, not
             // an average of historical TDC and current PDC records.
             $currentEnrollment = $student->enrollmentRequests
+                ->where('status', 'approved')
                 ->sortByDesc(function ($enrollment) {
                     return [
                         in_array($enrollment->course?->course_type, ['practical', 'combo'], true) ? 1 : 0,
+                        $enrollment->status === 'approved' ? 1 : 0,
                         $enrollment->id,
                     ];
                 })
@@ -291,6 +293,22 @@ class InstructorController extends Controller
             $student->current_course_name = $currentEnrollment?->course?->title;
             $student->current_hours_completed = 0.0;
             $student->current_hours_required = 0.0;
+            $tdcEnrollment = $student->enrollmentRequests
+                ->filter(fn ($enrollment) => $enrollment->course?->course_type === 'theoretical')
+                ->sortByDesc('id')
+                ->first();
+            $student->tdc_completed = $tdcEnrollment
+                && ($tdcEnrollment->status === 'completed' || $tdcEnrollment->theoretical_passed);
+            $student->tdc_hours_completed = 0.0;
+            $student->tdc_hours_required = 0.0;
+
+            if ($tdcEnrollment) {
+                $student->tdc_hours_completed = (float) $tdcEnrollment->sessionCompletions
+                    ->where('status', 'completed')
+                    ->where('session_type', 'theoretical')
+                    ->sum('hours_completed');
+                $student->tdc_hours_required = (float) $tdcEnrollment->tdc_hours_limit;
+            }
 
             if ($currentEnrollment) {
                 $completedSessions = $currentEnrollment->sessionCompletions
