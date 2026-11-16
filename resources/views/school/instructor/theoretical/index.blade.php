@@ -336,6 +336,20 @@
                 <div class="stat-detail">Students who passed theoretical training</div>
             </div>
         </div>
+        <div class="stat-card growth clickable" onclick="switchTab('pdc', this)">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">PDC Only</div>
+                        <div class="stat-value">{{ $totalPdcOnly }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m6-6H6"/></svg>
+                    </div>
+                </div>
+                <div class="stat-detail">Students enrolled in PDC without TDC</div>
+            </div>
+        </div>
     </div>
 
     {{-- ════════════════════════════════════════════════════
@@ -564,7 +578,64 @@
     </div>
 
     {{-- ════════════════════════════════════════════════════
-         TAB 3 — Passed Students
+         TAB 3 — PDC-only students
+         ════════════════════════════════════════════════════ --}}
+    <div class="tab-panel" id="tab-pdc">
+        <div class="section-header">
+            <h3>PDC-only Students</h3>
+        </div>
+        <div class="table-wrapper">
+            @if($pdcOnlyEnrollments->count() > 0)
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>PDC Course</th>
+                            <th>Training Hours</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($pdcOnlyEnrollments as $enrollment)
+                            <tr>
+                                <td>
+                                    <div class="user-cell">
+                                        <div class="user-avatar">{{ strtoupper(substr($enrollment->learner->name ?? 'N', 0, 1)) }}</div>
+                                        <div class="user-info">
+                                            <div class="user-name">{{ $enrollment->learner->name ?? 'N/A' }}</div>
+                                            <div class="user-email">{{ $enrollment->learner->email ?? 'N/A' }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{ $enrollment->course->title ?? 'N/A' }}</td>
+                                <td>
+                                    <div class="hours-display">
+                                        <span class="hours-value">{{ number_format($enrollment->pdc_hours_completed, 1) }} / {{ number_format($enrollment->pdc_hours_required, 1) }} hrs</span>
+                                        <span class="hours-required">{{ number_format($enrollment->pdc_progress, 1) }}% complete</span>
+                                    </div>
+                                </td>
+                                <td><span class="badge-custom badge-info">PDC ONLY</span></td>
+                                <td>
+                                    <a href="{{ route('schools.instructor.theoretical.show', ['school' => $school->slug, 'enrollment' => $enrollment->id]) }}" class="btn-action btn-view">Review</a>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            @else
+                <div class="empty-state">
+                    <div class="empty-state-text">No approved PDC-only students</div>
+                </div>
+            @endif
+        </div>
+        <div class="mt-4 px-4">
+            {{ $pdcOnlyEnrollments->appends(['active_page' => $activeEnrollments->currentPage(), 'passed_page' => $passedStudents->currentPage()])->links() }}
+        </div>
+    </div>
+
+    {{-- ════════════════════════════════════════════════════
+         TAB 4 — Passed Students
          ════════════════════════════════════════════════════ --}}
     <div class="tab-panel" id="tab-passed">
         <div class="section-header">
