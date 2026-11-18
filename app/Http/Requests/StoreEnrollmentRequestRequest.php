@@ -31,6 +31,9 @@ class StoreEnrollmentRequestRequest extends FormRequest
     {
         $school = $this->route('school');
         $schoolId = $school instanceof \App\Models\School ? $school->id : $school;
+        $branchSelectionRequired = $school instanceof \App\Models\School
+            && ($school->schoolSetting?->enable_branches ?? false)
+            && \App\Models\Branch::where('school_id', $schoolId)->where('is_active', true)->exists();
         $course = $this->route('course');
         $courseId = $course instanceof \App\Models\Course ? $course->id : $course;
 
@@ -42,9 +45,9 @@ class StoreEnrollmentRequestRequest extends FormRequest
                 ->where('course_id', $courseId)
             ],
             'branch_id' => [
-                'nullable',
+                $branchSelectionRequired ? 'required' : 'nullable',
                 'integer',
-                \Illuminate\Validation\Rule::exists('branches', 'id')->where('school_id', $schoolId)
+                \Illuminate\Validation\Rule::exists('branches', 'id')->where('school_id', $schoolId)->where('is_active', true)
             ],
             'credential_file' => [
                 'nullable',

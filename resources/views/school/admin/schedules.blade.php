@@ -2047,6 +2047,17 @@
                     </div>
 
                     <div class="form-group">
+                        <label class="form-label" for="createScheduleBranches"><i class="bi bi-geo-alt"></i> Branches <span class="text-danger">*</span></label>
+                        <select name="branch_ids[]" id="createScheduleBranches" class="form-control" multiple size="4" required>
+                            @foreach($branches as $branch)
+                                <option value="{{ $branch->id }}" @selected(collect(old('branch_ids', []))->contains((string) $branch->id) || (int) old('branch_id') === (int) $branch->id)>{{ $branch->name }}</option>
+                            @endforeach
+                        </select>
+                        <small class="text-muted">Choose one or more branches. Each branch receives its own schedule. Only instructors from the selected branches can be assigned.</small>
+                        @error('branch_ids') <p class="field-error">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="form-group">
                         <label class="form-label" for="createSessionType">
                             <i class="bi bi-diagram-3"></i> Session Type
                             <span class="text-danger">*</span>
@@ -2416,7 +2427,7 @@
                                             }
                                         }
                                     @endphp
-                                    <option value="{{ $instructor->id }}" data-accredited-courses="{{ json_encode($accreditedCourseIds) }}">
+                                    <option value="{{ $instructor->id }}" data-branch-id="{{ $instructor->branch_id }}" data-accredited-courses="{{ json_encode($accreditedCourseIds) }}">
                                         {{ $instructor->name }} ({{ $instructor->email }})
                                     </option>
                                 @endforeach
@@ -2515,6 +2526,23 @@
             </div>
         </div>
     </div>
+
+    <script>
+        const branchSelect = document.getElementById('createScheduleBranches');
+        const instructorsSelect = document.querySelector('#createModal select[name="instructor_ids[]"]');
+        function filterScheduleInstructorsByBranch() {
+            if (!branchSelect || !instructorsSelect) return;
+            const selected = new Set(Array.from(branchSelect.selectedOptions, option => option.value));
+            Array.from(instructorsSelect.options).forEach(option => {
+                const allowed = selected.has(option.dataset.branchId);
+                option.hidden = !allowed;
+                option.disabled = !allowed;
+                if (!allowed) option.selected = false;
+            });
+        }
+        branchSelect?.addEventListener('change', filterScheduleInstructorsByBranch);
+        filterScheduleInstructorsByBranch();
+    </script>
 
     <script>
         window.toggleTimeRanges = function(enabled) {
