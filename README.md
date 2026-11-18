@@ -2,7 +2,21 @@
 
 A school portal for managing students, instructors, courses, schedules, payments, and training records.
 
-[November 15](#fixes-november-15-2026) · [November 14](#fixes-november-14-2026) · [November 10](#fixes-november-10-2026) · [November 9](#fixes-november-9-2026) · [November 8](#fixes-november-8-2026) · [November 5](#fixes-november-5-2026) · [November 4](#latest-fixes-november-4-2026) · [November 1](#fixes-november-1-2026) · [October 31](#latest-fixes-october-31-2026) · [October 30](#fixes-october-30-2026) · [October 29](#fixes-october-29-2026) · [October 27](#fixes-october-27-2026) · [Earlier fixes](#earlier-fixes-october-20-to-26-2026)
+[Panel findings](#panel-findings) · [November 15](#fixes-november-15-2026) · [November 14](#fixes-november-14-2026) · [November 10](#fixes-november-10-2026) · [November 9](#fixes-november-9-2026) · [November 8](#fixes-november-8-2026) · [November 5](#fixes-november-5-2026) · [November 4](#latest-fixes-november-4-2026) · [November 1](#fixes-november-1-2026) · [October 31](#latest-fixes-october-31-2026) · [October 30](#fixes-october-30-2026) · [October 29](#fixes-october-29-2026) · [October 27](#fixes-october-27-2026) · [Earlier fixes](#earlier-fixes-october-20-to-26-2026)
+
+## Panel findings
+
+The original screenshots below come from `after defense comments of panel.docx`. The after screenshots were captured in the local app on November 17, 2026, after testing the updated flows. The enrollment and schedule forms were opened and inspected without submitting new records.
+
+| Finding | Before — panel report | After — local app |
+| --- | --- | --- |
+| Guest registration consent | <img src="docs/screenshots/after-defense-findings/before/image1.png" alt="Before: consent checkboxes were available immediately" width="300"><br><img src="docs/screenshots/after-defense-findings/before/image2.png" alt="Before: privacy policy had a direct I Understand button" width="300"> | <img src="docs/screenshots/after-defense-findings/after/registration-policy-gate.png" alt="After: consent stays locked until the policy is read" width="360"><br><img src="docs/screenshots/after-defense-findings/after/registration-consent-enabled.png" alt="After: consent checkboxes unlock after reading both documents" width="360"> |
+| Instructor session logging | <img src="docs/screenshots/after-defense-findings/before/image3.png" alt="Before: session logging used a single enrollment selector" width="360"> | <img src="docs/screenshots/after-defense-findings/after/instructor-session-search-batch-grade.png" alt="After: searchable session list with filters and batch grading" width="360"> |
+| Course enrollment branch | <img src="docs/screenshots/after-defense-findings/before/image4.png" alt="Before: course enrollment form without a branch choice" width="300"> | <img src="docs/screenshots/after-defense-findings/after/enrollment-branch-selector.png" alt="After: course enrollment includes a preferred branch selector" width="360"> |
+| Schedule branches and instructor filtering | <img src="docs/screenshots/after-defense-findings/before/image5.png" alt="Before: schedule form had no branch selector" width="300"><br><img src="docs/screenshots/after-defense-findings/before/image6.png" alt="Before: instructor list was not branch-filtered" width="300"> | <img src="docs/screenshots/after-defense-findings/after/schedule-branch-selector.png" alt="After: schedules can be assigned to selected branches" width="360"><br><img src="docs/screenshots/after-defense-findings/after/instructor-branch-filter.png" alt="After: instructors are filtered to the selected branch" width="360"> |
+| Misleading “Enrolled” schedule label | <img src="docs/screenshots/after-defense-findings/before/image7.png" alt="Before: available schedules displayed an Enrolled badge" width="360"> | <img src="docs/screenshots/after-defense-findings/after/student-schedule-clean-label.png" alt="After: student schedule view without the Enrolled badge" width="360"><br><sub>The demo student had no confirmed slots during capture, so this after image shows the empty schedule state.</sub> |
+
+The [panel findings screenshot index](docs/screenshots/after-defense-findings/README.md) includes the same before-and-after set and the browser verification notes.
 
 ## Fixes November 15 2026
 
@@ -23,6 +37,12 @@ Addressed the export findings in `Exports.docx`. Export actions now share one bu
 | Admin management | ![Before: admin management export](docs/screenshots/exports-findings/before/image9.png) | ![After: normalized admin export menu](docs/screenshots/exports-findings/after/admin-management.png) |
 
 The screenshots above pair all nine pages from the report with the updated local UI.
+
+### Student training and permit findings
+
+The November 15 student-training findings are also addressed. The Student Training List now retains completed TDC enrollments and includes PDC and combo enrollments, with hours and progress calculated for the relevant phase. Practical-only enrollments no longer receive a TDC hour allowance. When a package has no explicit PDC allowance, the practical course requirement sets the PDC limit. The instructor session form now shows hours completed and remaining for the selected phase, so TDC hours cannot make PDC appear complete. TDC graduates without a submitted permit are prompted to upload it in the PDC enrollment form. The TDC completion tab excludes completed records and PDC-phase enrollments, and the server now validates TDC hours and attendance dates before marking a student passed. PDC graduation also verifies the TDC prerequisite and required PDC hours server-side.
+
+The [findings screenshot index](docs/screenshots/nov15-findings/README.md) contains the five screenshots extracted from the report. The updated Student Training List was opened and visually checked in the local app. The focused regression checks pass with `node --test tests/verify-nov15-findings.mjs` (**4 tests**). PHP backend tests were not run in this environment because PHP and Docker CLI were unavailable.
 
 ## Fixes November 14 2026
 

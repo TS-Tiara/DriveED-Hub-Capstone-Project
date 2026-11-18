@@ -33,8 +33,6 @@ class PaymentController extends Controller
             abort(403, 'Unauthorized access.');
         }
 
-        $isArchivedView = $request->boolean('archived');
-
         $query = Payment::where('school_id', '=', $school->id)
             ->with(['payer', 'booking.course', 'enrollmentRequest.course']);
 
@@ -52,7 +50,7 @@ class PaymentController extends Controller
         }
 
         if (Auth::guard('admin')->check()) {
-            $query->when($isArchivedView, fn ($q) => $q->whereNotNull('archived_at'), fn ($q) => $q->whereNull('archived_at'));
+            $query->when($request->boolean('archived'), fn ($q) => $q->whereNotNull('archived_at'), fn ($q) => $q->whereNull('archived_at'));
         } else {
             $query->whereNull('archived_at');
         }
@@ -137,7 +135,7 @@ class PaymentController extends Controller
         $guard = Auth::guard('admin')->check() ? 'admin' : 'student';
         $view = "school.{$guard}.payments";
         return view($view, array_merge(
-            compact('school', 'payments', 'stats', 'pendingEnrollments', 'pendingBookings', 'gcashPaymentImageUrl', 'isArchivedView'),
+            compact('school', 'payments', 'stats', 'pendingEnrollments', 'pendingBookings', 'gcashPaymentImageUrl'),
             ['isAjax' => $request->ajax()]
         ));
     }

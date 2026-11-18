@@ -54,6 +54,7 @@ class InstructorTimeSlotController extends Controller
         // in toggle() so instructors are not offered slots they cannot select.
         $availableSlots = TimeSlot::with(['instructors', 'course', 'branch'])
             ->where('school_id', $school->id)
+            ->where('branch_id', $instructor->branch_id)
             ->where('status', 'open')
             ->upcoming($school->timezone)
             ->orderBy('date')
@@ -62,6 +63,7 @@ class InstructorTimeSlotController extends Controller
 
         $mySlots = TimeSlot::with(['instructors', 'course', 'branch'])
             ->where('school_id', $school->id)
+            ->where('branch_id', $instructor->branch_id)
             ->whereHas('instructors', function ($query) use ($instructor): void {
             $query->where('instructor_id', $instructor->id);
         })
@@ -89,6 +91,10 @@ class InstructorTimeSlotController extends Controller
         $timeSlot = TimeSlot::where('school_id', $school->id)
             ->where('id', $id)
             ->firstOrFail();
+
+        if ((int) $timeSlot->branch_id !== (int) $instructor->branch_id) {
+            abort(403, 'You can only select schedules assigned to your branch.');
+        }
 
         $isAjax = request()->ajax() || request()->header('X-Requested-With') === 'XMLHttpRequest';
 
@@ -251,6 +257,7 @@ class InstructorTimeSlotController extends Controller
         // My slots (instructor's selected and admin-assigned slots)
         $mySlots = TimeSlot::with(['instructors', 'course', 'branch', 'bookings.student', 'bookings.course'])
             ->where('school_id', $school->id)
+            ->where('branch_id', $instructor->branch_id)
             ->whereHas('instructors', function ($query) use ($instructorId) {
             $query->where('instructor_id', $instructorId);
         })
@@ -284,6 +291,7 @@ class InstructorTimeSlotController extends Controller
         // slots they can see but cannot select (toggle() rejects them).
         $availableSlots = TimeSlot::with(['instructors', 'course', 'branch'])
             ->where('school_id', $school->id)
+            ->where('branch_id', $instructor->branch_id)
             ->where('status', 'open')
             ->whereDoesntHave('instructors', function ($query) use ($instructorId) {
             $query->where('instructor_id', $instructorId);

@@ -290,7 +290,7 @@
     <div class="page-header">
         <div>
             <h1 class="page-title">Student Training List</h1>
-            <p class="page-subtitle">Track TDC graduation and current PDC training progress</p>
+            <p class="page-subtitle">Track student progress, mark completions, and view passed students</p>
         </div>
         @php
             $theoreticalExportPdf = Auth::guard('instructor')->check()
@@ -308,7 +308,7 @@
                 <div class="dropdown-header">Training list filters</div>
                 <form method="GET" action="{{ $theoreticalExportPdf }}">
                     <label class="training-export-field">Course type
-                        <select name="course_type" class="form-control"><option value="all">All types</option><option value="theoretical">Theoretical</option><option value="combo">Combo</option></select>
+                        <select name="course_type" class="form-control"><option value="all">All types</option><option value="theoretical">TDC</option><option value="practical">PDC</option><option value="combo">Combo</option></select>
                     </label>
                     <label class="training-export-field">Enrollment status
                         <select name="status" class="form-control"><option value="all">All statuses</option><option value="approved">In training</option><option value="completed">Completed</option></select>
@@ -339,7 +339,7 @@
                         <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
                     </div>
                 </div>
-                <div class="stat-detail">Students currently in theoretical training</div>
+                <div class="stat-detail">Current student training enrollments</div>
             </div>
         </div>
         <div class="stat-card growth clickable" onclick="switchTab('completion', this)">
@@ -353,7 +353,7 @@
                         <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     </div>
                 </div>
-                <div class="stat-detail">Completed hours, ready to mark as passed</div>
+                <div class="stat-detail">TDC enrollments ready to mark as passed</div>
             </div>
         </div>
         <div class="stat-card instructors clickable" onclick="switchTab('passed', this)">
@@ -370,20 +370,6 @@
                 <div class="stat-detail">Students who passed theoretical training</div>
             </div>
         </div>
-        <div class="stat-card growth clickable" onclick="switchTab('pdc', this)">
-            <div class="stat-content">
-                <div class="stat-header">
-                    <div>
-                        <div class="stat-label">PDC</div>
-                        <div class="stat-value">{{ $totalPdcOnly }}</div>
-                    </div>
-                    <div class="stat-icon">
-                        <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m6-6H6"/></svg>
-                    </div>
-                </div>
-                <div class="stat-detail">Students enrolled in PDC</div>
-            </div>
-        </div>
     </div>
 
     {{-- ════════════════════════════════════════════════════
@@ -397,6 +383,7 @@
                         <tr>
                             <th>Student</th>
                             <th>Course</th>
+                            <th>Phase</th>
                             <th>Enrolled</th>
                             <th>Hours</th>
                             <th>Progress</th>
@@ -425,6 +412,7 @@
                                     <div class="course-title">{{ $enrollment->course->title }}</div>
                                     <div class="course-license">{{ ucfirst(str_replace('_', ' ', $enrollment->course->license_type)) }}</div>
                                 </td>
+                                <td>{{ $enrollment->training_phase === 'practical' ? 'PDC' : 'TDC' }}</td>
                                 <td><span class="date-text">{{ $enrollment->enrolled_at?->format('M d, Y') ?? 'N/A' }}</span></td>
                                 <td>
                                     <div class="hours-display">
@@ -447,7 +435,9 @@
                                     </div>
                                 </td>
                                 <td>
-                                    @if($enrollment->progress >= 100)
+                                    @if($enrollment->status === 'completed')
+                                        <span class="badge-custom badge-success">Completed</span>
+                                    @elseif($enrollment->progress >= 100 && $enrollment->training_phase === 'theoretical')
                                         <span class="badge-custom badge-ready">Ready to Pass</span>
                                     @elseif($enrollment->progress > 0)
                                         <span class="badge-custom badge-progress">In Progress</span>
@@ -467,8 +457,8 @@
                     <div class="empty-state-icon muted">
                         <svg class="icon-28" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
                     </div>
-                    <div class="empty-state-text">No students currently in theoretical training</div>
-                    <div class="empty-state-sub">Students enrolled in theoretical courses will appear here</div>
+                    <div class="empty-state-text">No student training enrollments found</div>
+                    <div class="empty-state-sub">Approved and completed TDC and PDC enrollments appear here</div>
                 </div>
             @endif
         </div>
@@ -618,64 +608,7 @@
     </div>
 
     {{-- ════════════════════════════════════════════════════
-         TAB 3 — PDC students
-         ════════════════════════════════════════════════════ --}}
-    <div class="tab-panel" id="tab-pdc">
-        <div class="section-header">
-            <h3>PDC Students</h3>
-        </div>
-        <div class="table-wrapper">
-            @if($pdcOnlyEnrollments->count() > 0)
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Student</th>
-                            <th>PDC Course</th>
-                            <th>Training Hours</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($pdcOnlyEnrollments as $enrollment)
-                            <tr>
-                                <td>
-                                    <div class="user-cell">
-                                        <div class="user-avatar">{{ strtoupper(substr($enrollment->learner->name ?? 'N', 0, 1)) }}</div>
-                                        <div class="user-info">
-                                            <div class="user-name">{{ $enrollment->learner->name ?? 'N/A' }}</div>
-                                            <div class="user-email">{{ $enrollment->learner->email ?? 'N/A' }}</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>{{ $enrollment->course->title ?? 'N/A' }}</td>
-                                <td>
-                                    <div class="hours-display">
-                                        <span class="hours-value">{{ number_format($enrollment->pdc_hours_completed, 1) }} / {{ number_format($enrollment->pdc_hours_required, 1) }} hrs</span>
-                                        <span class="hours-required">{{ number_format($enrollment->pdc_progress, 1) }}% complete</span>
-                                    </div>
-                                </td>
-                                <td><span class="badge-custom badge-info">PDC</span></td>
-                                <td>
-                                    <a href="{{ route('schools.admin.theoretical.show', ['school' => $school->slug, 'enrollment' => $enrollment->id]) }}" class="btn-action btn-view">Review</a>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            @else
-                <div class="empty-state">
-                    <div class="empty-state-text">No approved PDC students</div>
-                </div>
-            @endif
-        </div>
-        <div class="mt-4 px-4">
-            {{ $pdcOnlyEnrollments->appends(['active_page' => $activeEnrollments->currentPage(), 'passed_page' => $passedStudents->currentPage()])->links() }}
-        </div>
-    </div>
-
-    {{-- ════════════════════════════════════════════════════
-         TAB 4 — Passed Students
+         TAB 3 — Passed Students
          ════════════════════════════════════════════════════ --}}
     <div class="tab-panel" id="tab-passed">
         <div class="section-header">
@@ -695,7 +628,6 @@
                         <tr>
                             <th>Student</th>
                             <th>Total Hours</th>
-                            <th>PDC Training</th>
                             <th>Date Passed</th>
                             <th>Status</th>
                             <th>Actions</th>
@@ -719,16 +651,6 @@
                                         <svg class="icon-13" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                         {{ $student->total_theoretical_hours ?? 0 }} hrs
                                     </span>
-                                </td>
-                                <td>
-                                    @if($student->pdc_enrollment)
-                                        <div class="hours-display">
-                                            <span class="hours-value">{{ number_format($student->pdc_hours_completed, 1) }} / {{ number_format($student->pdc_hours_required, 1) }} hrs</span>
-                                            <span class="hours-required">{{ number_format($student->pdc_progress, 1) }}% · {{ $student->pdc_enrollment->course->title }}</span>
-                                        </div>
-                                    @else
-                                        <span class="hours-required">Not enrolled</span>
-                                    @endif
                                 </td>
                                 <td><span class="date-text">{{ optional($student->theoretical_passed_at)->format('M d, Y') ?? 'N/A' }}</span></td>
                                 <td>

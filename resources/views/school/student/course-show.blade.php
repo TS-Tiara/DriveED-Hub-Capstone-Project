@@ -479,6 +479,11 @@
                             <div class="status-alert status-pending">
                                 License submitted and pending review. You can proceed with enrollment.
                             </div>
+                        @elseif($mustUploadLicenseForPractical)
+                            <div class="status-alert status-pending" style="text-align:left;">
+                                <strong>Student Driver's License required.</strong>
+                                <div class="mt-1">TDC completion does not replace the permit requirement. Upload your permit in the enrollment form before requesting PDC.</div>
+                            </div>
                         @endif
                     @endif
 
@@ -488,7 +493,11 @@
                         </button>
                     @else
                         <button type="button" class="btn-enroll-action" onclick="openEnrollModal()">
-                            {{ $enrollmentStatus === 'completed' ? 'Enroll Again' : 'Enroll Now' }}
+                            @if($isPracticalCourse && $mustUploadLicenseForPractical)
+                                Submit Student Permit &amp; Enroll
+                            @else
+                                {{ $enrollmentStatus === 'completed' ? 'Enroll Again' : 'Enroll Now' }}
+                            @endif
                         </button>
                     @endif
                 @endif
