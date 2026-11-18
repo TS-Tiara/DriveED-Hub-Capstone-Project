@@ -127,11 +127,11 @@ class EnrollmentValidator
      */
     public static function canMarkTheoreticalPassed($enrollment): array
     {
-        // Must be a theoretical course
-        if (!$enrollment->course->isTheoretical()) {
+        // A combo enrollment contains a TDC phase that can be marked passed.
+        if (!$enrollment->course->isTheoretical() && !$enrollment->course->isCombo()) {
             return [
                 'allowed' => false,
-                'message' => 'Only theoretical course enrollments can be marked as passed.'
+                'message' => 'Only TDC or combo enrollments can be marked as passed for theoretical training.'
             ];
         }
 

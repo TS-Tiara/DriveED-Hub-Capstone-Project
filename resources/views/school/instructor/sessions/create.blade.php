@@ -387,6 +387,10 @@
                                         data-course-type="{{ $enrollment->course->course_type }}"
                                         data-hours-required="{{ $enrollment->tdc_hours_limit + $enrollment->pdc_hours_limit }}"
                                         data-hours-completed="{{ $enrollment->used_tdc_hours + $enrollment->used_pdc_hours }}"
+                                        data-tdc-used="{{ $enrollment->used_tdc_hours }}"
+                                        data-pdc-used="{{ $enrollment->used_pdc_hours }}"
+                                        data-tdc-limit="{{ $enrollment->tdc_hours_limit }}"
+                                        data-pdc-limit="{{ $enrollment->pdc_hours_limit }}"
                                         data-tdc-remaining="{{ \App\Support\TrainingHours::remaining($enrollment, 'theoretical') }}"
                                         data-pdc-remaining="{{ \App\Support\TrainingHours::remaining($enrollment, 'practical') }}"
                                         {{ old('enrollment_id') == $enrollment->id || (isset($selectedEnrollment) && $selectedEnrollment->id == $enrollment->id) ? 'selected' : '' }}>
@@ -615,13 +619,7 @@
         
         if (selected && selected.value) {
             const courseType = selected.getAttribute('data-course-type');
-            const hoursRequired = parseFloat(selected.getAttribute('data-hours-required'));
-            const hoursCompleted = parseFloat(selected.getAttribute('data-hours-completed'));
-            const hoursRemaining = Math.max(0, hoursRequired - hoursCompleted);
-            
             document.getElementById('courseType').textContent = formatCourseType(courseType) || '—';
-            document.getElementById('hoursCompleted').textContent = hoursCompleted.toFixed(1) + ' hrs';
-            document.getElementById('hoursRemaining').textContent = hoursRemaining.toFixed(1) + ' hrs';
             
             // Auto-select matching session type
             if (courseType && courseType !== 'combo') {
@@ -633,12 +631,25 @@
             updateSessionTypeHint(courseType, selected.textContent);
             
             enrollmentInfo.classList.add('visible');
+            updatePhaseHours();
             updateHoursGuard();
         } else {
             enrollmentInfo.classList.remove('visible');
             sessionTypeSelect.value = '';
             updateSessionTypeHint('', '');
         }
+    }
+
+    function updatePhaseHours() {
+        const selected = enrollmentSelect.selectedOptions[0];
+        const type = sessionTypeSelect.value;
+        if (!selected?.value || !type) return;
+        const prefix = type === 'theoretical' ? 'tdc' : 'pdc';
+        const completed = parseFloat(selected.dataset[prefix + 'Used'] || '0');
+        const required = parseFloat(selected.dataset[prefix + 'Limit'] || '0');
+        const remaining = parseFloat(selected.dataset[prefix + 'Remaining'] || '0');
+        document.getElementById('hoursCompleted').textContent = completed.toFixed(1) + ' / ' + required.toFixed(1) + ' hrs (' + (type === 'theoretical' ? 'TDC' : 'PDC') + ')';
+        document.getElementById('hoursRemaining').textContent = remaining.toFixed(1) + ' hrs (' + (type === 'theoretical' ? 'TDC' : 'PDC') + ')';
     }
     
     enrollmentSelect.addEventListener('change', updateEnrollmentInfo);
@@ -656,6 +667,7 @@
             : remaining.toFixed(1) + ' training hour(s) remaining for this phase.';
     }
     sessionTypeSelect.addEventListener('change', function() {
+        updatePhaseHours();
         updateHoursGuard();
         const selected = enrollmentSelect.selectedOptions[0];
         const courseType = selected ? selected.getAttribute('data-course-type') : '';

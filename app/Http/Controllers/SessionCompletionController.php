@@ -29,6 +29,7 @@ class SessionCompletionController extends Controller
 
             $rawQuery = SessionCompletion::with(['enrollment.student', 'enrollment.course', 'booking'])
                 ->where('instructor_id', $instructor->id)
+                ->whereHas('enrollment', fn ($query) => $query->where('branch_id', $instructor->branch_id))
                 ->whereHas('enrollment.course', function ($query) use ($school) {
                     $query->where('school_id', $school->id);
                 });
@@ -51,6 +52,13 @@ class SessionCompletionController extends Controller
                 ->when($request->date_to, function ($query, $date) {
                     $query->whereDate('session_date', '<=', $date);
                 })
+                ->when($request->filled('search'), function ($query) use ($request) {
+                    $term = trim($request->string('search')->toString());
+                    $query->where(function ($match) use ($term) {
+                        $match->whereHas('enrollment.student', fn ($student) => $student->where('name', 'like', "%{$term}%"))
+                            ->orWhereHas('enrollment.course', fn ($course) => $course->where('title', 'like', "%{$term}%"));
+                    });
+                })
                 ->latest('session_date')
                 ->latest('session_time');
 
@@ -64,7 +72,7 @@ class SessionCompletionController extends Controller
                 'archived_count' => $archivedCount,
             ];
 
-            $sessions = $sessionsQuery->paginate(10);
+            $sessions = $sessionsQuery->paginate(10)->withQueryString();
 
             return view('school.instructor.sessions.index', compact('school', 'sessions', 'stats', 'isArchivedView'))->with('isAjax', $request->ajax());
         }
@@ -135,6 +143,40 @@ class SessionCompletionController extends Controller
         }
 
         abort(403);
+    }
+
+    public function batchGrade(Request $request, School $school)
+    {
+        $instructor = Auth::guard('instructor')->user();
+        abort_unless($instructor && (int) $instructor->school_id === (int) $school->id, 403);
+        $validated = $request->validate([
+            'session_ids' => ['required', 'array', 'min:1', 'max:100'],
+            'session_ids.*' => ['required', 'integer', 'distinct'],
+            'session_grade' => ['required', 'numeric', 'min:0', 'max:100'],
+        ]);
+        $sessions = SessionCompletion::with('enrollment.course')
+            ->where('instructor_id', $instructor->id)
+            ->where('school_id', $school->id)
+            ->whereHas('enrollment', fn ($query) => $query->where('branch_id', $instructor->branch_id))
+            ->whereNull('archived_at')
+            ->whereIn('id', $validated['session_ids'])->get();
+        if ($sessions->count() !== count($validated['session_ids'])) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['session_ids' => 'One or more selected sessions are unavailable.']);
+        }
+        $courseIds = $sessions->map(fn ($session) => $session->enrollment?->course_id)->unique();
+        $courseTypes = $sessions->map(fn ($session) => strtolower((string) ($session->enrollment?->course?->course_type)))->unique();
+        if ($courseIds->count() !== 1 || $courseTypes->count() !== 1) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['session_ids' => 'Select sessions from the same course and course type.']);
+        }
+        DB::transaction(function () use ($sessions, $validated) {
+            foreach ($sessions as $session) {
+                $session->update(['session_grade' => $validated['session_grade']]);
+                if ($session->booking) {
+                    $session->booking->update(['session_grade' => $validated['session_grade']]);
+                }
+            }
+        });
+        return back()->with('success', 'Grades updated for '.$sessions->count().' sessions.');
     }
 
     /**
@@ -338,6 +380,7 @@ class SessionCompletionController extends Controller
             if ($sessionCompletion->instructor_id !== $instructor->id) {
                 abort(403);
             }
+            abort_unless((int) $sessionCompletion->enrollment->branch_id === (int) $instructor->branch_id, 403);
             return view('school.instructor.sessions.show', compact('school', 'sessionCompletion'))->with('isAjax', $request->ajax());
         }
 
@@ -384,6 +427,7 @@ class SessionCompletionController extends Controller
         if ($sessionCompletion->instructor_id !== $instructor->id) {
             abort(403);
         }
+        abort_unless((int) $sessionCompletion->enrollment->branch_id === (int) $instructor->branch_id, 403);
 
         return view('school.instructor.sessions.edit', compact('school', 'sessionCompletion'))->with('isAjax', $request->ajax());
     }
@@ -411,6 +455,7 @@ class SessionCompletionController extends Controller
         if ($sessionCompletion->instructor_id !== $instructor->id) {
             abort(403);
         }
+        abort_unless((int) $sessionCompletion->enrollment->branch_id === (int) $instructor->branch_id, 403);
 
         // Calculate start and end times if provided, or use session_time and hours_completed
         $startTime = $request->start_time ?? $request->session_time;
@@ -481,6 +526,7 @@ class SessionCompletionController extends Controller
         abort_unless($instructor && $instructor->school_id === $school->id, 403);
         $session = SessionCompletion::with('booking')->where('school_id', $school->id)->findOrFail($sessionCompletion);
         abort_unless($session->instructor_id === $instructor->id, 403);
+        abort_unless((int) $session->enrollment?->branch_id === (int) $instructor->branch_id, 403);
         abort_unless($session->status === 'completed' && !$session->archived_at, 422, 'Only active completed sessions can be updated.');
         $validated = $request->validate([
             'session_grade' => ['sometimes', 'numeric', 'min:0', 'max:100'],
@@ -517,6 +563,7 @@ class SessionCompletionController extends Controller
             if ($sessionCompletion->instructor_id !== $instructor->id) {
                 abort(403);
             }
+            abort_unless((int) $sessionCompletion->enrollment?->branch_id === (int) $instructor->branch_id, 403);
         } elseif (Auth::guard('admin')->check()) {
             $admin = Auth::guard('admin')->user();
             if ($admin->isBranchSecretary() && !$admin->canAccessBranch($sessionCompletion->enrollment?->branch_id)) {
@@ -547,6 +594,7 @@ class SessionCompletionController extends Controller
             if ($sessionCompletion->instructor_id !== $instructor->id) {
                 abort(403);
             }
+            abort_unless((int) $sessionCompletion->enrollment?->branch_id === (int) $instructor->branch_id, 403);
         } elseif (Auth::guard('admin')->check()) {
             $admin = Auth::guard('admin')->user();
             if ($admin->isBranchSecretary() && !$admin->canAccessBranch($sessionCompletion->enrollment?->branch_id)) {
@@ -595,6 +643,7 @@ class SessionCompletionController extends Controller
             if ($sessionCompletion->instructor_id !== $instructor->id) {
                 abort(403);
             }
+            abort_unless((int) $sessionCompletion->enrollment?->branch_id === (int) $instructor->branch_id, 403);
             $sessionCompletion->update(['archived_at' => now()]);
             return redirect()
                 ->route('schools.instructor.sessions.index', ['school' => $school->slug])
@@ -615,6 +664,16 @@ class SessionCompletionController extends Controller
         // Verify enrollment belongs to this school
         if ($enrollment->school_id !== $school->id) {
             abort(404);
+        }
+        if (Auth::guard('instructor')->check()) {
+            $instructor = Auth::guard('instructor')->user();
+            abort_unless((int) $enrollment->branch_id === (int) $instructor->branch_id, 403);
+            abort_unless(EnrollmentRequest::forInstructor($instructor)->whereKey($enrollment->id)->exists(), 403);
+        } elseif (Auth::guard('admin')->check()) {
+            $admin = Auth::guard('admin')->user();
+            abort_unless(!$admin->isBranchSecretary() || $admin->canAccessBranch($enrollment->branch_id), 403);
+        } else {
+            abort(403);
         }
 
         $stats = [
