@@ -37,9 +37,9 @@ class TheoreticalCompletionController extends Controller
         $query = $school->enrollmentRequests()->with(['learner', 'course', 'package'])
             ->whereHas('course', function ($course) use ($school, $request) {
                 $course->where('school_id', $school->id)
-                    ->whereIn('course_type', in_array($request->input('course_type'), ['theoretical', 'combo'], true)
+                    ->whereIn('course_type', in_array($request->input('course_type'), ['theoretical', 'practical', 'combo'], true)
                         ? [$request->input('course_type')]
-                        : ['theoretical', 'combo']);
+                        : ['theoretical', 'practical', 'combo']);
             });
         $admin = Auth::guard('admin')->user();
         $instructor = Auth::guard('instructor')->user();
@@ -83,15 +83,19 @@ class TheoreticalCompletionController extends Controller
             ->get();
 
         $escape = fn ($value) => htmlspecialchars((string) ($value ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-        $html = '<table><thead><tr><th>Student</th><th>Course</th><th>Course type</th><th>Status</th><th>Completed hours</th><th>Required hours</th><th>Enrollment date</th></tr></thead><tbody>';
+        $html = '<table><thead><tr><th>Student</th><th>Course</th><th>Phase</th><th>Status</th><th>Completed hours</th><th>Required hours</th><th>Enrollment date</th></tr></thead><tbody>';
         foreach ($enrollments as $enrollment) {
-            $hours = $enrollment->sessionCompletions->where('status', 'completed')->where('session_type', 'theoretical')->sum('hours_completed');
+            $phase = $enrollment->course?->course_type === 'practical'
+                || ($enrollment->course?->course_type === 'combo' && $enrollment->theoretical_passed)
+                ? 'practical' : 'theoretical';
+            $hours = $enrollment->sessionCompletions->where('status', 'completed')->where('session_type', $phase)->sum('hours_completed');
+            $requiredHours = $phase === 'practical' ? $enrollment->pdc_hours_limit : $enrollment->tdc_hours_limit;
             $html .= '<tr><td>'.$escape($enrollment->learner?->name).'</td>'
                 .'<td>'.$escape($enrollment->course?->title).'</td>'
-                .'<td>'.$escape($enrollment->course?->course_type).'</td>'
+                .'<td>'.$escape($phase === 'practical' ? 'PDC' : 'TDC').'</td>'
                 .'<td>'.$escape(ucfirst($enrollment->status)).'</td>'
                 .'<td>'.number_format((float) $hours, 1).'</td>'
-                .'<td>'.number_format((float) ($enrollment->tdc_hours_limit ?? 0), 1).'</td>'
+                .'<td>'.number_format((float) $requiredHours, 1).'</td>'
                 .'<td>'.$escape($enrollment->created_at?->format('M d, Y')).'</td></tr>';
         }
         $html .= '</tbody></table>';
@@ -135,30 +139,35 @@ class TheoreticalCompletionController extends Controller
         $ctx = $this->getSchoolAndGuard();
         $school = $ctx['school'];
 
+        // Keep the historical TDC enrollment visible after graduation and include
+        // the student's active PDC enrollment in the same training list.
         $activeQuery = EnrollmentRequest::with(['learner', 'course', 'package', 'sessionCompletions'])
             ->whereHas('course', function ($query) use ($school) {
             $query->where('school_id', $school->id)
-                ->where('course_type', 'theoretical');
+                ->whereIn('course_type', ['theoretical', 'practical', 'combo']);
         })
-            ->whereHas('student', function ($query) {
-            $query->where('has_passed_theoretical', false);
-        })
-            ->where('status', 'approved');
+            ->whereIn('status', ['approved', 'completed']);
 
         // Calculate absolute totals for stats before pagination
-        $totalInTraining = (clone $activeQuery)->count();
-        $readyToPass = (clone $activeQuery)->get()->filter(function ($enrollment) {
-            $enrollment->total_hours = $enrollment->sessionCompletions->where('status', 'completed')->where('session_type', 'theoretical')->sum('hours_completed');
-            $enrollment->required_hours = $enrollment->tdc_hours_limit;
-            return $enrollment->required_hours > 0 && ($enrollment->total_hours / $enrollment->required_hours) >= 1;
+        $totalInTraining = (clone $activeQuery)->where('status', 'approved')->count();
+        $readyToPass = (clone $activeQuery)->where('status', 'approved')->get()->filter(function ($enrollment) {
+            $enrollment->training_phase = $enrollment->course->course_type === 'practical'
+                || ($enrollment->course->course_type === 'combo' && $enrollment->theoretical_passed)
+                ? 'practical' : 'theoretical';
+            $enrollment->total_hours = $enrollment->sessionCompletions->where('status', 'completed')->where('session_type', $enrollment->training_phase)->sum('hours_completed');
+            $enrollment->required_hours = $enrollment->training_phase === 'practical' ? $enrollment->pdc_hours_limit : $enrollment->tdc_hours_limit;
+            return $enrollment->training_phase === 'theoretical' && $enrollment->required_hours > 0 && ($enrollment->total_hours / $enrollment->required_hours) >= 1;
         })->count();
 
         $activeEnrollments = $activeQuery->paginate(10, ['*'], 'active_page');
 
         // Calculate hours & progress for the current page
         $activeEnrollments->getCollection()->transform(function ($enrollment) {
-            $enrollment->total_hours = $enrollment->sessionCompletions->where('status', 'completed')->where('session_type', 'theoretical')->sum('hours_completed');
-            $enrollment->required_hours = $enrollment->tdc_hours_limit;
+            $enrollment->training_phase = $enrollment->course->course_type === 'practical'
+                || ($enrollment->course->course_type === 'combo' && $enrollment->theoretical_passed)
+                ? 'practical' : 'theoretical';
+            $enrollment->total_hours = $enrollment->sessionCompletions->where('status', 'completed')->where('session_type', $enrollment->training_phase)->sum('hours_completed');
+            $enrollment->required_hours = $enrollment->training_phase === 'practical' ? $enrollment->pdc_hours_limit : $enrollment->tdc_hours_limit;
             $enrollment->progress = $enrollment->required_hours > 0
                 ? min(100, round(($enrollment->total_hours / $enrollment->required_hours) * 100))
                 : 0;
@@ -168,46 +177,14 @@ class TheoreticalCompletionController extends Controller
         });
 
         // Split for Mark Completion tab (representing ONLY current page)
-        $readyEnrollments = $activeEnrollments->getCollection()->where('progress', '>=', 100)->values();
-        $notReadyEnrollments = $activeEnrollments->getCollection()->where('progress', '<', 100)->values();
-
-        // ── PDC-only students tab ──
-        $pdcOnlyEnrollments = EnrollmentRequest::with(['learner', 'course', 'package', 'sessionCompletions'])
-            ->where('school_id', $school->id)
+        $theoreticalEnrollments = $activeEnrollments->getCollection()
             ->where('status', 'approved')
-            ->whereHas('course', function ($query) {
-                $query->where('course_type', 'practical');
-            })
-            ->whereDoesntHave('student.enrollmentRequests', function ($query) {
-                $query->where('status', 'approved')
-                    ->whereHas('course', function ($course) {
-                        $course->where('course_type', 'theoretical');
-                    });
-            })
-            ->latest('id')
-            ->paginate(10, ['*'], 'pdc_page');
-
-        $totalPdcOnly = $pdcOnlyEnrollments->total();
-        $pdcOnlyEnrollments->getCollection()->transform(function ($enrollment) {
-            $enrollment->pdc_hours_completed = (float) $enrollment->sessionCompletions
-                ->where('status', 'completed')
-                ->where('session_type', 'practical')
-                ->sum('hours_completed');
-            $enrollment->pdc_hours_required = (float) $enrollment->pdc_hours_limit;
-            $enrollment->pdc_progress = $enrollment->pdc_hours_required > 0
-                ? min(100, round(($enrollment->pdc_hours_completed / $enrollment->pdc_hours_required) * 100, 1))
-                : 0.0;
-
-            return $enrollment;
-        });
+            ->where('training_phase', 'theoretical');
+        $readyEnrollments = $theoreticalEnrollments->where('progress', '>=', 100)->values();
+        $notReadyEnrollments = $theoreticalEnrollments->where('progress', '<', 100)->values();
 
         // ── Passed Students tab ──
-        $passedStudents = Student::with(['enrollmentRequests' => function ($query) {
-                $query->where('status', 'approved')
-                    ->with(['course', 'package', 'sessionCompletions'])
-                    ->orderByDesc('id');
-            }])
-            ->where('school_id', $school->id)
+        $passedStudents = Student::where('school_id', $school->id)
             ->where('has_passed_theoretical', true)
             ->latest('updated_at')
             ->paginate(10, ['*'], 'passed_page');
@@ -216,40 +193,14 @@ class TheoreticalCompletionController extends Controller
             ->where('has_passed_theoretical', true)
             ->count();
 
-        $passedStudents->getCollection()->transform(function ($student) {
-            $pdcEnrollment = $student->enrollmentRequests
-                ->filter(fn ($enrollment) => in_array($enrollment->course?->course_type, ['practical', 'combo'], true))
-                ->sortByDesc('id')
-                ->first();
-
-            $student->pdc_enrollment = $pdcEnrollment;
-            $student->pdc_hours_completed = 0.0;
-            $student->pdc_hours_required = 0.0;
-            $student->pdc_progress = 0.0;
-
-            if ($pdcEnrollment) {
-                $student->pdc_hours_completed = (float) $pdcEnrollment->sessionCompletions
-                    ->where('status', 'completed')
-                    ->where('session_type', 'practical')
-                    ->sum('hours_completed');
-                $student->pdc_hours_required = (float) $pdcEnrollment->pdc_hours_limit;
-                $student->pdc_progress = $student->pdc_hours_required > 0
-                    ? min(100, round(($student->pdc_hours_completed / $student->pdc_hours_required) * 100, 1))
-                    : 0.0;
-            }
-
-            return $student;
-        });
-
         $passedEnrollmentIds = EnrollmentRequest::where('school_id', $school->id)
             ->whereIn('learner_id', $passedStudents->pluck('id'))
-            ->whereHas('course', fn ($query) => $query->where('course_type', 'theoretical'))
+            ->whereHas('course', fn ($query) => $query->whereIn('course_type', ['theoretical', 'combo']))
             ->orderBy('id')->get()->pluck('id', 'learner_id');
 
         return view($ctx['viewPrefix'] . '.index', array_merge(compact(
             'school', 'activeEnrollments', 'totalInTraining', 'readyToPass',
             'readyEnrollments', 'notReadyEnrollments',
-            'pdcOnlyEnrollments', 'totalPdcOnly',
             'passedStudents', 'totalPassed', 'passedEnrollmentIds'
         ), ['isAjax' => $request->ajax()]));
     }
@@ -337,6 +288,11 @@ class TheoreticalCompletionController extends Controller
             ->with(['learner', 'course'])
             ->findOrFail($request->enrollment_id);
 
+        $validation = $this->validateCanPassTheoretical($enrollment);
+        if (!$validation['allowed']) {
+            return back()->with('error', $validation['message']);
+        }
+
         // Verify student hasn't already passed theoretical
         if ($enrollment->student->has_passed_theoretical) {
             return back()->with('error', 'Student has already passed theoretical.');
@@ -376,8 +332,24 @@ class TheoreticalCompletionController extends Controller
     public function complete(Request $request, School $school, $enrollment)
     {
         $enrollment = $school->enrollmentRequests()
-            ->with(['learner', 'course'])
+            ->with(['learner', 'course', 'sessionCompletions'])
             ->findOrFail($enrollment);
+
+        if (!in_array($enrollment->course?->course_type, ['practical', 'combo'], true)) {
+            return back()->with('error', 'Only practical training enrollments can be graduated here.');
+        }
+
+        $hasPassedTdc = $enrollment->course->course_type === 'combo'
+            ? $enrollment->theoretical_passed
+            : $enrollment->learner?->hasPassedTheoretical();
+        if (!$hasPassedTdc) {
+            return back()->with('error', 'The student must pass TDC before PDC graduation.');
+        }
+
+        $requiredPdcHours = (float) $enrollment->pdc_hours_limit;
+        if ($requiredPdcHours <= 0 || (float) $enrollment->used_pdc_hours < $requiredPdcHours) {
+            return back()->with('error', 'The student must complete all required PDC hours before graduation.');
+        }
 
         $user = Auth::guard('admin')->user() ?? Auth::guard('instructor')->user();
 

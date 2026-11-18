@@ -11,7 +11,9 @@ class EnrollmentRequest extends Model
 {
     public function scopeForInstructor($query, Instructor $instructor)
     {
-        return $query->where('school_id', $instructor->school_id)->where(function ($connected) use ($instructor) {
+        return $query->where('school_id', $instructor->school_id)
+            ->where('branch_id', $instructor->branch_id)
+            ->where(function ($connected) use ($instructor) {
             $connected->whereHas('learner.bookings', fn ($booking) => $booking->where('instructor_id', $instructor->id))
                 ->orWhereHas('learner.enrollmentRequests.sessionCompletions', fn ($session) => $session->where('instructor_id', $instructor->id));
         });
@@ -501,12 +503,15 @@ class EnrollmentRequest extends Model
             return (float) $this->package->pdc_hours;
         }
 
-        if (in_array($this->course->course_type, ['practical', 'combo'])) {
+        if ($this->course->course_type === 'practical') {
+            return $this->courseHoursOr(10.0);
+        }
+
+        if ($this->course->course_type === 'combo') {
             if ($this->package?->training_hours > 0) {
                 return (float) $this->package->training_hours;
             }
-
-            return $this->course->course_type === 'practical' ? $this->courseHoursOr(10.0) : 10.0;
+            return 10.0;
         }
 
         return 0.0;

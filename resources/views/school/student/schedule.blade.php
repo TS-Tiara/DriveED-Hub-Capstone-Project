@@ -1778,9 +1778,6 @@
                                         {{ \Carbon\Carbon::parse($timeSlot->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($timeSlot->end_time)->format('g:i A') }}
                                         @if($timeSlot->course)
                                             <span class="course-badge course-badge-primary">{{ $timeSlot->course->title ?? 'Course' }}</span>
-                                            @if($isEnrolledInCourse)
-                                                <span class="course-badge course-badge-enrolled">&#10003; Enrolled</span>
-                                            @endif
                                         @endif
                                         @if($timeSlot->branch_id && $timeSlot->branch)
                                             <span class="course-badge course-badge-branch">{{ $timeSlot->branch->name }}</span>

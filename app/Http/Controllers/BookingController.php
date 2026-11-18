@@ -422,6 +422,13 @@ class BookingController extends Controller
         // Layer 2: Fail-Closed Retrieval
         $student = $school->students()->findOrFail($validated['student_id']);
         $course = $school->courses()->findOrFail($validated['course_id']);
+        $enrollment = \App\Models\EnrollmentRequest::where('school_id', $school->id)
+            ->whereKey($validated['enrollment_request_id'])
+            ->where('learner_id', $student->id)
+            ->where('course_id', $course->id)
+            ->where('status', 'approved')
+            ->firstOrFail();
+        abort_unless((int) $student->branch_id === (int) $enrollment->branch_id, 403, 'The student and enrollment must belong to the same branch.');
 
         if (Auth::guard('student')->check() && (int) Auth::guard('student')->id() !== (int) $validated['student_id']) {
             abort(403, 'Unauthorized booking attempt for another student.');
@@ -429,6 +436,7 @@ class BookingController extends Controller
 
         if (!empty($validated['instructor_id'])) {
             $instructor = $school->instructors()->findOrFail($validated['instructor_id']);
+            abort_unless((int) $instructor->branch_id === (int) $enrollment->branch_id, 403, 'The instructor is not assigned to this branch.');
             
             if (!$instructor->canTeach($course)) {
                 $message = "Instructor {$instructor->name} is not accredited to teach this course.";
@@ -441,9 +449,15 @@ class BookingController extends Controller
 
         if (!empty($validated['time_slot_id'])) {
             $timeSlot = $school->timeSlots()->findOrFail($validated['time_slot_id']);
+            abort_unless((int) $enrollment->branch_id === (int) $timeSlot->branch_id, 403, 'This schedule belongs to another branch.');
+            abort_unless((int) $student->branch_id === (int) $timeSlot->branch_id, 403, 'You can only book schedules assigned to your branch.');
+            if (!empty($validated['instructor_id'])) {
+                abort_unless((int) $instructor->branch_id === (int) $timeSlot->branch_id, 403, 'The instructor is not assigned to this branch.');
+            }
         }
 
         $validated['school_id'] = $school->id;
+        $validated['branch_id'] = $enrollment->branch_id;
 
         // Get school settings and timezone with defensive fallback
         $settings = $school->schoolSetting;
@@ -797,6 +811,11 @@ class BookingController extends Controller
             abort_if((int) $booking->student_id !== (int) Auth::guard('student')->id(), 403, 'Unauthorized access to booking details.');
         } elseif (Auth::guard('instructor')->check()) {
             abort_if((int) $booking->instructor_id !== (int) Auth::guard('instructor')->id(), 403, 'Unauthorized access to booking details.');
+            $instructor = Auth::guard('instructor')->user();
+            $bookingBranchId = $booking->time_slot_id
+                ? TimeSlot::where('school_id', $school->id)->whereKey($booking->time_slot_id)->value('branch_id')
+                : $booking->branch_id;
+            abort_unless((int) $bookingBranchId === (int) $instructor->branch_id, 403, 'This booking belongs to another branch.');
         }
 
         $booking->load(['student', 'instructor', 'course', 'payment']);
@@ -844,8 +863,16 @@ class BookingController extends Controller
         // Layer 2: Fail-Closed Retrieval
         $student = $school->students()->findOrFail($validated['student_id']);
         $course = $school->courses()->findOrFail($validated['course_id']);
+        $enrollment = \App\Models\EnrollmentRequest::where('school_id', $school->id)
+            ->whereKey($booking->enrollment_request_id)
+            ->where('learner_id', $student->id)
+            ->where('course_id', $course->id)
+            ->where('status', 'approved')
+            ->firstOrFail();
+        abort_unless((int) $student->branch_id === (int) $enrollment->branch_id, 403, 'The student and enrollment must belong to the same branch.');
         if (!empty($validated['instructor_id'])) {
             $instructor = $school->instructors()->findOrFail($validated['instructor_id']);
+            abort_unless((int) $instructor->branch_id === (int) $enrollment->branch_id, 403, 'The instructor is not assigned to this branch.');
 
             if (!$instructor->canTeach($course)) {
                 $message = "Instructor {$instructor->name} is not accredited to teach this course.";
@@ -854,6 +881,21 @@ class BookingController extends Controller
                 }
                 return back()->withErrors(['instructor_id' => $message]);
             }
+        }
+
+        if ($booking->time_slot_id) {
+            $timeSlot = $school->timeSlots()->findOrFail($booking->time_slot_id);
+            abort_unless((int) $enrollment->branch_id === (int) $timeSlot->branch_id, 403, 'This schedule belongs to another branch.');
+            abort_unless((int) $student->branch_id === (int) $timeSlot->branch_id, 403, 'The student is not assigned to this schedule branch.');
+            if (!empty($validated['instructor_id'])) {
+                abort_unless((int) $instructor->branch_id === (int) $timeSlot->branch_id, 403, 'The instructor is not assigned to this branch.');
+            }
+            $validated['branch_id'] = $timeSlot->branch_id;
+        } else {
+            if (!empty($validated['instructor_id'])) {
+                abort_unless((int) $instructor->branch_id === (int) $enrollment->branch_id, 403, 'The instructor is not assigned to this branch.');
+            }
+            $validated['branch_id'] = $enrollment->branch_id;
         }
 
         // If status is being changed to cancelled, track who cancelled it

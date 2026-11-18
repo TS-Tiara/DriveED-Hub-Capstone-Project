@@ -2001,6 +2001,9 @@ class AdminController extends Controller
             ->where('availability', 'available')
             ->get();
 
+        $branches = $admin->scopeToBranch(Branch::where('school_id', $school->id))
+            ->where('is_active', true)->orderBy('name')->get();
+
         $courses = \App\Models\Course::where('school_id', $school->id)
             ->where('status', 'active')
             ->orderBy('title')
@@ -2012,6 +2015,7 @@ class AdminController extends Controller
             'currentSchool' => $school,
             'timeslots' => $timeslots,
             'instructors' => $instructors,
+            'branches' => $branches,
             'courses' => $courses,
             'startDate' => $startDate,
             'endDate' => $endDate,
@@ -2026,6 +2030,43 @@ class AdminController extends Controller
      */
     public function createSchedule(Request $request, School $school)
     {
+        if ($request->has('branch_ids')) {
+            $branchIds = $request->validate([
+                'branch_ids' => ['required', 'array', 'min:1'],
+                'branch_ids.*' => [Rule::exists('branches', 'id')->where('school_id', $school->id)],
+            ])['branch_ids'];
+            if (count(array_unique($branchIds)) !== count($branchIds)) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['branch_ids' => 'Choose each branch only once.']);
+            }
+            $admin = Auth::guard('admin')->user();
+            abort_unless($admin instanceof Admin && $admin->canManageSchedules(), 403);
+            foreach ($branchIds as $branchId) {
+                abort_unless($admin->canAccessBranch((int) $branchId), 403);
+            }
+            return DB::transaction(function () use ($request, $school, $branchIds) {
+                $created = [];
+                foreach ($branchIds as $branchId) {
+                    $input = $request->except('branch_ids');
+                    $input['branch_id'] = $branchId;
+                    if (isset($input['instructor_ids'])) {
+                        $eligibleIds = Instructor::where('school_id', $school->id)
+                            ->where('branch_id', $branchId)
+                            ->whereIn('id', (array) $input['instructor_ids'])->pluck('id')->all();
+                        $input['instructor_ids'] = $eligibleIds;
+                    }
+                    $single = Request::create($request->url(), 'POST', $input);
+                    $single->headers->set('Accept', 'application/json');
+                    $single->headers->set('X-Requested-With', 'XMLHttpRequest');
+                    $response = $this->createSchedule($single, $school);
+                    if ($response->getStatusCode() !== 201) {
+                        $data = $response->getData(true);
+                        throw \Illuminate\Validation\ValidationException::withMessages($data['errors'] ?? ['branch_ids' => $data['message'] ?? 'Unable to create schedules.']);
+                    }
+                    $created[] = $response->getData(true)['schedule'];
+                }
+                return response()->json(['success' => true, 'message' => count($created).' branch schedule(s) created.', 'schedules' => $created], 201);
+            });
+        }
         if ($request->has('time_ranges') || $request->has('schedule_dates')) {
             $validatedBatch = $request->validate([
                 'date' => 'required_without:schedule_dates|nullable|date|after:today',
@@ -2211,6 +2252,10 @@ class AdminController extends Controller
                     throw \Illuminate\Validation\ValidationException::withMessages(['instructor_ids' => 'Some selected instructors are invalid or inactive.']);
                 }
                 foreach ($instructors as $instructor) {
+                    if ((int) $instructor->branch_id !== (int) $branchId) {
+                        DB::rollBack();
+                        throw \Illuminate\Validation\ValidationException::withMessages(['instructor_ids' => "Instructor {$instructor->name} is not assigned to the selected branch."]);
+                    }
                     if (!$instructor->canTeach($course)) {
                         DB::rollBack();
                         throw \Illuminate\Validation\ValidationException::withMessages(['instructor_ids' => "Instructor {$instructor->name} is not accredited to teach this course (License status: {$instructor->license_status})."]);
@@ -2432,6 +2477,10 @@ class AdminController extends Controller
                 if ($instructors->count() !== count($validated['instructor_ids'])) {
                     DB::rollBack();
                     throw \Illuminate\Validation\ValidationException::withMessages(['instructor_ids' => 'One or more selected instructors are invalid or inactive.']);
+                }
+                if ($instructors->contains(fn ($instructor) => (int) $instructor->branch_id !== (int) $timeslot->branch_id)) {
+                    DB::rollBack();
+                    throw \Illuminate\Validation\ValidationException::withMessages(['instructor_ids' => 'Every assigned instructor must belong to the schedule branch.']);
                 }
 
                 // Accreditation Check

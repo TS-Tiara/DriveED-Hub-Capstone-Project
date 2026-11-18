@@ -1067,6 +1067,7 @@ class StudentController extends Controller
         $availableTimeSlots = $hasApprovedEnrollment
             ? \App\Models\TimeSlot::visibleToStudents()
                 ->where('school_id', $school->id)
+                ->where('branch_id', $student->branch_id)
                 ->upcoming(
                     $schoolTimezone,
                     (int) ($settings?->booking_cutoff_hours ?? 0),

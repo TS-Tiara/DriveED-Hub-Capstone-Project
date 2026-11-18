@@ -115,6 +115,10 @@ class InstructorController extends Controller
         $instructor = Auth::guard('instructor')->user();
 
         $bookingStudentIds = Booking::where('school_id', '=', $school->id, 'and')
+            ->where(function ($branch) use ($instructor) {
+                $branch->where('branch_id', $instructor->branch_id)
+                    ->orWhereHas('timeSlot', fn ($slot) => $slot->where('branch_id', $instructor->branch_id));
+            })
             ->whereNotNull('student_id')
             ->whereIn('status', [
                 Booking::STATUS_SCHEDULED,
@@ -136,6 +140,7 @@ class InstructorController extends Controller
         // Include students from session completions (e.g., theoretical training logs)
         $sessionStudentIds = SessionCompletion::where('school_id', '=', $school->id, 'and')
             ->where('instructor_id', '=', $instructor->id, 'and')
+            ->whereHas('enrollment', fn ($query) => $query->where('branch_id', $instructor->branch_id))
             ->with(['enrollment' => function($q) {
                 $q->select('id', 'learner_id');
             }])
@@ -153,6 +158,7 @@ class InstructorController extends Controller
         if (!empty($assignedStudentIds)) {
             $rosterStudentIds = Student::where('school_id', '=', $school->id, 'and')
                 ->where('role', '=', 'student', 'and')
+                ->where('branch_id', $instructor->branch_id)
                 ->whereIn('id', $assignedStudentIds, 'and', false)
                 ->pluck('id')
                 ->map(fn($id) => (int) $id)
@@ -224,14 +230,7 @@ class InstructorController extends Controller
 
         $query->orderBy('name', 'asc');
 
-        $students = $query->with([
-            'progresses.course',
-            'enrollmentRequests' => function ($query) {
-                $query->whereIn('status', ['approved', 'completed'])
-                    ->with(['course', 'package', 'sessionCompletions'])
-                    ->orderByDesc('id');
-            },
-            'bookings' => function ($query) use ($instructorId) {
+        $students = $query->with(['progresses.course', 'bookings' => function ($query) use ($instructorId) {
             $query->where(function ($bookingQuery) use ($instructorId) {
                 $bookingQuery->where('instructor_id', '=', $instructorId, 'and')
                     ->orWhereHas('timeSlot.instructors', function ($slotQuery) use ($instructorId) {
@@ -245,8 +244,7 @@ class InstructorController extends Controller
                     Booking::STATUS_NO_SHOW,
                 ], 'and', false)
                 ->orderBy('scheduled_at', 'desc');
-            },
-        ])
+        }])
             ->paginate(12)
             ->withQueryString();
 
@@ -277,77 +275,8 @@ class InstructorController extends Controller
             $student->recent_note = $recentBooking && $recentBooking->notes ? $recentBooking->notes : 'No notes yet';
             $student->recent_note_date = $recentBooking ? $recentBooking->scheduled_at : null;
 
-            // Progress belongs to the student's current approved enrollment, not
-            // an average of historical TDC and current PDC records.
-            $currentEnrollment = $student->enrollmentRequests
-                ->where('status', 'approved')
-                ->sortByDesc(function ($enrollment) {
-                    return [
-                        in_array($enrollment->course?->course_type, ['practical', 'combo'], true) ? 1 : 0,
-                        $enrollment->status === 'approved' ? 1 : 0,
-                        $enrollment->id,
-                    ];
-                })
-                ->first();
-
-            $student->current_course_name = $currentEnrollment?->course?->title;
-            $student->current_hours_completed = 0.0;
-            $student->current_hours_required = 0.0;
-            $tdcEnrollment = $student->enrollmentRequests
-                ->filter(fn ($enrollment) => $enrollment->course?->course_type === 'theoretical')
-                ->sortByDesc('id')
-                ->first();
-            $student->tdc_completed = $tdcEnrollment
-                && ($tdcEnrollment->status === 'completed' || $tdcEnrollment->theoretical_passed);
-            $student->tdc_hours_completed = 0.0;
-            $student->tdc_hours_required = 0.0;
-            $pdcEnrollment = $student->enrollmentRequests
-                ->filter(fn ($enrollment) => in_array($enrollment->course?->course_type, ['practical', 'combo'], true))
-                ->sortByDesc('id')
-                ->first();
-            $student->pdc_enrolled = (bool) $pdcEnrollment;
-            $student->pdc_hours_completed = 0.0;
-            $student->pdc_hours_required = 0.0;
-            $student->pdc_completed = false;
-
-            if ($tdcEnrollment) {
-                $student->tdc_hours_completed = (float) $tdcEnrollment->sessionCompletions
-                    ->where('status', 'completed')
-                    ->where('session_type', 'theoretical')
-                    ->sum('hours_completed');
-                $student->tdc_hours_required = (float) $tdcEnrollment->tdc_hours_limit;
-            }
-
-            if ($pdcEnrollment) {
-                $student->pdc_hours_completed = (float) $pdcEnrollment->sessionCompletions
-                    ->where('status', 'completed')
-                    ->where('session_type', 'practical')
-                    ->sum('hours_completed');
-                $student->pdc_hours_required = (float) $pdcEnrollment->pdc_hours_limit;
-                $student->pdc_completed = $student->pdc_hours_required > 0
-                    && $student->pdc_hours_completed >= $student->pdc_hours_required;
-            }
-
-            if ($currentEnrollment) {
-                $completedSessions = $currentEnrollment->sessionCompletions
-                    ->where('status', 'completed');
-                $courseType = $currentEnrollment->course?->course_type;
-
-                $student->current_hours_completed = (float) $completedSessions
-                    ->when($courseType === 'theoretical', fn ($sessions) => $sessions->where('session_type', 'theoretical'))
-                    ->when($courseType === 'practical', fn ($sessions) => $sessions->where('session_type', 'practical'))
-                    ->sum('hours_completed');
-                $student->current_hours_required = match ($courseType) {
-                    'theoretical' => (float) $currentEnrollment->tdc_hours_limit,
-                    'practical' => (float) $currentEnrollment->pdc_hours_limit,
-                    'combo' => (float) ($currentEnrollment->tdc_hours_limit + $currentEnrollment->pdc_hours_limit),
-                    default => 0.0,
-                };
-            }
-
-            $student->overall_progress = $student->current_hours_required > 0
-                ? min(100, round(($student->current_hours_completed / $student->current_hours_required) * 100, 1))
-                : 0.0;
+            // Calculate overall progress
+            $student->overall_progress = $student->progresses->avg('completion_percent') ?? 0;
             $student->avg_progress = $student->overall_progress; // Alias for consistency
             $student->total_sessions = $student->bookings->whereIn('status', [
                 Booking::STATUS_DONE,
@@ -375,10 +304,18 @@ class InstructorController extends Controller
     public function showStudent(Request $request, School $school, $id)
     {
         $instructor = Auth::guard('instructor')->user();
+        abort_unless(Student::where('school_id', $school->id)
+            ->where('id', $id)
+            ->where('branch_id', $instructor->branch_id)
+            ->exists(), 403, 'You can only access students assigned to your branch.');
 
         // AUD-003 Fix: IDOR Guard - Verify student is assigned to this instructor
         $isAssigned = Booking::where('school_id', '=', $school->id, 'and')
             ->where('student_id', '=', $id, 'and')
+            ->where(function ($branch) use ($instructor) {
+                $branch->where('branch_id', $instructor->branch_id)
+                    ->orWhereHas('timeSlot', fn ($slot) => $slot->where('branch_id', $instructor->branch_id));
+            })
             ->where(function ($query) use ($instructor) {
                 $query->where('instructor_id', '=', $instructor->id, 'and')
                     ->orWhereHas('timeSlot.instructors', function ($slotQuery) use ($instructor) {
@@ -394,6 +331,7 @@ class InstructorController extends Controller
                     $query->where('learner_id', $id)
                         ->where('school_id', $school->id);
                 })
+                ->whereHas('enrollment', fn ($query) => $query->where('branch_id', $instructor->branch_id))
                 ->exists();
         }
         
@@ -498,6 +436,10 @@ class InstructorController extends Controller
             // Verify authorization
             $isAssigned = Booking::where('instructor_id', '=', $instructor->id, 'and')
                 ->where('student_id', '=', $studentId, 'and')
+                ->where(function ($branch) use ($instructor) {
+                    $branch->where('branch_id', $instructor->branch_id)
+                        ->orWhereHas('timeSlot', fn ($slot) => $slot->where('branch_id', $instructor->branch_id));
+                })
                 ->exists();
 
             abort_unless($isAssigned, 403);
@@ -534,6 +476,7 @@ class InstructorController extends Controller
         $schedules = TimeSlot::whereHas('instructors', function ($query) use ($instructor) {
             $query->where('instructor_id', '=', $instructor->id, 'and');
         })
+            ->where('branch_id', $instructor->branch_id)
             ->with(['course', 'branch'])
             ->where('date', '>=', now()->toDateString(), 'and')
             ->orderBy('date')

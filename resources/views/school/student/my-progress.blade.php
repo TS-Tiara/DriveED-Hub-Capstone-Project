@@ -118,11 +118,10 @@
     .progress-bar-track {
         margin-top: 20px;
         width: 100%;
-        height: 24px;
+        height: 10px;
         background: #e5e7eb;
         border-radius: 999px;
         overflow: hidden;
-        position: relative;
     }
 
     .progress-fill {
@@ -130,18 +129,6 @@
         border-radius: 999px;
         background: {{ $primaryColor }};
         transition: width 0.4s ease;
-    }
-
-    .progress-bar-label {
-        position: absolute;
-        inset: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #111827;
-        font-size: 0.75rem;
-        font-weight: 700;
-        pointer-events: none;
     }
 
     .progress-columns {
@@ -258,9 +245,8 @@
             </div>
 
             <div class="progress-bar-track" role="progressbar" aria-valuenow="{{ $progressPercent }}"
-                aria-valuemin="0" aria-valuemax="100" aria-label="Course progress">
+                aria-valuemin="0" aria-valuemax="100">
                 <div class="progress-fill" style="width: {{ $progressPercent }}%"></div>
-                <span class="progress-bar-label">{{ $progressPercent }}%</span>
             </div>
         </div>
 

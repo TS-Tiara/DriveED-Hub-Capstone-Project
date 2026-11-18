@@ -337,6 +337,9 @@
             line-height: 1.6;
             font-size: 14px;
             color: #333;
+            max-height: min(58vh, 560px);
+            overflow-y: auto;
+            overscroll-behavior: contain;
         }
 
         .policy-section-title {
@@ -637,7 +640,7 @@
                 <!-- Data Privacy and Terms -->
                 <div class="form-group consent-group">
                     <label class="consent-label">
-                        <input type="checkbox" id="accept_privacy" name="accept_privacy" required class="consent-checkbox">
+                        <input type="checkbox" id="accept_privacy" name="accept_privacy" required class="consent-checkbox" disabled>
                         <span class="consent-text">
                             I have read and agree to the <a href="#" onclick="showPrivacy(event)" class="policy-link">Data Privacy Policy</a>
                         </span>
@@ -649,7 +652,7 @@
 
                 <div class="form-group">
                     <label class="consent-label">
-                        <input type="checkbox" id="accept_terms" name="accept_terms" required class="consent-checkbox">
+                        <input type="checkbox" id="accept_terms" name="accept_terms" required class="consent-checkbox" disabled>
                         <span class="consent-text">
                             I agree to the <a href="#" onclick="showTerms(event)" class="policy-link">Terms and Conditions</a>
                         </span>
@@ -710,7 +713,8 @@
                 <h3 class="policy-section-title">5. Your Rights</h3>
                 <p>Under the Data Privacy Act, you have the right to access, correct, or request the deletion of your personal data. Contact us at <strong>{{ $school->contact_email ?? 'support@driveedhub.com' }}</strong> for any privacy concerns.</p>
             </div>
-            <button type="button" onclick="closePrivacy()" class="policy-modal-btn">I Understand</button>
+            <p class="policy-scroll-hint" id="privacyScrollHint">Scroll to the bottom to enable acceptance.</p>
+            <button type="button" id="privacyDone" onclick="closePrivacy()" class="policy-modal-btn" disabled>Read to the bottom to continue</button>
         </div>
     </div>
 
@@ -758,7 +762,8 @@
                 <h3 class="policy-section-title">6. Certification</h3>
                 <p>Completion of the course does not guarantee passing the LTO examination. The school provides the necessary training and certificates as required by law.</p>
             </div>
-            <button type="button" onclick="closeTerms()" class="policy-modal-btn">I Agree</button>
+            <p class="policy-scroll-hint" id="termsScrollHint">Scroll to the bottom to enable acceptance.</p>
+            <button type="button" id="termsDone" onclick="closeTerms()" class="policy-modal-btn" disabled>Read to the bottom to continue</button>
         </div>
     </div>
 
@@ -784,6 +789,7 @@
             }
             document.getElementById('privacyModal').style.display = 'block';
             document.body.style.overflow = 'hidden';
+            checkPolicyScroll('privacy');
         }
 
         function closePrivacy() {
@@ -797,7 +803,23 @@
             }
             document.getElementById('termsModal').style.display = 'block';
             document.body.style.overflow = 'hidden';
+            checkPolicyScroll('terms');
         }
+
+        function checkPolicyScroll(type) {
+            const content = document.querySelector(`#${type}Modal .policy-modal-content`);
+            const done = document.getElementById(`${type}Done`);
+            const checkbox = document.getElementById(type === 'privacy' ? 'accept_privacy' : 'accept_terms');
+            const reachedBottom = content.scrollHeight <= content.clientHeight + 2 || content.scrollTop + content.clientHeight >= content.scrollHeight - 2;
+            done.disabled = !reachedBottom;
+            done.textContent = reachedBottom ? (type === 'privacy' ? 'I Understand' : 'I Agree') : 'Read to the bottom to continue';
+            if (reachedBottom) checkbox.disabled = false;
+        }
+
+        ['privacy', 'terms'].forEach(type => {
+            const content = document.querySelector(`#${type}Modal .policy-modal-content`);
+            content.addEventListener('scroll', () => checkPolicyScroll(type));
+        });
 
         function closeTerms() {
             document.getElementById('termsModal').style.display = 'none';
