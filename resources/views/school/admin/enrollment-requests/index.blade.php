@@ -29,17 +29,6 @@
         padding-bottom: 15px;
         border-bottom: 3px solid {{ $primaryColor }};
     }
-
-    .page-header-left {
-        flex: 1;
-    }
-
-    .page-header-right {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        flex-wrap: wrap;
-    }
     
     .page-title {
         font-size: 1.75rem;
@@ -576,35 +565,6 @@
         flex-wrap: wrap;
         gap: 12px;
         margin-bottom: 16px;
-        align-items: center;
-    }
-
-    .filters-row form[style*="display:flex"] {
-        display: flex !important;
-        align-items: center;
-        gap: 8px;
-        flex: 1 1 320px;
-        min-width: 0;
-        flex-wrap: nowrap;
-    }
-
-    .filters-row form[style*="display:flex"] .form-control {
-        flex: 1 1 240px;
-        min-width: 0;
-        width: auto;
-    }
-
-    .filters-row .form-control {
-        height: 42px;
-        box-sizing: border-box;
-    }
-
-    .filters-row .btn {
-        height: 42px;
-        box-sizing: border-box;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
     }
 
     .filters-row .branch-filter-wrap {
@@ -628,18 +588,6 @@
     .filters-row .branch-filter-select {
         max-width: 340px;
         width: 100%;
-    }
-
-    .filters-row .sr-only {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        padding: 0;
-        margin: -1px;
-        overflow: hidden;
-        clip: rect(0, 0, 0, 0);
-        white-space: nowrap;
-        border: 0;
     }
 
     .action-bar-wrapper {
@@ -1030,18 +978,6 @@
             align-items: stretch;
         }
 
-        .filters-row form[style*="display:flex"] {
-            width: 100%;
-            flex: none;
-            flex-direction: column;
-            align-items: stretch;
-        }
-
-        .filters-row form[style*="display:flex"] .form-control,
-        .filters-row form[style*="display:flex"] .btn {
-            width: 100%;
-        }
-
         .filters-row .branch-filter-select {
             max-width: 100%;
             display: block;
@@ -1272,12 +1208,12 @@
 
 <div class="enrollment-requests-container">
     <!-- Page Header -->
-    <div class="page-header">
-        <div class="page-header-left">
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
             <h1 class="page-title">Manage Enrollments</h1>
             <p class="page-subtitle">View and manage all enrollment requests and active student enrollments</p>
         </div>
-        <div class="page-header-right">
+        <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">
         <a href="{{ school_route('admin.enrollments.index', ['archived' => ($isArchivedView ?? false) ? null : 1]) }}" class="btn btn-outline-secondary" style="text-decoration:none;">
             <i class="bi bi-archive"></i> {{ ($isArchivedView ?? false) ? 'Active enrollments' : 'Archived enrollments' }}
         </a>
@@ -1384,7 +1320,10 @@
     </div>
 
     <div class="filters-row">
-        <form method="GET" action="{{ school_route('admin.enrollments.index') }}" data-no-ajax="1" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <a href="{{ school_route('admin.enrollments.index', ['archived' => ($isArchivedView ?? false) ? null : 1]) }}" class="btn btn-outline-secondary" style="align-self:flex-start;text-decoration:none;">
+            <i class="bi bi-archive"></i> {{ ($isArchivedView ?? false) ? 'Active enrollments' : 'Archived enrollments' }}
+        </a>
+        <form method="GET" action="{{ school_route('admin.enrollments.index') }}" data-no-ajax="1" style="display:flex;gap:8px;flex-wrap:wrap;">
             @foreach(['status', 'branch', 'sort'] as $filter)
                 @if(request()->filled($filter))<input type="hidden" name="{{ $filter }}" value="{{ request($filter) }}">@endif
             @endforeach

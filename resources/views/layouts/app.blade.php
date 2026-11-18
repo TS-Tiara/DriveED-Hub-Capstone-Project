@@ -2195,6 +2195,8 @@
             @elseif(Auth::guard('instructor')->check())
                 <a href="{{ $schoolRoute('instructor.dashboard') }}" class="nav-item" data-page="dashboard">Dashboard</a>
                 <a href="{{ $schoolRoute('instructor.schedule') }}" class="nav-item" data-page="my-schedule">My Schedule</a>
+                <a href="{{ $schoolRoute('instructor.students.index') }}" class="nav-item" data-page="students">My
+                    Students</a>
                 <a href="{{ $schoolRoute('instructor.sessions.index') }}" class="nav-item" data-page="sessions">
                     Session Completions
                 </a>
@@ -2202,7 +2204,7 @@
 
                 <div class="nav-divider"></div>
 
-                {{-- Student Training --}}
+                {{-- Theoretical Training --}}
                 <div class="nav-category" data-category="instructor-training-resources">
                     <div class="nav-category-header" onclick="toggleCategory(this)" role="button" aria-expanded="false"
                         tabindex="0"
@@ -2213,7 +2215,7 @@
                     <div class="nav-category-items">
                         <a href="{{ $schoolRoute('instructor.settings') }}" class="nav-item" data-page="settings">Settings</a>
                         <a href="{{ $schoolRoute('instructor.theoretical.index') }}" class="nav-item"
-                            data-page="theoretical">Student Training List</a>
+                            data-page="theoretical">Theoretical Training</a>
                         <a href="{{ $schoolRoute('instructor.materials.index') }}" class="nav-item"
                             data-page="materials">Course Materials</a>
                         <a href="{{ $schoolRoute('instructor.questions.index') }}" class="nav-item"
@@ -2249,7 +2251,7 @@
                         <div class="nav-category-items">
                             <a href="{{ $schoolRoute('student.my-course') }}" class="nav-item" data-page="my-course">Enrolled
                                 Course</a>
-                            <a href="{{ $schoolRoute('student.my-progress') }}" class="nav-item" data-page="progress">My
+                            <a href="{{ $schoolRoute('student.progress.index') }}" class="nav-item" data-page="progress">My
                                 Progress</a>
                             <a href="{{ $schoolRoute('student.courses.index') }}" class="nav-item" data-page="courses">Browse
                                 Courses</a>
@@ -2596,7 +2598,6 @@
             'student/dashboard': 'Dashboard',
             'student/my-course': 'Enrolled Course',
             'student/progress': 'My Progress',
-            'student/my-progress': 'My Progress',
             'student/courses': 'Browse Courses',
             'student/schedule': 'My Schedule',
             'student/payments': 'My Payments',

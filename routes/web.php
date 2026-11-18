@@ -502,6 +502,7 @@ Route::prefix('{school:slug}')
                     // Instructor session logging (inside ajax middleware for proper AJAX loading)
                     Route::prefix('sessions')->name('sessions.')->group(function () {
                             Route::get('/', [SessionCompletionController::class , 'index'])->name('index');
+                            Route::post('/batch-grade', [SessionCompletionController::class, 'batchGrade'])->name('batchGrade');
                             Route::get('/create', [SessionCompletionController::class , 'create'])->name('create');
                             Route::post('/', [SessionCompletionController::class , 'store'])->name('store');
                             Route::patch('/{sessionCompletion}/quick-update', [SessionCompletionController::class, 'quickUpdate'])->name('quickUpdate');

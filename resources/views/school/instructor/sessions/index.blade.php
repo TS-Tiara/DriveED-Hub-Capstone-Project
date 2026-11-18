@@ -536,14 +536,33 @@
     </div>
 
     <!-- Filter Bar -->
-    <div class="filter-bar">
+    <form class="filter-bar" method="GET" action="{{ school_route('instructor.sessions.index') }}">
+        <label for="sessionSearch">Search:</label>
+        <input id="sessionSearch" name="search" value="{{ request('search') }}" placeholder="Student or course" class="filter-select" type="search">
         <label>Filter by:</label>
-        <select class="filter-select" id="filterType" onchange="filterSessions()">
+        <select class="filter-select" id="filterType" name="session_type">
             <option value="">All Types</option>
-            <option value="theoretical">Theoretical</option>
-            <option value="practical">Practical</option>
+            <option value="theoretical" @selected(request('session_type') === 'theoretical')>Theoretical</option>
+            <option value="practical" @selected(request('session_type') === 'practical')>Practical</option>
         </select>
-    </div>
+        <label for="sessionDateFrom">From:</label>
+        <input class="filter-select" type="date" id="sessionDateFrom" name="date_from" value="{{ request('date_from') }}">
+        <label for="sessionDateTo">To:</label>
+        <input class="filter-select" type="date" id="sessionDateTo" name="date_to" value="{{ request('date_to') }}">
+        <input type="hidden" name="tab" value="{{ $isArchivedView ? 'archived' : 'active' }}">
+        <button type="submit" class="filter-select">Apply</button>
+        <a href="{{ school_route('instructor.sessions.index', ['tab' => $isArchivedView ? 'archived' : 'active']) }}" class="filter-select" style="text-decoration:none">Clear</a>
+    </form>
+
+    @if(empty($isArchivedView))
+    <form id="batchGradeForm" method="POST" action="{{ school_route('instructor.sessions.batchGrade') }}" class="filter-bar">
+        @csrf
+        <strong>Batch grade selected sessions</strong>
+        <input type="number" name="session_grade" min="0" max="100" step="0.01" required placeholder="Grade (0–100)" class="filter-select">
+        <button type="submit" class="filter-select">Apply grade</button>
+        @error('session_ids')<span role="alert" style="color:#b91c1c">{{ $message }}</span>@enderror
+    </form>
+    @endif
 
     <!-- Sessions Table -->
     <div class="sessions-table-wrapper">
@@ -557,6 +576,7 @@
             <table class="sessions-table">
                 <thead>
                     <tr>
+                        @if(empty($isArchivedView))<th><input type="checkbox" aria-label="Select all visible sessions" id="selectAllSessions"></th>@endif
                         <th>Date & Time</th>
                         <th>Student</th>
                         <th>Course</th>
@@ -568,6 +588,7 @@
                 <tbody>
                     @foreach($sessions as $session)
                     <tr data-type="{{ $session->session_type }}">
+                        @if(empty($isArchivedView))<td><input type="checkbox" name="session_ids[]" value="{{ $session->id }}" form="batchGradeForm" class="session-select" aria-label="Select session for batch grading"></td>@endif
                         <td>
                             <div class="date-cell">
                                 <div class="date">{{ $session->session_date->format('M d, Y') }}</div>
@@ -734,14 +755,8 @@ document.addEventListener('click', function(e) {
     }
 });
 
-function filterSessions() {
-    const filter = document.getElementById('filterType').value.toLowerCase();
-    const rows = document.querySelectorAll('.sessions-table tbody tr');
-
-    rows.forEach(row => {
-        const type = row.getAttribute('data-type') || '';
-        row.style.display = (!filter || type === filter) ? '' : 'none';
-    });
-}
+document.getElementById('selectAllSessions')?.addEventListener('change', event => {
+    document.querySelectorAll('.session-select').forEach(input => input.checked = event.target.checked);
+});
 </script>
 @endsection
