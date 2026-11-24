@@ -36,13 +36,12 @@ class InstructorController extends Controller
             ->count();
 
         $weeklySchedules = TimeSlot::where('school_id', '=', $school->id, 'and')
+            ->where('branch_id', '=', $instructor->branch_id, 'and')
             ->whereHas('instructors', function ($query) use ($instructor) {
             $query->where('instructor_id', '=', $instructor->id, 'and');
         })
-            ->whereBetween('date', [
-            Carbon::now()->startOfWeek(),
-            Carbon::now()->endOfWeek()
-        ], 'and', false)
+            ->whereDate('date', '>=', Carbon::today())
+            ->whereDate('date', '<=', Carbon::now()->endOfWeek())
             ->count();
 
         $nextLesson = TimeSlot::where('school_id', '=', $school->id, 'and')

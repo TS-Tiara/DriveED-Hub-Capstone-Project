@@ -538,7 +538,7 @@
                     <span>{{ $hoursCompleted }} / {{ $hoursRequired }} hours</span>
                 </div>
                 <div class="progress-bar-container">
-                    <div class="progress-bar-fill progress-fill" data-progress="{{ $progressPercentage }}">
+                    <div class="progress-bar-fill progress-fill" role="progressbar" aria-label="Course progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ max(0, min(100, $progressPercentage)) }}" data-progress="{{ $progressPercentage }}" style="width: {{ max(0, min(100, $progressPercentage)) }}%;">
                         @if($progressPercentage > 10)
                             {{ $progressPercentage }}%
                         @endif

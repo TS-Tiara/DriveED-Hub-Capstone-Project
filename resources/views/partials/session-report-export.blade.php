@@ -50,6 +50,8 @@
 <style>
     .schedule-log-export {
         position: relative;
+        display: inline-block;
+        vertical-align: top;
         margin-bottom: 0;
     }
 
@@ -68,7 +70,8 @@
     .schedule-log-export__body {
         position: absolute;
         top: calc(100% + 10px);
-        right: 0;
+        left: 0;
+        right: auto;
         z-index: 2000;
         width: min(760px, calc(100vw - 40px));
         max-height: calc(100vh - 140px);
@@ -305,7 +308,8 @@
         }
 
         .schedule-log-export__body {
-            right: 0;
+            left: 0;
+            right: auto;
             width: min(1000px, calc(100vw - 28px));
             max-height: calc(100vh - 100px);
             padding: 14px;

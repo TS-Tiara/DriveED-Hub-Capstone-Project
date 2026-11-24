@@ -33,13 +33,13 @@
     }
 
     .course-flyer-grid .course-description {
-        display: -webkit-box;
-        -webkit-box-orient: vertical;
-        -webkit-line-clamp: 3;
-        overflow: hidden;
+        display: block;
+        overflow: visible;
         text-align: left;
         margin: 0 0 18px;
         color: #46536a;
+        white-space: pre-line;
+        overflow-wrap: anywhere;
     }
 
     .course-flyer-grid .course-features { margin-bottom: 16px; }
@@ -51,7 +51,7 @@
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 12px;
-        margin: auto 0 18px;
+        margin: 0 0 18px;
         padding-top: 17px;
         border-top: 1px solid #e6ebf2;
     }

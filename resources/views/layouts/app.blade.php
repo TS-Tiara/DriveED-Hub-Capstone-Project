@@ -662,10 +662,10 @@
             font-size: 12px;
             color: #6b7280;
             line-height: 1.3;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
+            display: block;
+            white-space: normal;
+            overflow: visible;
+            overflow-wrap: anywhere;
         }
 
         .notification-item-time {

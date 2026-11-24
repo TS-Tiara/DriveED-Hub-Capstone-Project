@@ -19,6 +19,23 @@
     .payment-export-formats { display:flex; gap:8px; padding:10px 14px 14px; }
     .payment-export-formats button { flex:1; border:0; border-radius:7px; padding:9px 12px; background:{{ $primaryColor }}; color:#fff; font-weight:700; cursor:pointer; }
     .payment-export-formats button:hover { filter:brightness(0.94); }
+    .btn-view-receipt {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        min-height: 34px;
+        padding: 6px 10px;
+        border: 1px solid #bfdbfe;
+        border-radius: 6px;
+        background: #eff6ff;
+        color: #1d4ed8;
+        font-size: 0.78rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background-color 0.15s ease, border-color 0.15s ease;
+    }
+    .btn-view-receipt:hover { background: #dbeafe; border-color: #93c5fd; }
+    .btn-view-receipt:focus-visible { outline: 2px solid #1d4ed8; outline-offset: 2px; }
     .method-badge {
         padding: 4px 10px;
         border-radius: 6px;
@@ -50,12 +67,6 @@
         max-width: 100%;
         max-height: 100%;
         object-fit: contain;
-    }
-    
-    .or-number {
-        color: #2563eb;
-        text-decoration: underline;
-        font-weight: 500;
     }
     
     /* Export Buttons */
@@ -463,7 +474,7 @@
                             <div style="display: flex; flex-direction: column; gap: 6px; align-items: flex-start;">
                                 <span class="method-badge" style="margin-bottom: 2px;">{{ ucfirst($payment->method ?? 'N/A') }}</span>
                                 @if($payment->proof_url)
-                                    <button type="button" class="btn-view-receipt text-xs text-blue-600 hover:underline" style="display: inline-flex; align-items: center; gap: 4px; font-weight: 500; background: none; border: none; padding: 0; cursor: pointer;" onclick="openImageLightbox('{{ $payment->proof_url }}', 'Payment Receipt - {{ addslashes($payment->payer->name ?? 'Guest') }} (₱{{ number_format($payment->amount, 2) }})')">
+                                    <button type="button" class="btn-view-receipt" onclick="openImageLightbox('{{ $payment->proof_url }}', 'Payment Receipt - {{ addslashes($payment->payer->name ?? 'Guest') }} (₱{{ number_format($payment->amount, 2) }})')">
                                         <i class="bi bi-receipt"></i> View Receipt
                                     </button>
                                 @endif
@@ -481,11 +492,6 @@
                                 <div class="qr-code-wrapper qr-zoom-interactive cursor-pointer select-none" onclick="openImageLightbox('{{ $qrImgSrc }}', 'Payment QR Code / OR', { isQr: false })" title="Click to enlarge & zoom QR code">
                                     <img src="{{ $qrImgSrc }}" alt="OR QR Code" class="qr-code-image max-w-full h-auto rounded-md transition-transform duration-300" style="max-height: 48px; object-fit: contain;">
                                 </div>
-                            @elseif($payment->or_number)
-                                <!-- OR Number - click to view full size -->
-                                <span class="or-number">
-                                    {{ $payment->or_number }}
-                                </span>
                             @else
                                 -
                             @endif
