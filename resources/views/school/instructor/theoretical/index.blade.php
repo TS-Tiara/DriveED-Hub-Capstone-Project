@@ -60,27 +60,27 @@
 
     .tab-panel.active { display: block; }
 
-    .pdc-search-form {
+    .training-search-form {
         display: flex;
         align-items: flex-end;
         gap: 10px;
-        padding: 16px;
+        margin: 0 0 20px;
     }
 
-    .pdc-search-field {
+    .training-search-field {
         flex: 1;
         min-width: 220px;
     }
 
-    .pdc-search-field label {
+    .training-search-field label {
         display: block;
         margin-bottom: 5px;
         font-weight: 600;
         color: #374151;
     }
 
-    .pdc-search-form .btn-search,
-    .pdc-search-form .btn-clear {
+    .training-search-form .btn-search,
+    .training-search-form .btn-clear {
         min-height: 40px;
         padding: 8px 14px;
         border-radius: 7px;
@@ -89,13 +89,13 @@
         white-space: nowrap;
     }
 
-    .pdc-search-form .btn-search {
+    .training-search-form .btn-search {
         border: 1px solid {{ $primaryColor }};
         background: {{ $primaryColor }};
         color: white;
     }
 
-    .pdc-search-form .btn-clear {
+    .training-search-form .btn-clear {
         border: 1px solid #d1d5db;
         background: white;
         color: #374151;
@@ -317,10 +317,10 @@
         .theoretical-container { padding: 15px; }
         .page-header { flex-direction: column; align-items: flex-start; gap: 10px; }
         .stats-grid { grid-template-columns: 1fr; }
-        .pdc-search-form { flex-direction: column; align-items: stretch; }
-        .pdc-search-field { width: 100%; }
-        .pdc-search-form .btn-search,
-        .pdc-search-form .btn-clear { width: 100%; text-align: center; }
+        .training-search-form { flex-direction: column; align-items: stretch; }
+        .training-search-field { width: 100%; }
+        .training-search-form .btn-search,
+        .training-search-form .btn-clear { width: 100%; text-align: center; }
         table { min-width: 700px; }
     }
 </style>
@@ -335,7 +335,16 @@
         <div class="action-buttons"><a class="btn btn-primary" data-no-ajax="1" href="{{ school_route('instructor.theoretical.exportList') }}">Export PDF</a><a class="btn btn-success" data-no-ajax="1" href="{{ school_route('instructor.theoretical.exportExcel') }}">Export Excel</a></div>
     </div>
 
-
+    <form method="GET" action="{{ school_route('instructor.theoretical.index') }}" class="training-search-form" data-no-ajax="1">
+        <div class="training-search-field">
+            <label for="studentTrainingSearch">Search the student training list</label>
+            <input type="search" id="studentTrainingSearch" name="search" value="{{ $studentSearch }}" class="form-control" maxlength="120" placeholder="Student name, email, or course">
+        </div>
+        <button type="submit" class="btn-search">Search</button>
+        @if($studentSearch !== '')
+            <a href="{{ school_route('instructor.theoretical.index') }}" class="btn-clear">Clear</a>
+        @endif
+    </form>
 
     <!-- Stats Cards (clickable - serve as tab navigation) -->
     <div class="stats-grid">
@@ -400,7 +409,7 @@
     {{-- ════════════════════════════════════════════════════
          TAB 1 — In Training
          ════════════════════════════════════════════════════ --}}
-    <div class="tab-panel {{ $pdcSearch !== '' ? '' : 'active' }}" id="tab-training">
+    <div class="tab-panel active" id="tab-training">
         <div class="table-wrapper">
             @if($activeEnrollments->count() > 0)
                 <table>
@@ -483,7 +492,7 @@
                     <div class="empty-state-icon muted">
                         <svg class="icon-28" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
                     </div>
-                    <div class="empty-state-text">No students currently in theoretical training</div>
+                    <div class="empty-state-text">{{ $studentSearch !== '' ? 'No matching training enrollments found' : 'No students currently in theoretical training' }}</div>
                     <div class="empty-state-sub">Students enrolled in theoretical courses will appear here</div>
                 </div>
             @endif
@@ -493,20 +502,10 @@
     {{-- ════════════════════════════════════════════════════
          TAB 2 — PDC Training
          ════════════════════════════════════════════════════ --}}
-    <div class="tab-panel {{ $pdcSearch !== '' ? 'active' : '' }}" id="tab-pdc">
+    <div class="tab-panel" id="tab-pdc">
         <div class="section-header ready-bg">
             <h3>PDC Student Training <span class="count-badge green">{{ $pdcEnrollments->total() }}</span></h3>
         </div>
-        <form method="GET" action="{{ school_route('instructor.theoretical.index') }}" class="pdc-search-form" data-no-ajax="1">
-            <div class="pdc-search-field">
-                <label for="pdcEnrollmentSearch">Search students or courses</label>
-                <input type="search" id="pdcEnrollmentSearch" name="pdc_search" value="{{ $pdcSearch }}" class="form-control" placeholder="Student name, email, or course">
-            </div>
-            <button type="submit" class="btn-search">Search</button>
-            @if($pdcSearch !== '')
-                <a href="{{ school_route('instructor.theoretical.index') }}" class="btn-clear">Clear</a>
-            @endif
-        </form>
         <div class="table-wrapper">
             @if($pdcEnrollments->count() > 0)
                 <table>
@@ -536,7 +535,7 @@
                 </table>
             @else
                 <div class="empty-state">
-                    <div class="empty-state-text">{{ $pdcSearch !== '' ? 'No matching PDC enrollments found' : 'No PDC enrollments found' }}</div>
+                    <div class="empty-state-text">{{ $studentSearch !== '' ? 'No matching PDC enrollments found' : 'No PDC enrollments found' }}</div>
                     <div class="empty-state-sub">Practical Driving Course enrollments will appear here.</div>
                 </div>
             @endif
@@ -750,7 +749,7 @@
                     <div class="empty-state-icon muted">
                         <svg class="icon-28" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/></svg>
                     </div>
-                    <div class="empty-state-text">No students have passed theoretical training yet</div>
+                    <div class="empty-state-text">{{ $studentSearch !== '' ? 'No matching passed students found' : 'No students have passed theoretical training yet' }}</div>
                     <div class="empty-state-sub">Students will appear here after being marked as passed</div>
                 </div>
             @endif

@@ -139,6 +139,8 @@ class TheoreticalCompletionController extends Controller
     {
         $ctx = $this->getSchoolAndGuard();
         $school = $ctx['school'];
+        $studentSearch = trim((string) $request->input('search', ''));
+        $searchTerm = '%'.$studentSearch.'%';
 
         $enrollmentQuery = EnrollmentRequest::with(['learner', 'course', 'package', 'sessionCompletions'])
             ->whereHas('course', function ($query) use ($school) {
@@ -146,6 +148,15 @@ class TheoreticalCompletionController extends Controller
                     ->whereIn('course_type', ['theoretical', 'practical', 'combo']);
             })
             ->whereIn('status', ['approved', 'completed']);
+
+        if ($studentSearch !== '') {
+            $enrollmentQuery->where(function ($query) use ($searchTerm) {
+                $query->whereHas('learner', function ($learner) use ($searchTerm) {
+                    $learner->where('name', 'like', $searchTerm)
+                        ->orWhere('email', 'like', $searchTerm);
+                })->orWhereHas('course', fn ($course) => $course->where('title', 'like', $searchTerm));
+            });
+        }
 
         $activeQuery = (clone $enrollmentQuery)->where(function ($query) {
             $query->whereHas('course', fn ($course) => $course->where('course_type', 'theoretical'))
@@ -177,7 +188,7 @@ class TheoreticalCompletionController extends Controller
             return $enrollment->training_phase === 'theoretical' && $enrollment->required_hours > 0 && ($enrollment->total_hours / $enrollment->required_hours) >= 1;
         })->count();
 
-        $activeEnrollments = $activeQuery->paginate(10, ['*'], 'active_page');
+        $activeEnrollments = $activeQuery->paginate(10, ['*'], 'active_page')->withQueryString();
 
         // Calculate hours & progress for the current page
         $activeEnrollments->getCollection()->transform(function ($enrollment) {
@@ -195,16 +206,6 @@ class TheoreticalCompletionController extends Controller
         });
 
         $pdcInTraining = (clone $pdcQuery)->where('status', 'approved')->count();
-        $pdcSearch = trim((string) $request->input('pdc_search', ''));
-        if ($pdcSearch !== '') {
-            $searchTerm = '%'.$pdcSearch.'%';
-            $pdcQuery->where(function ($query) use ($searchTerm) {
-                $query->whereHas('learner', function ($learner) use ($searchTerm) {
-                    $learner->where('name', 'like', $searchTerm)
-                        ->orWhere('email', 'like', $searchTerm);
-                })->orWhereHas('course', fn ($course) => $course->where('title', 'like', $searchTerm));
-            });
-        }
         $pdcEnrollments = $pdcQuery->orderByDesc('id')
             ->paginate(10, ['*'], 'pdc_page')
             ->withQueryString();
@@ -229,14 +230,26 @@ class TheoreticalCompletionController extends Controller
         $notReadyEnrollments = $theoreticalEnrollments->where('progress', '<', 100)->values();
 
         // ── Passed Students tab ──
-        $passedStudents = Student::where('school_id', $school->id)
-            ->where('has_passed_theoretical', true)
+        $passedStudentsQuery = Student::where('school_id', $school->id)
+            ->where('has_passed_theoretical', true);
+        if ($studentSearch !== '') {
+            $passedStudentsQuery->where(function ($query) use ($searchTerm, $school) {
+                $query->where('name', 'like', $searchTerm)
+                    ->orWhere('email', 'like', $searchTerm)
+                    ->orWhereHas('enrollmentRecords', function ($enrollments) use ($searchTerm, $school) {
+                        $enrollments->where('school_id', $school->id)
+                            ->whereHas('course', fn ($course) => $course
+                                ->where('school_id', $school->id)
+                                ->where('title', 'like', $searchTerm));
+                    });
+            });
+        }
+        $passedStudents = (clone $passedStudentsQuery)
             ->latest('updated_at')
-            ->paginate(10, ['*'], 'passed_page');
+            ->paginate(10, ['*'], 'passed_page')
+            ->withQueryString();
 
-        $totalPassed = Student::where('school_id', $school->id)
-            ->where('has_passed_theoretical', true)
-            ->count();
+        $totalPassed = (clone $passedStudentsQuery)->count();
 
         $passedEnrollmentIds = EnrollmentRequest::where('school_id', $school->id)
             ->whereIn('learner_id', $passedStudents->pluck('id'))
@@ -246,7 +259,7 @@ class TheoreticalCompletionController extends Controller
         return view($ctx['viewPrefix'] . '.index', array_merge(compact(
             'school', 'activeEnrollments', 'totalInTraining', 'readyToPass',
             'readyEnrollments', 'notReadyEnrollments',
-            'pdcEnrollments', 'pdcInTraining', 'pdcSearch',
+            'pdcEnrollments', 'pdcInTraining', 'studentSearch',
             'passedStudents', 'totalPassed', 'passedEnrollmentIds'
         ), ['isAjax' => $request->ajax()]));
     }
