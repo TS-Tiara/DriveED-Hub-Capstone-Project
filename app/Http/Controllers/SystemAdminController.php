@@ -482,9 +482,23 @@ class SystemAdminController extends Controller
             }
 
             $admins = $query->orderBy('created_at', 'desc')->paginate(50);
+
+            $branchQuery = Admin::with(['school', 'branch'])->where('role', Admin::ROLE_BRANCH_SECRETARY);
+            if ($request->filled('search')) {
+                $search = $request->search;
+                $branchQuery->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
+                });
+            }
+            if ($request->filled('school_id')) {
+                $branchQuery->where('school_id', $request->school_id);
+            }
+            $branchManagers = $branchQuery->orderBy('created_at', 'desc')->get();
+
             $schools = School::orderBy('name')->get();
 
-            return view('system-admin.admins', compact('admins', 'schools'));
+            return view('system-admin.admins', compact('admins', 'branchManagers', 'schools'));
         }
         catch (\Exception $e) {
             SystemLog::logError(

@@ -502,6 +502,37 @@
     </div>
 </div>
 
+
+<!-- Branch Managers -->
+<div class="card" style="margin-bottom: 24px;">
+    <div class="card-header">
+        <h3><i class="fas fa-user-shield section-title-icon"></i> Branch Managers ({{ $branchManagers->count() }})</h3>
+    </div>
+    <div class="card-body">
+        @if($branchManagers->count() > 0)
+        <div class="table-container">
+        <table>
+            <thead><tr><th>Name</th><th>Email</th><th>School</th><th>Branch</th><th>Status</th><th>Created</th></tr></thead>
+            <tbody>
+                @foreach($branchManagers as $manager)
+                <tr>
+                    <td><div class="admin-name-wrap"><div class="user-avatar">{{ strtoupper(substr($manager->name, 0, 1)) }}</div><strong>{{ $manager->name }}</strong></div></td>
+                    <td>{{ $manager->email }}</td>
+                    <td>{{ $manager->school->name ?? 'No school' }}</td>
+                    <td>{{ $manager->branch->name ?? 'No branch' }}</td>
+                    <td><span class="status-badge {{ $manager->is_active ? 'active' : 'inactive' }}">{{ $manager->is_active ? 'Active' : 'Inactive' }}</span></td>
+                    <td>{{ $manager->created_at->format('M d, Y') }}</td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+        </div>
+        @else
+        <div class="empty-state"><i class="fas fa-user-shield empty-state-icon"></i><p>No branch managers found.</p></div>
+        @endif
+    </div>
+</div>
+
 <!-- Create School Admin Modal -->
 <div class="modal-overlay" id="createAdminModal" role="dialog" aria-modal="true" aria-labelledby="createAdminModalTitle" aria-hidden="true">
     <div class="modal-content">

@@ -297,6 +297,7 @@ Route::prefix('{school:slug}')
                             Route::get('/admins/excel', [ExportController::class , 'adminsExcel'])->middleware('school.admin.only')->name('admins.excel');
                             Route::get('/enrollments/pdf', [ExportController::class , 'enrollmentsPdf'])->name('enrollments.pdf');
                             Route::get('/enrollments/excel', [ExportController::class, 'enrollmentsExcel'])->name('enrollments.excel');
+                            Route::get('/enrollments/csv', [ExportController::class, 'enrollmentsCsv'])->name('enrollments.csv');
                             Route::get('/student/{student}/progress/pdf', [ExportController::class , 'studentProgressPdf'])->name('student.progress.pdf');
                             Route::get('/instructors/pdf', [ExportController::class , 'instructorsPdf'])->name('instructors.pdf');
                             Route::get('/instructors/excel', [ExportController::class , 'instructorsExcel'])->name('instructors.excel');

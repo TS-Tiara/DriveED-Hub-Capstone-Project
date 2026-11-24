@@ -1244,7 +1244,7 @@
 
         /* Standard Capacity Colors (Matches Legend Image) */
         .slot-bar.available {
-            background: #10b981; /* Green: Has Available Spots */
+            background: #10b981; /* Green: Has Available Slots */
         }
 
         .slot-bar.full {
@@ -1309,6 +1309,10 @@
             font-size: 1.4rem !important;
             letter-spacing: -0.02em;
         }
+
+        .additional-instructors { max-width: 220px; }
+        .additional-instructor-list { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; min-width: 180px; }
+        .additional-instructor-name { display: block; white-space: normal; padding: 4px 6px; border-radius: 6px; background: #f8fafc; }
 
         /* Export Buttons */
         .export-buttons {
@@ -1592,7 +1596,7 @@
                 <div style="display: flex; gap: 12px;">
                     @include('partials.session-report-export')
                     @unless($isArchivedView ?? false)
-                    <button type="button" id="createScheduleBtn" class="btn btn-success" onclick="openCreateModal(); return false;" style="display: flex; align-items: center; gap: 8px; padding: 10px 20px; font-weight: 600; border-radius: 8px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);">
+                    <button type="button" id="createScheduleBtn" class="btn btn-success" onclick="openCreateModal(); return false;" style="display: flex; align-items: center; gap: 8px; padding: 10px 20px; font-weight: 600; border-radius: 8px; background: {{ $primaryColor }}; border-color: {{ $primaryColor }}; box-shadow: 0 4px 12px {{ $primaryColor }}40;">
                         <i class="bi bi-calendar-plus"></i> Create Schedule
                     </button>
                     @endunless
@@ -1648,6 +1652,18 @@
                         <option value="">-- All Types --</option>
                         <option value="theoretical" {{ request('session_type') == 'theoretical' ? 'selected' : '' }}>Theoretical (TDC)</option>
                         <option value="practical" {{ request('session_type') == 'practical' ? 'selected' : '' }}>Practical (PDC)</option>
+                    </select>
+                </div>
+
+                <div class="filter-field" style="min-width: 180px;">
+                    <label for="branch_id" class="form-label">Branch</label>
+                    <select name="branch_id" id="branch_id" class="form-control">
+                        <option value="">-- All Branches --</option>
+                        @foreach($branches as $branch)
+                            <option value="{{ $branch->id }}" {{ (string) request('branch_id') === (string) $branch->id ? 'selected' : '' }}>
+                                {{ $branch->name }}
+                            </option>
+                        @endforeach
                     </select>
                 </div>
 
@@ -1759,7 +1775,7 @@
                     <span style="font-weight: 800; color: #1e293b; font-size: 1.1rem;">Legend:</span>
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <span style="width: 16px; height: 16px; background: #10b981; border-radius: 4px;"></span>
-                        <span style="font-weight: 500; color: #64748b;">Has Available Spots</span>
+                        <span style="font-weight: 500; color: #64748b;">Has Available Slots</span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <span style="width: 16px; height: 16px; background: #3b82f6; border-radius: 4px;"></span>
@@ -1819,6 +1835,7 @@
                                         <tr>
                                             <th style="font-size: 0.8rem;">Time</th>
                                             <th style="font-size: 0.8rem;">Course / Session</th>
+                                            <th style="font-size: 0.8rem;">Branch</th>
                                             <th style="font-size: 0.8rem;">Instructors</th>
                                             <th style="font-size: 0.8rem;">Capacity</th>
                                             <th style="text-align: center; font-size: 0.8rem;">Actions</th>
@@ -1836,6 +1853,8 @@
                                             <tr class="timeslot-table-row timeslot-item" 
                                                 data-slot-id="{{ $timeslot->id }}"
                                                 data-course-id="{{ $timeslot->course_id }}"
+                                                data-date="{{ \Carbon\Carbon::parse($timeslot->date)->format('Y-m-d') }}"
+                                                data-branch-id="{{ $timeslot->branch_id }}"
                                                 data-start-time="{{ $timeslot->start_time }}"
                                                 data-end-time="{{ $timeslot->end_time }}"
                                                 data-session-type="{{ $sessionType }}"
@@ -1873,6 +1892,11 @@
                                                     </div>
                                                 </td>
                                                 <td>
+                                                    <div style="font-weight: 600; color: #334155;">
+                                                        {{ $timeslot->branch->name ?? 'Unassigned' }}
+                                                    </div>
+                                                </td>
+                                                <td>
                                                     <div style="display: flex; flex-wrap: wrap; gap: 5px;">
                                                         @php
                                                             $instructorCount = $timeslot->instructors->count();
@@ -1885,7 +1909,7 @@
                                                                 {{ $isSelf ? '[S] ' : '[A] ' }}{{ $firstInstructor->name }}
                                                             </span>
                                                             @if($instructorCount > 1)
-                                                                <details class="additional-instructors"><summary style="cursor:pointer;">+{{ $instructorCount - 1 }} more</summary>@foreach($timeslot->instructors->skip(1) as $additionalInstructor)<div>{{ ($additionalInstructor->pivot->assignment_type ?? '') === 'self_selected' ? '[S]' : '[A]' }} {{ $additionalInstructor->name }}</div>@endforeach</details>
+                                                                <details class="additional-instructors"><summary style="cursor:pointer;">+{{ $instructorCount - 1 }} more</summary><div class="additional-instructor-list">@foreach($timeslot->instructors->skip(1) as $additionalInstructor)<span class="additional-instructor-name">{{ ($additionalInstructor->pivot->assignment_type ?? '') === 'self_selected' ? '[S]' : '[A]' }} {{ $additionalInstructor->name }}</span>@endforeach</div></details>
                                                             @endif
                                                         @else
                                                             <span style="color: #cbd5e1; font-style: italic; font-size: 0.85rem;">Unassigned</span>
@@ -1900,7 +1924,7 @@
                                                         <div style="font-size: 0.7rem; color: #cbd5e1; font-weight: 500;">Assign instructor to open</div>
                                                     @else
                                                         <div style="font-size: 0.85rem; font-weight: 700; color: {{ $isFull ? '#64748b' : '#059669' }};">
-                                                            {{ $isFull ? 'FULL' : $availableSpots . ' SPOTS' }}
+                                                            {{ $isFull ? 'FULL' : $availableSpots . ' SLOTS' }}
                                                         </div>
                                                         <div style="font-size: 0.75rem; color: #94a3b8;">Max: {{ $studentCapacity }} Students</div>
                                                     @endif
@@ -2021,7 +2045,7 @@
                             <li>Select the course for this schedule</li>
                             <li>Set the max capacity for this schedule</li>
                             <li>Optionally pre-assign instructors (they'll be marked as "Admin Assigned")</li>
-                            <li>Remaining spots will be available for instructor self-selection</li>
+                            <li>Remaining slots will be available for instructor self-selection</li>
                         </ul>
                     </div>
 
@@ -2434,7 +2458,7 @@
                             </select>
                             <small class="text-muted">
                                 <i class="bi bi-info-circle"></i> Hold Ctrl (Windows) or Cmd (Mac) to select multiple instructors. 
-                                Leave unselected to make all spots available for self-selection. 
+                                Leave unselected to make all slots available for self-selection.
                                 Selected instructors will be marked as "Admin Assigned" [A].
                             </small>
                         @endif
@@ -3060,13 +3084,17 @@
             const availableStudents = Number(slotItem.dataset.availableStudents || 0);
             const availableText = instructorsList.length === 0
                 ? 'No instructor assigned'
-                : `${availableStudents} of ${maxStudents} student spots open`;
+                : `${availableStudents} of ${maxStudents} student slots open`;
             maxInstructors = slotItem.dataset.maxInstructors || '1';
 
             // Store data for edit modal
             window.currentSlotData = {
                 id: slotId,
                 courseId: courseId,
+                date: slotItem.dataset.date || '',
+                branchId: slotItem.dataset.branchId || '',
+                startTime: startTime,
+                endTime: endTime,
                 time: timeText,
                 sessionType: sessionType,
                 instructors: instructorsList,
@@ -3257,7 +3285,7 @@
                     // Build availability badge
                     let availableHtml = '';
                     if (schedule.availableSpots > 0) {
-                        availableHtml = `<span class="badge badge-success">${schedule.availableSpots} Spot${schedule.availableSpots > 1 ? 's' : ''} Available</span>`;
+                        availableHtml = `<span class="badge badge-success">${schedule.availableSpots} Slot${schedule.availableSpots > 1 ? 's' : ''} Available</span>`;
                     } else {
                         availableHtml = '<span class="badge badge-secondary">✓ Full</span>';
                     }
@@ -3325,11 +3353,22 @@
             const actionUrl = `/${schoolSlug}/admin/schedules/${slotData.id}`;
             document.getElementById('editScheduleForm').action = actionUrl;
 
+            const createCourseSelect = document.querySelector('#createModal select[name="course_id"]');
+            const courseOptions = createCourseSelect ? Array.from(createCourseSelect.options).filter(opt => opt.value).map(opt =>
+                `<option value="${opt.value}" ${String(opt.value) === String(slotData.courseId) ? 'selected' : ''}>${opt.text}</option>`
+            ).join('') : '';
+
+            const createBranchSelect = document.querySelector('#createModal select[name="branch_ids[]"]');
+            const branchOptions = createBranchSelect ? Array.from(createBranchSelect.options).map(opt =>
+                `<option value="${opt.value}" ${String(opt.value) === String(slotData.branchId) ? 'selected' : ''}>${opt.text}</option>`
+            ).join('') : '';
+
             // Get available instructors from the create modal
             const createModalSelect = document.querySelector('#createModal select[name="instructor_ids[]"]');
             const allInstructors = createModalSelect ? Array.from(createModalSelect.options).map(opt => ({
                 id: opt.value,
                 name: opt.dataset.originalText || opt.text,
+                branchId: opt.dataset.branchId || '',
                 accreditedCourses: opt.dataset.accreditedCourses || '[]'
             })) : [];
 
@@ -3356,6 +3395,34 @@
             }).join('');
 
             document.getElementById('editModalContent').innerHTML = `
+                <div class="form-group">
+                    <label class="form-label">Course</label>
+                    <select name="course_id" class="form-control" required>${courseOptions}</select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Branch</label>
+                    <select name="branch_id" class="form-control" required>${branchOptions}</select>
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">Date</label>
+                            <input type="date" name="date" class="form-control" value="${slotData.date}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">Start Time</label>
+                            <input type="time" name="start_time" class="form-control" value="${slotData.startTime}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">End Time</label>
+                            <input type="time" name="end_time" class="form-control" value="${slotData.endTime}" required>
+                        </div>
+                    </div>
+                </div>
                 <div class="form-group">
                     <label class="form-label">
                         <i class="bi bi-diagram-3"></i> Session Type

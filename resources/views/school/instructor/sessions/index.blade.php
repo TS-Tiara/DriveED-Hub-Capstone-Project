@@ -559,7 +559,12 @@
         @csrf
         <strong>Batch grade selected sessions</strong>
         <input type="number" name="session_grade" min="0" max="100" step="0.01" required placeholder="Grade (0–100)" class="filter-select">
-        <button type="submit" class="filter-select">Apply grade</button>
+        <input type="hidden" name="session_type" value="{{ request('session_type') }}">
+        <input type="hidden" name="date_from" value="{{ request('date_from') }}">
+        <input type="hidden" name="date_to" value="{{ request('date_to') }}">
+        <input type="hidden" name="search" value="{{ request('search') }}">
+        <button type="submit" name="grade_scope" value="selected" class="filter-select">Apply to Selected</button>
+        <button type="submit" name="grade_scope" value="all_matches" class="filter-select">Apply to All Matches</button>
         @error('session_ids')<span role="alert" style="color:#b91c1c">{{ $message }}</span>@enderror
     </form>
     @endif

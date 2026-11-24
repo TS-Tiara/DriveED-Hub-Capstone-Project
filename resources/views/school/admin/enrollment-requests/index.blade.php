@@ -1242,6 +1242,7 @@
                     <div class="enrollment-export-formats">
                         <button type="submit" formaction="{{ route('schools.admin.exports.enrollments.pdf', ['school' => $school->slug]) }}">PDF</button>
                         <button type="submit" formaction="{{ route('schools.admin.exports.enrollments.excel', ['school' => $school->slug]) }}">Excel</button>
+                        <button type="submit" formaction="{{ route('schools.admin.exports.enrollments.csv', ['school' => $school->slug]) }}">CSV</button>
                     </div>
                 </form>
             </div>
@@ -1320,9 +1321,6 @@
     </div>
 
     <div class="filters-row">
-        <a href="{{ school_route('admin.enrollments.index', ['archived' => ($isArchivedView ?? false) ? null : 1]) }}" class="btn btn-outline-secondary" style="align-self:flex-start;text-decoration:none;">
-            <i class="bi bi-archive"></i> {{ ($isArchivedView ?? false) ? 'Active enrollments' : 'Archived enrollments' }}
-        </a>
         <form method="GET" action="{{ school_route('admin.enrollments.index') }}" data-no-ajax="1" style="display:flex;gap:8px;flex-wrap:wrap;">
             @foreach(['status', 'branch', 'sort'] as $filter)
                 @if(request()->filled($filter))<input type="hidden" name="{{ $filter }}" value="{{ request($filter) }}">@endif

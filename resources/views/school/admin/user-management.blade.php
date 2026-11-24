@@ -2388,9 +2388,9 @@
                                                     data-role="{{ $user->role }}"
                                                     data-name="{{ $user->name }}"
                                                     style="background: #f59e0b; color: white; border: none;"
-                                                    title="Send License Renewal Advisory & Email">
+                                                    title="Send License Renewal Advisory & Email" aria-label="Send License Renewal Advisory & Email">
                                                     <i class="bi bi-bell-fill"></i>
-                                                    <span>Remind</span>
+                                                    <span class="visually-hidden">Send license renewal reminder</span>
                                                 </button>
                                             @endif
 

@@ -1970,11 +1970,13 @@ class AdminController extends Controller
 
         $courseId = $request->input('course_id');
         $sessionType = $request->input('session_type');
+        $branchId = $request->input('branch_id');
         $isArchivedView = $request->boolean('archived');
 
-        $timeslots = $admin->scopeToBranch(TimeSlot::with(['instructors', 'course', 'bookings.student', 'bookings.instructor'])
+        $timeslots = $admin->scopeToBranch(TimeSlot::with(['instructors', 'course', 'branch', 'bookings.student', 'bookings.instructor'])
             ->where('school_id', $school->id)
             ->when($isArchivedView, fn ($query) => $query->whereNotNull('archived_at'), fn ($query) => $query->whereNull('archived_at')->whereBetween('date', [$startDate, $endDate]))
+            ->when($branchId, fn ($query) => $query->where('branch_id', $branchId))
             ->when($courseId, function ($query) use ($courseId) {
                 return $query->where('course_id', $courseId);
             })
@@ -2026,7 +2028,7 @@ class AdminController extends Controller
     /**
      * Create schedule with optional instructor pre-assignment
      * Admin can create schedule and optionally assign instructors immediately
-     * Remaining spots will be available for instructor self-selection
+     * Remaining slots will be available for instructor self-selection
      */
     public function createSchedule(Request $request, School $school)
     {
@@ -2347,10 +2349,10 @@ class AdminController extends Controller
                 if (!empty($validated['instructor_ids'])) {
                     $message = 'Schedule created with ' . $instructors->count() . ' instructor(s) assigned.';
                     if ($availableSpots > 0) {
-                        $message .= ' ' . $availableSpots . ' spot(s) available for self-selection.';
+                        $message .= ' ' . $availableSpots . ' slot(s) available for self-selection.';
                     }
                 } else {
-                    $message = 'Schedule created! ' . $maxInstructors . ' spot(s) available for instructor self-selection.';
+                    $message = 'Schedule created! ' . $maxInstructors . ' slot(s) available for instructor self-selection.';
                 }
 
                 return response()->json([
@@ -2366,14 +2368,14 @@ class AdminController extends Controller
                 $message = 'Schedule created with ' . $instructors->count() . ' instructor(s) assigned.';
 
                 if ($availableSpots > 0) {
-                    $message .= ' ' . $availableSpots . ' spot(s) available for self-selection.';
+                    $message .= ' ' . $availableSpots . ' slot(s) available for self-selection.';
                 }
 
                 return redirect()->back()->with('success', $message);
             }
 
-            // No instructors assigned - all spots available
-            return redirect()->back()->with('success', 'Schedule created! ' . $maxInstructors . ' spot(s) available for instructor self-selection.');
+            // No instructors assigned - all slots available
+            return redirect()->back()->with('success', 'Schedule created! ' . $maxInstructors . ' slot(s) available for instructor self-selection.');
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             if ($request->ajax() || $request->wantsJson()) {
@@ -2422,6 +2424,11 @@ class AdminController extends Controller
             }
 
             $validated = $request->validate([
+                'course_id' => ['required', Rule::exists('courses', 'id')->where('school_id', $school->id)],
+                'branch_id' => ['required', Rule::exists('branches', 'id')->where('school_id', $school->id)],
+                'date' => ['required', 'date'],
+                'start_time' => ['required', 'date_format:H:i'],
+                'end_time' => ['required', 'date_format:H:i', 'after:start_time'],
                 'notes' => 'nullable|string|max:500',
                 'session_type' => 'nullable|in:theoretical,practical',
                 'max_instructors' => 'nullable|integer|min:1|max:10',
@@ -2440,6 +2447,31 @@ class AdminController extends Controller
 
             $maxInstructors = (int) ($validated['max_instructors'] ?? $timeslot->max_instructors);
             $maxStudents = (int) ($validated['max_students'] ?? $timeslot->max_students);
+            $course = $school->courses()->findOrFail($validated['course_id']);
+
+            if (!$admin->canAccessBranch((int) $validated['branch_id'])) {
+                DB::rollBack();
+                throw \Illuminate\Validation\ValidationException::withMessages(['branch_id' => 'You do not have permission to assign this branch.']);
+            }
+
+            $duration = Carbon::createFromFormat('H:i', $validated['start_time'])
+                ->diffInMinutes(Carbon::createFromFormat('H:i', $validated['end_time']));
+            if ($duration > 480) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['end_time' => 'A schedule cannot exceed 8 hours.']);
+            }
+
+            $duplicate = TimeSlot::where('school_id', $school->id)
+                ->where('id', '!=', $timeslot->id)
+                ->where('course_id', $course->id)
+                ->where('branch_id', $validated['branch_id'])
+                ->whereDate('date', $validated['date'])
+                ->where('start_time', $validated['start_time'])
+                ->where('end_time', $validated['end_time'])
+                ->whereNull('archived_at')
+                ->exists();
+            if ($duplicate) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['date' => 'A schedule already exists for this course, branch, date, and time range.']);
+            }
 
             // PDC Safety Sync
             if ($resolvedSessionType === 'practical') {
@@ -2448,6 +2480,11 @@ class AdminController extends Controller
 
             // Update timeslot core data
             $timeslot->update([
+                'course_id' => $course->id,
+                'branch_id' => (int) $validated['branch_id'],
+                'date' => $validated['date'],
+                'start_time' => $validated['start_time'],
+                'end_time' => $validated['end_time'],
                 'notes' => $validated['notes'] ?? null,
                 'session_type' => $resolvedSessionType,
                 'max_instructors' => $maxInstructors,
@@ -2482,9 +2519,26 @@ class AdminController extends Controller
                     DB::rollBack();
                     throw \Illuminate\Validation\ValidationException::withMessages(['instructor_ids' => 'Every assigned instructor must belong to the schedule branch.']);
                 }
+                foreach ($instructors as $instructor) {
+                    $overlap = TimeSlot::where('school_id', $school->id)
+                        ->where('id', '!=', $timeslot->id)
+                        ->whereDate('date', $validated['date'])
+                        ->whereHas('instructors', fn ($query) => $query->where('instructors.id', $instructor->id))
+                        ->get()
+                        ->contains(function ($slot) use ($validated) {
+                            $existingStart = Carbon::parse($slot->start_time);
+                            $existingEnd = Carbon::parse($slot->end_time);
+                            $newStart = Carbon::createFromFormat('H:i', $validated['start_time']);
+                            $newEnd = Carbon::createFromFormat('H:i', $validated['end_time']);
+                            return $existingStart->lt($newEnd) && $newStart->lt($existingEnd);
+                        });
+                    if ($overlap) {
+                        DB::rollBack();
+                        throw \Illuminate\Validation\ValidationException::withMessages(['instructor_ids' => "Instructor {$instructor->name} already has an overlapping schedule at this date and time."]);
+                    }
+                }
 
                 // Accreditation Check
-                $course = $timeslot->course;
                 foreach ($instructors as $instructor) {
                     if (!$instructor->canTeach($course)) {
                         DB::rollBack();

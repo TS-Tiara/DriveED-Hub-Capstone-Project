@@ -780,7 +780,7 @@
         }
         
         .time-info,
-        .spots-info {
+        .slots-info {
             font-size: 0.75rem;
             margin-bottom: 4px;
         }
@@ -1546,7 +1546,7 @@
                                             <span>Status: {{ ucfirst($booking->status ?? 'Scheduled') }}</span>
                                             <form method="POST" action="{{ route('schools.student.bookings.cancel', [$school->slug, $booking->id]) }}" style="margin: 0;">
                                                 @csrf
-                                                <button type="button" style="background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; padding: 7px 12px; margin: -4px 0; border-radius: 4px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#fecaca'" onmouseout="this.style.background='#fee2e2'" onclick="showConfirmDialog('Are you sure you want to cancel this scheduled lesson? Your instructor will be notified and your reserved spot will be released.', () => this.closest('form').submit())">
+                                                <button type="button" style="background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; padding: 7px 12px; margin: -4px 0; border-radius: 4px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s;"                                                 onmouseover="this.style.background='#fecaca'" onmouseout="this.style.background='#fee2e2'" onclick="showConfirmDialog('Are you sure you want to cancel this scheduled lesson? Your instructor will be notified and your reserved slot will be released.', () => this.closest('form').submit())">
                                                     Cancel Schedule
                                                 </button>
                                             </form>
@@ -1771,7 +1771,7 @@
                                  data-starts-at="{{ $slotStartsAt->toIso8601String() }}"
                                  data-start-time="{{ \Carbon\Carbon::parse($timeSlot->start_time)->format('H:i') }}"
                                  data-end-time="{{ \Carbon\Carbon::parse($timeSlot->end_time)->format('H:i') }}"
-                                                                 data-available-spots="{{ $availableStudentSpots }}"
+                                                                 data-available-slots="{{ $availableStudentSpots }}"
                                    data-enrolled="{{ $isEnrolledInCourse ? 'true' : 'false' }}">
                                 <div class="available-details">
                                     <div class="booking-time booking-time-wrap">
@@ -1804,7 +1804,7 @@
                                                 <span class="course-badge">{{ $timeSlot->course->vehicle_type ?? 'Manual' }}</span>
                                             @endif
                                             <div class="booking-status booking-status-inline">
-                                                {{ $availableStudentSpots }} {{ $availableStudentSpots === 1 ? 'spot' : 'spots' }} available
+                                                {{ $availableStudentSpots }} {{ $availableStudentSpots === 1 ? 'slot' : 'slots' }} available
                                             </div>
                                             <button class="book-now-btn book-now-btn-inline book-now-btn-disabled" id="book-btn-{{ $timeSlot->id }}" onclick="bookTimeSlot({{ $timeSlot->id }})" disabled>
                                                 {{ $bookButtonLabel ?? 'Schedule Lesson' }}
@@ -1817,7 +1817,7 @@
                                                 <span class="course-badge">{{ $timeSlot->course->vehicle_type ?? 'Manual' }}</span>
                                             @endif
                                             <div class="booking-status booking-status-inline">
-                                                {{ $availableStudentSpots }} {{ $availableStudentSpots === 1 ? 'spot' : 'spots' }} available
+                                                {{ $availableStudentSpots }} {{ $availableStudentSpots === 1 ? 'slot' : 'slots' }} available
                                             </div>
                                             <button class="book-now-btn book-now-btn-inline {{ $cannotBook ? 'book-now-btn-disabled' : '' }}" onclick="bookTimeSlotAuto({{ $timeSlot->id }})" {{ $cannotBook ? 'disabled' : '' }}>
                                                 {{ $bookButtonLabel ?? 'Schedule Now' }}
@@ -1830,7 +1830,7 @@
                                                 <span class="course-badge">{{ $timeSlot->course->vehicle_type ?? 'Manual' }}</span>
                                             @endif
                                             <div class="booking-status booking-status-inline">
-                                                {{ $availableStudentSpots }} {{ $availableStudentSpots === 1 ? 'spot' : 'spots' }} available
+                                                {{ $availableStudentSpots }} {{ $availableStudentSpots === 1 ? 'slot' : 'slots' }} available
                                             </div>
                                             <button class="book-now-btn book-now-btn-inline {{ $cannotBook ? 'book-now-btn-disabled' : '' }}" onclick="bookTimeSlotAdmin({{ $timeSlot->id }})" {{ $cannotBook ? 'disabled' : '' }}>
                                                 {{ $bookButtonLabel ?? 'Request Schedule' }}
@@ -2298,7 +2298,7 @@
         const startTime = timeSlotCard.getAttribute('data-start-time');
         const endTime = timeSlotCard.getAttribute('data-end-time');
         const enrollmentRequestId = timeSlotCard.getAttribute('data-enrollment-request-id');
-        const availableSpots = parseInt(timeSlotCard.getAttribute('data-available-spots') || '0', 10);
+        const availableSpots = parseInt(timeSlotCard.getAttribute('data-available-slots') || '0', 10);
         const instructorName = select.options[select.selectedIndex].text;
 
         if (availableSpots <= 0) {
@@ -2326,7 +2326,7 @@
         const startTime = timeSlotCard.getAttribute('data-start-time');
         const endTime = timeSlotCard.getAttribute('data-end-time');
         const enrollmentRequestId = timeSlotCard.getAttribute('data-enrollment-request-id');
-        const availableSpots = parseInt(timeSlotCard.getAttribute('data-available-spots') || '0', 10);
+        const availableSpots = parseInt(timeSlotCard.getAttribute('data-available-slots') || '0', 10);
 
         if (availableSpots <= 0) {
             showToast('This slot is already full.', 'error');
@@ -2353,7 +2353,7 @@
         const startTime = timeSlotCard.getAttribute('data-start-time');
         const endTime = timeSlotCard.getAttribute('data-end-time');
         const enrollmentRequestId = timeSlotCard.getAttribute('data-enrollment-request-id');
-        const availableSpots = parseInt(timeSlotCard.getAttribute('data-available-spots') || '0', 10);
+        const availableSpots = parseInt(timeSlotCard.getAttribute('data-available-slots') || '0', 10);
 
         if (availableSpots <= 0) {
             showToast('This slot is already full.', 'error');
@@ -2372,7 +2372,7 @@
         const select = document.getElementById('instructor-' + timeSlotId);
         const button = document.getElementById('book-btn-' + timeSlotId);
         const timeSlotCard = select.closest('.available-schedule-card');
-        const availableSpots = parseInt(timeSlotCard?.getAttribute('data-available-spots') || '0', 10);
+        const availableSpots = parseInt(timeSlotCard?.getAttribute('data-available-slots') || '0', 10);
         
         if (select.value && availableSpots > 0) {
             button.disabled = false;

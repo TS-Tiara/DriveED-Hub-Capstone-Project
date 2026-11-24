@@ -72,7 +72,7 @@
     .modal-header h5 { font-size: 1.25rem; font-weight: 600; margin: 0; display: flex; align-items: center; gap: 12px; }
     .modal-body { padding: 32px; background: white; max-height: 75vh; overflow-y: auto; }
     .modal-footer { padding: 20px 32px; display: flex; gap: 12px; background: #f8fafc; border-top: 1px solid #f1f5f9; justify-content: flex-end; }
-    .modal-footer button { position: relative; top: -15px; }
+    .modal-footer button { position: relative; top: 0; }
 
     /* Table Styles */
     .vehicle-table-card { background: white; border-radius: 16px; box-shadow: 0 2px 12px {{ $primaryColor }}10; overflow: hidden; border: 1px solid {{ $primaryColor }}08; }

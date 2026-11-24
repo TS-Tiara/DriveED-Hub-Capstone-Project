@@ -1547,6 +1547,12 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 
 /* â”€â”€ Compact Pagination Styling (Standardized) â”€â”€ */
+/* Shared button and modal consistency */
+.btn, button { border-radius: 8px !important; }
+.modal-content { max-height: 92vh; }
+.modal-body { max-height: calc(92vh - 180px); overflow-y: auto; }
+.modal-footer { position: sticky; bottom: 0; z-index: 20; }
+
 /* Export Dropdown - Unified Global Component */
 .export-dropdown {
     position: relative;
