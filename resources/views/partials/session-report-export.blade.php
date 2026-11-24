@@ -70,10 +70,10 @@
     .schedule-log-export__body {
         position: absolute;
         top: calc(100% + 10px);
-        left: 0;
-        right: auto;
+        left: auto;
+        right: 0;
         z-index: 2000;
-        width: min(760px, calc(100vw - 40px));
+        width: min(760px, calc(100vw - 24px));
         max-height: calc(100vh - 140px);
         overflow: auto;
         padding: 20px;

@@ -409,9 +409,13 @@
         }
 
         .notification-icon:hover,
+        .notification-icon.active,
         .profile-dropdown:hover {
             background-color: rgba(255, 255, 255, 0.1);
         }
+
+        .notification-icon.active { background: rgba(255, 255, 255, 0.18); }
+        .notification-icon.active i { color: #fff; }
 
         .notification-icon-emoji {
             font-size: 20px;
@@ -1968,7 +1972,7 @@
             <div class="notification-icon" onclick="toggleNotificationDropdown(event)" role="button"
                 aria-label="Notifications" aria-expanded="false" aria-haspopup="true" tabindex="0"
                 onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleNotificationDropdown(event)}">
-                <i class="bi bi-bell" style="font-size: 1.25rem;"></i>
+                <i id="notificationBellIcon" class="bi bi-bell" style="font-size: 1.25rem;"></i>
                 <span class="notification-badge" id="notificationBadge"></span>
 
                 <div class="notification-dropdown" id="notificationDropdown">
@@ -2399,6 +2403,9 @@
             e.stopPropagation();
             const dropdown = document.getElementById('notificationDropdown');
             notificationDropdownOpen = !notificationDropdownOpen;
+            const notificationBellIcon = document.getElementById('notificationBellIcon');
+            document.querySelector('.notification-icon[aria-label="Notifications"]')?.classList.toggle('active', notificationDropdownOpen);
+            if (notificationBellIcon) notificationBellIcon.className = notificationDropdownOpen ? "bi bi-bell-fill" : "bi bi-bell";
             document.querySelector('.notification-icon[aria-label="Notifications"]')?.setAttribute('aria-expanded', String(notificationDropdownOpen));
 
             if (notificationDropdownOpen) {
@@ -2415,6 +2422,9 @@
             notificationDropdownOpen = false;
             if (dropdown) dropdown.classList.remove('show');
             document.querySelector('.notification-icon[aria-label="Notifications"]')?.setAttribute('aria-expanded', 'false');
+            document.querySelector('.notification-icon[aria-label="Notifications"]')?.classList.remove('active');
+            const notificationBellIcon = document.getElementById('notificationBellIcon');
+            if (notificationBellIcon) notificationBellIcon.className = 'bi bi-bell';
         }
 
         function fetchNotifications() {

@@ -133,6 +133,34 @@ class ExportController extends Controller
         }
     }
 
+    public function enrollmentsCsv(School $school, Request $request)
+    {
+        $admin = Auth::guard('admin')->user();
+        abort_unless($admin && (int) $admin->school_id === (int) $school->id, 403);
+
+        $query = EnrollmentRequest::where('school_id', $school->id)->with(['learner', 'course']);
+        $this->applyEnrollmentExportFilters($query, $request, $admin);
+
+        $rows = [];
+        foreach ($query->orderBy('created_at', 'desc')->limit(1000)->cursor() as $enrollment) {
+            $rows[] = [
+                $enrollment->created_at->format('Y-m-d'),
+                $enrollment->learner->name ?? 'N/A',
+                $enrollment->learner->email ?? 'N/A',
+                $enrollment->learner_id,
+                $enrollment->course->title ?? 'N/A',
+                ucfirst($enrollment->status),
+                ucfirst($enrollment->payment_status ?: 'unpaid'),
+            ];
+        }
+
+        return $this->csvResponse(
+            ['Date', 'Student Name', 'Email', 'Student ID', 'Course', 'Status', 'Payment Status'],
+            $rows,
+            $school->slug . '_enrollments_' . date('Y-m-d') . '.csv'
+        );
+    }
+
     /**
      * Export student progress report as PDF
      */
@@ -871,6 +899,22 @@ class ExportController extends Controller
     /**
      * Return styled Excel response
      */
+    private function csvResponse(array $headers, array $rows, string $filename)
+    {
+        $callback = function () use ($headers, $rows) {
+            $output = fopen('php://output', 'w');
+            fputcsv($output, $headers);
+            foreach ($rows as $row) {
+                fputcsv($output, array_map(fn ($value) => (string) $value, $row));
+            }
+            fclose($output);
+        };
+
+        return response()->streamDownload($callback, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
+    }
+
     private function excelResponse(string $html, string $filename)
     {
         return response($html)

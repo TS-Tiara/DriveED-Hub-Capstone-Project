@@ -34,7 +34,7 @@
     .journey-steps {
         display: flex;
         flex-direction: column;
-        gap: 16px;
+        gap: 10px;
         position: relative;
     }
 
@@ -84,7 +84,7 @@
         font-weight: 600;
         color: #1f2937;
         font-size: 0.95rem;
-        margin-bottom: 4px;
+        margin-bottom: 1px;
     }
 
     .step-desc {

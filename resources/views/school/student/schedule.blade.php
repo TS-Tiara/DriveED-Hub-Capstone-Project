@@ -780,7 +780,7 @@
         }
         
         .time-info,
-        .spots-info {
+        .slots-info {
             font-size: 0.75rem;
             margin-bottom: 4px;
         }
@@ -1771,7 +1771,7 @@
                                  data-starts-at="{{ $slotStartsAt->toIso8601String() }}"
                                  data-start-time="{{ \Carbon\Carbon::parse($timeSlot->start_time)->format('H:i') }}"
                                  data-end-time="{{ \Carbon\Carbon::parse($timeSlot->end_time)->format('H:i') }}"
-                                                                 data-available-spots="{{ $availableStudentSpots }}"
+                                                                 data-available-slots="{{ $availableStudentSpots }}"
                                    data-enrolled="{{ $isEnrolledInCourse ? 'true' : 'false' }}">
                                 <div class="available-details">
                                     <div class="booking-time booking-time-wrap">
@@ -2298,7 +2298,7 @@
         const startTime = timeSlotCard.getAttribute('data-start-time');
         const endTime = timeSlotCard.getAttribute('data-end-time');
         const enrollmentRequestId = timeSlotCard.getAttribute('data-enrollment-request-id');
-        const availableSpots = parseInt(timeSlotCard.getAttribute('data-available-spots') || '0', 10);
+        const availableSpots = parseInt(timeSlotCard.getAttribute('data-available-slots') || '0', 10);
         const instructorName = select.options[select.selectedIndex].text;
 
         if (availableSpots <= 0) {
@@ -2326,7 +2326,7 @@
         const startTime = timeSlotCard.getAttribute('data-start-time');
         const endTime = timeSlotCard.getAttribute('data-end-time');
         const enrollmentRequestId = timeSlotCard.getAttribute('data-enrollment-request-id');
-        const availableSpots = parseInt(timeSlotCard.getAttribute('data-available-spots') || '0', 10);
+        const availableSpots = parseInt(timeSlotCard.getAttribute('data-available-slots') || '0', 10);
 
         if (availableSpots <= 0) {
             showToast('This slot is already full.', 'error');
@@ -2353,7 +2353,7 @@
         const startTime = timeSlotCard.getAttribute('data-start-time');
         const endTime = timeSlotCard.getAttribute('data-end-time');
         const enrollmentRequestId = timeSlotCard.getAttribute('data-enrollment-request-id');
-        const availableSpots = parseInt(timeSlotCard.getAttribute('data-available-spots') || '0', 10);
+        const availableSpots = parseInt(timeSlotCard.getAttribute('data-available-slots') || '0', 10);
 
         if (availableSpots <= 0) {
             showToast('This slot is already full.', 'error');
@@ -2372,7 +2372,7 @@
         const select = document.getElementById('instructor-' + timeSlotId);
         const button = document.getElementById('book-btn-' + timeSlotId);
         const timeSlotCard = select.closest('.available-schedule-card');
-        const availableSpots = parseInt(timeSlotCard?.getAttribute('data-available-spots') || '0', 10);
+        const availableSpots = parseInt(timeSlotCard?.getAttribute('data-available-slots') || '0', 10);
         
         if (select.value && availableSpots > 0) {
             button.disabled = false;

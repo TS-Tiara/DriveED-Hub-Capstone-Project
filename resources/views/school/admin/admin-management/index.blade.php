@@ -798,6 +798,9 @@
     }
 
     .modal-footer {
+        position: sticky;
+        bottom: 0;
+        z-index: 20;
         padding: 24px 32px 32px;
         display: flex;
         gap: 12px;

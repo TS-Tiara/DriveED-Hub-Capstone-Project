@@ -1310,6 +1310,10 @@
             letter-spacing: -0.02em;
         }
 
+        .additional-instructors { max-width: 220px; }
+        .additional-instructor-list { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; min-width: 180px; }
+        .additional-instructor-name { display: block; white-space: normal; padding: 4px 6px; border-radius: 6px; background: #f8fafc; }
+
         /* Export Buttons */
         .export-buttons {
             display: flex;
@@ -1905,7 +1909,7 @@
                                                                 {{ $isSelf ? '[S] ' : '[A] ' }}{{ $firstInstructor->name }}
                                                             </span>
                                                             @if($instructorCount > 1)
-                                                                <details class="additional-instructors"><summary style="cursor:pointer;">+{{ $instructorCount - 1 }} more</summary>@foreach($timeslot->instructors->skip(1) as $additionalInstructor)<div>{{ ($additionalInstructor->pivot->assignment_type ?? '') === 'self_selected' ? '[S]' : '[A]' }} {{ $additionalInstructor->name }}</div>@endforeach</details>
+                                                                <details class="additional-instructors"><summary style="cursor:pointer;">+{{ $instructorCount - 1 }} more</summary><div class="additional-instructor-list">@foreach($timeslot->instructors->skip(1) as $additionalInstructor)<span class="additional-instructor-name">{{ ($additionalInstructor->pivot->assignment_type ?? '') === 'self_selected' ? '[S]' : '[A]' }} {{ $additionalInstructor->name }}</span>@endforeach</div></details>
                                                             @endif
                                                         @else
                                                             <span style="color: #cbd5e1; font-style: italic; font-size: 0.85rem;">Unassigned</span>
