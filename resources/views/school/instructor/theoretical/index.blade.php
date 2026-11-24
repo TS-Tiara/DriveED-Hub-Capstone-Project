@@ -60,6 +60,47 @@
 
     .tab-panel.active { display: block; }
 
+    .pdc-search-form {
+        display: flex;
+        align-items: flex-end;
+        gap: 10px;
+        padding: 16px;
+    }
+
+    .pdc-search-field {
+        flex: 1;
+        min-width: 220px;
+    }
+
+    .pdc-search-field label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 600;
+        color: #374151;
+    }
+
+    .pdc-search-form .btn-search,
+    .pdc-search-form .btn-clear {
+        min-height: 40px;
+        padding: 8px 14px;
+        border-radius: 7px;
+        font-weight: 600;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    .pdc-search-form .btn-search {
+        border: 1px solid {{ $primaryColor }};
+        background: {{ $primaryColor }};
+        color: white;
+    }
+
+    .pdc-search-form .btn-clear {
+        border: 1px solid #d1d5db;
+        background: white;
+        color: #374151;
+    }
+
     /* ── Table ── */
     .table-wrapper { overflow-x: auto; }
 
@@ -276,6 +317,10 @@
         .theoretical-container { padding: 15px; }
         .page-header { flex-direction: column; align-items: flex-start; gap: 10px; }
         .stats-grid { grid-template-columns: 1fr; }
+        .pdc-search-form { flex-direction: column; align-items: stretch; }
+        .pdc-search-field { width: 100%; }
+        .pdc-search-form .btn-search,
+        .pdc-search-form .btn-clear { width: 100%; text-align: center; }
         table { min-width: 700px; }
     }
 </style>
@@ -336,12 +381,26 @@
                 <div class="stat-detail">Students who passed theoretical training</div>
             </div>
         </div>
+        <div class="stat-card success clickable" onclick="switchTab('pdc', this)">
+            <div class="stat-content">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-label">PDC Training</div>
+                        <div class="stat-value">{{ $pdcInTraining }}</div>
+                    </div>
+                    <div class="stat-icon">
+                        <svg class="icon-24" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 11l1.5-5h11L19 11M3 11h18v6H3zM6 17v2m12-2v2"/></svg>
+                    </div>
+                </div>
+                <div class="stat-detail">Students currently in practical training</div>
+            </div>
+        </div>
     </div>
 
     {{-- ════════════════════════════════════════════════════
          TAB 1 — In Training
          ════════════════════════════════════════════════════ --}}
-    <div class="tab-panel active" id="tab-training">
+    <div class="tab-panel {{ $pdcSearch !== '' ? '' : 'active' }}" id="tab-training">
         <div class="table-wrapper">
             @if($activeEnrollments->count() > 0)
                 <table>
@@ -429,32 +488,66 @@
                 </div>
             @endif
         </div>
-        @if($standalonePdcEnrollments->count() > 0)
-            <div class="section-header ready-bg" style="margin: 20px 16px 12px;">
-                <h3>Standalone PDC Enrollments <span class="count-badge green">{{ $standalonePdcEnrollments->count() }}</span></h3>
+    </div>
+
+    {{-- ════════════════════════════════════════════════════
+         TAB 2 — PDC Training
+         ════════════════════════════════════════════════════ --}}
+    <div class="tab-panel {{ $pdcSearch !== '' ? 'active' : '' }}" id="tab-pdc">
+        <div class="section-header ready-bg">
+            <h3>PDC Student Training <span class="count-badge green">{{ $pdcEnrollments->total() }}</span></h3>
+        </div>
+        <form method="GET" action="{{ school_route('instructor.theoretical.index') }}" class="pdc-search-form" data-no-ajax="1">
+            <div class="pdc-search-field">
+                <label for="pdcEnrollmentSearch">Search students or courses</label>
+                <input type="search" id="pdcEnrollmentSearch" name="pdc_search" value="{{ $pdcSearch }}" class="form-control" placeholder="Student name, email, or course">
             </div>
-            <div class="table-wrapper">
+            <button type="submit" class="btn-search">Search</button>
+            @if($pdcSearch !== '')
+                <a href="{{ school_route('instructor.theoretical.index') }}" class="btn-clear">Clear</a>
+            @endif
+        </form>
+        <div class="table-wrapper">
+            @if($pdcEnrollments->count() > 0)
                 <table>
                     <thead><tr><th>Student</th><th>Course</th><th>Hours</th><th>Progress</th><th>Status</th><th>Actions</th></tr></thead>
                     <tbody>
-                        @foreach($standalonePdcEnrollments as $enrollment)
+                        @foreach($pdcEnrollments as $enrollment)
                             <tr>
-                                <td>{{ $enrollment->student->name ?? 'N/A' }}</td>
-                                <td>{{ $enrollment->course->title }}</td>
+                                <td>{{ $enrollment->learner->name ?? 'N/A' }}</td>
+                                <td>{{ $enrollment->course->title ?? 'N/A' }}</td>
                                 <td>{{ number_format($enrollment->total_hours, 1) }} / {{ number_format($enrollment->required_hours, 1) }} hrs</td>
                                 <td>{{ $enrollment->progress }}%</td>
-                                <td>{{ $enrollment->status === 'completed' ? 'Completed' : ($enrollment->progress >= 100 ? 'Ready' : 'In Progress') }}</td>
+                                <td>
+                                    @if($enrollment->status === 'completed')
+                                        <span class="badge-custom badge-success">Completed</span>
+                                    @elseif($enrollment->progress >= 100)
+                                        <span class="badge-custom badge-ready">PDC Complete</span>
+                                    @elseif($enrollment->progress > 0)
+                                        <span class="badge-custom badge-progress">In Progress</span>
+                                    @else
+                                        <span class="badge-custom badge-started">Just Started</span>
+                                    @endif
+                                </td>
                                 <td><a href="{{ route('schools.instructor.theoretical.show', ['school' => $school->slug, 'enrollment' => $enrollment->id]) }}" class="btn-action btn-view">Review</a></td>
                             </tr>
                         @endforeach
                     </tbody>
                 </table>
-            </div>
-        @endif
+            @else
+                <div class="empty-state">
+                    <div class="empty-state-text">{{ $pdcSearch !== '' ? 'No matching PDC enrollments found' : 'No PDC enrollments found' }}</div>
+                    <div class="empty-state-sub">Practical Driving Course enrollments will appear here.</div>
+                </div>
+            @endif
+        </div>
+        <div class="mt-4 px-4">
+            {{ $pdcEnrollments->appends(['active_page' => $activeEnrollments->currentPage(), 'passed_page' => $passedStudents->currentPage()])->links() }}
+        </div>
     </div>
 
     {{-- ════════════════════════════════════════════════════
-         TAB 2 — Mark Completion
+         TAB 3 — Mark Completion
          ════════════════════════════════════════════════════ --}}
     <div class="tab-panel" id="tab-completion">
         {{-- Ready to Pass section --}}
@@ -592,7 +685,7 @@
     </div>
 
     {{-- ════════════════════════════════════════════════════
-         TAB 3 — Passed Students
+         TAB 4 — Passed Students
          ════════════════════════════════════════════════════ --}}
     <div class="tab-panel" id="tab-passed">
         <div class="section-header">
