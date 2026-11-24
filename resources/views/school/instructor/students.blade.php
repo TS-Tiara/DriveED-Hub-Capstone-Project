@@ -414,6 +414,13 @@
                         <div class="student-name">{{ $student->name }}</div>
                         <div class="student-detail"><strong>Email:</strong> {{ $student->email }}</div>
                         <div class="student-detail"><strong>Contact:</strong> {{ $student->contact ?? 'N/A' }}</div>
+                        <div class="student-detail">
+                            <strong>PDC:</strong>
+                            {{ $student->pdc_status }}
+                            @if($student->pdc_status_detail)
+                                ({{ $student->pdc_status_detail }})
+                            @endif
+                        </div>
                         @if($student->avg_progress)
                             <div class="student-grade"><strong>Grade:</strong> {{ number_format($student->avg_progress, 1) }}%</div>
                         @else

@@ -615,6 +615,21 @@
             align-items: center;
         }
 
+        .action-buttons {
+            gap: 6px;
+        }
+
+        .action-buttons .btn-action {
+            width: 44px;
+            height: 44px;
+            padding: 0;
+            flex: 0 0 44px;
+        }
+
+        .action-buttons .btn-action i {
+            margin: 0;
+        }
+
         .btn-edit {
             background: #ffc107;
             color: #000;
@@ -2242,7 +2257,7 @@
                                                     @endif
                                                 </div>
                                                 @if($lStatus === 'verified' && !empty($user->restriction_codes))
-                                                    <div class="d-flex flex-wrap gap-1 mt-1" style="max-width: 120px;">
+                                                    <div class="d-flex flex-wrap gap-1 mt-1">
                                                         @foreach($user->restriction_codes as $code)
                                                             <span class="badge bg-primary" style="font-size: 0.72rem;">{{ $code }}</span>
                                                         @endforeach
@@ -2310,9 +2325,8 @@
                                                     data-profile-picture="{{ $user->profile_picture ? asset('storage/' . $user->profile_picture) : '' }}"
                                                     data-last-login="{{ ($user->last_login_at ?? null) ? \Illuminate\Support\Carbon::parse($user->last_login_at)->diffForHumans() : 'Never' }}"
                                                     data-last-logout="{{ ($user->last_logout_at ?? null) ? \Illuminate\Support\Carbon::parse($user->last_logout_at)->diffForHumans() : 'Never' }}"
-                                                    title="View Student">
+                                                    title="View Student" aria-label="View Student">
                                                     <i class="bi bi-eye"></i>
-                                                    <span>View</span>
                                                 </button>
                                             @elseif($user->role === 'instructor')
                                                 <button type="button" class="btn-action btn-primary js-view-user" 
@@ -2335,9 +2349,8 @@
                                                     data-profile-picture="{{ $user->profile_picture ? asset('storage/' . $user->profile_picture) : '' }}"
                                                     data-last-login="{{ ($user->last_login_at ?? null) ? \Illuminate\Support\Carbon::parse($user->last_login_at)->diffForHumans() : 'Never' }}"
                                                     data-last-logout="{{ ($user->last_logout_at ?? null) ? \Illuminate\Support\Carbon::parse($user->last_logout_at)->diffForHumans() : 'Never' }}"
-                                                    title="View Instructor">
+                                                    title="View Instructor" aria-label="View Instructor">
                                                     <i class="bi bi-eye"></i>
-                                                    <span>View</span>
                                                 </button>
 @endif
 
@@ -2349,9 +2362,8 @@
                                                     data-address="{{ $user->address }}" data-branch="{{ $user->branch_id }}"
                                                     data-license="{{ $user->license_number }}"
                                                     data-license-expiration="{{ $user->license_expiration_date }}"
-                                                    title="Edit Student">
+                                                    title="Edit Student" aria-label="Edit Student">
                                                     <i class="bi bi-pencil-square"></i>
-                                                    <span>Edit</span>
                                                 </button>
                                             @elseif($user->role === 'instructor')
                                                 <button type="button" class="btn-action btn-info js-edit-user" data-role="instructor"
@@ -2362,9 +2374,8 @@
                                                     data-address="{{ $user->address }}"
                                                     data-availability="{{ $user->availability }}" data-branch="{{ $user->branch_id }}"
                                                     data-specializations="{{ json_encode($user->course_specializations ?? []) }}"
-                                                    title="Edit Instructor">
+                                                    title="Edit Instructor" aria-label="Edit Instructor">
                                                     <i class="bi bi-pencil-square"></i>
-                                                    <span>Edit</span>
                                                 </button>
 
                                                 {{-- Verify button moved to License column --}}
@@ -2397,10 +2408,10 @@
                                                 <button type="button"
                                                     class="btn-action {{ $user->status === 'active' ? 'btn-warning' : 'btn-success' }}"
                                                     onclick="unifiedToggle({{ $user->id }}, 'status', '{{ $user->status }}', '{{ $user->role }}')"
-                                                    title="{{ $user->status === 'active' ? 'Deactivate' : 'Activate' }}">
+                                                    title="{{ $user->status === 'active' ? 'Deactivate ' . ucfirst($user->role) : 'Activate ' . ucfirst($user->role) }}"
+                                                    aria-label="{{ $user->status === 'active' ? 'Deactivate ' . ucfirst($user->role) : 'Activate ' . ucfirst($user->role) }}">
                                                     <i
                                                         class="bi {{ $user->status === 'active' ? 'bi-pause-circle' : 'bi-play-circle' }}"></i>
-                                                    <span>{{ $user->status === 'active' ? 'Deactivate' : 'Activate' }}</span>
                                                 </button>
                                             @endif
 
@@ -2409,10 +2420,10 @@
                                                 <button type="button"
                                                     class="btn-action {{ $user->availability === 'available' ? 'btn-secondary' : 'btn-primary' }}"
                                                     onclick="unifiedToggle({{ $user->id }}, 'availability', '{{ $user->availability }}', '{{ $user->role }}')"
-                                                    title="{{ $user->availability === 'available' ? 'Mark Unavailable' : 'Mark Available' }}">
+                                                    title="{{ $user->availability === 'available' ? 'Set as Unavailable' : 'Set as Available' }}"
+                                                    aria-label="{{ $user->availability === 'available' ? 'Set as Unavailable' : 'Set as Available' }}">
                                                     <i
                                                         class="bi {{ $user->availability === 'available' ? 'bi-person-dash' : 'bi-person-check' }}"></i>
-                                                    <span>{{ $user->availability === 'available' ? 'Unavailable' : 'Available' }}</span>
                                                 </button>
                                             @endif
                                         </div>

@@ -193,6 +193,8 @@
         margin-bottom: 15px;
         text-align: justify;
         width: 100%;
+        white-space: pre-line;
+        overflow-wrap: anywhere;
     }
     
     .course-features {
@@ -861,7 +863,7 @@
                 <h3 class="course-title">{{ $course->title }}</h3>
                 
                 @if($course->description)
-                    <p class="course-description">{{ Str::limit($course->description, 120) }}</p>
+                    <p class="course-description">{{ $course->description }}</p>
                 @endif
 
                 @php
@@ -1041,6 +1043,11 @@
                         </span>
                     </div>
 
+                    <section class="mb-3 p-3 rounded border bg-light" aria-labelledby="course-description-{{ $course->id }}">
+                        <h6 id="course-description-{{ $course->id }}" class="mb-2">Course Description</h6>
+                        <p class="mb-0" style="white-space: pre-line; overflow-wrap: anywhere;">{{ $course->description ?: 'No description provided.' }}</p>
+                    </section>
+
                     @if($course->course_type === 'practical')
                     <!-- PDC License Notice -->
                     <div class="alert alert-info alert-warning-compact mb-3">
@@ -1180,8 +1187,7 @@
                     <!-- Info Alert -->
                     <div class="alert alert-info mb-0">
                         <small>
-                            <i class="fas fa-info-circle me-1"></i>
-                            Your enrollment request will be reviewed by an administrator. You'll be notified once approved.
+                            <i class="fas fa-info-circle me-1"></i>Your enrollment request will be reviewed by an administrator. You'll be notified once approved.
                         </small>
                     </div>
                 </div>

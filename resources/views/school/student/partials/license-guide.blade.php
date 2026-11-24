@@ -91,6 +91,11 @@
         font-size: 0.85rem;
         color: #6b7280;
         line-height: 1.5;
+        display: block;
+        max-height: none;
+        overflow: visible;
+        white-space: pre-line;
+        overflow-wrap: anywhere;
     }
 
     .step-badge {

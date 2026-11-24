@@ -662,10 +662,10 @@
             font-size: 12px;
             color: #6b7280;
             line-height: 1.3;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
+            display: block;
+            white-space: normal;
+            overflow: visible;
+            overflow-wrap: anywhere;
         }
 
         .notification-item-time {
@@ -2251,7 +2251,7 @@
                         <div class="nav-category-items">
                             <a href="{{ $schoolRoute('student.my-course') }}" class="nav-item" data-page="my-course">Enrolled
                                 Course</a>
-                            <a href="{{ $schoolRoute('student.progress.index') }}" class="nav-item" data-page="progress">My
+                            <a href="{{ $schoolRoute('student.my-progress') }}" class="nav-item" data-page="progress">My
                                 Progress</a>
                             <a href="{{ $schoolRoute('student.courses.index') }}" class="nav-item" data-page="courses">Browse
                                 Courses</a>

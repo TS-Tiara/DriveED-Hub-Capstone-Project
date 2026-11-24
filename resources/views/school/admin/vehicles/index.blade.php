@@ -678,7 +678,11 @@
         document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('active'));
         el.classList.add('active');
         document.querySelectorAll('#vehicleTableBody tr').forEach(r => {
-            r.style.display = (status === 'all' || r.dataset.status === status) ? '' : 'none';
+            const rowStatus = r.dataset.status;
+            const isInactive = rowStatus === 'maintenance' || rowStatus === 'out_of_service';
+            const matchesStatus = status === 'all'
+                || (status === 'inactive' ? isInactive : rowStatus === status);
+            r.style.display = matchesStatus ? '' : 'none';
         });
     }
 

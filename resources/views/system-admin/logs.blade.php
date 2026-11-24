@@ -49,12 +49,6 @@
         padding: 1.25rem;
         box-shadow: 0 2px 8px rgba(0,0,0,0.06);
         border-left: 4px solid;
-        transition: transform 0.2s, box-shadow 0.2s;
-    }
-    
-    .stat-box:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
     
     .stat-box.critical { border-color: #dc2626; }

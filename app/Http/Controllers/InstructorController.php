@@ -10,6 +10,7 @@ use App\Models\TimeSlot;
 use App\Models\Booking;
 use App\Models\Progress;
 use App\Models\SessionCompletion;
+use App\Models\EnrollmentRequest;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -36,13 +37,12 @@ class InstructorController extends Controller
             ->count();
 
         $weeklySchedules = TimeSlot::where('school_id', '=', $school->id, 'and')
+            ->where('branch_id', '=', $instructor->branch_id, 'and')
             ->whereHas('instructors', function ($query) use ($instructor) {
             $query->where('instructor_id', '=', $instructor->id, 'and');
         })
-            ->whereBetween('date', [
-            Carbon::now()->startOfWeek(),
-            Carbon::now()->endOfWeek()
-        ], 'and', false)
+            ->whereDate('date', '>=', Carbon::today())
+            ->whereDate('date', '<=', Carbon::now()->endOfWeek())
             ->count();
 
         $nextLesson = TimeSlot::where('school_id', '=', $school->id, 'and')
@@ -286,6 +286,32 @@ class InstructorController extends Controller
             $student->next_session = $student->bookings->where('status', Booking::STATUS_SCHEDULED)
                 ->where('scheduled_at', '>', now())
                 ->first();
+
+            $pdcEnrollment = EnrollmentRequest::where('learner_id', $student->id)
+                ->where('school_id', $student->school_id)
+                ->whereIn('status', ['approved', 'completed'])
+                ->whereHas('course', fn ($query) => $query->whereIn('course_type', ['practical', 'combo']))
+                ->with('sessionCompletions')
+                ->latest('created_at')
+                ->first();
+
+            if (!$pdcEnrollment) {
+                $student->pdc_status = 'No PDC';
+                $student->pdc_status_detail = null;
+            } else {
+                $used = (float) $pdcEnrollment->used_pdc_hours;
+                $required = (float) $pdcEnrollment->pdc_hours_limit;
+                if ($required > 0 && $used >= $required) {
+                    $student->pdc_status = 'Completed';
+                    $student->pdc_status_detail = null;
+                } elseif ($used > 0) {
+                    $student->pdc_status = 'In Progress';
+                    $student->pdc_status_detail = $used.' / '.$required.' hrs';
+                } else {
+                    $student->pdc_status = 'Not Started';
+                    $student->pdc_status_detail = '0 / '.$required.' hrs';
+                }
+            }
         });
 
         return view($school->resolveView('instructor.students'), [
@@ -396,6 +422,30 @@ class InstructorController extends Controller
         }
         $sessions = $sessions->sortByDesc(fn ($session) => $session['date'] ?? null)->values();
 
+        $pdcEnrollment = EnrollmentRequest::where('learner_id', $student->id)
+            ->where('school_id', $school->id)
+            ->whereIn('status', ['approved', 'completed'])
+            ->whereHas('course', fn ($query) => $query->whereIn('course_type', ['practical', 'combo']))
+            ->with('sessionCompletions')
+            ->latest('created_at')
+            ->first();
+
+        $pdcStatus = 'No PDC';
+        $pdcStatusDetail = null;
+        if ($pdcEnrollment) {
+            $used = (float) $pdcEnrollment->used_pdc_hours;
+            $required = (float) $pdcEnrollment->pdc_hours_limit;
+            if ($required > 0 && $used >= $required) {
+                $pdcStatus = 'Completed';
+            } elseif ($used > 0) {
+                $pdcStatus = 'In Progress';
+                $pdcStatusDetail = $used.' / '.$required.' hrs';
+            } else {
+                $pdcStatus = 'Not Started';
+                $pdcStatusDetail = '0 / '.$required.' hrs';
+            }
+        }
+
         // Calculate counts for the view
         $myCompletedCount = Booking::where('student_id', '=', $student->id, 'and')
             ->where(function ($query) use ($instructor) {
@@ -425,6 +475,8 @@ class InstructorController extends Controller
             'instructor' => $instructor,
             'myCompletedCount' => $myCompletedCount,
             'myUpcomingCount' => $myUpcomingCount,
+            'pdcStatus' => $pdcStatus,
+            'pdcStatusDetail' => $pdcStatusDetail,
         ]);
     }
 

@@ -1394,16 +1394,6 @@
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label">
-                                <input type="checkbox" name="enable_branches" value="1" {{ old('enable_branches', $settings->enable_branches ?? false) ? 'checked' : '' }} class="checkbox-inline">
-                                Enable Preferred Branch Selection
-                            </label>
-                            <small class="text-muted help-text-block">
-                                Allow guests and students to select an active branch when enrolling in courses
-                            </small>
-                        </div>
-
-                        <div class="form-group">
                             <label class="form-label">Max Branch Managers Per Branch</label>
                             <input type="number" class="number-input" name="branch_secretary_limit_per_branch" value="{{ old('branch_secretary_limit_per_branch', $settings->branch_secretary_limit_per_branch ?? 1) }}" min="1" max="50">
                             <small class="text-muted help-text-block">

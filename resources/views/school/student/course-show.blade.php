@@ -520,6 +520,11 @@
         <div class="modal-body">
             <form action="{{ route('schools.student.enroll', ['school' => $school->slug, 'course' => $course->id]) }}" method="POST" enctype="multipart/form-data">
                 @csrf
+
+                <section class="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-4" aria-labelledby="enrollment-course-description">
+                    <h4 id="enrollment-course-description" class="mb-2 font-semibold text-gray-900">Course Description</h4>
+                    <p class="mb-0 whitespace-pre-line break-words text-sm leading-relaxed text-gray-700">{{ $course->description ?: 'No description provided.' }}</p>
+                </section>
                 
                 @if($course->packages && $course->packages->count() > 0)
                 <div class="form-group">

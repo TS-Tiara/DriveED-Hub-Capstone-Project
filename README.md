@@ -2,7 +2,52 @@
 
 A school portal for managing students, instructors, courses, schedules, payments, and training records.
 
-[Panel findings](#panel-findings) · [November 15](#fixes-november-15-2026) · [November 14](#fixes-november-14-2026) · [November 10](#fixes-november-10-2026) · [November 9](#fixes-november-9-2026) · [November 8](#fixes-november-8-2026) · [November 5](#fixes-november-5-2026) · [November 4](#latest-fixes-november-4-2026) · [November 1](#fixes-november-1-2026) · [October 31](#latest-fixes-october-31-2026) · [October 30](#fixes-october-30-2026) · [October 29](#fixes-october-29-2026) · [October 27](#fixes-october-27-2026) · [Earlier fixes](#earlier-fixes-october-20-to-26-2026)
+[Design feedback — November 23](#design-feedback-november-23-2026) · [Panel findings](#panel-findings) · [November 15](#fixes-november-15-2026) · [November 14](#fixes-november-14-2026) · [November 10](#fixes-november-10-2026) · [November 9](#fixes-november-9-2026) · [November 8](#fixes-november-8-2026) · [November 5](#fixes-november-5-2026) · [November 4](#latest-fixes-november-4-2026) · [November 1](#fixes-november-1-2026) · [October 31](#latest-fixes-october-31-2026) · [October 30](#fixes-october-30-2026) · [October 29](#fixes-october-29-2026) · [October 27](#fixes-october-27-2026) · [Earlier fixes](#earlier-fixes-october-20-to-26-2026)
+
+## Design feedback November 23 2026
+
+Implemented the findings in `DriveED_Hub_Design_Feedback.docx` across guest and student enrollment, school administration, instructor, and system administration views.
+
+- Course descriptions remain complete in guest and student cards and enrollment dialogs. Permit guidance descriptions wrap fully, enrollment notices have corrected spacing, and course details use consistent spacing.
+- Student progress bars render at the correct width from the initial response, and schedule export menus open beneath their buttons.
+- Payment records show one official receipt reference and a clear **View Receipt** action. User-management actions use accessible icon buttons with tooltips, and license badges can wrap across the available width.
+- Static admin summary cards no longer imply hover actions. Inactive vehicle filtering includes both maintenance and out-of-service vehicles. Instructor schedule counts match the current/future week, notification messages are no longer truncated, and the system log summaries remain static.
+- Instructor session and grade option cards also use static styling when they do not perform an action.
+
+### Before and after screenshots
+
+The full 20-page before/after gallery was captured from the Git baseline and the updated local app at matching viewport sizes. Interactive states are included where relevant, such as the guest enrollment modal, student course details, open schedule export menus, and the filtered inactive fleet.
+
+| Area | Before | After |
+| --- | --- | --- |
+| Guest dashboard and permit guide | <img src="docs/screenshots/design-feedback/before/guest-dashboard.png" alt="Before: guest dashboard and permit guide" width="240"> | <img src="docs/screenshots/design-feedback/after/guest-dashboard.png" alt="After: guest dashboard and permit guide" width="240"> |
+| Guest course catalog | <img src="docs/screenshots/design-feedback/before/guest-courses.png" alt="Before: guest course catalog" width="240"> | <img src="docs/screenshots/design-feedback/after/guest-courses.png" alt="After: guest course catalog with full descriptions" width="240"> |
+| Guest enrollment modal | <img src="docs/screenshots/design-feedback/before/guest-enrollment-modal.png" alt="Before: guest enrollment details" width="240"> | <img src="docs/screenshots/design-feedback/after/guest-enrollment-modal.png" alt="After: guest enrollment modal with full course description" width="240"> |
+| Guest notifications | <img src="docs/screenshots/design-feedback/before/guest-notifications.png" alt="Before: guest notifications" width="240"> | <img src="docs/screenshots/design-feedback/after/guest-notifications.png" alt="After: guest notifications" width="240"> |
+| Student dashboard and permit guide | <img src="docs/screenshots/design-feedback/before/student-dashboard.png" alt="Before: student dashboard and permit guide" width="240"> | <img src="docs/screenshots/design-feedback/after/student-dashboard.png" alt="After: student dashboard and complete permit guidance" width="240"> |
+| Student course catalog | <img src="docs/screenshots/design-feedback/before/student-courses.png" alt="Before: student course catalog" width="240"> | <img src="docs/screenshots/design-feedback/after/student-courses.png" alt="After: student course catalog with full descriptions" width="240"> |
+| Student course details | <img src="docs/screenshots/design-feedback/before/student-course-details.png" alt="Before: student course details" width="240"> | <img src="docs/screenshots/design-feedback/after/student-course-details.png" alt="After: student course details with full description" width="240"> |
+| Student training progress | <img src="docs/screenshots/design-feedback/before/student-my-course.png" alt="Before: student training progress" width="240"> | <img src="docs/screenshots/design-feedback/after/student-my-course.png" alt="After: student training progress with correct initial bar width" width="240"> |
+| Student schedule and export menu | <img src="docs/screenshots/design-feedback/before/student-schedule.png" alt="Before: student schedule export menu" width="240"> | <img src="docs/screenshots/design-feedback/after/student-schedule.png" alt="After: student schedule export menu below its button" width="240"> |
+| Student notifications | <img src="docs/screenshots/design-feedback/before/student-notifications.png" alt="Before: student notifications" width="240"> | <img src="docs/screenshots/design-feedback/after/student-notifications.png" alt="After: student notifications" width="240"> |
+| School admin payments | <img src="docs/screenshots/design-feedback/before/admin-payments.png" alt="Before: school admin payments" width="240"> | <img src="docs/screenshots/design-feedback/after/admin-payments.png" alt="After: single receipt reference and View Receipt button" width="240"> |
+| School admin user management | <img src="docs/screenshots/design-feedback/before/admin-user-management.png" alt="Before: school admin user actions" width="240"> | <img src="docs/screenshots/design-feedback/after/admin-user-management.png" alt="After: accessible user action icons and license badges" width="240"> |
+| School admin vehicles | <img src="docs/screenshots/design-feedback/before/admin-vehicles.png" alt="Before: vehicle fleet before inactive filtering" width="240"> | <img src="docs/screenshots/design-feedback/after/admin-vehicles.png" alt="After: inactive filter showing the matching vehicle" width="240"> |
+| School admin reports | <img src="docs/screenshots/design-feedback/before/admin-reports.png" alt="Before: reports and analytics summary cards" width="240"> | <img src="docs/screenshots/design-feedback/after/admin-reports.png" alt="After: reports and analytics summary cards" width="240"> |
+| Instructor dashboard | <img src="docs/screenshots/design-feedback/before/instructor-dashboard.png" alt="Before: instructor dashboard option cards" width="240"> | <img src="docs/screenshots/design-feedback/after/instructor-dashboard.png" alt="After: instructor dashboard static option cards" width="240"> |
+| Instructor sessions | <img src="docs/screenshots/design-feedback/before/instructor-sessions.png" alt="Before: instructor sessions and notifications" width="240"> | <img src="docs/screenshots/design-feedback/after/instructor-sessions.png" alt="After: complete instructor notifications" width="240"> |
+| Instructor grades | <img src="docs/screenshots/design-feedback/before/instructor-grades.png" alt="Before: instructor grade management" width="240"> | <img src="docs/screenshots/design-feedback/after/instructor-grades.png" alt="After: instructor grade management" width="240"> |
+| Instructor schedule and weekly count | <img src="docs/screenshots/design-feedback/before/instructor-schedule.png" alt="Before: instructor weekly schedule" width="240"> | <img src="docs/screenshots/design-feedback/after/instructor-schedule.png" alt="After: instructor weekly schedule and export menu" width="240"> |
+| Instructor notifications | <img src="docs/screenshots/design-feedback/before/instructor-notifications.png" alt="Before: instructor notifications" width="240"> | <img src="docs/screenshots/design-feedback/after/instructor-notifications.png" alt="After: instructor notifications" width="240"> |
+| System admin logs | <img src="docs/screenshots/design-feedback/before/system-admin-logs.png" alt="Before: system admin log summary cards" width="240"> | <img src="docs/screenshots/design-feedback/after/system-admin-logs.png" alt="After: static system admin log summary cards" width="240"> |
+
+### Verification
+
+- `node tests/verify-design-feedback.mjs` — 16 regression checks passed.
+- Browser smoke check — Payments, User Management, and Vehicle Management loaded with a seeded school-admin account; the inactive filter displayed the vehicle counted by the summary.
+- `php -l app/Http/Controllers/InstructorController.php` — passed.
+- `php artisan view:cache` and `php artisan view:clear` — passed.
+- The full Laravel test suite was unavailable because this checkout does not contain the expected `phpunit.xml.dist` file.
 
 ## Panel findings
 

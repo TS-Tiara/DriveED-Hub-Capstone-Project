@@ -224,6 +224,8 @@
         font-size: 0.9rem;
         line-height: 1.5;
         margin-bottom: 15px;
+        white-space: pre-line;
+        overflow-wrap: anywhere;
     }
     
     .course-features {
@@ -599,7 +601,7 @@
                 <h3 class="course-title">{{ $course->title }}</h3>
                 
                 @if($course->description)
-                    <p class="course-description">{{ Str::limit($course->description, 120) }}</p>
+                    <p class="course-description">{{ $course->description }}</p>
                 @endif
 
                 @php
