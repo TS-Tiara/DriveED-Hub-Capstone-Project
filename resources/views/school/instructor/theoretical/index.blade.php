@@ -64,7 +64,11 @@
         display: flex;
         align-items: flex-end;
         gap: 10px;
-        margin: 0 0 20px;
+        margin: 20px 0;
+        padding: 16px;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
     }
 
     .training-search-field {
@@ -335,17 +339,6 @@
         <div class="action-buttons"><a class="btn btn-primary" data-no-ajax="1" href="{{ school_route('instructor.theoretical.exportList') }}">Export PDF</a><a class="btn btn-success" data-no-ajax="1" href="{{ school_route('instructor.theoretical.exportExcel') }}">Export Excel</a></div>
     </div>
 
-    <form method="GET" action="{{ school_route('instructor.theoretical.index') }}" class="training-search-form" data-no-ajax="1">
-        <div class="training-search-field">
-            <label for="studentTrainingSearch">Search the student training list</label>
-            <input type="search" id="studentTrainingSearch" name="search" value="{{ $studentSearch }}" class="form-control" maxlength="120" placeholder="Student name, email, or course">
-        </div>
-        <button type="submit" class="btn-search">Search</button>
-        @if($studentSearch !== '')
-            <a href="{{ school_route('instructor.theoretical.index') }}" class="btn-clear">Clear</a>
-        @endif
-    </form>
-
     <!-- Stats Cards (clickable - serve as tab navigation) -->
     <div class="stats-grid">
         <div class="stat-card students clickable" onclick="switchTab('training', this)">
@@ -405,6 +398,17 @@
             </div>
         </div>
     </div>
+
+    <form method="GET" action="{{ school_route('instructor.theoretical.index') }}" class="training-search-form" data-no-ajax="1">
+        <div class="training-search-field">
+            <label for="studentTrainingSearch">Search the student training list</label>
+            <input type="search" id="studentTrainingSearch" name="search" value="{{ $studentSearch }}" class="form-control" maxlength="120" placeholder="Student name, email, or course">
+        </div>
+        <button type="submit" class="btn-search">Search</button>
+        @if($studentSearch !== '')
+            <a href="{{ school_route('instructor.theoretical.index') }}" class="btn-clear">Clear</a>
+        @endif
+    </form>
 
     {{-- ════════════════════════════════════════════════════
          TAB 1 — In Training
