@@ -263,6 +263,7 @@
                     <span class="status-dot {{ $student->status === 'active' ? 'status-dot-active' : 'status-dot-inactive' }}"></span>
                     {{ ucfirst($student->status) }} Student
                 </p>
+                <p><strong>PDC Status:</strong> {{ $pdcStatus }}@if($pdcStatusDetail) ({{ $pdcStatusDetail }})@endif</p>
             </div>
 
             <div class="progress-summary">

@@ -15,6 +15,9 @@
     $requiredHours = $enrollment->tdc_hours_limit;
     $progress = $requiredHours > 0 ? min(100, round(($totalHours / $requiredHours) * 100)) : 0;
     $progressClass = $progress >= 100 ? 'high' : ($progress >= 50 ? 'mid' : 'low');
+    $pdcLimit = (float) $enrollment->pdc_hours_limit;
+    $pdcUsed = (float) $enrollment->used_pdc_hours;
+    $pdcProgress = $pdcLimit > 0 ? min(100, round(($pdcUsed / $pdcLimit) * 100)) : 0;
 @endphp
 
 @include('school.admin.partials.admin-styles')
@@ -496,6 +499,18 @@
                         {{ $progress }}%
                     </div>
                 </div>
+                @if($pdcLimit > 0)
+                    <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e5e7eb;">
+                        <strong>PDC Status:</strong>
+                        @if($pdcProgress >= 100)
+                            Completed
+                        @elseif($pdcUsed > 0)
+                            In Progress ({{ rtrim(rtrim(number_format($pdcUsed, 1), '0'), '.') }} / {{ rtrim(rtrim(number_format($pdcLimit, 1), '0'), '.') }} hrs)
+                        @else
+                            Not Started (0 / {{ rtrim(rtrim(number_format($pdcLimit, 1), '0'), '.') }} hrs)
+                        @endif
+                    </div>
+                @endif
             </div>
 
             <!-- Session History -->

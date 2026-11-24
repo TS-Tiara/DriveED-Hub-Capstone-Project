@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log as LogFacade;
+use App\Models\Notification;
 
 class TheoreticalCompletionController extends Controller
 {
@@ -357,6 +358,17 @@ class TheoreticalCompletionController extends Controller
         try {
             // Use the centralized graduation logic which also resolves pending phase requests
             $enrollment->markAsCompleted();
+
+            if ($enrollment->learner) {
+                Notification::send(
+                    $enrollment->learner,
+                    'certificate_claim_ready',
+                    'Your certificate is ready for pickup',
+                    'Your Certificate of Completion is ready! Please visit the school office during business hours to pick it up.',
+                    'success',
+                    route('schools.student.dashboard', $school)
+                );
+            }
 
             DB::commit();
 
