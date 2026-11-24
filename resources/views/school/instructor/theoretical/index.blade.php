@@ -1,6 +1,6 @@
 @extends($isAjax ?? false ? 'layouts.ajax' : 'layouts.app')
 
-@section('title', 'Theoretical Training')
+@section('title', 'Student Training List')
 
 @section('content')
 @php
@@ -284,7 +284,7 @@
     <!-- Page Header -->
     <div class="page-header">
         <div>
-            <h1 class="page-title">Theoretical Training</h1>
+            <h1 class="page-title">Student Training List</h1>
             <p class="page-subtitle">Track student progress, mark completions, and view passed students</p>
         </div>
         <a class="btn btn-primary" data-no-ajax="1" href="{{ school_route('instructor.theoretical.exportList') }}">Export PDF</a>
@@ -349,6 +349,7 @@
                         <tr>
                             <th>Student</th>
                             <th>Course</th>
+                            <th>Phase</th>
                             <th>Enrolled</th>
                             <th>Hours</th>
                             <th>Progress</th>
@@ -376,6 +377,7 @@
                                     <div class="course-title">{{ $enrollment->course->title }}</div>
                                     <div class="course-license">{{ ucfirst(str_replace('_', ' ', $enrollment->course->license_type)) }}</div>
                                 </td>
+                                <td>{{ $enrollment->training_phase === 'practical' ? 'PDC' : 'TDC' }}</td>
                                 <td><span class="date-text">{{ $enrollment->enrolled_at?->format('M d, Y') ?? 'N/A' }}</span></td>
                                 <td>
                                     <div class="hours-display">
@@ -398,7 +400,11 @@
                                     </div>
                                 </td>
                                 <td>
-                                    @if($enrollment->progress >= 100)
+                                    @if($enrollment->status === 'completed')
+                                        <span class="badge-custom badge-success">Completed</span>
+                                    @elseif($enrollment->training_phase === 'practical' && $enrollment->progress >= 100)
+                                        <span class="badge-custom badge-ready">PDC Complete</span>
+                                    @elseif($enrollment->progress >= 100)
                                         <span class="badge-custom badge-ready">Ready to Pass</span>
                                     @elseif($enrollment->progress > 0)
                                         <span class="badge-custom badge-progress">In Progress</span>
@@ -423,6 +429,28 @@
                 </div>
             @endif
         </div>
+        @if($standalonePdcEnrollments->count() > 0)
+            <div class="section-header ready-bg" style="margin: 20px 16px 12px;">
+                <h3>Standalone PDC Enrollments <span class="count-badge green">{{ $standalonePdcEnrollments->count() }}</span></h3>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead><tr><th>Student</th><th>Course</th><th>Hours</th><th>Progress</th><th>Status</th><th>Actions</th></tr></thead>
+                    <tbody>
+                        @foreach($standalonePdcEnrollments as $enrollment)
+                            <tr>
+                                <td>{{ $enrollment->student->name ?? 'N/A' }}</td>
+                                <td>{{ $enrollment->course->title }}</td>
+                                <td>{{ number_format($enrollment->total_hours, 1) }} / {{ number_format($enrollment->required_hours, 1) }} hrs</td>
+                                <td>{{ $enrollment->progress }}%</td>
+                                <td>{{ $enrollment->status === 'completed' ? 'Completed' : ($enrollment->progress >= 100 ? 'Ready' : 'In Progress') }}</td>
+                                <td><a href="{{ route('schools.instructor.theoretical.show', ['school' => $school->slug, 'enrollment' => $enrollment->id]) }}" class="btn-action btn-view">Review</a></td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
     </div>
 
     {{-- ════════════════════════════════════════════════════

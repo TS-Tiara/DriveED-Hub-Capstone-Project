@@ -2215,7 +2215,7 @@
                     <div class="nav-category-items">
                         <a href="{{ $schoolRoute('instructor.settings') }}" class="nav-item" data-page="settings">Settings</a>
                         <a href="{{ $schoolRoute('instructor.theoretical.index') }}" class="nav-item"
-                            data-page="theoretical">Theoretical Training</a>
+                            data-page="theoretical">Student Training List</a>
                         <a href="{{ $schoolRoute('instructor.materials.index') }}" class="nav-item"
                             data-page="materials">Course Materials</a>
                         <a href="{{ $schoolRoute('instructor.questions.index') }}" class="nav-item"

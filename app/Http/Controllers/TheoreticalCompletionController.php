@@ -177,6 +177,20 @@ class TheoreticalCompletionController extends Controller
             return $enrollment;
         });
 
+        $approvedTdcLearnerIds = EnrollmentRequest::where('school_id', $school->id)
+            ->whereIn('status', ['approved', 'completed'])
+            ->whereHas('course', fn ($query) => $query->whereIn('course_type', ['theoretical', 'combo']))
+            ->pluck('learner_id')
+            ->unique();
+
+        $standalonePdcEnrollments = $activeEnrollments->getCollection()
+            ->where('training_phase', 'practical')
+            ->filter(function ($enrollment) use ($approvedTdcLearnerIds) {
+                return $enrollment->course->course_type === 'practical'
+                    && !$approvedTdcLearnerIds->contains((int) $enrollment->learner_id);
+            })
+            ->values();
+
         // Split for Mark Completion tab (representing ONLY current page)
         $theoreticalEnrollments = $activeEnrollments->getCollection()
             ->where('status', 'approved')
@@ -202,7 +216,8 @@ class TheoreticalCompletionController extends Controller
         return view($ctx['viewPrefix'] . '.index', array_merge(compact(
             'school', 'activeEnrollments', 'totalInTraining', 'readyToPass',
             'readyEnrollments', 'notReadyEnrollments',
-            'passedStudents', 'totalPassed', 'passedEnrollmentIds'
+            'passedStudents', 'totalPassed', 'passedEnrollmentIds',
+            'standalonePdcEnrollments'
         ), ['isAjax' => $request->ajax()]));
     }
 

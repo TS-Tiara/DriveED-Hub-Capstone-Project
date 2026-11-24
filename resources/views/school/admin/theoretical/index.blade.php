@@ -465,6 +465,28 @@
         <div class="mt-4 px-4">
             {{ $activeEnrollments->appends(['passed_page' => $passedStudents->currentPage()])->links() }}
         </div>
+        @if($standalonePdcEnrollments->count() > 0)
+            <div class="section-header ready-bg" style="margin: 20px 16px 12px;">
+                <h3>Standalone PDC Enrollments <span class="count-badge green">{{ $standalonePdcEnrollments->count() }}</span></h3>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead><tr><th>Student</th><th>Course</th><th>Hours</th><th>Progress</th><th>Status</th><th>Actions</th></tr></thead>
+                    <tbody>
+                        @foreach($standalonePdcEnrollments as $enrollment)
+                            <tr>
+                                <td>{{ $enrollment->student->name ?? 'N/A' }}</td>
+                                <td>{{ $enrollment->course->title }}</td>
+                                <td>{{ number_format($enrollment->total_hours, 1) }} / {{ number_format($enrollment->required_hours, 1) }} hrs</td>
+                                <td>{{ $enrollment->progress }}%</td>
+                                <td>{{ $enrollment->status === 'completed' ? 'Completed' : ($enrollment->progress >= 100 ? 'Ready' : 'In Progress') }}</td>
+                                <td><a href="{{ route('schools.admin.theoretical.show', ['school' => $school->slug, 'enrollment' => $enrollment->id]) }}" class="btn-action btn-view">Review</a></td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
     </div>
 
     {{-- ════════════════════════════════════════════════════
