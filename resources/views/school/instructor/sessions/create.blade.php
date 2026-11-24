@@ -379,7 +379,10 @@
 
                     <!-- Enrollment Selection -->
                     <div class="form-group">
-                        <label class="form-label">Student Enrollment <span class="required">*</span></label>
+                        <label class="form-label" for="enrollmentSearch">Search enrollments</label>
+                        <input type="search" id="enrollmentSearch" class="form-input" placeholder="Search by student or course..." autocomplete="off">
+                        <p id="enrollmentSearchStatus" class="form-hint" aria-live="polite"></p>
+                        <label class="form-label" for="enrollment_id" style="margin-top: 12px;">Student Enrollment <span class="required">*</span></label>
                         <select name="enrollment_id" id="enrollment_id" class="form-select" required>
                             <option value="">Select a student enrollment...</option>
                             @foreach($enrollments as $enrollment)
@@ -568,6 +571,8 @@
 <script>
 (function() {
     const enrollmentSelect = document.getElementById('enrollment_id');
+    const enrollmentSearch = document.getElementById('enrollmentSearch');
+    const enrollmentSearchStatus = document.getElementById('enrollmentSearchStatus');
     const enrollmentInfo = document.getElementById('enrollmentInfo');
     const sessionTypeSelect = document.getElementById('session_type');
     const sessionTypeHint = document.getElementById('sessionTypeHint');
@@ -640,6 +645,33 @@
         }
     }
 
+    function filterEnrollments() {
+        const query = enrollmentSearch.value.trim().toLowerCase();
+        let matches = 0;
+
+        Array.from(enrollmentSelect.options).forEach(function(option) {
+            if (!option.value) {
+                option.hidden = false;
+                option.disabled = false;
+                return;
+            }
+
+            const isMatch = option.textContent.toLowerCase().includes(query);
+            option.hidden = !isMatch;
+            option.disabled = !isMatch;
+            if (isMatch) matches++;
+        });
+
+        if (enrollmentSelect.selectedOptions[0]?.hidden) {
+            enrollmentSelect.value = '';
+            updateEnrollmentInfo();
+        }
+
+        enrollmentSearchStatus.textContent = query && matches === 0
+            ? 'No enrollments match that search.'
+            : '';
+    }
+
     function updatePhaseHours() {
         const selected = enrollmentSelect.selectedOptions[0];
         const type = sessionTypeSelect.value;
@@ -652,7 +684,12 @@
         document.getElementById('hoursRemaining').textContent = remaining.toFixed(1) + ' hrs (' + (type === 'theoretical' ? 'TDC' : 'PDC') + ')';
     }
     
-    enrollmentSelect.addEventListener('change', updateEnrollmentInfo);
+    enrollmentSearch.addEventListener('input', filterEnrollments);
+    enrollmentSelect.addEventListener('change', function() {
+        enrollmentSearch.value = '';
+        filterEnrollments();
+        updateEnrollmentInfo();
+    });
     function updateHoursGuard() {
         const selected = enrollmentSelect.selectedOptions[0];
         const type = sessionTypeSelect.value;
@@ -676,6 +713,7 @@
     });
     
     // Initialize on page load
+    filterEnrollments();
     if (enrollmentSelect.value) {
         updateEnrollmentInfo();
     } else {

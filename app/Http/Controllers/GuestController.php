@@ -174,7 +174,7 @@ class GuestController extends Controller
         $enrollmentStatuses = [];
         if ($guest) {
             $enrollments = $guest->enrollmentRequests()
-                ->whereIn('status', ['pending', 'approved'])
+                ->whereIn('status', ['pending', 'approved', 'revision_required'])
                 ->get();
             $enrolledCourseIds = $enrollments->pluck('course_id')->toArray();
             $enrollmentStatuses = $enrollments->pluck('status', 'course_id')->toArray();
@@ -799,6 +799,9 @@ class GuestController extends Controller
         ]);
 
         try {
+            // Check if this is a re-upload after rejection
+            $wasRejected = $guest->student_license_status === 'rejected';
+
             // Delete old file if re-uploading
             if ($guest->student_license_path) {
                 Storage::disk('local')->delete($guest->student_license_path);
@@ -814,10 +817,13 @@ class GuestController extends Controller
                 ->whereHas('course', function ($query) {
                     $query->where('course_type', 'practical');
                 })
-                ->whereIn('status', ['pending', 'revision_required'])
+                ->whereIn('status', ['pending', 'approved'])
                 ->exists();
 
-            $licenseStatus = $hasOpenPracticalEnrollment ? 'pending' : 'none';
+            // Notify admins if there's an open practical enrollment OR if re-uploading after rejection
+            $shouldNotifyAdmins = $hasOpenPracticalEnrollment || $wasRejected;
+
+            $licenseStatus = $shouldNotifyAdmins ? 'pending' : 'none';
 
             $guest->update([
                 'student_license_path' => $path,
@@ -836,8 +842,8 @@ class GuestController extends Controller
                 'path' => $path,
             ]);
 
-            // Notify admins only when there is an actionable practical enrollment request.
-            if ($hasOpenPracticalEnrollment) {
+            // Notify admins when there is an actionable practical enrollment request or re-upload after rejection.
+            if ($shouldNotifyAdmins) {
                 $admins = Admin::where('school_id', $school->id)->where('is_active', true)->get();
                 foreach ($admins as $admin) {
                     Notification::send(

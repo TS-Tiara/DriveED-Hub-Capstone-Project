@@ -2060,11 +2060,17 @@ class AdminController extends Controller
                     $single->headers->set('Accept', 'application/json');
                     $single->headers->set('X-Requested-With', 'XMLHttpRequest');
                     $response = $this->createSchedule($single, $school);
+                    $data = $response->getData(true);
                     if ($response->getStatusCode() !== 201) {
-                        $data = $response->getData(true);
                         throw \Illuminate\Validation\ValidationException::withMessages($data['errors'] ?? ['branch_ids' => $data['message'] ?? 'Unable to create schedules.']);
                     }
-                    $created[] = $response->getData(true)['schedule'];
+                    $branchSchedules = $data['schedules'] ?? (isset($data['schedule']) ? [$data['schedule']] : []);
+                    if (!$branchSchedules) {
+                        throw \Illuminate\Validation\ValidationException::withMessages([
+                            'branch_ids' => 'The schedule request did not return any created schedules.',
+                        ]);
+                    }
+                    $created = array_merge($created, $branchSchedules);
                 }
                 return response()->json(['success' => true, 'message' => count($created).' branch schedule(s) created.', 'schedules' => $created], 201);
             });

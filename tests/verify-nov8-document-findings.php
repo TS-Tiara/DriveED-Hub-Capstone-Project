@@ -41,6 +41,20 @@ try {
     $result = app(AdminController::class)->createSchedule($request($body + ['time_ranges' => $ranges]), $school);
     $check($result->getStatusCode() === 201, 'Non-sequential same-day ranges create successfully');
     $check(TimeSlot::where('course_id', $course->id)->count() === 2, 'Both time ranges persist');
+    $branchIds = \App\Models\Branch::where('school_id', $school->id)->orderBy('id')->limit(2)->pluck('id')->all();
+    $check(count($branchIds) === 2, 'The regression fixture has two school branches');
+    $batchDates = [now()->addDays(120)->toDateString(), now()->addDays(121)->toDateString()];
+    $batchResponse = app(AdminController::class)->createSchedule($request([
+        'branch_ids' => $branchIds,
+        'course_id' => $course->id,
+        'schedule_dates' => $batchDates,
+        'time_ranges' => $ranges,
+        'max_instructors' => 4,
+        'max_students' => 20,
+    ]), $school);
+    $batchData = $batchResponse->getData(true);
+    $check($batchResponse->getStatusCode() === 201 && count($batchData['schedules'] ?? []) === 8, 'Multiple branches, dates, and time ranges create the full schedule cross-product');
+    $check(TimeSlot::whereIn('id', collect($batchData['schedules'])->pluck('id'))->count() === 8, 'Every schedule from the combined batch persists');
     $reject(fn () => app(AdminController::class)->createSchedule($request($body + ['time_ranges' => $ranges, 'batch_dates' => [now()->addDays(11)->toDateString()]]), $school), 'Same-day ranges and sequential dates cannot be combined');
     $reject(fn () => app(AdminController::class)->createSchedule($request($body + ['time_ranges' => [$ranges[0], ['start_time' => '08:30', 'end_time' => '10:00']]]), $school), 'Overlapping time ranges are rejected');
     $before = TimeSlot::where('course_id', $course->id)->count();

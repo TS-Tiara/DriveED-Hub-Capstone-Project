@@ -63,7 +63,7 @@ class StudentController extends Controller
         // enrollment exists (completed/rejected/cancelled allow re-enrollment).
         $blockingEnrollment = EnrollmentRequest::where('learner_id', $student->id)
             ->where('school_id', $school->id)
-            ->whereIn('status', ['pending', 'approved'])
+            ->whereIn('status', ['pending', 'approved', 'revision_required'])
             ->first();
 
         if ($blockingEnrollment) {
@@ -773,6 +773,9 @@ class StudentController extends Controller
         ]);
 
         try {
+            // Check if this is a re-upload after rejection
+            $wasRejected = $student->student_license_status === 'rejected';
+
             // Delete old file if re-uploading
             if ($student->student_license_path) {
                 Storage::disk('local')->delete($student->student_license_path);
@@ -786,10 +789,13 @@ class StudentController extends Controller
                 ->whereHas('course', function ($query) {
                     $query->where('course_type', 'practical');
                 })
-                ->whereIn('status', ['pending', 'revision_required'])
+                ->whereIn('status', ['pending', 'approved'])
                 ->exists();
 
-            $licenseStatus = $hasOpenPracticalEnrollment ? 'pending' : 'none';
+            // Notify admins if there's an open practical enrollment OR if re-uploading after rejection
+            $shouldNotifyAdmins = $hasOpenPracticalEnrollment || $wasRejected;
+
+            $licenseStatus = $shouldNotifyAdmins ? 'pending' : 'none';
 
             $student->update([
                 'student_license_path' => $path,
@@ -808,8 +814,8 @@ class StudentController extends Controller
                 'path' => $path,
             ]);
 
-            // Notify admins only when there is an actionable practical enrollment request.
-            if ($hasOpenPracticalEnrollment) {
+            // Notify admins when there is an actionable practical enrollment request or re-upload after rejection.
+            if ($shouldNotifyAdmins) {
                 $admins = Admin::where('school_id', $school->id)->where('is_active', true)->get();
                 foreach ($admins as $admin) {
                     Notification::send(

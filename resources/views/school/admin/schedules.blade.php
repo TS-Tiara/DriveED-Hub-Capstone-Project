@@ -907,7 +907,7 @@
         }
 
         .modal-header.modal-primary {
-            background: #3b82f6;
+            background: {{ $primaryColor }};
             color: white;
         }
 
@@ -1071,7 +1071,7 @@
         }
 
         .modal-header.modal-primary {
-            background: #3b82f6;
+            background: {{ $primaryColor }};
         }
 
         .modal-header h5 {
