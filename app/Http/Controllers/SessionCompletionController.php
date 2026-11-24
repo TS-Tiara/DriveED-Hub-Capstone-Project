@@ -150,17 +150,48 @@ class SessionCompletionController extends Controller
         $instructor = Auth::guard('instructor')->user();
         abort_unless($instructor && (int) $instructor->school_id === (int) $school->id, 403);
         $validated = $request->validate([
-            'session_ids' => ['required', 'array', 'min:1', 'max:100'],
+            'session_ids' => ['nullable', 'array', 'min:1'],
             'session_ids.*' => ['required', 'integer', 'distinct'],
             'session_grade' => ['required', 'numeric', 'min:0', 'max:100'],
+            'grade_scope' => ['nullable', 'in:selected,all_matches'],
         ]);
-        $sessions = SessionCompletion::with('enrollment.course')
+
+        $baseQuery = SessionCompletion::with('enrollment.course')
             ->where('instructor_id', $instructor->id)
             ->where('school_id', $school->id)
             ->whereHas('enrollment', fn ($query) => $query->where('branch_id', $instructor->branch_id))
-            ->whereNull('archived_at')
-            ->whereIn('id', $validated['session_ids'])->get();
-        if ($sessions->count() !== count($validated['session_ids'])) {
+            ->whereNull('archived_at');
+
+        if (($validated['grade_scope'] ?? 'selected') === 'all_matches') {
+            $matchingQuery = (clone $baseQuery)
+                ->when($request->session_type, fn ($query, $type) => $query->where('session_type', $type))
+                ->when($request->date_from, fn ($query, $date) => $query->whereDate('session_date', '>=', $date))
+                ->when($request->date_to, fn ($query, $date) => $query->whereDate('session_date', '<=', $date))
+                ->when($request->filled('search'), function ($query) use ($request) {
+                    $term = trim($request->string('search')->toString());
+                    $query->where(function ($match) use ($term) {
+                        $match->whereHas('enrollment.student', fn ($student) => $student->where('name', 'like', "%{$term}%"))
+                            ->orWhereHas('enrollment.course', fn ($course) => $course->where('title', 'like', "%{$term}%"));
+                    });
+                });
+            $sessions = $matchingQuery->get();
+        } else {
+            if (empty($validated['session_ids'])) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['session_ids' => 'Select at least one session or choose all matching sessions.']);
+            }
+            $sessions = (clone $baseQuery)
+                ->whereIn('id', $validated['session_ids'])
+                ->get();
+        }
+
+        if ($sessions->isEmpty()) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'session_ids' => 'No matching sessions are available to grade.',
+            ]);
+        }
+
+        if (($validated['grade_scope'] ?? 'selected') === 'selected'
+            && $sessions->count() !== count($validated['session_ids'] ?? [])) {
             throw \Illuminate\Validation\ValidationException::withMessages(['session_ids' => 'One or more selected sessions are unavailable.']);
         }
         $courseIds = $sessions->map(fn ($session) => $session->enrollment?->course_id)->unique();

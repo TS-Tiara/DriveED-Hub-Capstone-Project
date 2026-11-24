@@ -97,11 +97,16 @@ class TimeSlot extends Model
     }
 
     /**
-     * Get available spots FOR INSTRUCTORS to join.
+     * Get available slots for instructors to join.
      */
     public function getAvailableInstructorSpots(): int
     {
         return max(0, ($this->max_instructors ?? 0) - $this->instructors->count());
+    }
+
+    public function getAvailableInstructorSlots(): int
+    {
+        return $this->getAvailableInstructorSpots();
     }
 
     /**
@@ -153,6 +158,11 @@ class TimeSlot extends Model
 
         // Practical capacity is 1-on-1 with the number of instructors present.
         return max(0, $instructorCount - $bookingsCount);
+    }
+
+    public function getAvailableStudentSlots(): int
+    {
+        return $this->getAvailableStudentSpots();
     }
 
     /**
@@ -224,6 +234,11 @@ class TimeSlot extends Model
     public function getAvailableSpots(): int
     {
         return $this->getAvailableInstructorSpots();
+    }
+
+    public function getAvailableSlots(): int
+    {
+        return $this->getAvailableSpots();
     }
 
     public function isFull(): bool

@@ -1323,6 +1323,7 @@ class EnrollmentRequestController extends Controller
             $studentUpdate = [
                 'is_course_locked' => true,
                 'active_enrollment_id' => $enrollmentRequest->id,
+                'branch_id' => $enrollmentRequest->branch_id,
             ];
             if (!empty($enrollmentRequest->requested_dl_code)) {
                 $studentUpdate['dl_code'] = $enrollmentRequest->requested_dl_code;
